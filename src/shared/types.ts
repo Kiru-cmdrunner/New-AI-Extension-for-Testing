@@ -61,6 +61,9 @@ export enum StorageKeys {
   KNOWLEDGE_FRAGMENT = 'knowledge_fragment',
   RECOGNITION_COMPONENTS = 'recognition_components',
   DOMAIN_ENTITIES = 'domain_entities',
+  // ── Phase 8: Unified IR Pipeline ──
+  EXECUTION_IR_PLAN = 'execution_ir_plan',
+  GENERATED_FILES = 'generated_files',
 }
 
 /**

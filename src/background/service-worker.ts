@@ -280,6 +280,47 @@ async function handleStopRecording(): Promise<void> {
     // Non-fatal — the side panel can still show raw events and interactions
   }
 
+  // ── IR Bridge: Unified Generation Pipeline (Phase 8) ──
+  // Build an ExecutionIRPlan from the recording outputs, then render it
+  // to Playwright code using the IRCodeGenerator interface.
+  // Dual-write: runs alongside the legacy generation engine above.
+  // The side panel reads from whichever path produced output.
+  try {
+    const { build: buildIRPlan } = await import('../generation/ir-bridge');
+    const { PlaywrightCodeGenerator } = await import('../adapters/playwright/project-generator');
+
+    // Read the knowledge fragment from storage (written by the pipeline runner above)
+    const fragmentResult = await chrome.storage.local.get(StorageKeys.KNOWLEDGE_FRAGMENT);
+    const fragment = fragmentResult[StorageKeys.KNOWLEDGE_FRAGMENT] ?? null;
+
+    const tab = await getActiveTab();
+    const recordingContext = session.getRecordingContext();
+    const irPlan = buildIRPlan({
+      events,
+      interactions: mergedInteractions ?? interactions,
+      fragment,
+      recordingContext: {
+        startUrl: recordingContext?.startUrl ?? tab?.url ?? 'about:blank',
+        title: recordingContext?.startTitle ?? tab?.title ?? null,
+      },
+      testCaseName: (await StorageService.getTestCaseDraft())?.name ?? 'Recorded Test',
+    });
+
+    await StorageService.setRaw(StorageKeys.EXECUTION_IR_PLAN, irPlan);
+
+    // Render the plan to Playwright code files
+    const codeGen = new PlaywrightCodeGenerator();
+    const result = await codeGen.generate(irPlan, {
+      language: 'typescript',
+      pattern: 'flat',
+      assertions: 'expect',
+    });
+    await StorageService.setRaw(StorageKeys.GENERATED_FILES, result);
+  } catch (e) {
+    console.warn('[IR Bridge] error during unified generation:', e);
+    // Non-fatal — the legacy generation engine output is still available
+  }
+
   // Update UI state
   const uiState: UIState = {
     recordingState: RecordingState.Stopped,

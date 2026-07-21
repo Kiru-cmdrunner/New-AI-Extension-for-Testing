@@ -34,11 +34,11 @@ Key decisions:
 - [ ] Tests covering all interaction type mappings + enrichment
 
 ### 8.3: Wire Into Service Worker (Dual-Write)
-- [ ] Add EXECUTION_IR_PLAN and GENERATED_FILES StorageKeys
-- [ ] Call IR bridge after pipeline runner
-- [ ] Call PlaywrightCodeGenerator to render plan
-- [ ] Dual-write: both old (GENERATED_STEPS, GENERATED_PLAYWRIGHT) and new (EXECUTION_IR_PLAN, GENERATED_FILES) paths run
-- [ ] All existing tests pass
+- [x] Add EXECUTION_IR_PLAN and GENERATED_FILES StorageKeys
+- [x] Call IR bridge after pipeline runner
+- [x] Call PlaywrightCodeGenerator to render plan
+- [x] Dual-write: both old (GENERATED_STEPS, GENERATED_PLAYWRIGHT) and new (EXECUTION_IR_PLAN, GENERATED_FILES) paths run
+- [x] All existing tests pass
 
 ### 8.4: Update Side Panel
 - [ ] Read EXECUTION_IR_PLAN from storage
