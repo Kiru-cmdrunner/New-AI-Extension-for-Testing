@@ -38,6 +38,7 @@
 | — | [Architectural Decision Log](./11-architectural-decision-log.md) | Chronological ADR — how architecture evolved across four eras |
 | **★** | **[AI Resume Prompt](./12-ai-resume-prompt.md)** | **Onboarding protocol for new AI assistants — read before proposing changes** |
 | — | [Long-Term Roadmap](./13-long-term-roadmap.md) | Phases 8–18: what remains to achieve the product vision (2026-07-21 analysis) |
+| — | [Target Generation Architecture](./14-target-generation-architecture.md) | Unified IR-based generation pipeline design (Phase 8 prerequisite) |
 
 ---
 
