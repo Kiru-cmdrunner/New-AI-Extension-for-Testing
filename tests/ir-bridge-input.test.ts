@@ -14,6 +14,7 @@ import type { IRBridgeInput, IRBridgeRecordingContext } from '../src/generation/
 import type { SessionEvent, AIUnderstanding } from '../src/shared/types';
 import type { DetectedInteraction } from '../src/classifier/interaction-types';
 import type { ApplicationKnowledgeFragment } from '../src/domain/entities/application-knowledge';
+import type { UnderstandingResult } from '../src/domain/entities/understanding-result';
 
 describe('IRStep Extensions (Milestone 8.1)', () => {
   describe('optional recording-provenance fields', () => {
@@ -175,24 +176,23 @@ describe('IRBridgeInput Model (Milestone 8.1)', () => {
     it('encapsulates all required inputs', () => {
       const events: SessionEvent[] = [];
       const interactions: DetectedInteraction[] = [];
-      const fragment: ApplicationKnowledgeFragment | null = null;
 
       const input: IRBridgeInput = {
         events,
         interactions,
-        fragment,
+        understanding: null,
         recordingContext: { startUrl: 'https://example.com', title: 'Test' },
         testCaseName: 'Login Test',
       };
 
       expect(input.events).toBe(events);
       expect(input.interactions).toBe(interactions);
-      expect(input.fragment).toBeNull();
+      expect(input.understanding).toBeNull();
       expect(input.recordingContext.startUrl).toBe('https://example.com');
       expect(input.testCaseName).toBe('Login Test');
     });
 
-    it('accepts a non-null fragment', () => {
+    it('accepts a non-null understanding with fragment', () => {
       const fragment: ApplicationKnowledgeFragment = {
         sessionId: 'session-1',
         generatedAt: '2026-07-21T00:00:00Z',
@@ -212,23 +212,32 @@ describe('IRBridgeInput Model (Milestone 8.1)', () => {
         applicationSurfaces: [],
       };
 
+      const understanding: UnderstandingResult = {
+        sessionId: 'session-1',
+        generatedAt: '2026-07-21T00:00:00Z',
+        schemaVersion: 1,
+        fragment,
+        capability: null,
+      };
+
       const input: IRBridgeInput = {
         events: [],
         interactions: [],
-        fragment,
+        understanding,
         recordingContext: { startUrl: 'https://example.com', title: null },
         testCaseName: 'Test',
       };
 
-      expect(input.fragment).not.toBeNull();
-      expect(input.fragment?.sessionId).toBe('session-1');
+      expect(input.understanding).not.toBeNull();
+      expect(input.understanding?.fragment.sessionId).toBe('session-1');
+      expect(input.understanding?.capability).toBeNull();
     });
 
     it('is a stable interface — all 5 fields are present', () => {
       const input: IRBridgeInput = {
         events: [],
         interactions: [],
-        fragment: null,
+        understanding: null,
         recordingContext: { startUrl: '', title: null },
         testCaseName: '',
       };
@@ -237,7 +246,7 @@ describe('IRBridgeInput Model (Milestone 8.1)', () => {
       expect(keys).toHaveLength(5);
       expect(keys).toContain('events');
       expect(keys).toContain('interactions');
-      expect(keys).toContain('fragment');
+      expect(keys).toContain('understanding');
       expect(keys).toContain('recordingContext');
       expect(keys).toContain('testCaseName');
     });

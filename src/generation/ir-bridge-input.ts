@@ -17,7 +17,7 @@
 
 import type { SessionEvent } from '../shared/types';
 import type { DetectedInteraction } from '../classifier/interaction-types';
-import type { ApplicationKnowledgeFragment } from '../domain/entities/application-knowledge';
+import type { UnderstandingResult } from '../domain/entities/understanding-result';
 
 /**
  * The recording context captured at session start.
@@ -33,19 +33,28 @@ export interface IRBridgeRecordingContext {
 /**
  * Encapsulated input for the IR bridge's build() method.
  *
- * All fields are required — the bridge needs all three perspectives
- * to produce a complete ExecutionIRPlan. The fragment may be an empty
- * fragment (no components, no contracts) if enrichment was not run;
- * in that case the bridge produces steps without assertions or
- * business-field enrichment.
+ * The IR Bridge consumes the UnderstandingResult — the aggregate output of
+ * the Understanding Layer — as its input boundary. The fragment within
+ * provides assertions, business field labels, and workflow structure.
+ * The capability is available for future use (test naming, metadata) but
+ * is not required for IR plan generation.
+ *
+ * Design principle: IRBridgeInput is a stable interface. Future inputs
+ * (e.g., EnvironmentProfile, TestData) can be added as optional fields
+ * without breaking existing callers.
  */
 export interface IRBridgeInput {
   /** Raw event timeline — provides locators, input values, DOM context. */
   readonly events: SessionEvent[];
   /** Classified interactions — provides type classification, metadata, confidence. */
   readonly interactions: DetectedInteraction[];
-  /** Semantic enrichment — provides assertions, business field labels, workflow structure. */
-  readonly fragment: ApplicationKnowledgeFragment | null;
+  /**
+   * Understanding Layer output — contains the fragment (structural understanding)
+   * and capability (semantic understanding). The bridge reads fragment for
+   * assertions, business field labels, and workflow structure. Null if the
+   * Understanding Layer failed entirely.
+   */
+  readonly understanding: UnderstandingResult | null;
   /** Recording context — start URL, title. */
   readonly recordingContext: IRBridgeRecordingContext;
   /** Test case name (for test file naming and report headers). */

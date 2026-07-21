@@ -25,6 +25,7 @@ import { LocatorStrategyType, ValidationType, ValidationComparison } from '../sr
 import type { SessionEvent, ElementIdentity } from '../src/shared/types';
 import type { DetectedInteraction, InteractionType } from '../src/classifier/interaction-types';
 import type { ApplicationKnowledgeFragment } from '../src/domain/entities/application-knowledge';
+import type { UnderstandingResult } from '../src/domain/entities/understanding-result';
 
 // ── Helpers ────────────────────────────────────────────────
 
@@ -69,15 +70,26 @@ function makeInteraction(
 }
 
 function makeInput(
-  overrides: Partial<IRBridgeInput> = {},
+  overrides: Partial<IRBridgeInput> & { fragment?: ApplicationKnowledgeFragment | null } = {},
 ): IRBridgeInput {
+  const { fragment, ...rest } = overrides;
+  let understanding: UnderstandingResult | null = null;
+  if (fragment) {
+    understanding = {
+      sessionId: fragment.sessionId,
+      generatedAt: fragment.generatedAt,
+      schemaVersion: 1,
+      fragment,
+      capability: null,
+    };
+  }
   return {
     events: [],
     interactions: [],
-    fragment: null,
+    understanding,
     recordingContext: { startUrl: 'https://example.com/login', title: 'Login Page' },
     testCaseName: 'Test Case',
-    ...overrides,
+    ...rest,
   };
 }
 

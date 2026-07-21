@@ -609,7 +609,8 @@ function applyReadabilityRules(steps: IRStep[]): IRStep[] {
  * @returns ExecutionIRPlan — the unified execution representation
  */
 export function build(input: IRBridgeInput): ExecutionIRPlan {
-  const { events, interactions, fragment, recordingContext, testCaseName } = input;
+  const { events, interactions, recordingContext, testCaseName } = input;
+  const fragment = input.understanding?.fragment ?? null;
 
   const eventIndex = buildEventIndex(events);
   const steps: IRStep[] = [];

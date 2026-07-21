@@ -296,11 +296,20 @@ async function handleStopRecording(): Promise<void> {
     const { build: buildIRPlan } = await import('../generation/ir-bridge');
     const { PlaywrightCodeGenerator } = await import('../adapters/playwright/project-generator');
 
-    // Read the fragment from the UnderstandingResult (or fall back to direct storage)
-    let fragment = understandingResult?.fragment ?? null;
-    if (!fragment) {
+    // Read the UnderstandingResult (or fall back to direct storage for the fragment)
+    let understanding = understandingResult;
+    if (!understanding) {
       const fragmentResult = await chrome.storage.local.get(StorageKeys.KNOWLEDGE_FRAGMENT);
-      fragment = fragmentResult[StorageKeys.KNOWLEDGE_FRAGMENT] ?? null;
+      const fragment = fragmentResult[StorageKeys.KNOWLEDGE_FRAGMENT] ?? null;
+      if (fragment) {
+        understanding = {
+          sessionId: session.sessionId ?? '',
+          generatedAt: new Date().toISOString(),
+          schemaVersion: 1,
+          fragment,
+          capability: null,
+        };
+      }
     }
 
     const tab = await getActiveTab();
@@ -308,7 +317,7 @@ async function handleStopRecording(): Promise<void> {
     const irPlan = buildIRPlan({
       events,
       interactions: mergedInteractions ?? interactions,
-      fragment,
+      understanding,
       recordingContext: {
         startUrl: recordingContext?.startUrl ?? tab?.url ?? 'about:blank',
         title: recordingContext?.startTitle ?? tab?.title ?? null,
