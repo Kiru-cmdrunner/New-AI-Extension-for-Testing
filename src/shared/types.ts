@@ -62,6 +62,9 @@ export enum StorageKeys {
   // ── Phase 8: Unified IR Pipeline ──
   EXECUTION_IR_PLAN = 'execution_ir_plan',
   GENERATED_FILES = 'generated_files',
+  // ── Phase 9.5: Understanding Layer ──
+  UNDERSTANDING_RESULT = 'understanding_result',
+  CAPABILITY_CANDIDATE = 'capability_candidate',
 }
 
 /**
