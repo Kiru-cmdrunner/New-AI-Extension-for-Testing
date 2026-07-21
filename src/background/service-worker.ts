@@ -23,6 +23,7 @@ import { compareClassifierOutputs, logComparisonResult } from '../classifier/evi
 import { mergeV1V2, logMergeMetrics } from '../classifier/evidence/merge-layer';
 import { runPipeline } from '../recorder/pipeline/pipeline-runner';
 import type { DetectedInteraction } from '../classifier/interaction-types';
+import type { UnderstandingResult } from '../domain/entities/understanding-result';
 import {
   RecordingState,
   StorageKeys,
@@ -249,6 +250,9 @@ async function handleStopRecording(): Promise<void> {
   //   - Domain entities (UiElement[], ObservedTransition[])
   //   - Component groupings from the recognition orchestrator
   //   - Application Knowledge Fragment from the enrichment orchestrator
+  //   - Capability Candidate from the capability deriver
+  //   - UnderstandingResult (aggregate of fragment + capability)
+  let understandingResult: UnderstandingResult | null = null;
   try {
     const sessionId = `session-${Date.now()}`;
     const tab = await getActiveTab();
@@ -263,23 +267,41 @@ async function handleStopRecording(): Promise<void> {
     if (pipelineResult.fragment) {
       await StorageService.setRaw(StorageKeys.KNOWLEDGE_FRAGMENT, pipelineResult.fragment);
     }
+    if (pipelineResult.capability) {
+      await StorageService.setRaw(StorageKeys.CAPABILITY_CANDIDATE, pipelineResult.capability);
+    }
+
+    // Assemble UnderstandingResult (the layer boundary output)
+    if (pipelineResult.fragment) {
+      understandingResult = {
+        sessionId,
+        generatedAt: new Date().toISOString(),
+        schemaVersion: 1,
+        fragment: pipelineResult.fragment,
+        capability: pipelineResult.capability,
+      };
+      await StorageService.setRaw(StorageKeys.UNDERSTANDING_RESULT, understandingResult);
+    }
   } catch (e) {
     console.warn('[Pipeline] error during recognition/enrichment:', e);
     // Non-fatal — the existing V1/V2 classification results are already stored
   }
 
-  // ── IR Bridge: Unified Generation Pipeline (Phase 8) ──
+  // ── IR Bridge: Unified Generation Pipeline (Phase 8 + 9.5) ──
   // Build an ExecutionIRPlan from the recording outputs, then render it
   // to Playwright code using the IRCodeGenerator interface.
-  // This replaces the legacy GenerationEngine (canonical-step → execution-json
-  // → playwright-generator) with a single IR-based pipeline.
+  // The IR Bridge consumes the UnderstandingResult as its input from the
+  // Understanding Layer (fragment + capability as sibling artifacts).
   try {
     const { build: buildIRPlan } = await import('../generation/ir-bridge');
     const { PlaywrightCodeGenerator } = await import('../adapters/playwright/project-generator');
 
-    // Read the knowledge fragment from storage (written by the pipeline runner above)
-    const fragmentResult = await chrome.storage.local.get(StorageKeys.KNOWLEDGE_FRAGMENT);
-    const fragment = fragmentResult[StorageKeys.KNOWLEDGE_FRAGMENT] ?? null;
+    // Read the fragment from the UnderstandingResult (or fall back to direct storage)
+    let fragment = understandingResult?.fragment ?? null;
+    if (!fragment) {
+      const fragmentResult = await chrome.storage.local.get(StorageKeys.KNOWLEDGE_FRAGMENT);
+      fragment = fragmentResult[StorageKeys.KNOWLEDGE_FRAGMENT] ?? null;
+    }
 
     const tab = await getActiveTab();
     const recordingContext = session.getRecordingContext();

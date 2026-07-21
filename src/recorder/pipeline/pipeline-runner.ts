@@ -29,6 +29,8 @@ import type { RecordedEvent } from '../recorder/recorded-event';
 import type { DetectedInteraction } from '../../classifier/interaction-types';
 import type { ElementIdentity } from '../../shared/types';
 import type { ApplicationKnowledgeFragment } from '../../domain/entities/application-knowledge';
+import type { CapabilityCandidate } from '../../domain/entities/capability-candidate';
+import { deriveCapability } from '../enrichment/capability-deriver';
 
 // ── Types ───────────────────────────────────────────────────────────────
 
@@ -36,6 +38,7 @@ export interface PipelineResult {
   entities: DomainEntities;
   components: ComponentGrouping[];
   fragment: ApplicationKnowledgeFragment | null;
+  capability: CapabilityCandidate | null;
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────
@@ -193,9 +196,22 @@ export function runPipeline(
     fragment = null;
   }
 
+  // ── Step 4: Capability Derivation ──
+  let capability: CapabilityCandidate | null = null;
+  if (fragment) {
+    try {
+      const result = deriveCapability({ fragment, sessionId });
+      capability = result.capability;
+    } catch {
+      // Capability derivation failures are non-fatal
+      capability = null;
+    }
+  }
+
   return {
     entities,
     components,
     fragment,
+    capability,
   };
 }
