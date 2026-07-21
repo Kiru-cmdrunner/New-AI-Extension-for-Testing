@@ -10,12 +10,13 @@
 | Pipeline Runner (Phase 6.3–6.5) | ✅ Wired | 11 |
 | Component Recognition (Phases 1–4) | ✅ Complete | 200+ |
 | Post-Recording Enrichment (Phase 5) | ✅ Complete | 145 |
-| Generation Pipeline | ✅ Wired | 200+ |
+| Generation Pipeline | ✅ Wired (IR Bridge) | 84 |
 | Domain Model & Repository V2 | ✅ Complete | 100+ |
 | Execution IR | ✅ Complete | 50+ |
 | Playwright Adapter | ✅ Complete | 50+ |
 | Architecture C | 📦 Archived to `legacy/` | — |
-| **Total tests** | | **3126 across 119 files** |
+| Legacy Generation Pipeline | 📦 Archived to `legacy/generation-pipeline/` | — |
+| **Total tests** | | **2475 across 100 files** |
 
 ## Architecture Decision: Option B (Phase 6–7)
 
@@ -27,7 +28,7 @@ never wired into production.
 **Pipeline flow (active runtime):**
 
 ```
-Deterministic Recorder → V1/V2 Classifier → Domain Adapter → Recognition → Enrichment → Generation → Side Panel
+Deterministic Recorder → V1/V2 Classifier → Domain Adapter → Recognition → Enrichment → IR Bridge → PlaywrightCodeGenerator → Side Panel
 ```
 
 Architecture C files (universal observer, state tracker, interaction assembler,
@@ -194,7 +195,7 @@ extraction, DOM observation, and composite interaction assembly that may inform 
 ## Project Health
 
 ### Strengths
-- **3126 tests, all passing** — comprehensive coverage
+- **2475 tests, all passing** — comprehensive coverage
 - **Single runtime pipeline** — no dual-pipeline confusion (Architecture C retired)
 - **Clean architectural separation** — each subsystem is independently testable
 - **Typed contracts everywhere** — no untyped message passing

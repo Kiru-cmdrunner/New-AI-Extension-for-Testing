@@ -1,7 +1,7 @@
 # CmdRunner Smart Recorder — Long-Term Roadmap
 
-> Generated: 2026-07-21 · Based on full codebase inventory against product vision
-> Current state: 3,126 tests across 119 files · Build succeeds · HEAD: `ed5eb8b`
+> Generated: 2026-07-21 · Updated: 2026-07-21 (Phase 8 complete)
+> Current state: 2,475 tests across 100 files · Build succeeds · HEAD: `00e11b7`
 
 ---
 
@@ -19,8 +19,8 @@
 | Domain adapter | ✅ Wired | RecordedEvent[] + DetectedInteraction[] → UiElement[] + ObservedTransition[] |
 | Recognition orchestrator (3-tier) | ✅ Wired | Structural → behavioral → component registry, 6/11 patterns registered |
 | Post-recording enrichment pipeline | ✅ Wired | 9 modules → ApplicationKnowledgeFragment (7-step pipeline) |
-| Generation engine | ✅ Wired | Produces CanonicalSteps + Execution JSON + Playwright code |
-| Side panel display | ✅ Complete | Shows raw events, detected interactions, generated steps, Playwright code, replay JSON |
+| Generation engine | ✅ Wired | IR Bridge (SessionEvent[] + DetectedInteraction[] + KnowledgeFragment → ExecutionIRPlan → PlaywrightCodeGenerator). Legacy CanonicalStep pipeline retired. |
+| Side panel display | ✅ Complete | Shows raw events, detected interactions, IR Plan steps (action, locators, assertions), Playwright project files, replay JSON |
 | AI provider infrastructure | ✅ Complete | 6 providers (OpenAI, Claude, Gemini, Azure, OpenRouter, Custom), provider manager, connection tester |
 | Settings page | ✅ Complete | AI provider config, API keys, model selection, connection testing |
 
@@ -28,10 +28,10 @@
 
 | Capability | Status | What's Missing |
 |-----------|--------|----------------|
-| **Knowledge Fragment → Generation** | ⚠️ Fragment produced but not consumed | Generation engine reads raw `SessionEvent[]`, not `LogicalAction[]` from the fragment |
+| **Knowledge Fragment → Generation** | ✅ Complete (Phase 8) | IR Bridge consumes fragment + events + interactions → ExecutionIRPlan |
+| **Execution IR generation** | ✅ Complete (Phase 8) | IR Bridge produces ExecutionIRPlan, PlaywrightCodeGenerator renders to code files |
+| **IR-based Playwright generation** | ✅ Complete (Phase 8) | PlaywrightCodeGenerator wired into service worker via IR Bridge |
 | **Repository V2 (Dexie/IndexedDB)** | ⚠️ Fully implemented, tested, not wired | Runtime still uses legacy `RepositoryService` (chrome.storage.local, flat hierarchy) |
-| **Execution IR generation** | ⚠️ `DefaultIRGenerator` complete, not wired | Only called from tests. Runtime uses separate non-IR generation path |
-| **IR-based Playwright generation** | ⚠️ `PlaywrightCodeGenerator` complete, not wired | Runtime uses `playwright-generator.ts` (operates on CanonicalStep[], not IR) |
 | **Staleness detection** | ⚠️ `checkStaleness()` + `detectLocatorChanges()` complete, not wired | Only called from tests. No runtime trigger for staleness checks |
 | **Screenshot capture** | ⚠️ `ScreenshotService` complete, not wired | Never called from recorder or service worker |
 | **AI sendPrompt()** | ⚠️ All 6 providers' `sendPrompt()` methods complete, not wired | Only used for connection testing. No AI advisory layer in the pipeline |
@@ -69,17 +69,18 @@
 
 ## Roadmap: Remaining Phases
 
-### Phase 8: Knowledge Fragment → Generation Integration
+### Phase 8: Knowledge Fragment → Generation Integration — ✅ COMPLETE
 
-| Field | Value |
-|-------|-------|
-| **Priority** | 🔴 **Critical** |
-| **Objective** | The generation engine consumes the `ApplicationKnowledgeFragment` (LogicalActions, InteractionContracts, BehavioralContracts) to produce richer test steps with business-domain language, validation assertions, and conditional logic. |
-| **Complexity** | Medium |
-| **Dependencies** | Phase 5 enrichment (✅), Phase 6 pipeline wiring (✅) |
-| **Partial/From scratch** | **Partial** — generation engine is wired and produces artifacts. The fragment is produced and stored. The gap is purely the consumption path: the engine reads `SessionEvent[]` instead of `LogicalAction[]`. |
-| **Major features** | 1. Modify generation engine to read `KNOWLEDGE_FRAGMENT` from storage alongside `SESSION_EVENTS`<br>2. Map `LogicalAction[]` → `CanonicalStep[]` (enriched path) with fallback to raw events (degraded path)<br>3. Use `InteractionContract.constraints` to add validation assertions (required, min, max, pattern)<br>4. Use `BehavioralContract.stateTransitions` to add conditional logic (if/else branches in Playwright)<br>5. Use `RecordedWorkflow` metadata (navigation boundaries, branch points) to structure test organization<br>6. Use component-level `ComponentGrouping` data to group steps by UI component |
-| **Expected outcome** | Generated test steps read like a human wrote them — "Select 'United States' from the Country dropdown" instead of "Click on div with role=combobox". Steps include validation assertions derived from actual DOM constraints. Playwright code includes conditional logic for branching workflows. |
+> **Status**: Implemented via IR Bridge architecture (not the original CanonicalStep modification plan).
+> The legacy CanonicalStep → ExecutionJson → Playwright pipeline was fully retired.
+> The IR Bridge (src/generation/ir-bridge.ts) consumes SessionEvent[] + DetectedInteraction[] +
+> ApplicationKnowledgeFragment and produces an ExecutionIRPlan — the single canonical representation
+> for all downstream code generation. PlaywrightCodeGenerator renders the plan to a complete project.
+>
+> **Completed milestones**: 8.1 (IRStep + IRBridgeInput), 8.2 (IR Bridge build function, 740 LOC),
+> 8.3 (Service worker wiring), 8.4 (Side panel rendering), 8.5 (Legacy pipeline retirement).
+> **Results**: 2,475 tests pass (100 files), build 619ms. 17 legacy source files + 21 test files archived.
+> See `docs/handover/14-target-generation-architecture.md` for the full architecture design.
 
 ---
 
@@ -226,7 +227,7 @@
 ## Implementation Order (Recommended)
 
 ```
-Phase 8  🔴 Critical    Knowledge Fragment → Generation Integration
+Phase 8  ✅ COMPLETE   Knowledge Fragment → Generation Integration (IR Bridge)
 Phase 10 🟠 High        Repository V2 Migration
 Phase 9  🟠 High        AI-Powered Enrichment
 Phase 11 🟠 High        Self-Healing Locators
@@ -241,7 +242,7 @@ Phase 18 🟢 Low         Complete Pattern Catalogue
 
 ### Ordering rationale
 
-1. **Phase 8** (Fragment → Generation) is first because it's the highest-value, lowest-effort change. The fragment is already produced — we just need to consume it. This directly improves the core output (test steps).
+1. **Phase 8** (Fragment → Generation) — ✅ COMPLETE. The IR Bridge now consumes the knowledge fragment + session events + detected interactions to produce a unified ExecutionIRPlan. This directly improved the core output (test steps with business-domain language and assertions).
 
 2. **Phase 10** (Repository V2 Migration) is second because it's the foundation for everything downstream — self-healing needs Element persistence, test execution needs result storage, test suites need the new data model. It's a mechanical migration (code is written) with no design risk.
 
