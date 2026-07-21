@@ -2,6 +2,8 @@
 
 > **You are a new AI assistant. A user just said: "Let's resume the CmdRunner AI Extension project." This document tells you everything you need to know.**
 
+> **← Back to [Root README](../../README.md) | [Handover Index](./README.md) | [AI Resume Prompt](./12-ai-resume-prompt.md)****
+
 ---
 
 ## What Is This Project?

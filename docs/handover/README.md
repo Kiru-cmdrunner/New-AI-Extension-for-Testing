@@ -2,6 +2,8 @@
 
 > **Purpose:** This documentation is the permanent source of truth for the CmdRunner AI Extension project. A new AI assistant or developer can understand the project, its architecture, design philosophy, current state, and development trajectory by reading these documents — no prior conversation history required.
 
+> **← Back to [Root README](../../README.md)**
+
 ---
 
 ## How to Use This Documentation
@@ -62,5 +64,6 @@ These documents were created during development and contain deeper technical det
 | **Bundler** | Vite + @crxjs/vite-plugin |
 | **Test framework** | Vitest (jsdom environment) |
 | **Tests** | 3324 tests across 124 files |
-| **Git remote** | `git.drytis.dev/kirubakaran-1862/ai-extension-for-cmdrunner-2552.git` |
+| **Git remote** | `github.com/Kiru-cmdrunner/cmdrunner-smart-recorder` |
 | **HEAD branch** | `main` |
+| **Root README** | [`/README.md`](../../README.md) — start there for project overview and onboarding |

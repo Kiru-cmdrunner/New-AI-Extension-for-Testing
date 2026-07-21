@@ -1,6 +1,8 @@
-# 11. AI Resume Prompt
+# 12. AI Resume Prompt
 
 > **This document defines the standard onboarding protocol for any AI assistant joining this project. Follow these steps before proposing or making any changes.**
+
+> **← Back to [Root README](../../README.md) | [Handover Index](./README.md) | [AI Handover Guide](./10-ai-handover-guide.md)**
 
 ---
 
