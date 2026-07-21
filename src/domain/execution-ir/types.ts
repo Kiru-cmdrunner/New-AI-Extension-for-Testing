@@ -21,6 +21,7 @@ import {
   ValidationComparison,
   ValidationSeverity,
 } from '../enums';
+import type { AIUnderstanding } from '../../shared/types';
 
 // ── 2.1 IRAction ──────────────────────────────────────────
 
@@ -183,6 +184,15 @@ export interface IRStep {
   readonly assertions: IRAssertion[];
   /** Execution configuration for this step. */
   readonly executionParameters: ExecutionParameters;
+
+  // ── Recording provenance (optional — populated by IR bridge, not ATC path) ──
+
+  /** AI advisory enrichment from the recording session. Null if AI failed or wasn't used. */
+  readonly aiEnrichment?: AIUnderstanding | null;
+  /** Back-link to the source SessionEvent actionId (e.g., "click-0001"). Undefined for ATC-authored steps. */
+  readonly sourceEventId?: string;
+  /** Template-generated human description. Undefined for ATC-authored steps. */
+  readonly plainEnglish?: string;
 }
 
 // ── 2.8 IREnvironment ─────────────────────────────────────
