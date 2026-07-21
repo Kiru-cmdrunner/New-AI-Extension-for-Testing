@@ -37,6 +37,7 @@
 | **★** | **[AI Handover Guide](./10-ai-handover-guide.md)** | **Start here if you're a new AI assistant** |
 | — | [Architectural Decision Log](./11-architectural-decision-log.md) | Chronological ADR — how architecture evolved across four eras |
 | **★** | **[AI Resume Prompt](./12-ai-resume-prompt.md)** | **Onboarding protocol for new AI assistants — read before proposing changes** |
+| — | [Long-Term Roadmap](./13-long-term-roadmap.md) | Phases 8–18: what remains to achieve the product vision (2026-07-21 analysis) |
 
 ---
 
@@ -64,7 +65,7 @@ These documents were created during development and contain deeper technical det
 | **Language** | TypeScript (strict mode) |
 | **Bundler** | Vite + @crxjs/vite-plugin |
 | **Test framework** | Vitest (jsdom environment) |
-| **Tests** | 3324 tests across 124 files |
+| **Tests** | 3,126 tests across 119 files |
 | **Git remote** | `github.com/Kiru-cmdrunner/cmdrunner-smart-recorder` |
 | **HEAD branch** | `main` |
 | **Root README** | [`/README.md`](../../README.md) — start there for project overview and onboarding |
