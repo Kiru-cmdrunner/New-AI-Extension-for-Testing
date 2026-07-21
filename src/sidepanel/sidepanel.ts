@@ -21,6 +21,8 @@ import { RepositoryService } from '../repository/repository-service';
 import { renderEventTimeline, renderDetectedInteractions } from './timeline-renderer';
 import type { RecordedEvent, ReplayJson } from '../recorder/recorded-event';
 import type { DetectedInteraction } from '../classifier/interaction-types';
+import type { ExecutionIRPlan, IRStep, IRAssertion } from '../domain/execution-ir/types';
+import type { GeneratedFile } from '../domain/execution-ir/adapters/ir-code-generator';
 
 // ── View Management ────────────────────────────────────────
 
@@ -98,16 +100,24 @@ const replayToggle = document.getElementById('replay-toggle') as HTMLButtonEleme
 const replaySection = document.getElementById('replay-section')!;
 const replayCode = document.getElementById('replay-code')!;
 
-// Generated steps
+// Generated steps (legacy)
 const generatedStepsSection = document.getElementById('generated-steps-section')!;
 const generatedStepsList = document.getElementById('generated-steps-list')!;
 const generatedStepsCount = document.getElementById('generated-steps-count')!;
 
-// Generated Playwright
+// Generated Playwright (legacy)
 const playwrightSection = document.getElementById('playwright-section')!;
 const playwrightToggle = document.getElementById('playwright-toggle') as HTMLButtonElement;
 const playwrightCode = document.getElementById('playwright-code')!;
 const copyPlaywrightBtn = document.getElementById('copy-playwright-btn') as HTMLButtonElement;
+
+// IR Plan sections (Phase 8)
+const irStepsSection = document.getElementById('ir-steps-section')!;
+const irStepsList = document.getElementById('ir-steps-list')!;
+const irStepsCount = document.getElementById('ir-steps-count')!;
+const irPlaywrightSection = document.getElementById('ir-playwright-section')!;
+const irFilesList = document.getElementById('ir-files-list')!;
+const irFilesCount = document.getElementById('ir-files-count')!;
 
 // Header
 const settingsBtn = document.getElementById('settings-btn')!;
@@ -421,7 +431,7 @@ async function handleStopRecording(): Promise<void> {
     }, 800);
   }
 
-  // Load and display generated Playwright code
+  // Load and display generated Playwright code (legacy)
   const playwright = await loadGeneratedPlaywright();
   if (playwright) {
     showGeneratedPlaywright(playwright);
@@ -434,6 +444,31 @@ async function handleStopRecording(): Promise<void> {
         showGeneratedPlaywright(retryPw);
       }
     }, 800);
+  }
+
+  // Load and display IR Plan steps + Playwright files (Phase 8)
+  const irPlan = await loadIRPlan();
+  if (irPlan) {
+    renderIRSteps(irPlan);
+  } else {
+    irStepsSection.hidden = true;
+    setTimeout(async () => {
+      if (views['stopped'].hidden) return;
+      const retryPlan = await loadIRPlan();
+      if (retryPlan) renderIRSteps(retryPlan);
+    }, 1000);
+  }
+
+  const irFiles = await loadIRFiles();
+  if (irFiles) {
+    renderIRFiles(irFiles);
+  } else {
+    irPlaywrightSection.hidden = true;
+    setTimeout(async () => {
+      if (views['stopped'].hidden) return;
+      const retryFiles = await loadIRFiles();
+      if (retryFiles) renderIRFiles(retryFiles);
+    }, 1000);
   }
 
   // Show TC badge
@@ -464,7 +499,186 @@ async function loadReplayJson(): Promise<ReplayJson | null> {
   }
 }
 
-// ── Generated Steps Rendering ──────────────────────────────
+// ── IR Plan Rendering (Phase 8) ────────────────────────────
+
+/**
+ * Render an ExecutionIRPlan's steps in the side panel.
+ * Shows action, description, target locators, input, and assertions.
+ */
+function renderIRSteps(plan: ExecutionIRPlan): void {
+  irStepsCount.textContent = String(plan.steps.length);
+  irStepsList.innerHTML = '';
+
+  for (const step of plan.steps) {
+    const card = document.createElement('div');
+    card.className = 'step-card';
+
+    // Header: order + action + description
+    const header = document.createElement('div');
+    header.className = 'step-card__header';
+    const actionLabel = step.plainEnglish ?? step.description;
+    header.textContent = `${step.order + 1}. ${step.action} — ${actionLabel}`;
+    card.appendChild(header);
+
+    // Target info
+    if (step.target.kind === 'element') {
+      const target = document.createElement('div');
+      target.className = 'step-card__ids';
+      const loc = step.target.resolvedLocators[0];
+      target.textContent = `Target: ${step.target.elementName} (${loc?.type ?? '?'}: ${loc?.value ?? '?'})`;
+      card.appendChild(target);
+    } else if (step.target.kind === 'url') {
+      const target = document.createElement('div');
+      target.className = 'step-card__ids';
+      target.textContent = `Target: ${step.target.url}`;
+      card.appendChild(target);
+    }
+
+    // Input value
+    if (step.input !== null && step.input !== undefined) {
+      const input = document.createElement('div');
+      input.className = 'step-card__ids';
+      input.textContent = `Input: ${step.input}`;
+      card.appendChild(input);
+    }
+
+    // Assertions
+    if (step.assertions.length > 0) {
+      const assertDiv = document.createElement('div');
+      assertDiv.className = 'step-card__ids';
+      assertDiv.textContent = `Assertions: ${step.assertions.map(formatAssertion).join('; ')}`;
+      card.appendChild(assertDiv);
+    }
+
+    // IR Step JSON (collapsible)
+    const toggleBtn = document.createElement('button');
+    toggleBtn.className = 'step-card__json-toggle';
+    toggleBtn.type = 'button';
+    toggleBtn.textContent = '▶ IR Step JSON';
+
+    const jsonContent = document.createElement('pre');
+    jsonContent.className = 'step-card__json-content';
+    jsonContent.textContent = JSON.stringify(step, null, 2);
+    jsonContent.hidden = true;
+
+    toggleBtn.addEventListener('click', () => {
+      jsonContent.hidden = !jsonContent.hidden;
+      toggleBtn.textContent = jsonContent.hidden ? '▶ IR Step JSON' : '▼ IR Step JSON';
+    });
+
+    card.appendChild(toggleBtn);
+    card.appendChild(jsonContent);
+    irStepsList.appendChild(card);
+  }
+
+  irStepsSection.hidden = false;
+}
+
+function formatAssertion(a: IRAssertion): string {
+  const target = a.target.kind === 'element' ? a.target.elementName : a.target.kind === 'url' ? a.target.url : '—';
+  return `${a.type} ${a.comparison} ${String(a.expectedValue)} (${target})`;
+}
+
+/**
+ * Render the generated Playwright project files from the IR pipeline.
+ * Shows file path + collapsible code for each GeneratedFile.
+ */
+function renderIRFiles(files: GeneratedFile[]): void {
+  irFilesCount.textContent = `${files.length} files`;
+  irFilesList.innerHTML = '';
+
+  // Find the test spec file (most interesting to the user)
+  const testFile = files.find(f => f.path.endsWith('.spec.ts')) ?? files[0];
+
+  for (const file of files) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'step-card';
+
+    const header = document.createElement('div');
+    header.className = 'step-card__header';
+    const isTestFile = file === testFile;
+    header.textContent = `${isTestFile ? '📋 ' : '📄 '}${file.path}`;
+    wrapper.appendChild(header);
+
+    // Code (collapsible)
+    const toggleBtn = document.createElement('button');
+    toggleBtn.className = 'step-card__json-toggle';
+    toggleBtn.type = 'button';
+    toggleBtn.textContent = '▶ Show Code';
+
+    const codeContent = document.createElement('pre');
+    codeContent.className = 'step-card__json-content';
+    codeContent.textContent = file.content;
+    codeContent.hidden = true;
+
+    // Auto-expand the test spec by default
+    if (isTestFile) {
+      codeContent.hidden = false;
+      toggleBtn.textContent = '▼ Hide Code';
+    }
+
+    toggleBtn.addEventListener('click', () => {
+      codeContent.hidden = !codeContent.hidden;
+      toggleBtn.textContent = codeContent.hidden ? '▶ Show Code' : '▼ Hide Code';
+    });
+
+    // Copy button for the file
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'btn btn--secondary btn--sm';
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(file.content);
+        copyBtn.textContent = '✓ Copied';
+        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
+      } catch {
+        copyBtn.textContent = '✗ Failed';
+        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
+      }
+    });
+
+    const actionsDiv = document.createElement('div');
+    actionsDiv.style.cssText = 'display:flex;gap:8px;align-items:center;';
+    actionsDiv.appendChild(toggleBtn);
+    actionsDiv.appendChild(copyBtn);
+
+    wrapper.appendChild(actionsDiv);
+    wrapper.appendChild(codeContent);
+    irFilesList.appendChild(wrapper);
+  }
+
+  irPlaywrightSection.hidden = false;
+}
+
+async function loadIRPlan(): Promise<ExecutionIRPlan | null> {
+  try {
+    const result = await chrome.storage.local.get(StorageKeys.EXECUTION_IR_PLAN);
+    return (result[StorageKeys.EXECUTION_IR_PLAN] as ExecutionIRPlan) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function loadIRFiles(): Promise<GeneratedFile[] | null> {
+  try {
+    const result = await chrome.storage.local.get(StorageKeys.GENERATED_FILES);
+    const stored = result[StorageKeys.GENERATED_FILES];
+    return extractFiles(stored);
+  } catch {
+    return null;
+  }
+}
+
+function extractFiles(stored: unknown): GeneratedFile[] | null {
+  if (!stored) return null;
+  if (Array.isArray(stored)) return stored as GeneratedFile[];
+  if (stored && typeof stored === 'object' && Array.isArray((stored as any).files)) {
+    return (stored as any).files as GeneratedFile[];
+  }
+  return null;
+}
+
+// ── Generated Steps Rendering (Legacy) ─────────────────────
 
 function renderGeneratedSteps(steps: TestStep[]): void {
   generatedStepsCount.textContent = String(steps.length);
@@ -564,8 +778,12 @@ async function handleRecordAnother(): Promise<void> {
   try { await chrome.storage.local.remove(StorageKeys.KNOWLEDGE_FRAGMENT); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.RECOGNITION_COMPONENTS); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.DOMAIN_ENTITIES); } catch {}
+  try { await chrome.storage.local.remove(StorageKeys.EXECUTION_IR_PLAN); } catch {}
+  try { await chrome.storage.local.remove(StorageKeys.GENERATED_FILES); } catch {}
   generatedStepsSection.hidden = true;
   playwrightSection.hidden = true;
+  irStepsSection.hidden = true;
+  irPlaywrightSection.hidden = true;
   await openNewTestCase();
 }
 
@@ -618,6 +836,25 @@ function setupLiveListeners(): void {
     if (newValue && typeof newValue === 'object' && 'testCode' in newValue) {
       if (!views['stopped'].hidden) {
         showGeneratedPlaywright(newValue as { testCode: string; isManualEdit: boolean; generatedAt: string });
+      }
+    }
+  });
+
+  // IR Plan steps — fires when the IR bridge finishes building the plan
+  StorageService.onKeyChanged(StorageKeys.EXECUTION_IR_PLAN, (newValue) => {
+    if (newValue && typeof newValue === 'object' && 'steps' in newValue) {
+      if (!views['stopped'].hidden) {
+        renderIRSteps(newValue as ExecutionIRPlan);
+      }
+    }
+  });
+
+  // IR Generated Files — fires when PlaywrightCodeGenerator finishes
+  StorageService.onKeyChanged(StorageKeys.GENERATED_FILES, (newValue) => {
+    if (newValue) {
+      const files = extractFiles(newValue);
+      if (files && files.length > 0 && !views['stopped'].hidden) {
+        renderIRFiles(files);
       }
     }
   });
@@ -819,7 +1056,7 @@ async function init(): Promise<void> {
       replaySection.hidden = true;
     }
 
-    // Load generated steps
+    // Load generated steps (legacy)
     const genSteps = await loadGeneratedSteps();
     if (genSteps) {
       renderGeneratedSteps(genSteps);
@@ -827,12 +1064,27 @@ async function init(): Promise<void> {
       generatedStepsSection.hidden = true;
     }
 
-    // Load generated Playwright
+    // Load generated Playwright (legacy)
     const genPw = await loadGeneratedPlaywright();
     if (genPw) {
       showGeneratedPlaywright(genPw);
     } else {
       playwrightSection.hidden = true;
+    }
+
+    // Load IR Plan steps + Playwright files (Phase 8)
+    const irPlan = await loadIRPlan();
+    if (irPlan) {
+      renderIRSteps(irPlan);
+    } else {
+      irStepsSection.hidden = true;
+    }
+
+    const irFiles = await loadIRFiles();
+    if (irFiles) {
+      renderIRFiles(irFiles);
+    } else {
+      irPlaywrightSection.hidden = true;
     }
 
     const draft = await StorageService.getTestCaseDraft();
