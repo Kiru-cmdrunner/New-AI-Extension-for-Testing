@@ -3,8 +3,8 @@
  *
  * Defines the shared objects specified in Phase 2 Engineering Specifications
  * (§2–§6) that were not yet present in the codebase. Existing types from
- * shared/types.ts and generation/contracts/execution-json-types.ts are
- * referenced — not duplicated — where they already satisfy the spec.
+ * shared/types.ts are referenced — not duplicated — where they already
+ * satisfy the spec.
  *
  * Organization: one section per architectural layer, matching the Phase 2
  * spec object numbering (R=Recording, C=Context, I=Intelligence,
@@ -18,8 +18,8 @@ import type {
   ElementIdentity,
   ScreenshotMetadata,
   AIUnderstanding,
+  ExecutionJsonObject,
 } from './types';
-import type { ExecutionJsonObject } from '../generation/contracts/execution-json-types';
 
 // ── Recording Layer (R1–R7) ────────────────────────────────
 //
@@ -269,11 +269,9 @@ export interface ClassificationEvidence {
  * I7: CanonicalStep — the step after Stage 3b but before Stage 4 populates
  * executionJson. Human-readable artifact with optional machine-executable JSON.
  *
- * Note: A similar interface already exists in generation/types.ts with
- * `elementId: string` (not nullable). The spec's version allows null for
- * navigation steps. The generation/types.ts version is the implementation
- * used by existing code; this spec-compliant version is for the future
- * Stage 3a→3b pipeline. They will converge when Stage 3a is implemented.
+ * Note: The legacy CanonicalStep type was retired in Phase 8.5 when the
+ * generation pipeline was unified to the IR Bridge + ExecutionIRPlan.
+ * See docs/handover/14-target-generation-architecture.md.
  *
  * Fields match Phase 2 §I7 exactly.
  */
@@ -294,19 +292,10 @@ export interface SpecCanonicalStep {
 
 // ── Execution Layer (E1–E9) ────────────────────────────────
 //
-// E1–E7: Already defined in generation/contracts/execution-json-types.ts
-//        (frozen B5.2 six-section contract).
-// E8 TestStep: Already defined in shared/types.ts (though the spec version
-//        uses elementId: string | null and ExecutionJsonObject | null for
-//        executionJson — the convergence is deferred to Stage 3a implementation).
-// E9 GenerationResult: Already defined in generation/types.ts as GeneratorResult.
-
-/**
- * E9: GenerationResult — alias for the existing GeneratorResult type.
- *
- * Already implemented in generation/types.ts. Documented here for completeness.
- * Fields: success, steps, playwrightCode (nullable), errors.
- */
+// E1–E7: Legacy Execution JSON contract types — now in shared/types.ts
+//        (moved from generation/contracts/execution-json-types.ts in Phase 8.5).
+// E8 TestStep: Already defined in shared/types.ts.
+// E9 GenerationResult: Retired with legacy generation pipeline (Phase 8.5).
 
 // ── Review Layer (V1–V3) ───────────────────────────────────
 

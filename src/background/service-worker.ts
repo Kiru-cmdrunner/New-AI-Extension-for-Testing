@@ -268,23 +268,11 @@ async function handleStopRecording(): Promise<void> {
     // Non-fatal — the existing V1/V2 classification results are already stored
   }
 
-  // ── Generation Engine (Phase 6) ──
-  // Generate test artifacts (steps, execution JSON, Playwright code) from
-  // the recorded session. The engine reads from storage and writes to storage.
-  try {
-    const { GenerationEngine } = await import('../generation/engine/generation-engine');
-    const engine = new GenerationEngine();
-    await engine.generate();
-  } catch (e) {
-    console.warn('[Generation Engine] error during generation:', e);
-    // Non-fatal — the side panel can still show raw events and interactions
-  }
-
   // ── IR Bridge: Unified Generation Pipeline (Phase 8) ──
   // Build an ExecutionIRPlan from the recording outputs, then render it
   // to Playwright code using the IRCodeGenerator interface.
-  // Dual-write: runs alongside the legacy generation engine above.
-  // The side panel reads from whichever path produced output.
+  // This replaces the legacy GenerationEngine (canonical-step → execution-json
+  // → playwright-generator) with a single IR-based pipeline.
   try {
     const { build: buildIRPlan } = await import('../generation/ir-bridge');
     const { PlaywrightCodeGenerator } = await import('../adapters/playwright/project-generator');

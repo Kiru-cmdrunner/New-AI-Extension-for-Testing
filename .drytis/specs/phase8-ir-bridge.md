@@ -12,8 +12,8 @@ Key decisions:
 - IR Bridge produces ExecutionIRPlan (single source of truth downstream)
 - IRCodeGenerator interface renders plan → code files
 - Existing PlaywrightCodeGenerator reused (not rewritten)
-- Dual-write strategy: new IR path runs alongside existing pipeline until validated
-- Legacy pipeline retired only after verification
+- Dual-write strategy: new IR path ran alongside existing pipeline until validated
+- Legacy pipeline retired after verification (Phase 8.5)
 
 ## Milestones
 
@@ -23,15 +23,15 @@ Key decisions:
 - [x] All existing tests pass (additive change, non-breaking)
 
 ### 8.2: Build IR Bridge
-- [ ] Create src/generation/ir-bridge.ts
-- [ ] Implement build(IRBridgeInput) → ExecutionIRPlan
-- [ ] Map DetectedInteraction → IRStep (action, target, input)
-- [ ] Resolve element locators from ElementIdentity → ResolvedLocator[]
-- [ ] Derive assertions from InteractionContract.constraints → IRAssertion[]
-- [ ] Enrich descriptions from LogicalAction.businessField
-- [ ] Apply readability rules (focus-click merge)
-- [ ] Set IREnvironment from RecordingContext
-- [ ] Tests covering all interaction type mappings + enrichment
+- [x] Create src/generation/ir-bridge.ts
+- [x] Implement build(IRBridgeInput) → ExecutionIRPlan
+- [x] Map DetectedInteraction → IRStep (action, target, input)
+- [x] Resolve element locators from ElementIdentity → ResolvedLocator[]
+- [x] Derive assertions from InteractionContract.constraints → IRAssertion[]
+- [x] Enrich descriptions from LogicalAction.businessField
+- [x] Apply readability rules (focus-click merge)
+- [x] Set IREnvironment from RecordingContext
+- [x] Tests covering all interaction type mappings + enrichment
 
 ### 8.3: Wire Into Service Worker (Dual-Write)
 - [x] Add EXECUTION_IR_PLAN and GENERATED_FILES StorageKeys
@@ -41,18 +41,22 @@ Key decisions:
 - [x] All existing tests pass
 
 ### 8.4: Update Side Panel
-- [ ] Read EXECUTION_IR_PLAN from storage
-- [ ] Render IRStep[] (description, action, target, assertions)
-- [ ] Render GENERATED_FILES (Playwright code)
-- [ ] Listen for storage changes
-- [ ] All existing tests pass
+- [x] Read EXECUTION_IR_PLAN from storage
+- [x] Render IRStep[] (description, action, target, assertions)
+- [x] Render GENERATED_FILES (Playwright code)
+- [x] Listen for storage changes
+- [x] All existing tests pass
 
 ### 8.5: Validate and Retire Legacy Pipeline
-- [ ] Verify IR path produces equivalent or better output
-- [ ] Remove GenerationEngine, GeneratorRegistry, GeneratorContract
-- [ ] Remove canonical-step-generator, execution-json-generator, playwright-generator (runtime)
-- [ ] Remove CanonicalStep, ExecutionJsonObject types
-- [ ] Remove GENERATED_STEPS, GENERATED_PLAYWRIGHT StorageKeys
-- [ ] Update side panel to read only from IR path
-- [ ] All tests pass
-- [ ] Build succeeds
+- [x] Verify IR path produces equivalent or better output
+- [x] Remove GenerationEngine call from service worker
+- [x] Archive 17 legacy generation files to legacy/generation-pipeline/
+- [x] Archive 21 legacy test files to legacy/generation-pipeline/tests/
+- [x] Move ExecutionJsonObject + PlaywrightGeneratorOutput types to shared/types.ts
+- [x] Remove GENERATED_STEPS, GENERATED_PLAYWRIGHT StorageKeys
+- [x] Remove legacy StorageService methods (getGeneratedSteps, setGeneratedSteps, clearGeneratedSteps, getGeneratedPlaywright, setGeneratedPlaywright, clearGeneratedPlaywright)
+- [x] Remove legacy side panel rendering (renderGeneratedSteps, loadGeneratedSteps, loadGeneratedPlaywright, showGeneratedPlaywright)
+- [x] Remove legacy HTML sections from sidepanel/index.html
+- [x] Update stale comments in architecture-types.ts
+- [x] All tests pass (2475/2475 across 100 files)
+- [x] Build succeeds (643ms)

@@ -52,8 +52,6 @@ export enum StorageKeys {
   REPOSITORY = 'test_repository',
   SCREENSHOTS = 'session_screenshots',
   TEST_CASE_DRAFT = 'test_case_draft',
-  GENERATED_STEPS = 'generated_steps',
-  GENERATED_PLAYWRIGHT = 'generated_playwright',
   REPLAY_JSON = 'replay_json',
   DETECTED_INTERACTIONS = 'detected_interactions',
   DETECTED_INTERACTIONS_V2 = 'detected_interactions_v2',
@@ -391,6 +389,81 @@ export interface ExecutionJson {
   shadowDom: boolean;
   /** Detailed iframe context when inIframe is true. */
   iframeContext?: IframeContext;
+}
+
+/**
+ * Legacy Execution JSON contract types — preserved for SpecCanonicalStep
+ * and PlaywrightGeneratorOutput references. These were originally in
+ * src/generation/contracts/ but were moved here when the legacy generation
+ * pipeline was retired (Phase 8.5).
+ *
+ * See docs/handover/14-target-generation-architecture.md for the migration.
+ */
+
+// ── Execution JSON Contract (legacy) ───────────────────────
+
+export interface ExecutionAction {
+  type: string;
+  value: string | null;
+}
+
+export interface ExecutionTarget {
+  kind: string;
+  tag?: string;
+  role?: string | null;
+  name?: string;
+  url?: string;
+}
+
+export type LocatorStrategy =
+  | 'testId' | 'dataCy' | 'dataQa' | 'dataTest' | 'dataAutomationId'
+  | 'ariaLabel' | 'ariaLabelledby'
+  | 'id' | 'name'
+  | 'text' | 'placeholder' | 'alt' | 'title'
+  | 'css' | 'xpath';
+
+export type LocatorRole = 'primary' | 'secondary' | 'fallback';
+
+export interface ExecutionLocator {
+  strategy: LocatorStrategy;
+  value: string;
+  role: LocatorRole;
+}
+
+export interface ExecutionContext {
+  iframe: boolean;
+  shadowDom: boolean;
+  frame: IframeContext | null;
+}
+
+export interface ExecutionTrace {
+  interactionId: string;
+  stepId: string;
+}
+
+export type ExecutionStatus = 'generated' | 'error';
+
+export interface ExecutionMeta {
+  status: ExecutionStatus;
+  warnings: string[];
+  generatedAt: string;
+}
+
+export interface ExecutionJsonObject {
+  action: ExecutionAction;
+  target: ExecutionTarget;
+  locators: ExecutionLocator[];
+  context: ExecutionContext;
+  trace: ExecutionTrace;
+  meta: ExecutionMeta;
+}
+
+// ── Playwright Generator Output (legacy) ───────────────────
+
+export interface PlaywrightGeneratorOutput {
+  testCode: string;
+  isManualEdit: false;
+  generatedAt: string;
 }
 
 /** A complete test step generated from a recorded action. */
