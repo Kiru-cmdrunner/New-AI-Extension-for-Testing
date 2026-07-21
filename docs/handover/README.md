@@ -49,6 +49,7 @@ These documents were created during development and contain deeper technical det
 | Technical Architecture | [`../TECHNICAL_ARCHITECTURE.md`](../TECHNICAL_ARCHITECTURE.md) | Frozen at `semantic-interaction-engine-v1.0` tag — the V1 architecture reference |
 | Architecture Review | [`../architecture-review.md`](../architecture-review.md) | Comprehensive Phase 1–4 review of the UI Knowledge Model |
 | Architecture Walkthrough | [`../architecture-walkthrough.md`](../architecture-walkthrough.md) | End-to-end flight-booking scenario through all pipeline stages |
+| Architecture Validation | [`../architecture-validation.md`](../architecture-validation.md) | Validation summary — points to handover docs for detailed results |
 
 ---
 

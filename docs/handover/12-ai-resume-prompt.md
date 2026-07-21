@@ -8,6 +8,8 @@
 
 ## Onboarding Protocol
 
+> **Reading order note:** The [Root README](../../README.md) prescribes a comprehensive 9-document reading order for full project understanding (including architecture overview, current architecture detail, and the ADR). The order below is the **AI-specific fast path** — it covers the same material but prioritizes decision rules and development process over architectural detail. If you need to modify a specific subsystem, also read the corresponding deep-dive documents listed in the "as needed" table below.
+
 ### Step 1: Read the Documentation (in this order)
 
 Read these documents fully — do not skim:

@@ -139,17 +139,20 @@ Both pipelines exist and produce output:
 | Field | Value |
 |-------|-------|
 | Branch | `main` |
-| HEAD | `f6eb2ee` — Phase 5 enrichment |
-| Remote | `origin` at `git.drytis.dev` |
-| Remote HEAD | Behind origin (Phase 4 commit) — **needs push** |
-| Total commits | 82 |
-| Tags | 9 versioned tags |
+| HEAD | `b1a509a` — root README + documentation consistency fixes |
+| Remote | `github.com/Kiru-cmdrunner/cmdrunner-smart-recorder` (GitHub) |
+| Remote HEAD | `b1a509a` — in sync |
+| Total commits | 2 (history was intentionally squashed during repository migration — see note below) |
+| Tags | 25 versioned tags preserved from pre-squash history |
+
+> **Repository Migration Note:** The Git history was intentionally squashed into a single commit during the migration from the Drytis internal git server to GitHub. The original 84-commit development history (covering four architectural eras) was preserved in the commit message of `55fea59` and is documented in the [Architectural Decision Log](./11-architectural-decision-log.md). Contributors should use the ADR and handover documentation to understand the project's evolution rather than relying on `git log`.
 
 ### Git Tags (Versioned Milestones)
 - `v5.0.0` — Execution JSON Generator
 - `v5.0.0-b5.3-frozen` — B5.3 frozen
-- `v10.4.14` through `v10.4.18` — Feature releases
+- `v10.4.14` through `v10.4.18` — Feature releases (surface detection, drag-drop, autocomplete, selection controls, date-time completion)
 - `semantic-interaction-engine-v1.0` — V1 architecture freeze
+- `v1.16.0` through `v1.21.1` — Enterprise recorder releases (preserved from GitHub history)
 
 ## Project Health
 
@@ -162,9 +165,7 @@ Both pipelines exist and produce output:
 
 ### Technical Debt
 - **162 pre-existing TypeScript errors** — all in legacy code (`deterministic-recorder.ts`, `interaction-types.ts`). These are from the V1 codebase and were grandfathered. New code (Architecture C, Knowledge Model) has zero TS errors.
-- **`docs/architecture-validation.md` is corrupted** — contains an npm debug log instead of documentation. Needs replacement.
 - **Dual pipeline maintenance** — both legacy and Architecture C pipelines are maintained. Phase 7 (legacy retirement) is pending.
-- **`src/domain/index.ts` was deleted** — import paths reference it directly. May cause issues in some build configurations.
 - **Some `as any` casts** — in `behavioral-contract-deriver.ts` (lines 212, 223). Minor type safety gaps.
 
 ### Dependency Status

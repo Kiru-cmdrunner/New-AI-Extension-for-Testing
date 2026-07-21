@@ -107,25 +107,17 @@ CmdRunner AI Extension is a **Chrome Extension (Manifest V3)** that records user
 - The generation pipeline should use `LogicalAction[]` instead of raw `SessionEvent[]`
 - This will produce richer test steps with business domain language
 
-**2. Push to Remote**
-- Local HEAD is ahead of origin/main — the latest Phase 5 work needs pushing
-- Run: `git push origin main`
-
-**3. Fix `docs/architecture-validation.md`**
-- This file is corrupted (contains npm debug log instead of documentation)
-- Either restore from git history or write fresh
-
 ### Medium-Term Work
 
-**4. Legacy Pipeline Retirement (Phase 7)**
+**2. Legacy Pipeline Retirement (Phase 7)**
 - Remove `deterministic-recorder.ts` once Architecture C covers all cases
 - Requires E2E validation against real applications
 
-**5. Self-Healing Locators**
+**3. Self-Healing Locators**
 - Architecture is fully designed (staleness, heal history, identity matching)
 - Implementation would complete the core value proposition
 
-**6. Test Execution Engine**
+**4. Test Execution Engine**
 - IRExecutor interface exists
 - Need actual test runner that executes IR plans
 

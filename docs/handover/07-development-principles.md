@@ -44,7 +44,7 @@ These are the engineering principles that shaped this codebase. They are not arb
 - Specs marked `FROZEN` or `PERMANENTLY FROZEN` cannot be changed
 - Invariants are listed and referenced in code comments
 
-**Why:** This project has 82 commits spanning multiple architectural eras. Without frozen decisions, each new session risks reopening settled debates. Frozen decisions create stability.
+**Why:** This project spans multiple architectural eras (4 eras, 20 ADRs). Without frozen decisions, each new session risks reopening settled debates. Frozen decisions create stability.
 
 **Frozen items include:** Evidence Sovereignty (AP4), the 8 AI principles (P1–P8), the verb mapping table, the 3 foundational entity model, the no-actionType-enum decision, the generic semantic aggregator.
 
