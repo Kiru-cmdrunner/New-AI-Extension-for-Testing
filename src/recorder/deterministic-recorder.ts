@@ -15,8 +15,7 @@
  * It does NOT classify interactions, infer intent, or generate steps.
  *
  * SELF-CONTAINED: Content scripts run in an isolated world and cannot import
- * modules. All logic is inlined here, BUT the core helpers are copies of the
- * proven functions in observer-helpers.ts.
+ * modules. All logic is inlined here.
  */
 
 // ════════════════════════════════════════════════════════════════════════
@@ -76,6 +75,8 @@ interface DomContext {
   opensNewTab?: boolean | null;
   opensNewWindow?: boolean | null;
   openedUrl?: string | null;
+  domAttributes?: Record<string, string>;
+  ancestorRoles?: string[];
 }
 
 interface RecordedEventMessage {
@@ -306,7 +307,7 @@ function snapshotValue(el: Element): ValueSnapshot {
 }
 
 // ════════════════════════════════════════════════════════════════════════
-// IDENTITY & TARGET RESOLUTION (copied from observer-helpers.ts)
+// IDENTITY & TARGET RESOLUTION
 // ════════════════════════════════════════════════════════════════════════
 
 function truncate(str: string, max: number): string {
@@ -994,7 +995,76 @@ function captureDomContext(el: Element): DomContext {
   if (ariaValueMax !== null) ctx.ariaValueMax = ariaValueMax;
   if (nativeMin !== null) ctx.nativeMin = nativeMin;
   if (nativeMax !== null) ctx.nativeMax = nativeMax;
+
+  // Semantically relevant DOM attributes for the enrichment pipeline
+  ctx.domAttributes = captureDomAttributes(el);
+
+  // Ancestor role chain for structural recognition
+  ctx.ancestorRoles = captureAncestorRoles(el);
+
   return ctx;
+}
+
+/**
+ * Capture semantically relevant DOM attributes from an element.
+ * Only captures attributes that are present (no undefined keys).
+ * These feed into UiElement.domAttributes for InteractionContract derivation.
+ */
+function captureDomAttributes(el: Element): Record<string, string> {
+  const attrs: Record<string, string> = {};
+
+  const htmlEl = el instanceof HTMLElement ? el : null;
+
+  // Validation attributes (present on <input>, <textarea>, <select>)
+  const validationAttrs = [
+    'required', 'aria-required', 'type', 'min', 'max', 'step',
+    'pattern', 'minlength', 'maxlength', 'multiple', 'accept', 'autocomplete',
+  ];
+  for (const attr of validationAttrs) {
+    const value = el.getAttribute(attr);
+    if (value !== null) {
+      attrs[attr] = value;
+    }
+  }
+
+  // For <input> elements, ensure type is always captured (defaults to 'text')
+  if (el instanceof HTMLInputElement) {
+    if (!('type' in attrs)) {
+      attrs['type'] = el.type || 'text';
+    }
+  }
+
+  // For contenteditable elements, capture the contenteditable attribute
+  if (htmlEl && (htmlEl.isContentEditable || htmlEl.getAttribute('contenteditable') === 'true')) {
+    attrs['contenteditable'] = 'true';
+  }
+
+  return attrs;
+}
+
+/**
+ * Capture the ancestor chain from the target element upward.
+ * Returns an array of strings, index 0 = parent.
+ * Each entry is either "tag" or "tag[role=role]" if the ancestor has an ARIA role.
+ * Walks up to 10 ancestors (matching generateXPath depth).
+ */
+function captureAncestorRoles(el: Element): string[] {
+  const chain: string[] = [];
+  let current: Element | null = el.parentElement;
+  const MAX_DEPTH = 10;
+  let depth = 0;
+  while (current && current !== document.documentElement && depth < MAX_DEPTH) {
+    const tag = current.tagName.toLowerCase();
+    const role = current.getAttribute('role');
+    if (role) {
+      chain.push(`${tag}[role=${role}]`);
+    } else {
+      chain.push(tag);
+    }
+    current = current.parentElement;
+    depth++;
+  }
+  return chain;
 }
 
 // ── mousedown: snapshot before-state for click ─────────────────────────

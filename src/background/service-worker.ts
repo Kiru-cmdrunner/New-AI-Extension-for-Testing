@@ -21,6 +21,8 @@ import { detectInteractions } from '../classifier/interaction-detector';
 import { detectInteractionsV2 } from '../classifier/evidence/detector';
 import { compareClassifierOutputs, logComparisonResult } from '../classifier/evidence/ab-comparison';
 import { mergeV1V2, logMergeMetrics } from '../classifier/evidence/merge-layer';
+import { runPipeline } from '../recorder/pipeline/pipeline-runner';
+import type { DetectedInteraction } from '../classifier/interaction-types';
 import {
   RecordingState,
   StorageKeys,
@@ -216,6 +218,7 @@ async function handleStopRecording(): Promise<void> {
   // (fallback for events V2 couldn't confidently classify). The merged
   // result is stored separately — V1 DETECTED_INTERACTIONS remains the
   // production source of truth until the UI is switched to read merged.
+  let mergedInteractions: DetectedInteraction[] | null = null;
   try {
     const v2Interactions = detectInteractionsV2(events);
     await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_V2, v2Interactions);
@@ -228,9 +231,10 @@ async function handleStopRecording(): Promise<void> {
     logComparisonResult(comparison);
 
     // ── Merge Layer: V2-primary with V1 event-segment fallback ──
-    const { interactions: mergedInteractions, metrics: mergeMetrics } =
+    const { interactions: merged, metrics: mergeMetrics } =
       mergeV1V2(v2Interactions, interactions, events.length);
-    await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, mergedInteractions);
+    mergedInteractions = merged;
+    await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, merged);
 
     // Dev-only: log merge metrics
     logMergeMetrics(mergeMetrics);
@@ -238,6 +242,42 @@ async function handleStopRecording(): Promise<void> {
     console.warn('[Evidence Engine V2] error during detection:', e);
     // Fallback: if V2 or merge fails, use V1 results so the UI always has data
     await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, interactions);
+  }
+
+  // ── Recognition → Enrichment Pipeline (Phase 6) ──
+  // Run the analysis pipeline on the recorded session. This produces:
+  //   - Domain entities (UiElement[], ObservedTransition[])
+  //   - Component groupings from the recognition orchestrator
+  //   - Application Knowledge Fragment from the enrichment orchestrator
+  try {
+    const sessionId = `session-${Date.now()}`;
+    const tab = await getActiveTab();
+    const sourceUrl = tab?.url ?? undefined;
+    const pipelineResult = runPipeline(events, mergedInteractions ?? interactions, sessionId, sourceUrl);
+
+    await StorageService.setRaw(StorageKeys.DOMAIN_ENTITIES, {
+      elements: pipelineResult.entities.elements,
+      transitions: pipelineResult.entities.transitions,
+    });
+    await StorageService.setRaw(StorageKeys.RECOGNITION_COMPONENTS, pipelineResult.components);
+    if (pipelineResult.fragment) {
+      await StorageService.setRaw(StorageKeys.KNOWLEDGE_FRAGMENT, pipelineResult.fragment);
+    }
+  } catch (e) {
+    console.warn('[Pipeline] error during recognition/enrichment:', e);
+    // Non-fatal — the existing V1/V2 classification results are already stored
+  }
+
+  // ── Generation Engine (Phase 6) ──
+  // Generate test artifacts (steps, execution JSON, Playwright code) from
+  // the recorded session. The engine reads from storage and writes to storage.
+  try {
+    const { GenerationEngine } = await import('../generation/engine/generation-engine');
+    const engine = new GenerationEngine();
+    await engine.generate();
+  } catch (e) {
+    console.warn('[Generation Engine] error during generation:', e);
+    // Non-fatal — the side panel can still show raw events and interactions
   }
 
   // Update UI state
@@ -330,19 +370,6 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
 
     case 'RECORDED_EVENT':
       handleRecordedEvent(msg);
-      break;
-
-    // Legacy messages — silently ignored (content scripts no longer send these)
-    case 'CLICK_CAPTURED':
-    case 'TEXT_CAPTURED':
-    case 'HOVER_CAPTURED':
-    case 'CHECKBOX_CAPTURED':
-    case 'RADIO_CAPTURED':
-    case 'SELECT_CAPTURED':
-    case 'DATE_SELECT_CAPTURED':
-    case 'RAW_EVIDENCE':
-    case 'DETERMINISTIC_STATE':
-    case 'PIPELINE_EVENT':
       break;
 
     default:

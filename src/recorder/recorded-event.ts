@@ -83,6 +83,21 @@ export interface DomContext {
   nativeMin?: string | null;
   /** Native max value for <input type="range"> (el.max). null if not a range input. */
   nativeMax?: string | null;
+  /**
+   * Semantically relevant DOM attributes captured at event time.
+   * Only present attributes are included (no undefined keys).
+   * Keys typically include: required, aria-required, type, min, max, step,
+   * pattern, minlength, maxlength, multiple, accept, autocomplete.
+   * This is the source of InteractionContract derivation in the enrichment pipeline.
+   */
+  domAttributes?: Record<string, string>;
+  /**
+   * Ancestor chain from the target element upward (up to 10 levels).
+   * Each entry is the tag name lowercased; if the ancestor has an ARIA role,
+   * it is included as "tag[role=role]". Index 0 is the target's parent.
+   * Used by the recognition pipeline for structural pattern matching.
+   */
+  ancestorRoles?: string[];
 }
 
 // ── Recorded Events ────────────────────────────────────────────────────

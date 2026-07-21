@@ -58,6 +58,9 @@ export enum StorageKeys {
   DETECTED_INTERACTIONS = 'detected_interactions',
   DETECTED_INTERACTIONS_V2 = 'detected_interactions_v2',
   DETECTED_INTERACTIONS_MERGED = 'detected_interactions_merged',
+  KNOWLEDGE_FRAGMENT = 'knowledge_fragment',
+  RECOGNITION_COMPONENTS = 'recognition_components',
+  DOMAIN_ENTITIES = 'domain_entities',
 }
 
 /**
@@ -436,29 +439,6 @@ export type AppMessage =
   | { type: 'PING' }
   | { type: 'CONTENT_SCRIPT_STATUS'; tabId: number; alive: boolean; recording: boolean; url: string }
   | { type: 'STATE_UPDATE'; payload: UIState }
-  | { type: 'CLICK_CAPTURED'; payload: RawElementIdentity }
-  | { type: 'TEXT_CAPTURED'; payload: RawElementIdentity & { value: string } }
-  | { type: 'HOVER_CAPTURED'; payload: RawElementIdentity }
-  | { type: 'CHECKBOX_CAPTURED'; payload: RawElementIdentity & { checked: boolean } }
-  | { type: 'RADIO_CAPTURED'; payload: RawElementIdentity }
-  | { type: 'SELECT_CAPTURED'; payload: RawElementIdentity & { value: string } }
-  | {
-      type: 'DATE_SELECT_CAPTURED';
-      payload: RawElementIdentity & {
-        dateType: string;
-        displayValue: string;
-        isoValue: string;
-        startDisplayValue?: string;
-        endDisplayValue?: string;
-        startIsoValue?: string;
-        endIsoValue?: string;
-      };
-    }
-  | { type: 'CREATE_TEST_CASE'; payload: TestCaseDraft }
-  | { type: 'CLEAR_TEST_CASE' }
-  | { type: 'RAW_EVIDENCE'; payload: unknown }
-  | { type: 'DETERMINISTIC_STATE'; payload: unknown }
-  | { type: 'PIPELINE_EVENT'; payload: unknown }
   | {
       type: 'RECORDED_EVENT';
       eventType: 'click' | 'dblclick' | 'contextmenu' | 'focus' | 'blur' | 'change' | 'input' | 'scroll' | 'mouseenter' | 'dragstart' | 'drop';
@@ -485,18 +465,6 @@ export function isAppMessage(value: unknown): value is AppMessage {
       'PING',
       'CONTENT_SCRIPT_STATUS',
       'STATE_UPDATE',
-      'CLICK_CAPTURED',
-      'TEXT_CAPTURED',
-      'HOVER_CAPTURED',
-      'CHECKBOX_CAPTURED',
-      'RADIO_CAPTURED',
-      'SELECT_CAPTURED',
-      'DATE_SELECT_CAPTURED',
-      'CREATE_TEST_CASE',
-      'CLEAR_TEST_CASE',
-      'RAW_EVIDENCE',
-      'DETERMINISTIC_STATE',
-      'PIPELINE_EVENT',
       'RECORDED_EVENT',
     ].includes(msg['type'])
   );

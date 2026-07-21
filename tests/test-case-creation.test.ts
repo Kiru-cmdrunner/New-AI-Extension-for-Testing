@@ -5,9 +5,8 @@
  * - TestCaseState enum values
  * - TestCaseDraft interface shape
  * - Storage persistence (set/get/clear TestCaseDraft)
- * - New message types (CREATE_TEST_CASE, CLEAR_TEST_CASE)
+ * - AppMessage type guard (core messages accepted, legacy types rejected)
  * - Form validation logic
- * - isAppMessage accepts new types
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
@@ -201,53 +200,23 @@ describe('StorageService TestCaseDraft', () => {
   });
 });
 
-describe('AppMessage new types', () => {
-  it('accepts CREATE_TEST_CASE message', () => {
-    const msg = {
-      type: 'CREATE_TEST_CASE',
-      payload: {
-        id: 'tc-1',
-        name: 'Test',
-        projectId: 'p1',
-        projectName: 'P',
-        featureId: 'f1',
-        featureName: 'F',
-        scenarioId: 's1',
-        scenarioName: 'S',
-        status: 'draft',
-        createdAt: '2026-07-14T00:00:00.000Z',
-      },
-    };
-    expect(isAppMessage(msg)).toBe(true);
-  });
-
-  it('accepts CLEAR_TEST_CASE message', () => {
-    const msg = { type: 'CLEAR_TEST_CASE' };
-    expect(isAppMessage(msg)).toBe(true);
-  });
-
-  it('still accepts existing message types', () => {
+describe('AppMessage types', () => {
+  it('accepts core recording messages', () => {
     expect(isAppMessage({ type: 'START_RECORDING' })).toBe(true);
     expect(isAppMessage({ type: 'STOP_RECORDING' })).toBe(true);
-    expect(isAppMessage({ type: 'CLICK_CAPTURED', payload: {} })).toBe(true);
-  });
-
-  it('accepts DATE_SELECT_CAPTURED message', () => {
-    const msg = {
-      type: 'DATE_SELECT_CAPTURED',
-      payload: {
-        tag: 'input',
-        role: 'textbox',
-        dateType: 'date',
-        displayValue: '15 July 2026',
-        isoValue: '2026-07-15',
-      },
-    };
-    expect(isAppMessage(msg)).toBe(true);
   });
 
   it('rejects unknown message types', () => {
     expect(isAppMessage({ type: 'UNKNOWN_TYPE' })).toBe(false);
+  });
+
+  it('rejects removed legacy message types', () => {
+    // These message types were removed in Phase 7 when Architecture C
+    // was archived. They must not be accepted by the type guard.
+    expect(isAppMessage({ type: 'CREATE_TEST_CASE', payload: {} })).toBe(false);
+    expect(isAppMessage({ type: 'CLEAR_TEST_CASE' })).toBe(false);
+    expect(isAppMessage({ type: 'CLICK_CAPTURED', payload: {} })).toBe(false);
+    expect(isAppMessage({ type: 'DATE_SELECT_CAPTURED', payload: {} })).toBe(false);
   });
 });
 
