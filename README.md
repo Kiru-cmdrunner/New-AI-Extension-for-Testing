@@ -18,7 +18,7 @@ CmdRunner Smart Recorder is a Chrome Extension that captures user interactions o
 
 ### Maturity
 
-This is a **production architecture** with a complete domain model, a 3-tier recognition pipeline, a post-recording enrichment pipeline (UI Knowledge Model Phases 1–5), and a generation pipeline. **3,324 tests pass across 124 test files.** The build succeeds. The architecture has been frozen through three milestone eras and documented in a complete handover package.
+This is a **production architecture** with a complete domain model, a 3-tier recognition pipeline, a post-recording enrichment pipeline (UI Knowledge Model Phases 1–5), and a generation pipeline — all wired together through a single deterministic recorder. **3,126 tests pass across 119 test files.** The build succeeds. Architecture C has been retired (Phase 7) and archived to `legacy/`.
 
 ---
 
@@ -27,7 +27,9 @@ This is a **production architecture** with a complete domain model, a 3-tier rec
 | Subsystem | Status | Key Location |
 |-----------|--------|--------------|
 | Extension shell (MV3, Side Panel, Settings) | ✅ Complete | `src/sidepanel/`, `src/settings/`, `src/background/` |
-| Recording pipeline (Architecture C) | ✅ Complete | `src/recorder/deterministic-recorder.ts`, `src/recorder/pipeline/` |
+| Deterministic recorder (production content script) | ✅ Active | `src/recorder/deterministic-recorder.ts` |
+| Domain adapter (events → domain entities) | ✅ Complete | `src/recorder/pipeline/domain-adapter.ts` |
+| Pipeline runner (recognition → enrichment) | ✅ Wired | `src/recorder/pipeline/pipeline-runner.ts` |
 | Classification (V1 rules + V2 evidence engine) | ✅ Complete | `src/classifier/` |
 | Component recognition (3-tier, 11 patterns) | ✅ Complete | `src/recorder/recognition/` |
 | Post-recording enrichment (Phase 5) | ✅ Complete | `src/recorder/enrichment/` (9 modules) |
@@ -37,12 +39,13 @@ This is a **production architecture** with a complete domain model, a 3-tier rec
 | Domain model (9 entities, execution IR, staleness) | ✅ Complete | `src/domain/` |
 | Repository V2 (Dexie, Unit of Work) | ✅ Complete | `src/repository/v2/` |
 | Playwright adapter | ✅ Complete | `src/adapters/playwright/` |
-| AI integration (6 providers) | ✅ Complete | `src/ai/` |
+| AI integration (6 providers) | ✅ Complete | `src/ai/providers/` |
+| Architecture C (retired) | 📦 Archived | `legacy/architecture-c/` |
 | Handover documentation (14 documents) | ✅ Complete | `docs/handover/` |
 
-**Test coverage:** 3,324 tests across 124 files — all passing.
+**Test coverage:** 3,126 tests across 119 files — all passing.
 
-**Not yet wired:** The Application Knowledge Fragment → Generation Pipeline connection. The fragment is assembled but not yet consumed by generation. This is the current development focus.
+**Partially wired:** The Application Knowledge Fragment is produced and stored, but the Generation Pipeline does not yet consume it for richer test step output. This is the next development focus.
 
 ---
 

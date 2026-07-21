@@ -5,14 +5,34 @@
 | Area | Status | Tests |
 |------|--------|-------|
 | Extension Foundation (M1) | ✅ Complete | 20+ |
-| Deterministic Recorder (v6.1.0) | ✅ Complete (production) | 800+ |
-| Architecture C Pipeline (Phases 0–6) | ✅ Complete | 100+ |
-| UI Knowledge Model (Phases 1–5) | ✅ Complete | 500+ |
-| Generation Pipeline | ✅ Complete | 200+ |
+| Deterministic Recorder (v6.1.0) | ✅ Active runtime | 800+ |
+| Domain Adapter (Phase 6.2) | ✅ Complete | 84 |
+| Pipeline Runner (Phase 6.3–6.5) | ✅ Wired | 11 |
+| Component Recognition (Phases 1–4) | ✅ Complete | 200+ |
+| Post-Recording Enrichment (Phase 5) | ✅ Complete | 145 |
+| Generation Pipeline | ✅ Wired | 200+ |
 | Domain Model & Repository V2 | ✅ Complete | 100+ |
 | Execution IR | ✅ Complete | 50+ |
 | Playwright Adapter | ✅ Complete | 50+ |
-| **Total tests** | | **3324 across 124 files** |
+| Architecture C | 📦 Archived to `legacy/` | — |
+| **Total tests** | | **3126 across 119 files** |
+
+## Architecture Decision: Option B (Phase 6–7)
+
+In Phase 6–7, we adopted **Option B**: evolve the deterministic recorder as the sole
+runtime and integrate Recognition → Enrichment → Generation on top of it, without
+Architecture C. This eliminated ~2,500 lines of dormant code and ~100 tests that were
+never wired into production.
+
+**Pipeline flow (active runtime):**
+
+```
+Deterministic Recorder → V1/V2 Classifier → Domain Adapter → Recognition → Enrichment → Generation → Side Panel
+```
+
+Architecture C files (universal observer, state tracker, interaction assembler,
+AI observer, ai-service, snapshot coalescer) are preserved under `legacy/architecture-c/`
+for reference only. They are excluded from the build and test suite.
 
 ## Detailed Status
 
@@ -23,25 +43,28 @@
 - Side Panel UI with recording controls and timeline
 - Settings page with AI provider configuration
 - Storage service with debounce and schema versioning
-- Message routing (21 typed message types)
+- Message routing (8 typed message types — dead types removed in Phase 7)
 
-#### Recording Pipeline (Dual)
-Both pipelines exist and produce output:
-
-1. **Legacy Pipeline** (production content script)
-   - `deterministic-recorder.ts` — captures 33 interaction types
+#### Recording Pipeline (Production)
+1. **Deterministic Recorder** — the sole content script
+   - Captures 33 interaction types via raw event recording
    - V1 rule-based classifier + V2 evidence engine with merge layer
    - 5 evidence providers (DOM, ARIA, event-sequence, mutation, CSS-classname)
-   - Handles: click, text entry, navigation, hover, checkbox, radio, select, date picker, drag & drop, file upload, autocomplete, toggle switch, tabs, slider, window/frame interactions
+   - Handles: click, text entry, navigation, hover, checkbox, radio, select,
+     date picker, drag & drop, file upload, autocomplete, toggle switch, tabs,
+     slider, window/frame interactions
 
-2. **Architecture C Pipeline** (feature-flagged)
-   - Universal Interaction Observer (single capture-all content script)
-   - Snapshot Coalescer (temporal windowing)
-   - Multi-Tier Classifier (16 rules, 3 tiers)
-   - State Tracker (Session Context L1)
-   - Interaction Assembler (composite interaction buffering)
-   - AI Observer (advisory classification)
-   - Fully wired with feature flag `ARCHITECTURE_C_ENABLED`
+#### Pipeline Wiring (Phase 6)
+- **Domain Adapter** (`src/recorder/pipeline/domain-adapter.ts`)
+  Transforms `RecordedEvent[]` + `DetectedInteraction[]` → `UiElement[]` + `ObservedTransition[]`
+  Pure transformation, no side effects. 84 tests.
+- **Pipeline Runner** (`src/recorder/pipeline/pipeline-runner.ts`)
+  Chains: domain adapter → recognition orchestrator → enrichment orchestrator →
+  Application Knowledge Fragment. Uses `NullDomInspector` (service worker has no DOM).
+- **Service Worker Integration**
+  Pipeline runs on STOP_RECORDING in try/catch (non-fatal — existing classification
+  results remain if pipeline fails). Results stored via 3 new StorageKeys:
+  `KNOWLEDGE_FRAGMENT`, `RECOGNITION_COMPONENTS`, `DOMAIN_ENTITIES`.
 
 #### Component Recognition (Phases 1–4)
 - Pattern catalogue: 11 pattern types with behavioral signatures
@@ -51,7 +74,9 @@ Both pipelines exist and produce output:
 - Recognition orchestrator
 
 #### Post-Recording Enrichment (Phase 5)
-- 9 enrichment modules (interaction contract, option set, behavioral contract, semantic aggregator, workflow deriver, surface deriver, fragment assembler, orchestrator, DOM inspector)
+- 9 enrichment modules (interaction contract, option set, behavioral contract,
+  semantic aggregator, workflow deriver, surface deriver, fragment assembler,
+  orchestrator, DOM inspector)
 - Semantic aggregation with lifecycle occurrence segmentation (Rules A/B/C)
 - Application Knowledge Fragment assembly
 - 145 tests across 8 test files
@@ -95,26 +120,47 @@ Both pipelines exist and produce output:
 - 6 providers: OpenAI, Claude, Gemini, Azure OpenAI, OpenRouter, Custom
 - Provider manager with capability detection
 - Connection tester
-- AI Observer with 8 frozen principles (P1–P8)
+- Settings page integration
 
-### ⚡ Partially Implemented / In Progress
+### 📦 Archived (Phase 7)
 
-#### Architecture C Phase 7: Legacy Retirement
-- The legacy pipeline still runs as the primary content script
-- Architecture C runs alongside it (feature-flagged)
-- Full retirement requires confidence that Architecture C covers all legacy interaction types
+All Architecture C code has been moved to `legacy/architecture-c/`:
 
-#### Integration Between Knowledge Model and Generation Pipeline
-- The Application Knowledge Fragment is assembled but not yet consumed by the generation pipeline
-- The generation pipeline still operates on SessionEvents, not on LogicalActions
-- **Next step:** Wire the knowledge fragment into the generation pipeline for richer test step output
+| Module | Path | Reason |
+|--------|------|--------|
+| Universal Interaction Observer | `legacy/architecture-c/observer/` | Never registered in manifest |
+| State Tracker | `legacy/architecture-c/context/` | Never registered in manifest |
+| Snapshot Coalescer | `legacy/architecture-c/coalescer/` | Never imported by runtime |
+| Architecture C Pipeline | `legacy/architecture-c/pipeline/` | Never imported by runtime |
+| AI Observer / AI Service | `legacy/architecture-c/ai/` | Not imported by active runtime |
+| Observer Helpers | `legacy/architecture-c/observer/` | Logic inlined in deterministic recorder |
+
+These files are excluded from both the build (`vite build`) and test suite (`vitest`).
+They are preserved for reference — they contain working implementations of identity
+extraction, DOM observation, and composite interaction assembly that may inform future work.
+
+12 dead message types were removed from the `AppMessage` union:
+`CLICK_CAPTURED`, `TEXT_CAPTURED`, `HOVER_CAPTURED`, `CHECKBOX_CAPTURED`,
+`RADIO_CAPTURED`, `SELECT_CAPTURED`, `DATE_SELECT_CAPTURED`, `CREATE_TEST_CASE`,
+`CLEAR_TEST_CASE`, `RAW_EVIDENCE`, `DETERMINISTIC_STATE`, `PIPELINE_EVENT`.
+
+### ⚡ Partially Implemented
+
+#### Fragment → Generation Integration
+- The Application Knowledge Fragment is now produced by the pipeline runner and
+  stored in `chrome.storage.local` under `KNOWLEDGE_FRAGMENT`
+- The generation engine still reads from `SessionEvent[]` — it does not yet
+  consume the knowledge fragment for richer test step output
+- **Next step:** Wire the knowledge fragment into the generation pipeline so
+  LogicalActions and component-level contracts enhance generated steps
 
 ### 📋 Pending / Not Started
 
 #### Self-Healing Locators
 - Architecture is designed (staleness detection, heal history)
 - Element repository has `healHistory[]` field (schema-ready)
-- Not yet implemented — element status transitions (active → stale → broken) are defined but not triggered
+- Not yet implemented — element status transitions (active → stale → broken)
+  are defined but not triggered
 
 #### Test Execution
 - Execution IR has the IRExecutor interface
@@ -139,34 +185,32 @@ Both pipelines exist and produce output:
 | Field | Value |
 |-------|-------|
 | Branch | `main` |
-| HEAD | `b1a509a` — root README + documentation consistency fixes |
-| Remote | `github.com/Kiru-cmdrunner/cmdrunner-smart-recorder` (GitHub) |
-| Remote HEAD | `b1a509a` — in sync |
-| Total commits | 2 (history was intentionally squashed during repository migration — see note below) |
+| HEAD | `373693c` — Phase 6-7: pipeline wiring + Architecture C retirement |
+| Remote (origin) | `git.drytis.dev` (Drytis internal git server) |
+| Remote (upstream) | `github.com/Kiru-cmdrunner/cmdrunner-smart-recorder` (GitHub) |
+| Sync status | Both remotes at `373693c` |
 | Tags | 25 versioned tags preserved from pre-squash history |
-
-> **Repository Migration Note:** The Git history was intentionally squashed into a single commit during the migration from the Drytis internal git server to GitHub. The original 84-commit development history (covering four architectural eras) was preserved in the commit message of `55fea59` and is documented in the [Architectural Decision Log](./11-architectural-decision-log.md). Contributors should use the ADR and handover documentation to understand the project's evolution rather than relying on `git log`.
-
-### Git Tags (Versioned Milestones)
-- `v5.0.0` — Execution JSON Generator
-- `v5.0.0-b5.3-frozen` — B5.3 frozen
-- `v10.4.14` through `v10.4.18` — Feature releases (surface detection, drag-drop, autocomplete, selection controls, date-time completion)
-- `semantic-interaction-engine-v1.0` — V1 architecture freeze
-- `v1.16.0` through `v1.21.1` — Enterprise recorder releases (preserved from GitHub history)
 
 ## Project Health
 
 ### Strengths
-- **3324 tests, all passing** — comprehensive coverage
+- **3126 tests, all passing** — comprehensive coverage
+- **Single runtime pipeline** — no dual-pipeline confusion (Architecture C retired)
 - **Clean architectural separation** — each subsystem is independently testable
 - **Typed contracts everywhere** — no untyped message passing
-- **Feature-flagged transitions** — safe architectural evolution
 - **Frozen design decisions** — prevents regression of key principles
+- **No dormant code** — all active source is imported by the runtime
 
 ### Technical Debt
-- **162 pre-existing TypeScript errors** — all in legacy code (`deterministic-recorder.ts`, `interaction-types.ts`). These are from the V1 codebase and were grandfathered. New code (Architecture C, Knowledge Model) has zero TS errors.
-- **Dual pipeline maintenance** — both legacy and Architecture C pipelines are maintained. Phase 7 (legacy retirement) is pending.
-- **Some `as any` casts** — in `behavioral-contract-deriver.ts` (lines 212, 223). Minor type safety gaps.
+- **Pre-existing TypeScript errors in `deterministic-recorder.ts`** — content script
+  uses inline types and browser APIs that don't match the TS config. These are
+  grandfathered; the file works correctly in the browser extension context.
+- **`NullDomInspector`** — the enrichment pipeline uses a null implementation
+  because the service worker has no DOM access. Some enrichment derivers that
+  require DOM queries will produce limited results until a tab-injection path
+  is added.
+- **Fragment → Generation gap** — the knowledge fragment is produced but not
+  yet consumed by the generation engine for richer output.
 
 ### Dependency Status
 - **Runtime dependencies:** `dexie` (IndexedDB), `fake-indexeddb` (testing)
