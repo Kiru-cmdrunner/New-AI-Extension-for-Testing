@@ -1462,3 +1462,9 @@ body {
   max-height: 500px;
   overflow-y: auto;
 }
+
+.playwright-section__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

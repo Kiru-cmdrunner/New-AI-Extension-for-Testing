@@ -83,10 +83,10 @@ Deterministic Recorder → V1/V2 Classifier → Domain Adapter → Recognition �
 - `src/sidepanel/sidepanel.ts`
 
 **Acceptance criteria:**
-- [ ] Generation engine produces test steps + execution JSON + Playwright code
-- [ ] Side panel displays generated artifacts
-- [ ] All existing tests pass
-- [ ] New tests verify generation integration
+- [x] Generation engine produces test steps + execution JSON + Playwright code
+- [x] Side panel displays generated artifacts
+- [x] All existing tests pass
+- [x] New tests verify generation integration
 
 ### Phase 7 — Archive Architecture C
 

@@ -13,7 +13,7 @@ import {
   RecordingState, StorageKeys,
   type RecordingContext,
   type TestCaseDraft, TestCaseState,
-  type Project,
+  type Project, type TestStep,
 } from '../shared/types';
 import { StorageService } from '../storage/storage-service';
 import { sendMessage } from '../shared/messaging';
@@ -97,6 +97,17 @@ const recordAnotherBtn = document.getElementById('record-another-btn')!;
 const replayToggle = document.getElementById('replay-toggle') as HTMLButtonElement;
 const replaySection = document.getElementById('replay-section')!;
 const replayCode = document.getElementById('replay-code')!;
+
+// Generated steps
+const generatedStepsSection = document.getElementById('generated-steps-section')!;
+const generatedStepsList = document.getElementById('generated-steps-list')!;
+const generatedStepsCount = document.getElementById('generated-steps-count')!;
+
+// Generated Playwright
+const playwrightSection = document.getElementById('playwright-section')!;
+const playwrightToggle = document.getElementById('playwright-toggle') as HTMLButtonElement;
+const playwrightCode = document.getElementById('playwright-code')!;
+const copyPlaywrightBtn = document.getElementById('copy-playwright-btn') as HTMLButtonElement;
 
 // Header
 const settingsBtn = document.getElementById('settings-btn')!;
@@ -392,6 +403,39 @@ async function handleStopRecording(): Promise<void> {
     replaySection.hidden = true;
   }
 
+  // Load and display generated steps.
+  // The generation engine writes GENERATED_STEPS asynchronously after
+  // STOP_RECORDING — it may not be ready yet. Try once here; the storage
+  // listener will populate when the SW finishes.
+  const steps = await loadGeneratedSteps();
+  if (steps) {
+    renderGeneratedSteps(steps);
+  } else {
+    generatedStepsSection.hidden = true;
+    setTimeout(async () => {
+      if (views['stopped'].hidden) return;
+      const retrySteps = await loadGeneratedSteps();
+      if (retrySteps) {
+        renderGeneratedSteps(retrySteps);
+      }
+    }, 800);
+  }
+
+  // Load and display generated Playwright code
+  const playwright = await loadGeneratedPlaywright();
+  if (playwright) {
+    showGeneratedPlaywright(playwright);
+  } else {
+    playwrightSection.hidden = true;
+    setTimeout(async () => {
+      if (views['stopped'].hidden) return;
+      const retryPw = await loadGeneratedPlaywright();
+      if (retryPw) {
+        showGeneratedPlaywright(retryPw);
+      }
+    }, 800);
+  }
+
   // Show TC badge
   const draft = await StorageService.getTestCaseDraft();
   if (draft) {
@@ -420,6 +464,82 @@ async function loadReplayJson(): Promise<ReplayJson | null> {
   }
 }
 
+// ── Generated Steps Rendering ──────────────────────────────
+
+function renderGeneratedSteps(steps: TestStep[]): void {
+  generatedStepsCount.textContent = String(steps.length);
+  generatedStepsList.innerHTML = '';
+
+  for (const step of steps) {
+    const card = document.createElement('div');
+    card.className = 'step-card';
+
+    const header = document.createElement('div');
+    header.className = 'step-card__header';
+    header.textContent = `${step.stepId} — ${step.executionJson?.action ?? step.actionId}`;
+
+    const plain = document.createElement('div');
+    plain.className = 'step-card__plain-english';
+    plain.textContent = step.plainEnglish;
+
+    const ids = document.createElement('div');
+    ids.className = 'step-card__ids';
+    ids.textContent = `Action: ${step.actionId} · Element: ${step.elementId}`;
+
+    card.appendChild(header);
+    card.appendChild(plain);
+    card.appendChild(ids);
+
+    // Execution JSON (collapsible)
+    if (step.executionJson) {
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'step-card__json-toggle';
+      toggleBtn.type = 'button';
+      toggleBtn.textContent = '▶ Execution JSON';
+
+      const jsonContent = document.createElement('pre');
+      jsonContent.className = 'step-card__json-content';
+      jsonContent.textContent = JSON.stringify(step.executionJson, null, 2);
+      jsonContent.hidden = true;
+
+      toggleBtn.addEventListener('click', () => {
+        jsonContent.hidden = !jsonContent.hidden;
+        toggleBtn.textContent = jsonContent.hidden ? '▶ Execution JSON' : '▼ Execution JSON';
+      });
+
+      card.appendChild(toggleBtn);
+      card.appendChild(jsonContent);
+    }
+
+    generatedStepsList.appendChild(card);
+  }
+
+  generatedStepsSection.hidden = false;
+}
+
+async function loadGeneratedSteps(): Promise<TestStep[] | null> {
+  try {
+    const steps = await StorageService.getGeneratedSteps();
+    return steps.length > 0 ? steps : null;
+  } catch {
+    return null;
+  }
+}
+
+async function loadGeneratedPlaywright(): Promise<{ testCode: string; isManualEdit: boolean; generatedAt: string } | null> {
+  try {
+    return await StorageService.getGeneratedPlaywright();
+  } catch {
+    return null;
+  }
+}
+
+function showGeneratedPlaywright(data: { testCode: string; isManualEdit: boolean; generatedAt: string }): void {
+  playwrightCode.textContent = data.testCode;
+  playwrightSection.hidden = false;
+  copyPlaywrightBtn.hidden = false;
+}
+
 async function loadDetectedInteractions(): Promise<DetectedInteraction[] | null> {
   try {
     const result = await chrome.storage.local.get(StorageKeys.DETECTED_INTERACTIONS_MERGED);
@@ -435,10 +555,17 @@ async function handleRecordAnother(): Promise<void> {
   await StorageService.clearRecordingContext();
   await StorageService.clearTestCaseDraft();
   await StorageService.resetUIState();
+  await StorageService.clearGeneratedSteps();
+  await StorageService.clearGeneratedPlaywright();
   try { await chrome.storage.local.remove(StorageKeys.REPLAY_JSON); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.DETECTED_INTERACTIONS); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.DETECTED_INTERACTIONS_MERGED); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.DETECTED_INTERACTIONS_V2); } catch {}
+  try { await chrome.storage.local.remove(StorageKeys.KNOWLEDGE_FRAGMENT); } catch {}
+  try { await chrome.storage.local.remove(StorageKeys.RECOGNITION_COMPONENTS); } catch {}
+  try { await chrome.storage.local.remove(StorageKeys.DOMAIN_ENTITIES); } catch {}
+  generatedStepsSection.hidden = true;
+  playwrightSection.hidden = true;
   await openNewTestCase();
 }
 
@@ -473,6 +600,24 @@ function setupLiveListeners(): void {
       // Only update if we're in the stopped view
       if (!views['stopped'].hidden) {
         showDetectedInteractions(interactions);
+      }
+    }
+  });
+
+  // Generated steps — fires when the Generation Engine finishes writing
+  StorageService.onKeyChanged(StorageKeys.GENERATED_STEPS, (newValue) => {
+    if (Array.isArray(newValue) && newValue.length > 0) {
+      if (!views['stopped'].hidden) {
+        renderGeneratedSteps(newValue as TestStep[]);
+      }
+    }
+  });
+
+  // Generated Playwright code — fires when the Playwright generator finishes
+  StorageService.onKeyChanged(StorageKeys.GENERATED_PLAYWRIGHT, (newValue) => {
+    if (newValue && typeof newValue === 'object' && 'testCode' in newValue) {
+      if (!views['stopped'].hidden) {
+        showGeneratedPlaywright(newValue as { testCode: string; isManualEdit: boolean; generatedAt: string });
       }
     }
   });
@@ -605,6 +750,28 @@ if (replayToggle) {
   });
 }
 
+// Playwright code toggle
+if (playwrightToggle) {
+  playwrightToggle.addEventListener('click', () => {
+    playwrightCode.hidden = !playwrightCode.hidden;
+    playwrightToggle.textContent = playwrightCode.hidden ? '▶ Show Code' : '▼ Hide Code';
+  });
+}
+
+// Copy Playwright code
+if (copyPlaywrightBtn) {
+  copyPlaywrightBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(playwrightCode.textContent ?? '');
+      copyPlaywrightBtn.textContent = '✓ Copied';
+      setTimeout(() => { copyPlaywrightBtn.textContent = 'Copy'; }, 2000);
+    } catch {
+      copyPlaywrightBtn.textContent = '✗ Failed';
+      setTimeout(() => { copyPlaywrightBtn.textContent = 'Copy'; }, 2000);
+    }
+  });
+}
+
 // Header
 settingsBtn.addEventListener('click', () => chrome.runtime.openOptionsPage());
 repoBtn.addEventListener('click', () => {
@@ -651,6 +818,23 @@ async function init(): Promise<void> {
     } else {
       replaySection.hidden = true;
     }
+
+    // Load generated steps
+    const genSteps = await loadGeneratedSteps();
+    if (genSteps) {
+      renderGeneratedSteps(genSteps);
+    } else {
+      generatedStepsSection.hidden = true;
+    }
+
+    // Load generated Playwright
+    const genPw = await loadGeneratedPlaywright();
+    if (genPw) {
+      showGeneratedPlaywright(genPw);
+    } else {
+      playwrightSection.hidden = true;
+    }
+
     const draft = await StorageService.getTestCaseDraft();
     if (draft) {
       tcBadgeNameStopped.textContent = draft.name;
