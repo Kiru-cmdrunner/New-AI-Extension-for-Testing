@@ -628,8 +628,8 @@ async function loadIRFiles(): Promise<GeneratedFile[] | null> {
 function extractFiles(stored: unknown): GeneratedFile[] | null {
   if (!stored) return null;
   if (Array.isArray(stored)) return stored as GeneratedFile[];
-  if (stored && typeof stored === 'object' && Array.isArray((stored as any).files)) {
-    return (stored as any).files as GeneratedFile[];
+  if (typeof stored === 'object' && stored !== null && 'files' in stored && Array.isArray((stored as Record<string, unknown>).files)) {
+    return (stored as Record<string, unknown>).files as GeneratedFile[];
   }
   return null;
 }

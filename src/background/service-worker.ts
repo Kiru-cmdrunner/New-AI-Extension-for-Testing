@@ -306,7 +306,7 @@ async function handleStopRecording(): Promise<void> {
     await StorageService.setRaw(StorageKeys.GENERATED_FILES, result);
   } catch (e) {
     console.warn('[IR Bridge] error during unified generation:', e);
-    // Non-fatal — the legacy generation engine output is still available
+    // Non-fatal — recording still completes, but no test steps/playwright code generated
   }
 
   // Update UI state
