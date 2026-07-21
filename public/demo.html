@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pipeline V2 Demo — Interaction Types</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: #f0f2f5; color: #1a1a2e; padding: 20px; }
+    h1 { font-size: 1.5rem; margin-bottom: 8px; }
+    h2 { font-size: 1.1rem; margin: 20px 0 10px; color: #333; }
+    .subtitle { color: #666; margin-bottom: 20px; font-size: 0.9rem; }
+    .section {
+      background: white; border-radius: 8px; padding: 16px; margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .section-title { font-weight: 600; margin-bottom: 8px; font-size: 0.95rem; }
+
+    /* Controls */
+    button {
+      padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;
+      font-size: 0.9rem; background: #3b82f6; color: white; margin-right: 8px;
+    }
+    button:hover { background: #2563eb; }
+    button.secondary { background: #e5e7eb; color: #333; }
+    button.secondary:hover { background: #d1d5db; }
+
+    input[type="text"], input[type="email"], input[type="search"], textarea, select {
+      padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 4px;
+      font-size: 0.9rem; width: 250px; margin-right: 8px;
+    }
+    input[type="date"], input[type="time"] {
+      padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 4px;
+      font-size: 0.9rem; margin-right: 8px;
+    }
+    input[type="range"] { width: 200px; }
+
+    label { display: inline-flex; align-items: center; gap: 6px; margin-right: 16px; font-size: 0.9rem; }
+
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+
+    /* Custom dropdown */
+    .custom-dropdown { position: relative; display: inline-block; }
+    .dropdown-trigger {
+      padding: 8px 16px; border: 1px solid #d1d5db; border-radius: 4px;
+      background: white; cursor: pointer; font-size: 0.9rem; min-width: 200px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .dropdown-menu {
+      position: absolute; top: 100%; left: 0; right: 0; background: white;
+      border: 1px solid #d1d5db; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      z-index: 10; display: none;
+    }
+    .dropdown-menu.open { display: block; }
+    .dropdown-option {
+      padding: 8px 16px; cursor: pointer; font-size: 0.9rem;
+    }
+    .dropdown-option:hover { background: #f0f2f5; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 2px; border-bottom: 2px solid #e5e7eb; margin-bottom: 12px; }
+    .tab {
+      padding: 8px 16px; cursor: pointer; font-size: 0.9rem;
+      border-bottom: 2px solid transparent; margin-bottom: -2px;
+    }
+    .tab.active { border-bottom-color: #3b82f6; color: #3b82f6; font-weight: 600; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Accordion */
+    .accordion-item { border: 1px solid #e5e7eb; border-radius: 4px; margin-bottom: 4px; }
+    .accordion-header {
+      padding: 10px 16px; cursor: pointer; font-size: 0.9rem; font-weight: 500;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .accordion-content { padding: 10px 16px; display: none; font-size: 0.85rem; color: #666; }
+    .accordion-item.open .accordion-content { display: block; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4); display: none; justify-content: center;
+      align-items: center; z-index: 100;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white; border-radius: 8px; padding: 24px; min-width: 300px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+
+    /* Toggle switch */
+    .toggle-switch {
+      width: 44px; height: 24px; background: #ccc; border-radius: 12px;
+      cursor: pointer; position: relative; transition: background 0.2s;
+      display: inline-block;
+    }
+    .toggle-switch.on { background: #3b82f6; }
+    .toggle-switch::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 20px; height: 20px; background: white; border-radius: 50%;
+      transition: left 0.2s;
+    }
+    .toggle-switch.on::after { left: 22px; }
+
+    .current-value { font-size: 0.85rem; color: #666; margin-left: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Pipeline V2 Demo App</h1>
+  <p class="subtitle">All interaction types for end-to-end validation of the intent-based pipeline.</p>
+
+  <!-- Simple Click -->
+  <div class="section">
+    <div class="section-title">Simple Click</div>
+    <div class="row">
+      <button id="simple-click">Submit Form</button>
+      <button class="secondary" id="cancel-btn">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Text Entry -->
+  <div class="section">
+    <div class="section-title">Text Entry</div>
+    <div class="row">
+      <input type="email" id="email" placeholder="Email Address" aria-label="Email Address" />
+      <input type="text" id="full-name" placeholder="Full Name" aria-label="Full Name" />
+    </div>
+    <div class="row">
+      <textarea id="comments" placeholder="Comments" aria-label="Comments" rows="2" cols="30"></textarea>
+    </div>
+  </div>
+
+  <!-- Native Select -->
+  <div class="section">
+    <div class="section-title">Native Select (Dropdown)</div>
+    <div class="row">
+      <select id="country" aria-label="Country">
+        <option value="">Select Country...</option>
+        <option value="ca">Canada</option>
+        <option value="us">United States</option>
+        <option value="uk">United Kingdom</option>
+        <option value="au">Australia</option>
+      </select>
+      <span class="current-value" id="country-value"></span>
+    </div>
+  </div>
+
+  <!-- Custom Dropdown -->
+  <div class="section">
+    <div class="section-title">Custom Dropdown (Div-based)</div>
+    <div class="row">
+      <div class="custom-dropdown">
+        <div class="dropdown-trigger" id="travel-class-trigger" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-label="Travel Class" tabindex="0">
+          <span id="travel-class-label">Economy</span>
+          <span>▼</span>
+        </div>
+        <div class="dropdown-menu" id="travel-class-menu" role="listbox">
+          <div class="dropdown-option" role="option" data-value="Economy">Economy</div>
+          <div class="dropdown-option" role="option" data-value="Premium Economy">Premium Economy</div>
+          <div class="dropdown-option" role="option" data-value="Business">Business</div>
+          <div class="dropdown-option" role="option" data-value="First">First Class</div>
+        </div>
+      </div>
+      <span class="current-value" id="travel-class-value"></span>
+    </div>
+  </div>
+
+  <!-- Checkbox -->
+  <div class="section">
+    <div class="section-title">Checkbox</div>
+    <div class="row">
+      <label><input type="checkbox" id="subscribe" /> Subscribe to newsletter</label>
+      <label><input type="checkbox" id="terms" /> Accept terms</label>
+    </div>
+  </div>
+
+  <!-- Radio Buttons -->
+  <div class="section">
+    <div class="section-title">Radio Buttons</div>
+    <div class="row">
+      <label><input type="radio" name="plan" value="basic" /> Basic</label>
+      <label><input type="radio" name="plan" value="pro" /> Pro</label>
+      <label><input type="radio" name="plan" value="enterprise" /> Enterprise</label>
+    </div>
+  </div>
+
+  <!-- Date Picker (Native) -->
+  <div class="section">
+    <div class="section-title">Date Picker (Native)</div>
+    <div class="row">
+      <input type="date" id="departure-date" aria-label="Departure Date" />
+      <input type="time" id="departure-time" aria-label="Departure Time" />
+    </div>
+  </div>
+
+  <!-- Range Slider -->
+  <div class="section">
+    <div class="section-title">Range Slider</div>
+    <div class="row">
+      <input type="range" id="volume" min="0" max="100" value="50" aria-label="Volume" />
+      <span class="current-value" id="volume-value">50</span>
+    </div>
+  </div>
+
+  <!-- Toggle Switch (ARIA) -->
+  <div class="section">
+    <div class="section-title">Toggle Switch (ARIA)</div>
+    <div class="row">
+      <label>Dark Mode</label>
+      <div class="toggle-switch" id="dark-mode" role="switch" aria-checked="false" aria-label="Dark Mode" tabindex="0"></div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="section">
+    <div class="section-title">Tabs</div>
+    <div class="tabs" role="tablist">
+      <div class="tab active" role="tab" aria-selected="true" id="tab-overview" tabindex="0">Overview</div>
+      <div class="tab" role="tab" aria-selected="false" id="tab-settings" tabindex="0">Settings</div>
+      <div class="tab" role="tab" aria-selected="false" id="tab-security" tabindex="0">Security</div>
+    </div>
+    <div class="tab-panel active" id="panel-overview" role="tabpanel">Overview content here.</div>
+    <div class="tab-panel" id="panel-settings" role="tabpanel">Settings content here.</div>
+    <div class="tab-panel" id="panel-security" role="tabpanel">Security content here.</div>
+  </div>
+
+  <!-- Accordion -->
+  <div class="section">
+    <div class="section-title">Accordion</div>
+    <div class="accordion-item">
+      <div class="accordion-header" id="acc1-header" aria-expanded="false" role="button" tabindex="0">Section 1 <span>▶</span></div>
+      <div class="accordion-content">Content for section 1.</div>
+    </div>
+    <div class="accordion-item">
+      <div class="accordion-header" id="acc2-header" aria-expanded="false" role="button" tabindex="0">Section 2 <span>▶</span></div>
+      <div class="accordion-content">Content for section 2.</div>
+    </div>
+  </div>
+
+  <!-- Modal Dialog -->
+  <div class="section">
+    <div class="section-title">Modal Dialog</div>
+    <div class="row">
+      <button id="open-modal">Open Settings Dialog</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Settings Dialog">
+      <h2>Settings</h2>
+      <p style="margin: 12px 0;">This is a modal dialog.</p>
+      <div class="row">
+        <label><input type="checkbox" id="modal-option" /> Enable feature</label>
+      </div>
+      <div class="row">
+        <button id="modal-save">Save</button>
+        <button class="secondary" id="modal-close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Submit -->
+  <div class="section">
+    <div class="section-title">Form Submit</div>
+    <form id="search-form">
+      <div class="row">
+        <input type="search" id="search-query" placeholder="Search..." aria-label="Search Query" />
+        <button type="submit">Search</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // ── Simple Click ──
+    document.getElementById('simple-click').addEventListener('click', () => {});
+
+    // ── Native Select ──
+    const countrySelect = document.getElementById('country');
+    const countryValue = document.getElementById('country-value');
+    countrySelect.addEventListener('change', () => {
+      countryValue.textContent = countrySelect.value ? `Selected: ${countrySelect.value}` : '';
+    });
+
+    // ── Custom Dropdown ──
+    const ddTrigger = document.getElementById('travel-class-trigger');
+    const ddMenu = document.getElementById('travel-class-menu');
+    const ddLabel = document.getElementById('travel-class-label');
+    const ddValueDisplay = document.getElementById('travel-class-value');
+
+    ddTrigger.addEventListener('click', () => {
+      const isOpen = ddMenu.classList.contains('open');
+      if (isOpen) {
+        ddMenu.classList.remove('open');
+        ddTrigger.setAttribute('aria-expanded', 'false');
+      } else {
+        ddMenu.classList.add('open');
+        ddTrigger.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    ddMenu.querySelectorAll('.dropdown-option').forEach(option => {
+      option.addEventListener('click', () => {
+        const value = option.getAttribute('data-value');
+        ddLabel.textContent = value;
+        ddValueDisplay.textContent = `Selected: ${value}`;
+        ddMenu.classList.remove('open');
+        ddTrigger.setAttribute('aria-expanded', 'false');
+      });
+    });
+
+    // ── Range Slider ──
+    const volumeSlider = document.getElementById('volume');
+    const volumeValue = document.getElementById('volume-value');
+    volumeSlider.addEventListener('input', () => {
+      volumeValue.textContent = volumeSlider.value;
+    });
+
+    // ── Toggle Switch ──
+    const darkMode = document.getElementById('dark-mode');
+    darkMode.addEventListener('click', () => {
+      const isOn = darkMode.classList.contains('on');
+      if (isOn) {
+        darkMode.classList.remove('on');
+        darkMode.setAttribute('aria-checked', 'false');
+      } else {
+        darkMode.classList.add('on');
+        darkMode.setAttribute('aria-checked', 'true');
+      }
+    });
+
+    // ── Tabs ──
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+        });
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
+
+        const panelId = `panel-${tab.id.replace('tab-', '')}`;
+        document.getElementById(panelId)?.classList.add('active');
+      });
+    });
+
+    // ── Accordion ──
+    document.querySelectorAll('.accordion-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const item = header.parentElement;
+        const isOpen = item.classList.contains('open');
+        if (isOpen) {
+          item.classList.remove('open');
+          header.setAttribute('aria-expanded', 'false');
+          header.querySelector('span').textContent = '▶';
+        } else {
+          item.classList.add('open');
+          header.setAttribute('aria-expanded', 'true');
+          header.querySelector('span').textContent = '▼';
+        }
+      });
+    });
+
+    // ── Modal ──
+    const modalOverlay = document.getElementById('modal-overlay');
+    document.getElementById('open-modal').addEventListener('click', () => {
+      modalOverlay.classList.add('open');
+    });
+    document.getElementById('modal-close').addEventListener('click', () => {
+      modalOverlay.classList.remove('open');
+    });
+    document.getElementById('modal-save').addEventListener('click', () => {
+      modalOverlay.classList.remove('open');
+    });
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) modalOverlay.classList.remove('open');
+    });
+  </script>
+</body>
+</html>

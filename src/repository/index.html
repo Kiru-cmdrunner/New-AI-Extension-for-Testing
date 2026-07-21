@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test Repository — CmdRunner</title>
+  <link rel="stylesheet" href="repository.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header__logo">
+        <img src="../assets/icon-48.png" alt="CmdRunner" class="header__icon" />
+        <h1 class="header__title">Test Repository</h1>
+      </div>
+      <button id="close-btn" class="header__close-btn" title="Close">✕</button>
+    </header>
+
+    <!-- Search Bar -->
+    <div class="search-bar">
+      <input type="text" id="search-input" class="search-input" placeholder="Search by project, feature, scenario, or test case…" />
+      <button id="new-project-btn" class="btn btn--primary">+ New Project</button>
+    </div>
+
+    <!-- Tree Container -->
+    <main class="main">
+      <div class="tree" id="repository-tree">
+        <p class="tree__empty" id="tree-empty">No projects yet. Click "+ New Project" to get started.</p>
+      </div>
+
+      <!-- Detail Panel (shows test case steps when selected) -->
+      <div class="detail-panel" id="detail-panel" hidden>
+        <div class="detail-panel__header">
+          <h2 class="detail-panel__title" id="detail-title"></h2>
+          <button id="detail-close-btn" class="detail-panel__close">✕</button>
+        </div>
+        <div class="detail-panel__meta" id="detail-meta"></div>
+        <div class="detail-panel__steps" id="detail-steps"></div>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="repository-page.ts"></script>
+</body>
+</html>

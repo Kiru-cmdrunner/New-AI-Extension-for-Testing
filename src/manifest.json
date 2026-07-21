@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "CmdRunner Smart Recorder",
+  "version": "10.4.18",
+  "description": "Deterministic recorder that captures browser interactions with exact targets, element identity, event sequences, and value transitions.",
+  "permissions": ["sidePanel", "storage", "unlimitedStorage", "activeTab", "webNavigation", "tabs", "scripting", "alarms"],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "action": {
+    "default_title": "CmdRunner Smart Recorder"
+  },
+  "side_panel": {
+    "default_path": "src/sidepanel/index.html"
+  },
+  "background": {
+    "service_worker": "src/background/service-worker.ts",
+    "type": "module"
+  },
+  "options_page": "src/settings/index.html",
+  "web_accessible_resources": [
+    {
+      "resources": ["src/repository/index.html"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/recorder/deterministic-recorder.ts"],
+      "all_frames": true,
+      "run_at": "document_start"
+    }
+  ],
+  "icons": {
+    "16": "src/assets/icon-16.png",
+    "48": "src/assets/icon-48.png",
+    "128": "src/assets/icon-128.png"
+  }
+}

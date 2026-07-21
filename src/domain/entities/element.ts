@@ -1,0 +1,220 @@
+/**
+ * Element Entity — domain-schema.md §3.4
+ *
+ * A first-class logical UI element within a Project. Each Element represents
+ * a business-meaningful UI component identified by a stable ID and resolved
+ * to one or more locator strategies.
+ *
+ * Invariants:
+ *   INV-EL1: Belongs to exactly one Project
+ *   INV-EL2: Referenced by steps via stable ID, never by name or selector
+ *   INV-EL3: Delete blocked if referenced by any step or validation
+ *   INV-EL4: locatorStrategies is always a non-empty array
+ *   INV-EL5: id is immutable and never reused
+ */
+
+import { ElementStatus, LocatorStrategyType } from '../enums';
+import { MissingFieldError, ValueObjectError } from '../errors/invariant-errors';
+
+// ── LocatorStrategy (value object) ────────────────────────
+
+/** A ranked strategy for locating the element at execution time. */
+export interface LocatorStrategy {
+  readonly type: LocatorStrategyType;
+  readonly value: string;
+  /** Rank order (1 = highest priority, tried first). */
+  readonly priority: number;
+  /**
+   * Confidence score (0.0–1.0).
+   * V1: 1.0 for manually created, null for AI-suggested.
+   * Future: computed from observed success rates.
+   */
+  readonly confidence: number | null;
+}
+
+/** Input for creating a LocatorStrategy. */
+export interface CreateLocatorStrategyInput {
+  type: LocatorStrategyType;
+  value: string;
+  priority: number;
+  confidence?: number | null;
+}
+
+/**
+ * Create a validated LocatorStrategy value object.
+ *
+ * @throws ValueObjectError if type/value/priority are invalid
+ */
+export function createLocatorStrategy(input: CreateLocatorStrategyInput): LocatorStrategy {
+  if (!input.type) {
+    throw new ValueObjectError('LocatorStrategy', 'type is required');
+  }
+  if (!input.value || !input.value.trim()) {
+    throw new ValueObjectError('LocatorStrategy', 'value is required');
+  }
+  if (!Number.isInteger(input.priority) || input.priority < 1) {
+    throw new ValueObjectError(
+      'LocatorStrategy',
+      `priority must be a positive integer (got ${input.priority})`,
+    );
+  }
+
+  return {
+    type: input.type,
+    value: input.value.trim(),
+    priority: input.priority,
+    confidence: input.confidence ?? null,
+  };
+}
+
+// ── Element (aggregate root) ──────────────────────────────
+
+/** Element entity — a logical UI element with ranked locator strategies. */
+export interface Element {
+  readonly id: string;
+  readonly projectId: string;
+  readonly logicalName: string;
+  readonly description: string;
+  /** Scope — which page or reusable component this element belongs to. */
+  readonly pageOrComponent: string;
+  readonly locatorStrategies: LocatorStrategy[];
+  readonly status: ElementStatus;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  /** [future] When a self-heal last updated the locators. Null in V1. */
+  readonly lastHealedAt: string | null;
+  /** [future] History of heal events. Empty in V1. */
+  readonly healHistory: HealEvent[];
+}
+
+/** Input for creating a new Element. */
+export interface CreateElementInput {
+  projectId: string;
+  logicalName: string;
+  description?: string;
+  pageOrComponent?: string;
+  locatorStrategies: CreateLocatorStrategyInput[];
+}
+
+/** Update input — only metadata fields change; locatorStrategies has its own update path. */
+export interface UpdateElementInput {
+  logicalName?: string;
+  description?: string;
+  pageOrComponent?: string;
+  status?: ElementStatus;
+  locatorStrategies?: CreateLocatorStrategyInput[];
+}
+
+/** [future] A self-healing event record. Schema-ready; not used in V1 logic. */
+export interface HealEvent {
+  readonly healedAt: string;
+  readonly runId: string;
+  readonly reason: string;
+  readonly proposedBy: string;
+  readonly oldStrategies: LocatorStrategy[];
+  readonly newStrategies: LocatorStrategy[];
+}
+
+/**
+ * Create an Element entity with invariant validation.
+ *
+ * Invariants enforced:
+ *   - projectId, logicalName required
+ *   - locatorStrategies must be non-empty (INV-EL4)
+ *   - priorities must be unique within the element
+ *
+ * @throws MissingFieldError if projectId or logicalName is empty
+ * @throws ValueObjectError if locatorStrategies is empty or priorities are duplicated
+ */
+export function createElement(input: CreateElementInput): Element {
+  if (!input.projectId?.trim()) {
+    throw new MissingFieldError('Element', 'projectId');
+  }
+
+  const logicalName = input.logicalName?.trim();
+  if (!logicalName) {
+    throw new MissingFieldError('Element', 'logicalName');
+  }
+
+  if (!input.locatorStrategies || input.locatorStrategies.length === 0) {
+    throw new ValueObjectError(
+      'Element',
+      'locatorStrategies must have at least one strategy (INV-EL4)',
+    );
+  }
+
+  const strategies = input.locatorStrategies.map(createLocatorStrategy);
+
+  // Validate unique priorities
+  const priorities = new Set<number>();
+  for (const s of strategies) {
+    if (priorities.has(s.priority)) {
+      throw new ValueObjectError(
+        'Element',
+        `duplicate locator strategy priority ${s.priority} — priorities must be unique`,
+      );
+    }
+    priorities.add(s.priority);
+  }
+
+  const now = new Date().toISOString();
+
+  return {
+    id: crypto.randomUUID(),
+    projectId: input.projectId.trim(),
+    logicalName,
+    description: input.description?.trim() ?? '',
+    pageOrComponent: input.pageOrComponent?.trim() ?? '',
+    locatorStrategies: strategies,
+    status: ElementStatus.ACTIVE,
+    createdAt: now,
+    updatedAt: now,
+    lastHealedAt: null,
+    healHistory: [],
+  };
+}
+
+/**
+ * Create an updated Element with new field values.
+ */
+export function updateElement(existing: Element, input: UpdateElementInput): Element {
+  const logicalName =
+    input.logicalName !== undefined ? input.logicalName.trim() : existing.logicalName;
+  if (!logicalName) {
+    throw new MissingFieldError('Element', 'logicalName');
+  }
+
+  let locatorStrategies = existing.locatorStrategies;
+
+  if (input.locatorStrategies) {
+    if (input.locatorStrategies.length === 0) {
+      throw new ValueObjectError(
+        'Element',
+        'locatorStrategies must have at least one strategy (INV-EL4)',
+      );
+    }
+    locatorStrategies = input.locatorStrategies.map(createLocatorStrategy);
+
+    const priorities = new Set<number>();
+    for (const s of locatorStrategies) {
+      if (priorities.has(s.priority)) {
+        throw new ValueObjectError(
+          'Element',
+          `duplicate locator strategy priority ${s.priority} — priorities must be unique`,
+        );
+      }
+      priorities.add(s.priority);
+    }
+  }
+
+  return {
+    ...existing,
+    logicalName,
+    description: input.description !== undefined ? input.description.trim() : existing.description,
+    pageOrComponent:
+      input.pageOrComponent !== undefined ? input.pageOrComponent.trim() : existing.pageOrComponent,
+    status: input.status ?? existing.status,
+    locatorStrategies,
+    updatedAt: new Date().toISOString(),
+  };
+}

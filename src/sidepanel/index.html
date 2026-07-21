@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CmdRunner Smart Recorder</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header__logo">
+        <img src="../assets/icon-48.png" alt="CmdRunner" class="header__icon" />
+        <h1 class="header__title">CmdRunner</h1>
+      </div>
+      <button id="settings-btn" class="header__settings-btn" title="Open Settings">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+      <button id="repo-btn" class="header__settings-btn" title="Open Repository">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 6h18M3 12h18M3 18h18"/>
+        </svg>
+      </button>
+    </header>
+
+    <main class="main">
+
+      <!-- ════════ HOME VIEW ════════ -->
+      <div id="home-view" class="view">
+        <div class="home-hero">
+          <div class="home-hero__icon">🎯</div>
+          <h2 class="home-hero__title">Test Case Generation Platform</h2>
+          <p class="home-hero__subtitle">Create, review, and export high-quality test cases.</p>
+        </div>
+        <button id="new-tc-btn" class="btn btn--primary btn--lg">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          <span>New Test Case</span>
+        </button>
+        <button id="browse-repo-btn" class="btn btn--secondary btn--lg">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M3 12h18M3 18h18"/>
+          </svg>
+          <span>Browse Repository</span>
+        </button>
+      </div>
+
+      <!-- ════════ NEW TEST CASE VIEW ════════ -->
+      <div id="new-tc-view" class="view" hidden>
+        <div class="form-header">
+          <h2 class="form-header__title">New Test Case</h2>
+          <p class="form-header__subtitle">Enter details before recording.</p>
+        </div>
+
+        <div class="tc-form">
+          <!-- Project -->
+          <div class="tc-form__group" id="tc-project-group">
+            <label class="tc-form__label" for="tc-project">Project <span class="tc-form__required">*</span></label>
+            <select id="tc-project" class="tc-form__select"></select>
+          </div>
+          <div class="tc-form__create" id="tc-project-create" hidden>
+            <input type="text" id="tc-project-new-name" class="tc-form__input" placeholder="Enter project name" />
+            <div class="tc-form__create-actions">
+              <button id="tc-project-create-btn" class="btn btn--primary btn--sm">Create</button>
+              <button id="tc-project-cancel-btn" class="btn btn--ghost btn--sm">Cancel</button>
+            </div>
+          </div>
+
+          <!-- Feature -->
+          <div class="tc-form__group" id="tc-feature-group">
+            <label class="tc-form__label" for="tc-feature">Feature <span class="tc-form__required">*</span></label>
+            <select id="tc-feature" class="tc-form__select" disabled></select>
+            <p class="tc-form__hint" id="tc-feature-hint">Select a project first</p>
+          </div>
+          <div class="tc-form__create" id="tc-feature-create" hidden>
+            <input type="text" id="tc-feature-new-name" class="tc-form__input" placeholder="Enter feature name" />
+            <div class="tc-form__create-actions">
+              <button id="tc-feature-create-btn" class="btn btn--primary btn--sm">Create</button>
+              <button id="tc-feature-cancel-btn" class="btn btn--ghost btn--sm">Cancel</button>
+            </div>
+          </div>
+
+          <!-- Scenario -->
+          <div class="tc-form__group" id="tc-scenario-group">
+            <label class="tc-form__label" for="tc-scenario">Scenario <span class="tc-form__required">*</span></label>
+            <select id="tc-scenario" class="tc-form__select" disabled></select>
+            <p class="tc-form__hint" id="tc-scenario-hint">Select a feature first</p>
+          </div>
+          <div class="tc-form__create" id="tc-scenario-create" hidden>
+            <input type="text" id="tc-scenario-new-name" class="tc-form__input" placeholder="Enter scenario name" />
+            <div class="tc-form__create-actions">
+              <button id="tc-scenario-create-btn" class="btn btn--primary btn--sm">Create</button>
+              <button id="tc-scenario-cancel-btn" class="btn btn--ghost btn--sm">Cancel</button>
+            </div>
+          </div>
+
+          <!-- Test Case Name -->
+          <div class="tc-form__group">
+            <label class="tc-form__label" for="tc-name">Test Case Name <span class="tc-form__required">*</span></label>
+            <input type="text" id="tc-name" class="tc-form__input" placeholder="e.g. Verify user can book a one-way flight" />
+          </div>
+
+          <!-- Expected Result -->
+          <div class="tc-form__group">
+            <label class="tc-form__label" for="tc-expected">Expected Result <span class="tc-form__optional">(optional)</span></label>
+            <textarea id="tc-expected" class="tc-form__textarea" rows="3" placeholder="What should happen after this test?"></textarea>
+          </div>
+
+          <!-- Validation Error -->
+          <p class="tc-form__error" id="tc-form-error" hidden></p>
+
+          <!-- Form Actions -->
+          <div class="tc-form__actions">
+            <button id="tc-cancel-btn" class="btn btn--ghost">Cancel</button>
+            <button id="tc-start-recording-btn" class="btn btn--primary" disabled>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="12" r="8"/>
+              </svg>
+              <span>Start Recording</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ RECORDING VIEW ════════ -->
+      <div id="recording-view" class="view" hidden>
+        <!-- Content Script Status -->
+        <div class="cs-status" id="cs-status">
+          <div class="cs-status__indicator" id="cs-indicator"></div>
+          <span class="cs-status__text" id="cs-status-text">Checking connection...</span>
+        </div>
+
+        <!-- Recording Context -->
+        <div class="recording-context" id="recording-context" hidden>
+          <div class="recording-context__header">
+            <span class="recording-context__icon">📍</span>
+            <span class="recording-context__label">Recording started on</span>
+          </div>
+          <a class="recording-context__url" id="recording-context-url" href="#" target="_blank" rel="noopener"></a>
+        </div>
+
+        <!-- TC Header during recording -->
+        <div class="tc-badge" id="tc-badge-recording" hidden>
+          <span class="tc-badge__icon">📋</span>
+          <span class="tc-badge__name" id="tc-badge-name"></span>
+        </div>
+
+        <!-- Stop button -->
+        <button id="stop-btn" class="btn btn--danger btn--lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="6" width="12" height="12" rx="2"/>
+          </svg>
+          <span>Stop Recording</span>
+        </button>
+
+        <!-- Event Timeline -->
+        <div class="timeline" id="timeline">
+          <div class="timeline__header">
+            <h2 class="timeline__title">Event Timeline</h2>
+            <span class="timeline__count" id="timeline-count">0</span>
+          </div>
+          <div class="timeline__events" id="timeline-events">
+            <p class="timeline__empty">Recording... events will appear here.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ STOPPED VIEW ════════ -->
+      <div id="stopped-view" class="view" hidden>
+        <!-- TC Header -->
+        <div class="tc-badge tc-badge--stopped" id="tc-badge-stopped" hidden>
+          <span class="tc-badge__icon">📋</span>
+          <span class="tc-badge__name" id="tc-badge-name-stopped"></span>
+        </div>
+
+        <!-- Status -->
+        <div class="status-card status-card--stopped" id="status-card">
+          <div class="status-indicator">
+            <span class="status-indicator__dot" id="status-dot"></span>
+            <span class="status-indicator__label" id="status-label">Recording Stopped</span>
+          </div>
+        </div>
+
+        <!-- Recording Context -->
+        <div class="recording-context" id="stopped-recording-context" hidden>
+          <div class="recording-context__header">
+            <span class="recording-context__icon">📍</span>
+            <span class="recording-context__label">Recording started on</span>
+          </div>
+          <a class="recording-context__url" id="stopped-recording-context-url" href="#" target="_blank" rel="noopener"></a>
+        </div>
+
+        <!-- Observed Workflow (primary view) -->
+        <div class="timeline" id="detected-interactions-section" hidden>
+          <div class="timeline__header">
+            <h2 class="timeline__title">📋 Observed Workflow</h2>
+            <span class="timeline__count" id="detected-interactions-count">0</span>
+          </div>
+          <div class="timeline__events" id="detected-interactions-list"></div>
+        </div>
+
+        <!-- Raw Event Timeline (collapsible — for developers) -->
+        <div class="timeline" id="stopped-timeline">
+          <div class="timeline__header">
+            <h2 class="timeline__title">Raw Event Timeline</h2>
+            <button class="collapsible-toggle" id="raw-events-toggle" type="button">▶ Show Raw Events</button>
+          </div>
+          <div class="timeline__events" id="stopped-timeline-events" hidden></div>
+        </div>
+
+        <!-- Replay JSON -->
+        <div class="playwright-section" id="replay-section" hidden>
+          <div class="playwright-section__header">
+            <h2 class="playwright-section__title">📋 Replay JSON</h2>
+            <button class="step-card__json-toggle" id="replay-toggle" type="button">▶ Show Replay JSON</button>
+          </div>
+          <pre class="playwright-section__code" id="replay-code" hidden></pre>
+        </div>
+
+        <!-- Next Actions -->
+        <div class="stopped-actions">
+          <button id="record-another-btn" class="btn btn--primary">New Test Case</button>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <span class="footer__text">v10.4.18 · Date &amp; Time Complete</span>
+    </footer>
+  </div>
+  <script type="module" src="sidepanel.ts"></script>
+</body>
+</html>

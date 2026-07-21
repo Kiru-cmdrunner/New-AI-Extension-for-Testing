@@ -1,0 +1,18 @@
+node_modules/
+dist/
+*.zip
+.DS_Store
+*.log
+.env
+
+# Test/debug screenshots (not part of the extension)
+.playwright-mcp/
+repository-page.png
+repository-tree-expanded.png
+settings-about.png
+sidepanel.png
+*.tar.gz
+
+# Temporary/debug artifacts
+tmp/
+*.py

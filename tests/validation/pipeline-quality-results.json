@@ -1,0 +1,975 @@
+[
+  {
+    "testName": "Button click",
+    "userAction": "Click \"Primary Button\"",
+    "rawEventCount": 2,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "click",
+        "actionId": "click-0001",
+        "elementName": "Primary Button",
+        "elementType": "BUTTON",
+        "cssSelector": "#btn-primary",
+        "xPath": "//button[@id='btn-primary']",
+        "testId": "btn-primary"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "Hyperlink click",
+    "userAction": "Click \"Internal Hyperlink\"",
+    "rawEventCount": 3,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "click",
+        "actionId": "click-0001",
+        "elementName": "Internal Hyperlink",
+        "elementType": "A",
+        "cssSelector": "#link-internal",
+        "xPath": "//a[@id='link-internal']",
+        "testId": "link-internal"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "Text input",
+    "userAction": "Type \"Hello World\" in the text field, then click away",
+    "rawEventCount": 28,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "text",
+        "actionId": "text-0001",
+        "elementName": "Text:",
+        "elementType": "INPUT",
+        "value": "Hello World",
+        "cssSelector": "#input-text",
+        "xPath": "//input[@id='input-text']",
+        "testId": "input-text"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "Password input",
+    "userAction": "Type \"secret123\" in password field",
+    "rawEventCount": 23,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "text",
+        "actionId": "text-0001",
+        "elementName": "Password:",
+        "elementType": "INPUT",
+        "value": "secret123",
+        "cssSelector": "#input-password",
+        "xPath": "//input[@id='input-password']",
+        "testId": "input-password"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "Search input",
+    "userAction": "Type \"find me\" in search box",
+    "rawEventCount": 19,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "text",
+        "actionId": "text-0001",
+        "elementName": "Search:",
+        "elementType": "INPUT",
+        "value": "find me",
+        "cssSelector": "#input-search",
+        "xPath": "//input[@id='input-search']",
+        "testId": "input-search"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "Textarea",
+    "userAction": "Type \"multi-line content\" in textarea",
+    "rawEventCount": 41,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "text",
+        "actionId": "text-0001",
+        "elementName": "Textarea:",
+        "elementType": "TEXTAREA",
+        "value": "multi-line content",
+        "cssSelector": "#textarea",
+        "xPath": "//textarea[@id='textarea']",
+        "testId": "textarea"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "Checkbox toggle",
+    "userAction": "Check \"Checkbox 1\"",
+    "rawEventCount": 5,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "checkbox",
+        "actionId": "check-0001",
+        "elementName": "Checkbox 1",
+        "elementType": "INPUT",
+        "checked": true,
+        "cssSelector": "#cb-1",
+        "xPath": "//input[@id='cb-1']",
+        "testId": "cb-1"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "Radio selection",
+    "userAction": "Select \"Option 2\" radio button",
+    "rawEventCount": 7,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "select",
+        "actionId": "select-0001",
+        "elementName": "Option 2",
+        "elementType": "INPUT",
+        "value": "Option 2",
+        "cssSelector": "#rb-2",
+        "xPath": "//input[@id='rb-2']",
+        "testId": "rb-2"
+      }
+    ],
+    "quality": {
+      "typeMatch": false,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "PARTIAL",
+    "issues": [
+      "typeMatch FAILED"
+    ]
+  },
+  {
+    "testName": "Native dropdown",
+    "userAction": "Select \"Banana\" from dropdown",
+    "rawEventCount": 2,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "select",
+        "actionId": "select-0001",
+        "elementName": "Native Select:",
+        "elementType": "SELECT",
+        "value": "Banana",
+        "cssSelector": "#select-native",
+        "xPath": "//select[@id='select-native']",
+        "testId": "select-native"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "Multi-select",
+    "userAction": "Select Red and Green from multi-select",
+    "rawEventCount": 2,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "select",
+        "actionId": "select-0001",
+        "elementName": "Multi-select:",
+        "elementType": "SELECT",
+        "value": "Red",
+        "cssSelector": "#select-multi",
+        "xPath": "//select[@id='select-multi']",
+        "testId": "select-multi"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "Date picker (native)",
+    "userAction": "Select date 2025-06-15",
+    "rawEventCount": 1,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "dateSelect",
+        "actionId": "dateSelect-0001",
+        "elementName": "Date:",
+        "elementType": "INPUT",
+        "value": "2025-06-15",
+        "dateType": "date",
+        "isoValue": "2025-06-15",
+        "cssSelector": "#date-native",
+        "xPath": "//input[@id='date-native']",
+        "testId": "date-native"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "Time picker (native)",
+    "userAction": "Select time 14:30",
+    "rawEventCount": 1,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "dateSelect",
+        "actionId": "dateSelect-0001",
+        "elementName": "Time:",
+        "elementType": "INPUT",
+        "value": "14:30",
+        "dateType": "time",
+        "isoValue": "14:30",
+        "cssSelector": "#time-native",
+        "xPath": "//input[@id='time-native']",
+        "testId": "time-native"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "Custom calendar date picker",
+    "userAction": "Open calendar and select day 15",
+    "rawEventCount": 8,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "dateSelect",
+        "actionId": "dateSelect-0001",
+        "elementName": "Select a date▼",
+        "elementType": "DIV",
+        "value": "15",
+        "dateType": "date",
+        "isoValue": "15",
+        "cssSelector": "#calendar-trigger",
+        "xPath": "//div[@id='calendar-trigger']",
+        "testId": "calendar-trigger"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": false
+    },
+    "verdict": "PARTIAL",
+    "issues": [
+      "correctTarget FAILED"
+    ]
+  },
+  {
+    "testName": "Date range picker",
+    "userAction": "Select start=2025-01-01 and end=2025-12-31",
+    "rawEventCount": 2,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "dateSelect",
+        "actionId": "dateSelect-0001",
+        "elementName": "N/A",
+        "elementType": "INPUT",
+        "value": "2025-01-01",
+        "dateType": "date",
+        "isoValue": "2025-01-01",
+        "cssSelector": "#date-range-start",
+        "xPath": "//input[@id='date-range-start']",
+        "testId": "date-range-start"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": false,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": false
+    },
+    "verdict": "PARTIAL",
+    "issues": [
+      "hasTarget FAILED",
+      "correctTarget FAILED"
+    ]
+  },
+  {
+    "testName": "ARIA combobox dropdown",
+    "userAction": "Open dropdown and select \"Beta\"",
+    "rawEventCount": 8,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "select",
+        "actionId": "select-0001",
+        "elementName": "Choose option...▼",
+        "elementType": "DIV",
+        "value": "Beta",
+        "cssSelector": "#aria-dd-trigger",
+        "xPath": "//div[@id='aria-dd-trigger']",
+        "testId": null
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": false
+    },
+    "verdict": "PARTIAL",
+    "issues": [
+      "correctTarget FAILED"
+    ]
+  },
+  {
+    "testName": "CSS-only dropdown (no ARIA)",
+    "userAction": "Open dropdown and select \"Red\"",
+    "rawEventCount": 5,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "click",
+        "actionId": "click-0001",
+        "elementName": "Select...▼",
+        "elementType": "DIV",
+        "cssSelector": "#css-dd-trigger",
+        "xPath": "//div[@id='css-dd-trigger']",
+        "testId": null
+      }
+    ],
+    "quality": {
+      "typeMatch": false,
+      "hasTarget": true,
+      "hasValue": false,
+      "hasReplayInfo": true,
+      "correctTarget": false
+    },
+    "verdict": "INACCURATE",
+    "issues": [
+      "typeMatch FAILED",
+      "hasValue FAILED",
+      "correctTarget FAILED"
+    ]
+  },
+  {
+    "testName": "ARIA checkbox toggle",
+    "userAction": "Toggle the ARIA checkbox",
+    "rawEventCount": 5,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "checkbox",
+        "actionId": "check-0001",
+        "elementName": "☐ ARIA Checkbox",
+        "elementType": "DIV",
+        "checked": true,
+        "cssSelector": "#aria-cb",
+        "xPath": "//div[@id='aria-cb']",
+        "testId": "aria-cb"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "ARIA radio selection",
+    "userAction": "Select \"Option B\" in ARIA radio group",
+    "rawEventCount": 5,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "radio",
+        "actionId": "radio-0001",
+        "elementName": "○ Option B",
+        "elementType": "DIV",
+        "cssSelector": "body > div:nth-of-type(4) > div:nth-of-type(4) > div > div:nth-of-type(2)",
+        "xPath": "//body/div[4]/div[4]/div/div[2]",
+        "testId": "aria-rb-2"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "Toggle switch",
+    "userAction": "Flip the toggle switch",
+    "rawEventCount": 3,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "checkbox",
+        "actionId": "check-0001",
+        "elementName": "N/A",
+        "elementType": "INPUT",
+        "checked": true,
+        "cssSelector": "#toggle-native",
+        "xPath": "//input[@id='toggle-native']",
+        "testId": "toggle-native"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": false,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": false
+    },
+    "verdict": "PARTIAL",
+    "issues": [
+      "hasTarget FAILED",
+      "correctTarget FAILED"
+    ]
+  },
+  {
+    "testName": "Segmented control",
+    "userAction": "Switch from \"List\" to \"Grid\" view",
+    "rawEventCount": 5,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "select",
+        "actionId": "select-0001",
+        "elementName": "Grid",
+        "elementType": "BUTTON",
+        "value": "● Option B",
+        "cssSelector": "body > div:nth-of-type(4) > div:nth-of-type(6) > div > button:nth-of-type(2)",
+        "xPath": "//body/div[4]/div[6]/div/button[2]",
+        "testId": "seg-2"
+      }
+    ],
+    "quality": {
+      "typeMatch": false,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "PARTIAL",
+    "issues": [
+      "typeMatch FAILED"
+    ]
+  },
+  {
+    "testName": "Range slider",
+    "userAction": "Move slider from 50 to ~53",
+    "rawEventCount": 12,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "click",
+        "actionId": "click-0001",
+        "elementName": "Range:",
+        "elementType": "INPUT",
+        "cssSelector": "#input-range",
+        "xPath": "//input[@id='input-range']",
+        "testId": "input-range"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "Tab switch",
+    "userAction": "Click \"Tab 2\"",
+    "rawEventCount": 5,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "click",
+        "actionId": "click-0001",
+        "elementName": "Tab 2",
+        "elementType": "DIV",
+        "cssSelector": "#tab2",
+        "xPath": "//div[@id='tab2']",
+        "testId": "tab2"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "Accordion expand",
+    "userAction": "Click to expand \"Custom Accordion 1\"",
+    "rawEventCount": 5,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "click",
+        "actionId": "click-0001",
+        "elementName": "Custom Accordion 1 ▼",
+        "elementType": "DIV",
+        "cssSelector": "body > div:nth-of-type(5) > div:nth-of-type(6) > div:nth-of-type(1) > div:nth-of-type(1)",
+        "xPath": "//body/div[5]/div[6]/div[1]/div[1]",
+        "testId": "acc-h1"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "Native details expand",
+    "userAction": "Click summary to expand native details",
+    "rawEventCount": 4,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "click",
+        "actionId": "click-0001",
+        "elementName": "Native Details Section",
+        "elementType": "SUMMARY",
+        "cssSelector": "body > div:nth-of-type(5) > details > summary",
+        "xPath": "//body/div[5]/details/summary",
+        "testId": "summary-1"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "Autocomplete",
+    "userAction": "Type \"United\" and select first suggestion",
+    "rawEventCount": 18,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "text",
+        "actionId": "text-0001",
+        "elementName": "Type a country...",
+        "elementType": "INPUT",
+        "cssSelector": "#autocomplete-input",
+        "xPath": "//input[@id='autocomplete-input']",
+        "testId": "autocomplete-input"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": false,
+      "hasReplayInfo": true,
+      "correctTarget": false
+    },
+    "verdict": "PARTIAL",
+    "issues": [
+      "hasValue FAILED",
+      "correctTarget FAILED"
+    ]
+  },
+  {
+    "testName": "Tree expand/collapse",
+    "userAction": "Click \"Documents\" to collapse it",
+    "rawEventCount": 6,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "text",
+        "actionId": "text-0001",
+        "elementName": "▼\nDocuments",
+        "elementType": "DIV",
+        "cssSelector": "body > div:nth-of-type(8) > div > div:nth-of-type(1) > div:nth-of-type(1)",
+        "xPath": "//body/div[8]/div/div[1]/div[1]",
+        "testId": "tree-1"
+      }
+    ],
+    "quality": {
+      "typeMatch": false,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "PARTIAL",
+    "issues": [
+      "typeMatch FAILED"
+    ]
+  },
+  {
+    "testName": "Table sort",
+    "userAction": "Click \"Age\" column header to sort",
+    "rawEventCount": 2,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "click",
+        "actionId": "click-0001",
+        "elementName": "▶\nDocuments",
+        "elementType": "DIV",
+        "cssSelector": "body > div:nth-of-type(8) > div > div:nth-of-type(1) > div:nth-of-type(1)",
+        "xPath": "//body/div[8]/div/div[1]/div[1]",
+        "testId": "tree-1"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": false
+    },
+    "verdict": "PARTIAL",
+    "issues": [
+      "correctTarget FAILED"
+    ]
+  },
+  {
+    "testName": "Table row checkbox",
+    "userAction": "Check row 2 checkbox in the table",
+    "rawEventCount": 5,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "checkbox",
+        "actionId": "check-0001",
+        "elementName": "N/A",
+        "elementType": "INPUT",
+        "checked": true,
+        "cssSelector": "table > tbody > tr:nth-of-type(2) > td:nth-of-type(3) > input",
+        "xPath": "//body/div[9]/table/tbody/tr[2]/td[3]/input",
+        "testId": "row-2-cb"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": false,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": false
+    },
+    "verdict": "PARTIAL",
+    "issues": [
+      "hasTarget FAILED",
+      "correctTarget FAILED"
+    ]
+  },
+  {
+    "testName": "Modal open",
+    "userAction": "Click \"Open Modal\" button",
+    "rawEventCount": 4,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "checkbox",
+        "actionId": "check-0001",
+        "elementName": "Open Modal",
+        "elementType": "BUTTON",
+        "checked": true,
+        "cssSelector": "#open-modal-btn",
+        "xPath": "//button[@id='open-modal-btn']",
+        "testId": "open-modal-btn"
+      }
+    ],
+    "quality": {
+      "typeMatch": false,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "PARTIAL",
+    "issues": [
+      "typeMatch FAILED"
+    ]
+  },
+  {
+    "testName": "Modal close (Cancel button)",
+    "userAction": "Click \"Cancel\" in modal",
+    "rawEventCount": 4,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "click",
+        "actionId": "click-0001",
+        "elementName": "Cancel",
+        "elementType": "BUTTON",
+        "cssSelector": "#modal-cancel",
+        "xPath": "//button[@id='modal-cancel']",
+        "testId": "modal-cancel"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "File upload",
+    "userAction": "Click file input (simulated)",
+    "rawEventCount": 2,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "click",
+        "actionId": "click-0001",
+        "elementName": "File Upload:",
+        "elementType": "INPUT",
+        "cssSelector": "#input-file",
+        "xPath": "//input[@id='input-file']",
+        "testId": "input-file"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "Drag & Drop",
+    "userAction": "Drag \"Item A\" from column 1 to column 2",
+    "rawEventCount": 1,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "click",
+        "actionId": "click-0001",
+        "elementName": "File Upload:",
+        "elementType": "INPUT",
+        "cssSelector": "#input-file",
+        "xPath": "//input[@id='input-file']",
+        "testId": "input-file"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": false
+    },
+    "verdict": "PARTIAL",
+    "issues": [
+      "correctTarget FAILED"
+    ]
+  },
+  {
+    "testName": "Rich text editor",
+    "userAction": "Type \"Rich text content\" in editor",
+    "rawEventCount": 38,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "click",
+        "actionId": "click-0001",
+        "elementName": "Rich text editor",
+        "elementType": "DIV",
+        "cssSelector": "#rte-editor",
+        "xPath": "//div[@id='rte-editor']",
+        "testId": "rte-editor"
+      }
+    ],
+    "quality": {
+      "typeMatch": false,
+      "hasTarget": true,
+      "hasValue": false,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "PARTIAL",
+    "issues": [
+      "typeMatch FAILED",
+      "hasValue FAILED"
+    ]
+  },
+  {
+    "testName": "Shadow DOM button",
+    "userAction": "Click \"Shadow Button 1\" inside shadow root",
+    "rawEventCount": 1,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "click",
+        "actionId": "click-0001",
+        "elementName": "Shadow Button 1",
+        "elementType": "BUTTON",
+        "cssSelector": "#sb1",
+        "xPath": "//button[@id='sb1']",
+        "testId": "shadow-btn-1"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": true
+    },
+    "verdict": "ACCURATE",
+    "issues": []
+  },
+  {
+    "testName": "Form submit",
+    "userAction": "Type in form field and click Submit",
+    "rawEventCount": 16,
+    "sessionEventCount": 1,
+    "sessionEvents": [
+      {
+        "type": "click",
+        "actionId": "click-0001",
+        "elementName": "Form field",
+        "elementType": "INPUT",
+        "cssSelector": "#form-input",
+        "xPath": "//input[@id='form-input']",
+        "testId": "form-input"
+      }
+    ],
+    "quality": {
+      "typeMatch": true,
+      "hasTarget": true,
+      "hasValue": true,
+      "hasReplayInfo": true,
+      "correctTarget": false
+    },
+    "verdict": "PARTIAL",
+    "issues": [
+      "correctTarget FAILED"
+    ]
+  }
+]

@@ -1,0 +1,1702 @@
+[
+  {
+    "name": "Button click",
+    "category": "HTML5 Standard",
+    "expectedType": "click",
+    "captured": true,
+    "eventCount": 2,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Secondary button",
+    "category": "HTML5 Standard",
+    "expectedType": "click",
+    "captured": true,
+    "eventCount": 3,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Hyperlink",
+    "category": "HTML5 Standard",
+    "expectedType": "click",
+    "captured": true,
+    "eventCount": 3,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Text input",
+    "category": "HTML5 Standard",
+    "expectedType": "text_entry",
+    "captured": true,
+    "eventCount": 27,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Password input",
+    "category": "HTML5 Standard",
+    "expectedType": "text_entry",
+    "captured": true,
+    "eventCount": 22,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Search input",
+    "category": "HTML5 Standard",
+    "expectedType": "text_entry",
+    "captured": true,
+    "eventCount": 18,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Textarea",
+    "category": "HTML5 Standard",
+    "expectedType": "text_entry",
+    "captured": true,
+    "eventCount": 24,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Checkbox toggle",
+    "category": "HTML5 Standard",
+    "expectedType": "checkbox",
+    "captured": true,
+    "eventCount": 4,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Checkbox toggle 2",
+    "category": "HTML5 Standard",
+    "expectedType": "checkbox",
+    "captured": true,
+    "eventCount": 5,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Radio selection",
+    "category": "HTML5 Standard",
+    "expectedType": "radio",
+    "captured": true,
+    "eventCount": 5,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Native select",
+    "category": "HTML5 Standard",
+    "expectedType": "select",
+    "captured": true,
+    "eventCount": 2,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Multi-select",
+    "category": "HTML5 Standard",
+    "expectedType": "select",
+    "captured": true,
+    "eventCount": 2,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Native date input",
+    "category": "Date & Time",
+    "expectedType": "date",
+    "captured": true,
+    "eventCount": 1,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Native time input",
+    "category": "Date & Time",
+    "expectedType": "time",
+    "captured": true,
+    "eventCount": 1,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Custom calendar picker",
+    "category": "Date & Time",
+    "expectedType": "date",
+    "captured": true,
+    "eventCount": 4,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Date range picker",
+    "category": "Date & Time",
+    "expectedType": "date",
+    "captured": true,
+    "eventCount": 2,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "ARIA combobox dropdown",
+    "category": "Custom Widget (ARIA)",
+    "expectedType": "select",
+    "captured": true,
+    "eventCount": 4,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "CSS-only dropdown",
+    "category": "Custom Widget (No ARIA)",
+    "expectedType": "select",
+    "captured": true,
+    "eventCount": 3,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "ARIA checkbox toggle",
+    "category": "Custom Widget (ARIA)",
+    "expectedType": "checkbox",
+    "captured": true,
+    "eventCount": 3,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "ARIA radio selection",
+    "category": "Custom Widget (ARIA)",
+    "expectedType": "radio",
+    "captured": true,
+    "eventCount": 3,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Toggle switch",
+    "category": "Custom Widget",
+    "expectedType": "toggle",
+    "captured": false,
+    "eventCount": 0,
+    "eventTypes": [],
+    "eventDetails": [],
+    "error": "Node is either not clickable or not an Element"
+  },
+  {
+    "name": "Segmented control",
+    "category": "Custom Widget (ARIA)",
+    "expectedType": "toggle",
+    "captured": true,
+    "eventCount": 3,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Range slider",
+    "category": "HTML5 Standard",
+    "expectedType": "range",
+    "captured": true,
+    "eventCount": 8,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Tab switch",
+    "category": "Navigation",
+    "expectedType": "tab",
+    "captured": true,
+    "eventCount": 3,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Accordion (custom)",
+    "category": "Navigation",
+    "expectedType": "accordion",
+    "captured": true,
+    "eventCount": 3,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Accordion (native details)",
+    "category": "Navigation",
+    "expectedType": "accordion",
+    "captured": true,
+    "eventCount": 3,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Hover menu",
+    "category": "Navigation",
+    "expectedType": "hover",
+    "captured": true,
+    "eventCount": 1,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Autocomplete type + select",
+    "category": "Custom Widget (ARIA)",
+    "expectedType": "autocomplete",
+    "captured": true,
+    "eventCount": 15,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Tree expand/collapse",
+    "category": "Complex Widget",
+    "expectedType": "tree",
+    "captured": true,
+    "eventCount": 4,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Tree select child",
+    "category": "Complex Widget",
+    "expectedType": "tree",
+    "captured": true,
+    "eventCount": 3,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Table sort",
+    "category": "Complex Widget",
+    "expectedType": "click",
+    "captured": true,
+    "eventCount": 1,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Table row checkbox",
+    "category": "Complex Widget",
+    "expectedType": "checkbox",
+    "captured": true,
+    "eventCount": 4,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Modal open",
+    "category": "Navigation",
+    "expectedType": "dialog",
+    "captured": true,
+    "eventCount": 3,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Modal close",
+    "category": "Navigation",
+    "expectedType": "dialog",
+    "captured": true,
+    "eventCount": 4,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Native dialog open",
+    "category": "Navigation",
+    "expectedType": "dialog",
+    "captured": true,
+    "eventCount": 4,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Native dialog close",
+    "category": "Navigation",
+    "expectedType": "dialog",
+    "captured": true,
+    "eventCount": 3,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "File upload",
+    "category": "Not Supported",
+    "expectedType": "file",
+    "captured": true,
+    "eventCount": 3,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Drag & Drop",
+    "category": "Not Supported",
+    "expectedType": "drag_drop",
+    "captured": true,
+    "eventCount": 1,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Rich text editor",
+    "category": "Not Supported",
+    "expectedType": "rte",
+    "captured": true,
+    "eventCount": 21,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Shadow DOM button",
+    "category": "Shadow DOM",
+    "expectedType": "click",
+    "captured": true,
+    "eventCount": 1,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Shadow DOM checkbox",
+    "category": "Shadow DOM",
+    "expectedType": "checkbox",
+    "captured": true,
+    "eventCount": 2,
+    "eventTypes": [
+      "PIPELINE_EVENT"
+    ],
+    "eventDetails": [
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      },
+      {
+        "msgType": "PIPELINE_EVENT",
+        "eventType": "N/A",
+        "target": "N/A"
+      }
+    ],
+    "error": null
+  },
+  {
+    "name": "Virtualized list scroll",
+    "category": "Complex Widget",
+    "expectedType": "scroll",
+    "captured": false,
+    "eventCount": 0,
+    "eventTypes": [],
+    "eventDetails": [],
+    "error": null
+  },
+  {
+    "name": "Canvas click",
+    "category": "Not Supported",
+    "expectedType": "canvas",
+    "captured": false,
+    "eventCount": 0,
+    "eventTypes": [],
+    "eventDetails": [],
+    "error": null
+  },
+  {
+    "name": "Form submit",
+    "category": "HTML5 Standard",
+    "expectedType": "submit",
+    "captured": false,
+    "eventCount": 0,
+    "eventTypes": [],
+    "eventDetails": [],
+    "error": null
+  }
+]
