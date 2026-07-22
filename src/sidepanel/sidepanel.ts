@@ -114,6 +114,12 @@ const repoStatusBody = document.getElementById('repo-status-body')!;
 const healingStatusSection = document.getElementById('healing-status-section')!;
 const healingStatusBody = document.getElementById('healing-status-body')!;
 
+// Execution section (Phase 12.6)
+const executionSection = document.getElementById('execution-section')!;
+const executionBody = document.getElementById('execution-body')!;
+const runTestBtn = document.getElementById('run-test-btn') as HTMLButtonElement;
+const executionRunningSection = document.getElementById('execution-running-section')!;
+
 // Header
 const settingsBtn = document.getElementById('settings-btn')!;
 const repoBtn = document.getElementById('repo-btn')!;
@@ -267,10 +273,28 @@ function updateCsStatus(state: 'checking' | 'connected' | 'error'): void {
 
 // Listen for content script status updates from the service worker
 chrome.runtime.onMessage.addListener((message: unknown) => {
-  if (message && typeof message === 'object' && (message as any).type === 'CONTENT_SCRIPT_STATUS') {
-    const msg = message as { type: 'CONTENT_SCRIPT_STATUS'; alive: boolean; recording: boolean; url: string };
-    if (msg.recording) {
-      updateCsStatus(msg.alive ? 'connected' : 'error');
+  if (message && typeof message === 'object') {
+    const msg = message as { type: string; [key: string]: unknown };
+
+    if (msg.type === 'CONTENT_SCRIPT_STATUS') {
+      const csMsg = msg as { type: 'CONTENT_SCRIPT_STATUS'; alive: boolean; recording: boolean; url: string };
+      if (csMsg.recording) {
+        updateCsStatus(csMsg.alive ? 'connected' : 'error');
+      }
+    }
+
+    if (msg.type === 'EXECUTION_RESULT') {
+      // Execution completed — hide running indicator, load full results from storage
+      executionRunningSection.hidden = true;
+      runTestBtn.disabled = false;
+      loadExecutionResult().then((data) => {
+        if (data) {
+          renderExecutionResult(data);
+        } else {
+          executionBody.textContent = 'Execution completed but no result data found.';
+          executionSection.hidden = false;
+        }
+      });
     }
   }
 });
@@ -772,6 +796,180 @@ function renderHealingSummary(data: HealingSummary): void {
   healingStatusSection.hidden = false;
 }
 
+// ── Execution Results (Phase 12.6) ─────────────────────────
+
+interface ExecutionStepDisplay {
+  stepId: string;
+  status: 'passed' | 'failed' | 'error' | 'skipped';
+  durationMs: number;
+  assertionResults: Array<{ type: string; passed: boolean; message: string }>;
+  error?: { message: string; type: string };
+}
+
+interface ExecutionSummaryData {
+  status: 'passed' | 'failed' | 'error';
+  stepCount: number;
+  passedSteps: number;
+  failedSteps: number;
+  errorSteps: number;
+  skippedSteps: number;
+  durationMs: number;
+  startedAt: string;
+  completedAt: string;
+  stepResults: ExecutionStepDisplay[];
+  executionRunId?: string | null;
+}
+
+async function loadExecutionResult(): Promise<ExecutionSummaryData | null> {
+  try {
+    const result = await chrome.storage.local.get(StorageKeys.EXECUTION_RESULT);
+    const data = result[StorageKeys.EXECUTION_RESULT];
+    if (!data) return null;
+    return data as ExecutionSummaryData;
+  } catch {
+    return null;
+  }
+}
+
+function renderExecutionResult(data: ExecutionSummaryData): void {
+  executionBody.innerHTML = '';
+
+  // Status badge
+  const statusRow = document.createElement('div');
+  statusRow.className = 'repo-status__row';
+  const statusBadge = document.createElement('span');
+  statusBadge.className = `repo-status__badge repo-status__badge--${data.status === 'passed' ? 'merged' : data.status === 'failed' ? 'ambiguous' : 'new'}`;
+  statusBadge.textContent = data.status.toUpperCase();
+  const summaryText = document.createElement('span');
+  summaryText.className = 'repo-status__value';
+  summaryText.textContent = `${data.passedSteps}/${data.stepCount} steps passed · ${Math.round(data.durationMs)}ms`;
+  statusRow.append(statusBadge, summaryText);
+  executionBody.appendChild(statusRow);
+
+  // Step counts
+  if (data.failedSteps > 0 || data.errorSteps > 0 || data.skippedSteps > 0) {
+    const countsRow = document.createElement('div');
+    countsRow.className = 'repo-status__row';
+    const countsLabel = document.createElement('span');
+    countsLabel.className = 'repo-status__label';
+    countsLabel.textContent = 'Breakdown:';
+    const countsValue = document.createElement('span');
+    countsValue.className = 'repo-status__value';
+    const parts: string[] = [`${data.passedSteps} passed`];
+    if (data.failedSteps > 0) parts.push(`${data.failedSteps} failed`);
+    if (data.errorSteps > 0) parts.push(`${data.errorSteps} errored`);
+    if (data.skippedSteps > 0) parts.push(`${data.skippedSteps} skipped`);
+    countsValue.textContent = parts.join(', ');
+    countsRow.append(countsLabel, countsValue);
+    executionBody.appendChild(countsRow);
+  }
+
+  // Timing
+  const timingRow = document.createElement('div');
+  timingRow.className = 'repo-status__row';
+  const timingLabel = document.createElement('span');
+  timingLabel.className = 'repo-status__label';
+  timingLabel.textContent = 'Duration:';
+  const timingValue = document.createElement('span');
+  timingValue.className = 'repo-status__value';
+  timingValue.textContent = `${(data.durationMs / 1000).toFixed(2)}s`;
+  timingRow.append(timingLabel, timingValue);
+  executionBody.appendChild(timingRow);
+
+  // Execution Run ID
+  if (data.executionRunId) {
+    const idRow = document.createElement('div');
+    idRow.className = 'repo-status__row';
+    const idLabel = document.createElement('span');
+    idLabel.className = 'repo-status__label';
+    idLabel.textContent = 'Run ID:';
+    const idValue = document.createElement('span');
+    idValue.className = 'repo-status__value';
+    idValue.textContent = data.executionRunId.slice(0, 8) + '…';
+    idRow.append(idLabel, idValue);
+    executionBody.appendChild(idRow);
+  }
+
+  // Step-by-step results
+  if (data.stepResults && data.stepResults.length > 0) {
+    for (const step of data.stepResults.slice(0, 20)) {
+      const stepRow = document.createElement('div');
+      stepRow.className = 'repo-status__row';
+      const stepBadge = document.createElement('span');
+      const badgeClass = step.status === 'passed' ? 'merged'
+        : step.status === 'failed' ? 'ambiguous'
+        : step.status === 'error' ? 'new'
+        : 'new';
+      stepBadge.className = `repo-status__badge repo-status__badge--${badgeClass}`;
+      stepBadge.textContent = step.status;
+      const stepInfo = document.createElement('span');
+      stepInfo.className = 'repo-status__value';
+      stepInfo.textContent = `${step.stepId} (${step.durationMs}ms)`;
+      stepRow.append(stepBadge, stepInfo);
+      executionBody.appendChild(stepRow);
+
+      // Error message
+      if (step.error) {
+        const errRow = document.createElement('div');
+        errRow.className = 'repo-status__row';
+        errRow.style.marginLeft = '20px';
+        const errText = document.createElement('span');
+        errText.className = 'repo-status__label';
+        errText.textContent = `  ↳ ${step.error.type}: ${step.error.message}`;
+        errRow.appendChild(errText);
+        executionBody.appendChild(errRow);
+      }
+
+      // Assertion results
+      if (step.assertionResults && step.assertionResults.length > 0) {
+        for (const ar of step.assertionResults) {
+          const arRow = document.createElement('div');
+          arRow.className = 'repo-status__row';
+          arRow.style.marginLeft = '20px';
+          const arBadge = document.createElement('span');
+          arBadge.className = `repo-status__badge repo-status__badge--${ar.passed ? 'merged' : 'ambiguous'}`;
+          arBadge.textContent = ar.passed ? '✓' : '✗';
+          const arText = document.createElement('span');
+          arText.className = 'repo-status__label';
+          arText.textContent = `${ar.type}: ${ar.message}`;
+          arRow.append(arBadge, arText);
+          executionBody.appendChild(arRow);
+        }
+      }
+    }
+
+    if (data.stepResults.length > 20) {
+      const moreRow = document.createElement('div');
+      moreRow.className = 'repo-status__row';
+      const moreText = document.createElement('span');
+      moreText.className = 'repo-status__label';
+      moreText.textContent = `... and ${data.stepResults.length - 20} more steps`;
+      moreRow.appendChild(moreText);
+      executionBody.appendChild(moreRow);
+    }
+  }
+
+  executionSection.hidden = false;
+}
+
+async function handleRunTest(): Promise<void> {
+  // Show running indicator
+  executionSection.hidden = true;
+  executionRunningSection.hidden = false;
+  runTestBtn.disabled = true;
+
+  try {
+    await sendMessage({ type: 'RUN_TEST' });
+    // The EXECUTION_RESULT message will update the UI
+  } catch (e) {
+    console.error('[SidePanel] Failed to send RUN_TEST:', e);
+    executionRunningSection.hidden = true;
+    runTestBtn.disabled = false;
+    executionSection.hidden = false;
+    executionBody.textContent = 'Failed to start test execution.';
+  }
+}
+
 async function handleRecordAnother(): Promise<void> {
   await StorageService.clearEvents();
   await StorageService.clearRecordingContext();
@@ -785,10 +983,13 @@ async function handleRecordAnother(): Promise<void> {
   try { await chrome.storage.local.remove(StorageKeys.REPOSITORY_CAPABILITY_ID); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.REPOSITORY_CAPABILITY_DECISION); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.ELEMENT_HEAL_RESULT); } catch {}
+  try { await chrome.storage.local.remove(StorageKeys.EXECUTION_RESULT); } catch {}
   irStepsSection.hidden = true;
   irPlaywrightSection.hidden = true;
   repoStatusSection.hidden = true;
   healingStatusSection.hidden = true;
+  executionSection.hidden = true;
+  executionRunningSection.hidden = true;
   await openNewTestCase();
 }
 
@@ -979,6 +1180,9 @@ stopBtn.addEventListener('click', () => handleStopRecording());
 // Stopped
 recordAnotherBtn.addEventListener('click', () => handleRecordAnother());
 
+// Execution (Phase 12.6)
+runTestBtn.addEventListener('click', () => handleRunTest());
+
 // Raw Event Timeline toggle (collapsible)
 if (rawEventsToggle) {
   rawEventsToggle.addEventListener('click', () => {
@@ -1071,6 +1275,16 @@ async function init(): Promise<void> {
       renderHealingSummary(healingSummary);
     } else {
       healingStatusSection.hidden = true;
+    }
+
+    // Load execution results (Phase 12.6)
+    const executionData = await loadExecutionResult();
+    if (executionData) {
+      renderExecutionResult(executionData);
+    } else {
+      // Show the execution section with a Run button even if no prior result
+      executionBody.textContent = 'No execution results yet. Click "Run Test" to execute the generated test plan.';
+      executionSection.hidden = false;
     }
 
     const draft = await StorageService.getTestCaseDraft();

@@ -247,6 +247,25 @@
           <div class="repo-status__body" id="healing-status-body"></div>
         </div>
 
+        <!-- ══════ Execution Results (Phase 12.6) ══════ -->
+        <div class="repo-status" id="execution-section" hidden>
+          <div class="repo-status__header">
+            <h2 class="repo-status__title">▶ Execution</h2>
+            <button id="run-test-btn" class="btn btn--primary btn--sm">Run Test</button>
+          </div>
+          <div class="repo-status__body" id="execution-body"></div>
+        </div>
+
+        <!-- ══════ Execution Running Indicator (Phase 12.6) ══════ -->
+        <div class="repo-status" id="execution-running-section" hidden>
+          <div class="repo-status__header">
+            <h2 class="repo-status__title">⏳ Executing Test...</h2>
+          </div>
+          <div class="repo-status__body">
+            <p class="repo-status__label">Running test against live browser. Steps are executing sequentially.</p>
+          </div>
+        </div>
+
         <!-- Replay JSON -->
         <div class="playwright-section" id="replay-section" hidden>
           <div class="playwright-section__header">
