@@ -333,6 +333,65 @@ describe('Session Persistence Service', () => {
       });
     });
 
+    it('does not create a provisional capability for ambiguous matches', async () => {
+      // First recording — Create Customer
+      const result1 = await persistSession(factory, makePersistInput());
+
+      // Second recording — Create Premium Customer (ambiguous: overlapping
+      // name and inputs but different entry element, extra fields, different URL)
+      const ambiguousCandidate = makeCapabilityCandidate({
+        capabilityId: 'cand-003',
+        name: 'Create Premium Customer',
+        purpose: 'Create a premium customer record',
+        entryElement: {
+          elementId: 'elem-premium-submit',
+          accessibleName: 'Create Premium Customer',
+          tag: 'BUTTON',
+          role: 'button',
+        },
+        inputs: [
+          { label: 'Name', elementId: 'e1', required: true, inputType: 'text',
+            valueRange: null, lengthRange: null, format: null, validOptions: null },
+          { label: 'Email', elementId: 'e2', required: true, inputType: 'email',
+            valueRange: null, lengthRange: null, format: null, validOptions: null },
+          { label: 'Tier', elementId: 'e4', required: true, inputType: 'select',
+            valueRange: null, lengthRange: null, format: null, validOptions: ['Gold', 'Silver'] },
+          { label: 'Loyalty Points', elementId: 'e5', required: false, inputType: 'number',
+            valueRange: null, lengthRange: null, format: null, validOptions: null },
+        ],
+        observedOutcome: {
+          terminalUrl: '/customers/premium',
+          successSignals: ['redirect'],
+          completed: true,
+        },
+        sourceSessionId: 'session-002',
+        sourceFragmentId: 'frag-002',
+      });
+      const ambiguousUnderstanding = makeUnderstandingResult({
+        sessionId: 'session-002',
+        capability: ambiguousCandidate,
+      });
+
+      const result2 = await persistSession(factory, {
+        ...makePersistInput({
+          understanding: ambiguousUnderstanding,
+          projectId: result1.projectId,
+        }),
+      });
+
+      // Should be ambiguous — NO capability created, NO capabilityId
+      expect(result2.capabilityDecision).toBe('ambiguous');
+      expect(result2.capabilityId).toBeNull();
+
+      // Verify only ONE capability exists (the original "Create Customer")
+      const uow = factory.create();
+      await uow.execute(async (repos) => {
+        const caps = await repos.capabilities.getByProject(result1.projectId);
+        expect(caps).toHaveLength(1);
+        expect(caps[0].name).toBe('Create Customer');
+      });
+    });
+
     it('handles null capability gracefully', async () => {
       const understanding = makeUnderstandingResult({ capability: null });
       const result = await persistSession(factory, makePersistInput({ understanding }));

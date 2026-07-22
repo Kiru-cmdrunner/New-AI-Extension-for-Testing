@@ -131,12 +131,14 @@ export async function persistSession(
         capabilityId = capability.id;
         capabilityDecision = 'new';
       } else {
-        // Ambiguous — store candidate for human review
-        // For now, create a new capability (human can merge later)
-        const createInput = candidateToCreateInput(candidate, projectId);
-        const capability = createCapability(createInput);
-        await repos.capabilities.create(capability);
-        capabilityId = capability.id;
+        // Ambiguous — don't create a Capability. The candidate is already
+        // safely persisted inside the RecordingSession's UnderstandingResult.
+        // The human can later:
+        //   - Merge: call enrichCapability(existing, candidate) — one atomic op
+        //   - New: call createCapability(candidate) — one atomic op
+        // No provisional Capability is created to avoid cleanup complexity
+        // (re-linking test cases, merging enrichment data, deleting duplicates).
+        capabilityId = null;
         capabilityDecision = 'ambiguous';
       }
     }
