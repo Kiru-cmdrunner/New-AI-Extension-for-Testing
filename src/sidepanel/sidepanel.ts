@@ -678,10 +678,16 @@ async function loadRepositoryStatus(): Promise<RepoStatusData | null> {
 function renderRepositoryStatus(data: RepoStatusData): void {
   repoStatusBody.innerHTML = '';
 
-  // Session row
+  // Session row (built with textContent to avoid XSS)
   const sessionRow = document.createElement('div');
   sessionRow.className = 'repo-status__row';
-  sessionRow.innerHTML = `<span class="repo-status__label">Session:</span><span class="repo-status__value">${data.sessionId ? data.sessionId.slice(0, 8) : '—'}</span>`;
+  const sessionLabel = document.createElement('span');
+  sessionLabel.className = 'repo-status__label';
+  sessionLabel.textContent = 'Session:';
+  const sessionValue = document.createElement('span');
+  sessionValue.className = 'repo-status__value';
+  sessionValue.textContent = data.sessionId ? data.sessionId.slice(0, 8) : '—';
+  sessionRow.append(sessionLabel, sessionValue);
   repoStatusBody.appendChild(sessionRow);
 
   // Capability decision row
