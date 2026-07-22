@@ -73,6 +73,7 @@ interface EvaluateAssertionsMessage {
     comparison: string;
     expectedValue: unknown;
     property: string | null;
+    severity?: 'hard' | 'soft';
     target: { kind: string; elementId?: string; resolvedLocators?: LocatorInput[]; url?: string };
   }>;
   url?: string;
@@ -361,10 +362,20 @@ function compareValues(actual: unknown, expected: unknown, comparison: string): 
 function evaluateAssertionInContentScript(
   assertion: EvaluateAssertionsMessage['assertions'][0],
   url?: string,
-): { type: string; passed: boolean; actualValue?: unknown; expectedValue?: unknown; message: string } {
-  const { type, comparison, expectedValue, property, target } = assertion;
+): { type: string; passed: boolean; actualValue?: unknown; expectedValue?: unknown; message: string; severity?: 'hard' | 'soft' } {
+  const { type, comparison, expectedValue, property, target, severity } = assertion;
+  const result = evaluateAssertionInner(type, comparison, expectedValue, property, target, url);
+  return { ...result, severity };
+}
 
-  // URL_MATCH
+function evaluateAssertionInner(
+  type: string,
+  comparison: string,
+  expectedValue: unknown,
+  property: string | null,
+  target: EvaluateAssertionsMessage['assertions'][0]['target'],
+  url?: string,
+): { type: string; passed: boolean; actualValue?: unknown; expectedValue?: unknown; message: string } {
   if (type === 'urlMatch') {
     const currentUrl = url ?? window.location.href;
     const passed = compareValues(currentUrl, expectedValue, comparison);

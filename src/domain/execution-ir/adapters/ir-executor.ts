@@ -69,4 +69,6 @@ export interface IRAssertionResult {
   readonly actualValue?: unknown;
   readonly expectedValue?: unknown;
   readonly message: string;
+  /** Whether this assertion is a hard failure (stops the step) or soft (records only). */
+  readonly severity?: 'hard' | 'soft';
 }

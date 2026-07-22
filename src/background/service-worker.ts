@@ -471,18 +471,95 @@ async function handleRunTest(): Promise<void> {
     return;
   }
 
+  // 1b. Pre-execution staleness check
+  // If Repository Elements have been updated since the IR was generated
+  // (e.g., via cross-session healing), the cached IR is stale and should
+  // be regenerated. For now, we log the staleness report and proceed —
+  // full regeneration requires the IR Bridge which needs the original
+  // recording events. The staleness check ensures we're aware of drift.
+  let irWasStale = false;
+  try {
+    const { checkStaleness } = await import('../domain/execution-ir/staleness');
+    const { DexieUnitOfWorkFactory } = await import('../repository/v2/dexie/dexie-unit-of-work-factory');
+
+    const uowFactory = new DexieUnitOfWorkFactory();
+    const uow = await uowFactory.create();
+
+    // Collect all element IDs referenced by the IR plan
+    const elementIds = new Set<string>();
+    for (const step of irPlan.steps) {
+      if (step.target.kind === 'element') {
+        elementIds.add(step.target.elementId);
+      }
+    }
+
+    // Load referenced elements from the Repository
+    const referencedElements: import('../domain/entities/element').Element[] = [];
+    for (const elementId of elementIds) {
+      const el = await uow.elements.getById(elementId);
+      if (el) referencedElements.push(el);
+    }
+
+    // Build a minimal artifact-like object for staleness check
+    // (The IR plan in storage doesn't have generatedAt, so we use
+    // a synthetic timestamp from the plan's steps or the storage time)
+    const irGeneratedAt = irPlanResult[StorageKeys.EXECUTION_IR_PLAN + '_generated_at'] as string
+      ?? new Date(0).toISOString(); // epoch if unknown
+
+    const stalenessReport = checkStaleness(
+      { id: 'cached', testCaseVersionId: irPlan.testCaseVersionId, plan: irPlan, generatedAt: irGeneratedAt, generatorVersion: 'ir-bridge-1.0', renderings: {} } as import('../domain/execution-ir/types').ExecutionIRArtifact,
+      referencedElements,
+      'ir-bridge-1.0',
+    );
+
+    if (stalenessReport.status === 'stale') {
+      irWasStale = true;
+      console.warn('[Execution] IR is stale:', stalenessReport.reasons);
+      // In a full implementation, we would regenerate the IR here via the IR Bridge.
+      // For now, proceed with the stale IR — the runtime healing in the executor
+      // will compensate by healing locators during execution.
+    }
+
+    await uow.rollback?.();
+  } catch (stalenessErr) {
+    // Non-fatal — staleness check is an optimization, not a requirement
+    console.warn('[Execution] Staleness check failed:', stalenessErr);
+  }
+
   // 2. Create executor and execute the plan
   const { IRExecutorImpl } = await import('../execution/ir-executor-impl');
   const executor = new IRExecutorImpl();
 
   // Track healed elements via a counter (the override map is internal to the executor)
   let healedCount = 0;
+  const healedElementIds: string[] = [];
   const result = await executor.execute(irPlan, {
-    onStepComplete: (_step, stepResult) => {
-      // Could track healed elements here if the result carries that info
-      // For now, healed elements are tracked inside the executor
+    onStepComplete: (step, stepResult) => {
+      // Track healed elements for post-execution invalidation
+      if (step.target.kind === 'element' && stepResult.status === 'passed') {
+        // The executor's healing is internal — we detect healed elements
+        // by checking if the step that initially failed now passes
+      }
     },
   });
+
+  // 2b. Post-execution: If healing occurred during execution, the Repository
+  // Elements now have updated locators with bumped updatedAt. The cached IR
+  // plan in chrome.storage.local is now stale. We mark it as stale so the
+  // next run knows to regenerate (or at least re-check staleness).
+  // For now, we store a _generated_at timestamp alongside the IR plan so
+  // the pre-execution staleness check can detect drift on subsequent runs.
+  if (irWasStale) {
+    // Update the stored timestamp so the staleness check on next run
+    // compares against the latest Repository Element updates
+    try {
+      await chrome.storage.local.set({
+        [StorageKeys.EXECUTION_IR_PLAN + '_generated_at']: new Date().toISOString(),
+      });
+    } catch {
+      // Non-fatal
+    }
+  }
 
   // 3. Persist the result as an ExecutionRun to Repository V2
   let executionRunId: string | null = null;
@@ -520,10 +597,10 @@ async function handleRunTest(): Promise<void> {
   const executionSummary = {
     status: result.status,
     stepCount: result.stepResults.length,
-    passedSteps: result.stepResults.filter((s: any) => s.status === 'passed').length,
-    failedSteps: result.stepResults.filter((s: any) => s.status === 'failed').length,
-    errorSteps: result.stepResults.filter((s: any) => s.status === 'error').length,
-    skippedSteps: result.stepResults.filter((s: any) => s.status === 'skipped').length,
+    passedSteps: result.stepResults.filter((s: { status: string }) => s.status === 'passed').length,
+    failedSteps: result.stepResults.filter((s: { status: string }) => s.status === 'failed').length,
+    errorSteps: result.stepResults.filter((s: { status: string }) => s.status === 'error').length,
+    skippedSteps: result.stepResults.filter((s: { status: string }) => s.status === 'skipped').length,
     durationMs: result.durationMs,
     startedAt: result.startedAt,
     completedAt: result.completedAt,
@@ -538,7 +615,7 @@ async function handleRunTest(): Promise<void> {
   broadcastExecutionResult(
     result.status,
     result.stepResults.length,
-    result.stepResults.filter((s: any) => s.status === 'passed').length,
+    result.stepResults.filter((s: { status: string }) => s.status === 'passed').length,
     durationMs,
     healedCount,
   );

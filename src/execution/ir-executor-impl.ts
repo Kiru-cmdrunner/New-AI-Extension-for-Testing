@@ -368,9 +368,10 @@ export class IRExecutorImpl implements IRExecutor {
       assertionResults = evalResponse?.results ?? [];
     }
 
-    // Determine step status: passed if action succeeded AND all hard assertions passed
+    // Determine step status: passed if action succeeded AND all hard assertions passed.
+    // SOFT assertion failures are recorded in results but do NOT fail the step.
     const hardAssertionFailed = assertionResults.some(
-      (a) => !a.passed,
+      (a) => !a.passed && (a.severity === 'hard' || a.severity === undefined),
     );
 
     const actionSucceeded = actionResponse.status === 'passed';
@@ -432,7 +433,9 @@ export class IRExecutorImpl implements IRExecutor {
       const { extractCandidatesFromIdentity, rankLocatorCandidates } = await import(
         '../domain/locator-ranking'
       );
-      const candidates = extractCandidatesFromIdentity(extractResponse.identity as any);
+      const candidates = extractCandidatesFromIdentity(
+        extractResponse.identity as Record<string, string | null>,
+      );
       const ranked = rankLocatorCandidates(candidates);
 
       if (ranked.length === 0) return false;

@@ -711,4 +711,124 @@ describe('IRExecutorImpl', () => {
       expect(result.stepResults).toHaveLength(2);
     });
   });
+
+  describe('execute — HARD/SOFT assertion severity', () => {
+    it('does not fail step when SOFT assertion fails', async () => {
+      const opts = createMockOptions({
+        sendTabMessage: (async (tabId: number, message: any) => {
+          if (message.type === 'RESOLVE_LOCATOR') {
+            return { found: true, identity: { tag: 'DIV' } };
+          }
+          if (message.type === 'EXECUTE_STEP') {
+            return { stepId: 'step-1', action: 'click', status: 'passed', durationMs: 5 };
+          }
+          if (message.type === 'EVALUATE_ASSERTIONS') {
+            return {
+              results: [
+                {
+                  type: 'visibility',
+                  passed: false,
+                  actualValue: false,
+                  expectedValue: true,
+                  message: 'Element is not visible',
+                  severity: 'soft',
+                },
+              ],
+            };
+          }
+          return {};
+        }) as any,
+      });
+      const executor = new IRExecutorImpl(opts);
+      const plan = makePlan({
+        steps: [
+          makeElementStep({
+            assertions: [
+              {
+                type: ValidationType.VISIBILITY,
+                comparison: ValidationComparison.IS_TRUE,
+                expectedValue: true,
+                severity: ValidationSeverity.SOFT,
+                target: {
+                  kind: 'element',
+                  elementId: 'el-1',
+                  elementName: 'Result',
+                  pageOrComponent: 'Page',
+                  resolvedLocators: [{ type: 'testId' as any, value: 'result', priority: 1, confidence: 0.9 }],
+                },
+                property: null,
+              },
+            ],
+          }),
+        ],
+      });
+
+      const result = await executor.execute(plan);
+
+      // Step should PASS — SOFT assertion failure does not fail the step
+      expect(result.status).toBe('passed');
+      expect(result.stepResults[0].status).toBe('passed');
+      // But the SOFT assertion failure should still be recorded
+      expect(result.stepResults[0].assertionResults).toHaveLength(1);
+      expect(result.stepResults[0].assertionResults[0].passed).toBe(false);
+    });
+
+    it('fails step when HARD assertion fails', async () => {
+      const opts = createMockOptions({
+        sendTabMessage: (async (tabId: number, message: any) => {
+          if (message.type === 'RESOLVE_LOCATOR') {
+            return { found: true, identity: { tag: 'DIV' } };
+          }
+          if (message.type === 'EXECUTE_STEP') {
+            return { stepId: 'step-1', action: 'click', status: 'passed', durationMs: 5 };
+          }
+          if (message.type === 'EVALUATE_ASSERTIONS') {
+            return {
+              results: [
+                {
+                  type: 'textMatch',
+                  passed: false,
+                  actualValue: 'Error',
+                  expectedValue: 'Success',
+                  message: 'Text mismatch',
+                  severity: 'hard',
+                },
+              ],
+            };
+          }
+          return {};
+        }) as any,
+      });
+      const executor = new IRExecutorImpl(opts);
+      const plan = makePlan({
+        steps: [
+          makeElementStep({
+            assertions: [
+              {
+                type: ValidationType.TEXT_MATCH,
+                comparison: ValidationComparison.EQUALS,
+                expectedValue: 'Success',
+                severity: ValidationSeverity.HARD,
+                target: {
+                  kind: 'element',
+                  elementId: 'el-1',
+                  elementName: 'Result',
+                  pageOrComponent: 'Page',
+                  resolvedLocators: [{ type: 'testId' as any, value: 'result', priority: 1, confidence: 0.9 }],
+                },
+                property: null,
+              },
+            ],
+          }),
+        ],
+      });
+
+      const result = await executor.execute(plan);
+
+      // Step should FAIL — HARD assertion failure fails the step
+      expect(result.status).toBe('failed');
+      expect(result.stepResults[0].status).toBe('failed');
+      expect(result.stepResults[0].assertionResults[0].passed).toBe(false);
+    });
+  });
 });
