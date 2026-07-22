@@ -1,20 +1,25 @@
 /**
- * Healing Service — orchestrates cross-session element healing.
+ * Healing Service — element locator healing.
  *
- * Flow:
- *   1. Load stored Elements from Repository (scoped to project)
- *   2. Extract UiElements from the recording session's domain entities
- *   3. Match fresh UiElements against stored Elements (ElementMatchingService)
- *   4. For each match, resolve fresh locators and compare with stored
- *   5. If locators differ, heal the Element via healElement()
- *   6. Persist healed Elements via ElementRepository
+ * Two layers:
  *
- * Called from the pipeline runner after session persistence (non-fatal).
+ * 1. **healElementAndPersist()** — source-agnostic core.
+ *    Loads a stored Element, applies healElement() with the provided locator
+ *    strategies, and persists the result. Does NOT know where the locators
+ *    came from (recording, execution-time DOM inspection, AI suggestion, etc.).
+ *    This is the single extension point for Phase 12's execution-time healing.
+ *
+ * 2. **healFromRecording()** — recording-specific orchestrator.
+ *    Discovers candidates by batch-matching fresh UiElements against stored
+ *    Elements (ElementMatchingService), resolves locators from ElementIdentity,
+ *    delegates each heal to the shared core, and creates new Elements for
+ *    unmatched items. Only this function knows about recording sessions.
  */
 
-import { matchElements, type ElementMatchResult } from './element-matching-service';
+import { matchElements } from './element-matching-service';
 import { healElement, type Element, type HealContext } from '../../domain/entities/element';
-import type { CreateElementInput } from '../../domain/entities/element';
+import type { CreateElementInput, UpdateElementInput } from '../../domain/entities/element';
+import type { ElementRepository } from '../v2/interfaces/element-repository';
 import {
   extractCandidatesFromIdentity,
   rankLocatorCandidates,
@@ -45,16 +50,92 @@ interface HealingDetail {
   readonly reason?: string;
 }
 
-// ── Healing Service ──────────────────────────────────────────
+/**
+ * Input for the source-agnostic healing core.
+ * Both the recording flow and the execution flow produce this shape.
+ */
+export interface HealElementInput {
+  /** The stored Element to heal. */
+  readonly elementId: string;
+  /** Fresh locator strategies from any source (recording, DOM inspection, etc.). */
+  readonly newStrategies: RankedLocator[];
+  /** Healing provenance — who, why, from which session/run. */
+  readonly context: HealContext;
+}
+
+// ── Source-Agnostic Core ─────────────────────────────────────
+
+/**
+ * Apply a heal to a single Element and persist the result.
+ *
+ * This is the **shared extension point** — Phase 12's execution-time healing
+ * calls this with locators discovered from live DOM inspection, while the
+ * recording flow calls it with locators resolved from ElementIdentity.
+ *
+ * The function:
+ *   1. Loads the Element from the Repository
+ *   2. Calls healElement() (additive merge, appends HealEvent)
+ *   3. Persists via ElementRepository.update()
+ *
+ * @param input.elementId     The stored Element's ID
+ * @param input.newStrategies Fresh locators from any source
+ * @param input.context       Provenance (sessionId, reason, proposedBy)
+ * @param elements            The ElementRepository (from any UnitOfWork)
+ * @returns                   The healed Element, or undefined if not found
+ *
+ * @throws ValueObjectError if newStrategies is empty (from healElement)
+ * @throws MissingFieldError if context.sourceSessionId is empty (from healElement)
+ */
+export async function healElementAndPersist(
+  input: HealElementInput,
+  elements: ElementRepository,
+): Promise<Element | undefined> {
+  const existing = await elements.getById(input.elementId);
+  if (!existing) return undefined;
+
+  const healed = healElement(existing, {
+    newStrategies: input.newStrategies.map((r) => ({
+      type: r.type,
+      value: r.value,
+      priority: r.priority,
+      confidence: r.confidence,
+    })),
+    context: input.context,
+  });
+
+  const changes: UpdateElementInput = {
+    locatorStrategies: healed.locatorStrategies.map((s) => ({
+      type: s.type,
+      value: s.value,
+      priority: s.priority,
+      confidence: s.confidence,
+    })),
+    status: healed.status,
+    healHistory: healed.healHistory,
+    lastHealedAt: healed.lastHealedAt,
+  };
+
+  await elements.update(healed.id, changes);
+  return healed;
+}
+
+// ── Recording-Specific Orchestrator ──────────────────────────
 
 /**
  * Heal stored Elements using fresh evidence from a new recording session.
  *
- * @param projectId The project to scope element queries.
+ * Recording-specific responsibilities:
+ *   - Batch-match fresh UiElements against stored Elements
+ *   - Resolve locators from ElementIdentity (extractCandidatesFromIdentity)
+ *   - Detect which matched elements have changed locators
+ *   - Delegate each heal to healElementAndPersist()
+ *   - Create new Elements for unmatched items
+ *
+ * @param projectId     The project to scope element queries.
  * @param freshElements UiElements from the new recording session.
- * @param sessionId The recording session ID (for provenance).
- * @param uowFactory Unit of Work factory for Repository access.
- * @returns Healing result summary.
+ * @param sessionId     The recording session ID (for provenance).
+ * @param uowFactory    Unit of Work factory for Repository access.
+ * @returns             Healing result summary.
  */
 export async function healFromRecording(
   projectId: string,
@@ -86,45 +167,28 @@ export async function healFromRecording(
       const hasChanges = detectLocatorChanges(storedLocators, freshLocators);
 
       if (hasChanges) {
-        const healContext: HealContext = {
-          sourceSessionId: sessionId,
-          reason: 'css-shifted',
-          proposedBy: 'cross-session-matching',
-        };
+        const healed = await healElementAndPersist(
+          {
+            elementId: match.storedElement.id,
+            newStrategies: freshLocators,
+            context: {
+              sourceSessionId: sessionId,
+              reason: 'css-shifted',
+              proposedBy: 'cross-session-matching',
+            },
+          },
+          repos.elements,
+        );
 
-        // Convert RankedLocator[] to CreateLocatorStrategyInput[]
-        const newStrategies = freshLocators.map((r) => ({
-          type: r.type,
-          value: r.value,
-          priority: r.priority,
-          confidence: r.confidence,
-        }));
-
-        const healed = healElement(match.storedElement, {
-          newStrategies,
-          context: healContext,
-        });
-
-        // Use repository update(id, changes) — pass healed fields
-        await repos.elements.update(healed.id, {
-          locatorStrategies: healed.locatorStrategies.map((s) => ({
-            type: s.type,
-            value: s.value,
-            priority: s.priority,
-            confidence: s.confidence,
-          })),
-          status: healed.status,
-          healHistory: healed.healHistory,
-          lastHealedAt: healed.lastHealedAt,
-        });
-        healedCount++;
-
-        details.push({
-          elementId: healed.id,
-          logicalName: healed.logicalName,
-          action: 'healed',
-          reason: 'locator-changed',
-        });
+        if (healed) {
+          healedCount++;
+          details.push({
+            elementId: healed.id,
+            logicalName: healed.logicalName,
+            action: 'healed',
+            reason: 'locator-changed',
+          });
+        }
       } else {
         details.push({
           elementId: match.storedElement.id,
@@ -173,7 +237,7 @@ export async function healFromRecording(
   return result;
 }
 
-// ── Helpers ──────────────────────────────────────────────────
+// ── Recording-Specific Helpers ───────────────────────────────
 
 /**
  * Resolve fresh locators from an ElementIdentity using the shared ranking.
