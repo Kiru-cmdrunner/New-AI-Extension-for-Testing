@@ -16,12 +16,13 @@ import type { SourceArtifact } from '../../../domain/entities/source-artifact';
 import type { ExecutionIRArtifact } from '../../../domain/execution-ir/types';
 import type { Capability } from '../../../domain/entities/capability';
 import type { RecordingSession } from '../../../domain/entities/recording-session';
+import type { ExecutionRun } from '../../../domain/entities/execution-run';
 
 /** Database name — versioned for future migrations. */
 const DB_NAME = 'cmdrunner_repository';
 
-/** Schema version. V1: 6 tables. V2: added capabilities + recordingSessions. */
-const DB_VERSION = 2;
+/** Schema version. V1: 6 tables. V2: added capabilities + recordingSessions. V3: added executionRuns. */
+const DB_VERSION = 3;
 
 /**
  * Row types for Dexie storage. These extend the domain entities with
@@ -58,6 +59,9 @@ export type CapabilityRow = Capability;
 /** RecordingSession row — identical to domain RecordingSession. */
 export type RecordingSessionRow = RecordingSession;
 
+/** ExecutionRun row — identical to domain ExecutionRun. */
+export type ExecutionRunRow = ExecutionRun;
+
 /**
  * The CmdRunner Dexie database.
  *
@@ -77,6 +81,7 @@ export class CmdRunnerDatabase extends Dexie {
   executionIRs!: Table<ExecutionIRRow, string>;
   capabilities!: Table<CapabilityRow, string>;
   recordingSessions!: Table<RecordingSessionRow, string>;
+  executionRuns!: Table<ExecutionRunRow, string>;
 
   constructor() {
     super(DB_NAME);
@@ -107,6 +112,23 @@ export class CmdRunnerDatabase extends Dexie {
       // V2 new tables
       capabilities: 'id, projectId, *sessionIds',
       recordingSessions: 'id, projectId',
+    });
+
+    // V3: Added ExecutionRun table for persisted execution history.
+    // Indexed by testCaseVersionId (history per version) and projectId (all runs).
+    this.version(3).stores({
+      // V1 tables
+      projects: 'id, status',
+      elements: 'id, projectId, [projectId+pageOrComponent], status',
+      testCases: 'id, projectId, *tags, status, priority',
+      testCaseVersions: 'id, testCaseId, [testCaseId+versionNumber]',
+      sourceArtifacts: 'id, projectId, [projectId+type]',
+      executionIRs: 'id, testCaseVersionId',
+      // V2 tables
+      capabilities: 'id, projectId, *sessionIds',
+      recordingSessions: 'id, projectId',
+      // V3 new table
+      executionRuns: 'id, testCaseVersionId, projectId',
     });
   }
 }

@@ -17,6 +17,7 @@ import type { SourceArtifactRepository } from './source-artifact-repository';
 import type { ExecutionIRRepository } from './execution-ir-repository';
 import type { CapabilityRepository } from './capability-repository';
 import type { RecordingSessionRepository } from './recording-session-repository';
+import type { ExecutionRunRepository } from './execution-run-repository';
 
 /**
  * Unit of Work — provides access to repositories within a transactional scope.
@@ -53,6 +54,7 @@ export interface RepositorySet {
   readonly executionIRs: ExecutionIRRepository;
   readonly capabilities: CapabilityRepository;
   readonly recordingSessions: RecordingSessionRepository;
+  readonly executionRuns: ExecutionRunRepository;
 }
 
 /**
