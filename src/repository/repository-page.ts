@@ -1025,7 +1025,7 @@ function createElementCard(el: Element): HTMLElement {
   return card;
 }
 
-function renderElementDetail(el: Element): void {
+async function renderElementDetail(el: Element): Promise<void> {
   elementDetailTitle.textContent = el.logicalName;
   elementDetailBody.innerHTML = '';
 
@@ -1118,6 +1118,24 @@ function renderElementDetail(el: Element): void {
     lastHealRow.style.fontSize = '0.85em';
     lastHealRow.style.color = '#666';
     elementDetailBody.appendChild(lastHealRow);
+  }
+
+  // IR staleness note (Phase 11.4): healing updates element locators and
+  // bumps updatedAt. Any cached IR artifact referencing this element will
+  // be detected as stale by checkStaleness() when next served by the
+  // Execution Engine (Phase 12). The IR is derived and regenerable.
+  if (el.healHistory.length > 0) {
+    const staleNote = document.createElement('div');
+    staleNote.className = 'detail-section';
+    staleNote.style.padding = '8px';
+    staleNote.style.backgroundColor = '#fff3cd';
+    staleNote.style.borderRadius = '4px';
+    const staleIcon = document.createElement('span');
+    staleIcon.textContent = '⚠️ ';
+    const staleText = document.createElement('span');
+    staleText.textContent = 'Cached IR artifacts referencing this element will be detected as stale on next access. They are automatically regenerated.';
+    staleNote.append(staleIcon, staleText);
+    elementDetailBody.appendChild(staleNote);
   }
 
   elementDetailPanel.hidden = false;
