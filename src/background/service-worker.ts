@@ -340,6 +340,53 @@ async function handleStopRecording(): Promise<void> {
     // Non-fatal — recording still completes, but no test steps/playwright code generated
   }
 
+  // ── Repository V2 Persistence (Phase 10.3) ──
+  // Persist the UnderstandingResult, CapabilityCandidate, and ExecutionIRPlan
+  // to Repository V2 (Dexie/IndexedDB). This creates a RecordingSession,
+  // matches/creates the Capability, and stores the IR artifact.
+  //
+  // Non-fatal — if persistence fails, recording still completes.
+  // The UnderstandingResult and IR plan are already in chrome.storage.local
+  // for the side panel to display.
+  try {
+    const { DexieUnitOfWorkFactory } = await import('../repository/v2/dexie/dexie-unit-of-work-factory');
+    const { persistSession } = await import('../repository/services/session-persistence-service');
+
+    // Read back the IR plan that was just stored
+    const irPlanResult = await chrome.storage.local.get(StorageKeys.EXECUTION_IR_PLAN);
+    const irPlan = irPlanResult[StorageKeys.EXECUTION_IR_PLAN];
+
+    // Read back the test case draft for projectId
+    const draft = await StorageService.getTestCaseDraft();
+
+    if (understandingResult && irPlan) {
+      const uowFactory = new DexieUnitOfWorkFactory();
+      const persistenceResult = await persistSession(uowFactory, {
+        understanding: understandingResult,
+        events,
+        interactions: mergedInteractions ?? interactions,
+        url: (await getActiveTab())?.url ?? '',
+        irPlan,
+        projectId: draft?.projectId ?? null,
+        testCaseName: draft?.name ?? 'Recorded Test',
+      });
+
+      // Store the persistence result for the UI to reference
+      await StorageService.setRaw(StorageKeys.REPOSITORY_SESSION_ID, persistenceResult.sessionId);
+      await StorageService.setRaw(StorageKeys.REPOSITORY_CAPABILITY_ID, persistenceResult.capabilityId);
+      await StorageService.setRaw(StorageKeys.REPOSITORY_CAPABILITY_DECISION, persistenceResult.capabilityDecision);
+
+      console.info('[Repository V2] Session persisted:', {
+        sessionId: persistenceResult.sessionId,
+        capabilityId: persistenceResult.capabilityId,
+        capabilityDecision: persistenceResult.capabilityDecision,
+      });
+    }
+  } catch (e) {
+    console.warn('[Repository V2] error during session persistence:', e);
+    // Non-fatal — recording completes, artifacts are in chrome.storage.local
+  }
+
   // Update UI state
   const uiState: UIState = {
     recordingState: RecordingState.Stopped,

@@ -653,6 +653,9 @@ async function handleRecordAnother(): Promise<void> {
   try { await chrome.storage.local.remove(StorageKeys.GENERATED_FILES); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.UNDERSTANDING_RESULT); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.CAPABILITY_CANDIDATE); } catch {}
+  try { await chrome.storage.local.remove(StorageKeys.REPOSITORY_SESSION_ID); } catch {}
+  try { await chrome.storage.local.remove(StorageKeys.REPOSITORY_CAPABILITY_ID); } catch {}
+  try { await chrome.storage.local.remove(StorageKeys.REPOSITORY_CAPABILITY_DECISION); } catch {}
   irStepsSection.hidden = true;
   irPlaywrightSection.hidden = true;
   await openNewTestCase();

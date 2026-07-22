@@ -65,6 +65,10 @@ export enum StorageKeys {
   // ── Phase 9.5: Understanding Layer ──
   UNDERSTANDING_RESULT = 'understanding_result',
   CAPABILITY_CANDIDATE = 'capability_candidate',
+  // ── Phase 10.3: Repository V2 Persistence ──
+  REPOSITORY_SESSION_ID = 'repo_session_id',
+  REPOSITORY_CAPABILITY_ID = 'repo_capability_id',
+  REPOSITORY_CAPABILITY_DECISION = 'repo_capability_decision',
 }
 
 /**
