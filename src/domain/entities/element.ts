@@ -103,6 +103,10 @@ export interface UpdateElementInput {
   pageOrComponent?: string;
   status?: ElementStatus;
   locatorStrategies?: CreateLocatorStrategyInput[];
+  /** Heal history entries (append-only). */
+  healHistory?: HealEvent[];
+  /** Last healed timestamp. */
+  lastHealedAt?: string | null;
 }
 
 /** [future] A self-healing event record. Schema-ready; not used in V1 logic. */
@@ -343,6 +347,8 @@ export function updateElement(existing: Element, input: UpdateElementInput): Ele
       input.pageOrComponent !== undefined ? input.pageOrComponent.trim() : existing.pageOrComponent,
     status: input.status ?? existing.status,
     locatorStrategies,
+    healHistory: input.healHistory ?? existing.healHistory,
+    lastHealedAt: input.lastHealedAt ?? existing.lastHealedAt,
     updatedAt: new Date().toISOString(),
   };
 }

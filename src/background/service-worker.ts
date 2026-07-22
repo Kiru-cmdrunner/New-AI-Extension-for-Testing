@@ -381,6 +381,34 @@ async function handleStopRecording(): Promise<void> {
         capabilityId: persistenceResult.capabilityId,
         capabilityDecision: persistenceResult.capabilityDecision,
       });
+
+      // ── Phase 11: Cross-Session Element Healing ──
+      // Match fresh UiElements from this recording against stored Elements.
+      // Heal stale locators and create new Elements for unmatched ones.
+      // Non-fatal — healing failure doesn't affect the recording session.
+      try {
+        const { adaptToDomainEntities } = await import('../recorder/pipeline/domain-adapter');
+        const { healFromRecording } = await import('../repository/services/healing-service');
+
+        const domainEntities = adaptToDomainEntities(events, mergedInteractions ?? interactions, (await getActiveTab())?.url ?? '');
+        if (domainEntities.elements.length > 0 && persistenceResult.projectId) {
+          const healingResult = await healFromRecording(
+            persistenceResult.projectId,
+            domainEntities.elements,
+            persistenceResult.sessionId,
+            uowFactory,
+          );
+
+          if (healingResult.healed > 0 || healingResult.created > 0) {
+            await StorageService.setRaw(StorageKeys.ELEMENT_HEAL_RESULT, healingResult);
+          }
+
+          console.info('[Healing] Result:', healingResult);
+        }
+      } catch (healErr) {
+        console.warn('[Healing] error during cross-session healing:', healErr);
+        // Non-fatal
+      }
     }
   } catch (e) {
     console.warn('[Repository V2] error during session persistence:', e);

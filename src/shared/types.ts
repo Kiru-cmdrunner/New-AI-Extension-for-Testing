@@ -69,6 +69,8 @@ export enum StorageKeys {
   REPOSITORY_SESSION_ID = 'repo_session_id',
   REPOSITORY_CAPABILITY_ID = 'repo_capability_id',
   REPOSITORY_CAPABILITY_DECISION = 'repo_capability_decision',
+  // ── Phase 11: Self-Healing Locators ──
+  ELEMENT_HEAL_RESULT = 'element_heal_result',
 }
 
 /**
