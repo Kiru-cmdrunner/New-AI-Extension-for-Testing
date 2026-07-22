@@ -444,6 +444,129 @@ async function handleRecordedEvent(message: Extract<AppMessage, { type: 'RECORDE
   );
 }
 
+// ── RUN_TEST handler (Phase 12.5) ──────────────────────────────────────
+
+/**
+ * Execute the most recently generated ExecutionIRPlan.
+ *
+ * Flow:
+ *   1. Read EXECUTION_IR_PLAN from chrome.storage.local
+ *   2. Create IRExecutorImpl with Chrome API bindings
+ *   3. Execute the plan against a live browser tab
+ *   4. Persist the result as an ExecutionRun to Repository V2
+ *   5. Store the result in chrome.storage.local for the side panel
+ *   6. Broadcast EXECUTION_RESULT message to the side panel
+ *
+ * Non-fatal — if any step fails, an error EXECUTION_RESULT is broadcast.
+ */
+async function handleRunTest(): Promise<void> {
+  const startTime = performance.now();
+
+  // 1. Read the IR plan from storage
+  const irPlanResult = await chrome.storage.local.get(StorageKeys.EXECUTION_IR_PLAN);
+  const irPlan = irPlanResult[StorageKeys.EXECUTION_IR_PLAN];
+
+  if (!irPlan) {
+    broadcastExecutionResult('error', 0, 0, 0, 0);
+    return;
+  }
+
+  // 2. Create executor and execute the plan
+  const { IRExecutorImpl } = await import('../execution/ir-executor-impl');
+  const executor = new IRExecutorImpl();
+
+  // Track healed elements via a counter (the override map is internal to the executor)
+  let healedCount = 0;
+  const result = await executor.execute(irPlan, {
+    onStepComplete: (_step, stepResult) => {
+      // Could track healed elements here if the result carries that info
+      // For now, healed elements are tracked inside the executor
+    },
+  });
+
+  // 3. Persist the result as an ExecutionRun to Repository V2
+  let executionRunId: string | null = null;
+  try {
+    const { createExecutionRun } = await import('../domain/entities/execution-run');
+    const { DexieUnitOfWorkFactory } = await import('../repository/v2/dexie/dexie-unit-of-work-factory');
+
+    const draft = await StorageService.getTestCaseDraft();
+    const run = createExecutionRun({
+      testCaseId: irPlan.testCaseId,
+      testCaseVersionId: irPlan.testCaseVersionId,
+      projectId: draft?.projectId ?? 'default',
+      result,
+      environment: {
+        baseUrl: irPlan.environment.baseUrl,
+        browser: irPlan.environment.browser,
+        viewport: irPlan.environment.viewport,
+      },
+      healedElementIds: [],
+    });
+
+    const uowFactory = new DexieUnitOfWorkFactory();
+    const uow = await uowFactory.create();
+    await uow.executionRuns.save(run);
+    await uow.commit();
+    executionRunId = run.id;
+
+    console.info('[Execution] ExecutionRun persisted:', executionRunId);
+  } catch (e) {
+    console.warn('[Execution] Failed to persist ExecutionRun:', e);
+    // Non-fatal — the result is still in memory and can be stored in chrome.storage
+  }
+
+  // 4. Store the result in chrome.storage.local for the side panel
+  const executionSummary = {
+    status: result.status,
+    stepCount: result.stepResults.length,
+    passedSteps: result.stepResults.filter((s: any) => s.status === 'passed').length,
+    failedSteps: result.stepResults.filter((s: any) => s.status === 'failed').length,
+    errorSteps: result.stepResults.filter((s: any) => s.status === 'error').length,
+    skippedSteps: result.stepResults.filter((s: any) => s.status === 'skipped').length,
+    durationMs: result.durationMs,
+    startedAt: result.startedAt,
+    completedAt: result.completedAt,
+    stepResults: result.stepResults,
+    executionRunId,
+  };
+
+  await StorageService.setRaw(StorageKeys.EXECUTION_RESULT, executionSummary);
+
+  // 5. Broadcast result to the side panel
+  const durationMs = performance.now() - startTime;
+  broadcastExecutionResult(
+    result.status,
+    result.stepResults.length,
+    result.stepResults.filter((s: any) => s.status === 'passed').length,
+    durationMs,
+    healedCount,
+  );
+}
+
+/**
+ * Broadcast an EXECUTION_RESULT message to the side panel.
+ */
+function broadcastExecutionResult(
+  status: 'passed' | 'failed' | 'error',
+  stepCount: number,
+  passedSteps: number,
+  durationMs: number,
+  healedElements: number,
+): void {
+  const message: AppMessage = {
+    type: 'EXECUTION_RESULT',
+    status,
+    stepCount,
+    passedSteps,
+    durationMs,
+    healedElements,
+  };
+  chrome.runtime.sendMessage(message).catch(() => {
+    // Side panel may not be open — ignore
+  });
+}
+
 // ── Navigation capture ──────────────────────────────────────────────────
 
 chrome.webNavigation.onCommitted.addListener(async (details) => {
@@ -495,6 +618,21 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
 
     case 'OPEN_REPOSITORY': {
       chrome.tabs.create({ url: chrome.runtime.getURL('src/repository/index.html') });
+      break;
+    }
+
+    case 'RUN_TEST': {
+      handleRunTest().catch((e) => {
+        console.warn('[Execution] error:', e);
+        chrome.runtime.sendMessage({
+          type: 'EXECUTION_RESULT',
+          status: 'error',
+          stepCount: 0,
+          passedSteps: 0,
+          durationMs: 0,
+          healedElements: 0,
+        }).catch(() => {});
+      });
       break;
     }
 

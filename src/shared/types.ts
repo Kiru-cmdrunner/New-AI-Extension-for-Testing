@@ -71,6 +71,8 @@ export enum StorageKeys {
   REPOSITORY_CAPABILITY_DECISION = 'repo_capability_decision',
   // ── Phase 11: Self-Healing Locators ──
   ELEMENT_HEAL_RESULT = 'element_heal_result',
+  // ── Phase 12: Execution Engine ──
+  EXECUTION_RESULT = 'execution_result',
 }
 
 /**
@@ -524,6 +526,8 @@ export type AppMessage =
   | { type: 'PING' }
   | { type: 'CONTENT_SCRIPT_STATUS'; tabId: number; alive: boolean; recording: boolean; url: string }
   | { type: 'STATE_UPDATE'; payload: UIState }
+  | { type: 'RUN_TEST' }
+  | { type: 'EXECUTION_RESULT'; status: 'passed' | 'failed' | 'error'; stepCount: number; passedSteps: number; durationMs: number; healedElements: number }
   | {
       type: 'RECORDED_EVENT';
       eventType: 'click' | 'dblclick' | 'contextmenu' | 'focus' | 'blur' | 'change' | 'input' | 'scroll' | 'mouseenter' | 'dragstart' | 'drop';
@@ -550,6 +554,8 @@ export function isAppMessage(value: unknown): value is AppMessage {
       'PING',
       'CONTENT_SCRIPT_STATUS',
       'STATE_UPDATE',
+      'RUN_TEST',
+      'EXECUTION_RESULT',
       'RECORDED_EVENT',
     ].includes(msg['type'])
   );
