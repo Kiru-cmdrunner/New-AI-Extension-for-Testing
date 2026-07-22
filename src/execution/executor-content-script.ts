@@ -66,6 +66,18 @@ interface ExtractDomContextMessage {
   hint?: Record<string, string | null>;
 }
 
+interface EvaluateAssertionsMessage {
+  type: 'EVALUATE_ASSERTIONS';
+  assertions: Array<{
+    type: string;
+    comparison: string;
+    expectedValue: unknown;
+    property: string | null;
+    target: { kind: string; elementId?: string; resolvedLocators?: LocatorInput[]; url?: string };
+  }>;
+  url?: string;
+}
+
 interface StepResult {
   stepId: string;
   action: string;
@@ -282,6 +294,151 @@ function executeAction(
 }
 
 // ════════════════════════════════════════════════════════════════════════
+// ASSERTION EVALUATOR (inlined from src/execution/assertion-evaluator.ts)
+// ════════════════════════════════════════════════════════════════════════
+
+function extractPropertyValue(element: Element | null, property: string | null, url?: string): unknown {
+  if (property === 'url') return url ?? window.location.href;
+  if (!element) return null;
+  const el = element as HTMLElement;
+  switch (property) {
+    case 'text':
+    case 'textContent':
+      return el.textContent?.trim() ?? '';
+    case 'value':
+      return (el as HTMLInputElement).value ?? '';
+    case 'visible':
+    case 'visibility':
+      return isElementVisible(el);
+    case 'enabled':
+    case 'disabled':
+      return !el.hasAttribute('disabled') && !(el as HTMLInputElement).disabled;
+    case 'checked':
+    case 'selected':
+      return (el as HTMLInputElement).checked ?? false;
+    case 'href':
+      return el.getAttribute('href') ?? '';
+    case 'class':
+    case 'className':
+      return el.className ?? '';
+    case 'tag':
+    case 'tagName':
+      return el.tagName.toLowerCase();
+    case 'id':
+      return el.id ?? '';
+    case 'count':
+      return null;
+    default:
+      return property ? el.getAttribute(property) : (el.textContent?.trim() ?? '');
+  }
+}
+
+function compareValues(actual: unknown, expected: unknown, comparison: string): boolean {
+  switch (comparison) {
+    case 'equals':
+      return String(actual) === String(expected);
+    case 'contains':
+      if (typeof actual === 'string') return actual.includes(String(expected));
+      if (Array.isArray(actual)) return actual.includes(expected);
+      return false;
+    case 'matches':
+      try { return new RegExp(String(expected)).test(String(actual)); } catch { return false; }
+    case 'startsWith':
+      return String(actual).startsWith(String(expected));
+    case 'greaterThan':
+      return Number(actual) > Number(expected);
+    case 'lessThan':
+      return Number(actual) < Number(expected);
+    case 'isTrue':
+      return actual === true || actual === 'true' || actual === 1 || actual === '1';
+    case 'isFalse':
+      return actual === false || actual === 'false' || actual === 0 || actual === '0' || actual === null || actual === '';
+    default:
+      return String(actual) === String(expected);
+  }
+}
+
+function evaluateAssertionInContentScript(
+  assertion: EvaluateAssertionsMessage['assertions'][0],
+  url?: string,
+): { type: string; passed: boolean; actualValue?: unknown; expectedValue?: unknown; message: string } {
+  const { type, comparison, expectedValue, property, target } = assertion;
+
+  // URL_MATCH
+  if (type === 'urlMatch') {
+    const currentUrl = url ?? window.location.href;
+    const passed = compareValues(currentUrl, expectedValue, comparison);
+    return { type, passed, actualValue: currentUrl, expectedValue, message: passed ? `URL matched` : `URL "${currentUrl}" did not match "${expectedValue}"` };
+  }
+
+  // Element-based assertions
+  if (target.kind === 'element') {
+    // Resolve element via locators
+    let element: Element | null = null;
+    if (target.resolvedLocators) {
+      const resolved = resolveElement(target.resolvedLocators, document, false);
+      element = resolved?.element ?? null;
+    }
+
+    // PRESENCE
+    if (type === 'presence') {
+      const present = element !== null;
+      const result = comparison === 'isFalse' ? !present : present;
+      return { type, passed: result, actualValue: present, expectedValue, message: result ? 'Element is present' : 'Element is not present' };
+    }
+
+    // VISIBILITY
+    if (type === 'visibility') {
+      const visible = element !== null && isElementVisible(element);
+      const result = comparison === 'isFalse' ? !visible : visible;
+      return { type, passed: result, actualValue: visible, expectedValue, message: result ? 'Element is visible' : 'Element is not visible' };
+    }
+
+    if (!element) {
+      return { type, passed: false, actualValue: null, expectedValue, message: `Element not found — cannot evaluate ${type}` };
+    }
+
+    // TEXT_MATCH
+    if (type === 'textMatch') {
+      const actual = element.textContent?.trim() ?? '';
+      const passed = compareValues(actual, expectedValue, comparison);
+      return { type, passed, actualValue: actual, expectedValue, message: passed ? `Text matched` : `Text "${actual}" did not match "${expectedValue}"` };
+    }
+
+    // ATTRIBUTE_MATCH
+    if (type === 'attributeMatch') {
+      const attrName = property ?? 'value';
+      const actual = element.getAttribute(attrName);
+      const passed = compareValues(actual, expectedValue, comparison);
+      return { type, passed, actualValue: actual, expectedValue, message: passed ? `Attribute matched` : `Attribute "${attrName}"="${actual}" did not match "${expectedValue}"` };
+    }
+
+    // EQUALITY
+    if (type === 'equality') {
+      const actual = extractPropertyValue(element, property, url);
+      const passed = compareValues(actual, expectedValue, comparison);
+      return { type, passed, actualValue: actual, expectedValue, message: passed ? `Property matched` : `Property "${property}" value "${actual}" did not match "${expectedValue}"` };
+    }
+
+    // COUNT
+    if (type === 'count') {
+      const actualCount = element ? 1 : 0;
+      const passed = compareValues(actualCount, expectedValue, comparison);
+      return { type, passed, actualValue: actualCount, expectedValue, message: passed ? `Count matched` : `Count ${actualCount} did not match "${expectedValue}"` };
+    }
+
+    // CUSTOM
+    if (type === 'custom') {
+      const actual = extractPropertyValue(element, property, url);
+      const passed = compareValues(actual, expectedValue, comparison);
+      return { type, passed, actualValue: actual, expectedValue, message: passed ? `Custom check passed` : `Custom check failed` };
+    }
+  }
+
+  return { type, passed: false, actualValue: null, expectedValue, message: `Assertion type "${type}" not applicable to ${target.kind} target` };
+}
+
+// ════════════════════════════════════════════════════════════════════════
 // MESSAGE HANDLERS
 // ════════════════════════════════════════════════════════════════════════
 
@@ -351,6 +508,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       } else {
         sendResponse({ identity: null });
       }
+      return true;
+    }
+
+    case 'EVALUATE_ASSERTIONS': {
+      const msg = message as EvaluateAssertionsMessage;
+      const results = msg.assertions.map((a) => evaluateAssertionInContentScript(a, msg.url));
+      sendResponse({ results });
       return true;
     }
 
