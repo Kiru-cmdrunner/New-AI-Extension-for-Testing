@@ -55,6 +55,12 @@ function groupEvents(events: RecordedEvent[]): EventGroup[] {
       event.eventType === 'scroll' ||
       event.eventType === 'mouseenter'
     ) {
+      // Skip events owned by a date picker — they are evidence-only
+      // (scrolls, hovers, clicks inside calendar popovers)
+      const domCtx = (event as ElementRecordedEvent).domContext;
+      if (domCtx?.ownedByDatePicker) {
+        continue; // evidence-only, not a standalone interaction
+      }
       groups.push({ events: [event] });
       current = null;
       continue;
@@ -84,6 +90,12 @@ function groupEvents(events: RecordedEvent[]): EventGroup[] {
     // Regular element events (click, focus, input, change, blur)
     const elEvent = event as ElementRecordedEvent;
     const targetKey = getIdentityKey(elEvent.target);
+
+    // Skip events owned by a date picker — they are evidence-only
+    // (clicks on calendar navigation buttons inside calendar popovers)
+    if (elEvent.domContext?.ownedByDatePicker && elEvent.eventType !== 'dateSelect') {
+      continue;
+    }
 
     if (current) {
       const lastEvent = current.events[current.events.length - 1];
@@ -309,6 +321,32 @@ function classifyGroup(group: EventGroup): { type: InteractionType; metadata: In
   // Must come BEFORE TextEntry (native date inputs have ariaRole='textbox')
   // and BEFORE the Click catch-all (calendar cell clicks are just clicks).
   {
+    // Check for dateSelect events first — these carry normalized date metadata
+    // from the recorder + service worker normalization pipeline.
+    const dateSelectEvent = events.find(e => e.eventType === 'dateSelect') as ElementRecordedEvent | undefined;
+    if (dateSelectEvent?.domContext) {
+      const domCtx = dateSelectEvent.domContext;
+      const dateType = domCtx.dateType ?? 'date';
+      const pickerType: InteractionType =
+        dateType === 'time' ? 'TimePicker'
+        : dateType === 'dateTime' ? 'DateTimePicker'
+        : 'DatePicker';
+      const dateValue = domCtx.isoValue || domCtx.displayValue || dateSelectEvent.valueAfter || '';
+      const meta: InteractionMetadata = {};
+      if (dateValue) {
+        if (pickerType === 'TimePicker') meta.timeValue = dateValue;
+        else if (pickerType === 'DateTimePicker') meta.dateTimeValue = dateValue;
+        else meta.dateValue = dateValue;
+      }
+      if (domCtx.displayValue) meta.displayValue = domCtx.displayValue;
+      if (domCtx.dateAmbiguous) meta.dateAmbiguous = domCtx.dateAmbiguous;
+      return {
+        type: pickerType,
+        metadata: meta,
+        confidence: domCtx.dateConfidence ?? 1.0,
+      };
+    }
+
     const dpResult = tryClassifyDatePicker(target, events, eventTypes);
     if (dpResult) return dpResult;
   }

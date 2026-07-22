@@ -77,11 +77,20 @@ interface DomContext {
   openedUrl?: string | null;
   domAttributes?: Record<string, string>;
   ancestorRoles?: string[];
+  // Date picker fields (present on dateSelect events)
+  dateType?: string;
+  isoValue?: string;
+  displayValue?: string;
+  dateAmbiguous?: boolean;
+  dateWarning?: string;
+  dateConfidence?: number;
+  /** Events inside calendar popovers — evidence-only, not standalone interactions. */
+  ownedByDatePicker?: boolean;
 }
 
 interface RecordedEventMessage {
   type: 'RECORDED_EVENT';
-  eventType: 'click' | 'dblclick' | 'contextmenu' | 'focus' | 'blur' | 'change' | 'input' | 'scroll' | 'mouseenter' | 'dragstart' | 'drop';
+  eventType: 'click' | 'dblclick' | 'contextmenu' | 'focus' | 'blur' | 'change' | 'input' | 'scroll' | 'mouseenter' | 'dragstart' | 'drop' | 'dateSelect';
   timestamp: string;
   target: ElementIdentity;
   valueBefore: string | null;
@@ -169,6 +178,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   } else if (message.type === 'STOP_RECORDING') {
     isRecording = false;
     valueTracker.clear();
+    clearDatePickerDebounce();
   }
   return false;
 });
@@ -905,7 +915,7 @@ function resolveTarget(event: Event): Element | null {
  *   one. This avoids double-capture and preserves file metadata from the event.
  */
 function sendEvent(
-  eventType: 'click' | 'dblclick' | 'contextmenu' | 'focus' | 'blur' | 'change' | 'input' | 'scroll' | 'mouseenter' | 'dragstart' | 'drop',
+  eventType: 'click' | 'dblclick' | 'contextmenu' | 'focus' | 'blur' | 'change' | 'input' | 'scroll' | 'mouseenter' | 'dragstart' | 'drop' | 'dateSelect',
   target: Element,
   valueBefore: string | null,
   valueAfter: string | null,
@@ -1221,6 +1231,28 @@ document.addEventListener('change', (event) => {
   // Update tracker
   valueTracker.set(key, { value: valueAfter, checked: checkedAfter });
 
+  // ── Date picker: route to debounced dateSelect handler ──
+  // Native date inputs (type=date/time/datetime-local/month/week) and
+  // custom date picker text inputs are handled by the date picker capture
+  // system, which debounces and emits a single dateSelect event with
+  // normalized metadata. The raw change event is suppressed — the date
+  // system will emit the final committed value.
+  if (isDateTriggerElement(target) || isCalendarCell(target)) {
+    // For native date inputs, the change event carries the committed ISO value.
+    // For calendar cell clicks, the click handler will trigger date detection.
+    // Only route through the date handler if this is a native date input change
+    // or a text input with date keywords.
+    const isNativeDate = target instanceof HTMLInputElement &&
+      NATIVE_DATE_TYPES.has((target.type || '').toLowerCase());
+    const isDateText = isDateTriggerElement(target) && !isNativeDate;
+
+    if (isNativeDate || isDateText) {
+      handleDateValueChange(target, valueBefore, valueAfter);
+      // Still update the tracker — but don't send a raw change event
+      return;
+    }
+  }
+
   // ── File input: capture actual file metadata ──
   // For <input type="file">, input.value is a fake path (C:\fakepath\...)
   // for security reasons. The real file data is in input.files (FileList).
@@ -1535,6 +1567,33 @@ document.addEventListener('click', (event) => {
     }
   }
 
+  // ── Calendar cell click: route to date picker handler ──
+  // When the user clicks a day cell in a calendar popup, we detect it as
+  // a date picker interaction. We still send the click event (for evidence),
+  // but also trigger the debounced date capture to emit a dateSelect event
+  // with the final committed value.
+  if (isCalendarCell(target)) {
+    // Resolve the associated date input if possible
+    const dateInput = resolveDateInputFromCell(target);
+    const dateTarget = dateInput ?? target;
+    const ariaLabel = target.getAttribute('aria-label') || '';
+    const cellText = (target instanceof HTMLElement ? target.textContent : '') || '';
+    const dateValue = ariaLabel || cellText || '';
+
+    // Use the aria-label or cell text as the value
+    const beforeValue = dateInput instanceof HTMLInputElement ? dateInput.value : null;
+    handleDateValueChange(dateTarget, beforeValue, dateValue);
+  }
+
+  // ── Tag clicks inside calendar popovers as evidence-only ──
+  // Clicks on calendar navigation buttons (prev/next month, year selector),
+  // day cells, and other interactive elements inside the calendar popover are
+  // part of the date picker lifecycle — not standalone click interactions.
+  // The dateSelect event captures the final committed value.
+  if (isInsideCalendarPopover(target)) {
+    clickDomCtx.ownedByDatePicker = true;
+  }
+
   if (checkedBefore !== null) {
     // Checkbox/radio/toggle — defer checkedAfter read
     setTimeout(() => {
@@ -1583,6 +1642,23 @@ document.addEventListener('blur', (event) => {
 
   const target = resolveTarget(event);
   if (!target) return;
+
+  // ── Flush pending date picker debounce on blur ──
+  // When a custom date picker text input loses focus, the user has
+  // committed their selection. Flush the debounce timer immediately.
+  if (datePickerDebounce && datePickerDebounce.target === target) {
+    if (datePickerDebounce.timer) {
+      clearTimeout(datePickerDebounce.timer);
+    }
+    const finalValue = datePickerDebounce.lastValue;
+    const beforeValue = datePickerDebounce.valueBefore;
+    const targetEl = datePickerDebounce.target;
+    clearDatePickerDebounce();
+    // Only emit if the value actually changed
+    if (finalValue !== beforeValue) {
+      sendDateSelectEvent(targetEl, beforeValue, finalValue);
+    }
+  }
 
   // Blur events are ONLY recorded for text-entry elements (same as focus).
   // Blur on date pickers, buttons, divs, calendar cells, etc. is noise.
@@ -2122,6 +2198,310 @@ function isDateTriggerElement(el: Element): boolean {
   return DATE_TRIGGER_KEYWORDS.test(combined);
 }
 
+// ════════════════════════════════════════════════════════════════════════
+// DATE PICKER CAPTURE — debounced value-outcome model
+// ════════════════════════════════════════════════════════════════════════
+
+/**
+ * Native HTML date input types that produce ISO values from el.value.
+ */
+const NATIVE_DATE_TYPES = new Set(['date', 'datetime-local', 'time', 'month', 'week']);
+
+/**
+ * Map native input type → dateType for normalization hints.
+ */
+const NATIVE_DATE_TYPE_MAP: Record<string, string> = {
+  'date': 'date',
+  'datetime-local': 'dateTime',
+  'time': 'time',
+  'month': 'month',
+  'week': 'week',
+};
+
+/**
+ * Calendar grid cell detection — same patterns as the classifier's
+ * isCalendarCell() helper, inlined here for the content script.
+ */
+const CALENDAR_CELL_CLASS_PATTERN = /\bday\b|\bcell\b|\bdate\b|gridcell|calendar|react-datepicker__day/i;
+const CALENDAR_CELL_ROLE = 'gridcell';
+
+/**
+ * Check if an element is a calendar grid cell (a clickable day in a date picker).
+ */
+function isCalendarCell(el: Element): boolean {
+  const role = el.getAttribute('role');
+  if (role === CALENDAR_CELL_ROLE) return true;
+  const className = (el instanceof HTMLElement ? el.className : '') || '';
+  return CALENDAR_CELL_CLASS_PATTERN.test(className);
+}
+
+/**
+ * Check if an element is inside a calendar/datepicker container.
+ * Used to tag scroll, hover, and click events on calendar navigation
+ * buttons as ownedByDatePicker — they are evidence-only, not standalone
+ * interactions.
+ */
+const CALENDAR_POPOVER_PATTERN = /calendar|datepicker|date-picker|date_picker|react-datepicker|flatpickr-calendar|ant-picker/i;
+const CALENDAR_POPOVER_SELECTOR = '[role="grid"], [role="dialog"][aria-label*="calendar" i], [data-datepicker], [data-date]';
+
+function isInsideCalendarPopover(el: Element): boolean {
+  // Check the element itself and its ancestors
+  let current: Element | null = el;
+  for (let i = 0; i < 10 && current; i++) {
+    // Check role attributes
+    const role = current.getAttribute('role');
+    if (role === 'grid' || role === 'gridcell') return true;
+
+    // Check class name patterns
+    const className = (current instanceof HTMLElement ? current.className : '') || '';
+    if (className && CALENDAR_POPOVER_PATTERN.test(className)) return true;
+
+    // Check data attributes
+    if (current.hasAttribute('data-datepicker') || current.hasAttribute('data-date')) return true;
+
+    current = current.parentElement;
+  }
+
+  // Also check via closest() for ARIA grid containers
+  if (el.closest && el.closest(CALENDAR_POPOVER_SELECTOR)) return true;
+
+  return false;
+}
+
+/**
+ * Resolve the date input element associated with a calendar cell click.
+ * Walks up the DOM to find a containing calendar/datepicker element,
+ * then looks for an associated input within the same container.
+ */
+function resolveDateInputFromCell(cell: Element): Element | null {
+  const CALENDAR_CONTAINER_PATTERN = /calendar|datepicker|date-picker|date_picker/i;
+  let current: Element | null = cell;
+  for (let i = 0; i < 10 && current; i++) {
+    const className = (current instanceof HTMLElement ? current.className : '') || '';
+    if (CALENDAR_CONTAINER_PATTERN.test(className) || current.getAttribute('role') === 'dialog') {
+      // Found the calendar container — look for a date input inside it
+      const inputs = current.querySelectorAll('input');
+      for (const input of inputs) {
+        if (input instanceof HTMLInputElement && NATIVE_DATE_TYPES.has((input.type || '').toLowerCase())) {
+          return input;
+        }
+        // Also accept text inputs that look like date fields
+        if (isDateTriggerElement(input)) {
+          return input;
+        }
+      }
+      // Container found but no input — return the container itself
+      return current;
+    }
+    current = current.parentElement;
+  }
+  return null;
+}
+
+/**
+ * Inlined date normalization — content scripts cannot import modules.
+ * This mirrors src/shared/date-normalizer.ts but is simplified for the
+ * content script's needs. Full normalization happens in the service worker
+ * via the shared utility; here we just capture the raw value and a basic
+ * ISO attempt for native inputs.
+ */
+
+/**
+ * Get the dateType from a native input element's type attribute.
+ */
+function getNativeDateType(el: HTMLInputElement): string | null {
+  const type = (el.type || '').toLowerCase();
+  return NATIVE_DATE_TYPE_MAP[type] ?? null;
+}
+
+/**
+ * Debounce state for date picker value capture.
+ *
+ * When a date picker value changes, we wait for the value to stabilize
+ * before emitting a dateSelect event. This prevents capturing intermediate
+ * states while the user is navigating the calendar or typing a partial date.
+ */
+interface DatePickerDebounce {
+  timer: ReturnType<typeof setTimeout> | null;
+  target: Element;
+  valueBefore: string | null;
+  lastValue: string | null;
+}
+
+let datePickerDebounce: DatePickerDebounce | null = null;
+const DATE_DEBOUNCE_MS = 800;
+
+/**
+ * Clear any pending date picker debounce.
+ * Called on STOP_RECORDING and when a new date interaction starts.
+ */
+function clearDatePickerDebounce(): void {
+  if (datePickerDebounce?.timer) {
+    clearTimeout(datePickerDebounce.timer);
+  }
+  datePickerDebounce = null;
+}
+
+/**
+ * Send a dateSelect event with normalized date metadata in the DomContext.
+ *
+ * The actual normalization is done here (inlined) since the content script
+ * can't import the shared utility. We capture:
+ *   - dateType: from the input's type attribute
+ *   - isoValue: the raw value (already ISO for native inputs)
+ *   - displayValue: a human-readable version (basic conversion)
+ *   - dateAmbiguous/dateConfidence: for invalid values
+ */
+function sendDateSelectEvent(
+  target: Element,
+  valueBefore: string | null,
+  valueAfter: string | null,
+): void {
+  let dateType: string | null = null;
+  let isoValue = valueAfter ?? '';
+  let displayValue = valueAfter ?? '';
+  let dateAmbiguous = false;
+  let dateWarning: string | undefined;
+  let dateConfidence = 1.0;
+
+  if (target instanceof HTMLInputElement) {
+    dateType = getNativeDateType(target);
+    if (dateType) {
+      // Native date input — el.value is already ISO
+      isoValue = valueAfter ?? '';
+      // Basic display conversion for native date
+      displayValue = isoToDisplayInlined(isoValue, dateType);
+      // Validate: check if the ISO value looks valid
+      if (isoValue && !isValidIsoDate(isoValue, dateType)) {
+        dateAmbiguous = true;
+        dateWarning = `Potentially invalid date value: "${isoValue}"`;
+        dateConfidence = 0.5;
+      }
+    } else {
+      // Text input with date keywords (custom date picker)
+      dateType = 'date';
+      displayValue = valueAfter ?? '';
+      // For custom pickers, the value may be in display format
+      // The service worker / classifier can further normalize
+      dateConfidence = 0.8;
+    }
+  } else if (isCalendarCell(target)) {
+    // Calendar grid cell click — value comes from aria-label
+    dateType = 'date';
+    const ariaLabel = target.getAttribute('aria-label') || '';
+    displayValue = ariaLabel || valueAfter || '';
+    // The aria-label is a display date; the classifier will normalize
+    dateConfidence = 0.9;
+  }
+
+  const domContext = captureDomContext(target);
+  domContext.dateType = dateType ?? 'date';
+  domContext.isoValue = isoValue;
+  domContext.displayValue = displayValue;
+  domContext.dateAmbiguous = dateAmbiguous;
+  if (dateWarning) domContext.dateWarning = dateWarning;
+  domContext.dateConfidence = dateConfidence;
+
+  sendEvent('dateSelect', target, valueBefore, valueAfter, null, null, null, domContext);
+}
+
+/**
+ * Inlined ISO→display conversion (content script can't import modules).
+ * Only handles the basic cases — the full normalizer lives in the service worker.
+ */
+function isoToDisplayInlined(iso: string, dateType: string): string {
+  if (!iso) return '';
+  const months = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+
+  if (dateType === 'date') {
+    const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) {
+      return `${months[parseInt(m[2], 10)]} ${parseInt(m[3], 10)}, ${m[1]}`;
+    }
+  } else if (dateType === 'dateTime') {
+    const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{1,2}):(\d{2})$/);
+    if (m) {
+      return `${months[parseInt(m[2], 10)]} ${parseInt(m[3], 10)}, ${m[1]}, ${m[4].padStart(2, '0')}:${m[5]}`;
+    }
+  } else if (dateType === 'time') {
+    return iso;
+  } else if (dateType === 'month') {
+    const m = iso.match(/^(\d{4})-(\d{2})$/);
+    if (m) {
+      return `${months[parseInt(m[2], 10)]} ${m[1]}`;
+    }
+  }
+  return iso;
+}
+
+/**
+ * Basic ISO date validation (content script level).
+ */
+function isValidIsoDate(iso: string, dateType: string): boolean {
+  if (dateType === 'time') return /^\d{1,2}:\d{2}(:\d{2})?$/.test(iso);
+  if (dateType === 'month') return /^\d{4}-\d{2}$/.test(iso) && parseInt(iso.slice(5, 7), 10) <= 12;
+  if (dateType === 'week') return /^\d{4}-W\d{1,2}$/.test(iso);
+  if (dateType === 'dateTime') return /^\d{4}-\d{2}-\d{2}T\d{1,2}:\d{2}$/.test(iso);
+  // date
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return false;
+  const month = parseInt(m[2], 10);
+  const day = parseInt(m[3], 10);
+  return month >= 1 && month <= 12 && day >= 1 && day <= 31;
+}
+
+/**
+ * Handle a potential date picker value change.
+ * Called from the change handler when the target is a date control.
+ * Uses debouncing to capture only the final stabilized value.
+ */
+function handleDateValueChange(
+  target: Element,
+  valueBefore: string | null,
+  valueAfter: string | null,
+): boolean {
+  // Only proceed if this is a date-related element
+  if (!isDateTriggerElement(target) && !isCalendarCell(target)) {
+    return false;
+  }
+
+  // Clear any existing debounce for a different target
+  if (datePickerDebounce && datePickerDebounce.target !== target) {
+    clearDatePickerDebounce();
+  }
+
+  // Track the latest value
+  if (!datePickerDebounce) {
+    datePickerDebounce = {
+      timer: null,
+      target,
+      valueBefore,
+      lastValue: valueAfter,
+    };
+  } else {
+    datePickerDebounce.lastValue = valueAfter;
+  }
+
+  // Set/reset the debounce timer
+  if (datePickerDebounce.timer) {
+    clearTimeout(datePickerDebounce.timer);
+  }
+  datePickerDebounce.timer = setTimeout(() => {
+    if (datePickerDebounce && isRecording) {
+      const finalValue = datePickerDebounce.lastValue;
+      const beforeValue = datePickerDebounce.valueBefore;
+      const targetEl = datePickerDebounce.target;
+      clearDatePickerDebounce();
+      sendDateSelectEvent(targetEl, beforeValue, finalValue);
+    } else {
+      clearDatePickerDebounce();
+    }
+  }, DATE_DEBOUNCE_MS);
+
+  return true; // Handled as a date picker event
+}
+
 document.addEventListener('mouseover', (event) => {
   if (!isRecording) return;
   if (!event.isTrusted) return;
@@ -2257,7 +2637,14 @@ document.addEventListener('scroll', (event) => {
   lastScrollTarget = scrollEl;
   scrollTimer = setTimeout(() => {
     if (lastScrollTarget && isRecording) {
-      sendEvent('scroll', lastScrollTarget, null, null, null, null);
+      // Tag scroll events inside calendar popovers as evidence-only
+      if (isInsideCalendarPopover(lastScrollTarget)) {
+        const ctx = captureDomContext(lastScrollTarget);
+        ctx.ownedByDatePicker = true;
+        sendEvent('scroll', lastScrollTarget, null, null, null, null, null, ctx);
+      } else {
+        sendEvent('scroll', lastScrollTarget, null, null, null, null);
+      }
     }
     scrollTimer = null;
   }, 200);

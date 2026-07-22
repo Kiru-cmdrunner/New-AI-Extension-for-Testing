@@ -39,6 +39,11 @@ export class MutationProvider implements EvidenceProvider {
     const domCtx = event.domContext;
     if (!domCtx || !domCtx.surfaceType) return [];
 
+    // Skip popover evidence when the click is inside a calendar popover —
+    // the calendar's surface detection is part of a date picker interaction,
+    // not a standalone Popover interaction.
+    if (domCtx.ownedByDatePicker) return [];
+
     const mapping = SURFACE_EVIDENCE_MAP[domCtx.surfaceType];
     if (!mapping) return [];
 
@@ -134,7 +139,7 @@ export class MutationProvider implements EvidenceProvider {
         suggestedType: 'DatePicker' as InteractionType,
         confidence: hasCalendarTrigger ? 0.8 : 0.75,
         weight: 0.55,
-        metadata: cellValue ? { selectedDate: cellValue } : {},
+        metadata: cellValue ? { dateValue: cellValue } : {},
         reason: 'calendar cell interaction detected — date picker lifecycle',
       });
     }

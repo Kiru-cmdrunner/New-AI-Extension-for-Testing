@@ -91,13 +91,32 @@ export interface DomContext {
    * This is the source of InteractionContract derivation in the enrichment pipeline.
    */
   domAttributes?: Record<string, string>;
-  /**
-   * Ancestor chain from the target element upward (up to 10 levels).
+  /** Ancestor chain from the target element upward (up to 10 levels).
    * Each entry is the tag name lowercased; if the ancestor has an ARIA role,
    * it is included as "tag[role=role]". Index 0 is the target's parent.
    * Used by the recognition pipeline for structural pattern matching.
    */
   ancestorRoles?: string[];
+  /** Date picker type: 'date' | 'time' | 'dateTime' | 'month' | 'week'. Present on dateSelect events. */
+  dateType?: string;
+  /** ISO value for execution, e.g. "2026-07-15". Present on dateSelect events. */
+  isoValue?: string;
+  /** Human-readable display value, e.g. "July 15, 2026". Present on dateSelect events. */
+  displayValue?: string;
+  /** True if the captured value could not be confidently normalized. */
+  dateAmbiguous?: boolean;
+  /** Warning message if date normalization was uncertain. */
+  dateWarning?: string;
+  /** Confidence of the date normalization (1.0 = confident, 0 = unparseable). */
+  dateConfidence?: number;
+  /**
+   * True when this event occurred inside a calendar popover/dialog that is
+   * part of a date picker interaction. Such events (scroll, hover, click on
+   * navigation buttons) are evidence-only — they must NOT produce standalone
+   * interactions. Set by the recorder when it detects the event target is
+   * inside a calendar container while a date picker is active.
+   */
+  ownedByDatePicker?: boolean;
 }
 
 // ── Recorded Events ────────────────────────────────────────────────────
@@ -123,7 +142,7 @@ export interface NavigationRecordedEvent {
  */
 export interface ElementRecordedEvent {
   eventId: string;
-  eventType: 'click' | 'dblclick' | 'contextmenu' | 'focus' | 'blur' | 'change' | 'input' | 'scroll' | 'mouseenter' | 'dragstart' | 'drop';
+  eventType: 'click' | 'dblclick' | 'contextmenu' | 'focus' | 'blur' | 'change' | 'input' | 'scroll' | 'mouseenter' | 'dragstart' | 'drop' | 'dateSelect';
   timestamp: string;
   target: ElementIdentity;
   valueBefore: string | null;

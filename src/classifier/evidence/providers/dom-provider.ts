@@ -113,6 +113,34 @@ export class DomProvider implements EvidenceProvider {
       });
     }
 
+    // ── dateSelect event type (from recorder date picker pipeline) ──
+    // When the recorder detects a date picker interaction, it emits a
+    // dateSelect event with normalized metadata in domContext. This is
+    // higher-confidence than tag/attribute detection.
+    if (event.eventType === 'dateSelect' && domCtx?.dateType) {
+      const pickerType: InteractionType =
+        domCtx.dateType === 'time' ? 'TimePicker' as InteractionType
+        : domCtx.dateType === 'dateTime' ? 'DateTimePicker' as InteractionType
+        : 'DatePicker' as InteractionType;
+      const meta: InteractionMetadata = {};
+      const isoVal = domCtx.isoValue || event.valueAfter || '';
+      if (isoVal) {
+        if (pickerType === 'TimePicker') meta.timeValue = isoVal;
+        else if (pickerType === 'DateTimePicker') meta.dateTimeValue = isoVal;
+        else meta.dateValue = isoVal;
+      }
+      if (domCtx.displayValue) meta.displayValue = domCtx.displayValue;
+      if (domCtx.dateAmbiguous) meta.dateAmbiguous = domCtx.dateAmbiguous;
+      evidence.push({
+        provider: this.name,
+        suggestedType: pickerType,
+        confidence: domCtx.dateConfidence ?? 1.0,
+        weight: 1.0,
+        metadata: meta,
+        reason: `dateSelect event with dateType=${domCtx.dateType}, isoValue=${isoVal}`,
+      });
+    }
+
     // ── Native file input ──
     if (isFileInput(domCtx, cssSelector, name)) {
       evidence.push({

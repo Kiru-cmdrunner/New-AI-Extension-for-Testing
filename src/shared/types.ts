@@ -530,7 +530,7 @@ export type AppMessage =
   | { type: 'EXECUTION_RESULT'; status: 'passed' | 'failed' | 'error'; stepCount: number; passedSteps: number; durationMs: number; healedElements: number }
   | {
       type: 'RECORDED_EVENT';
-      eventType: 'click' | 'dblclick' | 'contextmenu' | 'focus' | 'blur' | 'change' | 'input' | 'scroll' | 'mouseenter' | 'dragstart' | 'drop';
+      eventType: 'click' | 'dblclick' | 'contextmenu' | 'focus' | 'blur' | 'change' | 'input' | 'scroll' | 'mouseenter' | 'dragstart' | 'drop' | 'dateSelect';
       timestamp: string;
       target: ElementIdentity;
       valueBefore: string | null;

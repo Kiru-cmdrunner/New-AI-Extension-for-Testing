@@ -220,7 +220,7 @@ describe('MutationProvider — calendar lifecycle', () => {
     expect(datePickerEv).toBeDefined();
     expect(datePickerEv!.confidence).toBeGreaterThanOrEqual(0.7);
     expect(datePickerEv!.reason).toContain('calendar');
-    expect(datePickerEv!.metadata?.selectedDate).toBe('15');
+    expect(datePickerEv!.metadata?.dateValue).toBe('15');
   });
 
   it('detects calendar lifecycle with react-datepicker classes', () => {

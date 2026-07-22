@@ -94,6 +94,10 @@ export interface InteractionMetadata {
   dateValue?: string;
   timeValue?: string;
   dateTimeValue?: string;
+  /** Human-readable display value for date picker interactions. */
+  displayValue?: string;
+  /** True if the date value could not be confidently normalized. */
+  dateAmbiguous?: boolean;
   // Slider
   sliderValue?: string;
   sliderMin?: string;

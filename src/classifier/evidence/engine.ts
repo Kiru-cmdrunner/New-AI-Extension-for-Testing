@@ -17,7 +17,7 @@
  */
 
 import type { DetectedInteraction, InteractionMetadata } from '../interaction-types.ts';
-import type { RecordedEvent } from '../../recorder/recorded-event.ts';
+import type { RecordedEvent, ElementRecordedEvent } from '../../recorder/recorded-event.ts';
 import type { ElementIdentity } from '../../shared/types.ts';
 import type { EvidenceProvider, InteractionBuffer, CombinationResult } from './types.ts';
 import { elementKey } from './types.ts';
@@ -71,6 +71,15 @@ export class InteractionEngine {
     if (event.eventType === 'navigation') {
       this.flush();
       this.emitNavigationInteraction(event);
+      return;
+    }
+
+    // Skip events owned by a date picker — they are evidence-only
+    // (scrolls, hovers, clicks inside calendar popovers that are part of
+    // a date picker interaction). These events remain in the session for
+    // audit/debugging but must not produce standalone interactions.
+    const domCtx = (event as ElementRecordedEvent).domContext;
+    if (domCtx?.ownedByDatePicker && event.eventType !== 'dateSelect') {
       return;
     }
 

@@ -22,8 +22,10 @@ import { detectInteractionsV2 } from '../classifier/evidence/detector';
 import { compareClassifierOutputs, logComparisonResult } from '../classifier/evidence/ab-comparison';
 import { mergeV1V2, logMergeMetrics } from '../classifier/evidence/merge-layer';
 import { runPipeline } from '../recorder/pipeline/pipeline-runner';
+import { normalizeDateValue } from '../shared/date-normalizer';
 import type { DetectedInteraction } from '../classifier/interaction-types';
 import type { UnderstandingResult } from '../domain/entities/understanding-result';
+import type { DomContext } from '../recorder/recorded-event';
 import {
   RecordingState,
   StorageKeys,
@@ -432,6 +434,17 @@ async function handleRecordedEvent(message: Extract<AppMessage, { type: 'RECORDE
   await ensureSessionRestored();
   if (!session.isRecording) return;
 
+  // Apply full date normalization for dateSelect events.
+  // The content script does basic ISO validation + display conversion, but
+  // custom date pickers may send display-format values ("September 19, 1987")
+  // or potentially malformed values. The shared normalizer handles all
+  // formats, ambiguous detection, and preserves invalid values per the
+  // "capture the final committed value, don't silently correct" principle.
+  let domContext = message.domContext;
+  if (message.eventType === 'dateSelect' && domContext) {
+    domContext = normalizeDateDomContext(domContext);
+  }
+
   session.addElementEvent(
     message.eventType,
     message.timestamp,
@@ -440,8 +453,50 @@ async function handleRecordedEvent(message: Extract<AppMessage, { type: 'RECORDE
     message.valueAfter,
     message.checkedBefore,
     message.checkedAfter,
-    message.domContext,
+    domContext,
   );
+}
+
+/**
+ * Apply the full date normalizer to a DomContext's date fields.
+ *
+ * The content script captures the raw value and does basic normalization
+ * (ISO validation for native inputs). Here we apply the full normalizer
+ * which handles:
+ *   - Display format parsing ("July 15, 2026" → ISO)
+ *   - Aria-label strings ("Monday, July 15, 2026" → ISO)
+ *   - Numeric date formats with separator disambiguation
+ *   - Ambiguous value preservation (no silent day/month swap)
+ *
+ * If the content script already produced a confident ISO value (confidence 1.0),
+ * the normalizer will confirm it. If the content script flagged it as ambiguous
+ * or lower confidence, the normalizer may improve the result.
+ */
+function normalizeDateDomContext(ctx: DomContext): DomContext {
+  // Only normalize if there's a value to work with
+  const rawValue = ctx.isoValue || ctx.displayValue || '';
+  if (!rawValue) return ctx;
+
+  const hints: { inputType?: string; dateFormat?: string } = {};
+  if (ctx.inputType) hints.inputType = ctx.inputType;
+
+  const normalized = normalizeDateValue(rawValue, hints);
+
+  // Always apply the normalizer's result — it may detect invalid values
+  // that the content script couldn't (e.g., month 15 in yyyy-MM-dd format).
+  // The normalizer is the authority: if it says the value is ambiguous or
+  // unparseable, that verdict overrides the content script's initial
+  // assessment. If it says the value is valid (confidence 1.0), it replaces
+  // the content script's lower-confidence display-format value.
+  return {
+    ...ctx,
+    dateType: normalized.dateType,
+    isoValue: normalized.isoValue,
+    displayValue: normalized.displayValue,
+    dateAmbiguous: normalized.ambiguous,
+    dateConfidence: normalized.confidence,
+    ...(normalized.warning ? { dateWarning: normalized.warning } : {}),
+  };
 }
 
 // ── RUN_TEST handler (Phase 12.5) ──────────────────────────────────────
