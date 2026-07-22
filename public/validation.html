@@ -104,7 +104,21 @@
   </div>
 
   <script type="module">
-    import { detectInteractions } from '/src/classifier/interaction-detector.ts';
+    // Detect whether we're running from the built dist/ folder (production)
+    // or from the Vite dev server (development). In built mode, the unbundled
+    // .ts source files are not available, so we skip the classifier import.
+    let detectInteractions = null;
+    const isDevMode = window.location.port === '5173' || window.location.hostname === 'localhost';
+    if (isDevMode) {
+      try {
+        const mod = await import('/src/classifier/interaction-detector.ts');
+        detectInteractions = mod.detectInteractions;
+      } catch (e) {
+        console.warn('validation.html: classifier module could not be loaded.');
+      }
+    } else {
+      console.info('validation.html: running in built mode — classifier tests skipped. DOM elements are still present for manual testing.');
+    }
 
     // ── Element identity extraction (inline, matching recorder) ──────────
 
@@ -351,6 +365,10 @@
     const results = [];
     let passCount = 0, failCount = 0;
 
+    if (!detectInteractions) {
+      document.getElementById('status').textContent = 'Running in built mode — DOM elements present for manual testing. Run via Vite dev server for classifier tests.';
+      document.getElementById('summary').innerHTML = '<div class="summary-card" style="background:#f3f4f6;color:#6b7280;">ℹ️ Built mode — classifier tests skipped</div>';
+    } else {
     for (const testCase of tests) {
       const interactions = detectInteractions(testCase.events);
       const detected = interactions[0];
@@ -388,8 +406,10 @@
         eventCount: testCase.events.length,
       });
     }
+    }
 
     // ── Render results
+    if (detectInteractions) {
     document.getElementById('status').textContent = `${passCount}/${tests.length} passed, ${failCount} failed`;
 
     const summary = document.getElementById('summary');
@@ -413,6 +433,7 @@
         <span class="result-conf ${confClass}">${(r.confidence * 100).toFixed(0)}%</span>
       `;
       resultsEl.appendChild(row);
+    }
     }
 
     // Make available globally for the tester agent
