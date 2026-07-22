@@ -20,6 +20,7 @@
     <!-- View Tabs -->
     <div class="view-tabs">
       <button class="view-tab view-tab--active" data-view="capabilities">Capabilities</button>
+      <button class="view-tab" data-view="elements">Elements</button>
       <button class="view-tab" data-view="classic">Classic Tree</button>
     </div>
 
@@ -59,6 +60,22 @@
         </div>
         <div class="detail-panel__meta" id="classic-detail-meta"></div>
         <div class="detail-panel__steps" id="classic-detail-steps"></div>
+      </div>
+    </main>
+
+    <!-- ════════ ELEMENTS VIEW (Phase 11.5) ════════ -->
+    <main class="main" id="elements-view" hidden>
+      <div class="cap-list" id="element-list">
+        <p class="cap-list__empty" id="element-empty">No elements yet. Record a feature to discover elements.</p>
+      </div>
+
+      <!-- Element Detail Panel (heal history) -->
+      <div class="detail-panel" id="element-detail-panel" hidden>
+        <div class="detail-panel__header">
+          <h2 class="detail-panel__title" id="element-detail-title"></h2>
+          <button id="element-detail-close-btn" class="detail-panel__close">✕</button>
+        </div>
+        <div class="detail-panel__body" id="element-detail-body"></div>
       </div>
     </main>
   </div>

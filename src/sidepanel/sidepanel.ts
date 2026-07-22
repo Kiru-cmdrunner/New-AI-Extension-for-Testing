@@ -111,6 +111,8 @@ const irFilesCount = document.getElementById('ir-files-count')!;
 // Repository status section (Phase 10.4)
 const repoStatusSection = document.getElementById('repo-status-section')!;
 const repoStatusBody = document.getElementById('repo-status-body')!;
+const healingStatusSection = document.getElementById('healing-status-section')!;
+const healingStatusBody = document.getElementById('healing-status-body')!;
 
 // Header
 const settingsBtn = document.getElementById('settings-btn')!;
@@ -716,6 +718,60 @@ function renderRepositoryStatus(data: RepoStatusData): void {
   repoStatusSection.hidden = false;
 }
 
+// ── Healing Summary (Phase 11.5) ──────────────────────────
+
+interface HealingSummary {
+  examined: number;
+  healed: number;
+  created: number;
+  details: Array<{ elementId: string; logicalName: string; action: string }>;
+}
+
+async function loadHealingSummary(): Promise<HealingSummary | null> {
+  try {
+    const result = await chrome.storage.local.get(StorageKeys.ELEMENT_HEAL_RESULT);
+    const data = result[StorageKeys.ELEMENT_HEAL_RESULT];
+    if (!data) return null;
+    return data as HealingSummary;
+  } catch {
+    return null;
+  }
+}
+
+function renderHealingSummary(data: HealingSummary): void {
+  healingStatusBody.innerHTML = '';
+
+  // Summary row
+  const summaryRow = document.createElement('div');
+  summaryRow.className = 'repo-status__row';
+  const summaryLabel = document.createElement('span');
+  summaryLabel.className = 'repo-status__label';
+  summaryLabel.textContent = 'Elements:';
+  const summaryValue = document.createElement('span');
+  summaryValue.className = 'repo-status__value';
+  summaryValue.textContent = `${data.healed} healed, ${data.created} new, ${data.examined} examined`;
+  summaryRow.append(summaryLabel, summaryValue);
+  healingStatusBody.appendChild(summaryRow);
+
+  // Details
+  if (data.details && data.details.length > 0) {
+    for (const detail of data.details.slice(0, 5)) {
+      const detailRow = document.createElement('div');
+      detailRow.className = 'repo-status__row';
+      const badge = document.createElement('span');
+      badge.className = `repo-status__badge repo-status__badge--${detail.action === 'healed' ? 'merged' : 'new'}`;
+      badge.textContent = detail.action;
+      const name = document.createElement('span');
+      name.className = 'repo-status__value';
+      name.textContent = detail.logicalName;
+      detailRow.append(badge, name);
+      healingStatusBody.appendChild(detailRow);
+    }
+  }
+
+  healingStatusSection.hidden = false;
+}
+
 async function handleRecordAnother(): Promise<void> {
   await StorageService.clearEvents();
   await StorageService.clearRecordingContext();
@@ -728,9 +784,11 @@ async function handleRecordAnother(): Promise<void> {
   try { await chrome.storage.local.remove(StorageKeys.REPOSITORY_SESSION_ID); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.REPOSITORY_CAPABILITY_ID); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.REPOSITORY_CAPABILITY_DECISION); } catch {}
+  try { await chrome.storage.local.remove(StorageKeys.ELEMENT_HEAL_RESULT); } catch {}
   irStepsSection.hidden = true;
   irPlaywrightSection.hidden = true;
   repoStatusSection.hidden = true;
+  healingStatusSection.hidden = true;
   await openNewTestCase();
 }
 
@@ -795,6 +853,16 @@ function setupLiveListeners(): void {
       const status = await loadRepositoryStatus();
       if (status) {
         renderRepositoryStatus(status);
+      }
+    }
+  });
+
+  // Healing summary — fires when service worker finishes cross-session healing
+  StorageService.onKeyChanged(StorageKeys.ELEMENT_HEAL_RESULT, async (newValue) => {
+    if (newValue && !views['stopped'].hidden) {
+      const summary = await loadHealingSummary();
+      if (summary) {
+        renderHealingSummary(summary);
       }
     }
   });
@@ -995,6 +1063,14 @@ async function init(): Promise<void> {
       renderRepositoryStatus(repoStatus);
     } else {
       repoStatusSection.hidden = true;
+    }
+
+    // Load healing summary (Phase 11.5)
+    const healingSummary = await loadHealingSummary();
+    if (healingSummary) {
+      renderHealingSummary(healingSummary);
+    } else {
+      healingStatusSection.hidden = true;
     }
 
     const draft = await StorageService.getTestCaseDraft();

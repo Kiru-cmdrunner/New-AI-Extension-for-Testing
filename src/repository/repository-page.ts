@@ -35,6 +35,7 @@ import type { EnrichmentEvent, CapabilityInput, CapabilityValidationRule, Capabi
 // View tabs
 const viewTabs = document.querySelectorAll<HTMLButtonElement>('.view-tab');
 const capabilitiesView = document.getElementById('capabilities-view')!;
+const elementsView = document.getElementById('elements-view')!;
 const classicView = document.getElementById('classic-view')!;
 
 // Capabilities View
@@ -46,6 +47,14 @@ const detailPanel = document.getElementById('detail-panel')!;
 const detailTitle = document.getElementById('detail-title')!;
 const detailBody = document.getElementById('detail-body')!;
 const detailCloseBtn = document.getElementById('detail-close-btn')!;
+
+// Elements View (Phase 11.5)
+const elementList = document.getElementById('element-list')!;
+const elementEmpty = document.getElementById('element-empty')!;
+const elementDetailPanel = document.getElementById('element-detail-panel')!;
+const elementDetailTitle = document.getElementById('element-detail-title')!;
+const elementDetailBody = document.getElementById('element-detail-body')!;
+const elementDetailCloseBtn = document.getElementById('element-detail-close-btn')!;
 
 // Classic Tree View
 const tree = document.getElementById('repository-tree')!;
@@ -68,7 +77,7 @@ const uowFactory = new DexieUnitOfWorkFactory();
 // ── State ─────────────────────────────────────────────────────
 
 /** Currently active view. */
-let activeView: 'capabilities' | 'classic' = 'capabilities';
+let activeView: 'capabilities' | 'elements' | 'classic' = 'capabilities';
 
 /** Currently displayed repository (classic view, may be filtered). */
 let displayRepo: TestRepository = { projects: [] };
@@ -86,10 +95,11 @@ viewTabs.forEach((tab) => {
     const view = tab.dataset.view;
     if (!view) return;
 
-    activeView = view as 'capabilities' | 'classic';
+    activeView = view as 'capabilities' | 'elements' | 'classic';
 
     viewTabs.forEach((t) => t.classList.toggle('view-tab--active', t === tab));
     capabilitiesView.hidden = activeView !== 'capabilities';
+    elementsView.hidden = activeView !== 'elements';
     classicView.hidden = activeView !== 'classic';
 
     refresh();
@@ -919,11 +929,211 @@ function escapeHtml(text: string): string {
   return div.innerHTML;
 }
 
+// ════════ ELEMENTS VIEW (Phase 11.5) ══════════════════════════
+
+import type { Element } from '../domain/entities/element';
+import { ElementStatus, LocatorStrategyType } from '../domain/enums';
+
+async function refreshElements(): Promise<void> {
+  const query = searchInput.value.trim().toLowerCase();
+  const uow = uowFactory.create();
+  const result = await uow.execute(async (repos) => {
+    const projects = await repos.projects.getAll();
+    const grouped: Map<string, { project: string; elements: Element[] }> = new Map();
+    for (const project of projects) {
+      const elements = await repos.elements.getByProject(project.id);
+      if (elements.length === 0) continue;
+      const filtered = query
+        ? elements.filter((e) =>
+            e.logicalName.toLowerCase().includes(query) ||
+            e.pageOrComponent.toLowerCase().includes(query))
+        : elements;
+      grouped.set(project.id, { project: project.name, elements: filtered });
+    }
+    return grouped;
+  });
+
+  elementList.innerHTML = '';
+  let totalCount = 0;
+  for (const [projectId, group] of result) {
+    if (group.elements.length === 0) continue;
+    totalCount += group.elements.length;
+
+    const projectHeader = document.createElement('div');
+    projectHeader.className = 'cap-project-header';
+    projectHeader.innerHTML = `<span class="cap-project-header__icon">📁</span><span class="cap-project-header__name">${escapeHtml(group.project)}</span>`;
+    elementList.appendChild(projectHeader);
+
+    for (const el of group.elements) {
+      elementList.appendChild(createElementCard(el));
+    }
+  }
+
+  if (totalCount === 0) {
+    elementEmpty.textContent = query
+      ? 'No elements match your search.'
+      : 'No elements yet. Record a feature to discover elements.';
+    elementList.appendChild(elementEmpty);
+  }
+}
+
+function createElementCard(el: Element): HTMLElement {
+  const card = document.createElement('div');
+  card.className = 'cap-card';
+  card.style.cursor = 'pointer';
+
+  // Status badge
+  const statusBadge = document.createElement('span');
+  const statusClass = el.status === ElementStatus.ACTIVE ? 'repo-status__badge--merged'
+    : el.status === ElementStatus.STALE ? 'repo-status__badge--ambiguous'
+    : 'repo-status__badge--none';
+  statusBadge.className = `repo-status__badge ${statusClass}`;
+  statusBadge.textContent = el.status;
+  card.appendChild(statusBadge);
+
+  // Name
+  const name = document.createElement('span');
+  name.className = 'cap-card__name';
+  name.textContent = el.logicalName;
+  card.appendChild(name);
+
+  // Page/component
+  if (el.pageOrComponent) {
+    const page = document.createElement('div');
+    page.className = 'cap-card__purpose';
+    page.textContent = el.pageOrComponent;
+    card.appendChild(page);
+  }
+
+  // Stats row
+  const stats = document.createElement('div');
+  stats.className = 'cap-card__stats';
+  const locCount = document.createElement('span');
+  locCount.textContent = `${el.locatorStrategies.length} locators`;
+  stats.appendChild(locCount);
+  if (el.healHistory.length > 0) {
+    const healCount = document.createElement('span');
+    healCount.textContent = `${el.healHistory.length} heals`;
+    stats.appendChild(healCount);
+  }
+  card.appendChild(stats);
+
+  card.addEventListener('click', () => {
+    renderElementDetail(el);
+  });
+
+  return card;
+}
+
+function renderElementDetail(el: Element): void {
+  elementDetailTitle.textContent = el.logicalName;
+  elementDetailBody.innerHTML = '';
+
+  // Status row
+  const statusRow = document.createElement('div');
+  statusRow.className = 'detail-section';
+  const statusLabel = document.createElement('span');
+  statusLabel.textContent = 'Status: ';
+  statusLabel.style.fontWeight = 'bold';
+  const statusValue = document.createElement('span');
+  const statusClass = el.status === ElementStatus.ACTIVE ? 'repo-status__badge--merged'
+    : el.status === ElementStatus.STALE ? 'repo-status__badge--ambiguous'
+    : 'repo-status__badge--none';
+  statusValue.className = `repo-status__badge ${statusClass}`;
+  statusValue.textContent = el.status;
+  statusRow.append(statusLabel, statusValue);
+  elementDetailBody.appendChild(statusRow);
+
+  // Page/component
+  if (el.pageOrComponent) {
+    const pageRow = document.createElement('div');
+    pageRow.className = 'detail-section';
+    pageRow.textContent = `Page: ${el.pageOrComponent}`;
+    elementDetailBody.appendChild(pageRow);
+  }
+
+  // Locator strategies
+  const locSection = document.createElement('div');
+  locSection.className = 'detail-section';
+  const locHeader = document.createElement('h3');
+  locHeader.textContent = 'Locator Strategies';
+  locSection.appendChild(locHeader);
+  for (const loc of el.locatorStrategies) {
+    const locRow = document.createElement('div');
+    locRow.style.display = 'flex';
+    locRow.style.justifyContent = 'space-between';
+    locRow.style.padding = '4px 0';
+    const locType = document.createElement('span');
+    locType.textContent = `${loc.priority}. ${loc.type}`;
+    locType.style.fontWeight = 'bold';
+    const locValue = document.createElement('span');
+    locValue.textContent = loc.value;
+    locValue.style.fontFamily = 'monospace';
+    locRow.append(locType, locValue);
+    locSection.appendChild(locRow);
+  }
+  elementDetailBody.appendChild(locSection);
+
+  // Heal history
+  if (el.healHistory.length > 0) {
+    const healSection = document.createElement('div');
+    healSection.className = 'detail-section';
+    const healHeader = document.createElement('h3');
+    healHeader.textContent = 'Heal History';
+    healSection.appendChild(healHeader);
+    for (const event of el.healHistory) {
+      const eventRow = document.createElement('div');
+      eventRow.style.padding = '8px 0';
+      eventRow.style.borderTop = '1px solid var(--color-border, #e0e0e0)';
+
+      const eventMeta = document.createElement('div');
+      eventMeta.style.display = 'flex';
+      eventMeta.style.justifyContent = 'space-between';
+      const eventDate = document.createElement('span');
+      eventDate.textContent = new Date(event.healedAt).toLocaleString();
+      eventDate.style.fontSize = '0.85em';
+      eventDate.style.color = '#666';
+      const eventReason = document.createElement('span');
+      eventReason.textContent = `${event.reason} (by ${event.proposedBy})`;
+      eventReason.style.fontStyle = 'italic';
+      eventMeta.append(eventDate, eventReason);
+      eventRow.appendChild(eventMeta);
+
+      const sessionRef = document.createElement('div');
+      sessionRef.textContent = `Session: ${event.runId.slice(0, 12)}`;
+      sessionRef.style.fontSize = '0.85em';
+      sessionRef.style.color = '#666';
+      eventRow.appendChild(sessionRef);
+
+      healSection.appendChild(eventRow);
+    }
+    elementDetailBody.appendChild(healSection);
+  }
+
+  // Last healed
+  if (el.lastHealedAt) {
+    const lastHealRow = document.createElement('div');
+    lastHealRow.className = 'detail-section';
+    lastHealRow.textContent = `Last healed: ${new Date(el.lastHealedAt).toLocaleString()}`;
+    lastHealRow.style.fontSize = '0.85em';
+    lastHealRow.style.color = '#666';
+    elementDetailBody.appendChild(lastHealRow);
+  }
+
+  elementDetailPanel.hidden = false;
+}
+
+elementDetailCloseBtn.addEventListener('click', () => {
+  elementDetailPanel.hidden = true;
+});
+
 // ════════ REFRESH DISPATCHER ═══════════════════════════════════
 
 async function refresh(): Promise<void> {
   if (activeView === 'capabilities') {
     await refreshCapabilities();
+  } else if (activeView === 'elements') {
+    await refreshElements();
   } else {
     await refreshClassic();
   }

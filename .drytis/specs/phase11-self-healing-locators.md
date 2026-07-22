@@ -28,32 +28,32 @@ Recording Session B (fresh DOM evidence)
 ## Milestones
 
 ### Milestone 11.1 — Shared Locator Ranking + healElement() Domain Function
-- [ ] Extract rankLocatorCandidates() shared helper from resolveLocatorsForIR()
-- [ ] Refactor resolveLocatorsForIR() to use rankLocatorCandidates()
-- [ ] Add healElement() pure function to element.ts
-- [ ] Add HealContext type
-- [ ] Extend updateElement() write-path for healHistory/lastHealedAt/status
-- [ ] Tests for all new functions
-- [ ] All existing tests still pass
+- [x] Extract rankLocatorCandidates() shared helper from resolveLocatorsForIR()
+- [x] Refactor resolveLocatorsForIR() to use rankLocatorCandidates()
+- [x] Add healElement() pure function to element.ts
+- [x] Add HealContext type
+- [x] Extend updateElement() write-path for healHistory/lastHealedAt/status
+- [x] Tests for all new functions
+- [x] All existing tests still pass
 
 ### Milestone 11.2 — Element Matching Service
-- [ ] ElementMatchingService with weighted identity signature comparison
-- [ ] Match score weights: accessibleName 30%, ariaRole/tag 25%, ancestorRoleChain 25%, testId/dataCy/dataQa 15%, pageOrComponent 5%
-- [ ] Threshold: ≥ 0.70 match
-- [ ] Tests: same-element match, different-element rejection, partial identity, missing fields
+- [x] ElementMatchingService with weighted identity signature comparison
+- [x] Match score weights: accessibleName 30%, ariaRole/tag 25%, ancestorRoleChain 25%, testId/dataCy/dataQa 15%, pageOrComponent 5%
+- [x] Threshold: ≥ 0.70 match
+- [x] Tests: same-element match, different-element rejection, partial identity, missing fields
 
 ### Milestone 11.3 — Healing Service + Pipeline Wiring
-- [ ] HealingService orchestrating match → detect → heal → persist
-- [ ] Wire into handleStopRecording after persistSession() (non-fatal)
-- [ ] Store healing summary in chrome.storage.local
-- [ ] Integration tests for full flow
+- [x] HealingService orchestrating match → detect → heal → persist
+- [x] Wire into handleStopRecording after persistSession() (non-fatal)
+- [x] Store healing summary in chrome.storage.local
+- [x] Integration tests for full flow
 
 ### Milestone 11.4 — Staleness Detection Wiring
-- [ ] Call checkStaleness() before serving cached IR artifacts
-- [ ] Wire detectLocatorChanges() to produce heal events
-- [ ] IR regeneration trigger when elements are healed
+- [x] Call checkStaleness() before serving cached IR artifacts
+- [x] Wire detectLocatorChanges() to produce heal events
+- [x] IR regeneration trigger when elements are healed
 
 ### Milestone 11.5 — UI: Element Status + Heal History
-- [ ] Repository page: element status badges (ACTIVE/STALE/BROKEN)
-- [ ] Element detail: heal history timeline
-- [ ] Side panel: brief healing summary after recording
+- [x] Repository page: element status badges (ACTIVE/STALE/BROKEN)
+- [x] Element detail: heal history timeline
+- [x] Side panel: brief healing summary after recording
