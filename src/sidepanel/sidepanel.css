@@ -1468,3 +1468,77 @@ body {
   align-items: center;
   gap: 8px;
 }
+
+/* ── Repository Status (Phase 10.4) ── */
+
+.repo-status {
+  margin: 12px 0;
+  padding: 12px 14px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+}
+
+.repo-status__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.repo-status__title {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.repo-status__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.repo-status__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.repo-status__label {
+  color: #475569;
+  font-weight: 500;
+}
+
+.repo-status__value {
+  font-weight: 600;
+  color: #0c4a6e;
+}
+
+.repo-status__badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.repo-status__badge--new {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.repo-status__badge--merged {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.repo-status__badge--ambiguous {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.repo-status__badge--none {
+  background: #f3f4f6;
+  color: #6b7280;
+}

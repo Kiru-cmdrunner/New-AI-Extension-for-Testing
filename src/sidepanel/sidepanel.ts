@@ -108,6 +108,10 @@ const irPlaywrightSection = document.getElementById('ir-playwright-section')!;
 const irFilesList = document.getElementById('ir-files-list')!;
 const irFilesCount = document.getElementById('ir-files-count')!;
 
+// Repository status section (Phase 10.4)
+const repoStatusSection = document.getElementById('repo-status-section')!;
+const repoStatusBody = document.getElementById('repo-status-body')!;
+
 // Header
 const settingsBtn = document.getElementById('settings-btn')!;
 const repoBtn = document.getElementById('repo-btn')!;
@@ -644,6 +648,68 @@ async function loadDetectedInteractions(): Promise<DetectedInteraction[] | null>
   }
 }
 
+// ── Repository Status (Phase 10.4) ─────────────────────────
+
+interface RepoStatusData {
+  sessionId: string | null;
+  capabilityId: string | null;
+  capabilityDecision: string | null;
+}
+
+async function loadRepositoryStatus(): Promise<RepoStatusData | null> {
+  try {
+    const result = await chrome.storage.local.get([
+      StorageKeys.REPOSITORY_SESSION_ID,
+      StorageKeys.REPOSITORY_CAPABILITY_ID,
+      StorageKeys.REPOSITORY_CAPABILITY_DECISION,
+    ]);
+    const sessionId = result[StorageKeys.REPOSITORY_SESSION_ID] ?? null;
+    if (!sessionId) return null;
+    return {
+      sessionId,
+      capabilityId: result[StorageKeys.REPOSITORY_CAPABILITY_ID] ?? null,
+      capabilityDecision: result[StorageKeys.REPOSITORY_CAPABILITY_DECISION] ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function renderRepositoryStatus(data: RepoStatusData): void {
+  repoStatusBody.innerHTML = '';
+
+  // Session row
+  const sessionRow = document.createElement('div');
+  sessionRow.className = 'repo-status__row';
+  sessionRow.innerHTML = `<span class="repo-status__label">Session:</span><span class="repo-status__value">${data.sessionId ? data.sessionId.slice(0, 8) : '—'}</span>`;
+  repoStatusBody.appendChild(sessionRow);
+
+  // Capability decision row
+  const decisionRow = document.createElement('div');
+  decisionRow.className = 'repo-status__row';
+
+  const decisionLabel = document.createElement('span');
+  decisionLabel.className = 'repo-status__label';
+  decisionLabel.textContent = 'Capability:';
+  decisionRow.appendChild(decisionLabel);
+
+  const badge = document.createElement('span');
+  const decision = data.capabilityDecision ?? 'none';
+  badge.className = `repo-status__badge repo-status__badge--${decision}`;
+  badge.textContent = decision.replace(/-/g, ' ');
+  decisionRow.appendChild(badge);
+
+  if (data.capabilityId) {
+    const capId = document.createElement('span');
+    capId.className = 'repo-status__value';
+    capId.textContent = data.capabilityId.slice(0, 8);
+    decisionRow.appendChild(capId);
+  }
+
+  repoStatusBody.appendChild(decisionRow);
+  repoStatusSection.hidden = false;
+}
+
 async function handleRecordAnother(): Promise<void> {
   await StorageService.clearEvents();
   await StorageService.clearRecordingContext();
@@ -658,6 +724,7 @@ async function handleRecordAnother(): Promise<void> {
   try { await chrome.storage.local.remove(StorageKeys.REPOSITORY_CAPABILITY_DECISION); } catch {}
   irStepsSection.hidden = true;
   irPlaywrightSection.hidden = true;
+  repoStatusSection.hidden = true;
   await openNewTestCase();
 }
 
@@ -711,6 +778,17 @@ function setupLiveListeners(): void {
       const files = extractFiles(newValue);
       if (files && files.length > 0 && !views['stopped'].hidden) {
         renderIRFiles(files);
+      }
+    }
+  });
+
+  // Repository persistence status — fires when service worker finishes persisting
+  // the recording session to Repository V2 (Dexie/IndexedDB).
+  StorageService.onKeyChanged(StorageKeys.REPOSITORY_SESSION_ID, async (newValue) => {
+    if (newValue && !views['stopped'].hidden) {
+      const status = await loadRepositoryStatus();
+      if (status) {
+        renderRepositoryStatus(status);
       }
     }
   });
@@ -903,6 +981,14 @@ async function init(): Promise<void> {
       renderIRFiles(irFiles);
     } else {
       irPlaywrightSection.hidden = true;
+    }
+
+    // Load repository persistence status (Phase 10.4)
+    const repoStatus = await loadRepositoryStatus();
+    if (repoStatus) {
+      renderRepositoryStatus(repoStatus);
+    } else {
+      repoStatusSection.hidden = true;
     }
 
     const draft = await StorageService.getTestCaseDraft();

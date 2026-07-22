@@ -17,26 +17,48 @@
       <button id="close-btn" class="header__close-btn" title="Close">✕</button>
     </header>
 
+    <!-- View Tabs -->
+    <div class="view-tabs">
+      <button class="view-tab view-tab--active" data-view="capabilities">Capabilities</button>
+      <button class="view-tab" data-view="classic">Classic Tree</button>
+    </div>
+
     <!-- Search Bar -->
     <div class="search-bar">
-      <input type="text" id="search-input" class="search-input" placeholder="Search by project, feature, scenario, or test case…" />
+      <input type="text" id="search-input" class="search-input" placeholder="Search by capability, project, test case…" />
       <button id="new-project-btn" class="btn btn--primary">+ New Project</button>
     </div>
 
-    <!-- Tree Container -->
-    <main class="main">
-      <div class="tree" id="repository-tree">
-        <p class="tree__empty" id="tree-empty">No projects yet. Click "+ New Project" to get started.</p>
+    <!-- ════════ CAPABILITIES VIEW ════════ -->
+    <main class="main" id="capabilities-view">
+      <div class="cap-list" id="capability-list">
+        <p class="cap-list__empty" id="cap-empty">No capabilities yet. Record a feature to build understanding.</p>
       </div>
 
-      <!-- Detail Panel (shows test case steps when selected) -->
+      <!-- Capability Detail Panel -->
       <div class="detail-panel" id="detail-panel" hidden>
         <div class="detail-panel__header">
           <h2 class="detail-panel__title" id="detail-title"></h2>
           <button id="detail-close-btn" class="detail-panel__close">✕</button>
         </div>
-        <div class="detail-panel__meta" id="detail-meta"></div>
-        <div class="detail-panel__steps" id="detail-steps"></div>
+        <div class="detail-panel__body" id="detail-body"></div>
+      </div>
+    </main>
+
+    <!-- ════════ CLASSIC TREE VIEW ════════ -->
+    <main class="main" id="classic-view" hidden>
+      <div class="tree" id="repository-tree">
+        <p class="tree__empty" id="tree-empty">No projects yet. Click "+ New Project" to get started.</p>
+      </div>
+
+      <!-- Detail Panel (shows test case steps when selected) -->
+      <div class="detail-panel" id="classic-detail-panel" hidden>
+        <div class="detail-panel__header">
+          <h2 class="detail-panel__title" id="classic-detail-title"></h2>
+          <button id="classic-detail-close-btn" class="detail-panel__close">✕</button>
+        </div>
+        <div class="detail-panel__meta" id="classic-detail-meta"></div>
+        <div class="detail-panel__steps" id="classic-detail-steps"></div>
       </div>
     </main>
   </div>

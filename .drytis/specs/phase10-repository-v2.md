@@ -31,10 +31,14 @@ Migrate the runtime from the legacy chrome.storage.local RepositoryService to th
 - Data migration from V1 storage to V2 Dexie tables
 
 ### Milestone 10.4 — Repository UI
-- Update side panel to read from Dexie
-- Capability list view
-- Test case list with capability grouping
-- Element repository view
+- [x] Capability-centric repository page (dual-view: Capabilities + Classic Tree)
+- [x] Capability cards showing name, confidence badge, purpose, stats (inputs/validations/outcomes/sessions)
+- [x] Capability detail panel with sections: meta row, purpose, inputs, validation rules, observed outcomes, business rules, failure modes, enrichment history
+- [x] Search filtering by capability name/purpose/project name
+- [x] View tab switching (Capabilities view default, Classic Tree preserved)
+- [x] Side panel repository status section (session ID, capability decision badge)
+- [x] Storage listener for live repository status updates
+- [x] Tests for rendering logic and data mapping
 
 ## Milestone 10.1 — Acceptance Criteria
 
