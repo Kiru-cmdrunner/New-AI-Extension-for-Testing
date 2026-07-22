@@ -14,10 +14,14 @@ import type { Element } from '../../../domain/entities/element';
 import type { ApprovedTestCase, TestCaseVersion } from '../../../domain/entities/approved-test-case';
 import type { SourceArtifact } from '../../../domain/entities/source-artifact';
 import type { ExecutionIRArtifact } from '../../../domain/execution-ir/types';
+import type { Capability } from '../../../domain/entities/capability';
+import type { RecordingSession } from '../../../domain/entities/recording-session';
 
 /** Database name — versioned for future migrations. */
 const DB_NAME = 'cmdrunner_repository';
-const DB_VERSION = 1;
+
+/** Schema version. V1: 6 tables. V2: added capabilities + recordingSessions. */
+const DB_VERSION = 2;
 
 /**
  * Row types for Dexie storage. These extend the domain entities with
@@ -48,6 +52,12 @@ export type SourceArtifactRow = SourceArtifact;
 /** ExecutionIRArtifact row — identical to domain ExecutionIRArtifact. */
 export type ExecutionIRRow = ExecutionIRArtifact;
 
+/** Capability row — identical to domain Capability. */
+export type CapabilityRow = Capability;
+
+/** RecordingSession row — identical to domain RecordingSession. */
+export type RecordingSessionRow = RecordingSession;
+
 /**
  * The CmdRunner Dexie database.
  *
@@ -65,34 +75,38 @@ export class CmdRunnerDatabase extends Dexie {
   testCaseVersions!: Table<TestCaseVersionRow, string>;
   sourceArtifacts!: Table<SourceArtifactRow, string>;
   executionIRs!: Table<ExecutionIRRow, string>;
+  capabilities!: Table<CapabilityRow, string>;
+  recordingSessions!: Table<RecordingSessionRow, string>;
 
   constructor() {
     super(DB_NAME);
 
-    this.version(DB_VERSION).stores({
-      // Primary key is `id` (first field). Subsequent fields are indexed.
-      // 'id' is the IndexedDB primary key.
-      // 'projectId' is indexed for getByProject() queries.
+    // V1: Original 6 tables
+    this.version(1).stores({
       projects: 'id, status',
-
-      // Elements: index on projectId for getByProject(), compound on
-      // [projectId+pageOrComponent] for getByPageComponent().
       elements: 'id, projectId, [projectId+pageOrComponent], status',
-
-      // Test cases: index on projectId for getByProject(),
-      // multi-entry on tags for getByTag().
       testCases: 'id, projectId, *tags, status, priority',
-
-      // Versions: index on testCaseId for listVersions(),
-      // compound on [testCaseId+versionNumber] for getCurrentVersion().
       testCaseVersions: 'id, testCaseId, [testCaseId+versionNumber]',
-
-      // Source artifacts: indexed by projectId and type for queries.
       sourceArtifacts: 'id, projectId, [projectId+type]',
-
-      // Execution IR artifacts: indexed by id and testCaseVersionId.
-      // testCaseVersionId is the primary lookup key (one IR per ATC version, INV-IR7).
       executionIRs: 'id, testCaseVersionId',
+    });
+
+    // V2: Added Capability + RecordingSession tables
+    // Capabilities: indexed by projectId for getByProject(),
+    // multi-entry on sessionIds for findBySessionId().
+    // RecordingSessions: indexed by projectId for getByProject().
+    // (understandingResult.capability is queried in-memory, not indexed.)
+    this.version(2).stores({
+      // V1 tables (unchanged — must repeat in Dexie version upgrade)
+      projects: 'id, status',
+      elements: 'id, projectId, [projectId+pageOrComponent], status',
+      testCases: 'id, projectId, *tags, status, priority',
+      testCaseVersions: 'id, testCaseId, [testCaseId+versionNumber]',
+      sourceArtifacts: 'id, projectId, [projectId+type]',
+      executionIRs: 'id, testCaseVersionId',
+      // V2 new tables
+      capabilities: 'id, projectId, *sessionIds',
+      recordingSessions: 'id, projectId',
     });
   }
 }

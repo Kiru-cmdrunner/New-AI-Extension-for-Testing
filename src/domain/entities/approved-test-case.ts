@@ -351,6 +351,8 @@ export interface ApprovedTestCase {
   readonly currentVersionId: string;
   /** References to datasets/parameters used by this case. */
   readonly testDataRefs: string[];
+  /** Optional link to the Capability this test case exercises. */
+  readonly capabilityId: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly createdBy: string;
@@ -429,6 +431,7 @@ export function createTestCase(input: CreateTestCaseInput): {
     status: TestCaseStatus.DRAFT,
     currentVersionId: version.id,
     testDataRefs: input.testDataRefs ?? [],
+    capabilityId: null,
     createdAt: now,
     updatedAt: now,
     createdBy,
@@ -455,6 +458,7 @@ export function updateTestCaseMetadata(
     tags?: string[];
     priority?: TestCasePriority;
     testDataRefs?: string[];
+    capabilityId?: string | null;
   },
 ): ApprovedTestCase {
   const title = changes.title !== undefined ? changes.title.trim() : existing.title;
@@ -469,6 +473,7 @@ export function updateTestCaseMetadata(
     tags: changes.tags ?? existing.tags,
     priority: changes.priority ?? existing.priority,
     testDataRefs: changes.testDataRefs ?? existing.testDataRefs,
+    capabilityId: changes.capabilityId !== undefined ? changes.capabilityId : existing.capabilityId,
     updatedAt: new Date().toISOString(),
   };
 }
