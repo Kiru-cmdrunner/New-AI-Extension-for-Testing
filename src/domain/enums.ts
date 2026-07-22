@@ -79,7 +79,7 @@ export enum ValidationSeverity {
 
 // ── 3.4 Element Repository ────────────────────────────────
 
-/** Element lifecycle state. V1: active is set automatically; stale/broken deferred. */
+/** Element lifecycle state. ACTIVE = locators valid, STALE = may need healing, BROKEN = locators failed. */
 export enum ElementStatus {
   ACTIVE = 'active',
   STALE = 'stale',

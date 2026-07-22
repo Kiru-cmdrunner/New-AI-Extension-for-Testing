@@ -81,9 +81,9 @@ export interface Element {
   readonly status: ElementStatus;
   readonly createdAt: string;
   readonly updatedAt: string;
-  /** [future] When a self-heal last updated the locators. Null in V1. */
+  /** When a self-heal last updated the locators. Null if never healed. */
   readonly lastHealedAt: string | null;
-  /** [future] History of heal events. Empty in V1. */
+  /** History of heal events. Empty if never healed. */
   readonly healHistory: HealEvent[];
 }
 
@@ -113,6 +113,134 @@ export interface HealEvent {
   readonly proposedBy: string;
   readonly oldStrategies: LocatorStrategy[];
   readonly newStrategies: LocatorStrategy[];
+}
+
+// ── Healing (Phase 11) ─────────────────────────────────────
+
+/** Context for a healing operation. */
+export interface HealContext {
+  /** Session ID that provided the fresh evidence. */
+  readonly sourceSessionId: string;
+  /** Why healing was triggered. */
+  readonly reason: string;
+  /** Who/what proposed the heal. */
+  readonly proposedBy: string;
+}
+
+/** Input for healing an Element with fresh locator strategies. */
+export interface HealElementInput {
+  /** The fresh locator strategies from a new recording or live DOM. */
+  readonly newStrategies: CreateLocatorStrategyInput[];
+  /** Context about the healing operation. */
+  readonly context: HealContext;
+}
+
+/**
+ * Check if two locator strategies are equal (same type + value).
+ */
+function strategiesEqual(a: LocatorStrategy, b: LocatorStrategy): boolean {
+  return a.type === b.type && a.value === b.value;
+}
+
+/**
+ * Heal an Element by merging fresh locator strategies into the existing set.
+ *
+ * Healing is **additive** — new strategies are merged alongside existing ones,
+ * never removing strategies that might still work. If a strategy type has a
+ * new value, the old value is preserved in the HealEvent record and the new
+ * value takes its place in the active strategies.
+ *
+ * Status transitions:
+ *   - STALE → ACTIVE (healed successfully)
+ *   - BROKEN → ACTIVE (healed successfully)
+ *   - ACTIVE → ACTIVE (locators updated proactively)
+ *
+ * The healHistory is append-only — every heal adds a new HealEvent.
+ *
+ * @param existing The current Element from the Repository.
+ * @param input Fresh locator strategies + healing context.
+ * @returns A new Element with merged strategies, appended heal event, and updated timestamps.
+ *
+ * @throws MissingFieldError if sourceSessionId is empty
+ * @throws ValueObjectError if newStrategies is empty
+ */
+export function healElement(existing: Element, input: HealElementInput): Element {
+  if (!input.context.sourceSessionId?.trim()) {
+    throw new MissingFieldError('HealContext', 'sourceSessionId');
+  }
+
+  if (!input.newStrategies || input.newStrategies.length === 0) {
+    throw new ValueObjectError(
+      'Element',
+      'newStrategies must have at least one strategy for healing',
+    );
+  }
+
+  // Snapshot old strategies for the heal event
+  const oldStrategies = existing.locatorStrategies;
+
+  // Parse new strategies into value objects
+  const newStrategies = input.newStrategies.map(createLocatorStrategy);
+
+  // Merge: additive — keep all existing strategies, add new ones that don't duplicate
+  // If a new strategy has the same type as an existing one but different value,
+  // replace the existing one (the old value is preserved in the HealEvent)
+  const merged: LocatorStrategy[] = [];
+  const usedTypes = new Set<LocatorStrategyType>();
+
+  // First, add new strategies (they take priority)
+  let nextPriority = 1;
+  for (const ns of newStrategies) {
+    // Check if this exact strategy already exists
+    const exactMatch = oldStrategies.find((os) => strategiesEqual(os, ns));
+    if (exactMatch) {
+      // Keep existing (with its priority)
+      merged.push({ ...exactMatch, priority: nextPriority++ });
+    } else {
+      // New strategy — add it
+      merged.push({ ...ns, priority: nextPriority++ });
+    }
+    usedTypes.add(ns.type);
+  }
+
+  // Then, add old strategies whose type isn't covered by new ones
+  for (const os of oldStrategies) {
+    if (!usedTypes.has(os.type)) {
+      merged.push({ ...os, priority: nextPriority++ });
+    }
+  }
+
+  // Validate unique priorities
+  const priorities = new Set<number>();
+  for (const s of merged) {
+    if (priorities.has(s.priority)) {
+      throw new ValueObjectError(
+        'Element',
+        `duplicate locator strategy priority ${s.priority} — priorities must be unique`,
+      );
+    }
+    priorities.add(s.priority);
+  }
+
+  const now = new Date().toISOString();
+
+  const healEvent: HealEvent = {
+    healedAt: now,
+    runId: input.context.sourceSessionId,
+    reason: input.context.reason,
+    proposedBy: input.context.proposedBy,
+    oldStrategies: [...oldStrategies],
+    newStrategies: merged,
+  };
+
+  return {
+    ...existing,
+    locatorStrategies: merged,
+    status: ElementStatus.ACTIVE,
+    lastHealedAt: now,
+    healHistory: [...existing.healHistory, healEvent],
+    updatedAt: now,
+  };
 }
 
 /**
