@@ -9,13 +9,55 @@
  * and returns the first matching element, or null if none match.
  *
  * Strategy → DOM mapping:
- *   TEST_ID        → [data-testid="X"], [data-cy="X"], [data-qa="X"]
- *   ACCESSIBLE_NAME → role + aria-label, or [aria-labelledby="X"]
- *   CSS            → document.querySelector(X)
- *   LABEL          → label[for="X"], or [name="X"], or [aria-label="X"]
- *   XPATH          → document.evaluate(X, ...)
- *   ROLE           → [role="X"]
- *   TEXT           → text content match (case-sensitive)
+ *   TEST_ID         → [data-testid="X"], [data-cy="X"], [data-qa="X"]
+ *   ACCESSIBLE_NAME → [aria-label="X"], or [aria-labelledby="X"]
+ *   ROLE            → [role="X"]
+ *   TEXT            → text content match (leaf elements only, case-sensitive)
+ *   LABEL           → label[for="X"], or [name="X"], or [placeholder="X"]
+ *   CSS             → document.querySelector(X)
+ *   XPATH           → document.evaluate(X, ...)
+ *
+ * ── Priority Ordering Rationale ─────────────────────────────
+ *
+ * Locator priority is assigned in the locator-ranking module (shared by
+ * recording-time and execution-time paths). The ordering reflects a
+ * balance between stability (resistance to DOM refactors) and specificity
+ * (uniqueness of match). Lower priority number = tried first:
+ *
+ *   Priority 1  TEST_ID (data-testid, data-cy, data-qa)
+ *     → Most stable. Explicitly added by developers for test automation.
+ *       Unlikely to change during UI refactors. Highly specific.
+ *
+ *   Priority 2  ACCESSIBLE_NAME (aria-label, aria-labelledby)
+ *     → Stable and semantically meaningful. Tied to accessibility contracts
+ *       that developers maintain deliberately. Survives CSS refactors.
+ *
+ *   Priority 3  ROLE (role attribute)
+ *     → Semantic but less specific than TEST_ID — multiple elements may share
+ *       a role. Still stable because ARIA roles are part of the accessibility
+ *       contract.
+ *
+ *   Priority 4  TEXT (visible text content)
+ *     → Moderately stable for interactive elements (button labels), but text
+ *       changes with i18n/copy edits. Only matched on leaf elements to avoid
+ *       ancestor false-positives.
+ *
+ *   Priority 5  LABEL (form label associations)
+ *     → label[for], [name], [placeholder]. The [name] attribute is developer-
+ *       controlled and stable; [placeholder] is copy-controlled and fragile.
+ *
+ *   Priority 6  CSS (CSS selector)
+ *     → Fragile. CSS class names change frequently (especially in CSS-in-JS
+ *       frameworks like Tailwind, styled-components, or generated class names).
+ *       Only used as a fallback before XPath.
+ *
+ *   Priority 7  XPATH (XPath expression)
+ *     → Most fragile. Structural XPaths break on any DOM hierarchy change.
+ *       Used only as a last resort when all semantic and structural locators
+ *       have failed.
+ *
+ * When a locator fails (element not found or not visible), the resolver
+ * automatically falls through to the next locator in priority order.
  */
 
 // ── Types (inlined for content script compatibility) ───────
