@@ -1,0 +1,449 @@
+/**
+ * Component Runtime — Lifecycle Management Engine (Layers 2+3 fused)
+ *
+ * Manages active component lifecycles. Processes events through the
+ * definition stack. Emits completed interactions.
+ *
+ * The runtime owns:
+ * - activeStack: ComponentContext[] — active components, newest at top
+ * - seenEventIds: Set<string> — dedup (cap at 500, halve when exceeded)
+ * - lastEmittedForDedup — type + elementKey + endTime for temporal dedup
+ * - errorLog: string[] — accumulate definition errors without crashing
+ *
+ * Architecture: `.drytis/specs/m0a-architecture-validation.md` §2.2 Stage 2
+ * Principle: AP5 (Linear data flow), AP6 (Contract-based boundaries)
+ */
+
+import type {
+  ObservedEvent,
+  ComponentDefinition,
+  ComponentContext,
+  ComponentInteraction,
+  ComponentCompletion,
+  ComponentTrigger,
+  RuntimeConfig,
+  InteractionType,
+  ElementIdentity,
+} from '../shared/component-types';
+import { DEDUP_WINDOW_MS } from '../shared/component-types';
+import { elementKey } from '../definitions/patterns';
+
+// ── Types ─────────────────────────────────────────────────────────────
+
+/**
+ * Record used for temporal dedup. Stores the key properties of the
+ * last emitted interaction so a new interaction with the same type +
+ * element + within the dedup window can be suppressed.
+ */
+interface DedupRecord {
+  type: InteractionType;
+  elementKey: string;
+  endTime: number;
+  /** Optional metadata snapshot for type-specific dedup (e.g., selectedDate). */
+  metadata: Record<string, unknown>;
+}
+
+/**
+ * Snapshot of the runtime state, used for MV3 recovery.
+ * Serialized and stored so a restarted SW can recreate the runtime.
+ */
+export interface RuntimeSnapshot {
+  interactionCounter: number;
+  seenEventIds: string[];
+  lastEmitted: DedupRecord | null;
+}
+
+// ── Constants ─────────────────────────────────────────────────────────
+
+/** Maximum size of seenEventIds before halving. */
+const SEEN_EVENTS_CAP = 500;
+
+// ── Factory ───────────────────────────────────────────────────────────
+
+/**
+ * Create a ComponentRuntime instance.
+ *
+ * @param definitions — all registered component definitions (sorted by priority)
+ * @param config — runtime configuration (onEmit callback, initial counter)
+ */
+export function createRuntime(
+  definitions: ComponentDefinition[],
+  config: RuntimeConfig,
+): ComponentRuntime {
+  return new ComponentRuntimeImpl(definitions, config);
+}
+
+// ── Implementation ────────────────────────────────────────────────────
+
+export interface ComponentRuntime {
+  /** Process an observed event. Returns newly emitted interactions. */
+  process(event: ObservedEvent): ComponentInteraction[];
+
+  /** Flush all active components as 'interrupted'. Returns emitted interactions. */
+  flush(): ComponentInteraction[];
+
+  /** Get a serializable snapshot for MV3 recovery. */
+  snapshot(): RuntimeSnapshot;
+
+  /** Restore from a snapshot. */
+  restore(snap: RuntimeSnapshot): void;
+
+  /** Get the current active stack depth (for diagnostics). */
+  get activeCount(): number;
+
+  /** Get accumulated errors (for diagnostics). */
+  get errors(): string[];
+}
+
+class ComponentRuntimeImpl implements ComponentRuntime {
+  private readonly definitions: ComponentDefinition[];
+  private readonly clickDefinition: ComponentDefinition | null;
+  private readonly nonClickDefinitions: ComponentDefinition[];
+  private readonly config: RuntimeConfig;
+
+  private activeStack: ComponentContext[] = [];
+  private seenEventIds: Set<string> = new Set();
+  private interactionCounter: number;
+  private lastEmittedForDedup: DedupRecord | null = null;
+  private errorLog: string[] = [];
+
+  constructor(definitions: ComponentDefinition[], config: RuntimeConfig) {
+    // Sort by priority descending (highest priority checked first)
+    this.definitions = [...definitions].sort((a, b) => b.priority - a.priority);
+    this.config = config;
+    this.interactionCounter = config.initialInteractionId ?? 0;
+
+    // Separate Click (fallback) from other definitions
+    this.clickDefinition =
+      this.definitions.find((d) => d.type === 'Click') ?? null;
+    this.nonClickDefinitions = this.definitions.filter(
+      (d) => d.type !== 'Click',
+    );
+  }
+
+  // ── Public API ───────────────────────────────────────────────────
+
+  get activeCount(): number {
+    return this.activeStack.length;
+  }
+
+  get errors(): string[] {
+    return [...this.errorLog];
+  }
+
+  process(event: ObservedEvent): ComponentInteraction[] {
+    const emitted: ComponentInteraction[] = [];
+
+    // 1. Dedup by event ID
+    if (this.seenEventIds.has(event.eventId)) return emitted;
+    this.trackSeenEvent(event.eventId);
+
+    // 2. Navigation flush
+    if (event.eventType === ('navigation' as string)) {
+      return this.flush();
+    }
+
+    // 3. Offer to active stack (top → bottom)
+    let handled = false;
+    // Iterate from top of stack downward. We may remove items during iteration.
+    for (let i = this.activeStack.length - 1; i >= 0; i--) {
+      const ctx = this.activeStack[i];
+      const def = this.findDefForType(ctx.type);
+      if (!def) continue;
+
+      let inScope = false;
+      try {
+        inScope = def.isInScope(event, ctx);
+      } catch (err) {
+        this.logError(def.type, 'isInScope', err);
+      }
+
+      if (inScope) {
+        handled = true;
+        // Add event to member events
+        ctx.memberEvents.push(event);
+
+        let completion: ComponentCompletion | null = null;
+        try {
+          completion = def.handleEvent(event, ctx);
+        } catch (err) {
+          this.logError(def.type, 'handleEvent', err);
+        }
+
+        if (completion) {
+          ctx.state = completion.endState;
+          ctx.endTime = event.timestamp;
+          const interaction = this.completeComponent(ctx, def, completion);
+          if (interaction) emitted.push(interaction);
+          // Remove from stack
+          this.activeStack.splice(i, 1);
+        }
+      } else {
+        // Not in scope — check outside cancellation
+        let shouldCancel = false;
+        try {
+          shouldCancel = def.shouldCancelOnOutside(event, ctx);
+        } catch (err) {
+          this.logError(def.type, 'shouldCancelOnOutside', err);
+        }
+
+        if (shouldCancel) {
+          ctx.state = 'abandoned';
+          ctx.endTime = event.timestamp;
+          const interaction = this.completeComponent(ctx, def, {
+            endState: 'abandoned',
+          });
+          if (interaction) emitted.push(interaction);
+          this.activeStack.splice(i, 1);
+        }
+      }
+    }
+
+    // 4. Discovery — no active component claimed it
+    if (!handled) {
+      const newCtx = this.tryDiscovery(event);
+      if (newCtx) {
+        this.activeStack.push(newCtx);
+        // Check if the definition completes immediately (e.g., Click, Checkbox)
+        const def = this.findDefForType(newCtx.type);
+        if (def) {
+          let completion: ComponentCompletion | null = null;
+          try {
+            completion = def.handleEvent(event, newCtx);
+          } catch (err) {
+            this.logError(def.type, 'handleEvent', err);
+          }
+          if (completion) {
+            newCtx.state = completion.endState;
+            newCtx.endTime = event.timestamp;
+            const interaction = this.completeComponent(newCtx, def, completion);
+            if (interaction) emitted.push(interaction);
+            this.activeStack.pop();
+          }
+        }
+      }
+    }
+
+    return emitted;
+  }
+
+  flush(): ComponentInteraction[] {
+    const emitted: ComponentInteraction[] = [];
+    for (let i = this.activeStack.length - 1; i >= 0; i--) {
+      const ctx = this.activeStack[i];
+      const def = this.findDefForType(ctx.type);
+      ctx.state = 'interrupted';
+      ctx.endTime = Date.now();
+      if (def) {
+        const interaction = this.completeComponent(ctx, def, {
+          endState: 'interrupted',
+        });
+        if (interaction) emitted.push(interaction);
+      }
+    }
+    this.activeStack = [];
+    return emitted;
+  }
+
+  snapshot(): RuntimeSnapshot {
+    return {
+      interactionCounter: this.interactionCounter,
+      seenEventIds: [...this.seenEventIds],
+      lastEmitted: this.lastEmittedForDedup
+        ? { ...this.lastEmittedForDedup }
+        : null,
+    };
+  }
+
+  restore(snap: RuntimeSnapshot): void {
+    this.interactionCounter = snap.interactionCounter;
+    this.seenEventIds = new Set(snap.seenEventIds);
+    this.lastEmittedForDedup = snap.lastEmitted
+      ? { ...snap.lastEmitted }
+      : null;
+  }
+
+  // ── Internal ─────────────────────────────────────────────────────
+
+  /**
+   * Try to discover a matching definition for this event.
+   * Iterates definitions by priority descending (excluding Click fallback).
+   * Returns a new ComponentContext if a definition matched.
+   */
+  private tryDiscovery(event: ObservedEvent): ComponentContext | null {
+    // Try non-Click definitions first
+    for (const def of this.nonClickDefinitions) {
+      if (!def.triggerEventTypes.has(event.eventType)) continue;
+
+      let trigger: ComponentTrigger | null = null;
+      try {
+        trigger = def.detectTrigger(event);
+      } catch (err) {
+        this.logError(def.type, 'detectTrigger', err);
+        continue;
+      }
+
+      if (trigger) {
+        return this.createContext(def, event);
+      }
+    }
+
+    // Click fallback
+    if (this.clickDefinition) {
+      const def = this.clickDefinition;
+      if (!def.triggerEventTypes.has(event.eventType)) return null;
+
+      let trigger: ComponentTrigger | null = null;
+      try {
+        trigger = def.detectTrigger(event);
+      } catch (err) {
+        this.logError(def.type, 'detectTrigger', err);
+      }
+
+      if (trigger) {
+        return this.createContext(def, event);
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Create a new ComponentContext for a freshly triggered definition.
+   */
+  private createContext(
+    def: ComponentDefinition,
+    event: ObservedEvent,
+  ): ComponentContext {
+    return {
+      type: def.type,
+      state: 'active',
+      trigger: event.target,
+      triggerEvent: event,
+      memberEvents: [event],
+      scopeKeys: new Set([elementKey(event.target)]),
+      startTime: event.timestamp,
+      endTime: 0,
+      data: {},
+    };
+  }
+
+  /**
+   * Complete a component: build result, dedup, emit.
+   * Returns the interaction if emitted, null if suppressed by dedup.
+   */
+  private completeComponent(
+    ctx: ComponentContext,
+    def: ComponentDefinition,
+    completion: ComponentCompletion,
+  ): ComponentInteraction | null {
+    // Build metadata
+    let metadata: Record<string, unknown> = {};
+    try {
+      const result = def.buildResult(ctx, completion);
+      metadata = result.metadata;
+    } catch (err) {
+      this.logError(def.type, 'buildResult', err);
+    }
+
+    // Dedup check
+    const key = elementKey(ctx.trigger);
+    if (this.isDuplicate(ctx, metadata, key)) {
+      return null;
+    }
+
+    // Create interaction
+    this.interactionCounter++;
+    const interaction: ComponentInteraction = {
+      interactionId: `int-${this.interactionCounter}`,
+      type: ctx.type,
+      trigger: ctx.trigger,
+      triggerEvent: ctx.triggerEvent,
+      memberEvents: [...ctx.memberEvents],
+      startTime: ctx.startTime,
+      endTime: ctx.endTime,
+      endState: completion.endState,
+      metadata,
+    };
+
+    // Update dedup record
+    this.lastEmittedForDedup = {
+      type: ctx.type,
+      elementKey: key,
+      endTime: ctx.endTime,
+      metadata: { ...metadata },
+    };
+
+    // Emit
+    try {
+      this.config.onEmit(interaction);
+    } catch (err) {
+      this.logError(def.type, 'onEmit', err);
+    }
+
+    return interaction;
+  }
+
+  /**
+   * Check if this interaction is a duplicate of the last emitted one.
+   *
+   * Dedup rules:
+   * - Same type + same elementKey + gap (endTime_prev → startTime_now) ≤ DEDUP_WINDOW_MS
+   * - DatePicker: also compare selectedDate — same date = duplicate
+   */
+  private isDuplicate(
+    ctx: ComponentContext,
+    metadata: Record<string, unknown>,
+    key: string,
+  ): boolean {
+    if (!this.lastEmittedForDedup) return false;
+    const last = this.lastEmittedForDedup;
+
+    if (last.type !== ctx.type) return false;
+    if (last.elementKey !== key) return false;
+
+    const gap = ctx.startTime - last.endTime;
+    if (gap > DEDUP_WINDOW_MS) return false;
+
+    // DatePicker-specific: also check selectedDate
+    if (ctx.type === 'DatePicker') {
+      const prevDate = last.metadata.selectedDate;
+      const newDate = metadata.selectedDate;
+      // If dates differ, NOT a duplicate even within the window
+      if (prevDate !== newDate) return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Find the definition for a given interaction type.
+   */
+  private findDefForType(type: InteractionType): ComponentDefinition | null {
+    return this.definitions.find((d) => d.type === type) ?? null;
+  }
+
+  /**
+   * Track a seen event ID. Halve the set when it exceeds the cap.
+   */
+  private trackSeenEvent(eventId: string): void {
+    this.seenEventIds.add(eventId);
+    if (this.seenEventIds.size > SEEN_EVENTS_CAP) {
+      const entries = [...this.seenEventIds];
+      const half = entries.slice(Math.floor(entries.length / 2));
+      this.seenEventIds = new Set(half);
+    }
+  }
+
+  /**
+   * Log an error from a definition method without crashing the runtime.
+   */
+  private logError(
+    type: InteractionType,
+    method: string,
+    err: unknown,
+  ): void {
+    const msg = `[${type}.${method}] ${err instanceof Error ? err.message : String(err)}`;
+    this.errorLog.push(msg);
+  }
+}
