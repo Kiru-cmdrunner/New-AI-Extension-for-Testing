@@ -19,7 +19,7 @@
  */
 
 import type { ObservedEvent } from '../../shared/component-types';
-import { createEventTap, type EventTapHandle } from '../tap/event-tap';
+import { createEventTap, type EventTapHandle } from '../../tap/event-tap';
 
 // ── Session Storage Keys ─────────────────────────────────────────────
 
