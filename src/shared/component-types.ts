@@ -33,6 +33,7 @@ export type BrowserEventType =
   | 'change'
   | 'mouseenter'
   | 'mouseleave'
+  | 'mousemove'
   | 'keydown'
   | 'scroll'
   | 'navigation';

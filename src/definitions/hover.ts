@@ -1,30 +1,37 @@
 /**
- * Hover Definition — Evidence-Based Candidate (Priority 60)
+ * Hover Definition — Confidence-Based Candidate (Priority 60)
  *
  * Unlike Click or TextEntry, a mouseenter alone does not represent user
  * intent. The pointer may be transiting through elements on its way to a
  * destination. Hover is therefore a CANDIDATE interaction — it starts on
- * mouseenter but is NOT emitted until evidence proves it was meaningful.
+ * mouseenter but is NOT emitted until accumulated evidence confidence
+ * exceeds the promotion threshold.
  *
- * Lifecycle:
- *   mouseenter → candidate (active, not emitted)
- *     ├── mouseleave + evidence     → emit as completed Hover
- *     ├── mouseleave + no evidence  → discard silently
- *     ├── click on same element     → discard (Click takes precedence)
- *     └── click elsewhere            → discard (user moved on)
+ * ## Confidence Model
  *
- * Evidence signals (any one promotes to meaningful):
- *   1. aria-expanded toggled to true during hover
- *   2. Element has aria-haspopup + dwell ≥ threshold
- *   3. Sustained dwell ≥ HOVER_PROMOTION_DWELL_MS (2s)
- *   4. Ancestor/element role suggests overlay trigger (menu, tooltip, etc.)
+ * Evidence signals contribute weighted confidence:
  *
- * Discard signals:
- *   1. mouseleave before any evidence (transit hover)
- *   2. Click on same element (Click interaction takes precedence)
+ *   Signal                           Confidence
+ *   ───────────────────────────────  ──────────
+ *   aria-expanded false→true         100  (Very High)
+ *   Overlay role + dwell ≥ 500ms      70  (High)
+ *   aria-haspopup + dwell ≥ 500ms     60  (High)
+ *   Sustained dwell ≥3s + stationary  50  (Medium — fallback)
+ *   Transit (< 500ms, no evidence)     0  (None)
  *
- * Design principle: capture meaningful user intent, not every physical
- * mouse movement.
+ * Promotion threshold: confidence ≥ 50
+ *
+ * Dwell is the WEAKEST form of evidence — it only counts when combined
+ * with pointer stationarity (< 10px movement) and a longer threshold (3s).
+ * This prevents false positives from thinking pauses over disabled buttons.
+ *
+ * ## Lifecycle
+ *
+ *   mouseenter → candidate (confidence = 0)
+ *     ├── mouseleave + confidence ≥ threshold → emit completed Hover
+ *     ├── mouseleave + confidence < threshold → discard silently
+ *     ├── click on same element → discard (Click takes precedence)
+ *     └── click elsewhere → discard (user moved on)
  *
  * Spec: .drytis/specs/evidence-based-hover.md
  */
@@ -42,24 +49,39 @@ import {
   bestName,
 } from './patterns';
 
-// ── Constants ─────────────────────────────────────────────────────────
+// ── Confidence Weights ────────────────────────────────────────────────
 
-/**
- * Minimum dwell time before a hover is even considered.
- * Hovers shorter than this are always discarded (transit hovers).
- */
+/** Direct proof the UI expanded — highest possible evidence. */
+const CONFIDENCE_ARIA_EXPANDED = 100;
+
+/** Element is part of an overlay system (menuitem, tooltip, tab) + dwell. */
+const CONFIDENCE_OVERLAY_ROLE = 70;
+
+/** Element declares popup capability via aria-haspopup + dwell. */
+const CONFIDENCE_HASPOPUP = 60;
+
+/** Fallback: sustained dwell + pointer stationarity. Weakest evidence. */
+const CONFIDENCE_SUSTAINED_DWELL = 50;
+
+/** Minimum accumulated confidence to promote hover to meaningful. */
+const CONFIDENCE_THRESHOLD = 50;
+
+// ── Timing & Movement Thresholds ──────────────────────────────────────
+
+/** Hovers shorter than this are always discarded (transit). */
 const HOVER_TRANSIT_THRESHOLD_MS = 500;
 
-/**
- * Dwell time after which a hover is promoted to meaningful even without
- * other evidence signals. 2 seconds of stillness = intent to interact.
- */
-const HOVER_PROMOTION_DWELL_MS = 2000;
+/** Dwell duration required for fallback confidence (dwell alone is weak). */
+const SUSTAINED_DWELL_MS = 3000;
+
+/** Max pointer displacement (px) from initial position to count as "stationary". */
+const POINTER_STATIONARY_RADIUS_PX = 10;
+
+// ── Pattern Sets ──────────────────────────────────────────────────────
 
 /**
- * Roles that indicate an element can trigger an overlay on hover.
- * If the element (or an ancestor) has one of these, a dwell ≥ threshold
- * is strong evidence the overlay was shown.
+ * Roles that indicate an element participates in an overlay system.
+ * Hovering these with sufficient dwell is strong evidence of intent.
  */
 const OVERLAY_TRIGGER_ROLES = new Set([
   'menuitem', 'menuitemcheckbox', 'menuitemradio',
@@ -107,12 +129,18 @@ export const hoverDefinition: ComponentDefinition = {
   },
 
   handleEvent(event: ObservedEvent, ctx: ComponentContext): ComponentCompletion | null {
-    // ── Accumulate evidence on any lifecycle event ──
-    checkEvidence(event, ctx);
+    // ── Initialize pointer tracking on first event ──
+    if (ctx.data.pointerOriginX === undefined && event.clientX !== null) {
+      ctx.data.pointerOriginX = event.clientX;
+      ctx.data.pointerOriginY = event.clientY;
+      ctx.data.maxDisplacement = 0;
+    }
+
+    // ── Accumulate evidence on every in-scope event ──
+    accumulateEvidence(event, ctx);
 
     // ── mouseleave: decide emit vs discard ──
     if (event.eventType === 'mouseleave') {
-      // Was it on the same element? (mouseleave from trigger element)
       const sameElement = event.target.stableId === ctx.trigger.stableId
         || event.target.cssSelector === ctx.trigger.cssSelector;
 
@@ -120,37 +148,34 @@ export const hoverDefinition: ComponentDefinition = {
         const dwell = event.timestamp - ctx.startTime;
         ctx.data.dwellMs = dwell;
 
-        if (ctx.data.meaningful === true) {
+        const confidence = (ctx.data.confidence as number) ?? 0;
+        if (confidence >= CONFIDENCE_THRESHOLD) {
+          ctx.data.meaningful = true;
           return { endState: 'completed' };
         }
 
-        // Not meaningful — discard silently
+        // Not enough evidence — discard silently
         return { endState: 'discarded' };
       }
-      // mouseleave on a different element — not our trigger, ignore
-      return null;
+      return null; // mouseleave on different element, ignore
     }
 
-    // ── mousemove: check for sustained dwell promotion ──
+    // ── mousemove: track pointer stationarity ──
     if (event.eventType === 'mousemove') {
-      const dwell = event.timestamp - ctx.startTime;
-      if (dwell >= HOVER_PROMOTION_DWELL_MS) {
-        ctx.data.meaningful = true;
-        ctx.data.evidenceReason = 'sustained-dwell';
-        ctx.data.dwellMs = dwell;
-      }
+      trackPointerMovement(event, ctx);
+      // Re-check evidence after updating pointer state
+      accumulateEvidence(event, ctx);
     }
 
     return null; // still active
   },
 
   shouldCancelOnOutside(event: ObservedEvent, _ctx: ComponentContext): boolean {
-    // Click on a different element → user moved on, discard the hover.
-    // Click on the SAME element → also discard (Click takes precedence),
-    // but this is handled by isInScope returning false for clicks, which
-    // causes the runtime to offer it to other definitions or discovery.
+    // Click anywhere → discard the hover candidate.
+    // If on same element: Click takes precedence via discovery.
+    // If on different element: user moved on.
     if (event.eventType === 'click') {
-      return true; // discard — let the Click definition fire via discovery
+      return true;
     }
     return false;
   },
@@ -165,61 +190,108 @@ export const hoverDefinition: ComponentDefinition = {
         ),
         dwellMs: (ctx.data.dwellMs as number) ?? 0,
         meaningful: ctx.data.meaningful === true,
+        confidence: (ctx.data.confidence as number) ?? 0,
         evidenceReason: (ctx.data.evidenceReason as string) ?? null,
       },
     };
   },
 };
 
-// ── Evidence Evaluation ───────────────────────────────────────────────
+// ── Evidence Accumulation ─────────────────────────────────────────────
 
 /**
- * Check the current event for evidence signals and update ctx.data.
- * Called on every in-scope event.
+ * Evaluate evidence signals and accumulate confidence.
+ * Called on every in-scope event (mouseenter, mousemove, mouseleave).
+ *
+ * Once a signal fires, its confidence is added permanently — it doesn't
+ * decay. Multiple signals stack (e.g. aria-haspopup + sustained dwell).
+ * However, each unique signal type only contributes once.
  */
-function checkEvidence(event: ObservedEvent, ctx: ComponentContext): void {
-  if (ctx.data.meaningful === true) return; // already promoted
-
+function accumulateEvidence(event: ObservedEvent, ctx: ComponentContext): void {
+  const confidence = (ctx.data.confidence as number) ?? 0;
   const dwell = event.timestamp - ctx.startTime;
 
-  // ── Evidence 1: aria-expanded transition ──
-  // The element started not-expanded and now shows expanded=true
-  if (event.domContext.ariaExpanded === true) {
-    // Check if the trigger started as not-expanded
-    const triggerExpanded = ctx.triggerEvent.domContext.ariaExpanded;
-    if (triggerExpanded !== true) {
-      ctx.data.meaningful = true;
-      ctx.data.evidenceReason = 'aria-expanded';
+  // ── Signal 1: aria-expanded transition (Very High = 100) ──
+  if (ctx.data.evidenceAriaExpanded !== true) {
+    if (event.domContext.ariaExpanded === true) {
+      const triggerExpanded = ctx.triggerEvent.domContext.ariaExpanded;
+      if (triggerExpanded !== true) {
+        ctx.data.confidence = confidence + CONFIDENCE_ARIA_EXPANDED;
+        ctx.data.evidenceAriaExpanded = true;
+        setReason(ctx, 'aria-expanded');
+        return; // 100 ≥ threshold, done
+      }
+    }
+  }
+
+  // ── Signal 2: overlay role + dwell ≥ threshold (High = 70) ──
+  if (ctx.data.evidenceOverlayRole !== true && dwell >= HOVER_TRANSIT_THRESHOLD_MS) {
+    const triggerRole = ctx.triggerEvent.target.ariaRole;
+    const ancestorRoles = ctx.triggerEvent.domContext.ancestorRoles ?? [];
+    const hasOverlayRole =
+      (triggerRole && OVERLAY_TRIGGER_ROLES.has(triggerRole)) ||
+      ancestorRoles.some((r) => OVERLAY_TRIGGER_ROLES.has(r));
+    if (hasOverlayRole) {
+      ctx.data.confidence = ((ctx.data.confidence as number) ?? 0) + CONFIDENCE_OVERLAY_ROLE;
+      ctx.data.evidenceOverlayRole = true;
+      setReason(ctx, 'overlay-role-dwell');
       return;
     }
   }
 
-  // ── Evidence 2: aria-haspopup + dwell ≥ threshold ──
-  const hasPopup = ctx.triggerEvent.domContext.ariaHasPopup;
-  if (hasPopup && HOVER_POPUP_TYPES.has(hasPopup) && dwell >= HOVER_TRANSIT_THRESHOLD_MS) {
-    ctx.data.meaningful = true;
-    ctx.data.evidenceReason = 'haspopup-dwell';
-    return;
+  // ── Signal 3: aria-haspopup + dwell ≥ threshold (High = 60) ──
+  if (ctx.data.evidenceHasPopup !== true && dwell >= HOVER_TRANSIT_THRESHOLD_MS) {
+    const hasPopup = ctx.triggerEvent.domContext.ariaHasPopup;
+    if (hasPopup && HOVER_POPUP_TYPES.has(hasPopup)) {
+      ctx.data.confidence = ((ctx.data.confidence as number) ?? 0) + CONFIDENCE_HASPOPUP;
+      ctx.data.evidenceHasPopup = true;
+      setReason(ctx, 'haspopup-dwell');
+      return;
+    }
   }
 
-  // ── Evidence 3: overlay trigger role + dwell ──
-  const triggerRole = ctx.triggerEvent.target.ariaRole;
-  const ancestorRoles = ctx.triggerEvent.domContext.ancestorRoles ?? [];
-  const hasOverlayRole =
-    (triggerRole && OVERLAY_TRIGGER_ROLES.has(triggerRole)) ||
-    ancestorRoles.some((r) => OVERLAY_TRIGGER_ROLES.has(r));
-  if (hasOverlayRole && dwell >= HOVER_TRANSIT_THRESHOLD_MS) {
-    ctx.data.meaningful = true;
-    ctx.data.evidenceReason = 'overlay-role-dwell';
-    return;
+  // ── Signal 4: sustained dwell + pointer stationary (Medium = 50) ──
+  // This is FALLBACK evidence — the weakest signal. Only fires when:
+  //   - dwell ≥ SUSTAINED_DWELL_MS (3s)
+  //   - pointer stayed within POINTER_STATIONARY_RADIUS_PX of origin
+  if (ctx.data.evidenceSustainedDwell !== true && dwell >= SUSTAINED_DWELL_MS) {
+    const maxDisplacement = (ctx.data.maxDisplacement as number) ?? 999;
+    if (maxDisplacement <= POINTER_STATIONARY_RADIUS_PX) {
+      ctx.data.confidence = ((ctx.data.confidence as number) ?? 0) + CONFIDENCE_SUSTAINED_DWELL;
+      ctx.data.evidenceSustainedDwell = true;
+      setReason(ctx, 'sustained-dwell-stationary');
+      return;
+    }
   }
+}
 
-  // ── Evidence 4: sustained dwell (checked in handleEvent for mousemove) ──
-  // This is handled in handleEvent on mousemove events, but also check here
-  // for mouseenter/mouseleave events that arrive after the threshold.
-  if (dwell >= HOVER_PROMOTION_DWELL_MS) {
+/**
+ * Track pointer displacement from the origin position.
+ * Updates maxDisplacement if this mousemove is farther from origin.
+ */
+function trackPointerMovement(event: ObservedEvent, ctx: ComponentContext): void {
+  if (event.clientX === null || event.clientY === null) return;
+
+  const originX = (ctx.data.pointerOriginX as number) ?? event.clientX;
+  const originY = (ctx.data.pointerOriginY as number) ?? event.clientY;
+
+  const dx = event.clientX - originX;
+  const dy = event.clientY - originY;
+  const displacement = Math.sqrt(dx * dx + dy * dy);
+
+  const prevMax = (ctx.data.maxDisplacement as number) ?? 0;
+  if (displacement > prevMax) {
+    ctx.data.maxDisplacement = displacement;
+  }
+}
+
+/**
+ * Set the primary evidence reason (first signal that pushed confidence over threshold).
+ */
+function setReason(ctx: ComponentContext, reason: string): void {
+  const confidence = (ctx.data.confidence as number) ?? 0;
+  if (confidence >= CONFIDENCE_THRESHOLD && !ctx.data.evidenceReason) {
+    ctx.data.evidenceReason = reason;
     ctx.data.meaningful = true;
-    ctx.data.evidenceReason = 'sustained-dwell';
-    return;
   }
 }

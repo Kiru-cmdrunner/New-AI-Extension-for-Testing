@@ -1,96 +1,83 @@
-# Spec: Evidence-Based Hover Redesign
+# Spec: Evidence-Based Hover — Confidence Model
 
 ## Problem
 
-The current Hover definition treats every `mouseenter` on an interactive element as an immediate interaction. This produces massive noise — transit hovers through menus, exploratory cursor movement, and accidental mouse-overs all get captured. The screenshot shows 6 abandoned hovers (`int-6` through `int-11`) cluttering a login + navigation recording.
+The first Hover redesign used fixed thresholds with pass/fail rules. Two issues:
 
-Worse, active Hover components interfere with other interactions: before the click-exclusion fix, Hovers were swallowing click events. Even now, the hover candidate stays on the active stack and can interfere with discovery ordering.
+1. **Dwell as primary evidence** — A fixed 2s dwell promotes any hover to meaningful, even if the user was just thinking while paused over a disabled button. Dwell should be **fallback evidence**, not primary.
 
-## Design
+2. **Pass/fail doesn't scale** — As we encounter more web app patterns (mega menus, tooltips that appear in 300ms, accordions, etc.), special-case rules accumulate. A confidence model is more extensible.
 
-Redesign Hover as a **candidate interaction** — it starts on `mouseenter` but is NOT emitted until evidence proves it was meaningful. If no evidence arrives before `mouseleave`, the candidate is silently discarded.
+## Confidence Model
 
-### Evidence Signals
+Each evidence signal contributes a weighted confidence score. The hover is promoted to meaningful when accumulated confidence meets or exceeds the threshold.
 
-A hover is **meaningful** if any of:
-1. **UI expansion** — `aria-expanded` toggled to `true` on the element or an ancestor during the hover
-2. **Overlay appeared** — a new DOM node with `role=menu`, `role=tooltip`, `role=listbox`, `role=dialog`, or class patterns suggesting a popover appeared during the hover
-3. **Sustained dwell** — pointer stayed on the element for ≥ 2 seconds (intent to interact, not transit)
-4. **Click on the element** — user hovered then clicked (the Click takes precedence, but the hover is no longer noise)
+### Evidence Signals & Confidence Weights
 
-### Discard Signals
+| Signal | Confidence | Rationale |
+|---|---|---|
+| `aria-expanded` changed false→true during hover | **100** (Very High) | Direct proof the UI expanded |
+| Overlay role (`menuitem`, `tooltip`, `tab`) + dwell ≥ 500ms | **70** (High) | Element is part of an overlay system |
+| `aria-haspopup` + dwell ≥ 500ms | **60** (High) | Element declares popup capability |
+| Sustained dwell ≥ 3s + pointer stationary (< 10px movement) | **50** (Medium) | Intent inferred from stillness, not UI change |
+| Transit (dwell < 500ms, no evidence) | **0** (None) | Pointer passing through |
 
-A hover is **discarded** if:
-1. `mouseleave` fires before any evidence signal — transit hover, not meaningful
-2. A click occurs on the element — Click takes precedence; the hover is suppressed in favor of the Click interaction
+### Thresholds
 
-### Lifecycle
+- `CONFIDENCE_THRESHOLD = 50` — minimum accumulated confidence to promote
+- `HOVER_TRANSIT_THRESHOLD_MS = 500` — hovers shorter than this are always discarded
+- `SUSTAINED_DWELL_MS = 3000` — dwell duration for fallback confidence
+- `POINTER_STATIONARY_RADIUS_PX = 10` — max pointer movement for "stationary"
+- `HOVER_PROMOTION_DWELL_MS` — removed (dwell alone no longer auto-promotes at any fixed time)
+
+### Pointer Stationarity Tracking
+
+On each `mousemove`, track the maximum displacement from the first recorded position:
+- If max displacement < `POINTER_STATIONARY_RADIUS_PX` AND dwell ≥ `SUSTAINED_DWELL_MS`, add fallback confidence
+- If pointer moved significantly, reset the stationary start point (user is actively moving)
+
+### Why this is better
+
+1. **2s dwell on a disabled button** → confidence stays below threshold (dwell alone doesn't reach 50 without stationarity + 3s)
+2. **300ms mega menu open** → `aria-expanded` transition gives 100 confidence instantly
+3. **700ms tooltip hover** → `aria-haspopup=tooltip` + dwell ≥ 500ms gives 60 confidence
+4. **Extensible** — new evidence signals just add their confidence to the accumulator
+
+## Lifecycle
 
 ```
-mouseenter
+mouseenter → candidate (confidence = 0)
     ↓
-Candidate Hover (active, NOT emitted)
+mousemove → track pointer stationarity, check aria-expanded changes
     ↓
-Monitor: mouseleave? → discard (silently, endState='discarded')
-Monitor: evidence?   → promote to completed
-Monitor: click?      → discard (Click takes precedence)
-    ↓
-mouseleave + had evidence → emit as completed Hover
-mouseleave + no evidence  → discard silently
-click on same element     → discard silently (Click wins)
+mouseleave:
+  confidence ≥ 50 → emit as completed Hover
+  confidence < 50 → discard silently
+click on same element → discard (Click takes precedence)
+click elsewhere → discard (user moved on)
 ```
 
-### `isInScope` — Minimal Event Ownership
+## `isInScope` — unchanged from evidence-based design
 
-Hover only claims events relevant to its lifecycle:
-- `mouseenter` — already the trigger; subsequent ones on same element extend
-- `mouseleave` — completion/discard check
-- `mousemove` — dwell tracking (accumulate pointer stationary time)
-
-It does NOT claim: `click`, `mousedown`, `mouseup`, `focus`, `blur`, `input`, `change`, `keydown`, `scroll`, `navigation`.
-
-### `shouldCancelOnOutside`
-
-- `click` on a different element → discard the hover candidate (user moved on)
-- `navigation` → let the runtime flush handle it
-
-### Evidence Detection Strategy
-
-Since we cannot install MutationObserver per-hover (costly, MV3 lifecycle), we use what's already captured in the `ObservedEvent`:
-
-1. **`aria-expanded` transition**: The event tap already captures `ariaExpanded` in `DomContext`. If `mouseenter` had `ariaExpanded=false/null` and a subsequent `mouseenter`/`mousemove` shows `ariaExpanded=true`, that's evidence.
-2. **`aria-haspopup` presence**: If the element has `aria-haspopup` (menu, listbox, dialog, tooltip), a dwell ≥ threshold confirms the popup was shown.
-3. **Sustained dwell**: If no `mouseleave` for `HOVER_PROMOTION_DWELL_MS` (default 2000ms), treat as meaningful.
-4. **Transient dwell threshold**: `HOVER_TRANSIT_THRESHOLD_MS` (default 500ms) — hovers shorter than this are always discarded.
-
-### Production Filter
-
-In `output-adapter.ts`, `isProductionInteraction` for Hover:
-- `endState` must be `completed`
-- `metadata.meaningful` must be `true`
-- Abandoned/discarded hovers are filtered out
-
-### Side Panel Display
-
-The side panel should show only production interactions by default (same filter). The `renderProductionInteractions` function already exists — switch the live recording view to use it.
+Hover claims only: `mouseenter`, `mouseleave`, `mousemove`.
+Does NOT claim: `click`, `mousedown`, `contextmenu`, `focus`, `blur`, `input`, `change`, `keydown`, `scroll`, `navigation`.
 
 ## Files to Change
 
-1. **`src/definitions/hover.ts`** — full rewrite: candidate lifecycle, evidence accumulation, dwell tracking
-2. **`src/presentation/output-adapter.ts`** — Hover must pass `metadata.meaningful === true`
-3. **`src/sidepanel/interaction-renderer.ts`** — `renderProductionInteractions` updated for Hover filter
-4. **`src/sidepanel/sidepanel.ts`** — live recording uses `renderProductionInteractions` instead of `renderInteractions`
-5. **`src/shared/component-types.ts`** — add `'discarded'` to ComponentEndState
+1. **`src/definitions/hover.ts`** — rewrite with confidence scoring
+2. **`src/shared/component-types.ts`** — `mousemove` added to BrowserEventType (done)
 
 ## Acceptance Criteria
 
-- [ ] AC1: Transit hovers (mouseenter → mouseleave < 500ms) are silently discarded, never emitted
-- [ ] AC2: Hovers with `aria-haspopup` + dwell ≥ 500ms are promoted to meaningful
-- [ ] AC3: Hovers lasting ≥ 2000ms without mouseleave are promoted to meaningful
-- [ ] AC4: `aria-expanded` transition from false→true during hover promotes to meaningful
-- [ ] AC5: Click on same element as active hover → hover is discarded, Click takes precedence
-- [ ] AC6: Hover `isInScope` never returns true for click/mousedown/focus/blur/input/change/keydown
-- [ ] AC7: Production filter drops all Hover interactions where `meaningful !== true`
-- [ ] AC8: Side panel live recording shows only production interactions (no noise)
-- [ ] AC9: All 3275 existing tests pass (with updated hover expectations)
-- [ ] AC10: New tests cover each evidence signal and discard scenario
+- [ ] AC1: Transit hovers (< 500ms, no evidence) → discarded (confidence = 0)
+- [ ] AC2: `aria-expanded` transition → instant promotion (confidence = 100)
+- [ ] AC3: `aria-haspopup` + dwell ≥ 500ms → promotion (confidence = 60)
+- [ ] AC4: Overlay role + dwell ≥ 500ms → promotion (confidence = 70)
+- [ ] AC5: Sustained dwell ≥ 3s + pointer stationary → promotion (confidence = 50)
+- [ ] AC6: Sustained dwell ≥ 3s + pointer moved significantly → NO promotion
+- [ ] AC7: Dwell alone < 3s without other evidence → discarded (even at 2.5s)
+- [ ] AC8: Click on same element → hover discarded, Click fires
+- [ ] AC9: `isInScope` excludes all non-hover events
+- [ ] AC10: Production filter requires `metadata.meaningful === true`
+- [ ] AC11: All existing tests pass with updated expectations
+- [ ] AC12: New tests cover confidence scenarios

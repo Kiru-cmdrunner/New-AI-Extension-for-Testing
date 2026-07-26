@@ -130,33 +130,32 @@ describe('Evidence-Based Hover — Transit Discard', () => {
   });
 });
 
-// ── Evidence: sustained dwell ─────────────────────────────────────────
+// ── Evidence: sustained dwell (fallback — requires 3s + stationarity) ─
 
 describe('Evidence-Based Hover — Sustained Dwell', () => {
-  it('promotes a hover after 2s of sustained dwell (via mousemove)', () => {
+  it('promotes a hover after 3s of sustained dwell with stationary pointer', () => {
     const { runtime, emitted } = setupRuntime();
 
-    runtime.process(makeEvent('me1', 'mouseenter', BTN, {}, { timestamp: 1000 }));
-    // mousemove at 2.5s — crosses the 2s promotion threshold
-    runtime.process(makeEvent('mm1', 'mousemove', BTN, {}, { timestamp: 3500 }));
-    runtime.process(makeEvent('ml1', 'mouseleave', BTN, {}, { timestamp: 3600 }));
+    runtime.process(makeEvent('me1', 'mouseenter', BTN, {}, { timestamp: 1000, clientX: 100, clientY: 200 }));
+    // mousemoves that stay within 10px — stationary
+    runtime.process(makeEvent('mm1', 'mousemove', BTN, {}, { timestamp: 2500, clientX: 103, clientY: 202 }));
+    runtime.process(makeEvent('mm2', 'mousemove', BTN, {}, { timestamp: 4001, clientX: 105, clientY: 199 }));
+    runtime.process(makeEvent('ml1', 'mouseleave', BTN, {}, { timestamp: 4100, clientX: 106, clientY: 201 }));
 
     const hover = emitted.find((e) => e.type === 'Hover');
     expect(hover!.endState).toBe('completed');
     expect(hover!.metadata.meaningful).toBe(true);
-    expect(hover!.metadata.evidenceReason).toBe('sustained-dwell');
+    expect(hover!.metadata.evidenceReason).toBe('sustained-dwell-stationary');
   });
 
-  it('promotes a hover after 2s even on mouseleave', () => {
+  it('does NOT promote dwell alone at 2.5s (fallback requires 3s + stationarity)', () => {
     const { runtime, emitted } = setupRuntime();
 
     runtime.process(makeEvent('me1', 'mouseenter', BTN, {}, { timestamp: 1000 }));
-    // mouseleave at 2.5s — crosses threshold
     runtime.process(makeEvent('ml1', 'mouseleave', BTN, {}, { timestamp: 3500 }));
 
     const hover = emitted.find((e) => e.type === 'Hover');
-    expect(hover!.endState).toBe('completed');
-    expect(hover!.metadata.meaningful).toBe(true);
+    expect(hover!.endState).toBe('discarded');
   });
 });
 
@@ -418,9 +417,11 @@ describe('Real-World: Sidebar Menu Navigation', () => {
     runtime.process(makeEvent('me2', 'mouseenter', time, {}, { timestamp: 1150 }));
     runtime.process(makeEvent('ml2', 'mouseleave', time, {}, { timestamp: 1250 }));
 
-    runtime.process(makeEvent('me3', 'mouseenter', myInfo, {}, { timestamp: 1300 }));
-    runtime.process(makeEvent('mm1', 'mousemove', myInfo, {}, { timestamp: 3400 })); // sustained 2s+
-    runtime.process(makeEvent('ml3', 'mouseleave', myInfo, {}, { timestamp: 3500 }));
+    runtime.process(makeEvent('me3', 'mouseenter', myInfo, {}, { timestamp: 1300, clientX: 100, clientY: 200 }));
+    // Sustained dwell 3s+ with stationary pointer
+    runtime.process(makeEvent('mm1', 'mousemove', myInfo, {}, { timestamp: 2800, clientX: 102, clientY: 201 }));
+    runtime.process(makeEvent('mm2', 'mousemove', myInfo, {}, { timestamp: 4400, clientX: 103, clientY: 199 }));
+    runtime.process(makeEvent('ml3', 'mouseleave', myInfo, {}, { timestamp: 4500, clientX: 101, clientY: 200 }));
 
     const hovers = emitted.filter((e) => e.type === 'Hover');
     const meaningful = hovers.filter((e) => e.metadata.meaningful === true);
