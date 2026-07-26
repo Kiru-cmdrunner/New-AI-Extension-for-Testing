@@ -23,6 +23,15 @@ import { compareClassifierOutputs, logComparisonResult } from '../classifier/evi
 import { mergeV1V2, logMergeMetrics } from '../classifier/evidence/merge-layer';
 import { runPipeline } from '../recorder/pipeline/pipeline-runner';
 import { normalizeDateValue } from '../shared/date-normalizer';
+import { build as buildIRPlan } from '../generation/ir-bridge';
+import { PlaywrightCodeGenerator } from '../adapters/playwright/project-generator';
+import { DexieUnitOfWorkFactory } from '../repository/v2/dexie/dexie-unit-of-work-factory';
+import { persistSession } from '../repository/services/session-persistence-service';
+import { adaptToDomainEntities } from '../recorder/pipeline/domain-adapter';
+import { healFromRecording } from '../repository/services/healing-service';
+import { checkStaleness } from '../domain/execution-ir/staleness';
+import { IRExecutorImpl } from '../execution/ir-executor-impl';
+import { createExecutionRun } from '../domain/entities/execution-run';
 import type { DetectedInteraction } from '../classifier/interaction-types';
 import type { UnderstandingResult } from '../domain/entities/understanding-result';
 import type { DomContext } from '../recorder/recorded-event';
@@ -295,8 +304,7 @@ async function handleStopRecording(): Promise<void> {
   // The IR Bridge consumes the UnderstandingResult as its input from the
   // Understanding Layer (fragment + capability as sibling artifacts).
   try {
-    const { build: buildIRPlan } = await import('../generation/ir-bridge');
-    const { PlaywrightCodeGenerator } = await import('../adapters/playwright/project-generator');
+    // IR Bridge + Code Generation (statically imported — Bug B fix)
 
     // Read the UnderstandingResult (or fall back to direct storage for the fragment)
     let understanding = understandingResult;
@@ -351,8 +359,7 @@ async function handleStopRecording(): Promise<void> {
   // The UnderstandingResult and IR plan are already in chrome.storage.local
   // for the side panel to display.
   try {
-    const { DexieUnitOfWorkFactory } = await import('../repository/v2/dexie/dexie-unit-of-work-factory');
-    const { persistSession } = await import('../repository/services/session-persistence-service');
+    const uowFactory = new DexieUnitOfWorkFactory();
 
     // Read back the IR plan that was just stored
     const irPlanResult = await chrome.storage.local.get(StorageKeys.EXECUTION_IR_PLAN);
@@ -362,7 +369,6 @@ async function handleStopRecording(): Promise<void> {
     const draft = await StorageService.getTestCaseDraft();
 
     if (understandingResult && irPlan) {
-      const uowFactory = new DexieUnitOfWorkFactory();
       const persistenceResult = await persistSession(uowFactory, {
         understanding: understandingResult,
         events,
@@ -385,13 +391,7 @@ async function handleStopRecording(): Promise<void> {
       });
 
       // ── Phase 11: Cross-Session Element Healing ──
-      // Match fresh UiElements from this recording against stored Elements.
-      // Heal stale locators and create new Elements for unmatched ones.
-      // Non-fatal — healing failure doesn't affect the recording session.
       try {
-        const { adaptToDomainEntities } = await import('../recorder/pipeline/domain-adapter');
-        const { healFromRecording } = await import('../repository/services/healing-service');
-
         const domainEntities = adaptToDomainEntities(events, mergedInteractions ?? interactions, (await getActiveTab())?.url ?? '');
         if (domainEntities.elements.length > 0 && persistenceResult.projectId) {
           const healingResult = await healFromRecording(
@@ -534,9 +534,6 @@ async function handleRunTest(): Promise<void> {
   // recording events. The staleness check ensures we're aware of drift.
   let irWasStale = false;
   try {
-    const { checkStaleness } = await import('../domain/execution-ir/staleness');
-    const { DexieUnitOfWorkFactory } = await import('../repository/v2/dexie/dexie-unit-of-work-factory');
-
     const uowFactory = new DexieUnitOfWorkFactory();
     const uow = await uowFactory.create();
 
@@ -582,7 +579,6 @@ async function handleRunTest(): Promise<void> {
   }
 
   // 2. Create executor and execute the plan
-  const { IRExecutorImpl } = await import('../execution/ir-executor-impl');
   const executor = new IRExecutorImpl();
 
   // Track healed elements via a counter (the override map is internal to the executor)
@@ -619,9 +615,6 @@ async function handleRunTest(): Promise<void> {
   // 3. Persist the result as an ExecutionRun to Repository V2
   let executionRunId: string | null = null;
   try {
-    const { createExecutionRun } = await import('../domain/entities/execution-run');
-    const { DexieUnitOfWorkFactory } = await import('../repository/v2/dexie/dexie-unit-of-work-factory');
-
     const draft = await StorageService.getTestCaseDraft();
     const run = createExecutionRun({
       testCaseId: irPlan.testCaseId,

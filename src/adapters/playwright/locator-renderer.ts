@@ -92,6 +92,9 @@ function renderByType(locator: ResolvedLocator): string {
     case LocatorStrategyType.TEXT:
       return renderTextLocator(locator.value);
 
+    case LocatorStrategyType.PLACEHOLDER:
+      return renderPlaceholderLocator(locator.value);
+
     case LocatorStrategyType.LABEL:
       return renderLabelLocator(locator.value);
 
@@ -144,8 +147,8 @@ interface ParsedRole {
  *   'link[name="Forgot password?"]'  → { role: 'link', name: 'Forgot password?' }
  */
 function parseRoleValue(value: string): ParsedRole {
-  // Match: `roleName[name="..."]`
-  const bracketMatch = value.match(/^([a-zA-Z]+)\[name="(.+)"\]$/);
+  // Match: `roleName[name="..."]` — use [\s\S] to match across newlines
+  const bracketMatch = value.match(/^([a-zA-Z]+)\[name="([\s\S]+)"\]$/);
   if (bracketMatch) {
     return { role: bracketMatch[1], name: bracketMatch[2] };
   }
@@ -166,13 +169,12 @@ function parseRoleValue(value: string): ParsedRole {
 /**
  * Render an ACCESSIBLE_NAME locator.
  *
- * For accessible names, getByLabel is the primary Playwright method
- * for form elements (inputs, textareas, selects). getByPlaceholder is
- * used when the value looks like a placeholder hint (contains "..." or
- * starts lowercase without being a proper label).
- *
- * V1: We always use getByLabel for ACCESSIBLE_NAME, as this is the most
- * common ARIA association. The adapter can refine this later.
+ * Maps to getByLabel for form elements. This is the correct Playwright
+ * method for elements that have an accessible name via aria-label,
+ * aria-labelledby, or <label> wrapping. The locator-ranking system
+ * now generates ROLE candidates (getByRole) as a higher-priority
+ * alternative when both role and name are known, so ACCESSIBLE_NAME
+ * is only used as a fallback when role is unknown.
  */
 function renderAccessibleNameLocator(value: string): string {
   return `getByLabel('${escapeString(value)}')`;
@@ -215,6 +217,19 @@ function renderTextLocator(value: string): string {
  */
 function renderLabelLocator(value: string): string {
   return `getByLabel('${escapeString(value)}')`;
+}
+
+// ── PLACEHOLDER ───────────────────────────────────────────
+
+/**
+ * Render a PLACEHOLDER locator.
+ *
+ * For inputs with placeholder text but no <label> association (common in
+ * modern SPAs like OrangeHRM, Material UI), getByPlaceholder is the
+ * correct Playwright method.
+ */
+function renderPlaceholderLocator(value: string): string {
+  return `getByPlaceholder('${escapeString(value)}')`;
 }
 
 // ── CSS ───────────────────────────────────────────────────

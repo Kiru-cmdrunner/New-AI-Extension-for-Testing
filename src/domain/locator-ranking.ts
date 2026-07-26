@@ -152,6 +152,14 @@ export function filterValidCandidates(candidates: readonly LocatorCandidate[]): 
     // Remove empty values
     if (!c.value || !c.value.trim()) return false;
 
+    // Remove candidates with excessively long values (>100 chars) — these
+    // are typically entire form/page accessible names, not useful locators
+    if (c.value.length > 100) return false;
+
+    // Remove candidates with newlines in accessible name — these come from
+    // parent containers (e.g., FORM) that aggregate all child text
+    if (c.value.includes('\n') && c.type !== LocatorStrategyType.CSS && c.type !== LocatorStrategyType.XPATH) return false;
+
     // For CSS locators that are ID-based, filter auto-generated IDs
     if (c.type === LocatorStrategyType.CSS && c.value.startsWith('#')) {
       const idValue = c.value.slice(1);
@@ -253,6 +261,14 @@ export function extractCandidatesFromIdentity(identity: ElementIdentity): Locato
 
   // Category 2: Accessibility
   if (identity.ariaLabel) {
+    // aria-label is best used as role+name when we know the role
+    if (identity.ariaRole) {
+      candidates.push({
+        type: LocatorStrategyType.ROLE,
+        value: `${identity.ariaRole}[name="${identity.ariaLabel}"]`,
+        category: LocatorCategory.ACCESSIBILITY,
+      });
+    }
     candidates.push({
       type: LocatorStrategyType.ACCESSIBLE_NAME,
       value: identity.ariaLabel,
@@ -275,15 +291,28 @@ export function extractCandidatesFromIdentity(identity: ElementIdentity): Locato
       category: LocatorCategory.STABLE_TECHNICAL,
     });
   }
+  // Bug C fix: HTML `name` attribute is NOT a <label> — it's a structural
+  // selector. Map it to CSS as `tag[name="value"]` so it renders as
+  // `page.locator('input[name="username"]')` which actually works.
   if (identity.name) {
+    const tagLower = identity.tag.toLowerCase();
     candidates.push({
-      type: LocatorStrategyType.LABEL,
-      value: identity.name,
+      type: LocatorStrategyType.CSS,
+      value: `${tagLower}[name="${identity.name}"]`,
       category: LocatorCategory.STABLE_TECHNICAL,
     });
   }
 
   // Category 4: Content-Based
+  // Bug C fix: When we have both role and accessibleName, prefer
+  // getByRole(role, {name}) which is the most robust Playwright locator.
+  if (identity.ariaRole && identity.accessibleName) {
+    candidates.push({
+      type: LocatorStrategyType.ROLE,
+      value: `${identity.ariaRole}[name="${identity.accessibleName}"]`,
+      category: LocatorCategory.CONTENT,
+    });
+  }
   if (identity.accessibleName) {
     candidates.push({
       type: LocatorStrategyType.ACCESSIBLE_NAME,
@@ -291,9 +320,10 @@ export function extractCandidatesFromIdentity(identity: ElementIdentity): Locato
       category: LocatorCategory.CONTENT,
     });
   }
+  // Bug C fix: placeholder should use getByPlaceholder, NOT getByLabel.
   if (identity.placeholder) {
     candidates.push({
-      type: LocatorStrategyType.LABEL,
+      type: LocatorStrategyType.PLACEHOLDER,
       value: identity.placeholder,
       category: LocatorCategory.CONTENT,
     });

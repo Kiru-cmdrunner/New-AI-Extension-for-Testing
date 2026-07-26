@@ -13,6 +13,10 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    // Bug B fix: Disable modulepreload polyfill — it references `document`
+    // which doesn't exist in MV3 service workers, causing a ReferenceError
+    // that silently kills IR Bridge and Repository V2 persistence.
+    modulePreload: false,
     rollupOptions: {
       input: {
         repository: resolve(__dirname, 'src/repository/index.html'),

@@ -43,6 +43,9 @@ import type {
 } from '../domain/execution-ir/adapters/ir-executor';
 import type { RankedLocator } from '../domain/locator-ranking';
 import { LocatorStrategyType } from '../domain/enums';
+import { extractCandidatesFromIdentity, rankLocatorCandidates } from '../domain/locator-ranking';
+import { DexieUnitOfWorkFactory } from '../repository/v2/dexie/dexie-unit-of-work-factory';
+import { healElementAndPersist } from '../repository/services/healing-service';
 
 // ── Types ───────────────────────────────────────────────────
 
@@ -430,9 +433,6 @@ export class IRExecutorImpl implements IRExecutor {
       if (!extractResponse?.identity) return false;
 
       // 2. Rank locators from the live DOM identity
-      const { extractCandidatesFromIdentity, rankLocatorCandidates } = await import(
-        '../domain/locator-ranking'
-      );
       const candidates = extractCandidatesFromIdentity(
         extractResponse.identity as Record<string, string | null>,
       );
@@ -441,13 +441,6 @@ export class IRExecutorImpl implements IRExecutor {
       if (ranked.length === 0) return false;
 
       // 3. Call healElementAndPersist() via the Repository
-      const { DexieUnitOfWorkFactory } = await import(
-        '../repository/v2/dexie/dexie-unit-of-work-factory'
-      );
-      const { healElementAndPersist } = await import(
-        '../repository/services/healing-service'
-      );
-
       const uowFactory = new DexieUnitOfWorkFactory();
       const uow = await uowFactory.create();
       const healed = await healElementAndPersist(

@@ -698,6 +698,18 @@ function extractIdentity(el: Element): ElementIdentity {
       frameDepth: iframeCtx.frameDepth,
     };
   }
+  // Bug A fix: Generate a stable synthetic elementId from the strongest
+  // available identity signal. This is required by the Domain Adapter's
+  // createUiElement() which enforces a non-empty elementId invariant.
+  // Priority: DOM id > data-testid > data-cy > name attr > CSS selector > tag+accessibleName
+  identity.elementId = identity.stableId
+    || identity.testId
+    || identity.dataCy
+    || identity.dataQa
+    || identity.name
+    || identity.cssSelector
+    || `${identity.tag}::${identity.accessibleName}`;
+
   return identity;
 }
 

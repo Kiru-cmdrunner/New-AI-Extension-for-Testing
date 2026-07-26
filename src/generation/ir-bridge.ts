@@ -70,7 +70,7 @@ const INTERACTION_TO_IR_ACTION: Record<InteractionType, IRAction> = {
   Autocomplete: IRAction.SELECT,
   MultiSelect: IRAction.SELECT,
   Checkbox: IRAction.TOGGLE,
-  RadioButton: IRAction.SELECT,
+  RadioButton: IRAction.CLICK,
   ToggleSwitch: IRAction.TOGGLE,
   Slider: IRAction.FILL,
   // Date & Time
@@ -165,12 +165,17 @@ function generateDescription(
     case 'NativeDropdown':
     case 'CustomDropdown':
     case 'Autocomplete':
-    case 'MultiSelect':
-    case 'RadioButton': {
+    case 'MultiSelect': {
       const value = event?.type === 'select' ? event.value : interaction.metadata.selectedValue ?? '';
       return businessField
         ? `Select "${value}" from the ${businessField}`
         : `Select "${value}" from the ${name}`;
+    }
+    case 'RadioButton': {
+      const value = interaction.metadata.selectedValue ?? name;
+      return businessField
+        ? `Select "${value}" in the ${businessField}`
+        : `Select "${value}"`;
     }
     case 'DatePicker':
     case 'TimePicker':
@@ -526,10 +531,36 @@ function applyReadabilityRules(steps: IRStep[]): IRStep[] {
       // Skip the duplicate — keep only the first
       result.push(current);
       i += 2;
-    } else {
-      result.push(current);
-      i++;
+      continue;
     }
+
+    // OR-2: Merge consecutive FILL on same element (e.g., date picker
+    // fires change events for both old and new value, producing duplicate
+    // TextEntry interactions). Keep only the LAST fill (final value).
+    // Compare by elementId OR by matching top resolved locator.
+    if (
+      next &&
+      current.action === IRAction.FILL &&
+      next.action === IRAction.FILL &&
+      current.target.kind === 'element' &&
+      next.target.kind === 'element'
+    ) {
+      const sameId = current.target.elementId === next.target.elementId;
+      const sameLocator =
+        current.target.resolvedLocators?.[0]?.value === next.target.resolvedLocators?.[0]?.value &&
+        !!current.target.resolvedLocators?.[0]?.value;
+      const sameName = current.target.elementName === next.target.elementName &&
+        !!current.target.elementName;
+
+      if (sameId || sameLocator || sameName) {
+        // Skip current, keep next (next has the final committed value)
+        i += 1;
+        continue;
+      }
+    }
+
+    result.push(current);
+    i++;
   }
 
   // Re-number order after merging

@@ -273,11 +273,12 @@ describe('extractCandidatesFromIdentity', () => {
     const candidates = extractCandidatesFromIdentity(identity);
     const ranked = rankLocatorCandidates(candidates);
 
-    // Should be: TEST_ID (business) → ACCESSIBLE_NAME (accessibility) → CSS (structural)
-    // Note: accessibleName from ariaLabel (accessibility cat) ranks before accessibleName (content cat)
+    // Should be: TEST_ID (business) → ROLE (accessibility, from ariaLabel) → ACCESSIBLE_NAME (accessibility)
+    // Note: ariaLabel now generates a ROLE candidate (getByRole) at accessibility priority,
+    // followed by an ACCESSIBLE_NAME fallback at the same priority.
     expect(ranked[0].type).toBe(LocatorStrategyType.TEST_ID);
-    expect(ranked[1].type).toBe(LocatorStrategyType.ACCESSIBLE_NAME);
-    expect(ranked[2].type).toBe(LocatorStrategyType.CSS);
+    expect(ranked[1].type).toBe(LocatorStrategyType.ROLE);
+    expect(ranked[2].type).toBe(LocatorStrategyType.ACCESSIBLE_NAME);
   });
 });
 
@@ -286,16 +287,21 @@ describe('extractCandidatesFromIdentity', () => {
 describe('Cross-path consistency', () => {
   it('produces same ranking for equivalent candidates from different sources', () => {
     // Recording-time: candidates extracted from ElementIdentity
-    const identity = makeIdentity({ testId: 'submit', ariaLabel: 'Submit Form' });
+    const identity = makeIdentity({
+      testId: 'submit',
+      ariaLabel: 'Submit Form',
+      ariaRole: 'button',
+    });
     const recordingCandidates = extractCandidatesFromIdentity(identity);
     const recordingRanked = rankLocatorCandidates(recordingCandidates);
 
     // Execution-time: same candidates gathered from live DOM
     // Must match the same candidates the identity extractor produces
+    // Note: ariaLabel now generates ROLE + ACCESSIBLE_NAME candidates
     const executionCandidates: LocatorCandidate[] = [
       { type: LocatorStrategyType.TEST_ID, value: 'submit', category: LocatorCategory.BUSINESS },
+      { type: LocatorStrategyType.ROLE, value: 'button[name="Submit Form"]', category: LocatorCategory.ACCESSIBILITY },
       { type: LocatorStrategyType.ACCESSIBLE_NAME, value: 'Submit Form', category: LocatorCategory.ACCESSIBILITY },
-      { type: LocatorStrategyType.ACCESSIBLE_NAME, value: 'Submit', category: LocatorCategory.CONTENT },
     ];
     const executionRanked = rankLocatorCandidates(executionCandidates);
 

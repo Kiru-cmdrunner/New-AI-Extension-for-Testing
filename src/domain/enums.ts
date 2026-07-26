@@ -93,6 +93,7 @@ export enum LocatorStrategyType {
   TEST_ID = 'testId',
   TEXT = 'text',
   LABEL = 'label',
+  PLACEHOLDER = 'placeholder',
   CSS = 'css',
   XPATH = 'xpath',
 }

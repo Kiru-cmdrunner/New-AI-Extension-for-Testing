@@ -160,7 +160,7 @@ describe('IR Bridge — build()', () => {
       ['CustomDropdown', IRAction.SELECT],
       ['Autocomplete', IRAction.SELECT],
       ['MultiSelect', IRAction.SELECT],
-      ['RadioButton', IRAction.SELECT],
+      ['RadioButton', IRAction.CLICK],
       ['Checkbox', IRAction.TOGGLE],
       ['ToggleSwitch', IRAction.TOGGLE],
       ['Hover', IRAction.HOVER],
@@ -244,6 +244,7 @@ describe('IR Bridge — build()', () => {
         testId: null, dataCy: null, dataQa: null,
         ariaLabel: null, ariaLabelledBy: null,
         stableId: null, name: null,
+        ariaRole: null,
         accessibleName: 'Submit',
         cssSelector: 'button.submit',
         xPath: '//button',
@@ -253,7 +254,8 @@ describe('IR Bridge — build()', () => {
       const target = plan.steps[0].target;
       if (target.kind === 'element') {
         expect(target.resolvedLocators.length).toBeGreaterThanOrEqual(1);
-        // accessibleName (text) should be first when nothing better exists
+        // accessibleName (content) should be first when nothing better exists
+        // (no testId, ariaLabel, stableId, name, or role — accessibleName is the only signal)
         expect(target.resolvedLocators[0].type).toBe(LocatorStrategyType.ACCESSIBLE_NAME);
       }
     });

@@ -153,7 +153,7 @@ export function loginFlowPlan(): ExecutionIRPlan {
     ),
     makeStep(IRAction.FILL, 'Enter password',
       makeElementTarget('elm-password', 'Password Input', 'LoginPage', [
-        makeLocator(LocatorStrategyType.LABEL, 'Password', 1),
+        makeLocator(LocatorStrategyType.PLACEHOLDER, 'Enter password', 1),
         makeLocator(LocatorStrategyType.CSS, '#password', 2),
       ]),
       { input: 'secret123!' },
