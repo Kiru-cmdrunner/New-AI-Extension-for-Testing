@@ -118,21 +118,11 @@ export const dropdownDefinition: ComponentDefinition = {
     return null;
   },
 
-  shouldCancelOnOutside(event: ObservedEvent, ctx: ComponentContext): boolean {
-    // If user clicks outside the dropdown entirely, abandon
-    if (event.eventType === 'click' || event.eventType === 'mousedown') {
-      // Check if the click is on the trigger, an option, or inside the surface
-      const eventKey = elementKey(event.target);
-      const triggerKey = elementKey(ctx.trigger);
-
-      if (eventKey === triggerKey) return false;
-      if (isDropdownOption(event.target.ariaRole, event.target.className)) {
-        return false;
-      }
-      if (isInsideDropdownSurface(event.target.className)) return false;
-
-      return true; // clicked outside
-    }
+  shouldCancelOnOutside(_event: ObservedEvent, _ctx: ComponentContext): boolean {
+    // Architecture: lifecycle abandonment is timeout-based (MAX_LIFECYCLE_DURATION_MS).
+    // We do NOT abandon on DOM boundary heuristics — portal-rendered overlays
+    // break those checks. The definition waits passively for completion evidence
+    // (option click or change event) or the runtime timeout.
     return false;
   },
 

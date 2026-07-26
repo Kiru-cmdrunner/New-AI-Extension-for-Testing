@@ -25,6 +25,9 @@ import { extractDomContext } from '../definitions/dom-context-extractor';
 /** Minimum interval between scroll events (ms) — rate limiting. */
 const SCROLL_MIN_INTERVAL_MS = 16;
 
+/** Minimum interval between mousemove events (ms) — throttle to ~20fps max. */
+const MOUSEMOVE_MIN_INTERVAL_MS = 50;
+
 /**
  * Test hook: when true, all events are treated as trusted regardless of
  * the actual isTrusted property. This is ONLY set by test code — in
@@ -58,6 +61,7 @@ export interface EventTapConfig {
 export function createEventTap(config: EventTapConfig): EventTapHandle {
   const listeners: Array<{ type: string; listener: EventListenerOrEventListenerObject; options: AddEventListenerOptions }> = [];
   let lastScrollTime = 0;
+  let lastMouseMoveTime = 0;
   let pageCounter = 0;
 
   // Generate a page-unique counter for event IDs
@@ -90,6 +94,14 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
       const now = Date.now();
       if (now - lastScrollTime < SCROLL_MIN_INTERVAL_MS) return;
       lastScrollTime = now;
+    }
+
+    // mousemove rate limiting — throttle to prevent message pipeline flooding.
+    // The Hover definition only needs ~20fps for pointer stationarity tracking.
+    if (eventType === 'mousemove') {
+      const now = Date.now();
+      if (now - lastMouseMoveTime < MOUSEMOVE_MIN_INTERVAL_MS) return;
+      lastMouseMoveTime = now;
     }
 
     // Resolve target (pierces Shadow DOM via composedPath)

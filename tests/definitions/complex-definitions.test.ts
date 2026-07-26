@@ -171,18 +171,23 @@ describe('DatePicker Definition', () => {
     expect(dp).toBeUndefined(); // not completed because dateValue was empty
   });
 
-  it('abandons when user clicks outside the datepicker', () => {
+  it('abandons via timeout when user clicks outside the datepicker', () => {
+    // Architecture change: shouldCancelOnOutside removed (Fix 4).
+    // DatePicker lifecycle is now managed by timeout (MAX_LIFECYCLE_DURATION_MS).
+    // A click outside no longer abandons it — it waits for completion evidence
+    // or the timeout safety net.
     const { runtime, emitted } = setupRuntime();
     const trigger = { tag: 'DIV', stableId: 'oxd-date', className: 'oxd-date-input', accessibleName: 'Date of Birth' };
 
-    runtime.process(makeEvent('c1', 'click', trigger));
+    runtime.process(makeEvent('c1', 'click', trigger, {}, { timestamp: 1000 }));
 
-    // Click outside
-    runtime.process(makeEvent('c2', 'click', { tag: 'BUTTON', accessibleName: 'Save', stableId: 'save-btn' }));
+    // Click outside — does NOT abandon (shouldCancelOnOutside is always false now)
+    runtime.process(makeEvent('c2', 'click', { tag: 'BUTTON', accessibleName: 'Save', stableId: 'save-btn' }, {}, { timestamp: 2000 }));
 
     const dp = emitted.find((e) => e.type === 'DatePicker');
-    expect(dp).toBeDefined();
-    expect(dp!.endState).toBe('abandoned');
+    // DatePicker should still be active (not abandoned, not emitted yet)
+    expect(dp).toBeUndefined();
+    expect(runtime.activeCount).toBe(1);
   });
 });
 
@@ -215,24 +220,44 @@ describe('DatePicker Dedup (Bug 3)', () => {
 // ── Scroll Tests ─────────────────────────────────────────────────────
 
 describe('Scroll Definition', () => {
-  it('captures scroll events with non-zero delta', () => {
+  it('captures scroll gestures with non-zero delta (coalesced)', () => {
+    // Architecture change: Scroll is now a coalescing lifecycle component (Fix 2).
+    // Delta = last scroll position - first scroll position in the burst.
     const { runtime, emitted } = setupRuntime();
-    runtime.process(
-      makeEvent('s1', 'scroll', { tag: 'DIV', stableId: 'page' }, {}, { scrollDeltaY: 100, scrollDeltaX: 0 }),
-    );
-    expect(emitted.length).toBe(1);
-    expect(emitted[0].type).toBe('Scroll');
-    expect(emitted[0].metadata.hasDelta).toBe(true);
-  });
-
-  // Bug 5: Scroll 0px events
-  it('captures scroll events with 0px delta but marks hasDelta=false (Bug 5)', () => {
-    const { runtime, emitted } = setupRuntime();
+    // Scroll burst: 0 → 100
     runtime.process(
       makeEvent('s1', 'scroll', { tag: 'DIV', stableId: 'page' }, {}, { scrollDeltaY: 0, scrollDeltaX: 0 }),
     );
-    expect(emitted.length).toBe(1);
-    expect(emitted[0].metadata.hasDelta).toBe(false);
+    runtime.process(
+      makeEvent('s2', 'scroll', { tag: 'DIV', stableId: 'page' }, {}, { scrollDeltaY: 100, scrollDeltaX: 0 }),
+    );
+    // Non-scroll event completes the gesture
+    runtime.process(
+      makeEvent('c1', 'click', { tag: 'BUTTON', stableId: 'btn1' }, {}, {}),
+    );
+    const scrolls = emitted.filter((e) => e.type === 'Scroll');
+    expect(scrolls.length).toBe(1);
+    expect(scrolls[0].metadata.hasDelta).toBe(true);
+    expect(scrolls[0].metadata.scrollDeltaY).toBe(100); // 100 - 0
+  });
+
+  // Bug 5: Scroll 0px events
+  it('marks hasDelta=false when gesture has no movement (Bug 5)', () => {
+    // Architecture change: Scroll is now a coalescing lifecycle component (Fix 2).
+    const { runtime, emitted } = setupRuntime();
+    runtime.process(
+      makeEvent('s1', 'scroll', { tag: 'DIV', stableId: 'page' }, {}, { scrollDeltaY: 50, scrollDeltaX: 0 }),
+    );
+    // Same position — no movement during the burst
+    runtime.process(
+      makeEvent('s2', 'scroll', { tag: 'DIV', stableId: 'page' }, {}, { scrollDeltaY: 50, scrollDeltaX: 0 }),
+    );
+    runtime.process(
+      makeEvent('c1', 'click', { tag: 'BUTTON', stableId: 'btn1' }, {}, {}),
+    );
+    const scrolls = emitted.filter((e) => e.type === 'Scroll');
+    expect(scrolls.length).toBe(1);
+    expect(scrolls[0].metadata.hasDelta).toBe(false); // 50 - 50 = 0
   });
 });
 

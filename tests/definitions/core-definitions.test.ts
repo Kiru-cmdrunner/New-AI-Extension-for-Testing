@@ -237,19 +237,23 @@ describe('Dropdown Definition', () => {
     expect(dropdown!.metadata.selectedValue).toBe('ESS');
   });
 
-  it('abandons when user clicks outside the dropdown', () => {
+  it('waits passively when user clicks outside (timeout-based abandonment)', () => {
+    // Architecture change: shouldCancelOnOutside removed (Fix 4).
+    // Dropdown lifecycle is now managed by timeout (MAX_LIFECYCLE_DURATION_MS).
+    // A click outside no longer abandons it — it waits for completion evidence
+    // (option click or change event) or the timeout safety net.
     const { runtime, emitted } = setupRuntime();
     const trigger = { tag: 'SELECT', ariaRole: 'listbox', stableId: 'sel3', accessibleName: 'Nationality' };
 
     runtime.process(makeEvent('c1', 'click', trigger));
 
-    // Click outside
+    // Click outside — does NOT abandon
     runtime.process(makeEvent('c2', 'click', { tag: 'BUTTON', accessibleName: 'Save', stableId: 'save-btn' }));
 
-    // The dropdown should be abandoned, and the button click captured
+    // Dropdown should NOT be abandoned (shouldCancelOnOutside is always false now)
     const dropdown = emitted.find((e) => e.type === 'Dropdown');
-    expect(dropdown).toBeDefined();
-    expect(dropdown!.endState).toBe('abandoned');
+    expect(dropdown).toBeUndefined();
+    expect(runtime.activeCount).toBe(1);
   });
 });
 

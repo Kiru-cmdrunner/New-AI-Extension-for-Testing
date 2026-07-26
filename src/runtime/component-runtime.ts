@@ -7,7 +7,7 @@
  * The runtime owns:
  * - activeStack: ComponentContext[] — active components, newest at top
  * - seenEventIds: Set<string> — dedup (cap at 500, halve when exceeded)
- * - lastEmittedForDedup — type + elementKey + endTime for temporal dedup
+ * - dedupByType: Map<InteractionType, DedupRecord> — per-type temporal dedup
  * - errorLog: string[] — accumulate definition errors without crashing
  *
  * Architecture: `.drytis/specs/m0a-architecture-validation.md` §2.2 Stage 2
@@ -50,13 +50,21 @@ interface DedupRecord {
 export interface RuntimeSnapshot {
   interactionCounter: number;
   seenEventIds: string[];
-  lastEmitted: DedupRecord | null;
+  /** Per-type dedup records for MV3 recovery. */
+  dedupRecords: DedupRecord[];
 }
 
 // ── Constants ─────────────────────────────────────────────────────────
 
 /** Maximum size of seenEventIds before halving. */
 const SEEN_EVENTS_CAP = 500;
+
+/**
+ * Maximum duration (ms) an active component can remain on the stack without
+ * completing. Prevents zombie components from blocking discovery indefinitely.
+ * Framework-independent: doesn't rely on DOM boundary heuristics.
+ */
+const MAX_LIFECYCLE_DURATION_MS = 15_000;
 
 // ── Factory ───────────────────────────────────────────────────────────
 
@@ -104,12 +112,14 @@ class ComponentRuntimeImpl implements ComponentRuntime {
   private activeStack: ComponentContext[] = [];
   private seenEventIds: Set<string> = new Set();
   private interactionCounter: number;
-  private lastEmittedForDedup: DedupRecord | null = null;
+  /** Per-type dedup: tracks the last interaction of each type independently. */
+  private dedupByType: Map<InteractionType, DedupRecord> = new Map();
   private errorLog: string[] = [];
 
   constructor(definitions: ComponentDefinition[], config: RuntimeConfig) {
-    // Sort by priority descending (highest priority checked first)
-    this.definitions = [...definitions].sort((a, b) => b.priority - a.priority);
+    // Sort by priority ascending (lower number = higher priority = checked first).
+    // Click (180) is the universal fallback — always checked last.
+    this.definitions = [...definitions].sort((a, b) => a.priority - b.priority);
     this.config = config;
     this.interactionCounter = config.initialInteractionId ?? 0;
 
@@ -144,6 +154,13 @@ class ComponentRuntimeImpl implements ComponentRuntime {
       emitted.push(...flushed);
       // Fall through to discovery — the Navigation definition will claim it
     }
+
+    // 2b. Stale component cleanup — abandon components that exceeded the
+    //     maximum lifecycle duration. This is the framework-independent
+    //     replacement for shouldCancelOnOutside DOM boundary heuristics.
+    //     Prevents zombie components (e.g., Dropdown, DatePicker that never
+    //     received their completion event) from blocking discovery.
+    this.cleanupStaleComponents(event, emitted);
 
     // 3. Offer to active stack (top → bottom)
     let handled = false;
@@ -197,6 +214,26 @@ class ComponentRuntimeImpl implements ComponentRuntime {
           });
           if (interaction) emitted.push(interaction);
           this.activeStack.splice(i, 1);
+        } else {
+          // Check if the component should complete (e.g., Scroll gesture ended)
+          let shouldComplete = false;
+          if (def.shouldCompleteOnOutside) {
+            try {
+              shouldComplete = def.shouldCompleteOnOutside(event, ctx);
+            } catch (err) {
+              this.logError(def.type, 'shouldCompleteOnOutside', err);
+            }
+          }
+
+          if (shouldComplete) {
+            ctx.state = 'completed';
+            ctx.endTime = event.timestamp;
+            const interaction = this.completeComponent(ctx, def, {
+              endState: 'completed',
+            });
+            if (interaction) emitted.push(interaction);
+            this.activeStack.splice(i, 1);
+          }
         }
       }
     }
@@ -234,11 +271,14 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     for (let i = this.activeStack.length - 1; i >= 0; i--) {
       const ctx = this.activeStack[i];
       const def = this.findDefForType(ctx.type);
-      ctx.state = 'interrupted';
+      // Gesture components (Scroll) complete naturally on flush, not interrupt.
+      // They accumulated their data and the gesture is done — it should be emitted.
+      const endState = def?.shouldCompleteOnOutside ? 'completed' : 'interrupted';
+      ctx.state = endState;
       ctx.endTime = Date.now();
       if (def) {
         const interaction = this.completeComponent(ctx, def, {
-          endState: 'interrupted',
+          endState,
         });
         if (interaction) emitted.push(interaction);
       }
@@ -247,29 +287,61 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     return emitted;
   }
 
+  /**
+   * Abandon active components that have exceeded MAX_LIFECYCLE_DURATION_MS.
+   * This is the framework-independent lifecycle management mechanism —
+   * no DOM boundary checks, no CSS class heuristics.
+   *
+   * Gesture components (Scroll) are completed, not abandoned, since they
+   * accumulated valid data — the user just didn't do anything afterwards.
+   *
+   * Called on every event, so staleness is caught promptly.
+   */
+  private cleanupStaleComponents(
+    event: ObservedEvent,
+    emitted: ComponentInteraction[],
+  ): void {
+    for (let i = this.activeStack.length - 1; i >= 0; i--) {
+      const ctx = this.activeStack[i];
+      const duration = event.timestamp - ctx.startTime;
+      if (duration > MAX_LIFECYCLE_DURATION_MS) {
+        const def = this.findDefForType(ctx.type);
+        const endState = def?.shouldCompleteOnOutside ? 'completed' : 'abandoned';
+        ctx.state = endState;
+        ctx.endTime = event.timestamp;
+        if (def) {
+          const interaction = this.completeComponent(ctx, def, {
+            endState,
+          });
+          if (interaction) emitted.push(interaction);
+        }
+        this.activeStack.splice(i, 1);
+      }
+    }
+  }
+
   snapshot(): RuntimeSnapshot {
     return {
       interactionCounter: this.interactionCounter,
       seenEventIds: [...this.seenEventIds],
-      lastEmitted: this.lastEmittedForDedup
-        ? { ...this.lastEmittedForDedup }
-        : null,
+      dedupRecords: [...this.dedupByType.values()],
     };
   }
 
   restore(snap: RuntimeSnapshot): void {
     this.interactionCounter = snap.interactionCounter;
     this.seenEventIds = new Set(snap.seenEventIds);
-    this.lastEmittedForDedup = snap.lastEmitted
-      ? { ...snap.lastEmitted }
-      : null;
+    this.dedupByType = new Map(
+      (snap.dedupRecords ?? []).map((r) => [r.type, r]),
+    );
   }
 
   // ── Internal ─────────────────────────────────────────────────────
 
   /**
    * Try to discover a matching definition for this event.
-   * Iterates definitions by priority descending (excluding Click fallback).
+   * Iterates definitions by priority ascending — lower number = higher priority
+   * (excluding Click fallback).
    * Returns a new ComponentContext if a definition matched.
    */
   private tryDiscovery(event: ObservedEvent): ComponentContext | null {
@@ -368,13 +440,13 @@ class ComponentRuntimeImpl implements ComponentRuntime {
       metadata,
     };
 
-    // Update dedup record
-    this.lastEmittedForDedup = {
+    // Update dedup record (per-type)
+    this.dedupByType.set(ctx.type, {
       type: ctx.type,
       elementKey: key,
       endTime: ctx.endTime,
       metadata: { ...metadata },
-    };
+    });
 
     // Emit
     try {
@@ -387,7 +459,9 @@ class ComponentRuntimeImpl implements ComponentRuntime {
   }
 
   /**
-   * Check if this interaction is a duplicate of the last emitted one.
+   * Check if this interaction is a duplicate of the last emitted interaction
+   * of the SAME type. Per-type dedup prevents interleaved interactions of
+   * different types from resetting the dedup window.
    *
    * Dedup rules:
    * - Same type + same elementKey + gap (endTime_prev → startTime_now) ≤ DEDUP_WINDOW_MS
@@ -398,10 +472,9 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     metadata: Record<string, unknown>,
     key: string,
   ): boolean {
-    if (!this.lastEmittedForDedup) return false;
-    const last = this.lastEmittedForDedup;
+    const last = this.dedupByType.get(ctx.type);
+    if (!last) return false;
 
-    if (last.type !== ctx.type) return false;
     if (last.elementKey !== key) return false;
 
     const gap = ctx.startTime - last.endTime;
@@ -414,6 +487,11 @@ class ComponentRuntimeImpl implements ComponentRuntime {
       // If dates differ, NOT a duplicate even within the window
       if (prevDate !== newDate) return false;
     }
+
+    // Scroll is exempt from temporal dedup — gesture coalescing already
+    // prevents rapid-fire duplication. Two scroll gestures separated by
+    // other interactions are always distinct, even on the same container.
+    if (ctx.type === 'Scroll') return false;
 
     return true;
   }

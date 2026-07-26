@@ -130,21 +130,11 @@ export const datePickerDefinition: ComponentDefinition = {
     return null; // unknown event, stay active
   },
 
-  shouldCancelOnOutside(event: ObservedEvent, ctx: ComponentContext): boolean {
-    // If user clicks outside the datepicker entirely, abandon
-    if (event.eventType === 'click' || event.eventType === 'mousedown') {
-      const eventKey = elementKey(event.target);
-      const triggerKey = elementKey(ctx.trigger);
-
-      if (eventKey === triggerKey) return false;
-      if (isInsideCalendarSurface(event.target.className)) return false;
-      if (isCalendarCell(event.target.ariaRole, event.target.className)) return false;
-
-      const ancestorClasses = event.domContext.ancestorClasses.join(' ');
-      if (isInsideCalendarSurface(ancestorClasses)) return false;
-
-      return true; // clicked outside
-    }
+  shouldCancelOnOutside(_event: ObservedEvent, _ctx: ComponentContext): boolean {
+    // Architecture: lifecycle abandonment is timeout-based (MAX_LIFECYCLE_DURATION_MS).
+    // We do NOT abandon on DOM boundary heuristics — portal-rendered calendars
+    // break those checks. The definition waits passively for completion evidence
+    // (calendar cell click or change event) or the runtime timeout.
     return false;
   },
 

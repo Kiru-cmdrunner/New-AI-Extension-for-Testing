@@ -28,7 +28,7 @@ import { clickDefinition } from './click';
 
 /**
  * All registered component definitions, ordered by priority.
- * The ComponentRuntime sorts this by priority (descending) during discovery.
+ * The ComponentRuntime sorts this by priority (ascending) during discovery.
  *
  * Priority semantics (lower = higher priority in discovery order):
  *   10 = most specific (DatePicker)

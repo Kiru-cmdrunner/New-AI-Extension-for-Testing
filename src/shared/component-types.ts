@@ -265,8 +265,8 @@ export interface ComponentDefinition {
   type: InteractionType;
 
   /**
-   * Priority for discovery ordering. Higher = checked first.
-   * Click (180) is the universal fallback — always lowest priority.
+   * Priority for discovery ordering. Lower number = checked first.
+   * Click (180) is the universal fallback — always checked last.
    */
   priority: number;
 
@@ -306,6 +306,21 @@ export interface ComponentDefinition {
    * Only called for events NOT in scope (isInScope returned false).
    */
   shouldCancelOnOutside(event: ObservedEvent, ctx: ComponentContext): boolean;
+
+  /**
+   * Should this event (outside the component's scope) cause completion?
+   * Return true if the component should be finalized as 'completed'
+   * (not abandoned) because the gesture/interaction naturally ended.
+   *
+   * Only called for events NOT in scope (isInScope returned false), and
+   * only if shouldCancelOnOutside also returned false.
+   *
+   * Used by gesture components (e.g., Scroll) that coalesce consecutive
+   * events and should complete when the user starts a different action.
+   *
+   * Optional — defaults to false. Most definitions don't need this.
+   */
+  shouldCompleteOnOutside?(event: ObservedEvent, ctx: ComponentContext): boolean;
 
   /**
    * Build the metadata for the emitted interaction.
