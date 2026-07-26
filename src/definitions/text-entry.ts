@@ -46,7 +46,7 @@ export const textEntryDefinition: ComponentDefinition = {
   },
 
   handleEvent(event: ObservedEvent, ctx: ComponentContext): ComponentCompletion | null {
-    if (event.eventType === 'input') {
+    if (event.eventType === 'input' || event.eventType === 'change') {
       // User typed something
       ctx.data.userTyped = true;
       ctx.data.textValue = event.valueAfter ?? '';
@@ -54,7 +54,15 @@ export const textEntryDefinition: ComponentDefinition = {
     }
 
     if (event.eventType === 'blur') {
-      // Complete on blur — the presentation layer will filter if userTyped=false
+      // Complete on blur — the presentation layer will filter if userTyped=false.
+      // Also capture the value from the blur event as a fallback in case input
+      // events were missed (autofill, paste, React controlled inputs).
+      if (event.valueAfter != null && event.valueAfter !== '') {
+        ctx.data.textValue = event.valueAfter;
+        if (ctx.data.userTyped !== true) {
+          ctx.data.userTyped = true;
+        }
+      }
       return { endState: 'completed' };
     }
 
@@ -62,8 +70,11 @@ export const textEntryDefinition: ComponentDefinition = {
   },
 
   shouldCancelOnOutside(event: ObservedEvent, ctx: ComponentContext): boolean {
-    // If user clicks a different element, abandon this text entry
-    if (event.eventType === 'click' || event.eventType === 'mousedown') {
+    // Only cancel on 'click' (fires AFTER blur, so the TextEntry completes
+    // naturally). Never cancel on 'mousedown' — it fires BEFORE blur in the
+    // browser event order (mousedown → blur → click), which would abandon
+    // the TextEntry before it can complete.
+    if (event.eventType === 'click') {
       const sameElement =
         event.target.stableId === ctx.trigger.stableId ||
         event.target.cssSelector === ctx.trigger.cssSelector;

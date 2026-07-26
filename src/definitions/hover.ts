@@ -38,7 +38,15 @@ export const hoverDefinition: ComponentDefinition = {
   },
 
   isInScope(event: ObservedEvent, ctx: ComponentContext): boolean {
-    // In scope if same element
+    // In scope if same element AND event is relevant to the hover lifecycle.
+    // CRITICAL: Exclude click/mousedown/contextmenu — these must fall through
+    // to discovery so the Click definition can fire. Without this exclusion,
+    // an active Hover absorbs clicks on the same element, silently losing
+    // the click interaction entirely.
+    const HOVER_RELEVANT_EVENTS = new Set(['mouseenter', 'mouseleave']);
+    if (!HOVER_RELEVANT_EVENTS.has(event.eventType)) {
+      return false;
+    }
     const eventKey = `${event.target.tag}:${event.target.cssSelector}`;
     const triggerKey = `${ctx.trigger.tag}:${ctx.trigger.cssSelector}`;
     return eventKey === triggerKey;

@@ -149,6 +149,12 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
     if (eventType === 'input' || eventType === 'change') {
       valueAfter = value ?? null;
     }
+    if (eventType === 'blur') {
+      // Capture value at blur time — this is the final value the user left
+      // in the field. Critical for TextEntry completion, especially when
+      // input events were missed (autofill, paste, React controlled inputs).
+      valueAfter = value ?? null;
+    }
 
     // Determine checkedBefore/after
     let checkedBefore: boolean | null = null;
