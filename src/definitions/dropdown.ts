@@ -49,7 +49,7 @@ export const dropdownDefinition: ComponentDefinition = {
     }
 
     // aria-haspopup="listbox" on any element
-    if (ariaHasPopup === 'listbox' || ariaHasPopup === 'listbox') {
+    if (ariaHasPopup === 'listbox') {
       return { type: 'Dropdown' };
     }
 

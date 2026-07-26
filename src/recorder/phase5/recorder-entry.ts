@@ -63,21 +63,6 @@ function removeFromBuffer(eventId: string): void {
 }
 
 /**
- * Remove all events older than the given timestamp (in milliseconds).
- */
-function removeOlderThan(timestampMs: number): void {
-  try {
-    const raw = sessionStorage.getItem(BUFFER_KEY);
-    if (!raw) return;
-    const buffer: ObservedEvent[] = JSON.parse(raw);
-    const filtered = buffer.filter((e) => e.timestamp >= timestampMs);
-    sessionStorage.setItem(BUFFER_KEY, JSON.stringify(filtered));
-  } catch {
-    // silent degrade
-  }
-}
-
-/**
  * Peek the buffer (non-destructive read).
  */
 function peekBuffer(): ObservedEvent[] {
