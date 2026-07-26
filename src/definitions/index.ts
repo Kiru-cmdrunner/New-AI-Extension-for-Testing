@@ -15,12 +15,16 @@
  */
 
 import type { ComponentDefinition } from '../shared/component-types';
-import { clickDefinition } from './click';
-import { textEntryDefinition } from './text-entry';
+import { datePickerDefinition } from './date-picker';
 import { dropdownDefinition } from './dropdown';
 import { checkboxDefinition } from './checkbox';
 import { radioButtonDefinition } from './radio-button';
+import { textEntryDefinition } from './text-entry';
+import { hoverDefinition } from './hover';
 import { linkDefinition } from './link';
+import { scrollDefinition } from './scroll';
+import { navigationDefinition } from './navigation';
+import { clickDefinition } from './click';
 
 /**
  * All registered component definitions, ordered by priority.
@@ -32,26 +36,37 @@ import { linkDefinition } from './link';
  *   30 = Checkbox
  *   40 = RadioButton
  *   50 = TextEntry
+ *   60 = Hover
  *   70 = Link
+ *  110 = Scroll
+ *  120 = Navigation
  *  180 = Click (universal fallback — always checked last)
  */
 export const ALL_DEFINITIONS: ComponentDefinition[] = [
-  dropdownDefinition,     // priority 20
-  checkboxDefinition,     // priority 30
-  radioButtonDefinition,  // priority 40
-  textEntryDefinition,    // priority 50
-  linkDefinition,         // priority 70
-  clickDefinition,        // priority 180 (fallback)
+  datePickerDefinition,    // priority 10
+  dropdownDefinition,      // priority 20
+  checkboxDefinition,      // priority 30
+  radioButtonDefinition,   // priority 40
+  textEntryDefinition,     // priority 50
+  hoverDefinition,         // priority 60
+  linkDefinition,          // priority 70
+  scrollDefinition,        // priority 110
+  navigationDefinition,    // priority 120
+  clickDefinition,         // priority 180 (fallback)
 ];
 
 /**
  * For external consumers that need individual definitions.
  */
 export {
-  clickDefinition,
-  textEntryDefinition,
+  datePickerDefinition,
   dropdownDefinition,
   checkboxDefinition,
   radioButtonDefinition,
+  textEntryDefinition,
+  hoverDefinition,
   linkDefinition,
+  scrollDefinition,
+  navigationDefinition,
+  clickDefinition,
 };

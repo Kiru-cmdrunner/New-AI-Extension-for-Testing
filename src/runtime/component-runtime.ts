@@ -138,9 +138,11 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     if (this.seenEventIds.has(event.eventId)) return emitted;
     this.trackSeenEvent(event.eventId);
 
-    // 2. Navigation flush
+    // 2. Navigation flush — interrupt all active, then continue to discovery
     if (event.eventType === ('navigation' as string)) {
-      return this.flush();
+      const flushed = this.flush();
+      emitted.push(...flushed);
+      // Fall through to discovery — the Navigation definition will claim it
     }
 
     // 3. Offer to active stack (top → bottom)

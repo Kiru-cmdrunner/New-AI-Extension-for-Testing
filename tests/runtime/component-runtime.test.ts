@@ -336,6 +336,8 @@ describe('Component Runtime', () => {
     });
 
     const result = runtime.process(navEvent);
+    // Flush interrupts the TextEntry. No Navigation definition is registered
+    // in this test, so only the interrupted TextEntry is emitted.
     expect(result.length).toBe(1);
     expect(result[0].endState).toBe('interrupted');
     expect(runtime.activeCount).toBe(0);
