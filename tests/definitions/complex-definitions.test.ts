@@ -251,7 +251,7 @@ describe('Hover Definition', () => {
     expect(hover!.metadata.dwellMs).toBe(1000);
   });
 
-  it('abandons hover when dwell < 500ms', () => {
+  it('discards hover when dwell < 500ms (transit)', () => {
     const { runtime, emitted } = setupRuntime();
     const target = { tag: 'BUTTON', stableId: 'btn2', accessibleName: 'Menu' };
 
@@ -260,7 +260,7 @@ describe('Hover Definition', () => {
 
     const hover = emitted.find((e) => e.type === 'Hover');
     expect(hover).toBeDefined();
-    expect(hover!.endState).toBe('abandoned');
+    expect(hover!.endState).toBe('discarded');
   });
 });
 

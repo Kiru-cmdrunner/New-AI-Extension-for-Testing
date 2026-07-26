@@ -72,8 +72,15 @@ export function isProductionInteraction(
     case 'Click':
     case 'Link':
     case 'Checkbox':
-    case 'Hover':
     case 'Navigation':
+      return true;
+
+    case 'Hover':
+      // Evidence-based hover: only meaningful hovers pass the production filter.
+      // Transit hovers, cosmetic hovers, and click-suppressed hovers are filtered.
+      if (metadata.meaningful !== true) return false;
+      return true;
+
     default:
       return true;
   }

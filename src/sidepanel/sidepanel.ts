@@ -19,7 +19,7 @@ import { StorageService } from '../storage/storage-service';
 import { sendMessage } from '../shared/messaging';
 import { RepositoryService } from '../repository/repository-service';
 import { renderEventTimeline } from './timeline-renderer';
-import { renderInteractions } from './interaction-renderer';
+import { renderProductionInteractions } from './interaction-renderer';
 import type { RecordedEvent, ReplayJson } from '../recorder/recorded-event';
 import type { ComponentInteraction } from '../shared/component-types';
 import type { ExecutionIRPlan, IRStep, IRAssertion } from '../domain/execution-ir/types';
@@ -472,7 +472,7 @@ async function handleStopRecording(): Promise<void> {
  */
 function showDetectedInteractions(interactions: ComponentInteraction[]): void {
   detectedInteractionsCount.textContent = String(interactions.length);
-  renderInteractions(detectedInteractionsList, interactions);
+  renderProductionInteractions(detectedInteractionsList, interactions);
   detectedInteractionsSection.hidden = false;
 }
 
@@ -1002,7 +1002,7 @@ function setupLiveListeners(): void {
     if (Array.isArray(newValue) && !views['recording'].hidden) {
       const interactions = newValue as ComponentInteraction[];
       timelineCount.textContent = String(interactions.length);
-      renderInteractions(timelineEvents, interactions);
+      renderProductionInteractions(timelineEvents, interactions);
     }
   });
 
@@ -1022,7 +1022,7 @@ function setupLiveListeners(): void {
       // Update during recording (live timeline)
       if (!views['recording'].hidden) {
         detectedInteractionsCount.textContent = String(interactions.length);
-        renderInteractions(detectedInteractionsList, interactions);
+        renderProductionInteractions(detectedInteractionsList, interactions);
         detectedInteractionsSection.hidden = false;
       }
       // Update in stopped view
@@ -1084,7 +1084,7 @@ function setupLiveListeners(): void {
           const all = result[LIVE_INTERACTIONS_KEY];
           if (Array.isArray(all)) {
             detectedInteractionsCount.textContent = String(all.length);
-            renderInteractions(detectedInteractionsList, all as ComponentInteraction[]);
+            renderProductionInteractions(detectedInteractionsList, all as ComponentInteraction[]);
             detectedInteractionsSection.hidden = false;
           }
         }).catch(() => {});
@@ -1249,7 +1249,7 @@ async function init(): Promise<void> {
     const liveInts = liveResult[LIVE_INTERACTIONS_KEY];
     if (Array.isArray(liveInts) && liveInts.length > 0) {
       timelineCount.textContent = String(liveInts.length);
-      renderInteractions(timelineEvents, liveInts as ComponentInteraction[]);
+      renderProductionInteractions(timelineEvents, liveInts as ComponentInteraction[]);
     } else {
       timelineEvents.innerHTML = '<p class="timeline__empty">Recording... interactions will appear here.</p>';
       timelineCount.textContent = '0';

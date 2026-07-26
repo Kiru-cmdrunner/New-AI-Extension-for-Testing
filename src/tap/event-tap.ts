@@ -202,7 +202,7 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
     'click', 'mousedown', 'contextmenu',
     'focus', 'blur',
     'input', 'change',
-    'mouseenter', 'mouseleave',
+    'mouseenter', 'mouseleave', 'mousemove',
     'keydown',
     'scroll',
   ];

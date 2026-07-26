@@ -181,7 +181,7 @@ export type ComponentState =
  * The end state of a completed or terminated component.
  Used in buildResult and the emitted ComponentInteraction.
  */
-export type ComponentEndState = 'completed' | 'abandoned' | 'interrupted';
+export type ComponentEndState = 'completed' | 'abandoned' | 'interrupted' | 'discarded';
 
 /**
  * Result of detectTrigger — signals "this event starts my interaction".

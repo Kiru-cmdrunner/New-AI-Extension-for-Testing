@@ -236,22 +236,22 @@ describe('Bug 3: Click not absorbed by active Hover', () => {
     expect(click!.endState).toBe('completed');
   });
 
-  it('hover completes on mouseleave with dwell time', () => {
+  it('hover discarded without evidence (600ms dwell, no evidence signal)', () => {
     const { runtime, emitted } = setupRuntime();
     const target = { tag: 'BUTTON', ariaRole: 'button', stableId: 'hover1', accessibleName: 'Info', cssSelector: 'button#hover1' };
 
     runtime.process(makeEvent('me1', 'mouseenter', target, {}, { timestamp: 1000 }));
 
-    // mouseleave after 600ms (above 500ms threshold)
+    // mouseleave after 600ms — above transit threshold but no evidence
     runtime.process(makeEvent('ml1', 'mouseleave', target, {}, { timestamp: 1600 }));
 
     const hover = emitted.find((e) => e.type === 'Hover');
     expect(hover).toBeDefined();
-    expect(hover!.endState).toBe('completed');
+    expect(hover!.endState).toBe('discarded');
     expect(hover!.metadata.dwellMs).toBe(600);
   });
 
-  it('hover abandoned on quick mouseleave (below threshold)', () => {
+  it('hover discarded on quick mouseleave (below threshold)', () => {
     const { runtime, emitted } = setupRuntime();
     const target = { tag: 'BUTTON', ariaRole: 'button', stableId: 'hover2', accessibleName: 'Menu', cssSelector: 'button#hover2' };
 
@@ -262,7 +262,7 @@ describe('Bug 3: Click not absorbed by active Hover', () => {
 
     const hover = emitted.find((e) => e.type === 'Hover');
     expect(hover).toBeDefined();
-    expect(hover!.endState).toBe('abandoned');
+    expect(hover!.endState).toBe('discarded');
   });
 
   it('full login flow: hover Login → click Login does not lose the click', () => {

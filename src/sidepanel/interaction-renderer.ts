@@ -224,6 +224,9 @@ export function renderProductionInteractions(
         return String(i.metadata.selectedDate ?? '').trim() !== '';
       case 'Scroll':
         return i.metadata.hasDelta === true;
+      case 'Hover':
+        // Evidence-based hover: only meaningful hovers are shown
+        return i.metadata.meaningful === true;
       default:
         return true;
     }
