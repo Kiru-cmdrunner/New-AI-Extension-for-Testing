@@ -53,12 +53,12 @@ export const datePickerDefinition: ComponentDefinition = {
       return { type: 'DatePicker' };
     }
 
-    // Also detect clicks on date input wrapper (OXD: div.oxd-date-input)
-    if (event.eventType === 'click') {
-      const ancestorClasses = event.domContext.ancestorClasses.join(' ');
-      if (isDatePickerTrigger(tag, inputType, ancestorClasses, null, name)) {
-        return { type: 'DatePicker' };
-      }
+    // Also detect focus/click on date input wrapper (OXD: div.oxd-date-input)
+    // The date-triggering class is on the parent wrapper, not the input.
+    // Check ancestor classes for ALL trigger events (focus AND click).
+    const ancestorClasses = event.domContext.ancestorClasses.join(' ');
+    if (isDatePickerTrigger(tag, inputType, ancestorClasses, null, name)) {
+      return { type: 'DatePicker' };
     }
 
     return null;

@@ -125,9 +125,16 @@ async function ensureContentScriptInjected(tabId: number): Promise<boolean> {
   return pingTabContentScript(tabId);
 }
 
+/** Consecutive health check failures before reporting "not responding". */
+const HEALTH_MAX_FAILURES = 3;
+let consecutiveHealthFailures = 0;
+
 /**
  * Check content script health on the active tab and report status.
  * Called when recording starts and periodically while recording.
+ *
+ * Debounce: a single transient ping failure does NOT trigger "Tab not
+ * responding". Only after HEALTH_MAX_FAILURES consecutive failures.
  */
 async function checkActiveTabHealth(): Promise<void> {
   const tab = await getActiveTab();
@@ -135,14 +142,22 @@ async function checkActiveTabHealth(): Promise<void> {
 
   const alive = await ensureContentScriptInjected(tab.id);
 
-  // Broadcast status to the side panel
-  broadcastToPanel({
-    type: 'CONTENT_SCRIPT_STATUS',
-    tabId: tab.id,
-    alive,
-    recording: await isRecordingActive(),
-    url: tab.url ?? '',
-  });
+  if (alive) {
+    consecutiveHealthFailures = 0;
+  } else {
+    consecutiveHealthFailures++;
+  }
+
+  // Only broadcast "not responding" after sustained failures
+  if (alive || consecutiveHealthFailures >= HEALTH_MAX_FAILURES) {
+    broadcastToPanel({
+      type: 'CONTENT_SCRIPT_STATUS',
+      tabId: tab.id,
+      alive,
+      recording: await isRecordingActive(),
+      url: tab.url ?? '',
+    });
+  }
 }
 
 // ── Tab helpers ─────────────────────────────────────────────────────────

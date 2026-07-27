@@ -17,18 +17,31 @@ import type {
 } from '../shared/component-types';
 import { isCheckbox, bestName } from './patterns';
 
+/** CSS class patterns for custom checkbox wrappers (OXD, MUI, etc.). */
+const CHECKBOX_WRAPPER_CLASS_RE =
+  /\b(?:checkbox.*wrapper|checkbox.*input|oxd-checkbox|checkbox-input|custom-checkbox)\b/i;
+
 export const checkboxDefinition: ComponentDefinition = {
   type: 'Checkbox',
   priority: 30,
   triggerEventTypes: new Set<BrowserEventType>(['click', 'change']),
 
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
-    const { tag, ariaRole } = event.target;
-    const { inputType } = event.domContext;
+    const { tag, ariaRole, className } = event.target;
+    const { inputType, ancestorClasses } = event.domContext;
 
     if (isCheckbox(tag, inputType, ariaRole)) {
       return { type: 'Checkbox' };
     }
+
+    // Framework wrapper detection: OXD renders checkboxes as
+    // <div class="oxd-checkbox-wrapper"> — the click target is a
+    // child div/span with no ARIA role and no inputType.
+    const allClasses = (className ?? '') + ' ' + ancestorClasses.join(' ');
+    if (CHECKBOX_WRAPPER_CLASS_RE.test(allClasses)) {
+      return { type: 'Checkbox' };
+    }
+
     return null;
   },
 

@@ -22,18 +22,31 @@ import type {
 } from '../shared/component-types';
 import { isRadio, bestName } from './patterns';
 
+/** CSS class patterns for custom radio wrappers (OXD, MUI, etc.). */
+const RADIO_WRAPPER_CLASS_RE =
+  /\b(?:radio.*wrapper|radio.*input|oxd-radio|radio-input|radio-btn|custom-radio)\b/i;
+
 export const radioButtonDefinition: ComponentDefinition = {
   type: 'RadioButton',
   priority: 40,
   triggerEventTypes: new Set<BrowserEventType>(['click', 'change']),
 
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
-    const { tag, ariaRole } = event.target;
-    const { inputType } = event.domContext;
+    const { tag, ariaRole, className } = event.target;
+    const { inputType, ancestorClasses } = event.domContext;
 
     if (isRadio(tag, inputType, ariaRole)) {
       return { type: 'RadioButton' };
     }
+
+    // Framework wrapper detection: OXD renders radios as
+    // <div class="oxd-radio-input-wrapper"> — the click target is a
+    // child div/span with no ARIA role and no inputType.
+    const allClasses = (className ?? '') + ' ' + ancestorClasses.join(' ');
+    if (RADIO_WRAPPER_CLASS_RE.test(allClasses)) {
+      return { type: 'RadioButton' };
+    }
+
     return null;
   },
 
