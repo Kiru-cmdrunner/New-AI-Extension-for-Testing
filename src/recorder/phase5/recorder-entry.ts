@@ -207,7 +207,11 @@ async function stopRecording(): Promise<void> {
 // ── Message Listener ─────────────────────────────────────────────────
 
 if (chrome?.runtime?.onMessage) {
-  chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
+  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message?.type === 'PING') {
+      sendResponse({ type: 'PONG', recording: isRecording });
+      return false;
+    }
     if (message?.type === 'START_RECORDING') {
       startRecording();
       // Don't sendResponse async — the listener must return synchronously
