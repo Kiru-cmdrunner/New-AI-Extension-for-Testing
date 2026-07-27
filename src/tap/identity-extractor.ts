@@ -371,8 +371,89 @@ export function extractIdentity(el: Element): ElementIdentity {
 // ── Value / Checked State Capture ──────────────────────────────────────
 
 /**
+ * CSS class patterns that indicate a display-value element in React SPAs.
+ * AdaniOne and similar apps render the selected value (date, city, class)
+ * in a sibling element with a class like "value-display", "selected-value",
+ * "display-text", etc., NOT in the trigger input's .value.
+ */
+const DISPLAY_VALUE_CLASS_RE =
+  /(?:value-display|display-value|selected-value|display-text|field-value|input-value|selected-text|value-text|current-value|date-display|date-value|city-name|airport-name)/i;
+
+/**
+ * Find the display value of an element by scanning its siblings and parent.
+ *
+ * React SPAs render form fields as a composite: an INPUT (or hidden div)
+ * as the trigger, plus a sibling display element showing the current value.
+ * When the input's .value is empty but the UI shows a value, this function
+ * finds it by looking at:
+ *   1. Siblings with display-value CSS classes
+ *   2. The parent container's direct text content (excluding the input)
+ *
+ * This is a last-resort fallback — it only runs when all standard value
+ * extraction strategies return undefined.
+ */
+function findDisplayValue(el: Element): string | undefined {
+  // Strategy 1: Look for a sibling with a display-value class
+  const parent = el.parentElement;
+  if (parent) {
+    const siblings = parent.children;
+    for (const sibling of siblings) {
+      if (sibling === el) continue;
+      if (sibling instanceof HTMLElement) {
+        const cls = sibling.className || '';
+        if (typeof cls === 'string' && DISPLAY_VALUE_CLASS_RE.test(cls)) {
+          const text = sibling.innerText?.trim() || sibling.textContent?.trim();
+          if (text) return text;
+        }
+      }
+    }
+
+    // Strategy 2: The parent container has a display text that isn't
+    // the input element itself. This catches date/class selectors where
+    // the visible value is direct text in the container.
+    // Only do this if the parent is NOT a generic form wrapper.
+    const parentClass = (parent.getAttribute('class') || '').toLowerCase();
+    if (parentClass && (
+      parentClass.includes('field') ||
+      parentClass.includes('selector') ||
+      parentClass.includes('picker') ||
+      parentClass.includes('date') ||
+      parentClass.includes('input-group') ||
+      parentClass.includes('control')
+    )) {
+      // Get text content excluding the input element
+      let displayText = '';
+      for (const child of parent.children) {
+        if (child === el) continue;
+        if (child instanceof HTMLElement) {
+          const text = child.innerText?.trim();
+          if (text && text.length < 100) { // avoid grabbing large text blocks
+            displayText = text;
+            break;
+          }
+        }
+      }
+      if (displayText) return displayText;
+    }
+  }
+
+  return undefined;
+}
+
+/**
  * Capture the current value of an element.
  * Used for valueBefore/valueAfter tracking in ObservedEvent.
+ *
+ * Tries multiple strategies in priority order:
+ *   1. Native form controls (select, input, textarea)
+ *   2. ARIA value attributes (aria-valuetext, aria-valuenow)
+ *   3. Contenteditable elements
+ *   4. aria-selected descendant (active option)
+ *   5. aria-activedescendant reference
+ *   6. Display-value fallback: scan nearby siblings for visible text that
+ *      represents the current value. React SPAs (AdaniOne, etc.) render the
+ *      selected date/city/class in a separate display div, NOT in the
+ *      trigger input's .value. This fallback catches that pattern.
  */
 export function captureValue(el: Element): string | undefined {
   if (el instanceof HTMLSelectElement) {
@@ -383,6 +464,7 @@ export function captureValue(el: Element): string | undefined {
   if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
     return el.value ?? '';
   }
+  // ARIA value attributes — check BEFORE contenteditable/descendant lookups
   const ariaValueText = el.getAttribute('aria-valuetext');
   if (ariaValueText !== null) return ariaValueText;
   const ariaValueNow = el.getAttribute('aria-valuenow');
@@ -397,6 +479,13 @@ export function captureValue(el: Element): string | undefined {
     const option = deepGetElementById(descendantId);
     if (option) return option.textContent?.trim() || option.getAttribute('aria-label') || '';
   }
+
+  // Display-value fallback: React SPAs render the selected value in a
+  // sibling display element, not in the trigger input. Look for a nearby
+  // display span/div with a value-like class name.
+  const displayValue = findDisplayValue(el);
+  if (displayValue) return displayValue;
+
   return undefined;
 }
 
@@ -494,6 +583,23 @@ export function resolveTarget(event: Event | null | undefined): Element | null {
     const style = window.getComputedStyle(el);
     if (style.cursor === 'pointer') return el;
     if (el.hasAttribute('onclick')) return el;
+  }
+
+  // Strategy 2b: Selectable/option heuristic — React SPAs render dropdown
+  // options, menu items, and listbox options as divs/spans without ARIA roles
+  // or cursor:pointer. Check for common SPA option patterns via class and
+  // attribute heuristics.
+  for (const el of path) {
+    if (!(el instanceof Element)) continue;
+    if (NON_INTERACTIVE_TAGS.has(el.tagName)) continue;
+    const cls = (el.getAttribute('class') || '').toLowerCase();
+    // Match option/menu-item/selectable patterns common in React SPAs
+    if (/(\boption\b|\bmenu-?item\b|\bselectable\b|\bselect-item\b|\bchoice\b|\bpickable\b|list-item|tile-item|radio-tile|class-option|fare-option|travel-class)/.test(cls)) {
+      return el;
+    }
+    // aria-selected or aria-current indicates a selectable element
+    if (el.getAttribute('aria-selected') !== null) return el;
+    if (el.getAttribute('aria-current') !== null) return el;
   }
 
   // Strategy 3: Raw target (if not structural)

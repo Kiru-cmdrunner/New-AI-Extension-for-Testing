@@ -60,7 +60,7 @@ const INTERACTIVE_ROLES = new Set([
  * Includes common patterns from modern React/Vue/Angular apps.
  */
 const INTERACTIVE_CLASS_RE =
-  /(btn|button|clickable|selectable|dropdown|menu-item|nav-item|tab-item|chip|toggle|action|stepper|counter|increment|decrement|qty|quantity|plus|minus|add-btn|remove-btn|arrow|chevron|expand|collapse)/i;
+  /(btn|button|clickable|selectable|dropdown|menu-item|nav-item|tab-item|chip|toggle|action|stepper|counter|increment|decrement|qty|quantity|plus|minus|add-btn|remove-btn|arrow|chevron|expand|collapse|option|menuitem|choice|pickable|tile|fare-option|class-option|travel-class)/i;
 
 /**
  * Is this element interactive (worth capturing as a Click)?
@@ -105,16 +105,16 @@ const DROPDOWN_OPTION_ROLES = new Set([
  * Covers OXD (OrangeHRM), MUI, Ant Design, Bootstrap, React-Select.
  */
 const DROPDOWN_TRIGGER_CLASS_RE =
-  /(oxd-select-text|select|combobox|dropdown|antd.*select|MuiSelect|selector|traveler|passenger|cabin|class-selector|trip-type|economy|traveller)/i;
+  /(oxd-select-text|select|combobox|dropdown|antd.*select|MuiSelect|selector|traveler|traveller|passenger|pax|cabin|class-selector|trip-type|economy|journey-type|fare-type|travel-class)/i;
 
 const DROPDOWN_OPTION_CLASS_RE =
-  /(oxd-select-option|select-option|option-item|list-option|ant-select-item)/i;
+  /(oxd-select-option|select-option|option-item|list-option|ant-select-item|selectable-item|choice-item|pax-option|class-option|fare-option|travel-class-option|tile-option|radio-tile|chip-option|menu-item-option|list-item-option)/i;
 
 /**
  * CSS class patterns for the dropdown surface (the open listbox container).
  */
 const DROPDOWN_SURFACE_CLASS_RE =
-  /(oxd-select-dropdown|select-dropdown|listbox|dropdown-menu|popover|overlay)/i;
+  /(oxd-select-dropdown|select-dropdown|listbox|dropdown-menu|popover|overlay|popup|drawer-content|sheet-content|bottom-sheet|modal-body)/i;
 
 /**
  * Is this element a dropdown trigger?
@@ -139,6 +139,36 @@ export function isDropdownOption(
 ): boolean {
   if (ariaRole && DROPDOWN_OPTION_ROLES.has(ariaRole)) return true;
   if (className && DROPDOWN_OPTION_CLASS_RE.test(className)) return true;
+  return false;
+}
+
+/**
+ * Is this element a dropdown option, with a fallback for frameworks that
+ * don't use standard ARIA roles or CSS classes?
+ *
+ * In React SPAs (AdaniOne, etc.), dropdown options are often plain
+ * div/span/li elements inside a dropdown surface without explicit roles.
+ * We detect them by checking if:
+ *   1. The standard check passes (role=option or known CSS class)
+ *   2. OR the element has a non-empty accessible name and contains text
+ *      content (it's a clickable choice).
+ *
+ * This is called by the dropdown definition ONLY when inside a dropdown
+ * surface — it's not used for general element classification.
+ */
+export function isDropdownOptionWithFallback(
+  ariaRole: string | null,
+  className: string | null,
+  accessibleName: string | null,
+): boolean {
+  // First try the standard check
+  if (isDropdownOption(ariaRole, className)) return true;
+
+  // Fallback: element has a meaningful accessible name (the option's label)
+  if (accessibleName && accessibleName.trim()) {
+    return true;
+  }
+
   return false;
 }
 
@@ -172,22 +202,26 @@ const DATE_INPUT_TYPES = new Set([
 
 /**
  * CSS class patterns for date picker triggers.
- * Covers OXD, MUI DatePicker, Ant Design DatePicker, React-DatePicker.
+ * Covers OXD, MUI DatePicker, Ant Design DatePicker, React-DatePicker,
+ * and common React SPA patterns (AdaniOne, etc.).
  */
 const DATEPICKER_TRIGGER_CLASS_RE =
-  /(oxd-date-input|datepicker|date-picker|date-input|calendar-input)/i;
+  /(oxd-date-input|datepicker|date-picker|date-input|calendar-input|depart-on|departure-date|return-on|arrival-date|journey-date|travel-date|trip-date)/i;
 
 /**
  * CSS class patterns for calendar cells (actual selectable dates).
+ * Covers OXD, MUI DatePicker, Ant Design DatePicker, React-DatePicker,
+ * and common patterns found in React SPAs (AdaniOne, etc.).
  */
 const DATEPICKER_CELL_CLASS_RE =
-  /(oxd-date-day|calendar-day|datepicker-day|day-cell|flatpickr-day)/i;
+  /(oxd-date-day|calendar-day|datepicker-day|day-cell|flatpickr-day|react-datepicker__day|date-day|calendar-date|picker-day|cell-day|day-number|calendar-number|date-number)/i;
 
 /**
  * CSS class patterns for the calendar surface (the open calendar container).
+ * Expanded to cover React SPA patterns.
  */
 const CALENDAR_SURFACE_CLASS_RE =
-  /(oxd-date-input-dropdown|oxd-calendar|calendar|datepicker|flatpickr-calendar)/i;
+  /(oxd-date-input-dropdown|oxd-calendar|calendar|datepicker|flatpickr-calendar|react-datepicker|date-picker-dropdown|date-dropdown|date-picker-panel|calendar-panel|picker-panel)/i;
 
 /**
  * CSS class patterns for calendar NAVIGATION buttons (Next/Prev Month, etc.).
@@ -233,6 +267,91 @@ export function isCalendarCell(
   }
   // Some calendars use buttons/cells without explicit roles
   if (className && DATEPICKER_CELL_CLASS_RE.test(className)) return true;
+  return false;
+}
+
+/**
+ * Is this element a calendar cell, with fallback for frameworks that
+ * don't use standard ARIA roles or CSS classes?
+ *
+ * In React SPAs (AdaniOne, etc.), calendar date cells are often plain
+ * div/span/button elements inside a calendar surface without explicit
+ * roles. We detect them by checking if:
+ *   1. The element has a date-like accessible name (1-2 digits, or
+ *      day-month-year patterns)
+ *   2. The element is inside a calendar surface (checked by the caller
+ *      via ancestor classes)
+ *
+ * This is called by the date-picker definition ONLY when inside a
+ * calendar surface — it's not used for general element classification.
+ */
+export function isCalendarCellWithFallback(
+  ariaRole: string | null,
+  className: string | null,
+  accessibleName: string | null,
+): boolean {
+  // First try the standard check
+  if (isCalendarCell(ariaRole, className)) return true;
+
+  // Fallback: check for date-like accessible name
+  // A calendar cell's text is typically a day number (1-31) or a formatted date
+  if (accessibleName) {
+    const name = accessibleName.trim();
+
+    // Pure 1-2 digit number (day of month)
+    if (/^\d{1,2}$/.test(name)) {
+      const dayNum = parseInt(name, 10);
+      if (dayNum >= 1 && dayNum <= 31) return true;
+    }
+
+    // Date patterns like "15 July", "Jul 15", "15/07", "2026-07-15"
+    if (/^\d{1,2}\s+\w+/i.test(name)) return true; // "15 July"
+    if (/^\w+\s+\d{1,2}/i.test(name)) return true; // "July 15"
+    if (/^\d{1,2}[\/\-]\d{1,2}/.test(name)) return true; // "15/07"
+    if (/^\d{4}-\d{2}-\d{2}$/.test(name)) return true; // ISO format
+
+    // "Thu, 30 Jul" or similar formatted dates
+    if (/^\w{2,3},\s*\d{1,2}\s+\w{3}/i.test(name)) return true;
+  }
+
+  return false;
+}
+
+/**
+ * Does this text look like a date? A broader check used as a last-resort
+ * fallback for React SPAs (AdaniOne, etc.) where calendar cells have
+ * unique class names and no ARIA roles.
+ *
+ * Matches:
+ *   - Day numbers: "15", "30"
+ *   - Formatted dates: "Thu, 30 Jul", "30 July", "Jul 30"
+ *   - ISO dates: "2026-07-30"
+ *   - Slashed dates: "30/07", "07/30/2026"
+ */
+export function looksLikeDateText(text: string): boolean {
+  const name = text.trim();
+  if (!name) return false;
+
+  // Pure 1-2 digit number (day of month)
+  if (/^\d{1,2}$/.test(name)) {
+    const dayNum = parseInt(name, 10);
+    if (dayNum >= 1 && dayNum <= 31) return true;
+  }
+
+  // "Thu, 30 Jul" or "30 Jul" or "Jul 30"
+  if (/^\w{2,3},?\s*\d{1,2}\s+\w{3}/i.test(name)) return true;
+  if (/^\w{3}\s+\d{1,2}/i.test(name)) return true;
+
+  // "15 July" or "July 15"
+  if (/^\d{1,2}\s+\w+/i.test(name)) return true;
+  if (/^\w+\s+\d{1,2}/i.test(name)) return true;
+
+  // ISO format
+  if (/^\d{4}-\d{2}-\d{2}$/.test(name)) return true;
+
+  // Slashed dates
+  if (/^\d{1,2}[\/\-]\d{1,2}([\/\-]\d{2,4})?$/.test(name)) return true;
+
   return false;
 }
 

@@ -495,11 +495,15 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     const gap = ctx.startTime - last.endTime;
     if (gap > DEDUP_WINDOW_MS) return false;
 
-    // DatePicker-specific: also check selectedDate
+    // DatePicker-specific: also check dateValue (the canonical date string)
+    // selectedDate is the cell's display name which may differ between
+    // a cell click ('15') and a change event ('2026-07-15'). dateValue
+    // is always the actual date value from valueAfter, so it's the
+    // reliable dedup key.
     if (ctx.type === 'DatePicker') {
-      const prevDate = last.metadata.selectedDate;
-      const newDate = metadata.selectedDate;
-      // If dates differ, NOT a duplicate even within the window
+      const prevDate = last.metadata.dateValue;
+      const newDate = metadata.dateValue;
+      // If date values differ, NOT a duplicate even within the window
       if (prevDate !== newDate) return false;
     }
 

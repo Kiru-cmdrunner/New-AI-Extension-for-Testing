@@ -30,8 +30,10 @@ import type {
 import {
   isDatePickerTrigger,
   isCalendarCell,
+  isCalendarCellWithFallback,
   isInsideCalendarSurface,
   isCalendarNavigationButton,
+  looksLikeDateText,
   bestName,
   elementKey,
 } from './patterns';
@@ -77,12 +79,20 @@ export const datePickerDefinition: ComponentDefinition = {
     if (eventKey === triggerKey) return true;
 
     // Inside calendar surface (check target class + ancestors)
-    if (isInsideCalendarSurface(event.target.className)) return true;
-    const ancestorClasses = event.domContext.ancestorClasses.join(' ');
-    if (isInsideCalendarSurface(ancestorClasses)) return true;
+    const inCalendarSurface = isInsideCalendarSurface(event.target.className) ||
+      isInsideCalendarSurface(event.domContext.ancestorClasses.join(' '));
+    if (inCalendarSurface) return true;
 
     // Calendar cell (may not have surface ancestor classes in all frameworks)
     if (isCalendarCell(event.target.ariaRole, event.target.className)) return true;
+
+    // Fallback: inside calendar surface + date-like accessible name
+    // (React SPAs that use custom calendar implementations)
+    if (inCalendarSurface && isCalendarCellWithFallback(
+      event.target.ariaRole, event.target.className, event.target.accessibleName
+    )) {
+      return true;
+    }
 
     return false;
   },
@@ -97,10 +107,9 @@ export const datePickerDefinition: ComponentDefinition = {
       }
     }
 
-    // Blur on the trigger input → complete with whatever date was typed
-    // This handles the OXD pattern: user types a date in a text input,
-    // then clicks elsewhere (blur fires). Without this, the lifecycle
-    // sits idle for 15s and gets abandoned with no value captured.
+    // Blur on the trigger input → complete with whatever date was typed.
+    // The value is captured deferred by the EventTap for SPA frameworks,
+    // so valueAfter should reflect the FINAL value after framework updates.
     if (event.eventType === 'blur') {
       const dateValue =
         (ctx.data.dateValue as string) ||
@@ -117,27 +126,81 @@ export const datePickerDefinition: ComponentDefinition = {
 
     // Calendar cell click → complete
     if (
-      (event.eventType === 'click' || event.eventType === 'mousedown') &&
-      isCalendarCell(event.target.ariaRole, event.target.className)
+      (event.eventType === 'click' || event.eventType === 'mousedown')
     ) {
-      // Bug 7 check: make sure this isn't a navigation button
-      if (isCalendarNavigationButton(event.target.ariaRole, event.target.accessibleName, event.target.className)) {
-        return null; // lifecycle-internal
+      // Standard calendar cell detection
+      if (isCalendarCell(event.target.ariaRole, event.target.className)) {
+        // Bug 7 check: make sure this isn't a navigation button
+        if (isCalendarNavigationButton(event.target.ariaRole, event.target.accessibleName, event.target.className)) {
+          return null; // lifecycle-internal
+        }
+
+        ctx.data.selectedDate = event.target.accessibleName || '';
+        ctx.data.dateValue = event.valueAfter ?? event.target.accessibleName ?? '';
+
+        const dateValue = (ctx.data.dateValue as string) || '';
+        if (!dateValue.trim()) return null;
+
+        return { endState: 'completed' };
       }
 
-      ctx.data.selectedDate = event.target.accessibleName || '';
-      ctx.data.dateValue = event.valueAfter ?? event.target.accessibleName ?? '';
+      // Fallback: element inside a calendar surface with date-like text
+      const inCalendarSurface = isInsideCalendarSurface(event.target.className) ||
+        isInsideCalendarSurface(event.domContext.ancestorClasses.join(' '));
+      if (inCalendarSurface && isCalendarCellWithFallback(
+        event.target.ariaRole, event.target.className, event.target.accessibleName
+      )) {
+        // Check it's not a navigation button
+        if (isCalendarNavigationButton(event.target.ariaRole, event.target.accessibleName, event.target.className)) {
+          return null; // lifecycle-internal
+        }
 
-      const dateValue = (ctx.data.dateValue as string) || '';
-      if (!dateValue.trim()) return null;
+        ctx.data.selectedDate = event.target.accessibleName || '';
+        ctx.data.dateValue = event.valueAfter ?? event.target.accessibleName ?? '';
 
-      return { endState: 'completed' };
+        const fallbackDateValue = (ctx.data.dateValue as string) || '';
+        if (!fallbackDateValue.trim()) return null;
+
+        return { endState: 'completed' };
+      }
+
+      // SPA fallback: React SPAs (AdaniOne, etc.) render date selection as
+      // a click on a date-like element that may not match the standard cell
+      // or fallback patterns. If the click is inside a calendar surface and
+      // the target's accessibleName looks like a date, use it as the value.
+      // This catches cases where the calendar is a custom component with
+      // unique class names.
+      if (inCalendarSurface && event.target.accessibleName) {
+        const name = event.target.accessibleName.trim();
+        if (isCalendarCellWithFallback(event.target.ariaRole, event.target.className, name)) {
+          // Already handled above — skip to avoid duplication
+        } else if (looksLikeDateText(name)) {
+          ctx.data.selectedDate = name;
+          ctx.data.dateValue = event.valueAfter ?? name;
+          return { endState: 'completed' };
+        }
+      }
     }
 
     // Change event on native date input → complete
     if (event.eventType === 'change' && ctx.trigger.tag === 'INPUT') {
       const dateValue = event.valueAfter ?? (ctx.data.dateValue as string) ?? '';
       if (dateValue.trim()) {
+        ctx.data.selectedDate = dateValue;
+        ctx.data.dateValue = dateValue;
+        return { endState: 'completed' };
+      }
+    }
+
+    // SPA-style: change event on the trigger input after async framework update.
+    // When a calendar cell is clicked, React updates the input value
+    // asynchronously. The recorder's post-click value check emits a
+    // supplementary change event. Complete the DatePicker with this value.
+    if (event.eventType === 'change') {
+      const eventKey = elementKey(event.target);
+      const triggerKey = elementKey(ctx.trigger);
+      if (eventKey === triggerKey && event.valueAfter) {
+        const dateValue = event.valueAfter;
         ctx.data.selectedDate = dateValue;
         ctx.data.dateValue = dateValue;
         return { endState: 'completed' };

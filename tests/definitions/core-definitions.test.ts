@@ -255,6 +255,54 @@ describe('Dropdown Definition', () => {
     expect(dropdown).toBeUndefined();
     expect(runtime.activeCount).toBe(1);
   });
+
+  // ── AdaniOne SPA Compatibility ──────────────────────────────────────
+
+  it('completes Dropdown when named div option clicked inside dropdown surface (AdaniOne)', () => {
+    // AdaniOne renders travel class options as bare <div> elements with
+    // accessible names but no ARIA roles or option CSS classes. The Dropdown
+    // lifecycle now captures these as selections and completes with the
+    // selectedValue — previously they fell through to Click discovery, which
+    // captured the click but LOST the selected value.
+    const { runtime, emitted } = setupRuntime();
+    const trigger = { tag: 'DIV', stableId: 'passenger-trigger', accessibleName: '2 • Premium Economy', className: 'passenger-selector' };
+
+    // Open the passenger modal
+    runtime.process(makeEvent('c1', 'click', trigger, { ancestorClasses: ['dropdown-surface'] }));
+
+    // Click on "Premium Economy" — a div with a name inside the dropdown surface
+    const option = { tag: 'DIV', accessibleName: 'Premium Economy', className: 'class-option' };
+    runtime.process(makeEvent('c2', 'click', option, { ancestorClasses: ['dropdown-surface'] }));
+
+    // The Dropdown should complete with the selected value
+    const dropdown = emitted.find((e) => e.type === 'Dropdown');
+    expect(dropdown).toBeDefined();
+    expect(dropdown!.metadata.selectedValue).toBe('Premium Economy');
+    expect(dropdown!.endState).toBe('completed');
+  });
+
+  it('completes Dropdown when SPA change event updates trigger value (AdaniOne)', () => {
+    // React/Vue batch state updates: clicking a dropdown option doesn't
+    // update the trigger input's value until after the click. The recorder
+    // emits a supplementary change event. The Dropdown should complete.
+    const { runtime, emitted } = setupRuntime();
+    const trigger = { tag: 'INPUT', ariaRole: 'combobox', stableId: 'city-trigger', accessibleName: 'From', className: 'autocomplete-input' };
+
+    // Open dropdown
+    runtime.process(makeEvent('c1', 'focus', trigger, { inputType: 'text', ariaHasPopup: 'listbox' as const }));
+
+    // Click on a city option (not a recognized dropdown option class, so
+    // the dropdown lifecycle doesn't complete here — it waits for the
+    // async value update)
+    runtime.process(makeEvent('c2', 'mousedown', { tag: 'DIV', accessibleName: 'Mumbai', className: 'city-result-item' }));
+
+    // SPA-style: change event on trigger with async-updated value
+    runtime.process(makeEvent('c3', 'change', trigger, { inputType: 'text' }, { valueAfter: 'BOM Mumbai' }));
+
+    const dropdown = emitted.find((e) => e.type === 'Dropdown' && e.endState === 'completed');
+    expect(dropdown).toBeDefined();
+    expect(dropdown!.metadata.selectedValue).toBe('BOM Mumbai');
+  });
 });
 
 describe('Checkbox Definition', () => {

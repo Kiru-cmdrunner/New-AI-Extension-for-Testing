@@ -13,6 +13,9 @@ settings-about.png
 sidepanel.png
 *.tar.gz
 
+# User-uploaded documents/screenshots (not part of the extension)
+userDocs/
+
 # Temporary/debug artifacts
 tmp/
 *.py

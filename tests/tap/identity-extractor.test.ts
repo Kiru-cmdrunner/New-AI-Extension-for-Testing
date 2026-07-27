@@ -228,5 +228,39 @@ describe('Identity Extractor', () => {
       expect(resolveTarget(null as any)).toBeNull();
       expect(resolveTarget(undefined as any)).toBeNull();
     });
+
+    // ── SPA Target Resolution (AdaniOne) ──────────────────────────────
+
+    it('resolves divs with option/menu-item class patterns (AdaniOne)', () => {
+      document.body.innerHTML = '<div class="class-option">Premium Economy</div>';
+      const div = document.querySelector('.class-option')!;
+      const fakeEvent = { target: div, composedPath: () => [div] } as any;
+      const resolved = resolveTarget(fakeEvent);
+      expect(resolved).toBe(div);
+    });
+
+    it('resolves divs with aria-selected attribute', () => {
+      document.body.innerHTML = '<div aria-selected="true">Economy</div>';
+      const div = document.querySelector('[aria-selected]')!;
+      const fakeEvent = { target: div, composedPath: () => [div] } as any;
+      const resolved = resolveTarget(fakeEvent);
+      expect(resolved).toBe(div);
+    });
+
+    it('resolves divs with fare-option class', () => {
+      document.body.innerHTML = '<div class="fare-option">Student</div>';
+      const div = document.querySelector('.fare-option')!;
+      const fakeEvent = { target: div, composedPath: () => [div] } as any;
+      const resolved = resolveTarget(fakeEvent);
+      expect(resolved).toBe(div);
+    });
+
+    it('resolves divs with selectable class pattern', () => {
+      document.body.innerHTML = '<div class="list-item">Mumbai</div>';
+      const div = document.querySelector('.list-item')!;
+      const fakeEvent = { target: div, composedPath: () => [div] } as any;
+      const resolved = resolveTarget(fakeEvent);
+      expect(resolved).toBe(div);
+    });
   });
 });

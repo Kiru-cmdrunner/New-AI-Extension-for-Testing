@@ -26,6 +26,7 @@ import type {
 import {
   isDropdownTrigger,
   isDropdownOption,
+  isDropdownOptionWithFallback,
   isInsideDropdownSurface,
   normalizeDisplayValue,
   bestName,
@@ -40,7 +41,7 @@ export const dropdownDefinition: ComponentDefinition = {
   ]),
 
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
-    const { tag, ariaRole, className, ariaLabel, placeholder } = event.target;
+    const { tag, ariaRole, className } = event.target;
     const { ariaHasPopup, inputType } = event.domContext;
 
     // Standard dropdown triggers
@@ -58,6 +59,17 @@ export const dropdownDefinition: ComponentDefinition = {
       // Check ancestor classes for combobox patterns
       const ancestorClasses = event.domContext.ancestorClasses.join(' ');
       if (isDropdownTrigger('', null, ancestorClasses)) {
+        return { type: 'Dropdown' };
+      }
+    }
+
+    // SPA-style: custom div/span with dropdown/combobox/selector class.
+    // AdaniOne and similar React SPAs use div-based dropdowns without ARIA roles.
+    // NOTE: only check the element's OWN class — NOT ancestor classes. Checking
+    // ancestors would match elements INSIDE a dropdown surface (options, labels)
+    // as new triggers, which blocks Click discovery for those elements.
+    if (tag === 'DIV' || tag === 'SPAN') {
+      if (isDropdownTrigger(tag, ariaRole, className)) {
         return { type: 'Dropdown' };
       }
     }
@@ -100,6 +112,25 @@ export const dropdownDefinition: ComponentDefinition = {
           ariaRole === 'radio' || ariaRole === 'spinbutton' || ariaRole === 'slider') {
         return false; // let Click/Checkbox/etc. definition claim it
       }
+
+      // Option-like elements with a meaningful accessible name: keep them
+      // in scope so handleEvent can complete the dropdown with the selected
+      // value. SPA frameworks (AdaniOne, etc.) render options as div/span
+      // elements without ARIA roles or standard option CSS classes. These
+      // are clickable selection targets whose text IS the selected value.
+      //
+      // Previously, these fell through to Click discovery which captured the
+      // click but lost the SELECTED VALUE (the Dropdown never completed).
+      // Now we keep them in scope and complete via the fallback in handleEvent.
+      if (event.target.accessibleName && event.target.accessibleName.trim()) {
+        // Only claim it if it looks like an option (not a stepper control, etc.)
+        if (isDropdownOptionWithFallback(
+          event.target.ariaRole, event.target.className, event.target.accessibleName
+        )) {
+          return true;
+        }
+      }
+
       return true;
     }
 
@@ -118,10 +149,44 @@ export const dropdownDefinition: ComponentDefinition = {
       return { endState: 'completed' };
     }
 
+    // SPA fallback: click on an option-like element inside the dropdown surface
+    // without standard ARIA roles or CSS classes (AdaniOne travel class,
+    // fare type, etc.). The clicked element's accessibleName IS the value.
+    if (
+      (event.eventType === 'click' || event.eventType === 'mousedown') &&
+      (event.target.accessibleName || event.target.ariaLabel)
+    ) {
+      const inSurface = isInsideDropdownSurface(event.target.className) ||
+        isInsideDropdownSurface(event.domContext.ancestorClasses.join(' '));
+      if (inSurface) {
+        const selectedValue = event.target.accessibleName
+          || event.target.ariaLabel
+          || '';
+        if (selectedValue.trim()) {
+          ctx.data.selectedValue = selectedValue;
+          return { endState: 'completed' };
+        }
+      }
+    }
+
     // Native SELECT change → complete
     if (event.eventType === 'change' && ctx.trigger.tag === 'SELECT') {
       ctx.data.selectedValue = event.valueAfter ?? '';
       return { endState: 'completed' };
+    }
+
+    // SPA-style: change event on the trigger input after async framework update.
+    // React/Vue batch state updates — when a dropdown option is clicked, the
+    // framework updates the trigger input's value asynchronously. The recorder's
+    // post-click value check emits a supplementary 'change' event. If this
+    // change fires on the trigger input and has a new value, complete the dropdown.
+    if (event.eventType === 'change') {
+      const eventKey = elementKey(event.target);
+      const triggerKey = elementKey(ctx.trigger);
+      if (eventKey === triggerKey && event.valueAfter) {
+        ctx.data.selectedValue = event.valueAfter;
+        return { endState: 'completed' };
+      }
     }
 
     // Click on trigger again (toggle close without selecting) → still active

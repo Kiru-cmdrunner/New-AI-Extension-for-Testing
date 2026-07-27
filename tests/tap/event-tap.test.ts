@@ -160,7 +160,7 @@ describe('Event Tap', () => {
 
   // ── Event Types ───────────────────────────────────────────────────
 
-  it('captures focus and blur events', () => {
+  it('captures focus and blur events', async () => {
     document.body.innerHTML = '<input id="f1" type="text" /><input id="f2" type="text" />';
     const f1 = document.getElementById('f1')!;
     tapHandle = createEventTap({
@@ -169,6 +169,9 @@ describe('Event Tap', () => {
 
     f1.dispatchEvent(new FocusEvent('focus', { bubbles: true }));
     f1.dispatchEvent(new FocusEvent('blur', { bubbles: true }));
+    // Blur value capture is deferred via setTimeout(0) for SPA frameworks
+    // so the framework has time to flush state updates. Wait for it.
+    await new Promise((r) => setTimeout(r, 10));
     expect(capturedEvents.length).toBe(2);
     expect(capturedEvents[0].eventType).toBe('focus');
     expect(capturedEvents[1].eventType).toBe('blur');
@@ -226,5 +229,87 @@ describe('Event Tap', () => {
     div.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }));
     expect(capturedEvents.length).toBe(1);
     expect(capturedEvents[0].eventType).toBe('contextmenu');
+  });
+
+  // ── SPA Deferred Value Capture (AdaniOne) ───────────────────────────
+
+  it('defers blur value capture so SPA frameworks can flush state', async () => {
+    // Simulate a React-like scenario: blur fires BEFORE the framework
+    // updates the DOM value. The deferred capture reads the value AFTER.
+    document.body.innerHTML = '<input id="date-input" type="text" value="Old Date" />';
+    const input = document.getElementById('date-input') as HTMLInputElement;
+    tapHandle = createEventTap({
+      onEvent: (e) => capturedEvents.push(e),
+    });
+
+    // Focus the input
+    input.dispatchEvent(new FocusEvent('focus', { bubbles: true }));
+
+    // Simulate: user selects a date from a calendar. The framework will
+    // update the value asynchronously AFTER blur fires.
+    input.dispatchEvent(new FocusEvent('blur', { bubbles: true }));
+
+    // Simulate React flushing the state update (happens after blur in SPAs)
+    input.value = 'New Date';
+
+    // Wait for deferred blur capture
+    await new Promise((r) => setTimeout(r, 20));
+
+    const blurEvent = capturedEvents.find((e) => e.eventType === 'blur');
+    expect(blurEvent).toBeDefined();
+    // The deferred value should reflect the NEW value, not the stale one
+    expect(blurEvent.valueAfter).toBe('New Date');
+  });
+
+  it('emits supplementary change event when input value changes after click', async () => {
+    // Simulate: user clicks a dropdown option, React updates the input
+    // value asynchronously after the click.
+    document.body.innerHTML = `
+      <input id="city-input" type="text" value="Old City" />
+      <div id="option">New City</div>
+    `;
+    const input = document.getElementById('city-input') as HTMLInputElement;
+    const option = document.getElementById('option')!;
+    tapHandle = createEventTap({
+      onEvent: (e) => capturedEvents.push(e),
+    });
+
+    // Focus the input (user was typing/selecting in autocomplete)
+    input.dispatchEvent(new FocusEvent('focus', { bubbles: true }));
+
+    // Click on the option (simulates selecting from dropdown)
+    option.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    // Simulate React flushing the value update AFTER the click
+    input.value = 'New City';
+
+    // Wait for post-click value check
+    await new Promise((r) => setTimeout(r, 80));
+
+    // Should have: focus event, click event, and a supplementary change event
+    const changeEvents = capturedEvents.filter((e) => e.eventType === 'change');
+    expect(changeEvents.length).toBeGreaterThanOrEqual(1);
+    expect(changeEvents[0].valueBefore).toBe('Old City');
+    expect(changeEvents[0].valueAfter).toBe('New City');
+  });
+
+  it('does NOT emit change event when value stays the same after click', async () => {
+    document.body.innerHTML = `
+      <input id="input" type="text" value="Same Value" />
+      <div id="btn">Click</div>
+    `;
+    const input = document.getElementById('input') as HTMLInputElement;
+    const btn = document.getElementById('btn')!;
+    tapHandle = createEventTap({
+      onEvent: (e) => capturedEvents.push(e),
+    });
+
+    input.dispatchEvent(new FocusEvent('focus', { bubbles: true }));
+    btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    // Value does NOT change
+    await new Promise((r) => setTimeout(r, 80));
+
+    const changeEvents = capturedEvents.filter((e) => e.eventType === 'change');
+    expect(changeEvents.length).toBe(0);
   });
 });

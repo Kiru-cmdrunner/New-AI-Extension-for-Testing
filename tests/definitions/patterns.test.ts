@@ -18,6 +18,7 @@ import {
   normalizeDisplayValue,
   isDatePickerTrigger,
   isCalendarCell,
+  isCalendarCellWithFallback,
   isInsideCalendarSurface,
   isCalendarNavigationButton,
   isCheckbox,
@@ -405,5 +406,69 @@ describe('elementKey', () => {
     const id1 = makeIdentity({ testId: 'btn-1' });
     const id2 = makeIdentity({ testId: 'btn-2' });
     expect(elementKey(id1)).not.toBe(elementKey(id2));
+  });
+});
+
+// ── Calendar Cell Fallback (AdaniOne) ────────────────────────────────
+
+describe('isCalendarCellWithFallback (AdaniOne SPA)', () => {
+  it('detects standard calendar cells (class-based)', () => {
+    expect(isCalendarCellWithFallback('gridcell', 'react-datepicker__day', null)).toBe(true);
+  });
+
+  it('detects plain divs with day-number accessible names', () => {
+    expect(isCalendarCellWithFallback(null, null, '15')).toBe(true);
+    expect(isCalendarCellWithFallback(null, null, '1')).toBe(true);
+    expect(isCalendarCellWithFallback(null, null, '31')).toBe(true);
+  });
+
+  it('rejects numbers outside day range', () => {
+    expect(isCalendarCellWithFallback(null, null, '0')).toBe(false);
+    expect(isCalendarCellWithFallback(null, null, '32')).toBe(false);
+    expect(isCalendarCellWithFallback(null, null, '100')).toBe(false);
+  });
+
+  it('detects formatted date strings', () => {
+    expect(isCalendarCellWithFallback(null, null, '15 July')).toBe(true);
+    expect(isCalendarCellWithFallback(null, null, 'July 15')).toBe(true);
+    expect(isCalendarCellWithFallback(null, null, '15/07')).toBe(true);
+    expect(isCalendarCellWithFallback(null, null, '2026-07-15')).toBe(true);
+    expect(isCalendarCellWithFallback(null, null, 'Thu, 30 Jul')).toBe(true);
+  });
+
+  it('rejects non-date text', () => {
+    expect(isCalendarCellWithFallback(null, null, 'Search')).toBe(false);
+    expect(isCalendarCellWithFallback(null, null, 'Next Month')).toBe(false);
+    expect(isCalendarCellWithFallback(null, null, '')).toBe(false);
+    expect(isCalendarCellWithFallback(null, null, null)).toBe(false);
+  });
+});
+
+// ── Expanded DatePicker Patterns (AdaniOne) ──────────────────────────
+
+describe('Expanded DatePicker Patterns', () => {
+  it('detects react-datepicker trigger', () => {
+    expect(isDatePickerTrigger('INPUT', 'text', 'react-datepicker__input', null, null)).toBe(true);
+  });
+
+  it('detects AdaniOne-style trigger classes', () => {
+    expect(isDatePickerTrigger('INPUT', null, 'depart-on', null, null)).toBe(true);
+    expect(isDatePickerTrigger('INPUT', null, 'departure-date', null, null)).toBe(true);
+    expect(isDatePickerTrigger('INPUT', null, 'travel-date', null, null)).toBe(true);
+    expect(isDatePickerTrigger('INPUT', null, 'journey-date', null, null)).toBe(true);
+  });
+
+  it('detects expanded calendar surface patterns', () => {
+    expect(isInsideCalendarSurface('react-datepicker')).toBe(true);
+    expect(isInsideCalendarSurface('calendar-panel')).toBe(true);
+    expect(isInsideCalendarSurface('picker-panel')).toBe(true);
+    expect(isInsideCalendarSurface('date-picker-dropdown')).toBe(true);
+  });
+
+  it('detects expanded calendar cell patterns', () => {
+    expect(isCalendarCell('gridcell', 'react-datepicker__day')).toBe(true);
+    expect(isCalendarCell('gridcell', 'calendar-date')).toBe(true);
+    expect(isCalendarCell(null, 'date-number')).toBe(true);
+    expect(isCalendarCell(null, 'day-number')).toBe(true);
   });
 });
