@@ -118,6 +118,12 @@ export interface IRAction {
   };
   value?: string;
   metadata?: Record<string, unknown>;
+  /** Layer 2: Semantic component type (DataGrid, IconButton, SortButton, etc.). */
+  componentType?: string;
+  /** Layer 2: Framework that rendered the component (MUI, AntDesign, etc.). */
+  componentFramework?: string;
+  /** Layer 3: Human-readable business meaning. */
+  businessMeaning?: string;
 }
 
 /**
@@ -134,6 +140,13 @@ export function toIRAction(interaction: ComponentInteraction): IRAction | null {
     role: interaction.trigger.ariaRole,
   };
 
+  // Three-layer enrichment fields
+  const enrichment = {
+    componentType: interaction.componentType,
+    componentFramework: interaction.componentFramework,
+    businessMeaning: interaction.businessMeaning,
+  };
+
   switch (type as InteractionType) {
     case 'Click':
     case 'Link':
@@ -144,6 +157,7 @@ export function toIRAction(interaction: ComponentInteraction): IRAction | null {
           clientX: metadata.clientX,
           clientY: metadata.clientY,
         },
+        ...enrichment,
       };
 
     case 'TextEntry':
@@ -154,6 +168,7 @@ export function toIRAction(interaction: ComponentInteraction): IRAction | null {
         metadata: {
           userTyped: metadata.userTyped,
         },
+        ...enrichment,
       };
 
     case 'Dropdown':
@@ -164,6 +179,7 @@ export function toIRAction(interaction: ComponentInteraction): IRAction | null {
         metadata: {
           noOpSelection: metadata.noOpSelection,
         },
+        ...enrichment,
       };
 
     case 'Checkbox':
@@ -174,6 +190,7 @@ export function toIRAction(interaction: ComponentInteraction): IRAction | null {
         metadata: {
           checked: metadata.checked,
         },
+        ...enrichment,
       };
 
     case 'RadioButton':
@@ -183,6 +200,7 @@ export function toIRAction(interaction: ComponentInteraction): IRAction | null {
         metadata: {
           noOpSelection: metadata.noOpSelection,
         },
+        ...enrichment,
       };
 
     case 'DatePicker':
@@ -193,6 +211,7 @@ export function toIRAction(interaction: ComponentInteraction): IRAction | null {
         metadata: {
           selectedDate: metadata.selectedDate,
         },
+        ...enrichment,
       };
 
     case 'Navigation':
@@ -200,6 +219,7 @@ export function toIRAction(interaction: ComponentInteraction): IRAction | null {
         type: 'NAVIGATE',
         target: { name: metadata.pageTitle ?? metadata.pageUrl ?? 'page' },
         value: metadata.pageUrl,
+        ...enrichment,
       };
 
     case 'Hover':
@@ -209,6 +229,7 @@ export function toIRAction(interaction: ComponentInteraction): IRAction | null {
         metadata: {
           dwellMs: metadata.dwellMs,
         },
+        ...enrichment,
       };
 
     case 'Scroll':
@@ -219,6 +240,7 @@ export function toIRAction(interaction: ComponentInteraction): IRAction | null {
           scrollDeltaY: metadata.scrollDeltaY,
           scrollDeltaX: metadata.scrollDeltaX,
         },
+        ...enrichment,
       };
 
     default:

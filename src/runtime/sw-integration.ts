@@ -15,6 +15,7 @@
 
 import { createRuntime, type ComponentRuntime } from './component-runtime';
 import { ALL_DEFINITIONS } from '../definitions';
+import { enrichInteraction } from '../enrichment';
 import type {
   ObservedEvent,
   ComponentInteraction,
@@ -47,6 +48,7 @@ export function initRecording(): void {
       // Store IMMEDIATELY — no debounce, no timer
       // Bug 1 fix: debounce timer was killed by MV3 SW termination
       // before the Login button form-submit navigation
+      enrichInteraction(interaction);
       liveInteractions.push(interaction);
       persistLiveInteractions();
     },
@@ -140,6 +142,7 @@ export async function restoreFromStorage(): Promise<boolean> {
     // Recreate runtime with restored snapshot
     const config: RuntimeConfig = {
       onEmit: (interaction: ComponentInteraction) => {
+        enrichInteraction(interaction);
         liveInteractions.push(interaction);
         persistLiveInteractions();
       },

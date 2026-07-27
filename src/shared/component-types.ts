@@ -364,6 +364,22 @@ export interface ComponentInteraction {
   endState: ComponentEndState;
   /** Type-specific metadata from buildResult. */
   metadata: Record<string, unknown>;
+
+  // ── Three-Layer Enrichment ─────────────────────────────────────────
+  //
+  // These fields are populated by the enrichment layer (Layer 2 + Layer 3)
+  // after the interaction is emitted by the Component Runtime. They are
+  // optional because not all code paths enrich (e.g., legacy tests, raw
+  // runtime output before enrichment).
+  //
+  // Architecture: .drytis/specs/three-layer-component-model.md
+
+  /** Layer 2: Semantic component type (e.g. 'DataGrid', 'IconButton', 'SortButton'). */
+  componentType?: string;
+  /** Layer 2: Framework that rendered it (e.g. 'MUI', 'AntDesign', 'OXD'). */
+  componentFramework?: string;
+  /** Layer 3: Human-readable business meaning (e.g. 'Sort by Name', 'Close dialog'). */
+  businessMeaning?: string;
 }
 
 // ── Runtime Configuration ──────────────────────────────────────────────

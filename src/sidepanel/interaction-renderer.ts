@@ -2,20 +2,24 @@
  * Interaction Renderer — Component Runtime Display (v10.9.0+)
  *
  * Renders ComponentInteraction[] as a readable timeline for the side panel.
- * Replaces the old DetectedInteraction renderer which showed evidence/confidence/engine badges.
+ * Displays the three-layer model:
+ *   Layer 1: Interaction Type icon + label badge (Click, TextEntry, etc.)
+ *   Layer 2: Component Type label (DataGrid, IconButton, SortButton, etc.)
+ *   Layer 3: Business Meaning (the human-readable description)
  *
  * Each interaction is displayed as:
- *   - Type icon + label badge (Click, TextEntry, Dropdown, etc.)
- *   - Interaction ID
- *   - Human-readable action description
+ *   - Type icon + label badge
+ *   - Component type + framework badge (Layer 2)
+ *   - Business meaning (Layer 3 — primary description)
+ *   - Fallback: action description if no enrichment
  *   - Metadata details (value, selected option, date, etc.)
  *
- * Architecture: .drytis/specs/m0a-architecture-validation.md §2.2 Stage 6
+ * Architecture: .drytis/specs/three-layer-component-model.md
  */
 
 import type { ComponentInteraction } from '../shared/component-types';
 
-// ── Type Display Config ──────────────────────────────────────────────
+// ── Layer 1: Type Display Config ──────────────────────────────────────
 
 interface TypeDisplay {
   icon: string;
@@ -41,9 +45,46 @@ const TYPE_DISPLAY: Record<string, TypeDisplay> = {
 
 const DEFAULT_DISPLAY: TypeDisplay = { icon: '❓', label: 'Unknown', color: '#9ca3af' };
 
-// ── Action Description ───────────────────────────────────────────────
+// ── Layer 2: Component Type Display Config ────────────────────────────
 
-function actionDescription(interaction: ComponentInteraction): string {
+interface ComponentDisplay {
+  icon: string;
+  color: string;
+}
+
+const COMPONENT_DISPLAY: Record<string, ComponentDisplay> = {
+  DataGrid:         { icon: '📊', color: '#1e40af' },
+  TreeView:         { icon: '🌲', color: '#15803d' },
+  Accordion:        { icon: '📂', color: '#7c2d12' },
+  TabBar:           { icon: '📑', color: '#6d28d9' },
+  Dialog:           { icon: '💬', color: '#be123c' },
+  Drawer:           { icon: '📦', color: '#b45309' },
+  Carousel:         { icon: '🎠', color: '#0e7490' },
+  ContextMenu:      { icon: '📋', color: '#4338ca' },
+  Breadcrumb:       { icon: '🍞', color: '#92400e' },
+  Stepper:          { icon: '🔢', color: '#155e75' },
+  IconButton:       { icon: '🔘', color: '#475569' },
+  SortButton:       { icon: '↕️', color: '#1d4ed8' },
+  GridToggle:       { icon: '🔲', color: '#5b21b6' },
+  Autocomplete:     { icon: '🔍', color: '#c2410c' },
+  RichTextEditor:   { icon: '📝', color: '#166534' },
+  ChipInput:        { icon: '🏷️', color: '#9f1239' },
+  SplitButton:      { icon: '⚡', color: '#075985' },
+  Spinner:          { icon: '⏳', color: '#6b7280' },
+  Alert:            { icon: '🔔', color: '#dc2626' },
+  Tooltip:          { icon: '💡', color: '#a16207' },
+  ProgressBar:      { icon: '📊', color: '#4b5563' },
+  Rating:           { icon: '⭐', color: '#ca8a04' },
+  ToggleSwitch:     { icon: '🔌', color: '#0d9488' },
+  FileUpload:       { icon: '📎', color: '#65a30d' },
+  Badge:            { icon: '🎖️', color: '#9333ea' },
+};
+
+const DEFAULT_COMPONENT_DISPLAY: ComponentDisplay = { icon: '🧩', color: '#64748b' };
+
+// ── Fallback Action Description (no enrichment) ───────────────────────
+
+function fallbackActionDescription(interaction: ComponentInteraction): string {
   const { type, metadata } = interaction;
   const targetName = String(metadata.targetName ?? 'element');
 
@@ -58,8 +99,6 @@ function actionDescription(interaction: ComponentInteraction): string {
 
     case 'Dropdown': {
       const val = String(metadata.selectedValue ?? '');
-      const noOp = metadata.noOpSelection === true;
-      if (noOp) return `Select "${val}" from "${targetName}" (no change)`;
       return `Select "${val}" from "${targetName}"`;
     }
 
@@ -83,8 +122,6 @@ function actionDescription(interaction: ComponentInteraction): string {
     }
 
     case 'RadioButton': {
-      const noOp = metadata.noOpSelection === true;
-      if (noOp) return `Select "${targetName}" (already selected)`;
       return `Select "${targetName}"`;
     }
 
@@ -155,13 +192,37 @@ export function createInteractionElement(interaction: ComponentInteraction): HTM
   // Border color by type
   el.style.borderLeft = `3px solid ${display.color}`;
 
-  // Type badge
+  // ── Layer 1: Type badge ──
   const badge = document.createElement('span');
   badge.className = 'timeline-event__type interaction-badge';
   badge.textContent = `${display.icon} ${display.label}`;
   badge.style.backgroundColor = `${display.color}15`;
   badge.style.color = display.color;
   el.appendChild(badge);
+
+  // ── Layer 2: Component type badge ──
+  if (interaction.componentType && interaction.componentType !== 'Generic') {
+    const compDisplay = COMPONENT_DISPLAY[interaction.componentType] ?? DEFAULT_COMPONENT_DISPLAY;
+    const compBadge = document.createElement('span');
+    compBadge.className = 'timeline-event__component interaction-badge';
+    compBadge.textContent = `${compDisplay.icon} ${interaction.componentType}`;
+    compBadge.style.backgroundColor = `${compDisplay.color}10`;
+    compBadge.style.color = compDisplay.color;
+    compBadge.style.marginLeft = '4px';
+    compBadge.style.fontSize = '0.75em';
+    el.appendChild(compBadge);
+
+    // Framework tag
+    if (interaction.componentFramework && interaction.componentFramework !== 'Generic') {
+      const fwTag = document.createElement('span');
+      fwTag.className = 'timeline-event__framework';
+      fwTag.textContent = interaction.componentFramework;
+      fwTag.style.fontSize = '0.7em';
+      fwTag.style.color = '#94a3b8';
+      fwTag.style.marginLeft = '2px';
+      el.appendChild(fwTag);
+    }
+  }
 
   // Interaction ID
   const idBadge = document.createElement('span');
@@ -178,10 +239,10 @@ export function createInteractionElement(interaction: ComponentInteraction): HTM
     el.appendChild(stateBadge);
   }
 
-  // Action description
+  // ── Layer 3: Business Meaning (primary) or fallback description ──
   const title = document.createElement('p');
   title.className = 'timeline-event__title interaction-action-text';
-  title.textContent = actionDescription(interaction);
+  title.textContent = interaction.businessMeaning ?? fallbackActionDescription(interaction);
   el.appendChild(title);
 
   // Metadata warnings
