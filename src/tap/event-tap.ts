@@ -71,6 +71,68 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
     return `evt-${pageId}-${pageCounter}`;
   }
 
+  // ── SPA Navigation Detection ───────────────────────────────────────
+  //
+  // Modern SPAs (React Router, Next.js, Vue Router, etc.) change routes
+  // via history.pushState/replaceState. These don't fire native events,
+  // so we monkey-patch the History API to emit synthetic 'navigation'
+  // ObservedEvents. We also listen for popstate (back/forward) and
+  // hashchange (hash-based routers).
+
+  /** Track last known URL to suppress duplicate navigation events. */
+  let lastKnownUrl = location.href;
+
+  /**
+   * Emit a synthetic navigation event when the URL changes.
+   * Called after history.pushState/replaceState or on popstate/hashchange.
+   */
+  function emitSpaNavigation(): void {
+    const currentUrl = location.href;
+    if (currentUrl === lastKnownUrl) return; // suppress duplicates
+    lastKnownUrl = currentUrl;
+
+    const navEvent: ObservedEvent = {
+      eventId: nextEventId(),
+      eventType: 'navigation',
+      timestamp: Date.now(),
+      isTrusted: true, // user-initiated navigation (even if programmatic in the SPA)
+      target: extractIdentity(document.body || document.documentElement),
+      domContext: extractDomContext(document.body || document.documentElement),
+      valueBefore: null,
+      valueAfter: null,
+      checkedBefore: null,
+      checkedAfter: null,
+      clientX: null,
+      clientY: null,
+      key: null,
+      code: null,
+      shiftKey: false,
+      ctrlKey: false,
+      altKey: false,
+      metaKey: false,
+      scrollDeltaY: null,
+      scrollDeltaX: null,
+      pageUrl: currentUrl,
+      pageTitle: document.title,
+    };
+
+    config.onEvent(navEvent);
+  }
+
+  // Monkey-patch History API to detect SPA pushState/replaceState
+  const originalPushState = history.pushState.bind(history);
+  const originalReplaceState = history.replaceState.bind(history);
+
+  history.pushState = function patchedPushState(...args: Parameters<typeof history.pushState>): void {
+    originalPushState(...args);
+    emitSpaNavigation();
+  } as typeof history.pushState;
+
+  history.replaceState = function patchedReplaceState(...args: Parameters<typeof history.replaceState>): void {
+    originalReplaceState(...args);
+    emitSpaNavigation();
+  } as typeof history.replaceState;
+
   function register(
     type: string,
     handler: EventListenerOrEventListenerObject,
@@ -223,6 +285,10 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
     register(type, handleRawEvent as EventListener);
   }
 
+  // SPA navigation listeners (popstate = back/forward, hashchange = hash routers)
+  window.addEventListener('popstate', emitSpaNavigation);
+  window.addEventListener('hashchange', emitSpaNavigation);
+
   // ── Stop ────────────────────────────────────────────────────────────
 
   return {
@@ -231,6 +297,14 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
         document.removeEventListener(type, listener, options);
       }
       listeners.length = 0;
+
+      // Restore original History API
+      history.pushState = originalPushState;
+      history.replaceState = originalReplaceState;
+
+      // Remove SPA navigation listeners
+      window.removeEventListener('popstate', emitSpaNavigation);
+      window.removeEventListener('hashchange', emitSpaNavigation);
     },
   };
 }

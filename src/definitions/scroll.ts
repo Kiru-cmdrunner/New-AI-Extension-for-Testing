@@ -115,12 +115,19 @@ export const scrollDefinition: ComponentDefinition = {
     const deltaY = lastY - firstY;
     const deltaX = lastX - firstX;
 
+    // Identify the scroll target — is it the page or a nested container?
+    const trigger = ctx.triggerEvent.target;
+    const isPageScroll = trigger.tag === 'HTML' || trigger.tag === 'BODY'
+      || trigger.elementKey === 'html' || trigger.elementKey === 'body';
+
     return {
       metadata: {
         scrollDeltaY: deltaY,
         scrollDeltaX: deltaX,
         hasDelta: hasScrollDelta(deltaY, deltaX),
         pageUrl: ctx.triggerEvent.pageUrl,
+        scrollTarget: isPageScroll ? 'page' : (trigger.accessibleName || trigger.className || trigger.tag || 'container'),
+        scrollTargetType: isPageScroll ? 'page' : 'container',
       },
     };
   },
