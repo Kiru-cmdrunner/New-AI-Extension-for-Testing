@@ -27,11 +27,14 @@ const TYPE_DISPLAY: Record<string, TypeDisplay> = {
   Click:        { icon: '🖱️', label: 'Click',        color: '#3b82f6' },
   TextEntry:    { icon: '⌨️',  label: 'Text Entry',   color: '#8b5cf6' },
   Dropdown:     { icon: '📋', label: 'Dropdown',      color: '#f59e0b' },
+  Slider:       { icon: '🎚️', label: 'Slider',       color: '#f97316' },
   Checkbox:     { icon: '☑️',  label: 'Checkbox',     color: '#10b981' },
+  FileUpload:   { icon: '📎', label: 'File Upload',  color: '#84cc16' },
   RadioButton:  { icon: '🔘', label: 'Radio Button',  color: '#ec4899' },
   DatePicker:   { icon: '📅', label: 'Date Picker',   color: '#ef4444' },
   Hover:        { icon: '👆', label: 'Hover',         color: '#6366f1' },
   Link:         { icon: '🔗', label: 'Link',          color: '#06b6d4' },
+  Tab:          { icon: '📂', label: 'Tab',           color: '#8b5cf6' },
   Scroll:       { icon: '📜', label: 'Scroll',        color: '#6b7280' },
   Navigation:   { icon: '🧭', label: 'Navigation',    color: '#0ea5e9' },
 };
@@ -63,6 +66,20 @@ function actionDescription(interaction: ComponentInteraction): string {
     case 'Checkbox': {
       const checked = metadata.checked === true;
       return `${checked ? 'Check' : 'Uncheck'} "${targetName}"`;
+    }
+
+    case 'Slider': {
+      const val = metadata.value != null ? String(metadata.value) : '';
+      return `Set slider "${targetName}" to ${val}`;
+    }
+
+    case 'FileUpload': {
+      const fileName = metadata.fileName ? String(metadata.fileName) : '';
+      return fileName ? `Upload file "${fileName}"` : `Click file upload "${targetName}"`;
+    }
+
+    case 'Tab': {
+      return `Click "${targetName}" tab`;
     }
 
     case 'RadioButton': {

@@ -273,7 +273,8 @@ describe('Checkbox Definition', () => {
     runtime.process(
       makeEvent('c1', 'click', { tag: 'INPUT', ariaRole: 'checkbox', stableId: 'chk2', accessibleName: 'Agree' }, { inputType: 'checkbox' }, { checkedBefore: false }),
     );
-    expect(emitted[0].metadata.checked).toBe(true);
+    // Browsers perform pre-click activation: checkedBefore is the NEW state.
+    expect(emitted[0].metadata.checked).toBe(false);
   });
 
   it('correctly determines new checked state from checkedBefore=true', () => {
@@ -281,7 +282,8 @@ describe('Checkbox Definition', () => {
     runtime.process(
       makeEvent('c1', 'click', { tag: 'INPUT', ariaRole: 'checkbox', stableId: 'chk3', accessibleName: 'Agree' }, { inputType: 'checkbox' }, { checkedBefore: true }),
     );
-    expect(emitted[0].metadata.checked).toBe(false);
+    // Browsers perform pre-click activation: checkedBefore is the NEW state.
+    expect(emitted[0].metadata.checked).toBe(true);
   });
 });
 

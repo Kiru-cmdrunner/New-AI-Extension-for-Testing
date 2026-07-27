@@ -475,6 +475,21 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     const last = this.dedupByType.get(ctx.type);
     if (!last) return false;
 
+    // For Checkbox/RadioButton: elements with different elementKeys but
+    // the same accessibleName within the dedup window are the same
+    // logical toggle (e.g. clicking an OXD label fires a synthetic click
+    // on the hidden input — two events, one user action).
+    if (ctx.type === 'Checkbox' || ctx.type === 'RadioButton') {
+      if (last.elementKey !== key) {
+        const prevName = String(last.metadata.targetName ?? '');
+        const newName = String(metadata.targetName ?? '');
+        if (prevName && prevName === newName) {
+          const gap = ctx.startTime - last.endTime;
+          if (gap <= DEDUP_WINDOW_MS) return true;
+        }
+      }
+    }
+
     if (last.elementKey !== key) return false;
 
     const gap = ctx.startTime - last.endTime;

@@ -24,7 +24,10 @@ const CHECKBOX_WRAPPER_CLASS_RE =
 export const checkboxDefinition: ComponentDefinition = {
   type: 'Checkbox',
   priority: 30,
-  triggerEventTypes: new Set<BrowserEventType>(['click', 'change']),
+  // Only trigger on click — change events are a side-effect of the click.
+  // Triggering on both click and change causes double-capture when the
+  // browser fires both events for the same user action.
+  triggerEventTypes: new Set<BrowserEventType>(['click']),
 
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
     const { tag, ariaRole, className } = event.target;
@@ -58,17 +61,23 @@ export const checkboxDefinition: ComponentDefinition = {
   },
 
   buildResult(ctx: ComponentContext, _completion: ComponentCompletion) {
-    // Determine checked state AFTER the click
-    // For a checkbox, checkedAfter from the change event is the new state.
-    // If we only have a click event, checkedBefore is the OLD state,
-    // so the new state is the negation.
+    // Browsers perform pre-click activation: the checkbox's checked state
+    // is toggled BEFORE the click event fires. So checkedBefore captured
+    // at click time is actually the NEW state, not the old state.
+    //
+    // For OXD/label-wrapped checkboxes: clicking the label fires a
+    // synthetic click on the hidden input. This produces two events
+    // (one on the span/wrapper, one on the input). The wrapper click
+    // fires first with checkedBefore=NEW state. The input click fires
+    // second but is suppressed by per-type dedup (same element key
+    // since both resolve to the checkbox's accessible name).
+    //
+    // Use checkedBefore as the NEW state directly (no negation).
     let checked: boolean;
-    if (ctx.triggerEvent.checkedAfter !== null) {
-      checked = ctx.triggerEvent.checkedAfter;
-    } else if (ctx.triggerEvent.checkedBefore !== null) {
-      checked = !ctx.triggerEvent.checkedBefore;
+    if (ctx.triggerEvent.checkedBefore !== null) {
+      checked = ctx.triggerEvent.checkedBefore;
     } else {
-      // ARIA checkbox — check aria-pressed or default to true
+      // Fallback for ARIA checkboxes without native checked state
       checked = true;
     }
 
