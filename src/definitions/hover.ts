@@ -15,25 +15,20 @@
  *   ───────────────────────────────  ──────────
  *   aria-expanded false→true         100  (Very High)
  *   Overlay role + dwell ≥ 500ms      70  (High)
+ *   CSS/structural overlay evidence   65  (High) ← NEW
  *   aria-haspopup + dwell ≥ 500ms     60  (High)
  *   Sustained dwell ≥3s + stationary  50  (Medium — fallback)
  *   Transit (< 500ms, no evidence)     0  (None)
  *
  * Promotion threshold: confidence ≥ 50
  *
- * Dwell is the WEAKEST form of evidence — it only counts when combined
- * with pointer stationarity (< 10px movement) and a longer threshold (3s).
- * This prevents false positives from thinking pauses over disabled buttons.
+ * ## CSS/Structural Overlay Evidence (NEW)
  *
- * ## Lifecycle
- *
- *   mouseenter → candidate (confidence = 0)
- *     ├── mouseleave + confidence ≥ threshold → emit completed Hover
- *     ├── mouseleave + confidence < threshold → discard silently
- *     ├── click on same element → discard (Click takes precedence)
- *     └── click elsewhere → discard (user moved on)
- *
- * Spec: .drytis/specs/evidence-based-hover.md
+ * Many modern SPAs (React, Vue) render menu/submenu systems WITHOUT
+ * ARIA attributes. They use CSS classes like "nav-item", "menu-link",
+ * "has-submenu", "dropdown-trigger", "mega-menu", etc. and reveal
+ * overlays via CSS :hover or JavaScript state. This signal detects
+ * such elements by their CSS class patterns and contextual position.
  */
 
 import type {
@@ -56,6 +51,9 @@ const CONFIDENCE_ARIA_EXPANDED = 100;
 
 /** Element is part of an overlay system (menuitem, tooltip, tab) + dwell. */
 const CONFIDENCE_OVERLAY_ROLE = 70;
+
+/** CSS/structural cues indicate hover-revealed overlay (no ARIA needed). */
+const CONFIDENCE_OVERLAY_CSS = 65;
 
 /** Element declares popup capability via aria-haspopup + dwell. */
 const CONFIDENCE_HASPOPUP = 60;
@@ -94,6 +92,24 @@ const OVERLAY_TRIGGER_ROLES = new Set([
 const HOVER_POPUP_TYPES = new Set([
   'menu', 'listbox', 'dialog', 'tooltip', 'tree', 'grid',
 ]);
+
+/**
+ * CSS class patterns that indicate an element reveals an overlay on hover.
+ * Covers nav menus, mega-menus, dropdowns, tooltips, and expandable sections
+ * from modern frameworks (React, Vue, Angular) that may lack ARIA markup.
+ *
+ * Examples: "nav-item", "has-submenu", "dropdown-trigger", "menu-link",
+ * "mega-menu", "popover-trigger", "expandable", "accordion-header"
+ */
+const OVERLAY_CSS_RE =
+  /\b(?:has-submenu|has-children|submenu|mega-menu|nav-item|menu-link|menu-trigger|dropdown-trigger|popover-trigger|expandable|collapsible|accordion-header|drawer-toggle|nav-link|with-dropdown)\b/i;
+
+/**
+ * Ancestor CSS class patterns that suggest the hovered element is inside
+ * a navigation/menu system where hover-revealed overlays are expected.
+ */
+const NAV_ANCESTOR_RE =
+  /\b(?:navbar|navigation|header-nav|main-nav|primary-nav|top-nav|side-nav|main-menu|primary-menu)\b/i;
 
 /**
  * Events that belong to the hover lifecycle. Only these are claimed by
@@ -235,6 +251,26 @@ function accumulateEvidence(event: ObservedEvent, ctx: ComponentContext): void {
       ctx.data.confidence = ((ctx.data.confidence as number) ?? 0) + CONFIDENCE_OVERLAY_ROLE;
       ctx.data.evidenceOverlayRole = true;
       setReason(ctx, 'overlay-role-dwell');
+      return;
+    }
+  }
+
+  // ── Signal 2b: CSS/structural overlay evidence (High = 65) ──
+  // Detects hover-revealed overlays in modern SPAs that lack ARIA markup.
+  // Checks the trigger element's CSS classes AND its ancestor classes for
+  // patterns indicating the element is part of a nav/menu/dropdown system.
+  if (ctx.data.evidenceOverlayCss !== true && dwell >= HOVER_TRANSIT_THRESHOLD_MS) {
+    const triggerClasses = ctx.triggerEvent.target.className ?? '';
+    const ancestorClassesStr = (ctx.triggerEvent.domContext.ancestorClasses ?? []).join(' ');
+    const allClasses = `${triggerClasses} ${ancestorClassesStr}`;
+
+    const hasOverlayCss = OVERLAY_CSS_RE.test(allClasses);
+    const hasNavAncestor = NAV_ANCESTOR_RE.test(ancestorClassesStr);
+
+    if (hasOverlayCss || hasNavAncestor) {
+      ctx.data.confidence = ((ctx.data.confidence as number) ?? 0) + CONFIDENCE_OVERLAY_CSS;
+      ctx.data.evidenceOverlayCss = true;
+      setReason(ctx, hasOverlayCss ? 'overlay-css' : 'nav-ancestor');
       return;
     }
   }

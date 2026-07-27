@@ -57,9 +57,10 @@ const INTERACTIVE_ROLES = new Set([
 /**
  * CSS class patterns that indicate a custom interactive element.
  * Frameworks apply these to wrapper divs that act as buttons, links, etc.
+ * Includes common patterns from modern React/Vue/Angular apps.
  */
 const INTERACTIVE_CLASS_RE =
-  /(btn|button|clickable|selectable|dropdown|menu-item|nav-item|tab-item|chip|toggle|action)/i;
+  /(btn|button|clickable|selectable|dropdown|menu-item|nav-item|tab-item|chip|toggle|action|stepper|counter|increment|decrement|qty|quantity|plus|minus|add-btn|remove-btn|arrow|chevron|expand|collapse)/i;
 
 /**
  * Is this element interactive (worth capturing as a Click)?
@@ -104,7 +105,7 @@ const DROPDOWN_OPTION_ROLES = new Set([
  * Covers OXD (OrangeHRM), MUI, Ant Design, Bootstrap, React-Select.
  */
 const DROPDOWN_TRIGGER_CLASS_RE =
-  /(oxd-select-text|select|combobox|dropdown|antd.*select|MuiSelect)/i;
+  /(oxd-select-text|select|combobox|dropdown|antd.*select|MuiSelect|selector|traveler|passenger|cabin|class-selector|trip-type|economy|traveller)/i;
 
 const DROPDOWN_OPTION_CLASS_RE =
   /(oxd-select-option|select-option|option-item|list-option|ant-select-item)/i;

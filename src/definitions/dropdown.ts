@@ -69,7 +69,10 @@ export const dropdownDefinition: ComponentDefinition = {
     // In scope if:
     // 1. Event is on the trigger element itself
     // 2. Event is on a dropdown option
-    // 3. Event is inside the dropdown surface
+    // 3. Event is inside the dropdown surface AND is not on an interactive
+    //    element that has its own definition (e.g., a stepper +/- button
+    //    inside a passenger selector popover). Those clicks must fall through
+    //    to Click discovery so they're not swallowed.
 
     const eventKey = elementKey(event.target);
     const triggerKey = elementKey(ctx.trigger);
@@ -77,15 +80,28 @@ export const dropdownDefinition: ComponentDefinition = {
     // Same element as trigger
     if (eventKey === triggerKey) return true;
 
-    // Dropdown option
+    // Dropdown option — always in scope (this is the selection event)
     if (isDropdownOption(event.target.ariaRole, event.target.className)) {
       return true;
     }
 
-    // Inside dropdown surface (check event target's class and ancestors)
-    if (isInsideDropdownSurface(event.target.className)) return true;
-    const ancestorClasses = event.domContext.ancestorClasses.join(' ');
-    if (isInsideDropdownSurface(ancestorClasses)) return true;
+    // Inside dropdown surface — but NOT if the event target is itself an
+    // interactive element (button, link, etc.) with its own clear identity.
+    // This prevents the dropdown from swallowing clicks on stepper buttons,
+    // filter controls, and other interactive elements rendered inside
+    // popover/modal surfaces.
+    if (isInsideDropdownSurface(event.target.className) ||
+        isInsideDropdownSurface(event.domContext.ancestorClasses.join(' '))) {
+      // Let clearly interactive elements (buttons, links, checkboxes, etc.)
+      // fall through to their own definitions instead of being claimed here
+      const { tag, ariaRole } = event.target;
+      if (tag === 'BUTTON' || tag === 'A' || tag === 'INPUT' ||
+          ariaRole === 'button' || ariaRole === 'link' || ariaRole === 'checkbox' ||
+          ariaRole === 'radio' || ariaRole === 'spinbutton' || ariaRole === 'slider') {
+        return false; // let Click/Checkbox/etc. definition claim it
+      }
+      return true;
+    }
 
     return false;
   },
