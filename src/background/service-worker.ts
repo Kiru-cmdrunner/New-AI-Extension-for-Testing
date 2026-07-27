@@ -77,12 +77,21 @@ async function pingTabContentScript(tabId: number): Promise<boolean> {
  * Programmatically inject the content script into a tab.
  * Used when the declarative content script is missing (e.g., the tab was
  * already open when the extension was reloaded/updated).
+ *
+ * The content script filename includes a Vite content hash that changes
+ * on every build (e.g. assets/recorder-entry.ts-CP_NOlxs.js). We cannot
+ * hardcode the path — we must read it from the manifest at runtime.
  */
 async function injectContentScript(tabId: number): Promise<boolean> {
   try {
+    // Read the content script path from the manifest (handles Vite hashing)
+    const manifest = chrome.runtime.getManifest();
+    const csEntry = manifest.content_scripts?.[0]?.js?.[0];
+    if (!csEntry) return false;
+
     await chrome.scripting.executeScript({
       target: { tabId, allFrames: true },
-      files: ['src/recorder/phase5/recorder-entry.ts'],
+      files: [csEntry],
     });
     return true;
   } catch {
@@ -185,6 +194,18 @@ async function handleStartRecording(): Promise<void> {
   // Reset Component Runtime for a fresh recording session
   resetState();
   initRecording();
+
+  // Persist recording context (start URL + title) so the side panel
+  // can display the current page URL immediately.
+  try {
+    await chrome.storage.local.set({
+      [StorageKeys.SESSION_CONTEXT]: {
+        startUrl,
+        startTitle,
+        capturedAt: new Date().toISOString(),
+      },
+    });
+  } catch { /* non-fatal */ }
 
   // Ensure content script is injected in the active tab
   // (Critical: if the extension was reloaded, the content script may be
