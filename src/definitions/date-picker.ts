@@ -88,13 +88,39 @@ export const datePickerDefinition: ComponentDefinition = {
   },
 
   handleEvent(event: ObservedEvent, ctx: ComponentContext): ComponentCompletion | null {
+    // Track typed values from input events (OXD date fields are text inputs
+    // that users type into directly — no native date picker, no calendar click)
+    if (event.eventType === 'input' || event.eventType === 'change') {
+      if (event.valueAfter && event.valueAfter.trim()) {
+        ctx.data.dateValue = event.valueAfter;
+        ctx.data.selectedDate = event.valueAfter;
+      }
+    }
+
+    // Blur on the trigger input → complete with whatever date was typed
+    // This handles the OXD pattern: user types a date in a text input,
+    // then clicks elsewhere (blur fires). Without this, the lifecycle
+    // sits idle for 15s and gets abandoned with no value captured.
+    if (event.eventType === 'blur') {
+      const dateValue =
+        (ctx.data.dateValue as string) ||
+        event.valueAfter ||
+        '';
+      if (dateValue.trim()) {
+        ctx.data.dateValue = dateValue;
+        ctx.data.selectedDate = dateValue;
+        return { endState: 'completed' };
+      }
+      // Empty value on blur — abandon silently
+      return { endState: 'abandoned' };
+    }
+
     // Calendar cell click → complete
     if (
       (event.eventType === 'click' || event.eventType === 'mousedown') &&
       isCalendarCell(event.target.ariaRole, event.target.className)
     ) {
       // Bug 7 check: make sure this isn't a navigation button
-      // (isCalendarCell should already exclude these, but double-check)
       if (isCalendarNavigationButton(event.target.ariaRole, event.target.accessibleName, event.target.className)) {
         return null; // lifecycle-internal
       }
@@ -102,7 +128,6 @@ export const datePickerDefinition: ComponentDefinition = {
       ctx.data.selectedDate = event.target.accessibleName || '';
       ctx.data.dateValue = event.valueAfter ?? event.target.accessibleName ?? '';
 
-      // Only complete if dateValue is non-empty (Bug: empty date selection)
       const dateValue = (ctx.data.dateValue as string) || '';
       if (!dateValue.trim()) return null;
 
@@ -111,7 +136,7 @@ export const datePickerDefinition: ComponentDefinition = {
 
     // Change event on native date input → complete
     if (event.eventType === 'change' && ctx.trigger.tag === 'INPUT') {
-      const dateValue = event.valueAfter ?? '';
+      const dateValue = event.valueAfter ?? (ctx.data.dateValue as string) ?? '';
       if (dateValue.trim()) {
         ctx.data.selectedDate = dateValue;
         ctx.data.dateValue = dateValue;

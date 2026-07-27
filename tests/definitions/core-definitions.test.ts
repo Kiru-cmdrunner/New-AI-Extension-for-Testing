@@ -295,13 +295,16 @@ describe('RadioButton Definition', () => {
     expect(emitted[0].type).toBe('RadioButton');
   });
 
-  // Bug 4: pre-selected radio is a no-op
-  it('marks as noOpSelection when radio was already checked (Bug 4)', () => {
+  // Bug 4: radio buttons can only be turned ON, never OFF by clicking.
+  // checkedBefore is unreliable because browsers perform pre-click activation
+  // (radio checked state is set to true before the click event fires).
+  // So noOpSelection is always false for radio — every click is a real selection.
+  it('always treats radio click as a real selection (checkedBefore unreliable)', () => {
     const { runtime, emitted } = setupRuntime();
     runtime.process(
       makeEvent('c1', 'click', { tag: 'INPUT', ariaRole: 'radio', stableId: 'r2', accessibleName: 'Female' }, { inputType: 'radio' }, { checkedBefore: true }),
     );
-    expect(emitted[0].metadata.noOpSelection).toBe(true);
+    expect(emitted[0].metadata.noOpSelection).toBe(false);
   });
 
   it('marks as real selection when radio was not checked', () => {

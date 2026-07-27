@@ -40,7 +40,7 @@ export const radioButtonDefinition: ComponentDefinition = {
     }
 
     // Framework wrapper detection: OXD renders radios as
-    // <div class="oxd-radio-input-wrapper"> — the click target is a
+    // <div class="oxd-radio-wrapper"> — the click target is a
     // child div/span with no ARIA role and no inputType.
     const allClasses = (className ?? '') + ' ' + ancestorClasses.join(' ');
     if (RADIO_WRAPPER_CLASS_RE.test(allClasses)) {
@@ -63,11 +63,15 @@ export const radioButtonDefinition: ComponentDefinition = {
   },
 
   buildResult(ctx: ComponentContext, _completion: ComponentCompletion) {
-    // No-op detection: if the radio was already checked before the click,
-    // this is a re-selection of an already-selected option.
-    // Bug 4 fix: checkedBefore detects pre-selected radios.
-    const noOpSelection = ctx.triggerEvent.checkedBefore === true;
-
+    // Radio buttons can only be turned ON by clicking — you can't uncheck
+    // a radio by clicking it again. So every radio click is a real selection.
+    //
+    // Previous noOpSelection logic used checkedBefore, but browsers perform
+    // pre-click activation: the radio's checked state is set to true BEFORE
+    // the click event fires (even in capture phase). This made checkedBefore
+    // always true, filtering out every radio click as a "no-op".
+    //
+    // Fix: noOpSelection is always false for radio buttons.
     return {
       metadata: {
         targetName: bestName(
@@ -75,7 +79,7 @@ export const radioButtonDefinition: ComponentDefinition = {
           ctx.trigger.ariaLabel,
           ctx.trigger.placeholder,
         ),
-        noOpSelection,
+        noOpSelection: false,
       },
     };
   },
