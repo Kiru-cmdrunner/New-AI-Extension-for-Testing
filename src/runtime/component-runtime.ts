@@ -241,6 +241,22 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     // 4. Discovery — no active component claimed it
     if (!handled) {
       const newCtx = this.tryDiscovery(event);
+
+      // Diagnostic: log unmatched click/focus events that might be radio/date/checkbox
+      if (!newCtx && (event.eventType === 'click' || event.eventType === 'focus')) {
+        const allClasses = (event.target.className ?? '') + ' ' + event.domContext.ancestorClasses.join(' ');
+        if (/radio|date|checkbox/i.test(allClasses)) {
+          console.warn('[CmdRunner DISCOVERY] Unmatched event:', {
+            eventType: event.eventType,
+            tag: event.target.tag,
+            ariaRole: event.target.ariaRole,
+            inputType: event.domContext.inputType,
+            className: event.target.className,
+            ancestorClasses: event.domContext.ancestorClasses.slice(0, 5),
+          });
+        }
+      }
+
       if (newCtx) {
         this.activeStack.push(newCtx);
         // Check if the definition completes immediately (e.g., Click, Checkbox)

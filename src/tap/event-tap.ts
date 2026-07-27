@@ -117,6 +117,22 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
     // Build the observed event
     const observed = assembleObservedEvent(rawEvent, eventType, identity, domContext);
 
+    // Diagnostic logging for click/focus on elements with radio/date/checkbox classes
+    if (eventType === 'click' || eventType === 'focus' || eventType === 'mousedown') {
+      const allClasses = (identity.className ?? '') + ' ' + domContext.ancestorClasses.join(' ');
+      if (/radio|date|checkbox/i.test(allClasses)) {
+        console.log('[CmdRunner CAPTURE]', eventType, {
+          tag: identity.tag,
+          ariaRole: identity.ariaRole,
+          className: identity.className,
+          inputType: domContext.inputType,
+          ancestorClasses: domContext.ancestorClasses.slice(0, 3),
+          resolvedTag: targetEl.tagName,
+          resolvedClassName: targetEl instanceof HTMLElement ? targetEl.className : null,
+        });
+      }
+    }
+
     config.onEvent(observed);
   }
 
