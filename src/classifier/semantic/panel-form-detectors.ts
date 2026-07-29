@@ -137,8 +137,19 @@ export function isMultiConfigCompletion(
 /**
  * Determine whether an interaction should be absorbed by an active MultiConfig session.
  *
- * Absorbs all interactions that occur inside the panel — the panel boundary
- * is determined by proximity (timing + overlapping ancestor classes).
+ * Two absorption strategies:
+ *
+ * 1. Surface-anchored absorption (preferred): If the session was activated by
+ *    a click that opened a surface (popover/drawer), absorb ALL Click, RadioButton,
+ *    Checkbox, ToggleSwitch, Slider, and TextEntry interactions. This works because:
+ *    - Completion (Done/Apply) is checked BEFORE absorption in the reasoner
+ *    - PageNavigation is handled by the navigation lookback merge BEFORE absorption
+ *    - The session has a 15s timeout as a safety valve
+ *    - End-of-stream flush commits accumulated fields
+ *
+ * 2. CSS class-token overlap (fallback): For sessions activated via CSS class
+ *    matching (no surface evidence), use the original heuristic approach:
+ *    absorb noise types, field types, TextEntry, and Click with stepper keywords.
  */
 export function shouldAbsorbMultiConfig(
   interaction: DetectedInteraction,
@@ -150,7 +161,24 @@ export function shouldAbsorbMultiConfig(
   const noiseTypes = new Set(['PageScroll', 'ContainerScroll', 'Hover', 'Tooltip']);
   if (noiseTypes.has(interaction.type)) return true;
 
-  // Absorb interactions that share CSS class ancestry with the panel trigger
+  // ── Strategy 1: Surface-anchored absorption ────────────────────────────
+  // If the session was activated by a surface-opening click, absorb all
+  // interaction types that could be field adjustments inside the panel.
+  const triggerSurfaceCtx = session.triggerInteraction.metadata.surfaceContext;
+  if (triggerSurfaceCtx?.openedByThisInteraction) {
+    // Absorb all Click, RadioButton, Checkbox, ToggleSwitch, Slider, TextEntry
+    // interactions. Completion (Done/Apply) is already checked before absorption,
+    // and PageNavigation is handled by the navigation lookback merge.
+    const absorbableTypes = new Set([
+      'Click', 'RadioButton', 'Checkbox', 'ToggleSwitch', 'Slider', 'TextEntry',
+      'NativeDropdown', 'CustomDropdown',
+    ]);
+    if (absorbableTypes.has(interaction.type)) return true;
+  }
+
+  // ── Strategy 2: CSS class-token overlap (fallback) ─────────────────────
+  // Used when the session was NOT activated by a surface-opening click
+  // (e.g., activated via CSS class matching on the trigger).
   const triggerClass = session.triggerInteraction.target?.className ?? '';
 
   // Check if the interaction target shares a common panel ancestor class
