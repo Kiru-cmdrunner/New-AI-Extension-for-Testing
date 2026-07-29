@@ -121,6 +121,17 @@ export interface InteractionMetadata {
   // Surface detection (Modal, Drawer, Popover, Tooltip)
   surfaceLabel?: string;
   surfaceRole?: string;
+  // ── Semantic Reasoning Enrichment ──
+  /** Semantic action assigned by the reasoner: 'configure' | 'authenticate'. */
+  semanticAction?: string;
+  /** For MultiConfig: field-value pairs configured inside a panel. */
+  configuredFields?: Record<string, string>;
+  /** For MultiConfig: the panel's label (trigger accessibleName). */
+  panelLabel?: string;
+  /** For FormSubmit: the submit action label (e.g., 'Login', 'Sign Up'). */
+  formSubmitAction?: string;
+  /** For FormSubmit: interaction IDs of form fields in this submission. */
+  formFields?: string[];
 }
 
 // ── Detection Result ────────────────────────────────────────────────────

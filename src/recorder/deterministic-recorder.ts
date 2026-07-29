@@ -136,12 +136,29 @@ if ((window as any)[CS_GUARD]) {
 (window as any)[CS_GUARD] = true;
 
 let isRecording = false;
+let isLegacyEngine = true; // Default: legacy recorder is active
+
+// ── Stage 2 feature flag ───────────────────────────────────────────────────
+// When recorder_engine === 'control', this legacy recorder stays inactive so
+// the new control-recorder.ts can capture events with correct target resolution.
+async function syncEngineFlag(): Promise<void> {
+  try {
+    const result = await chrome.storage.local.get('ui_state');
+    const uiState = result['ui_state'] as any;
+    const engine = uiState?.recorderEngine || 'legacy';
+    isLegacyEngine = engine !== 'control';
+  } catch {
+    isLegacyEngine = true; // Default: legacy
+  }
+}
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local') return;
   const uiState = changes['ui_state'];
   if (uiState && uiState.newValue) {
     isRecording = uiState.newValue.recordingState === 'recording';
+    const engine = uiState.newValue.recorderEngine || 'legacy';
+    isLegacyEngine = engine !== 'control';
   }
 });
 
@@ -149,18 +166,23 @@ chrome.storage.onChanged.addListener((changes, area) => {
 chrome.storage.local.get('ui_state').then((result) => {
   if (result['ui_state']) {
     isRecording = result['ui_state'].recordingState === 'recording';
+    const engine = (result['ui_state'] as any).recorderEngine || 'legacy';
+    isLegacyEngine = engine !== 'control';
   }
 }).catch(() => {});
 
 async function checkRecording(): Promise<boolean> {
+  if (!isLegacyEngine) return false; // Stage 2: legacy recorder disabled
   if (isRecording) return true;
   try {
     const result = await chrome.storage.local.get('ui_state');
     if (result['ui_state']) {
       isRecording = result['ui_state'].recordingState === 'recording';
+      const engine = (result['ui_state'] as any).recorderEngine || 'legacy';
+      isLegacyEngine = engine !== 'control';
     }
   } catch {}
-  return isRecording;
+  return isRecording && isLegacyEngine;
 }
 
 // Also listen for explicit messages (covers SPA navigation where storage
@@ -170,11 +192,12 @@ async function checkRecording(): Promise<boolean> {
 // extension reload/update).
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'PING') {
-    sendResponse({ type: 'PONG', isRecording, url: location.href });
+    sendResponse({ type: 'PONG', isRecording: isRecording && isLegacyEngine, url: location.href, engine: isLegacyEngine ? 'legacy' : 'control' });
     return true; // keep channel open for sendResponse
   }
   if (message.type === 'START_RECORDING') {
     isRecording = true;
+    syncEngineFlag(); // Check if legacy recorder should be active
   } else if (message.type === 'STOP_RECORDING') {
     isRecording = false;
     valueTracker.clear();
@@ -347,9 +370,33 @@ const INPUT_TYPE_ROLE_MAP: Record<string, string> = {
   button: 'button', submit: 'button', reset: 'button', image: 'button',
   checkbox: 'checkbox', radio: 'radio', text: 'textbox', email: 'textbox',
   password: 'textbox', search: 'textbox', tel: 'textbox', url: 'textbox',
-  number: 'spinbutton', range: 'slider', color: 'textbox', date: 'textbox',
-  'datetime-local': 'textbox', time: 'textbox', file: 'textbox',
+  number: 'spinbutton', range: 'slider', color: 'textbox',
+  date: 'combobox', 'datetime-local': 'combobox', time: 'combobox',
+  month: 'combobox', week: 'combobox', file: 'textbox',
 };
+
+/**
+ * Framework-specific CSS class → semantic role mappings.
+ *
+ * Many UI frameworks (OrangeHRM/OXD, Ant Design, Element Plus) build composite
+ * controls from div elements with CSS classes rather than native form elements.
+ * Without these mappings, getImplicitRole() returns null for div-based controls,
+ * and downstream classifiers can't identify them (dropdowns → Click, checkboxes
+ * → Click, etc.).
+ *
+ * Checked AFTER the native tag/role fallbacks so that explicit ARIA roles and
+ * native element types always take precedence.
+ */
+const FRAMEWORK_CLASS_ROLE_MAP: { pattern: RegExp; role: string }[] = [
+  // OrangeHRM / OXD
+  { pattern: /oxd-select-text|oxd-select-text-input|oxd-select-wrapper/i, role: 'combobox' },
+  { pattern: /oxd-checkbox-wrapper|oxd-checkbox-input/i, role: 'checkbox' },
+  { pattern: /oxd-radio-wrapper/i, role: 'radio' },
+  { pattern: /oxd-date-input|oxd-date-picker/i, role: 'combobox' },  // date input triggers calendar
+  // Generic custom dropdown patterns
+  { pattern: /\bdropdown-trigger\b|\bdropdown-toggle\b|\bselect-trigger\b/i, role: 'combobox' },
+  { pattern: /\bcustom-select\b|\bselect-wrapper\b/i, role: 'combobox' },
+];
 
 function getImplicitRole(el: Element): string | null {
   const explicitRole = el.getAttribute('role');
@@ -357,9 +404,43 @@ function getImplicitRole(el: Element): string | null {
   const tag = el.tagName;
   if (tag === 'INPUT') {
     const type = el.getAttribute('type') || 'text';
-    return INPUT_TYPE_ROLE_MAP[type] || null;
+    const inputRole = INPUT_TYPE_ROLE_MAP[type] || null;
+    // For text/email/password/search/tel/url inputs, check framework CSS
+    // classes BEFORE returning 'textbox' — frameworks like OXD use
+    // <input type="text" class="oxd-date-input"> which is really a date
+    // picker, not a generic text field.
+    if (inputRole && inputRole !== 'textbox') {
+      return inputRole; // checkbox, radio, button, etc. — no ambiguity
+    }
+    // For textbox-type inputs (text, email, search, etc.), check framework
+    // classes first — they may reveal the input is actually a date picker
+    // or dropdown trigger in disguise.
+    if (inputRole === 'textbox') {
+      const className = (el instanceof HTMLElement ? (el.className || '') : '').toString();
+      if (className) {
+        for (const entry of FRAMEWORK_CLASS_ROLE_MAP) {
+          if (entry.pattern.test(className)) return entry.role;
+        }
+      }
+      return 'textbox'; // no framework match — genuine text input
+    }
+    // Unknown input type with no role mapping — fall through to framework check
+  } else {
+    const tagRole = TAG_ROLE_MAP[tag] || null;
+    if (tagRole) return tagRole;
   }
-  return TAG_ROLE_MAP[tag] || null;
+
+  // Framework-specific CSS class → role mapping (lowest priority).
+  // Catches div-based composite controls that have no native tag or ARIA role:
+  // OXD dropdowns, checkboxes, radio wrappers, date pickers, etc.
+  const className = (el instanceof HTMLElement ? (el.className || '') : '').toString();
+  if (className) {
+    for (const entry of FRAMEWORK_CLASS_ROLE_MAP) {
+      if (entry.pattern.test(className)) return entry.role;
+    }
+  }
+
+  return null;
 }
 
 function computeAccessibleName(el: Element): string {
@@ -402,6 +483,21 @@ function computeAccessibleName(el: Element): string {
       const optText = opt?.textContent?.trim();
       if (optText) return truncate(optText, 200);
     }
+
+    // Form-group sibling label resolution (common in component libraries like OXD,
+    // MUI, Bootstrap). The input is inside a wrapper that also contains a <label>.
+    // Structure: <div class="form-group"><label>Field Name</label><div><input/></div></div>
+    const groupAncestor = el.closest('[class*="input-group"], [class*="form-group"], [class*="form-field"], [class*="field-wrapper"], [class*="oxd-input-group"]');
+    if (groupAncestor) {
+      const groupLabel = groupAncestor.querySelector('label, [class*="label"], .oxd-label');
+      if (groupLabel) {
+        const labelText = groupLabel.textContent?.trim();
+        // Avoid matching the input's own text or empty labels
+        if (labelText && labelText.length > 0 && labelText.length <= 100) {
+          return truncate(labelText, 200);
+        }
+      }
+    }
   }
 
   if (el instanceof HTMLElement) {
@@ -432,6 +528,30 @@ function computeAccessibleName(el: Element): string {
 
   const title = el.getAttribute('title');
   if (title && title.trim()) return truncate(title.trim(), 200);
+
+  // ── Ancestor label resolution ──
+  // Some frameworks (OrangeHRM/OXD, Material-UI) put form control labels in
+  // sibling or ancestor elements without using aria-label, aria-labelledby,
+  // or wrapping <label>. Walk up to 8 ancestors looking for:
+  //   - .oxd-input-group → query .oxd-label inside it
+  //   - role="group" or <fieldset> → query legend or .oxd-label
+  //   - .oxd-input-field-bottom-line / .form-field wrapper → query label
+  // This is a last resort before giving up — keeps checkboxes, inputs,
+  // and selects from recording with empty accessible names.
+  let ancestor: Element | null = el.parentElement;
+  for (let i = 0; i < 8 && ancestor; i++) {
+    const aClasses = (ancestor instanceof HTMLElement ? (ancestor.className || '') : '').toString();
+    if (aClasses.includes('oxd-input-group')) {
+      const labelEl = ancestor.querySelector('.oxd-label');
+      if (labelEl?.textContent?.trim()) return truncate(labelEl.textContent.trim(), 200);
+    }
+    // General group/fieldset label resolution
+    if (ancestor.getAttribute('role') === 'group' || ancestor.tagName === 'FIELDSET') {
+      const legend = ancestor.querySelector('legend, .oxd-label, label');
+      if (legend?.textContent?.trim()) return truncate(legend.textContent.trim(), 200);
+    }
+    ancestor = ancestor.parentElement;
+  }
 
   return '';
 }
@@ -792,6 +912,77 @@ const NON_INTERACTIVE_TAGS = new Set([
   'CIRCLE', 'LINE', 'POLYLINE', 'POLYGON', 'USE', 'CLIPPATH',
 ]);
 
+/**
+ * Structural/container tags that, when resolved as a click target via the
+ * fallback strategies (cursor:pointer or raw-target), may capture
+ * unintended clicks. We apply additional filtering to these — specifically,
+ * if their accessible name is very long (e.g., a form section whose
+ * innerText concatenates every field label), the click is likely noise.
+ */
+const CONTAINER_TAGS = new Set([
+  'DIV', 'SECTION', 'FIELDSET', 'ARTICLE', 'MAIN', 'FORM',
+  'UL', 'OL', 'TABLE', 'TBODY', 'THEAD', 'SPAN',
+]);
+
+/**
+ * Threshold for the accessible name length of a container element.
+ * If a container tag's accessible name exceeds this many characters,
+ * the click is likely on the container itself (not a specific child)
+ * and represents noise rather than an intentional user action.
+ * 80 chars is enough for legitimate single-element labels like "Save"
+ * or "Submit Order" while filtering out concatenated form content.
+ */
+const LARGE_CONTAINER_NAME_THRESHOLD = 80;
+
+/**
+ * Check if a click target is a large container that should be suppressed.
+ *
+ * When resolveTarget() falls through to Strategy 2 (cursor:pointer) or
+ * Strategy 3 (raw target), it may resolve to a large container element
+ * like a form row or section div. The accessible name for such elements
+ * is their innerText — which can be hundreds of characters of concatenated
+ * field labels. These clicks are almost always unintentional noise
+ * (e.g., clicking slightly off from a form field, or the framework
+ * setting cursor:pointer on a layout container).
+ *
+ * We suppress only when ALL conditions hold:
+ *   1. The element is a structural container tag (not a button, input, etc.)
+ *   2. The accessible name is very long (> 80 chars)
+ * OR:
+ *   1. The element is a structural container tag
+ *   2. The accessible name is very short (≤ 2 chars) — single letters,
+ *      empty strings, or icon-font glyphs are almost certainly not the
+ *      intended target. This catches "Click I" noise from wrapper divs.
+ *
+ * Exception: elements with dropdown-related classes (oxd-select, dropdown-*)
+ * are NOT suppressed even if they meet the above criteria — they are
+ * intentional dropdown trigger clicks.
+ */
+function isContainerNoiseClick(el: Element): boolean {
+  const tag = el.tagName.toUpperCase();
+  if (!CONTAINER_TAGS.has(tag)) return false;
+
+  // Never suppress dropdown trigger elements — they are intentional clicks
+  const className = (el instanceof HTMLElement ? (el.className || '') : '').toString().toLowerCase();
+  if (className.includes('oxd-select') || className.includes('oxd-dropdown') ||
+      className.includes('dropdown-trigger') || className.includes('dropdown-toggle') ||
+      className.includes('select-wrapper') || className.includes('select-text')) {
+    return false;
+  }
+
+  const name = computeAccessibleName(el);
+  // Suppress very long names (concatenated form content) — original filter
+  if (name.length > LARGE_CONTAINER_NAME_THRESHOLD) return true;
+  // Suppress very short names (single letters, empty, icon glyphs) — these
+  // are almost certainly wrapper divs that resolvedTarget picked up
+  // incorrectly via cursor:pointer or raw-target fallback
+  if (name.length > 0 && name.length <= 2) return true;
+  // Suppress empty-name containers (no label at all — pure layout)
+  if (name.length === 0) return true;
+
+  return false;
+}
+
 const INTERACTIVE_SELECTOR = [
   'a[href]', 'button', 'summary', 'select', 'option', 'textarea', 'input',
   'form', '[contenteditable]',
@@ -799,7 +990,7 @@ const INTERACTIVE_SELECTOR = [
   '[role="menuitemcheckbox"]', '[role="menuitemradio"]', '[role="option"]',
   '[role="switch"]', '[role="treeitem"]', '[role="checkbox"]', '[role="radio"]',
   '[role="gridcell"]', '[role="combobox"]', '[role="textbox"]', '[role="spinbutton"]',
-  '[role="slider"]', '[role="group"]', '[role="radiogroup"]',
+  '[role="slider"]', '[role="radiogroup"]',
   '[tabindex]', '[onclick]', '[data-action]', '[data-toggle]', '[data-bs-toggle]',
   '[aria-haspopup]',
 ].join(', ');
@@ -1136,7 +1327,13 @@ function isTextEntryElement(el: Element): boolean {
   if (el instanceof HTMLInputElement) {
     if ((el as HTMLInputElement).readOnly) return false;
     const type = (el.type || 'text').toLowerCase();
-    return TEXT_ENTRY_INPUT_TYPES.has(type);
+    if (!TEXT_ENTRY_INPUT_TYPES.has(type)) return false;
+    // Date trigger inputs (text inputs that are really date pickers —
+    // identified by date keywords or date-format placeholders like
+    // "yyyy-mm-dd") are NOT text entry. They are handled by the date
+    // picker capture system which emits a single dateSelect event.
+    if (isDateTriggerElement(el)) return false;
+    return true;
   }
   // contenteditable elements accept text entry
   if (el instanceof HTMLElement && el.isContentEditable) return true;
@@ -1190,6 +1387,14 @@ document.addEventListener('input', (event) => {
   // the committed value. The input event on SELECT is redundant and fires
   // at the same time.
   if (target instanceof HTMLSelectElement) {
+    return;
+  }
+
+  // Suppress input events on date trigger elements — they are handled by
+  // the date picker capture system which emits a single debounced dateSelect
+  // event. Without this, the input event leaks through to the "non-text-entry
+  // raw send" path below and gets classified as TextEntry.
+  if (isDateTriggerElement(target)) {
     return;
   }
 
@@ -1536,6 +1741,19 @@ document.addEventListener('click', (event) => {
   const target = resolveTarget(event);
   if (!target) return;
 
+  // ── Suppress clicks on large containers ──
+  // When resolveTarget() falls back to Strategy 2 (cursor:pointer) or
+  // Strategy 3 (raw target), it may resolve to a large container div or
+  // section whose accessible name is a concatenation of child field labels.
+  // These are almost always noise — the user intended to click a specific
+  // child element, not the container. We suppress them to keep the timeline
+  // clean. Legitimate clicks on specific interactive elements (buttons,
+  // inputs, links, etc.) are never affected because resolveTarget() finds
+  // them via Strategy 1 (INTERACTIVE_SELECTOR match).
+  if (isContainerNoiseClick(target)) {
+    return;
+  }
+
   // Suppress clicks on <label> elements that wrap (or are associated with)
   // an input element. Browsers forward label clicks to the associated input,
   // so the input's own click event captures the full interaction. Without
@@ -1606,6 +1824,35 @@ document.addEventListener('click', (event) => {
     clickDomCtx.ownedByDatePicker = true;
   }
 
+  // Helper: merge surface data + page-world signals into the click context.
+  // Also tags the click as ownedByDatePicker when the click target is a date
+  // trigger and the surface that appeared is a calendar popover.
+  const mergeClickContext = (surfaceData: { surfaceType: string; surfaceRole: string | null; surfaceLabel: string | null } | null): DomContext => {
+    const pwSignals = readPageWorldSignals();
+    const mergedCtx: DomContext = { ...clickDomCtx };
+    if (surfaceData) {
+      mergedCtx.surfaceType = surfaceData.surfaceType as DomContext['surfaceType'];
+      mergedCtx.surfaceRole = surfaceData.surfaceRole;
+      mergedCtx.surfaceLabel = surfaceData.surfaceLabel;
+      // If clicking a date trigger opened a calendar popover, tag as
+      // ownedByDatePicker so the click is evidence-only (the dateSelect
+      // event captures the real interaction). This prevents the click
+      // from being classified as a standalone Click and the popover from
+      // being classified as a Popover interaction.
+      if (
+        surfaceData.surfaceType === 'popover' &&
+        !mergedCtx.ownedByDatePicker &&
+        isDateTriggerElement(target)
+      ) {
+        mergedCtx.ownedByDatePicker = true;
+      }
+    }
+    if (pwSignals) {
+      Object.assign(mergedCtx, pwSignals);
+    }
+    return mergedCtx;
+  };
+
   if (checkedBefore !== null) {
     // Checkbox/radio/toggle — defer checkedAfter read
     setTimeout(() => {
@@ -1613,34 +1860,14 @@ document.addEventListener('click', (event) => {
       valueTracker.set(key, { value: valueAfter, checked: checkedAfter });
       // Start surface detection for this click
       detectSurfaceAfterClick((surfaceData) => {
-        // Read page-world signals (dialog/window.open may have been triggered)
-        const pwSignals = readPageWorldSignals();
-        const mergedCtx: DomContext = { ...clickDomCtx };
-        if (surfaceData) {
-          mergedCtx.surfaceType = surfaceData.surfaceType as DomContext['surfaceType'];
-          mergedCtx.surfaceRole = surfaceData.surfaceRole;
-          mergedCtx.surfaceLabel = surfaceData.surfaceLabel;
-        }
-        if (pwSignals) {
-          Object.assign(mergedCtx, pwSignals);
-        }
+        const mergedCtx = mergeClickContext(surfaceData);
         sendEvent('click', target, valueBefore, valueAfter, checkedBefore, checkedAfter, null, mergedCtx);
       });
     }, 0);
   } else {
     // Regular click — start surface detection
     detectSurfaceAfterClick((surfaceData) => {
-      // Read page-world signals (dialog/window.open may have been triggered)
-      const pwSignals = readPageWorldSignals();
-      const mergedCtx: DomContext = { ...clickDomCtx };
-      if (surfaceData) {
-        mergedCtx.surfaceType = surfaceData.surfaceType as DomContext['surfaceType'];
-        mergedCtx.surfaceRole = surfaceData.surfaceRole;
-        mergedCtx.surfaceLabel = surfaceData.surfaceLabel;
-      }
-      if (pwSignals) {
-        Object.assign(mergedCtx, pwSignals);
-      }
+      const mergedCtx = mergeClickContext(surfaceData);
       sendEvent('click', target, valueBefore, valueAfter, null, null, null, mergedCtx);
     });
   }
@@ -1697,7 +1924,39 @@ document.addEventListener('dblclick', (event) => {
   const target = resolveTarget(event);
   if (!target) return;
 
-  sendEvent('dblclick', target, null, null, null, null);
+  // ── Suppress double-clicks on large containers ──
+  // Same suppression as single clicks: a dblclick that resolved to a
+  // large container div is almost always noise (the user intended a
+  // specific child element, not the container wrapper).
+  if (isContainerNoiseClick(target)) {
+    return;
+  }
+
+  // Suppress double-clicks on <label> elements that wrap inputs —
+  // the forwarded input event already captures the interaction.
+  if (target instanceof HTMLLabelElement) {
+    const wrappedInput = target.querySelector('input, button, select, textarea');
+    if (wrappedInput) return;
+    const forAttr = target.getAttribute('for');
+    if (forAttr) {
+      const associated = deepGetElementById(forAttr);
+      if (associated && (associated instanceof HTMLInputElement ||
+          associated instanceof HTMLSelectElement ||
+          associated instanceof HTMLTextAreaElement ||
+          associated instanceof HTMLButtonElement)) {
+        return;
+      }
+    }
+  }
+
+  const dblclickDomCtx = captureDomContext(target);
+
+  // Tag dblclicks inside calendar popovers as evidence-only.
+  if (isInsideCalendarPopover(target)) {
+    dblclickDomCtx.ownedByDatePicker = true;
+  }
+
+  sendEvent('dblclick', target, null, null, null, null, null, dblclickDomCtx);
 }, true);
 
 // ── contextmenu: right click ────────────────────────────────────────────
@@ -2169,6 +2428,31 @@ function isVisible(el: Element): boolean {
 const DATE_TRIGGER_KEYWORDS = /(?:^|[^a-z])(date|depart|arrival|return|check.?in|check.?out|from.?date|to.?date|travel|journey|trip|fly|calendar|checkin|checkout)(?:[^a-z]|$)/i;
 
 /**
+ * Check if a string looks like a date format placeholder.
+ *
+ * Many custom date pickers use text inputs with placeholders like
+ * "yyyy-mm-dd", "mm/dd/yyyy", "dd-mm-yyyy". These don't contain date
+ * keywords, so DATE_TRIGGER_KEYWORDS doesn't match them.
+ *
+ * We split the string on common delimiters and check if at least 2
+ * tokens are standard date format tokens.
+ */
+const DATE_FORMAT_TOKENS = new Set(['yyyy', 'yy', 'mm', 'dd', 'd', 'm']);
+
+function isDateFormatPlaceholder(str: string): boolean {
+  if (!str || str.length < 4) return false;
+  const tokens = str.split(/[-/_\.\s]+/).filter(Boolean);
+  if (tokens.length < 2) return false;
+  let dateTokenCount = 0;
+  for (const token of tokens) {
+    if (DATE_FORMAT_TOKENS.has(token.toLowerCase())) {
+      dateTokenCount++;
+    }
+  }
+  return dateTokenCount >= 2;
+}
+
+/**
  * Check if an element is a date/time picker trigger — an input, button, or
  * div that opens a calendar when clicked. These produce DOM mutations
  * (calendar popup appearing) that would be incorrectly attributed to hover.
@@ -2207,7 +2491,17 @@ function isDateTriggerElement(el: Element): boolean {
   const ariaLabel = el.getAttribute('aria-label') || '';
   const combined = `${placeholder} ${name} ${id} ${className} ${ariaLabel}`;
 
-  return DATE_TRIGGER_KEYWORDS.test(combined);
+  if (DATE_TRIGGER_KEYWORDS.test(combined)) {
+    return true;
+  }
+
+  // Check for date-format placeholders (e.g. "yyyy-mm-dd", "mm/dd/yyyy")
+  // that don't contain date keywords but are clearly date picker inputs
+  if (isDateFormatPlaceholder(placeholder)) {
+    return true;
+  }
+
+  return false;
 }
 
 // ════════════════════════════════════════════════════════════════════════

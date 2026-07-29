@@ -21,6 +21,7 @@ import { detectInteractions } from '../classifier/interaction-detector';
 import { detectInteractionsV2 } from '../classifier/evidence/detector';
 import { compareClassifierOutputs, logComparisonResult } from '../classifier/evidence/ab-comparison';
 import { mergeV1V2, logMergeMetrics } from '../classifier/evidence/merge-layer';
+import { recognizeInteractions } from '../recorder/v2/interaction-recognizer';
 import { runPipeline } from '../recorder/pipeline/pipeline-runner';
 import { normalizeDateValue } from '../shared/date-normalizer';
 import { build as buildIRPlan } from '../generation/ir-bridge';
@@ -33,6 +34,7 @@ import { checkStaleness } from '../domain/execution-ir/staleness';
 import { IRExecutorImpl } from '../execution/ir-executor-impl';
 import { createExecutionRun } from '../domain/entities/execution-run';
 import type { DetectedInteraction } from '../classifier/interaction-types';
+import { reasonAboutInteractions } from '../classifier/semantic';
 import type { UnderstandingResult } from '../domain/entities/understanding-result';
 import type { DomContext } from '../recorder/recorded-event';
 import {
@@ -83,9 +85,15 @@ async function pingTabContentScript(tabId: number): Promise<boolean> {
  */
 async function injectContentScript(tabId: number): Promise<boolean> {
   try {
+    // Inject both content scripts — which one activates depends on the
+    // recorderEngine feature flag. The inactive one will no-op its capture
+    // handlers but still respond to PING so the SW knows the tab is healthy.
     await chrome.scripting.executeScript({
       target: { tabId, allFrames: true },
-      files: ['src/recorder/deterministic-recorder.ts'],
+      files: [
+        'src/recorder/deterministic-recorder.ts',
+        'src/recorder/v2/control-recorder.ts',
+      ],
     });
     return true;
   } catch {
@@ -184,10 +192,12 @@ async function handleStartRecording(): Promise<void> {
     await ensureContentScriptInjected(tab.id);
   }
 
-  // Update UI state
+  // Update UI state (preserve recorderEngine flag for Stage 2 feature flag)
+  const prevUiState = await StorageService.getUIState();
   const uiState: UIState = {
     recordingState: RecordingState.Recording,
     lastChanged: new Date().toISOString(),
+    recorderEngine: prevUiState.recorderEngine || 'legacy',
   };
   await StorageService.setUIState(uiState);
 
@@ -222,38 +232,90 @@ async function handleStopRecording(): Promise<void> {
     // Stable tiebreaker: lower eventId sorts first
     return a.eventId.localeCompare(b.eventId);
   });
-  const interactions = detectInteractions(events);
-  await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS, interactions);
 
-  // ── Evidence Engine V2 + Merge Layer ──
-  // V2 runs in parallel. The merge layer combines V2 (primary) with V1
-  // (fallback for events V2 couldn't confidently classify). The merged
-  // result is stored separately — V1 DETECTED_INTERACTIONS remains the
-  // production source of truth until the UI is switched to read merged.
+  // ── Classifier Selection (Stage 3 Feature Flag) ──
+  // When recorderEngine is 'control', use the new Control Model recognizer.
+  // When 'legacy' (default), use the existing V1 + V2 + merge pipeline.
+  const prevUiStateForEngine = await StorageService.getUIState();
+  const useControlEngine = prevUiStateForEngine.recorderEngine === 'control';
+
   let mergedInteractions: DetectedInteraction[] | null = null;
+
+  if (useControlEngine) {
+    // ── Control Model Recognizer (Stage 3) ──
+    try {
+      const controlInteractions = recognizeInteractions(events);
+      mergedInteractions = controlInteractions;
+      await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS, controlInteractions);
+      await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, controlInteractions);
+      console.info(`[Control Engine] Recognized ${controlInteractions.length} interactions from ${events.length} events`);
+    } catch (e) {
+      console.warn('[Control Engine] error during recognition:', e);
+      // Fallback to V1 classifier so the UI always has data
+      const interactions = detectInteractions(events);
+      mergedInteractions = interactions;
+      await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS, interactions);
+      await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, interactions);
+    }
+  } else {
+    // ── Legacy V1/V2/Merge Pipeline ──
+    const interactions = detectInteractions(events);
+    await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS, interactions);
+
+    // V2 runs in parallel. The merge layer combines V2 (primary) with V1
+    // (fallback for events V2 couldn't confidently classify).
+    try {
+      const v2Interactions = detectInteractionsV2(events);
+      await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_V2, v2Interactions);
+
+      // Dev-only: log V1 vs V2 comparison disagreements to console
+      const comparison = compareClassifierOutputs(
+        interactions as { type: string; eventIds: string[] }[],
+        v2Interactions as { type: string; eventIds: string[] }[],
+      );
+      logComparisonResult(comparison);
+
+      // ── Merge Layer: V2-primary with V1 event-segment fallback ──
+      const { interactions: merged, metrics: mergeMetrics } =
+        mergeV1V2(v2Interactions, interactions, events.length);
+      mergedInteractions = merged;
+      await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, merged);
+
+      // Dev-only: log merge metrics
+      logMergeMetrics(mergeMetrics);
+    } catch (e) {
+      console.warn('[Evidence Engine V2] error during detection:', e);
+      // Fallback: if V2 or merge fails, use V1 results so the UI always has data
+      mergedInteractions = interactions;
+      await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, interactions);
+    }
+  } // end of engine selection
+
+  // ── Stage 5: Semantic Reasoning Engine ──
+  // Transform the merged interaction stream into semantically correct
+  // interactions. Composite UI components (dropdowns, date pickers,
+  // autocomplete, navigation) are collapsed into single semantic
+  // interactions that represent what the user accomplished.
+  let semanticInteractions: DetectedInteraction[] = mergedInteractions!;
   try {
-    const v2Interactions = detectInteractionsV2(events);
-    await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_V2, v2Interactions);
-
-    // Dev-only: log V1 vs V2 comparison disagreements to console
-    const comparison = compareClassifierOutputs(
-      interactions as { type: string; eventIds: string[] }[],
-      v2Interactions as { type: string; eventIds: string[] }[],
-    );
-    logComparisonResult(comparison);
-
-    // ── Merge Layer: V2-primary with V1 event-segment fallback ──
-    const { interactions: merged, metrics: mergeMetrics } =
-      mergeV1V2(v2Interactions, interactions, events.length);
-    mergedInteractions = merged;
-    await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, merged);
-
-    // Dev-only: log merge metrics
-    logMergeMetrics(mergeMetrics);
+    const reasoningResult = reasonAboutInteractions(mergedInteractions!, events);
+    semanticInteractions = reasoningResult.interactions;
+    console.info('[Semantic Reasoner]', {
+      activated: reasoningResult.sessionsActivated,
+      completed: reasoningResult.sessionsCompleted,
+      cancelled: reasoningResult.sessionsCancelled,
+      absorbed: reasoningResult.interactionsAbsorbed,
+      passedThrough: reasoningResult.interactionsPassedThrough,
+      before: mergedInteractions!.length,
+      after: semanticInteractions.length,
+    });
+    // Store the semantically refined interactions as the merged result
+    // so downstream stages (pipeline, IR bridge) see the correct data.
+    mergedInteractions = semanticInteractions;
+    await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, semanticInteractions);
   } catch (e) {
-    console.warn('[Evidence Engine V2] error during detection:', e);
-    // Fallback: if V2 or merge fails, use V1 results so the UI always has data
-    await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, interactions);
+    console.warn('[Semantic Reasoner] error during reasoning:', e);
+    // Non-fatal — use the merged interactions as-is
   }
 
   // ── Recognition → Enrichment Pipeline (Phase 6) ──
@@ -268,7 +330,7 @@ async function handleStopRecording(): Promise<void> {
     const sessionId = `session-${Date.now()}`;
     const tab = await getActiveTab();
     const sourceUrl = tab?.url ?? undefined;
-    const pipelineResult = runPipeline(events, mergedInteractions ?? interactions, sessionId, sourceUrl);
+    const pipelineResult = runPipeline(events, mergedInteractions!, sessionId, sourceUrl, useControlEngine ? 'control' : 'legacy');
 
     await StorageService.setRaw(StorageKeys.DOMAIN_ENTITIES, {
       elements: pipelineResult.entities.elements,
@@ -326,7 +388,7 @@ async function handleStopRecording(): Promise<void> {
     const recordingContext = session.getRecordingContext();
     const irPlan = buildIRPlan({
       events,
-      interactions: mergedInteractions ?? interactions,
+      interactions: mergedInteractions,
       understanding,
       recordingContext: {
         startUrl: recordingContext?.startUrl ?? tab?.url ?? 'about:blank',
@@ -372,7 +434,7 @@ async function handleStopRecording(): Promise<void> {
       const persistenceResult = await persistSession(uowFactory, {
         understanding: understandingResult,
         events,
-        interactions: mergedInteractions ?? interactions,
+        interactions: mergedInteractions,
         url: (await getActiveTab())?.url ?? '',
         irPlan,
         projectId: draft?.projectId ?? null,
@@ -392,7 +454,7 @@ async function handleStopRecording(): Promise<void> {
 
       // ── Phase 11: Cross-Session Element Healing ──
       try {
-        const domainEntities = adaptToDomainEntities(events, mergedInteractions ?? interactions, (await getActiveTab())?.url ?? '');
+        const domainEntities = adaptToDomainEntities(events, mergedInteractions, (await getActiveTab())?.url ?? '');
         if (domainEntities.elements.length > 0 && persistenceResult.projectId) {
           const healingResult = await healFromRecording(
             persistenceResult.projectId,
@@ -417,10 +479,12 @@ async function handleStopRecording(): Promise<void> {
     // Non-fatal — recording completes, artifacts are in chrome.storage.local
   }
 
-  // Update UI state
+  // Update UI state (preserve recorderEngine flag)
+  const prevUiState = await StorageService.getUIState();
   const uiState: UIState = {
     recordingState: RecordingState.Stopped,
     lastChanged: new Date().toISOString(),
+    recorderEngine: prevUiState.recorderEngine || 'legacy',
   };
   await StorageService.setUIState(uiState);
 

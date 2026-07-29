@@ -38,12 +38,25 @@ function getActionText(el: HTMLElement): string {
 }
 
 function hasEngineBadge(el: HTMLElement): boolean {
-  return !!el.querySelector('.interaction-engine-badge');
+  const badge = el.querySelector('.interaction-engine-badge');
+  if (badge) return true;
+  // Engine info now lives in the developer details section
+  const details = el.querySelector('.interaction-details');
+  if (details && (details.textContent || '').includes('Engine:')) return true;
+  return false;
 }
 
 function getEngineBadgeText(el: HTMLElement): string {
   const badge = el.querySelector('.interaction-engine-badge');
-  return badge?.textContent || '';
+  if (badge) return badge.textContent || '';
+  // Engine badge moved to developer details section
+  const details = el.querySelector('.interaction-details');
+  if (details) {
+    const text = details.textContent || '';
+    const match = text.match(/Engine:\s*(\S+)/);
+    if (match) return match[1];
+  }
+  return '';
 }
 
 // ── Tests ────────────────────────────────────────────────────────────────────
@@ -142,6 +155,15 @@ describe('Action-Oriented Interaction Phrasing', () => {
         metadata: { dateValue: 'August 15' },
       }));
       expect(getActionText(el)).toBe('Select date "August 15"');
+    });
+
+    it('strips date-format placeholder from field label', () => {
+      const el = createDetectedInteractionElement(makeInteraction({
+        type: 'DatePicker',
+        target: { ...baseTarget, accessibleName: 'yyyy-dd-mm', tag: 'INPUT' },
+        metadata: { dateValue: '2023-10-21' },
+      }));
+      expect(getActionText(el)).toBe('Select date "2023-10-21"');
     });
   });
 

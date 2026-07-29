@@ -375,13 +375,16 @@ export class CssClassnameProvider implements EvidenceProvider {
     // Generic dropdown patterns — catches custom dropdowns with semantic class names
     // e.g. "dropdown-trigger", "dropdown-menu", "custom-select", "select-option",
     // "listbox-option", "combo-input"
+    // Also catches OrangeHRM (OXD) div-based dropdowns: "oxd-select-text",
+    // "oxd-select-wrapper", "oxd-select-text-input"
     if (
       lower.includes('dropdown-trigger') || lower.includes('dropdown-toggle') ||
       lower.includes('dropdown-menu') || lower.includes('dropdown-list') ||
       lower.includes('dropdown-item') || lower.includes('dropdown-option') ||
       lower === 'dropdown' || lower === 'listbox' ||
       lower.includes('select-option') || lower.includes('select-item') ||
-      lower.includes('list-option') || lower.includes('combo-box')
+      lower.includes('list-option') || lower.includes('combo-box') ||
+      lower.includes('oxd-select') || lower.includes('oxd-dropdown')
     ) {
       return { type: 'CustomDropdown' as InteractionType, confidence: 0.65, weight: 0.6, framework: 'Generic' };
     }

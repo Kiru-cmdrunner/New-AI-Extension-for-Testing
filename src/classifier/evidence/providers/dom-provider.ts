@@ -346,7 +346,20 @@ export class DomProvider implements EvidenceProvider {
     // trigger that happens to use an <input>, not a pure text field.
     // The AriaProvider will classify it as CustomDropdown.
     // Also skip if it has a datalist (native autocomplete — handled above).
-    if (!hasComboboxSemantics(domCtx, event) && !domCtx?.listId && isTextEntryElement(domCtx, tag, cssSelector)) {
+    // Also skip if this is a dateSelect event or has dateType metadata —
+    // it's a date picker text input, handled by the DatePicker evidence above.
+    // Also skip if the element looks like a date trigger (date-format placeholder
+    // like "yyyy-mm-dd" or has a date-picker CSS class like "oxd-date-input").
+    // Without this, a click on the date input produces TextEntry evidence at
+    // confidence 0.85 which outvotes DatePicker evidence.
+    if (
+      event.eventType !== 'dateSelect' &&
+      !domCtx?.dateType &&
+      !hasComboboxSemantics(domCtx, event) &&
+      !domCtx?.listId &&
+      !isDateTriggerSignature(event) &&
+      isTextEntryElement(domCtx, tag, cssSelector)
+    ) {
       evidence.push({
         provider: this.name,
         suggestedType: 'TextEntry' as InteractionType,
@@ -377,7 +390,13 @@ export class DomProvider implements EvidenceProvider {
     const hasFocus = buffer.events.some(e => e.eventType === 'focus');
     const hasBlur = buffer.events.some(e => e.eventType === 'blur');
 
-    if (hasFocus && hasBlur) {
+    // If the buffer contains a dateSelect event or date metadata, suppress
+    // TextEntry reinforcement — the interaction is a date picker, not text entry.
+    const hasDateSelect = buffer.events.some(e =>
+      e.eventType === 'dateSelect' || e.domContext?.dateType
+    );
+
+    if (hasFocus && hasBlur && !hasDateSelect) {
       const lastFocus = [...buffer.events].reverse().find(e => e.eventType === 'focus');
       if (lastFocus && lastFocus.eventType !== 'navigation') {
         const tag = lastFocus.target.tag.toUpperCase();
@@ -660,6 +679,52 @@ function hasComboboxSemantics(
   // CSS class-based autocomplete/typeahead detection
   const className = (event.target.className || '').toLowerCase();
   if (className.includes('autocomplete') || className.includes('typeahead')) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Check if an event's target looks like a date picker trigger — a text input
+ * that opens a calendar when clicked. This catches the case where a click on
+ * a date input would otherwise be classified as TextEntry (because it's a
+ * text-type input) instead of DatePicker.
+ *
+ * Signals:
+ *   - Placeholder matches date format pattern (yyyy-mm-dd, mm/dd/yyyy, etc.)
+ *   - CSS class contains date-picker patterns (oxd-date-input, datepicker, etc.)
+ *   - ARIA label contains date keywords
+ */
+function isDateTriggerSignature(event: RecordedEvent): boolean {
+  if (event.eventType === 'navigation') return false;
+  const target = event.target;
+
+  // CSS class patterns
+  const className = (target.className || '').toLowerCase();
+  if (/oxd-date-input|oxd-date-picker|date.?picker|datepicker/i.test(className)) {
+    return true;
+  }
+
+  // Date-format placeholder (yyyy-mm-dd, mm/dd/yyyy, dd-mm-yyyy, etc.)
+  const placeholder = (target.placeholder || '').toLowerCase();
+  if (placeholder) {
+    const tokens = placeholder.split(/[-/_\.\s]+/).filter(Boolean);
+    if (tokens.length >= 2) {
+      const dateTokens = new Set(['yyyy', 'yy', 'mm', 'dd', 'd', 'm']);
+      let count = 0;
+      for (const t of tokens) {
+        if (dateTokens.has(t)) count++;
+      }
+      if (count >= 2) return true;
+    }
+  }
+
+  // ARIA label or accessible name with date keywords
+  const ariaLabel = (target.ariaLabel || '').toLowerCase();
+  const accName = (target.accessibleName || '').toLowerCase();
+  const nameStr = `${ariaLabel} ${accName}`;
+  if (/\b(date.?of.?birth|birthday|date|calendar)\b/i.test(nameStr)) {
     return true;
   }
 

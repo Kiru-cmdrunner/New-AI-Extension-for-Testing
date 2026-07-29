@@ -222,13 +222,37 @@ function formatInteractionMetadata(interaction: DetectedInteraction): string {
  * "Enter your mobile phone number" or "Please enter your email". Since the
  * action description already starts with "Enter ...", we strip those prefixes
  * to avoid doubled verbs like "Enter Enter your mobile phone number".
+ *
+ * Additionally, date-format placeholders like "yyyy-dd-mm" are NOT useful
+ * labels — they're the input's placeholder format hint, not the field name.
+ * We strip them entirely so the description doesn't read e.g.
+ * "Enter yyyy-dd-mm "2023-01-15"".
  */
+const DATE_FORMAT_TOKENS = new Set(['yyyy', 'yy', 'mm', 'dd', 'd', 'm']);
+function isDateFormatPlaceholder(str: string): boolean {
+  if (!str || str.length < 4) return false;
+  const tokens = str.split(/[-/_\.\s]+/).filter(Boolean);
+  if (tokens.length < 2) return false;
+  let dateTokenCount = 0;
+  for (const token of tokens) {
+    if (DATE_FORMAT_TOKENS.has(token.toLowerCase())) {
+      dateTokenCount++;
+    }
+  }
+  return dateTokenCount >= 2;
+}
+
 function cleanFieldLabel(name: string): string {
-  return name
+  let cleaned = name
     .replace(/^(please\s+)?enter\s+(your\s+)?/i, '')
     .replace(/^(please\s+)?type\s+(your\s+)?/i, '')
     .replace(/^(please\s+)?input\s+(your\s+)?/i, '')
     .trim();
+  // Date-format placeholders are not real field labels
+  if (isDateFormatPlaceholder(cleaned)) {
+    cleaned = '';
+  }
+  return cleaned;
 }
 
 /**
@@ -281,6 +305,31 @@ export function actionDescription(interaction: DetectedInteraction): string {
 
   let description: string;
 
+  // ── Semantic Action Override ──
+  // When the semantic reasoner enriches an interaction with a semanticAction,
+  // it overrides the normal type-based description to describe what the user
+  // accomplished rather than which event fired.
+  if (m.semanticAction === 'configure' && m.configuredFields) {
+    const fields = Object.entries(m.configuredFields)
+      .map(([field, value]) => `${field}=${value}`)
+      .join(', ');
+    const label = m.panelLabel || targetName || 'Options';
+    description = fields
+      ? `Configure ${label}: ${fields}`
+      : `Configure ${label}`;
+    return description;
+  }
+
+  // PageNavigation with formSubmitAction: describe as authentication
+  if (m.semanticAction === 'authenticate') {
+    const action = m.formSubmitAction || 'Login';
+    if (m.url) {
+      description = `Log in (${action}) → ${urlToDisplay(m.url)}`;
+    } else {
+      description = `Log in (${action})`;
+    }
+    return description;
+  }
   switch (type) {
     case 'PageNavigation':
       description = m.url ? `Navigate to ${urlToDisplay(m.url)}` : `Navigate${targetName ? ` "${targetName}"` : ''}`;
@@ -556,6 +605,12 @@ export function actionDescription(interaction: DetectedInteraction): string {
 
 /**
  * Create a DOM element for a DetectedInteraction.
+ *
+ * Card structure:
+ *   [Summary]  (always visible)
+ *     type badge · interaction ID · action description · metadata
+ *   [▶ Details] (collapsed by default)
+ *     raw event types · confidence · engine badge
  */
 export function createDetectedInteractionElement(interaction: DetectedInteraction): HTMLElement {
   const el = document.createElement('div');
@@ -566,44 +621,30 @@ export function createDetectedInteractionElement(interaction: DetectedInteractio
   // Border color by type
   el.style.borderLeft = `3px solid ${display.color}`;
 
+  // ── Summary section (always visible) ───────────────────────────────────
+
+  const summary = document.createElement('div');
+  summary.className = 'interaction-summary';
+
   // Type icon + label badge
   const badge = document.createElement('span');
   badge.className = 'timeline-event__type interaction-badge';
   badge.textContent = `${display.icon} ${display.label}`;
   badge.style.backgroundColor = `${display.color}15`;
   badge.style.color = display.color;
-  el.appendChild(badge);
+  summary.appendChild(badge);
 
   // Interaction ID
   const idBadge = document.createElement('span');
   idBadge.className = 'timeline-event__id';
   idBadge.textContent = interaction.interactionId;
-  el.appendChild(idBadge);
-
-  // Confidence badge
-  if (interaction.confidence < 1.0) {
-    const confBadge = document.createElement('span');
-    confBadge.className = 'timeline-event__id';
-    confBadge.textContent = `${(interaction.confidence * 100).toFixed(0)}%`;
-    confBadge.style.color = '#9ca3af';
-    el.appendChild(confBadge);
-  }
-
-  // Engine badge — shows which engine classified this interaction
-  if (interaction.engine) {
-    const engineBadge = document.createElement('span');
-    engineBadge.className = 'interaction-engine-badge';
-    engineBadge.textContent = interaction.engine === 'v2' ? 'V2' : 'V1';
-    engineBadge.style.backgroundColor = interaction.engine === 'v2' ? '#10b98115' : '#f59e0b15';
-    engineBadge.style.color = interaction.engine === 'v2' ? '#10b981' : '#f59e0b';
-    el.appendChild(engineBadge);
-  }
+  summary.appendChild(idBadge);
 
   // Action-oriented description
   const title = document.createElement('p');
   title.className = 'timeline-event__title interaction-action-text';
   title.textContent = actionDescription(interaction);
-  el.appendChild(title);
+  summary.appendChild(title);
 
   // Additional metadata (non-value metadata)
   const metaText = formatInteractionMetadata(interaction);
@@ -611,14 +652,50 @@ export function createDetectedInteractionElement(interaction: DetectedInteractio
     const meta = document.createElement('p');
     meta.className = 'timeline-event__value';
     meta.textContent = metaText;
-    el.appendChild(meta);
+    summary.appendChild(meta);
   }
+
+  el.appendChild(summary);
+
+  // ── Developer details toggle (collapsed by default) ────────────────────
+
+  const detailsToggle = document.createElement('button');
+  detailsToggle.className = 'collapsible-toggle interaction-details-toggle';
+  detailsToggle.textContent = '▶ Details';
+
+  const detailsContent = document.createElement('div');
+  detailsContent.className = 'interaction-details';
+  detailsContent.hidden = true;
 
   // Raw event types
   const eventsEl = document.createElement('p');
   eventsEl.className = 'element-identity__chips';
-  eventsEl.textContent = `[${interaction.rawEventTypes.join(', ')}]`;
-  el.appendChild(eventsEl);
+  eventsEl.textContent = `Events: [${interaction.rawEventTypes.join(', ')}]`;
+  detailsContent.appendChild(eventsEl);
+
+  // Confidence badge — now in developer details only
+  if (interaction.confidence < 1.0) {
+    const confEl = document.createElement('p');
+    confEl.className = 'timeline-event__value';
+    confEl.textContent = `Confidence: ${(interaction.confidence * 100).toFixed(0)}%`;
+    detailsContent.appendChild(confEl);
+  }
+
+  // Engine badge — also in developer details
+  if (interaction.engine) {
+    const engineEl = document.createElement('p');
+    engineEl.className = 'timeline-event__value';
+    engineEl.textContent = `Engine: ${interaction.engine === 'v2' ? 'V2' : interaction.engine === 'control' ? 'Control' : 'V1'}`;
+    detailsContent.appendChild(engineEl);
+  }
+
+  detailsToggle.addEventListener('click', () => {
+    detailsContent.hidden = !detailsContent.hidden;
+    detailsToggle.textContent = detailsContent.hidden ? '▶ Details' : '▼ Details';
+  });
+
+  el.appendChild(detailsToggle);
+  el.appendChild(detailsContent);
 
   return el;
 }

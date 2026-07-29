@@ -41,9 +41,17 @@ const STANDALONE_EVENT_TYPES = new Set([
 // Interaction Engine
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Composite control timeout — buffers older than this without completion
+// are committed as-is to prevent infinite holding.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const COMPOSITE_TIMEOUT_MS = 10_000;
+
 export class InteractionEngine {
   private providers: EvidenceProvider[];
   private currentBuffer: InteractionBuffer | null = null;
+  private pendingBuffers: InteractionBuffer[] = [];
   private interactions: DetectedInteraction[] = [];
   private eventIdCounter = 0;
 
@@ -58,8 +66,153 @@ export class InteractionEngine {
     for (const event of events) {
       this.processEvent(event);
     }
+    this.flushPending();
     this.flush();
     return this.interactions;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Composite control lifecycle — pending buffer management
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Check if a buffer represents a composite control trigger that is waiting
+   * for a completion event (option click, date cell click, suggestion click).
+   *
+   * A buffer is "pending composite" if it contains trigger evidence but NO
+   * completion evidence yet. The trigger types we recognize:
+   *   - Dropdown trigger (combobox, listbox, aria-haspopup, oxd-select)
+   *   - Date picker trigger (date input, calendar button)
+   *   - Autocomplete trigger (typeahead/autocomplete input with focus)
+   */
+  private isPendingComposite(buffer: InteractionBuffer): boolean {
+    const events = buffer.events.filter(e => e.eventType !== 'navigation');
+    if (events.length === 0) return false;
+
+    // Check if any event in the buffer is a composite trigger
+    let hasTrigger = false;
+    let hasCompletion = false;
+
+    for (const e of events) {
+      const role = (e.target.ariaRole || '').toLowerCase();
+      const className = (e.target.className || '').toLowerCase();
+      const domCtx = (e as ElementRecordedEvent).domContext;
+      const cssSelector = e.target.cssSelector || '';
+
+      // Dropdown trigger detection
+      if (isDropdownTrigger(role, className, domCtx, e)) {
+        hasTrigger = true;
+      }
+
+      // Date picker trigger detection — ONLY for custom date pickers
+      // (text inputs with date-format classes). Native date inputs
+      // (inputType=date/time/etc.) handle their own lifecycle — the
+      // click with a value IS the completion. No pending needed.
+      const isNativeDate = domCtx?.inputType &&
+        ['date', 'datetime-local', 'time', 'month', 'week'].includes(domCtx.inputType);
+      if (!isNativeDate && isCalendarTrigger(role, className, domCtx, cssSelector)) {
+        hasTrigger = true;
+      }
+
+      // Autocomplete trigger detection
+      if (e.eventType === 'focus' && (
+        className.includes('autocomplete') || className.includes('typeahead') ||
+        domCtx?.ariaAutoComplete
+      )) {
+        hasTrigger = true;
+      }
+
+      // Completion signals — if we see these, the interaction is complete
+      // and should NOT be held pending
+      if (isDropdownOption(role, className)) {
+        hasCompletion = true; // option click = dropdown complete
+      }
+      if (isCalendarCell(role, className)) {
+        hasCompletion = true; // calendar cell = date selection
+      }
+      if (e.eventType === 'dateSelect') {
+        hasCompletion = true; // dateSelect event = date committed
+      }
+      if (e.eventType === 'change' && hasTrigger) {
+        hasCompletion = true; // change after trigger = value committed
+      }
+    }
+
+    // Pending composite = trigger detected but no completion yet
+    return hasTrigger && !hasCompletion;
+  }
+
+  /**
+   * Check if the current buffer is a composite control trigger waiting for
+   * completion. If so, move it to pendingBuffers instead of flushing.
+   */
+  private flushOrDefer(): void {
+    if (!this.currentBuffer) return;
+
+    if (this.isPendingComposite(this.currentBuffer)) {
+      // Move to pending — keep waiting for the completion event
+      this.pendingBuffers.push(this.currentBuffer);
+    } else {
+      // Not a pending composite — commit immediately as before
+      this.commitBuffer(this.currentBuffer);
+    }
+    this.currentBuffer = null;
+  }
+
+  /**
+   * Check if a new event is related to ANY pending buffer. If so, restore
+   * that pending buffer as the current buffer and add the event to it.
+   * Returns true if the event was consumed by a pending buffer.
+   */
+  private checkPendingBuffers(event: RecordedEvent): boolean {
+    if (this.pendingBuffers.length === 0) return false;
+
+    for (let i = this.pendingBuffers.length - 1; i >= 0; i--) {
+      const pending = this.pendingBuffers[i];
+      if (this.isRelatedToBuffer(event, pending)) {
+        // Remove from pending and restore as current buffer
+        this.pendingBuffers.splice(i, 1);
+        // Merge: if there's already a current buffer, merge both into pending
+        if (this.currentBuffer) {
+          for (const e of this.currentBuffer.events) {
+            pending.events.push(e);
+          }
+          pending.lastEventTime = this.currentBuffer.lastEventTime;
+        }
+        this.currentBuffer = pending;
+        this.addToBuffer(event, this.currentBuffer);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Commit any pending buffers that have exceeded the stale timeout.
+   */
+  private cleanupStalePending(currentTimestamp: string): void {
+    if (this.pendingBuffers.length === 0) return;
+
+    const now = new Date(currentTimestamp).getTime();
+    this.pendingBuffers = this.pendingBuffers.filter(buffer => {
+      const age = now - new Date(buffer.startTime).getTime();
+      if (age > COMPOSITE_TIMEOUT_MS) {
+        // Stale — commit as-is
+        this.commitBuffer(buffer);
+        return false; // remove from pending
+      }
+      return true; // keep pending
+    });
+  }
+
+  /**
+   * Flush all pending buffers at end of stream.
+   */
+  private flushPending(): void {
+    for (const buffer of this.pendingBuffers) {
+      this.commitBuffer(buffer);
+    }
+    this.pendingBuffers = [];
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -67,8 +220,12 @@ export class InteractionEngine {
   // ─────────────────────────────────────────────────────────────────────────
 
   private processEvent(event: RecordedEvent): void {
+    // Clean up stale pending composite buffers
+    this.cleanupStalePending(event.timestamp);
+
     // Navigation events are always standalone interactions
     if (event.eventType === 'navigation') {
+      this.flushPending();
       this.flush();
       this.emitNavigationInteraction(event);
       return;
@@ -114,9 +271,18 @@ export class InteractionEngine {
       this.flush();
     }
 
-    // Standalone events get their own interaction immediately
+    // ── Pending composite check ──
+    // If this event completes a pending composite control (dropdown option,
+    // date cell, suggestion), restore that buffer and add this event to it.
+    if (this.checkPendingBuffers(event)) {
+      return;
+    }
+
+    // Standalone events: if the current buffer is a pending composite control
+    // (e.g. dropdown trigger waiting for option click), defer it instead of
+    // flushing. Otherwise flush as normal.
     if (STANDALONE_EVENT_TYPES.has(event.eventType)) {
-      this.flush();
+      this.flushOrDefer();
       this.processStandaloneEvent(event, key);
       return;
     }
@@ -131,8 +297,8 @@ export class InteractionEngine {
         this.addToBuffer(event, this.currentBuffer);
         return;
       } else {
-        // Different, unrelated element — commit current buffer, start new one
-        this.flush();
+        // Different, unrelated element — defer if composite, else commit
+        this.flushOrDefer();
       }
     }
 
@@ -469,7 +635,9 @@ function isCalendarTrigger(
   if (role === 'gridcell' || role === 'row') return false; // cells are not triggers
 
   // Class patterns common in date picker libraries
-  if (/date.?picker|calendar|datepicker/i.test(className)) return true;
+  // Includes OXD pattern (oxd-date-input) which doesn't contain "datepicker"
+  // or "calendar" but is a date picker trigger
+  if (/date.?picker|calendar|datepicker|oxd-date-input|oxd-date-picker/i.test(className)) return true;
 
   // Fallback: cssSelector for date inputs without domContext
   if (cssSelector && /type=["']?(date|datetime-local|time|month|week)["']?/i.test(cssSelector)) {

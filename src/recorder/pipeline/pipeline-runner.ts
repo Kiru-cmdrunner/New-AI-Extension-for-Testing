@@ -16,6 +16,7 @@
  */
 
 import { adaptToDomainEntities } from './domain-adapter';
+import { adaptToDomainEntitiesV2 } from '../v2/domain-adapter-v2';
 import type { DomainEntities } from './domain-adapter';
 import { processInteraction, type OrchestratorInput } from '../recognition/orchestrator';
 import type { ElementRoleInfo } from '../recognition/structural-recognizer';
@@ -167,6 +168,7 @@ function runRecognition(
  * @param interactions - Detected interactions from the V1/V2 classifier.
  * @param sessionId - Session identifier for the fragment.
  * @param sourceUrl - URL of the recorded page.
+ * @param engine - 'control' to use interaction-centric domain adapter, 'legacy' for event-centric
  * @returns Pipeline results including entities, components, and fragment.
  */
 export function runPipeline(
@@ -174,9 +176,13 @@ export function runPipeline(
   interactions: DetectedInteraction[],
   sessionId: string,
   sourceUrl?: string,
+  engine?: 'legacy' | 'control',
 ): PipelineResult {
   // ── Step 1: Domain Adapter ──
-  const entities = adaptToDomainEntities(events, interactions, sourceUrl);
+  const entities =
+    engine === 'control'
+      ? adaptToDomainEntitiesV2(events, interactions, sourceUrl ?? 'about:blank')
+      : adaptToDomainEntities(events, interactions, sourceUrl);
 
   // ── Step 2: Recognition ──
   const components = runRecognition(entities);

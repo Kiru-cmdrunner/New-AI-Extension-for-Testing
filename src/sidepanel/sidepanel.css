@@ -782,6 +782,24 @@ body {
   color: var(--color-text);
 }
 
+/* ── Interaction Card Summary + Developer Details ── */
+.interaction-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  width: 100%;
+}
+
+.interaction-details {
+  margin-top: 6px;
+  width: 100%;
+}
+
+.interaction-details-toggle {
+  margin-top: 2px;
+}
+
 /* ── Action-Oriented Interaction Description ── */
 .interaction-action-text {
   font-size: 13px;

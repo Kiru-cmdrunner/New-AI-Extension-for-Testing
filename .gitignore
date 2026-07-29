@@ -16,3 +16,11 @@ sidepanel.png
 # Temporary/debug artifacts
 tmp/
 *.py
+
+# Build/runtime artifacts (dev-container only)
+$f
+download/
+downloads/
+chrome/
+extension-zip/
+tmp-build/
