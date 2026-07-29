@@ -51,20 +51,34 @@ const PANEL_TRIGGER_CLASSES = [
  * Check if an interaction activates a MultiConfig session.
  *
  * A MultiConfig session activates when a click opens a panel/popover/drawer
- * that contains multiple interactive controls. In the real-time stream, we
- * detect this via:
- *   1. Click target has panel-trigger classes
- *   2. Click target has aria-haspopup and aria-expanded (combobox/menu button)
- *   3. Click target has surface type popover/drawer
- *   4. Heuristic: click on element with aria-expanded=true
+ * that contains multiple interactive controls. Detection methods in priority order:
+ *   1. Surface evidence: click caused a surface (popover, drawer, menu) to appear
+ *      — detected via DomContext.surfaceType propagated to metadata.surfaceContext
+ *   2. Known panel trigger CSS classes
+ *   3. Element with aria-haspopup + panel-like role (combobox/button/menuitem)
  */
 export function isMultiConfigActivation(interaction: DetectedInteraction): boolean {
   if (interaction.type !== 'Click') return false;
 
-  // Pattern 1: Known panel trigger classes
+  // Pattern 1 (NEW): Surface-anchored activation — the most reliable signal.
+  // If this click caused a surface (popover, drawer, menu) to appear, activate
+  // a multiConfig session. This is framework-agnostic: it doesn't depend on
+  // CSS class naming conventions.
+  const surfaceCtx = interaction.metadata.surfaceContext;
+  if (surfaceCtx?.openedByThisInteraction) {
+    // popover and drawer are composite panels; menu may be a simple dropdown
+    // (let the dropdown session handle those). We activate multiConfig for
+    // surfaces that typically contain multiple fields.
+    if (surfaceCtx.type === 'popover' || surfaceCtx.type === 'drawer') {
+      return true;
+    }
+  }
+
+  // Pattern 2: Known panel trigger classes (fallback for frameworks without
+  // surface detection — older content script versions)
   if (hasClassPattern(interaction, PANEL_TRIGGER_CLASSES)) return true;
 
-  // Pattern 2: Element with aria-haspopup + panel-like role
+  // Pattern 3: Element with aria-haspopup + panel-like role
   const target = interaction.target;
   if (target) {
     const role = target.ariaRole ?? '';
