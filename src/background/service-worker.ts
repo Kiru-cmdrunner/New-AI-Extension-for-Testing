@@ -1,21 +1,21 @@
 /**
- * Background Service Worker — Phase 1 Deterministic Recorder
+ * Background Service Worker — Component Runtime Architecture
  *
  * Responsibilities:
  *   1. Extension lifecycle (side panel action)
- *   2. Message routing: START_RECORDING, STOP_RECORDING, RECORDED_EVENT
+ *   2. Message routing: START_RECORDING, STOP_RECORDING, OBSERVED_EVENT
  *   3. Navigation capture via webNavigation API
- *   4. Session management (start/stop/persist/restore)
+ *   4. Session management via Component Runtime
  *
- * Active classification: V1 (rule-based) + V2 (evidence engine) in parallel,
- * with merge layer combining results.
+ * Active classification: Component Runtime with lifecycle-based definitions.
+ * Events from the content script are processed through the Component Runtime
+ * engine which produces ComponentInteractions. These are filtered and mapped
+ * to IR actions by the presentation layer, then passed to the generation
+ * pipeline (IR Bridge → Playwright code generator → Repository V2).
  *
- * Archived (see legacy/ directory):
- *   - Per-type content scripts (click, hover, select, datepicker, etc.)
- *   - Pipeline V2 (boundary detector, state diff, pattern registry, etc.)
+ * Architecture: .drytis/specs/m0a-architecture-validation.md
  */
 
-import { RecordingSession } from '../recorder/recording-session';
 import { StorageService } from '../storage/storage-service';
 import { detectInteractions } from '../classifier/interaction-detector';
 import { detectInteractionsV2 } from '../classifier/evidence/detector';
@@ -36,26 +36,39 @@ import { createExecutionRun } from '../domain/entities/execution-run';
 import type { DetectedInteraction } from '../classifier/interaction-types';
 import { reasonAboutInteractions } from '../classifier/semantic';
 import type { UnderstandingResult } from '../domain/entities/understanding-result';
-import type { DomContext } from '../recorder/recorded-event';
 import {
   RecordingState,
   StorageKeys,
   type UIState,
   type AppMessage,
 } from '../shared/types';
+import type { ObservedEvent, ComponentInteraction } from '../shared/component-types';
+import {
+  initRecording,
+  stopRecording,
+  processObservedEvent,
+  getLiveInteractions,
+  restoreFromStorage,
+  resetState,
+  LIVE_INTERACTIONS_KEY,
+} from '../runtime/sw-integration';
+import {
+  filterProductionInteractions,
+  toIRActions,
+} from '../presentation/output-adapter';
 
 // ── Singletons ──────────────────────────────────────────────────────────
 
-const session = new RecordingSession();
-
 let sessionRestored = false;
+let recordingStartUrl = '';
+let recordingStartTitle = '';
 
 // ── MV3 Recovery: restore session on SW startup ─────────────────────────
 
 async function ensureSessionRestored(): Promise<void> {
   if (sessionRestored) return;
   sessionRestored = true;
-  await session.restoreFromStorage();
+  await restoreFromStorage();
 }
 
 ensureSessionRestored();
@@ -82,18 +95,21 @@ async function pingTabContentScript(tabId: number): Promise<boolean> {
  * Programmatically inject the content script into a tab.
  * Used when the declarative content script is missing (e.g., the tab was
  * already open when the extension was reloaded/updated).
+ *
+ * The content script filename includes a Vite content hash that changes
+ * on every build (e.g. assets/recorder-entry.ts-CP_NOlxs.js). We cannot
+ * hardcode the path — we must read it from the manifest at runtime.
  */
 async function injectContentScript(tabId: number): Promise<boolean> {
   try {
-    // Inject both content scripts — which one activates depends on the
-    // recorderEngine feature flag. The inactive one will no-op its capture
-    // handlers but still respond to PING so the SW knows the tab is healthy.
+    // Read the content script path from the manifest (handles Vite hashing)
+    const manifest = chrome.runtime.getManifest();
+    const csEntry = manifest.content_scripts?.[0]?.js?.[0];
+    if (!csEntry) return false;
+
     await chrome.scripting.executeScript({
       target: { tabId, allFrames: true },
-      files: [
-        'src/recorder/deterministic-recorder.ts',
-        'src/recorder/v2/control-recorder.ts',
-      ],
+      files: [csEntry],
     });
     return true;
   } catch {
@@ -126,7 +142,7 @@ async function ensureContentScriptInjected(tabId: number): Promise<boolean> {
   await new Promise((r) => setTimeout(r, 100));
 
   // Re-sync recording state if currently recording
-  if (session.isRecording) {
+  if (await isRecordingActive()) {
     try {
       await chrome.tabs.sendMessage(tabId, { type: 'START_RECORDING' });
     } catch { /* ignore */ }
@@ -136,9 +152,16 @@ async function ensureContentScriptInjected(tabId: number): Promise<boolean> {
   return pingTabContentScript(tabId);
 }
 
+/** Consecutive health check failures before reporting "not responding". */
+const HEALTH_MAX_FAILURES = 3;
+let consecutiveHealthFailures = 0;
+
 /**
  * Check content script health on the active tab and report status.
  * Called when recording starts and periodically while recording.
+ *
+ * Debounce: a single transient ping failure does NOT trigger "Tab not
+ * responding". Only after HEALTH_MAX_FAILURES consecutive failures.
  */
 async function checkActiveTabHealth(): Promise<void> {
   const tab = await getActiveTab();
@@ -146,14 +169,22 @@ async function checkActiveTabHealth(): Promise<void> {
 
   const alive = await ensureContentScriptInjected(tab.id);
 
-  // Broadcast status to the side panel
-  broadcastToPanel({
-    type: 'CONTENT_SCRIPT_STATUS',
-    tabId: tab.id,
-    alive,
-    recording: session.isRecording,
-    url: tab.url ?? '',
-  });
+  if (alive) {
+    consecutiveHealthFailures = 0;
+  } else {
+    consecutiveHealthFailures++;
+  }
+
+  // Only broadcast "not responding" after sustained failures
+  if (alive || consecutiveHealthFailures >= HEALTH_MAX_FAILURES) {
+    broadcastToPanel({
+      type: 'CONTENT_SCRIPT_STATUS',
+      tabId: tab.id,
+      alive,
+      recording: await isRecordingActive(),
+      url: tab.url ?? '',
+    });
+  }
 }
 
 // ── Tab helpers ─────────────────────────────────────────────────────────
@@ -175,15 +206,24 @@ async function handleStartRecording(): Promise<void> {
   const tab = await getActiveTab();
   const startUrl = tab?.url ?? '';
   const startTitle = tab?.title ?? '';
+  recordingStartUrl = startUrl;
+  recordingStartTitle = startTitle;
 
-  // Clear previous session and start fresh
-  session.clear();
-  session.start(startUrl, startTitle);
+  // Reset Component Runtime for a fresh recording session
+  resetState();
+  initRecording();
 
-  // Record initial navigation (the page recording started on)
-  if (startUrl) {
-    session.addNavigation(startUrl, startTitle);
-  }
+  // Persist recording context (start URL + title) so the side panel
+  // can display the current page URL immediately.
+  try {
+    await chrome.storage.local.set({
+      [StorageKeys.SESSION_CONTEXT]: {
+        startUrl,
+        startTitle,
+        capturedAt: new Date().toISOString(),
+      },
+    });
+  } catch { /* non-fatal */ }
 
   // Ensure content script is injected in the active tab
   // (Critical: if the extension was reloaded, the content script may be
@@ -211,13 +251,14 @@ async function handleStartRecording(): Promise<void> {
 async function handleStopRecording(): Promise<void> {
   await ensureSessionRestored();
 
-  session.stop();
+  // Flush runtime and get all interactions
+  const allInteractions = stopRecording();
 
-  // Produce and persist ReplayJson
-  const replayJson = session.toReplayJson();
-  await StorageService.setRaw(StorageKeys.REPLAY_JSON, replayJson);
+  // Filter to production interactions
+  const productionInteractions = filterProductionInteractions(allInteractions);
 
-  // Produce and persist DetectedInteractions (existing classifier — production)
+  // Store interactions for UI display
+  await StorageService.setRaw(LIVE_INTERACTIONS_KEY, allInteractions);
 
   // Sort events by timestamp before classification to ensure correct
   // chronological ordering across frames. With all_frames:true, events
@@ -366,33 +407,16 @@ async function handleStopRecording(): Promise<void> {
   // The IR Bridge consumes the UnderstandingResult as its input from the
   // Understanding Layer (fragment + capability as sibling artifacts).
   try {
-    // IR Bridge + Code Generation (statically imported — Bug B fix)
-
-    // Read the UnderstandingResult (or fall back to direct storage for the fragment)
-    let understanding = understandingResult;
-    if (!understanding) {
-      const fragmentResult = await chrome.storage.local.get(StorageKeys.KNOWLEDGE_FRAGMENT);
-      const fragment = fragmentResult[StorageKeys.KNOWLEDGE_FRAGMENT] ?? null;
-      if (fragment) {
-        understanding = {
-          sessionId: session.sessionId ?? '',
-          generatedAt: new Date().toISOString(),
-          schemaVersion: 1,
-          fragment,
-          capability: null,
-        };
-      }
-    }
 
     const tab = await getActiveTab();
-    const recordingContext = session.getRecordingContext();
+
     const irPlan = buildIRPlan({
       events,
       interactions: mergedInteractions,
       understanding,
       recordingContext: {
-        startUrl: recordingContext?.startUrl ?? tab?.url ?? 'about:blank',
-        title: recordingContext?.startTitle ?? tab?.title ?? null,
+        startUrl: recordingStartUrl || tab?.url || 'about:blank',
+        title: recordingStartTitle || tab?.title || null,
       },
       testCaseName: (await StorageService.getTestCaseDraft())?.name ?? 'Recorded Test',
     });
@@ -409,30 +433,25 @@ async function handleStopRecording(): Promise<void> {
     await StorageService.setRaw(StorageKeys.GENERATED_FILES, result);
   } catch (e) {
     console.warn('[IR Bridge] error during unified generation:', e);
-    // Non-fatal — recording still completes, but no test steps/playwright code generated
   }
 
-  // ── Repository V2 Persistence (Phase 10.3) ──
-  // Persist the UnderstandingResult, CapabilityCandidate, and ExecutionIRPlan
-  // to Repository V2 (Dexie/IndexedDB). This creates a RecordingSession,
-  // matches/creates the Capability, and stores the IR artifact.
-  //
-  // Non-fatal — if persistence fails, recording still completes.
-  // The UnderstandingResult and IR plan are already in chrome.storage.local
-  // for the side panel to display.
+  // ── Repository V2 Persistence ──
   try {
     const uowFactory = new DexieUnitOfWorkFactory();
 
-    // Read back the IR plan that was just stored
     const irPlanResult = await chrome.storage.local.get(StorageKeys.EXECUTION_IR_PLAN);
     const irPlan = irPlanResult[StorageKeys.EXECUTION_IR_PLAN];
-
-    // Read back the test case draft for projectId
     const draft = await StorageService.getTestCaseDraft();
 
     if (understandingResult && irPlan) {
       const persistenceResult = await persistSession(uowFactory, {
-        understanding: understandingResult,
+        understanding: understandingResult ?? {
+          sessionId: `session-${Date.now()}`,
+          generatedAt: new Date().toISOString(),
+          schemaVersion: 1,
+          fragment: null,
+          capability: null,
+        },
         events,
         interactions: mergedInteractions,
         url: (await getActiveTab())?.url ?? '',
@@ -441,7 +460,6 @@ async function handleStopRecording(): Promise<void> {
         testCaseName: draft?.name ?? 'Recorded Test',
       });
 
-      // Store the persistence result for the UI to reference
       await StorageService.setRaw(StorageKeys.REPOSITORY_SESSION_ID, persistenceResult.sessionId);
       await StorageService.setRaw(StorageKeys.REPOSITORY_CAPABILITY_ID, persistenceResult.capabilityId);
       await StorageService.setRaw(StorageKeys.REPOSITORY_CAPABILITY_DECISION, persistenceResult.capabilityDecision);
@@ -476,7 +494,6 @@ async function handleStopRecording(): Promise<void> {
     }
   } catch (e) {
     console.warn('[Repository V2] error during session persistence:', e);
-    // Non-fatal — recording completes, artifacts are in chrome.storage.local
   }
 
   // Update UI state (preserve recorderEngine flag)
@@ -492,75 +509,23 @@ async function handleStopRecording(): Promise<void> {
   broadcastToTabs({ type: 'STOP_RECORDING' });
 }
 
-// ── RECORDED_EVENT handler ──────────────────────────────────────────────
+// ── OBSERVED_EVENT handler (Component Runtime) ──────────────────────────
 
-async function handleRecordedEvent(message: Extract<AppMessage, { type: 'RECORDED_EVENT' }>): Promise<void> {
+async function handleObservedEvent(payload: ObservedEvent): Promise<void> {
   await ensureSessionRestored();
-  if (!session.isRecording) return;
 
-  // Apply full date normalization for dateSelect events.
-  // The content script does basic ISO validation + display conversion, but
-  // custom date pickers may send display-format values ("September 19, 1987")
-  // or potentially malformed values. The shared normalizer handles all
-  // formats, ambiguous detection, and preserves invalid values per the
-  // "capture the final committed value, don't silently correct" principle.
-  let domContext = message.domContext;
-  if (message.eventType === 'dateSelect' && domContext) {
-    domContext = normalizeDateDomContext(domContext);
+  // Process through the Component Runtime
+  const emitted = processObservedEvent(payload);
+
+  // Broadcast new interactions to the side panel for live display
+  for (const interaction of emitted) {
+    chrome.runtime.sendMessage({
+      type: 'INTERACTION_CAPTURED',
+      interaction,
+    }).catch(() => {
+      // Side panel may not be open — ignore
+    });
   }
-
-  session.addElementEvent(
-    message.eventType,
-    message.timestamp,
-    message.target,
-    message.valueBefore,
-    message.valueAfter,
-    message.checkedBefore,
-    message.checkedAfter,
-    domContext,
-  );
-}
-
-/**
- * Apply the full date normalizer to a DomContext's date fields.
- *
- * The content script captures the raw value and does basic normalization
- * (ISO validation for native inputs). Here we apply the full normalizer
- * which handles:
- *   - Display format parsing ("July 15, 2026" → ISO)
- *   - Aria-label strings ("Monday, July 15, 2026" → ISO)
- *   - Numeric date formats with separator disambiguation
- *   - Ambiguous value preservation (no silent day/month swap)
- *
- * If the content script already produced a confident ISO value (confidence 1.0),
- * the normalizer will confirm it. If the content script flagged it as ambiguous
- * or lower confidence, the normalizer may improve the result.
- */
-function normalizeDateDomContext(ctx: DomContext): DomContext {
-  // Only normalize if there's a value to work with
-  const rawValue = ctx.isoValue || ctx.displayValue || '';
-  if (!rawValue) return ctx;
-
-  const hints: { inputType?: string; dateFormat?: string } = {};
-  if (ctx.inputType) hints.inputType = ctx.inputType;
-
-  const normalized = normalizeDateValue(rawValue, hints);
-
-  // Always apply the normalizer's result — it may detect invalid values
-  // that the content script couldn't (e.g., month 15 in yyyy-MM-dd format).
-  // The normalizer is the authority: if it says the value is ambiguous or
-  // unparseable, that verdict overrides the content script's initial
-  // assessment. If it says the value is valid (confidence 1.0), it replaces
-  // the content script's lower-confidence display-format value.
-  return {
-    ...ctx,
-    dateType: normalized.dateType,
-    isoValue: normalized.isoValue,
-    displayValue: normalized.displayValue,
-    dateAmbiguous: normalized.ambiguous,
-    dateConfidence: normalized.confidence,
-    ...(normalized.warning ? { dateWarning: normalized.warning } : {}),
-  };
 }
 
 // ── RUN_TEST handler (Phase 12.5) ──────────────────────────────────────
@@ -763,7 +728,10 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
   if (details.frameId !== 0) return;
 
   await ensureSessionRestored();
-  if (!session.isRecording) return;
+
+  // Check if recording is active by checking if we have a runtime
+  const liveInts = getLiveInteractions();
+  if (liveInts.length === 0 && !await isRecordingActive()) return;
 
   // Get the page title (may be empty at commit time)
   let title = '';
@@ -772,18 +740,74 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
     title = tab.title ?? '';
   } catch {}
 
-  // Determine direction: Chrome uses 'forward_back' for both directions,
-  // but transitionQualifiers includes 'forward_navigation' for forward.
-  let transitionType = details.transitionType;
-  if (
-    transitionType === 'forward_back' &&
-    details.transitionQualifiers?.includes('forward_navigation')
-  ) {
-    transitionType = 'forward';
-  }
+  // Create a navigation ObservedEvent and process it
+  const navEvent: ObservedEvent = {
+    eventId: `nav-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    eventType: 'navigation' as any,
+    timestamp: Date.now(),
+    isTrusted: true,
+    target: {
+      accessibleName: '',
+      ariaRole: null,
+      ariaLabel: null,
+      ariaLabelledBy: null,
+      placeholder: null,
+      tag: 'HTML',
+      className: null,
+      name: null,
+      stableId: null,
+      testId: null,
+      dataCy: null,
+      dataQa: null,
+      cssSelector: 'html',
+      xPath: '/html',
+      inIframe: false,
+      shadowDom: false,
+      elementId: '',
+    },
+    domContext: {
+      inputType: null,
+      ariaExpanded: null,
+      ariaHasPopup: null,
+      isContentEditable: false,
+      disabled: false,
+      readOnly: false,
+      required: false,
+      ancestorRoles: [],
+      ancestorClasses: [],
+    },
+    valueBefore: null,
+    valueAfter: null,
+    checkedBefore: null,
+    checkedAfter: null,
+    clientX: null,
+    clientY: null,
+    key: null,
+    code: null,
+    shiftKey: false,
+    ctrlKey: false,
+    altKey: false,
+    metaKey: false,
+    scrollDeltaY: null,
+    scrollDeltaX: null,
+    pageUrl: details.url,
+    pageTitle: title,
+  };
 
-  session.addNavigation(details.url, title, transitionType);
+  processObservedEvent(navEvent);
 });
+
+/**
+ * Check if recording is currently active.
+ */
+async function isRecordingActive(): Promise<boolean> {
+  try {
+    const result = await chrome.storage.local.get('cmdrunner_recording_active');
+    return result['cmdrunner_recording_active'] === true;
+  } catch {
+    return false;
+  }
+}
 
 // ── Message routing ─────────────────────────────────────────────────────
 
@@ -827,12 +851,17 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
 
     case 'PING':
       // Side panel pinging the service worker — respond with recording state
-      sendResponse({ type: 'PONG', recording: session.isRecording });
+      isRecordingActive().then((recording) => {
+        sendResponse({ type: 'PONG', recording });
+      });
       return true;
 
-    case 'RECORDED_EVENT':
-      handleRecordedEvent(msg);
-      break;
+    case 'OBSERVED_EVENT': {
+      const msg = message as { type: string; payload: ObservedEvent };
+      handleObservedEvent(msg.payload);
+      sendResponse({ ok: true });
+      return true;
+    }
 
     default:
       // Unknown message type — ignore
@@ -895,7 +924,9 @@ const HEALTH_CHECK_ALARM = 'cs-health-check';
 chrome.alarms.create(HEALTH_CHECK_ALARM, { periodInMinutes: 0.08 }); // ~5s
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === HEALTH_CHECK_ALARM && session.isRecording) {
-    checkActiveTabHealth().catch(() => {});
+  if (alarm.name === HEALTH_CHECK_ALARM) {
+    isRecordingActive().then((active) => {
+      if (active) checkActiveTabHealth().catch(() => {});
+    });
   }
 });

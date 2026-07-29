@@ -18,11 +18,15 @@ import {
 import { StorageService } from '../storage/storage-service';
 import { sendMessage } from '../shared/messaging';
 import { RepositoryService } from '../repository/repository-service';
-import { renderEventTimeline, renderDetectedInteractions } from './timeline-renderer';
+import { renderEventTimeline } from './timeline-renderer';
+import { renderProductionInteractions } from './interaction-renderer';
 import type { RecordedEvent, ReplayJson } from '../recorder/recorded-event';
-import type { DetectedInteraction } from '../classifier/interaction-types';
+import type { ComponentInteraction } from '../shared/component-types';
 import type { ExecutionIRPlan, IRStep, IRAssertion } from '../domain/execution-ir/types';
 import type { GeneratedFile } from '../domain/execution-ir/adapters/ir-code-generator';
+
+/** Storage key for Component Runtime interactions. */
+const LIVE_INTERACTIONS_KEY = 'cmdrunner_live_interactions';
 
 // ── View Management ────────────────────────────────────────
 
@@ -79,8 +83,8 @@ const recordingContextSection = document.getElementById('recording-context')!;
 const recordingContextUrl = document.getElementById('recording-context-url') as HTMLAnchorElement;
 const tcBadgeRecording = document.getElementById('tc-badge-recording')!;
 const tcBadgeName = document.getElementById('tc-badge-name')!;
-const timelineEvents = document.getElementById('timeline-events')!;
-const timelineCount = document.getElementById('timeline-count')!;
+const timelineEvents = document.getElementById('recording-interactions-list')!;
+const timelineCount = document.getElementById('recording-interactions-count')!;
 const csStatus = document.getElementById('cs-status')!;
 const csIndicator = document.getElementById('cs-indicator')!;
 const csStatusText = document.getElementById('cs-status-text')!;
@@ -387,7 +391,7 @@ async function handleStartRecording(): Promise<void> {
   updateCsStatus('checking');
 
   recordingContextSection.hidden = true;
-  timelineEvents.innerHTML = '<p class="timeline__empty">Recording... events will appear here.</p>';
+  timelineEvents.innerHTML = '<p class="timeline__empty">Recording... interactions will appear here.</p>';
   timelineCount.textContent = '0';
 }
 
@@ -400,11 +404,7 @@ async function handleStopRecording(): Promise<void> {
     showRecordingContext({ section: stoppedRecordingContext, url: stoppedRecordingContextUrl }, ctx);
   }
 
-  // Load recorded events into raw timeline (collapsed by default)
-  const events = await StorageService.getEvents() as unknown as RecordedEvent[];
-  renderTimeline(stoppedTimelineEvents, events);
-
-  // Load and display detected interactions.
+  // Load and display detected interactions from Component Runtime.
   // The service worker writes DETECTED_INTERACTIONS_MERGED asynchronously after
   // STOP_RECORDING — it may not be ready yet. We try once here, and if empty,
   // the storage listener (setupLiveListeners) will populate when SW finishes.
@@ -468,11 +468,11 @@ async function handleStopRecording(): Promise<void> {
 }
 
 /**
- * Render detected interactions and show the section.
+ * Render interactions and show the section.
  */
-function showDetectedInteractions(interactions: DetectedInteraction[]): void {
+function showDetectedInteractions(interactions: ComponentInteraction[]): void {
   detectedInteractionsCount.textContent = String(interactions.length);
-  renderDetectedInteractions(detectedInteractionsList, interactions);
+  renderProductionInteractions(detectedInteractionsList, interactions);
   detectedInteractionsSection.hidden = false;
 }
 
@@ -664,11 +664,12 @@ function extractFiles(stored: unknown): GeneratedFile[] | null {
   return null;
 }
 
-async function loadDetectedInteractions(): Promise<DetectedInteraction[] | null> {
+async function loadDetectedInteractions(): Promise<ComponentInteraction[] | null> {
   try {
-    const result = await chrome.storage.local.get(StorageKeys.DETECTED_INTERACTIONS_MERGED);
-    const stored = result[StorageKeys.DETECTED_INTERACTIONS_MERGED];
-    return Array.isArray(stored) ? stored as DetectedInteraction[] : null;
+    // Read from Component Runtime storage key
+    const result = await chrome.storage.local.get(LIVE_INTERACTIONS_KEY);
+    const stored = result[LIVE_INTERACTIONS_KEY];
+    return Array.isArray(stored) ? stored as ComponentInteraction[] : null;
   } catch {
     return null;
   }
@@ -996,14 +997,12 @@ async function handleRecordAnother(): Promise<void> {
 // ── Live Updates ───────────────────────────────────────────
 
 function setupLiveListeners(): void {
-  // Events update
-  StorageService.onKeyChanged(StorageKeys.SESSION_EVENTS, (newValue) => {
-    if (Array.isArray(newValue)) {
-      const events = newValue as RecordedEvent[];
-      renderRecordingTimeline(timelineEvents, timelineCount, events);
-      if (!views['stopped'].hidden) {
-        renderTimeline(stoppedTimelineEvents, events);
-      }
+  // Live interactions update during recording
+  StorageService.onKeyChanged(LIVE_INTERACTIONS_KEY, (newValue) => {
+    if (Array.isArray(newValue) && !views['recording'].hidden) {
+      const interactions = newValue as ComponentInteraction[];
+      timelineCount.textContent = String(interactions.length);
+      renderProductionInteractions(timelineEvents, interactions);
     }
   });
 
@@ -1015,14 +1014,19 @@ function setupLiveListeners(): void {
     }
   });
 
-  // Detected interactions (merged) — fires when service worker finishes
-  // classification after STOP_RECORDING. This handles the race condition where
-  // the side panel reads storage before the SW has finished writing.
-  StorageService.onKeyChanged(StorageKeys.DETECTED_INTERACTIONS_MERGED, (newValue) => {
-    if (Array.isArray(newValue) && newValue.length > 0) {
-      const interactions = newValue as DetectedInteraction[];
-      // Only update if we're in the stopped view
-      if (!views['stopped'].hidden) {
+  // Component Runtime interactions — fires when SW emits new interactions
+  // during recording (via INTERACTION_CAPTURED messages) and after STOP.
+  StorageService.onKeyChanged(LIVE_INTERACTIONS_KEY, (newValue) => {
+    if (Array.isArray(newValue)) {
+      const interactions = newValue as ComponentInteraction[];
+      // Update during recording (live timeline)
+      if (!views['recording'].hidden) {
+        detectedInteractionsCount.textContent = String(interactions.length);
+        renderProductionInteractions(detectedInteractionsList, interactions);
+        detectedInteractionsSection.hidden = false;
+      }
+      // Update in stopped view
+      if (!views['stopped'].hidden && interactions.length > 0) {
         showDetectedInteractions(interactions);
       }
     }
@@ -1064,6 +1068,26 @@ function setupLiveListeners(): void {
       const summary = await loadHealingSummary();
       if (summary) {
         renderHealingSummary(summary);
+      }
+    }
+  });
+
+  // Live interaction updates during recording
+  // The SW sends INTERACTION_CAPTURED messages as the Component Runtime
+  // emits interactions. We also rely on storage updates from LIVE_INTERACTIONS_KEY.
+  chrome.runtime.onMessage.addListener((message: any) => {
+    if (message?.type === 'INTERACTION_CAPTURED' && message.interaction) {
+      const interaction = message.interaction as ComponentInteraction;
+      if (!views['recording'].hidden) {
+        // Live update: reload all interactions from storage
+        chrome.storage.local.get(LIVE_INTERACTIONS_KEY).then((result) => {
+          const all = result[LIVE_INTERACTIONS_KEY];
+          if (Array.isArray(all)) {
+            detectedInteractionsCount.textContent = String(all.length);
+            renderProductionInteractions(detectedInteractionsList, all as ComponentInteraction[]);
+            detectedInteractionsSection.hidden = false;
+          }
+        }).catch(() => {});
       }
     }
   });
@@ -1220,15 +1244,21 @@ async function init(): Promise<void> {
       tcBadgeRecording.hidden = false;
     }
     if (ctx) showRecordingContext({ section: recordingContextSection, url: recordingContextUrl }, ctx);
-    const events = await StorageService.getEvents() as unknown as RecordedEvent[];
-    renderRecordingTimeline(timelineEvents, timelineCount, events);
+    // Load live interactions from Component Runtime
+    const liveResult = await chrome.storage.local.get(LIVE_INTERACTIONS_KEY);
+    const liveInts = liveResult[LIVE_INTERACTIONS_KEY];
+    if (Array.isArray(liveInts) && liveInts.length > 0) {
+      timelineCount.textContent = String(liveInts.length);
+      renderProductionInteractions(timelineEvents, liveInts as ComponentInteraction[]);
+    } else {
+      timelineEvents.innerHTML = '<p class="timeline__empty">Recording... interactions will appear here.</p>';
+      timelineCount.textContent = '0';
+    }
     showView('recording');
   } else if (uiState.recordingState === RecordingState.Stopped) {
     if (ctx) {
       showRecordingContext({ section: stoppedRecordingContext, url: stoppedRecordingContextUrl }, ctx);
     }
-    const events = await StorageService.getEvents() as unknown as RecordedEvent[];
-    renderTimeline(stoppedTimelineEvents, events);
 
     // Load detected interactions
     const interactions = await loadDetectedInteractions();

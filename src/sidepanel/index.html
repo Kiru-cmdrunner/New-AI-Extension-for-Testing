@@ -158,14 +158,14 @@
           <span>Stop Recording</span>
         </button>
 
-        <!-- Event Timeline -->
-        <div class="timeline" id="timeline">
+        <!-- Captured Interactions (live during recording) -->
+        <div class="timeline" id="recording-interactions">
           <div class="timeline__header">
-            <h2 class="timeline__title">Event Timeline</h2>
-            <span class="timeline__count" id="timeline-count">0</span>
+            <h2 class="timeline__title">Captured Steps</h2>
+            <span class="timeline__count" id="recording-interactions-count">0</span>
           </div>
-          <div class="timeline__events" id="timeline-events">
-            <p class="timeline__empty">Recording... events will appear here.</p>
+          <div class="timeline__events" id="recording-interactions-list">
+            <p class="timeline__empty">Recording... interactions will appear here.</p>
           </div>
         </div>
       </div>
@@ -285,7 +285,7 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <span class="footer__text">v10.4.18 · Date &amp; Time Complete</span>
+        <span class="footer__text">v10.9.0 · Component Runtime</span>
     </footer>
   </div>
   <script type="module" src="sidepanel.ts"></script>

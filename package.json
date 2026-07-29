@@ -4,7 +4,7 @@
   "description": "CmdRunner Smart Recorder Chrome Extension",
   "type": "module",
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && node scripts/pack-zip.mjs",
     "dev": "vite build --watch",
     "test": "vitest run",
     "test:watch": "vitest"

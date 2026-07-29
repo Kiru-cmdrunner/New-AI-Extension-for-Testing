@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "CmdRunner Smart Recorder",
-  "version": "10.4.18",
-  "description": "Deterministic recorder that captures browser interactions with exact targets, element identity, event sequences, and value transitions.",
+  "version": "10.9.0",
+  "description": "Smart recorder with Component Runtime architecture — captures browser interactions through lifecycle-based component definitions for precise test generation.",
   "permissions": ["sidePanel", "storage", "unlimitedStorage", "activeTab", "webNavigation", "tabs", "scripting", "alarms"],
   "host_permissions": [
     "http://*/*",
@@ -28,7 +28,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["src/recorder/deterministic-recorder.ts"],
+      "js": ["src/recorder/phase5/recorder-entry.ts"],
       "all_frames": true,
       "run_at": "document_start"
     },

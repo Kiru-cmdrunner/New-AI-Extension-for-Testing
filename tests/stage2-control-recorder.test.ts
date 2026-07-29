@@ -291,7 +291,7 @@ describe('Stage 2 — Manifest Configuration', () => {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
 
     const jsFiles = manifest.content_scripts.flatMap((cs: any) => cs.js);
-    expect(jsFiles.some((f: string) => f.includes('deterministic-recorder'))).toBe(true);
+    expect(jsFiles.some((f: string) => f.includes('recorder-entry') || f.includes('deterministic-recorder'))).toBe(true);
   });
 
   it('built manifest has both content scripts', async () => {
