@@ -34,6 +34,81 @@ function hasClassPattern(interaction: DetectedInteraction, patterns: string[]): 
   return patterns.some(p => lower.includes(p));
 }
 
+// ── Stepper Detection ────────────────────────────────────────────────────
+
+/**
+ * CSS class patterns that indicate a stepper/counter button.
+ * Matches plus, minus, increment, decrement, stepper, counter, qty, spinner.
+ */
+const STEPPER_CSS_PATTERN = /plus|minus|increment|decrement|stepper|counter|qty|spinner/i;
+
+/** CSS class patterns specifically for plus/increment buttons. */
+const STEPPER_PLUS_CSS = /plus|increment|add|increase/i;
+
+/** CSS class patterns specifically for minus/decrement buttons. */
+const STEPPER_MINUS_CSS = /minus|decrement|remove|decrease/i;
+
+/** aria-label patterns for plus/increment buttons (e.g., "Increase Adults"). */
+const STEPPER_PLUS_ARIA = /^(add|increase|increment)\b/i;
+
+/** aria-label patterns for minus/decrement buttons (e.g., "Decrease Children"). */
+const STEPPER_MINUS_ARIA = /^(remove|decrease|decrement)\b/i;
+
+/**
+ * Check if a Click interaction targets a stepper/counter button.
+ *
+ * Detection methods:
+ *   1. accessibleName matches +/- / add / remove / increase / decrease
+ *   2. CSS class matches stepper patterns (plus-icon, counter-btn, etc.)
+ *   3. aria-label matches "Increase/Decrease ..." patterns
+ *
+ * Returns 'plus', 'minus', or null.
+ */
+function detectStepperDirection(interaction: DetectedInteraction): 'plus' | 'minus' | null {
+  if (interaction.type !== 'Click') return null;
+
+  const name = getTargetName(interaction).toLowerCase();
+  const cls = (interaction.target?.className ?? '').toLowerCase();
+  const ariaLabel = (interaction.target?.ariaLabel ?? '').toLowerCase();
+
+  // Check accessibleName first (most reliable when present)
+  if (name === '+' || name === 'add' || name.includes('increase') || name.includes('increment')) return 'plus';
+  if (name === '-' || name === 'remove' || name.includes('decrease') || name.includes('decrement')) return 'minus';
+
+  // Check CSS class patterns (icon-only buttons with no text label)
+  if (STEPPER_PLUS_CSS.test(cls)) return 'plus';
+  if (STEPPER_MINUS_CSS.test(cls)) return 'minus';
+
+  // Check aria-label patterns (e.g., "Increase Adults", "Decrease Children")
+  if (STEPPER_PLUS_ARIA.test(ariaLabel)) return 'plus';
+  if (STEPPER_MINUS_ARIA.test(ariaLabel)) return 'minus';
+
+  return null;
+}
+
+/**
+ * Extract a field name from a stepper button's aria-label.
+ *
+ * "Increase Adults" → "Adults"
+ * "Decrease Children" → "Children"
+ * "Add Infant" → "Infant"
+ *
+ * Falls back to the accessibleName (which may come from a parent container
+ * via the recorder's ancestor label resolution), then to 'Counter'.
+ */
+function extractStepperFieldName(interaction: DetectedInteraction): string {
+  const ariaLabel = interaction.target?.ariaLabel ?? '';
+  if (ariaLabel) {
+    const stripped = ariaLabel
+      .replace(/^(add|increase|increment|remove|decrease|decrement)\s+/i, '')
+      .trim();
+    if (stripped) return stripped;
+  }
+  const accessibleName = getTargetName(interaction);
+  if (accessibleName && accessibleName.length > 0) return accessibleName;
+  return 'Counter';
+}
+
 // ── MultiConfig: Activation ───────────────────────────────────────────────
 
 /**
@@ -200,8 +275,8 @@ export function shouldAbsorbMultiConfig(
   if (interaction.type === 'TextEntry') return true;
 
   // Absorb Click interactions on stepper/counter buttons (+/-)
-  const name = getTargetName(interaction);
-  if (interaction.type === 'Click' && /^[+\-]$|add|remove|increase|decrease/i.test(name)) {
+  // Uses enhanced stepper detection: accessibleName, CSS class, and aria-label
+  if (interaction.type === 'Click' && detectStepperDirection(interaction) !== null) {
     return true;
   }
 
@@ -245,12 +320,14 @@ export function extractConfigField(
       };
 
     case 'Click': {
-      // Stepper/counter clicks: extract +/- as increment/decrement
-      const name = fieldName.toLowerCase();
-      if (name === '+' || name.includes('add') || name.includes('increase')) {
+      // Stepper/counter clicks: detect direction via accessibleName, CSS class, aria-label
+      const direction = detectStepperDirection(interaction);
+      if (direction === 'plus') {
+        const fieldName = extractStepperFieldName(interaction);
         return { field: fieldName, value: '+1' };
       }
-      if (name === '-' || name.includes('remove') || name.includes('decrease')) {
+      if (direction === 'minus') {
+        const fieldName = extractStepperFieldName(interaction);
         return { field: fieldName, value: '-1' };
       }
       // Generic click inside panel — record as selection
