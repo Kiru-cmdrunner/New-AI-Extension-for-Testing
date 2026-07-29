@@ -527,6 +527,17 @@ New feature or bug fix?
 
 ## 6. Current Adani One Fixes — Architecture Mapping
 
+### Status Vocabulary
+
+| Status | Meaning |
+|--------|---------|
+| 🔴 **Designed** | Architecture agreed, code not yet written |
+| 🟡 **Implemented** | Code written, unit tests pass, NOT yet verified on the real site |
+| 🟢 **Verified** | Confirmed working by manual testing on the target site (Adani One) |
+| ✅ **Complete** | Verified AND regression-tested — safe to build on |
+
+> **Critical rule:** "Implemented" does NOT mean "done." A fix is only Complete after manual testing confirms the behavior on the target site AND regression tests pass. No fix should be treated as a foundation for further work until it reaches Complete.
+
 ### Issue 1: SVG chevron resolves to icon instead of trigger button
 
 | Aspect | Detail |
@@ -536,7 +547,7 @@ New feature or bug fix?
 | **Fix location** | `src/tap/identity-extractor.ts` — Strategy 2 in `resolveTarget()` |
 | **Engine** | Identity Extraction |
 | **Why here** | Target resolution is an identity extraction concern. The EventTap calls `resolveTarget` to determine which element the user interacted with. Surface detection and semantic reasoning are downstream — they can only work if the correct target was resolved. |
-| **Status** | ✅ Applied (Change 1) |
+| **Status** | 🟡 Implemented — Designed + code written. NOT yet verified on Adani One. |
 
 ### Issue 2: Surface evidence not propagated to semantic interactions
 
@@ -547,7 +558,7 @@ New feature or bug fix?
 | **Fix location** | `src/definitions/dom-context-extractor.ts` — added `detectSurface()` function |
 | **Engine** | DOM Context Extraction |
 | **Why here** | Surface detection is a DOM context concern — it reads the live DOM at event time to determine if the element is inside a modal/drawer/popover/tooltip. This information is then carried in `DomContext` and propagated by the Classifier's `extractSurfaceContext()` to the Semantic Reasoner. It does NOT belong in EventTap (which only captures events) or the Semantic Reasoner (which can't access the DOM). |
-| **Status** | ✅ Applied (Change 2 + post-merge fix) |
+| **Status** | 🟡 Implemented — Designed + code written. NOT yet verified on Adani One. |
 
 ### Issue 3: multiConfig not activating for passenger/class selector
 
@@ -558,7 +569,7 @@ New feature or bug fix?
 | **Fix location** | `src/classifier/semantic/panel-form-detectors.ts` — `isMultiConfigActivation()` |
 | **Engine** | Semantic Reasoner |
 | **Why here** | Session activation is a semantic reasoning concern. The Reasoner decides whether a sequence of interactions represents a composite component configuration. The surface evidence comes from DOM Context Extraction (upstream) and is propagated by the Classifier (upstream). The Reasoner's job is to interpret that evidence. |
-| **Status** | ✅ Applied (Change 3) |
+| **Status** | 🟡 Implemented — Designed + code written. NOT yet verified on Adani One. |
 
 ### Issue 4: Internal clicks not absorbed (no CSS class overlap)
 
@@ -569,7 +580,7 @@ New feature or bug fix?
 | **Fix location** | `src/classifier/semantic/panel-form-detectors.ts` — `shouldAbsorbMultiConfig()` |
 | **Engine** | Semantic Reasoner |
 | **Why here** | Absorption is a semantic reasoning concern. The Reasoner decides which interactions are internal to a composite component session. Surface-anchored absorption (absorb all interactions while surface is open) is the correct approach because it's framework-agnostic. |
-| **Status** | ✅ Applied (Change 4) |
+| **Status** | 🟡 Implemented — Designed + code written. NOT yet verified on Adani One. |
 
 ### Issue 5: Icon-only +/- buttons not detected as steppers
 
@@ -580,7 +591,7 @@ New feature or bug fix?
 | **Fix location** | `src/classifier/semantic/panel-form-detectors.ts` — `detectStepperDirection()`, `extractStepperFieldName()`, `extractConfigField()` |
 | **Engine** | Semantic Reasoner |
 | **Why here** | Stepper detection is a semantic interpretation of a click interaction. The Reasoner has access to the full interaction metadata (CSS class, aria-label, accessible name) and can determine whether a click represents an increment/decrement action. |
-| **Status** | ✅ Applied (Change 5) |
+| **Status** | 🟡 Implemented — Designed + code written. NOT yet verified on Adani One. |
 
 ### Issue 6: Date picker captured twice
 
@@ -613,7 +624,7 @@ New feature or bug fix?
 | **Fix location** | `src/background/service-worker.ts` — replaced `session.getEvents()` with extraction of ObservedEvents from ComponentInteraction[] |
 | **Engine** | SW Orchestration |
 | **Why here** | The SW is the pipeline orchestrator. The bug was a broken orchestration step (referencing an undefined variable), not a bug in any specific engine. |
-| **Status** | ✅ Applied (post-merge fix) |
+| **Status** | 🟡 Implemented — Designed + code written. NOT yet verified on Adani One. |
 
 ---
 
