@@ -121,6 +121,21 @@ export interface InteractionMetadata {
   // Surface detection (Modal, Drawer, Popover, Tooltip)
   surfaceLabel?: string;
   surfaceRole?: string;
+  /**
+   * Surface context: populated when this interaction either opened a surface
+   * (popover, drawer, modal) or occurred inside an already-open surface.
+   * Used by the SemanticReasoner for multiConfig activation and absorption.
+   */
+  surfaceContext?: {
+    /** Type of surface: 'modal' | 'drawer' | 'popover' | 'tooltip'. */
+    type: string;
+    /** Accessible name of the surface container, if known. */
+    label?: string;
+    /** ARIA role of the surface container, if known. */
+    role?: string;
+    /** True if this interaction is the one that caused the surface to appear. */
+    openedByThisInteraction?: boolean;
+  } | null;
   // ── Semantic Reasoning Enrichment ──
   /** Semantic action assigned by the reasoner: 'configure' | 'authenticate'. */
   semanticAction?: string;

@@ -767,6 +767,38 @@ function tryClassifyDatePicker(
 // ════════════════════════════════════════════════════════════════════════
 
 /**
+ * Extract surface context from a group of events.
+ *
+ * The content script captures DomContext.surfaceType/surfaceLabel/surfaceRole
+ * when a surface (popover, drawer, modal) appears after a click. This function
+ * propagates that information into DetectedInteraction.metadata.surfaceContext
+ * so the SemanticReasoner can use it for multiConfig activation/absorption.
+ *
+ * @param events  The events in the interaction group
+ * @returns       Surface context object, or null if no surface info present
+ */
+function extractSurfaceContext(
+  events: RecordedEvent[],
+): InteractionMetadata['surfaceContext'] {
+  for (const event of events) {
+    const elEvent = event as ElementRecordedEvent;
+    const domCtx = elEvent.domContext;
+    if (!domCtx) continue;
+
+    // surfaceType on an event means THIS interaction caused the surface to appear
+    if (domCtx.surfaceType) {
+      return {
+        type: domCtx.surfaceType,
+        label: domCtx.surfaceLabel ?? undefined,
+        role: domCtx.surfaceRole ?? undefined,
+        openedByThisInteraction: true,
+      };
+    }
+  }
+  return null;
+}
+
+/**
  * Detect interactions from a list of recorded events.
  *
  * @param events The raw events from a recording session
@@ -792,6 +824,14 @@ export function detectInteractions(events: RecordedEvent[]): DetectedInteraction
       metadata.iframeSrc = iframeCtx.frameSrc;
       metadata.iframeName = iframeCtx.frameName ?? undefined;
       metadata.iframeDepth = iframeCtx.frameDepth;
+    }
+
+    // ── Surface Context Propagation ──
+    // Propagate surface evidence from DomContext into metadata.surfaceContext
+    // so the SemanticReasoner can use it for multiConfig activation/absorption.
+    const surfaceContext = extractSurfaceContext(group.events);
+    if (surfaceContext) {
+      metadata.surfaceContext = surfaceContext;
     }
 
     return {
