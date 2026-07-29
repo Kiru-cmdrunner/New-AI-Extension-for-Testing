@@ -64,6 +64,26 @@ export interface DomContext {
   ancestorRoles: string[];
   /** Ancestor chain classes (up to 10 levels), index 0 = parent. */
   ancestorClasses: string[];
+  /** Type of dynamic UI surface (modal, drawer, popover, tooltip) if the element is inside one. null otherwise. */
+  surfaceType?: string | null;
+  /** ARIA role of the surface element. null if not applicable. */
+  surfaceRole?: string | null;
+  /** Human-readable label of the surface (aria-label, heading text, or title). null if not found. */
+  surfaceLabel?: string | null;
+  /** Value of aria-autocomplete attribute. null if absent. */
+  ariaAutoComplete?: string | null;
+  /** Current ARIA value (aria-valuenow). For sliders, progress bars. null if absent. */
+  ariaValueNow?: string | null;
+  /** Human-readable ARIA value (aria-valuetext). null if absent. */
+  ariaValueText?: string | null;
+  /** Minimum ARIA value (aria-valuemin). null if absent. */
+  ariaValueMin?: string | null;
+  /** Maximum ARIA value (aria-valuemax). null if absent. */
+  ariaValueMax?: string | null;
+  /** Native min attribute (for <input type="range">, <input type="number">). null if absent. */
+  nativeMin?: string | null;
+  /** Native max attribute. null if absent. */
+  nativeMax?: string | null;
 }
 
 // ── Observed Event ─────────────────────────────────────────────────────

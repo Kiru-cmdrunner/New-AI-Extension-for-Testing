@@ -16,6 +16,88 @@ import type { DomContext } from '../shared/component-types';
 /** Maximum ancestor chain depth to capture. */
 const MAX_ANCESTOR_DEPTH = 10;
 
+// ── Surface Detection ──────────────────────────────────────────────────
+
+const SURFACE_ROLE_MAP: Record<string, string> = {
+  dialog: 'modal',
+  alertdialog: 'modal',
+  menu: 'popover',
+  listbox: 'popover',
+  tree: 'popover',
+  grid: 'popover',
+  tooltip: 'tooltip',
+};
+
+const SURFACE_CLASS_PATTERNS: Array<{ regex: RegExp; type: string }> = [
+  // MUI
+  { regex: /MuiDialog-root/i, type: 'modal' },
+  { regex: /MuiDrawer-root/i, type: 'drawer' },
+  { regex: /MuiPopover-root|MuiMenu-root|MuiAutocomplete-popper|MuiCalendarPicker-root/i, type: 'popover' },
+  { regex: /MuiTooltip-popper/i, type: 'tooltip' },
+  // Ant Design
+  { regex: /ant-modal/i, type: 'modal' },
+  { regex: /ant-drawer/i, type: 'drawer' },
+  { regex: /ant-popover|ant-dropdown|ant-picker-dropdown|ant-select-dropdown/i, type: 'popover' },
+  { regex: /ant-tooltip/i, type: 'tooltip' },
+  // Bootstrap
+  { regex: /modal\s+show|modal-open/i, type: 'modal' },
+  { regex: /offcanvas/i, type: 'drawer' },
+  { regex: /dropdown-menu/i, type: 'popover' },
+  { regex: /tooltip-inner/i, type: 'tooltip' },
+  // Generic patterns
+  { regex: /\bmodal\b/i, type: 'modal' },
+  { regex: /\bdrawer\b/i, type: 'drawer' },
+  { regex: /\bpopover|popup|dropdown\b/i, type: 'popover' },
+];
+
+function getSurfaceLabel(el: Element): string | null {
+  const ariaLabel = el.getAttribute('aria-label');
+  if (ariaLabel?.trim()) return ariaLabel.trim().substring(0, 100);
+  const heading = el.querySelector('h1, h2, h3, h4, h5, h6, [class*="title"], [class*="header"]');
+  if (heading) {
+    const text = heading.textContent?.trim();
+    if (text) return text.substring(0, 100);
+  }
+  const title = el.getAttribute('title');
+  if (title?.trim()) return title.trim().substring(0, 100);
+  return null;
+}
+
+/**
+ * Detect if the element or any of its ancestors is a dynamic UI surface
+ * (modal, drawer, popover, tooltip) that appeared after a user interaction.
+ */
+function detectSurface(el: Element): { type: string; role: string | null; label: string | null } | null {
+  let current: Element | null = el;
+  let depth = 0;
+  while (current && depth < MAX_ANCESTOR_DEPTH) {
+    const role = current.getAttribute('role');
+    if (role) {
+      const roleLower = role.toLowerCase();
+      if (SURFACE_ROLE_MAP[roleLower]) {
+        return { type: SURFACE_ROLE_MAP[roleLower]!, role: roleLower, label: getSurfaceLabel(current) };
+      }
+    }
+    if (current.getAttribute('aria-modal') === 'true') {
+      return { type: 'modal', role: role ?? null, label: getSurfaceLabel(current) };
+    }
+    if (current.tagName === 'DIALOG') {
+      return { type: 'modal', role: 'dialog', label: getSurfaceLabel(current) };
+    }
+    const cls = current.getAttribute('class') || '';
+    if (cls) {
+      for (const { regex, type } of SURFACE_CLASS_PATTERNS) {
+        if (regex.test(cls)) {
+          return { type, role: role ?? null, label: getSurfaceLabel(current) };
+        }
+      }
+    }
+    current = current.parentElement;
+    depth++;
+  }
+  return null;
+}
+
 /**
  * Extract DOM context from a live element.
  *
@@ -23,6 +105,8 @@ const MAX_ANCESTOR_DEPTH = 10;
  * during event capture, before the DOM can mutate.
  */
 export function extractDomContext(el: Element): DomContext {
+  const surface = detectSurface(el);
+
   return {
     inputType: getInputType(el),
     ariaExpanded: getAttributeBoolean(el, 'aria-expanded'),
@@ -33,6 +117,19 @@ export function extractDomContext(el: Element): DomContext {
     required: hasAttribute(el, 'required') || getAttributeBoolean(el, 'aria-required') === true,
     ancestorRoles: getAncestorRoles(el),
     ancestorClasses: getAncestorClasses(el),
+    // Surface detection — populated when the element is inside a modal,
+    // drawer, popover, or tooltip. Used by the surface-anchored detection
+    // pipeline (interaction-detector.ts → extractSurfaceContext).
+    surfaceType: surface?.type ?? null,
+    surfaceRole: surface?.role ?? null,
+    surfaceLabel: surface?.label ?? null,
+    ariaAutoComplete: getAttributeString(el, 'aria-autocomplete'),
+    ariaValueNow: getAttributeString(el, 'aria-valuenow'),
+    ariaValueText: getAttributeString(el, 'aria-valuetext'),
+    ariaValueMin: getAttributeString(el, 'aria-valuemin'),
+    ariaValueMax: getAttributeString(el, 'aria-valuemax'),
+    nativeMin: el instanceof HTMLInputElement ? (el.min || null) : null,
+    nativeMax: el instanceof HTMLInputElement ? (el.max || null) : null,
   };
 }
 

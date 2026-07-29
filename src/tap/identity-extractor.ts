@@ -577,12 +577,37 @@ export function resolveTarget(event: Event | null | undefined): Element | null {
   }
 
   // Strategy 2: Clickable heuristic (cursor:pointer or onclick)
+  // With Change 1: collect the first clickable candidate, then walk up to
+  // 3 parents looking for a clickable ancestor with a meaningful accessible
+  // name (>2 chars). This resolves SVG icons inside buttons to the button
+  // itself instead of the icon wrapper.
+  let firstClickable: Element | null = null;
   for (const el of path) {
     if (!(el instanceof Element)) continue;
     if (NON_INTERACTIVE_TAGS.has(el.tagName)) continue;
     const style = window.getComputedStyle(el);
-    if (style.cursor === 'pointer') return el;
-    if (el.hasAttribute('onclick')) return el;
+    if (style.cursor === 'pointer' || el.hasAttribute('onclick')) {
+      if (!firstClickable) firstClickable = el;
+      // Check if this element has a meaningful accessible name
+      const name = computeAccessibleName(el);
+      if (name && name.trim().length > 2) return el;
+    }
+  }
+  // If we found a clickable element but none had a meaningful name, walk up
+  // to 3 parents from the first clickable candidate
+  if (firstClickable) {
+    let parent: Element | null = firstClickable;
+    for (let i = 0; i < 3 && parent; i++) {
+      parent = parent.parentElement;
+      if (!parent || NON_INTERACTIVE_TAGS.has(parent.tagName)) break;
+      const style = window.getComputedStyle(parent);
+      if (style.cursor === 'pointer' || parent.hasAttribute('onclick') || parent.matches(INTERACTIVE_SELECTOR)) {
+        const name = computeAccessibleName(parent);
+        if (name && name.trim().length > 2) return parent;
+      }
+    }
+    // Fall back to the first clickable element found
+    return firstClickable;
   }
 
   // Strategy 2b: Selectable/option heuristic — React SPAs render dropdown

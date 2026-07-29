@@ -260,18 +260,51 @@ async function handleStopRecording(): Promise<void> {
   // Store interactions for UI display
   await StorageService.setRaw(LIVE_INTERACTIONS_KEY, allInteractions);
 
-  // Sort events by timestamp before classification to ensure correct
-  // chronological ordering across frames. With all_frames:true, events
-  // from different frames arrive in chrome.runtime.sendMessage delivery
-  // order, which may not match timestamp order. The stable sort uses
-  // eventId as a tiebreaker for events with identical timestamps.
-  const events = session.getEvents();
-  events.sort((a, b) => {
-    const ta = new Date(a.timestamp).getTime();
-    const tb = new Date(b.timestamp).getTime();
+  // ── Collect raw ObservedEvents from ComponentInteractions ──
+  // The Component Runtime stores triggerEvent + memberEvents on each
+  // ComponentInteraction. We extract ALL unique ObservedEvents so the
+  // V1 classifier + semantic reasoner can process them.
+  const seenEventIds = new Set<string>();
+  const observedEvents: ObservedEvent[] = [];
+  for (const ci of allInteractions) {
+    for (const evt of [ci.triggerEvent, ...ci.memberEvents]) {
+      if (evt && !seenEventIds.has(evt.eventId)) {
+        seenEventIds.add(evt.eventId);
+        observedEvents.push(evt);
+      }
+    }
+  }
+
+  // Sort observed events by timestamp for correct chronological ordering
+  observedEvents.sort((a, b) => {
+    const ta = typeof a.timestamp === 'number' ? a.timestamp : new Date(a.timestamp).getTime();
+    const tb = typeof b.timestamp === 'number' ? b.timestamp : new Date(b.timestamp).getTime();
     if (ta !== tb) return ta - tb;
-    // Stable tiebreaker: lower eventId sorts first
     return a.eventId.localeCompare(b.eventId);
+  });
+
+  // Convert ObservedEvent[] → RecordedEvent[] for V1 classifier compatibility
+  const events: import('./recorder/recorded-event').RecordedEvent[] = observedEvents.map((oe) => {
+    if (oe.eventType === 'navigation') {
+      return {
+        eventId: oe.eventId,
+        eventType: 'navigation' as const,
+        timestamp: new Date(oe.timestamp).toISOString(),
+        url: oe.pageUrl,
+        title: oe.pageTitle,
+      };
+    }
+    return {
+      eventId: oe.eventId,
+      eventType: oe.eventType as any,
+      timestamp: new Date(oe.timestamp).toISOString(),
+      target: oe.target,
+      valueBefore: oe.valueBefore,
+      valueAfter: oe.valueAfter,
+      checkedBefore: oe.checkedBefore,
+      checkedAfter: oe.checkedAfter,
+      domContext: oe.domContext as any,
+    };
   });
 
   // ── Classifier Selection (Stage 3 Feature Flag) ──
