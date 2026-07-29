@@ -65,6 +65,23 @@ function isClickableHeuristic(el: Element): boolean {
 }
 
 /**
+ * Compute a best-effort accessible name for an element.
+ * Used by Strategy 2 to prefer clickable ancestors with meaningful labels
+ * over empty-name icon wrappers.
+ */
+function getAccessibleName(el: Element): string {
+  const ariaLabel = el.getAttribute('aria-label');
+  if (ariaLabel) return ariaLabel.trim();
+  const title = el.getAttribute('title');
+  if (title) return title.trim();
+  const text = el.textContent?.trim() ?? '';
+  // Only use text content if it's reasonably short (not a container with
+  // concatenated child text)
+  if (text && text.length <= 80) return text;
+  return '';
+}
+
+/**
  * Resolve the target element from a DOM event.
  *
  * Uses composedPath() to pierce Shadow DOM boundaries.
@@ -107,10 +124,40 @@ export function resolveTarget(event: Event | null | undefined): Element | null {
   }
 
   // Strategy 2: Clickable heuristic (cursor:pointer or onclick)
+  // Prefers clickable ancestors with meaningful accessible names over
+  // inner icon wrappers with empty names. Prevents resolving to an
+  // icon container (cursor:pointer, no label) instead of the parent
+  // trigger (cursor:pointer, has label like "Passengers and class").
+  let clickCandidate: Element | null = null;
   for (const el of fullPath) {
     if (!(el instanceof Element)) continue;
     if (isNonInteractive(el)) continue;
-    if (isClickableHeuristic(el)) return el;
+    if (isClickableHeuristic(el)) {
+      clickCandidate = el;
+      const name = getAccessibleName(el);
+      if (name && name.trim().length > 2) return el;
+      // No meaningful name — keep walking to find a clickable ancestor with one
+      break;
+    }
+  }
+  // Walk parents to find a better clickable candidate
+  if (clickCandidate) {
+    let bestCandidate = clickCandidate;
+    let parent: Element | null = clickCandidate.parentElement;
+    for (let depth = 0; depth < 3 && parent; depth++) {
+      if (isNonInteractive(parent)) break;
+      if (isClickableHeuristic(parent)) {
+        const parentName = getAccessibleName(parent);
+        const bestName = getAccessibleName(bestCandidate);
+        if (parentName && parentName.trim().length > 2) {
+          if (!bestName || bestName.trim().length <= 2) {
+            bestCandidate = parent;
+          }
+        }
+      }
+      parent = parent.parentElement;
+    }
+    return bestCandidate;
   }
 
   // Strategy 3: Raw target (if not structural)

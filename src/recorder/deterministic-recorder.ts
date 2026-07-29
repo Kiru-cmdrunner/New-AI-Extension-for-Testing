@@ -1077,20 +1077,66 @@ function resolveTarget(event: Event): Element | null {
   }
 
   // Strategy 2: Find nearest "clickable" element (cursor:pointer, onclick)
+  // When a clickable element is found, prefer ancestors with a more meaningful
+  // accessible name. This prevents resolving to an inner icon wrapper (which has
+  // cursor:pointer but no label) instead of the parent trigger button (which has
+  // the real label like "Passengers and class"). We collect the first clickable
+  // candidate, then continue checking if a parent is clickable AND has a better
+  // name — if so, prefer the parent.
+  let clickCandidate: Element | null = null;
   if (typeof event.composedPath === 'function') {
     const path = event.composedPath();
     for (const node of path) {
       if (node instanceof Element && !isNonInteractive(node) && isClickableHeuristic(node)) {
-        return node;
+        clickCandidate = node;
+        // Check if this candidate has a meaningful accessible name.
+        // If it does, it's likely the right element — return it.
+        const name = computeAccessibleName(node);
+        if (name && name.trim().length > 2) {
+          return node;
+        }
+        // No meaningful name — keep walking to find a clickable ancestor with one.
+        break;
       }
     }
   }
-  current = rawTarget;
-  while (current) {
-    if (!isNonInteractive(current) && isClickableHeuristic(current)) {
-      return current;
+  if (!clickCandidate) {
+    current = rawTarget;
+    while (current) {
+      if (!isNonInteractive(current) && isClickableHeuristic(current)) {
+        clickCandidate = current;
+        const name = computeAccessibleName(current);
+        if (name && name.trim().length > 2) {
+          break;
+        }
+      }
+      current = current.parentElement;
     }
-    current = current.parentElement;
+  }
+  // If we found a clickable candidate (even without a good name), continue
+  // walking parents to see if a BETTER clickable ancestor with a name exists.
+  if (clickCandidate) {
+    let bestCandidate = clickCandidate;
+    let parent: Element | null = clickCandidate.parentElement;
+    // Walk up at most 3 ancestors — deep traversal risks resolving to a
+    // large container that merely has cursor:pointer inherited.
+    for (let depth = 0; depth < 3 && parent; depth++) {
+      if (isNonInteractive(parent)) break;
+      if (isClickableHeuristic(parent)) {
+        const parentName = computeAccessibleName(parent);
+        const bestName = computeAccessibleName(bestCandidate);
+        // Prefer parent if it has a meaningful name and current best doesn't,
+        // or if parent has a substantially better name (longer but not a
+        // container noise name).
+        if (parentName && parentName.trim().length > 2) {
+          if (!bestName || bestName.trim().length <= 2) {
+            bestCandidate = parent;
+          }
+        }
+      }
+      parent = parent.parentElement;
+    }
+    return bestCandidate;
   }
 
   // Strategy 3: Return the raw target if it's a real interactive-looking element
