@@ -95,18 +95,19 @@ The recording pipeline has ONE active data flow. Everything else is either legac
 | `src/recorder/element-id-generator.ts` | 🔴 DEAD | Not imported by active pipeline. |
 | `src/recorder/step-id-generator.ts` | 🔴 DEAD | Not imported by active pipeline. |
 | `src/recorder/surface-detector.ts` | 🔴 DEAD | Only imported by `deterministic-recorder.ts`. Functionality moved to `definitions/dom-context-extractor.ts`. |
-| `src/recorder/v2/control-recorder.ts` | 🔴 DEAD content script | Loaded by manifest but sends `RECORDED_EVENT` messages the SW does not handle. Events go nowhere. |
-| `src/recorder/v2/control-model.ts` | 🔴 DEAD | Only used by `control-recorder.ts` (dead path). |
-| `src/recorder/v2/element-identity-builder.ts` | 🔴 DEAD | Only used by control-model/v2 (dead path). |
-| `src/recorder/v2/framework-adapters.ts` | 🔴 DEAD | Only used by control-model/v2 (dead path). |
-| `src/recorder/v2/identity-extractor.ts` | 🔴 DEAD | Only used by control-model/v2 (dead path). |
+| `src/recorder/v2/control-recorder.ts` | 🔴 ACTIVE-DEPRECATED | ⚠️ Declared in `manifest.json:37` as a content script — actively loaded on every page. Sends `RECORDED_EVENT` messages the SW does NOT handle. Creates a parallel recording pipeline. **Must remove from manifest before file deletion.** See §5.2b of Specification. |
+| `src/recorder/v2/control-model.ts` | 🔴 ACTIVE-DEPRECATED | Imported by `control-recorder.ts:22` — loaded into page. **Must remove manifest entry first.** |
+| `src/recorder/v2/element-identity-builder.ts` | 🔴 ACTIVE-DEPRECATED | Imported by `control-recorder.ts:23` — loaded into page. **Must remove manifest entry first.** |
+| `src/recorder/v2/interaction-recognizer.ts` | 🔴 ACTIVE-DEPRECATED | Imported by `service-worker.ts:24`. Active when `recorderEngine === 'control'` (feature flag, default `'legacy'`). **Must remove feature flag + import before deletion.** |
+| `src/recorder/v2/framework-adapters.ts` | ⚠️ BARREL-LOADED | Barrel re-export in `v2/index.ts` only. Unused at runtime. |
+| `src/recorder/v2/identity-extractor.ts` | ⚠️ BARREL-LOADED | Barrel re-export in `v2/index.ts` only. Unused at runtime. |
 | `src/runtime/modal-tracker.ts` | ⚠️ DORMANT | `ModalTracker` class exists but is not instantiated. Surface detection is handled by `dom-context-extractor.ts`. |
 | `src/pipeline/` (34 files) | 🔴 DEAD | Entire "Blueprint Architecture" directory. Zero imports from outside. Parallel universe to active code. |
-| `src/types/` (8 files) | 🔴 DEAD | Only imported by `src/pipeline/` (which is dead). |
+| `src/types/` (8 files) | 🔴 DEAD | Only imported by `src/pipeline/` (which is dead). Paired with `src/pipeline/`. |
 | `legacy/` | 🔴 ARCHIVE | Old architecture snapshots. |
 | `tmp-build/` | 🔴 ARCHIVE | Full project snapshot (Jul 28). |
 | `extension-zip/` | 🔴 ARCHIVE | Built extension package (Jul 28). |
-| `src/presentation/output-adapter.ts` `toIRActions()` | ⚠️ DEAD EXPORT | Exported and imported by SW but never called. Only `filterProductionInteractions` is used. IR Bridge has its own mapping. |
+| `src/presentation/output-adapter.ts` `toIRActions()` | ⚠️ DEAD IMPORT | Imported by SW line 57 but never called (0 call sites). Tree-shaken by Vite. Remove import in Phase 1. |
 
 ### 1.5 Duplicate Type Definitions — Canonical Sources
 

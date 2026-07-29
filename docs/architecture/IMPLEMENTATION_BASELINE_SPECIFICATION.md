@@ -207,15 +207,35 @@ The recording → semantic → code generation pipeline as it runs at commit `77
 | Element ID Generator | `src/recorder/element-id-generator.ts` | ~100 | Unused |
 | Step ID Generator | `src/recorder/step-id-generator.ts` | ~100 | Unused |
 | Surface Detector | `src/recorder/surface-detector.ts` | ~200 | Duplicated in dom-context-extractor.ts |
-| Control Recorder (content script) | `src/recorder/v2/control-recorder.ts` | ~800 | Sends RECORDED_EVENT; SW doesn't handle it |
-| Control Model | `src/recorder/v2/control-model.ts` | ~300 | Used only by control-recorder.ts |
-| Element Identity Builder | `src/recorder/v2/element-identity-builder.ts` | ~400 | Dead; identity extraction in identity-extractor.ts |
-| Framework Adapters | `src/recorder/v2/framework-adapters.ts` | ~200 | Dead; not imported anywhere active |
-| V2 Identity Extractor | `src/recorder/v2/identity-extractor.ts` | ~300 | Dead; superseded by tap/identity-extractor.ts |
 | Modal Tracker | `src/runtime/modal-tracker.ts` | ~150 | Dormant — not instantiated |
-| Pipeline Blueprint | `src/pipeline/` | 34 files | Entire blueprint architecture; not loaded by manifest |
-| Legacy Types | `src/types/` | 8 files | Only imported by src/pipeline/ |
+| Pipeline Blueprint | `src/pipeline/` | 34 files | Entire blueprint architecture; not loaded by manifest. Only imported internally. |
+| Legacy Types | `src/types/` | 8 files | Only imported by src/pipeline/. Paired with src/pipeline/. |
 | Build Artifacts | `tmp-build/`, `extension-zip/` | — | Full project snapshots; not source |
+| Dead IR Import | `src/presentation/output-adapter.ts` `toIRActions()` | — | Imported in SW line 57 but never called (0 call sites). Remove import in Phase 1. |
+
+### 5.2b Active-Deprecated Modules (Loaded but Functionally Dead — Must Update Manifest Before File Deletion)
+
+> **⚠️ CRITICAL:** These modules are **actively loaded by Chrome** (declared in `manifest.json` or imported by the SW) but their output is **never processed**. They create a parallel recording pipeline. Removing the files without updating the manifest and SW will **break the extension at load time**.
+
+| Module | Path | Lines | Status | Loaded By | Output Goes Where |
+|--------|------|-------|--------|-----------|-------------------|
+| Control Recorder (content script) | `src/recorder/v2/control-recorder.ts` | ~800 | 🔴 Active-Deprecated | `manifest.json:37` (content_scripts) | Sends `RECORDED_EVENT` → SW does NOT handle → **silently dropped** |
+| Control Model | `src/recorder/v2/control-model.ts` | ~300 | 🔴 Active-Deprecated | Imported by `control-recorder.ts:22` | Used by control-recorder only |
+| Element Identity Builder | `src/recorder/v2/element-identity-builder.ts` | ~400 | 🔴 Active-Deprecated | Imported by `control-recorder.ts:23` | Used by control-recorder only |
+| Control Engine Recognizer | `src/recorder/v2/interaction-recognizer.ts` | 674 | 🔴 Active-Deprecated | Imported by `service-worker.ts:24` | Active when `recorderEngine === 'control'` (feature flag, default `'legacy'`) |
+| V2 Identity Extractor | `src/recorder/v2/identity-extractor.ts` | ~300 | ⚠️ Barrel-loaded | Barrel re-export in `v2/index.ts` | Unused at runtime |
+| Framework Adapters | `src/recorder/v2/framework-adapters.ts` | ~200 | ⚠️ Barrel-loaded | Barrel re-export in `v2/index.ts` | Unused at runtime |
+
+**Removal prerequisites (must complete ALL before file deletion):**
+1. Remove `control-recorder.ts` from `manifest.json` content_scripts section
+2. Remove `control-recorder.ts` from `manifest.json` web_accessible_resources
+3. Remove `recognizeInteractions` import from `service-worker.ts:24`
+4. Remove the `recorderEngine === 'control'` feature flag block from `service-worker.ts` (lines 318–333)
+5. Remove `recorderEngine` from settings UI and StorageService defaults
+6. Remove `toIRActions` import from `service-worker.ts:57`
+7. Then delete `src/recorder/v2/` directory
+
+**⚠️ Pre-Phase-0 Recommendation:** Remove the `control-recorder.ts` manifest entry as soon as the Adani One fixes are Verified. This eliminates the parallel recording pipeline (two content scripts competing for DOM events on the same page). This is a 1-line manifest change.
 
 ### 5.3 Future Modules (Not Yet Built)
 
