@@ -480,6 +480,39 @@ describe('Stepper label normalization and counter grouping', () => {
     expect(cs.fields[0].label).toBe('Adults');
     expect(cs.fields[1].label).toBe('Children');
   });
+
+  it('separates counters with no CSS keywords into Passenger 1, 2, 3', () => {
+    // Simulates the stripped subActions as they come from buildResult,
+    // where the CSS selector has no "adults"/"children" keywords (common
+    // on AdaniOne where buttons are generic icons with no contextual class)
+    const interaction = makeInteraction([], { targetName: '1Economy' });
+    (interaction as any).metadata.subActions = [
+      { action: 'increment', label: '+', value: '', targetElementId: 'el-a', targetCssSelector: 'div.panel > button.icon-btn', targetClassName: 'icon-btn' },
+      { action: 'increment', label: '+', value: '', targetElementId: 'el-b', targetCssSelector: 'div.panel > button.icon-btn', targetClassName: 'icon-btn' },
+      { action: 'increment', label: '+', value: '', targetElementId: 'el-c', targetCssSelector: 'div.panel > button.icon-btn', targetClassName: 'icon-btn' },
+      { action: 'selectOption', label: 'Premium Economy', value: 'Premium Economy' },
+      { action: 'confirm', label: 'Done', value: undefined },
+    ];
+    const enriched = enrichConfigurationSession(interaction);
+    const cs = enriched.metadata!.configurationSession as ConfigurationSession;
+
+    // 3 separate counter fields (NOT merged into one "Counter +3")
+    const counterFields = cs.fields.filter(f => f.kind === 'counter');
+    expect(counterFields.length).toBe(3);
+    expect(counterFields.every(f => f.delta === 1)).toBe(true);
+
+    // Sequential naming: Passenger 1, Passenger 2, Passenger 3
+    expect(counterFields[0].label).toBe('Passenger 1');
+    expect(counterFields[1].label).toBe('Passenger 2');
+    expect(counterFields[2].label).toBe('Passenger 3');
+
+    // Verify the summary includes all of them + Done
+    const summary = renderConfigurationSummary(cs);
+    expect(summary).toContain('Passenger 1 +1');
+    expect(summary).toContain('Passenger 2 +1');
+    expect(summary).toContain('Passenger 3 +1');
+    expect(summary).toContain('Done');
+  });
 });
 
 const crossSource: DropdownSubAction[] = [];

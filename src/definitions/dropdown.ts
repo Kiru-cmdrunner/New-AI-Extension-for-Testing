@@ -552,6 +552,12 @@ export const dropdownDefinition: ComponentDefinition = {
           action: s.action,
           label: s.label,
           value: s.value,
+          // Preserve target identity fields needed by the enrichment layer to
+          // distinguish different stepper buttons (Adults vs Children vs Infants)
+          // that share the same generic label ("+").
+          targetElementId: s.target?.elementId ?? undefined,
+          targetCssSelector: s.target?.cssSelector ?? undefined,
+          targetClassName: s.target?.className ?? undefined,
         })),
         isMultiConfig,
         // Keep raw element identities for the generation layer (locators).

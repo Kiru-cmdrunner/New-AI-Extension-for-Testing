@@ -187,21 +187,29 @@ function groupByField(
 ): Map<string, DropdownSubAction[]> {
   const groups = new Map<string, DropdownSubAction[]>();
   for (const sub of subActions) {
-    const fieldName = normalizeFieldName(sub.label);
+    const subAny = sub as any;
+    const label: string = subAny.label ?? '';
+    const fieldName = normalizeFieldName(label);
 
-    // For counters with generic labels, append elementId to keep distinct
-    // stepper buttons as separate fields. If the label was already descriptive
-    // ("Adults", "Children"), keep using the label as the key.
+    // For counters with generic labels, try to infer a better name from
+    // the target's CSS selector or class. If we can't infer one, use
+    // a sequential counter label ("Passenger 1", "Passenger 2") to keep
+    // distinct stepper buttons as separate, readable fields.
     let key = fieldName;
     if (
-      (sub.action === 'increment' || sub.action === 'decrement') &&
+      (subAny.action === 'increment' || subAny.action === 'decrement') &&
       (fieldName === 'Counter' || fieldName === '+' || fieldName === '-')
     ) {
-      // Use a combination of label + elementId so each physical button
-      // becomes its own field. Also infer a better name from the element's
-      // CSS selector or class if possible.
       const inferredName = inferCounterName(sub);
-      key = inferredName || `${fieldName} (${sub.target?.elementId ?? 'unknown'})`;
+      const elementId = subAny.targetElementId ?? subAny.target?.elementId ?? '';
+      if (inferredName) {
+        key = inferredName;
+      } else if (elementId) {
+        // Use elementId to distinguish but with a friendlier label.
+        // The renderer will show "Passenger +1" etc.
+        key = `__counter_${elementId}`;
+      }
+      // else: fall through with generic "Counter" key (all merge)
     }
 
     if (!groups.has(key)) {
@@ -216,19 +224,24 @@ function groupByField(
  * Try to infer a meaningful field name for a counter (stepper) subAction
  * from its target's CSS selector or class name.
  * E.g., cssSelector "button.plus-adults" → "Adults"
+ *
+ * Handles both raw DropdownSubAction (with full .target object) and
+ * stripped metadata subActions (with flat targetCssSelector/targetClassName).
  */
-function inferCounterName(sub: DropdownSubAction): string | null {
+function inferCounterName(sub: DropdownSubAction | Record<string, unknown>): string | null {
+  // Extract CSS selector and class name from either shape
+  const cssSelector = (sub as any)?.targetCssSelector ?? (sub as any)?.target?.cssSelector ?? '';
+  const className = (sub as any)?.targetClassName ?? (sub as any)?.target?.className ?? '';
+
   // Check CSS selector for contextual keywords
-  const selector = sub.target?.cssSelector || '';
-  const selMatch = selector.match(/(?:adult|child|children|infant|senior|youth|teen|pax|passenger|room|guest)(?:[-_a-z]*)?/i);
+  const selMatch = cssSelector.match?.(/(?:adult|child|children|infant|senior|youth|teen|pax|passenger|room|guest)(?:[-_a-z]*)?/i);
   if (selMatch) {
     const name = selMatch[0].replace(/[-_]/g, ' ').trim();
     if (name) return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
   }
 
   // Check className for contextual keywords
-  const className = sub.target?.className || '';
-  const clsMatch = className.match(/(?:adult|child|children|infant|senior|youth|teen|pax|passenger|room|guest)(?:[-_a-z]*)?/i);
+  const clsMatch = className.match?.(/(?:adult|child|children|infant|senior|youth|teen|pax|passenger|room|guest)(?:[-_a-z]*)?/i);
   if (clsMatch) {
     const name = clsMatch[0].replace(/[-_]/g, ' ').trim();
     if (name) return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
@@ -361,14 +374,23 @@ export function enrichConfigurationSession(
   const groups = groupByField(fieldSubActions);
 
   // Step 3: Derive ConfigurationField from each group
+  // Count unnamed counter groups for sequential labeling
+  let unnamedCounterIdx = 0;
   const fields: ConfigurationField[] = [];
   for (const [label, group] of groups) {
     const kind = deriveKind(group[0].action);
     const finalValue = extractFinalValue(group, kind);
     const delta = kind === 'counter' ? computeDelta(group) : undefined;
 
+    // Convert internal __counter_<id> keys into sequential "Passenger N" labels
+    let displayLabel = label;
+    if (label.startsWith('__counter_')) {
+      unnamedCounterIdx++;
+      displayLabel = `Passenger ${unnamedCounterIdx}`;
+    }
+
     fields.push({
-      label,
+      label: displayLabel,
       kind,
       finalValue,
       delta,
