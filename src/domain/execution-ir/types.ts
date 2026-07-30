@@ -164,6 +164,22 @@ export type IRInput = string | number | boolean | null;
 // ── 2.7 IRStep ────────────────────────────────────────────
 
 /**
+ * Resolved frame locator for iframe-embedded elements.
+ * When present on an IRStep, the adapter must wrap element actions in
+ * frameLocator() calls to reach elements inside iframes.
+ */
+export interface ResolvedFrame {
+  /** Playwright frameLocator selector (e.g., 'iframe#payment', 'iframe[name="stripe"]'). */
+  readonly selector: string;
+  /** How the selector was derived — guides adapter-specific rendering. */
+  readonly strategy: 'css' | 'name' | 'url' | 'index';
+  /** Source URL of the iframe (always available from window.location.href). */
+  readonly frameSrc?: string;
+  /** Depth in the iframe nesting (1 = direct child of top-level page). */
+  readonly depth: number;
+}
+
+/**
  * The atomic execution unit. Self-contained — carries everything an adapter
  * needs to produce engine-specific code or execute the action. No step
  * references another step (designs for graph evolution: steps[] → nodes[]
@@ -195,6 +211,15 @@ export interface IRStep {
   readonly sourceEventId?: string;
   /** Template-generated human description. Undefined for ATC-authored steps. */
   readonly plainEnglish?: string;
+
+  // ── Frame context (optional — populated by IR bridge for iframe-embedded elements) ──
+
+  /**
+   * Frame locator for iframe-embedded elements. Undefined for top-frame elements.
+   * When present, the adapter wraps element actions in frameLocator() to reach
+   * elements inside iframes.
+   */
+  readonly frame?: ResolvedFrame;
 }
 
 // ── 2.8 IREnvironment ─────────────────────────────────────

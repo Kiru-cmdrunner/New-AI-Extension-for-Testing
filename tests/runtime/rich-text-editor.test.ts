@@ -18,7 +18,8 @@ import type {
   BrowserEventType,
 } from '../../src/shared/component-types';
 import type { ElementIdentity } from '../../src/shared/types';
-import { build as buildIRPlan, type IRBridgeInput } from '../../src/generation/ir-bridge';
+import { build as buildIRPlan } from '../../src/generation/ir-bridge';
+import type { IRBridgeInput } from '../../src/generation/ir-bridge-input';
 import type { DetectedInteraction } from '../../src/classifier/interaction-types';
 import type { IRStep } from '../../src/domain/execution-ir/types';
 

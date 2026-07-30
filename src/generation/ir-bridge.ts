@@ -25,6 +25,7 @@ import {
   type ExecutionIRPlan,
   type ResolvedLocator,
   type ResolvedTarget,
+  type ResolvedFrame,
   type ElementTarget,
   type IRAssertion,
   type IREnvironment,
@@ -35,7 +36,7 @@ import {
   ValidationComparison,
   ValidationSeverity,
 } from '../domain/enums';
-import type { SessionEvent, ElementIdentity, AIUnderstanding } from '../shared/types';
+import type { SessionEvent, ElementIdentity, AIUnderstanding, IframeContext } from '../shared/types';
 import type { DetectedInteraction, InteractionType } from '../classifier/interaction-types';
 import type {
   ApplicationKnowledgeFragment,
@@ -140,6 +141,103 @@ function resolveElementTarget(identity: ElementIdentity): ElementTarget {
 
 function resolveUrlTarget(url: string): ResolvedTarget {
   return { kind: 'url', url };
+}
+
+// ── Frame Resolution ──────────────────────────────────────
+
+/**
+ * Resolve a frame locator from an element's iframe context.
+ *
+ * Priority chain:
+ * 1. frameSelector (CSS selector from parent — same-origin only)
+ * 2. frameName → iframe[name="..."]
+ * 3. frameId → iframe#id
+ * 4. frameSrc → iframe[src*="partial-url"] (always available)
+ * 5. frameIndex → fallback nth-of-type
+ *
+ * Returns null for top-frame elements (no iframeContext or inIframe false).
+ */
+function resolveFrame(identity: ElementIdentity): ResolvedFrame | undefined {
+  if (!identity.inIframe || !identity.iframeContext) {
+    return undefined;
+  }
+
+  const ctx: IframeContext = identity.iframeContext;
+
+  // Priority 1: CSS selector (most reliable — same-origin only)
+  if (ctx.frameSelector) {
+    return {
+      selector: ctx.frameSelector,
+      strategy: 'css',
+      frameSrc: ctx.frameSrc,
+      depth: ctx.frameDepth,
+    };
+  }
+
+  // Priority 2: name attribute
+  if (ctx.frameName) {
+    return {
+      selector: `iframe[name="${ctx.frameName}"]`,
+      strategy: 'name',
+      frameSrc: ctx.frameSrc,
+      depth: ctx.frameDepth,
+    };
+  }
+
+  // Priority 3: id attribute
+  if (ctx.frameId) {
+    return {
+      selector: `iframe#${ctx.frameId}`,
+      strategy: 'css',
+      frameSrc: ctx.frameSrc,
+      depth: ctx.frameDepth,
+    };
+  }
+
+  // Priority 4: source URL partial match (always available — cross-origin safe)
+  if (ctx.frameSrc) {
+    // Extract a meaningful URL fragment for matching
+    const src = ctx.frameSrc;
+    const urlPart = extractUrlFragment(src);
+    return {
+      selector: `iframe[src*="${urlPart}"]`,
+      strategy: 'url',
+      frameSrc: src,
+      depth: ctx.frameDepth,
+    };
+  }
+
+  // Priority 5: index-based fallback
+  if (ctx.frameIndex !== null) {
+    return {
+      selector: `iframe >> nth=${ctx.frameIndex}`,
+      strategy: 'index',
+      frameSrc: ctx.frameSrc,
+      depth: ctx.frameDepth,
+    };
+  }
+
+  return undefined;
+}
+
+/**
+ * Extract a stable URL fragment for iframe src matching.
+ * Uses the pathname's last segment (usually most distinctive).
+ */
+function extractUrlFragment(url: string): string {
+  try {
+    const parsed = new URL(url);
+    // Prefer the last path segment — usually most distinctive
+    const segments = parsed.pathname.split('/').filter(Boolean);
+    if (segments.length > 0) {
+      return segments[segments.length - 1];
+    }
+    // Fall back to hostname
+    return parsed.hostname;
+  } catch {
+    // Not a valid URL — return as-is (may be a relative path)
+    return url.slice(-30);
+  }
 }
 
 // ── Description Generation ─────────────────────────────────
@@ -767,6 +865,10 @@ export function build(input: IRBridgeInput): ExecutionIRPlan {
       target = { kind: 'none' };
     }
 
+    // Resolve frame context for iframe-embedded elements
+    const frameSource = interaction.target ?? (event && 'elementIdentity' in event ? event.elementIdentity : null);
+    const frame = frameSource ? resolveFrame(frameSource as ElementIdentity) : undefined;
+
     // Extract input value
     const inputValue = extractInputValue(interaction, event);
 
@@ -802,6 +904,7 @@ export function build(input: IRBridgeInput): ExecutionIRPlan {
       aiEnrichment,
       sourceEventId,
       plainEnglish,
+      ...(frame ? { frame } : {}),
     });
 
     stepCounter++;

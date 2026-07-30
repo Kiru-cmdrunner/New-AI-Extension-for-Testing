@@ -150,6 +150,9 @@ function timeoutOption(step: IRStep): string {
 /**
  * Resolve the element locator expression from the step's target.
  * Delegates to the Milestone 1 locator renderer.
+ *
+ * For iframe-embedded elements (step.frame present), wraps in frameLocator():
+ *   page.frameLocator('iframe#payment').getByRole('button', { name: 'Pay' })
  */
 function elementExpression(step: IRStep, pageVar: string): string {
   if (step.target.kind !== 'element') {
@@ -160,7 +163,14 @@ function elementExpression(step: IRStep, pageVar: string): string {
   }
 
   const rendered = renderLocator(step.target.resolvedLocators, pageVar);
-  return `${rendered.pageRef}.${rendered.expression}`;
+  const baseExpr = `${rendered.pageRef}.${rendered.expression}`;
+
+  // If the element is inside an iframe, prefix with frameLocator()
+  if (step.frame) {
+    return `${pageVar}.frameLocator('${escapeString(step.frame.selector)}').${rendered.expression}`;
+  }
+
+  return baseExpr;
 }
 
 /**
