@@ -184,7 +184,13 @@ function isStepperMinus(event: ObservedEvent): boolean {
  * (e.g., generic clicks on non-interactive surface padding).
  */
 function classifySubAction(event: ObservedEvent): DropdownSubAction | null {
-  if (event.eventType !== 'click' && event.eventType !== 'mousedown' && event.eventType !== 'change') {
+  // Only classify click and change events as subActions — NOT mousedown.
+  // Every real button press fires mousedown → click in sequence, so processing
+  // both double-counts every interaction. In React SPAs, the element identity
+  // may change between mousedown and click (re-render), which breaks dedup.
+  // Using click only eliminates the duplication at the source.
+  // (mousedown is still used for trigger detection / session discovery.)
+  if (event.eventType !== 'click' && event.eventType !== 'change') {
     return null;
   }
 
@@ -195,7 +201,7 @@ function classifySubAction(event: ObservedEvent): DropdownSubAction | null {
   );
 
   // Done/Apply button → confirm
-  if ((event.eventType === 'click' || event.eventType === 'mousedown') && isDoneButton(event)) {
+  if (event.eventType === 'click' && isDoneButton(event)) {
     return { action: 'confirm', label, target: event.target, event };
   }
 
@@ -219,7 +225,7 @@ function classifySubAction(event: ObservedEvent): DropdownSubAction | null {
   // Stepper +/- buttons (detected by aria-label, accessible name, or CSS class)
   // This check runs BEFORE the generic click fallback to ensure icon-only
   // stepper buttons (no text, only SVG icon) are captured as increment/decrement.
-  if (event.eventType === 'click' || event.eventType === 'mousedown') {
+  if (event.eventType === 'click') {
     if (isStepperPlus(event)) {
       // For icon-only buttons, derive a descriptive label from aria-label
       // or CSS class instead of falling through to 'element'
@@ -271,7 +277,7 @@ function classifySubAction(event: ObservedEvent): DropdownSubAction | null {
   }
 
   // Generic click on a labeled element inside the surface (SPA-style options)
-  if ((event.eventType === 'click' || event.eventType === 'mousedown') && label !== 'element') {
+  if (event.eventType === 'click' && label !== 'element') {
     return {
       action: 'selectOption',
       label,
@@ -436,10 +442,10 @@ export const dropdownDefinition: ComponentDefinition = {
     const triggerKey = elementKey(ctx.trigger);
 
     // ── Done/Apply button → complete with all accumulated subActions ──
-    if (
-      (event.eventType === 'click' || event.eventType === 'mousedown') &&
-      isDoneButton(event)
-    ) {
+    // Only on click — not mousedown — to avoid completing the session
+    // before the click event arrives (which would cause the click to be
+    // processed as a separate Click interaction).
+    if (event.eventType === 'click' && isDoneButton(event)) {
       ctx.data.doneClicked = true;
       const sub = classifySubAction(event);
       if (sub) addSubAction(ctx, sub);
