@@ -206,6 +206,28 @@ async function handleStartRecording(): Promise<void> {
   const tab = await getActiveTab();
   const startUrl = tab?.url ?? '';
   const startTitle = tab?.title ?? '';
+
+  // ── Guard: Block recording on browser-internal pages ──
+  // Content scripts cannot execute on chrome://, chrome-extension://, edge://,
+  // or about:// pages. Recording would silently fail with no feedback.
+  // Surface an actionable error instead of letting the session hang.
+  if (
+    startUrl.startsWith('chrome://') ||
+    startUrl.startsWith('chrome-extension://') ||
+    startUrl.startsWith('edge://') ||
+    startUrl.startsWith('about:')
+  ) {
+    console.warn(`[SW] Blocked recording on internal page: ${startUrl}`);
+    await chrome.storage.local.set({
+      [StorageKeys.UI_STATE]: {
+        recordingState: RecordingState.Error,
+        lastChanged: new Date().toISOString(),
+        errorMessage: `Cannot record on internal page (${startUrl}). Please open a regular web page first.`,
+      },
+    });
+    return;
+  }
+
   recordingStartUrl = startUrl;
   recordingStartTitle = startTitle;
 
