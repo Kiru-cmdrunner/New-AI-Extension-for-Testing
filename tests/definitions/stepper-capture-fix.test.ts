@@ -431,4 +431,157 @@ describe('Stepper +/- Capture Fix', () => {
       expect(confirms.length).toBe(1);
     });
   });
+
+  // ── Dedup: mousedown + click should not double-count ──
+
+  describe('Dedup: mousedown + click same target', () => {
+    it('captures only ONE increment when mousedown+click fire on same button', () => {
+      const { runtime, emitted } = setupRuntime();
+      const SURFACE = 'surf:testId:pax-panel';
+
+      openDropdown(runtime, SURFACE);
+
+      // mousedown on +
+      runtime.process(makeClickEvent({
+        accessibleName: '+', tag: 'BUTTON', ariaRole: 'button',
+        className: 'plus-icon', elementId: 'plus-adults',
+        cssSelector: 'body > div.panel > button.plus-adults',
+      }, { surfaceId: SURFACE, surfaceType: 'popover' }));
+
+      // click on same +
+      runtime.process(makeClickEvent({
+        accessibleName: '+', tag: 'BUTTON', ariaRole: 'button',
+        className: 'plus-icon', elementId: 'plus-adults',
+        cssSelector: 'body > div.panel > button.plus-adults',
+      }, { surfaceId: SURFACE, surfaceType: 'popover' }));
+
+      runtime.process(makeClickEvent({
+        accessibleName: 'Done', tag: 'BUTTON', ariaRole: 'button',
+        elementId: 'done-btn',
+        cssSelector: 'body > div.panel > button.done',
+      }, { surfaceId: SURFACE, surfaceType: 'popover' }));
+
+      const dropdown = emitted.find(e => e.type === 'Dropdown');
+      expect(dropdown).toBeDefined();
+      const subActions = dropdown!.metadata.subActions as any[];
+      const increments = subActions.filter(s => s.action === 'increment');
+      // Should be exactly 1, not 2 — dedup prevents double-counting
+      expect(increments.length).toBe(1);
+    });
+
+    it('captures multiple increments when different buttons are clicked', () => {
+      const { runtime, emitted } = setupRuntime();
+      const SURFACE = 'surf:testId:pax-panel';
+
+      openDropdown(runtime, SURFACE);
+
+      // + Adults
+      runtime.process(makeClickEvent({
+        accessibleName: '+', tag: 'BUTTON', ariaRole: 'button',
+        className: 'plus-icon', elementId: 'plus-adults',
+        cssSelector: 'body > div.panel > button.plus-adults',
+      }, { surfaceId: SURFACE, surfaceType: 'popover' }));
+
+      // + Children (different button)
+      runtime.process(makeClickEvent({
+        accessibleName: '+', tag: 'BUTTON', ariaRole: 'button',
+        className: 'plus-icon', elementId: 'plus-children',
+        cssSelector: 'body > div.panel > button.plus-children',
+      }, { surfaceId: SURFACE, surfaceType: 'popover' }));
+
+      runtime.process(makeClickEvent({
+        accessibleName: 'Done', tag: 'BUTTON', ariaRole: 'button',
+        elementId: 'done-btn',
+        cssSelector: 'body > div.panel > button.done',
+      }, { surfaceId: SURFACE, surfaceType: 'popover' }));
+
+      const dropdown = emitted.find(e => e.type === 'Dropdown');
+      expect(dropdown).toBeDefined();
+      const subActions = dropdown!.metadata.subActions as any[];
+      const increments = subActions.filter(s => s.action === 'increment');
+      expect(increments.length).toBe(2);
+    });
+  });
+
+  // ── Label extraction from CSS selector / class ──
+
+  describe('Label extraction from CSS selector', () => {
+    it('infers "Adults" from CSS selector "button.plus-adults"', () => {
+      const { runtime, emitted } = setupRuntime();
+      const SURFACE = 'surf:testId:pax-panel';
+
+      openDropdown(runtime, SURFACE);
+
+      runtime.process(makeClickEvent({
+        accessibleName: '', tag: 'BUTTON', ariaRole: 'button',
+        className: 'plus-btn', elementId: 'plus-adults',
+        cssSelector: 'body > div.panel > button.plus-adults',
+      }, { surfaceId: SURFACE, surfaceType: 'popover' }));
+
+      runtime.process(makeClickEvent({
+        accessibleName: 'Done', tag: 'BUTTON', ariaRole: 'button',
+        elementId: 'done-btn',
+        cssSelector: 'body > div.panel > button.done',
+      }, { surfaceId: SURFACE, surfaceType: 'popover' }));
+
+      const dropdown = emitted.find(e => e.type === 'Dropdown');
+      expect(dropdown).toBeDefined();
+      const subActions = dropdown!.metadata.subActions as any[];
+      const increment = subActions.find(s => s.action === 'increment');
+      expect(increment).toBeDefined();
+      expect(increment!.label).toBe('Adults');
+    });
+
+    it('infers "Infant" from CSS selector "button.inc-infant"', () => {
+      const { runtime, emitted } = setupRuntime();
+      const SURFACE = 'surf:testId:pax-panel';
+
+      openDropdown(runtime, SURFACE);
+
+      runtime.process(makeClickEvent({
+        accessibleName: '', tag: 'BUTTON', ariaRole: 'button',
+        className: 'increment-btn', elementId: 'infant-plus',
+        cssSelector: 'body > div.panel > button.inc-infant',
+      }, { surfaceId: SURFACE, surfaceType: 'popover' }));
+
+      runtime.process(makeClickEvent({
+        accessibleName: 'Done', tag: 'BUTTON', ariaRole: 'button',
+        elementId: 'done-btn',
+        cssSelector: 'body > div.panel > button.done',
+      }, { surfaceId: SURFACE, surfaceType: 'popover' }));
+
+      const dropdown = emitted.find(e => e.type === 'Dropdown');
+      expect(dropdown).toBeDefined();
+      const subActions = dropdown!.metadata.subActions as any[];
+      const increment = subActions.find(s => s.action === 'increment');
+      expect(increment).toBeDefined();
+      expect(increment!.label).toBe('Infant');
+    });
+
+    it('infers "Children" from className "plus-children"', () => {
+      const { runtime, emitted } = setupRuntime();
+      const SURFACE = 'surf:testId:pax-panel';
+
+      openDropdown(runtime, SURFACE);
+
+      runtime.process(makeClickEvent({
+        accessibleName: '', tag: 'BUTTON', ariaRole: 'button',
+        className: 'plus-children icon-btn', elementId: 'child-plus',
+        cssSelector: 'body > div.panel > button.icon',
+      }, { surfaceId: SURFACE, surfaceType: 'popover' }));
+
+      runtime.process(makeClickEvent({
+        accessibleName: 'Done', tag: 'BUTTON', ariaRole: 'button',
+        elementId: 'done-btn',
+        cssSelector: 'body > div.panel > button.done',
+      }, { surfaceId: SURFACE, surfaceType: 'popover' }));
+
+      const dropdown = emitted.find(e => e.type === 'Dropdown');
+      expect(dropdown).toBeDefined();
+      const subActions = dropdown!.metadata.subActions as any[];
+      const increment = subActions.find(s => s.action === 'increment');
+      expect(increment).toBeDefined();
+      expect(increment!.label).toBe('Children');
+    });
+  });
 });

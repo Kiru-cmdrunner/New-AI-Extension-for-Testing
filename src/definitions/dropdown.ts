@@ -100,9 +100,11 @@ const STEPPER_MINUS_CLASS_RE =
   /(?:minus|decrement|remove-btn|remove-button|counter-minus|stepper-minus|pax-minus|qty-minus|btn-minus|dec-btn|decrease)/i;
 
 /**
- * Extract a descriptive label for a stepper button from its aria-label or
- * accessible name. Looks for patterns like "Increase Adults" → "Adults".
- * Falls back to the className-based name or a generic stepper label.
+ * Extract a descriptive label for a stepper button from its aria-label,
+ * accessible name, or CSS selector context. Looks for patterns like
+ * "Increase Adults" → "Adults".
+ * Falls back to inferring the field name from the CSS selector (e.g.,
+ * "button.plus-adults" → "Adults") or a generic label.
  */
 function extractStepperLabel(event: ObservedEvent): string {
   // Try aria-label first — "Increase Adults" → "Adults"
@@ -113,7 +115,32 @@ function extractStepperLabel(event: ObservedEvent): string {
   // Try accessibleName — "Add Infant" → "Infant"
   const accName = event.target.accessibleName || '';
   const fromName = accName.replace(/\b(?:increase|decrease|add|remove|plus|minus|less|more)\b\s*/i, '').trim();
-  if (fromName) return fromName;
+  if (fromName && fromName !== '+' && fromName !== '-') return fromName;
+
+  // Try inferring from CSS selector — "button.plus-adults" → "Adults"
+  // This helps icon-only buttons that have a contextual CSS class but no aria-label
+  const selector = event.target.cssSelector || '';
+  const selectorMatch = selector.match(/(?:adult|child|children|infant|senior|youth|teen|pax|passenger|qty|quantity|counter|room|guest)(?:[-_a-z]*)?/i);
+  if (selectorMatch) {
+    const inferred = selectorMatch[0]
+      .replace(/[-_]/g, ' ')
+      .replace(/\b(qty|quantity|counter)\b/gi, '')
+      .trim();
+    if (inferred) {
+      // Capitalize first letter
+      return inferred.charAt(0).toUpperCase() + inferred.slice(1).toLowerCase();
+    }
+  }
+
+  // Try className — "plus-btn adults-stepper" → "Adults"
+  const className = event.target.className || '';
+  const classMatch = className.match(/(?:adult|child|children|infant|senior|youth|teen|pax|passenger|room|guest)(?:[-_a-z]*)?/i);
+  if (classMatch) {
+    const inferred = classMatch[0].replace(/[-_]/g, ' ').trim();
+    if (inferred) {
+      return inferred.charAt(0).toUpperCase() + inferred.slice(1).toLowerCase();
+    }
+  }
 
   // Fallback: a generic label based on the action type
   return '';
@@ -532,5 +559,22 @@ export const dropdownDefinition: ComponentDefinition = {
 
 function addSubAction(ctx: ComponentContext, sub: DropdownSubAction): void {
   if (!ctx.data.subActions) ctx.data.subActions = [];
-  (ctx.data.subActions as DropdownSubAction[]).push(sub);
+  const subs = ctx.data.subActions as DropdownSubAction[];
+
+  // Dedup: when both mousedown and click fire for the same target+action,
+  // skip the second one. This is very common with SPA buttons (React, Angular)
+  // where the event pipeline delivers mousedown → click in quick succession.
+  const subEvent = sub.event;
+  const subKey = sub.target?.elementId || subEvent?.target?.elementId;
+  if (subKey && subEvent) {
+    const last = subs[subs.length - 1];
+    if (last &&
+        last.action === sub.action &&
+        last.target?.elementId === subKey &&
+        subEvent.timestamp - (last.event?.timestamp ?? 0) < 500) {
+      return; // Skip duplicate — same button, same action, within 500ms
+    }
+  }
+
+  subs.push(sub);
 }
