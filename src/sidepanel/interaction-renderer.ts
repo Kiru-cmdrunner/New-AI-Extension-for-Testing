@@ -178,6 +178,74 @@ function formatMetadata(interaction: ComponentInteraction): string | null {
   return parts.length > 0 ? parts.join(' · ') : null;
 }
 
+// ── Description Builder (Phase 0e-aware) ──────────────────────────────
+
+/**
+ * Build the display description for an interaction.
+ *
+ * Priority:
+ *   1. configurationSession (structural semantic enrichment)
+ *   2. subActions (multi-config raw display)
+ *   3. businessMeaning (live meaning resolver)
+ *   4. fallbackActionDescription (structural fallback)
+ */
+function buildInteractionDescription(interaction: ComponentInteraction): string {
+  const { metadata } = interaction;
+
+  // 1. Structural Semantic Enrichment (Phase 0e)
+  const cs = metadata?.configurationSession;
+  if (cs && typeof cs === 'object' && 'fields' in cs) {
+    const session = cs as {
+      fields: Array<{ label: string; kind: string; finalValue: string; delta?: number }>;
+      commitAction?: { label?: string } | null;
+      triggerLabel?: string;
+    };
+    const parts = session.fields.map((f) => {
+      switch (f.kind) {
+        case 'toggle':
+          return `${f.label}=${f.finalValue === 'true' ? 'on' : 'off'}`;
+        case 'counter':
+          return `${f.label}=${f.finalValue || (f.delta !== undefined ? (f.delta > 0 ? `+${f.delta}` : `${f.delta}`) : '?')}`;
+        default:
+          return `${f.label}=${f.finalValue}`;
+      }
+    });
+    const triggerName = session.triggerLabel ?? metadata?.targetName ?? '';
+    const verb = session.commitAction ? 'Configure' : 'Changed';
+    return `${verb} ${triggerName}: ${parts.join(', ')}`;
+  }
+
+  // 2. Multi-config subActions (pre-enrichment live display, before stopRecording)
+  const subActions = metadata?.subActions;
+  if (
+    subActions &&
+    Array.isArray(subActions) &&
+    subActions.length > 0 &&
+    metadata?.isMultiConfig === true
+  ) {
+    const parts = (subActions as Array<{ action: string; label: string; value?: string }>).map((s) => {
+      switch (s.action) {
+        case 'increment': return `+${s.label}`;
+        case 'decrement': return `−${s.label}`;
+        case 'selectOption': return `Select ${s.label}`;
+        case 'toggle': return `${s.label}=${s.value === 'checked' ? 'on' : 'off'}`;
+        case 'fillInput': return `${s.label}="${s.value ?? ''}"`;
+        case 'confirm': return `Done`;
+        default: return s.label;
+      }
+    });
+    return `${metadata?.targetName ?? 'Config'}: ${parts.join(', ')}`;
+  }
+
+  // 3. Business meaning (live enrichment)
+  if (interaction.businessMeaning) {
+    return interaction.businessMeaning;
+  }
+
+  // 4. Fallback
+  return fallbackActionDescription(interaction);
+}
+
 // ── Renderers ────────────────────────────────────────────────────────
 
 /**
@@ -239,10 +307,14 @@ export function createInteractionElement(interaction: ComponentInteraction): HTM
     el.appendChild(stateBadge);
   }
 
-  // ── Layer 3: Business Meaning (primary) or fallback description ──
+  // ── Layer 3: Description ──
+  // Priority: configurationSession (Phase 0e structural semantic) →
+  //           subActions (multi-config display) →
+  //           businessMeaning (live enrichment) →
+  //           fallbackActionDescription (last resort)
   const title = document.createElement('p');
   title.className = 'timeline-event__title interaction-action-text';
-  title.textContent = interaction.businessMeaning ?? fallbackActionDescription(interaction);
+  title.textContent = buildInteractionDescription(interaction);
   el.appendChild(title);
 
   // Metadata warnings

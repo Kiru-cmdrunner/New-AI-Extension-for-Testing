@@ -348,6 +348,29 @@ export function actionDescription(interaction: DetectedInteraction): string {
     case 'NativeDropdown':
     case 'CustomDropdown':
     case 'MultiSelect': {
+      // Phase 0e: Structural Semantic Enrichment
+      // When configurationSession is present, render the field-based summary
+      // ("Configure Economy: Adults=2, Children=1, Class=Premium Economy")
+      // instead of the raw action sequence.
+      const cs = m.configurationSession;
+      if (cs && typeof cs === 'object' && 'fields' in cs) {
+        const parts = (cs.fields as Array<{ label: string; kind: string; finalValue: string; delta?: number }>).map(f => {
+          switch (f.kind) {
+            case 'toggle':
+              return `${f.label}=${f.finalValue === 'true' ? 'on' : 'off'}`;
+            case 'counter':
+              return `${f.label}=${f.finalValue || (f.delta !== undefined ? (f.delta > 0 ? `+${f.delta}` : `${f.delta}`) : '?')}`;
+            default:
+              return `${f.label}=${f.finalValue}`;
+          }
+        });
+        const prefix = targetName
+          ? `${cs.commitAction ? 'Configure' : 'Changed'} ${targetName}`
+          : `${cs.commitAction ? 'Configure' : 'Changed'}`;
+        const suffix = !cs.commitAction ? ' (not confirmed)' : '';
+        description = `${prefix}: ${parts.join(', ')}${suffix}`;
+        break;
+      }
       // Multi-config panel: display each subAction as a separate step
       if (m.subActions && Array.isArray(m.subActions) && m.subActions.length > 0) {
         const parts = (m.subActions as Array<{ action: string; label: string; value?: string }>).map(sa => {

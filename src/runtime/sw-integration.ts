@@ -16,6 +16,7 @@
 import { createRuntime, type ComponentRuntime } from './component-runtime';
 import { ALL_DEFINITIONS } from '../definitions';
 import { enrichInteraction } from '../enrichment';
+import { enrichConfigurationSession } from '../enrichment/structural-enrichment';
 import type {
   ObservedEvent,
   ComponentInteraction,
@@ -70,6 +71,12 @@ export function stopRecording(): ComponentInteraction[] {
     // which pushes them to liveInteractions already. Do NOT push the
     // return value again — that would duplicate every flushed interaction.
     runtime.flush();
+
+    // Phase 0e: Structural Semantic Enrichment
+    // Transform subActions into ConfigurationSession for all qualifying
+    // interactions. Pure transform — adds configurationSession to metadata.
+    liveInteractions = liveInteractions.map(enrichConfigurationSession);
+
     persistLiveInteractions();
   }
 

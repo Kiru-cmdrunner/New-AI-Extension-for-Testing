@@ -721,6 +721,29 @@ class ComponentRuntimeImpl implements ComponentRuntime {
         // it's a no-op (user opened dropdown and clicked away without selecting).
         const hasSelections = Array.isArray(ctx.data.allSelections) &&
           (ctx.data.allSelections as string[]).length > 0;
+
+        // Phase 0e Fix: Don't close the session on a Done/Apply/Confirm button
+        // click. The Done button may not match the surface CSS class patterns,
+        // but it's still inside the dropdown panel. The Dropdown definition's
+        // handleEvent will complete the session when it processes this event.
+        const targetName = (event.target.accessibleName || event.target.ariaLabel || '').trim().toLowerCase();
+        const isConfirmButton = /^(done|apply|confirm|ok|close|save|update|continue|search)$/.test(targetName);
+        if (isConfirmButton) continue; // Skip closure — let the session handle it
+
+        // Stepper button protection: Don't close the session when the user
+        // clicks a +/- stepper button. Icon-only stepper buttons (SVG icon, no
+        // text, no aria-label) won't match the surface CSS class patterns, so
+        // without this guard the session would be prematurely completed —
+        // swallowing the stepper click. The Dropdown definition's handleEvent
+        // will capture it as an increment/decrement subAction.
+        const targetClassName = event.target.className || '';
+        const stepperLabel = `${event.target.accessibleName || ''} ${event.target.ariaLabel || ''}`.trim();
+        const isStepperButton =
+          /^\s*\+\s*$/.test(stepperLabel) || /^\s*-\s*$/.test(stepperLabel) ||
+          /(?:^|\s|\b)(?:increase|add|plus|decrease|remove|minus|less)(?:\s|$|\b)/i.test(stepperLabel) ||
+          (targetClassName && /(?:plus|minus|increment|decrement|add-btn|remove-btn|counter-plus|counter-minus|stepper-plus|stepper-minus|pax-plus|pax-minus|qty-plus|qty-minus|inc-btn|dec-btn|increase|decrease)/i.test(targetClassName));
+        if (isStepperButton) continue;
+
         // BUT: don't close if the click is actually INSIDE the surface (detected
         // by CSS class). This prevents premature closure when the user clicks
         // an in-surface element (Done button, stepper, etc.) that doesn't have

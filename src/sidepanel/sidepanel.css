@@ -689,6 +689,12 @@ body {
   min-width: 0;
 }
 
+/* ConfigurationSession entries can wrap to show full field details */
+.timeline-event__title.interaction-action-text {
+  white-space: normal;
+  word-break: break-word;
+}
+
 .timeline-event__url {
   font-size: 11px;
   color: var(--color-text-secondary);

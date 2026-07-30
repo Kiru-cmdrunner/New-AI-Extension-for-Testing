@@ -76,19 +76,79 @@ function isDoneButton(event: ObservedEvent): boolean {
 }
 
 // ── Stepper Detection ─────────────────────────────────────────────────
-// Steppers have +/- buttons. We detect them by aria-label patterns.
+// Steppers have +/- buttons. We detect them via multiple signals:
+//   1. Word-form labels: "Increase Adults", "Add Infant", "plus", "minus"
+//   2. Symbol labels: "+" or "-" (standalone or in compound like "+ Adults")
+//   3. CSS class patterns: plus-icon, increment-btn, counter-plus, etc.
+//
+// IMPORTANT: The old regexes used \b (word boundary) around \+ and \-.
+// Since + and - are non-word characters, \b+ does NOT match a standalone "+".
+// This was the root cause of stepper clicks being silently dropped.
 
-const STEPPER_PLUS_RE = /\b(increase|add|plus|\+)\b/i;
-const STEPPER_MINUS_RE = /\b(decrease|remove|minus|less|-)\b/i;
+/** Match word forms of "plus/increase" AND standalone "+" symbols. */
+const STEPPER_PLUS_RE = /(?:^|\s|\b)(increase|add|plus|\+)(?:\s|$|\b)/i;
+const STEPPER_PLUS_SYMBOL_RE = /^\s*\+\s*$/;
+
+/** Match word forms of "minus/decrease" AND standalone "-" symbols. */
+const STEPPER_MINUS_RE = /(?:^|\s|\b)(decrease|remove|minus|less)(?:\s|$|\b)/i;
+const STEPPER_MINUS_SYMBOL_RE = /(?:^|\s|\b)-(?:\s|$)/;
+
+/** CSS class patterns for icon-only stepper buttons. */
+const STEPPER_PLUS_CLASS_RE =
+  /(?:plus|increment|add-btn|add-button|counter-plus|stepper-plus|pax-plus|qty-plus|btn-plus|inc-btn|increase)/i;
+const STEPPER_MINUS_CLASS_RE =
+  /(?:minus|decrement|remove-btn|remove-button|counter-minus|stepper-minus|pax-minus|qty-minus|btn-minus|dec-btn|decrease)/i;
+
+/**
+ * Extract a descriptive label for a stepper button from its aria-label or
+ * accessible name. Looks for patterns like "Increase Adults" → "Adults".
+ * Falls back to the className-based name or a generic stepper label.
+ */
+function extractStepperLabel(event: ObservedEvent): string {
+  // Try aria-label first — "Increase Adults" → "Adults"
+  const ariaLabel = event.target.ariaLabel || '';
+  const fromAria = ariaLabel.replace(/\b(?:increase|decrease|add|remove|plus|minus|less|more)\b\s*/i, '').trim();
+  if (fromAria) return fromAria;
+
+  // Try accessibleName — "Add Infant" → "Infant"
+  const accName = event.target.accessibleName || '';
+  const fromName = accName.replace(/\b(?:increase|decrease|add|remove|plus|minus|less|more)\b\s*/i, '').trim();
+  if (fromName) return fromName;
+
+  // Fallback: a generic label based on the action type
+  return '';
+}
 
 function isStepperPlus(event: ObservedEvent): boolean {
-  const label = `${event.target.accessibleName} ${event.target.ariaLabel || ''}`;
-  return STEPPER_PLUS_RE.test(label);
+  const label = `${event.target.accessibleName || ''} ${event.target.ariaLabel || ''}`.trim();
+
+  // Symbol check: standalone "+" character
+  if (STEPPER_PLUS_SYMBOL_RE.test(label)) return true;
+
+  // Word form check: "increase", "add", "plus"
+  if (STEPPER_PLUS_RE.test(label)) return true;
+
+  // CSS class check (for icon-only buttons with no text/aria-label)
+  const className = event.target.className || '';
+  if (className && STEPPER_PLUS_CLASS_RE.test(className)) return true;
+
+  return false;
 }
 
 function isStepperMinus(event: ObservedEvent): boolean {
-  const label = `${event.target.accessibleName} ${event.target.ariaLabel || ''}`;
-  return STEPPER_MINUS_RE.test(label);
+  const label = `${event.target.accessibleName || ''} ${event.target.ariaLabel || ''}`.trim();
+
+  // Symbol check: standalone "-" character
+  if (STEPPER_MINUS_SYMBOL_RE.test(label)) return true;
+
+  // Word form check: "decrease", "remove", "minus"
+  if (STEPPER_MINUS_RE.test(label)) return true;
+
+  // CSS class check (for icon-only buttons with no text/aria-label)
+  const className = event.target.className || '';
+  if (className && STEPPER_MINUS_CLASS_RE.test(className)) return true;
+
+  return false;
 }
 
 /**
@@ -129,21 +189,27 @@ function classifySubAction(event: ObservedEvent): DropdownSubAction | null {
     };
   }
 
-  // Stepper +/- buttons (detected by aria-label patterns)
+  // Stepper +/- buttons (detected by aria-label, accessible name, or CSS class)
+  // This check runs BEFORE the generic click fallback to ensure icon-only
+  // stepper buttons (no text, only SVG icon) are captured as increment/decrement.
   if (event.eventType === 'click' || event.eventType === 'mousedown') {
     if (isStepperPlus(event)) {
+      // For icon-only buttons, derive a descriptive label from aria-label
+      // or CSS class instead of falling through to 'element'
+      const stepperLabel = extractStepperLabel(event);
       return {
         action: 'increment',
-        label,
+        label: stepperLabel || label !== 'element' ? (stepperLabel || label) : '+',
         value: event.valueAfter ?? undefined,
         target: event.target,
         event,
       };
     }
     if (isStepperMinus(event)) {
+      const stepperLabel = extractStepperLabel(event);
       return {
         action: 'decrement',
-        label,
+        label: stepperLabel || label !== 'element' ? (stepperLabel || label) : '-',
         value: event.valueAfter ?? undefined,
         target: event.target,
         event,
@@ -252,6 +318,22 @@ export const dropdownDefinition: ComponentDefinition = {
       }
     }
 
+    // Phase 0e Fix: Ancestor-based trigger detection.
+    // On SPA sites, the user often clicks a child element (icon, span, label)
+    // inside a dropdown trigger. The child itself lacks ARIA roles or matching
+    // CSS classes, but the parent wrapper is the actual trigger.
+    // Check ancestor classes for dropdown trigger patterns.
+    //
+    // EXCLUSION: Don't trigger a new Dropdown session for Done/Apply buttons
+    // inside a dropdown surface — those should be captured by the active
+    // session as confirm subActions, not start a new session.
+    if (!isDoneButton(event)) {
+      const ancestorClasses = event.domContext.ancestorClasses.join(' ');
+      if (ancestorClasses && isDropdownTrigger('', null, ancestorClasses)) {
+        return { type: 'Dropdown' };
+      }
+    }
+
     return null;
   },
   isInScope(event: ObservedEvent, ctx: ComponentContext): boolean {
@@ -288,6 +370,34 @@ export const dropdownDefinition: ComponentDefinition = {
     if (isInsideDropdownSurface(event.target.className) ||
         isInsideDropdownSurface(event.domContext.ancestorClasses.join(' '))) {
       // Claim all events inside the surface (steppers, options, buttons, etc.)
+      return true;
+    }
+
+    // Phase 0e Fix: Done-button rescue for active multi-config sessions.
+    // On many SPA sites (Adani One, etc.), the Done/Apply button lives in a
+    // DOM subtree that the surface tracker can't associate with the dropdown
+    // session (surfaceId mismatch, CSS class gap). When a Dropdown session
+    // has accumulated subActions but hasn't been confirmed yet, and the user
+    // clicks a Done/Apply/Confirm button, that click MUST be claimed by this
+    // session to complete the compound interaction.
+    if (
+      (event.eventType === 'click' || event.eventType === 'mousedown') &&
+      isDoneButton(event) &&
+      (ctx.data.allSelections?.length > 0 || ctx.data.subActions?.length > 0) &&
+      !ctx.data.doneClicked
+    ) {
+      return true;
+    }
+
+    // Stepper-button rescue: icon-only +/- buttons inside a dropdown panel may
+    // not carry a surfaceId (CSS-class fallback mode) and their CSS classes may
+    // not match the surface patterns. But they ARE inside the panel. When a
+    // Dropdown session is active, claim stepper clicks so they're captured as
+    // increment/decrement subActions instead of leaking as separate Clicks.
+    if (
+      (event.eventType === 'click' || event.eventType === 'mousedown') &&
+      (isStepperPlus(event) || isStepperMinus(event))
+    ) {
       return true;
     }
 

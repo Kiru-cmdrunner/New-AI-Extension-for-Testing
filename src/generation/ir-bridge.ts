@@ -598,7 +598,66 @@ export function build(input: IRBridgeInput): ExecutionIRPlan {
     const event = findCorrespondingEvent(interaction, eventIndex);
     const logicalAction = findLogicalAction(interaction, fragment);
 
-    // ── Multi-config dropdown expansion ──
+    // ── Phase 0e: Structural Semantic Enrichment ──
+    // When configurationSession is present, use field-based expansion.
+    // Each field becomes an IR step with the optimal action for its kind:
+    //   counter → fill (if target accepts text) or click N times
+    //   select  → click on the option
+    //   toggle  → check/uncheck
+    //   text    → fill
+    //   date    → fill
+    const configSession = interaction.metadata?.configurationSession;
+    if (
+      configSession &&
+      typeof configSession === 'object' &&
+      'fields' in configSession
+    ) {
+      const session = configSession as {
+        fields: Array<{
+          label: string;
+          kind: string;
+          finalValue: string;
+          delta?: number;
+          evidence?: Array<{ target?: ElementIdentity; action: string }>;
+        }>;
+        commitAction?: { label?: string };
+        triggerLabel?: string;
+      };
+
+      for (const field of session.fields) {
+        const fieldStep = buildFieldStep(
+          field, interaction, event, logicalAction, stepCounter,
+        );
+        if (fieldStep) {
+          steps.push(fieldStep);
+          stepCounter++;
+        }
+      }
+
+      // Add commit action as final step
+      if (session.commitAction) {
+        const commitLabel = session.commitAction.label ?? 'Done';
+        steps.push({
+          id: `step-${String(stepCounter + 1).padStart(4, '0')}`,
+          order: stepCounter,
+          action: IRAction.CLICK,
+          description: `Click ${commitLabel}`,
+          target: resolveElementTarget(
+            { ...interaction.target, elementId: `${interaction.target.elementId ?? 'elem'}::${commitLabel}`, accessibleName: commitLabel },
+          ),
+          input: null,
+          assertions: deriveAssertions('', null),
+          executionParameters: DEFAULT_EXECUTION_PARAMETERS,
+          aiEnrichment: null,
+          sourceEventId: interaction.eventIds[0] ?? event?.actionId,
+          plainEnglish: `Confirm ${session.triggerLabel ?? 'selections'}`,
+        });
+        stepCounter++;
+      }
+      continue; // Skip default single-step generation
+    }
+
+    // ── Multi-config dropdown expansion (legacy subActions path) ──
     // When a Dropdown interaction has subActions (steppers, options, toggles,
     // confirm button), expand into one IR step per subAction. This produces
     // the correct Playwright code: open → adjust Adults → select Premium
@@ -881,6 +940,139 @@ function buildSubActionStep(
         aiEnrichment: null,
         sourceEventId: interaction.eventIds[0] ?? event?.actionId,
         plainEnglish: `Confirm ${fieldName} selections`,
+      };
+    }
+    default:
+      return null;
+  }
+}
+
+// ── Phase 0e: Field-Based Step Builder ────────────────────────────────
+//
+// Uses ConfigurationField data to choose the optimal IR action per field:
+//   counter → FILL (if target element known, fill the target value)
+//   select  → CLICK on the option
+//   toggle  → TOGGLE with boolean input
+//   text    → FILL
+//   date    → SELECT_DATE
+
+interface ConfigFieldData {
+  label: string;
+  kind: string;
+  finalValue: string;
+  delta?: number;
+  evidence?: Array<{ target?: ElementIdentity; action: string }>;
+}
+
+function buildFieldStep(
+  field: ConfigFieldData,
+  interaction: DetectedInteraction,
+  event: SessionEvent | undefined,
+  logicalAction: LogicalAction | undefined,
+  stepCounter: number,
+): IRStep | null {
+  const fieldName = logicalAction?.businessField ?? getElementDisplayName(interaction, event);
+  const assertions = deriveAssertions('', null);
+  const stepId = `step-${String(stepCounter + 1).padStart(4, '0')}`;
+  const sourceEventId = interaction.eventIds[0] ?? event?.actionId;
+
+  // Try to get a target from the evidence chain (element identity)
+  const evidenceTarget = field.evidence?.[0]?.target;
+  const baseTarget = evidenceTarget ?? interaction.target;
+
+  // Each field step gets a unique elementId so readability rules
+  // (OR-1 merge consecutive CLICK same elementId, OR-2 merge consecutive
+  // FILL same elementId) don't collapse field steps together.
+  // The field label distinguishes the targets semantically.
+  const fieldElementId = `${baseTarget.elementId ?? 'elem'}::${field.label}`;
+
+  function makeFieldTarget(displayName: string): ElementTarget {
+    const identity: ElementIdentity = {
+      ...baseTarget,
+      elementId: fieldElementId,
+      accessibleName: displayName,
+      ariaLabel: displayName,
+    };
+    return resolveElementTarget(identity);
+  }
+
+  switch (field.kind) {
+    case 'counter': {
+      // Fill the final value (optimal strategy — idempotent)
+      const displayValue = field.finalValue || (field.delta !== undefined ? String(field.delta) : '');
+      return {
+        id: stepId,
+        order: stepCounter,
+        action: IRAction.FILL,
+        description: `Set ${field.label} to ${displayValue} in ${fieldName}`,
+        target: makeFieldTarget(field.label),
+        input: field.finalValue || null,
+        assertions,
+        executionParameters: DEFAULT_EXECUTION_PARAMETERS,
+        aiEnrichment: null,
+        sourceEventId,
+        plainEnglish: `Set ${field.label} to ${displayValue}`,
+      };
+    }
+    case 'select': {
+      return {
+        id: stepId,
+        order: stepCounter,
+        action: IRAction.CLICK,
+        description: `Select "${field.finalValue}" in ${fieldName}`,
+        target: makeFieldTarget(field.finalValue || field.label),
+        input: field.finalValue,
+        assertions,
+        executionParameters: DEFAULT_EXECUTION_PARAMETERS,
+        aiEnrichment: null,
+        sourceEventId,
+        plainEnglish: `Select ${field.finalValue}`,
+      };
+    }
+    case 'toggle': {
+      const checked = field.finalValue === 'true';
+      return {
+        id: stepId,
+        order: stepCounter,
+        action: IRAction.TOGGLE,
+        description: `${checked ? 'Check' : 'Uncheck'} ${field.label} in ${fieldName}`,
+        target: makeFieldTarget(field.label),
+        input: checked,
+        assertions,
+        executionParameters: DEFAULT_EXECUTION_PARAMETERS,
+        aiEnrichment: null,
+        sourceEventId,
+        plainEnglish: `${checked ? 'Check' : 'Uncheck'} ${field.label}`,
+      };
+    }
+    case 'text': {
+      return {
+        id: stepId,
+        order: stepCounter,
+        action: IRAction.FILL,
+        description: `Enter "${field.finalValue}" in ${field.label || fieldName}`,
+        target: makeFieldTarget(field.label || fieldName),
+        input: field.finalValue,
+        assertions,
+        executionParameters: DEFAULT_EXECUTION_PARAMETERS,
+        aiEnrichment: null,
+        sourceEventId,
+        plainEnglish: `Enter ${field.finalValue} in ${field.label || fieldName}`,
+      };
+    }
+    case 'date': {
+      return {
+        id: stepId,
+        order: stepCounter,
+        action: IRAction.SELECT_DATE,
+        description: `Select date ${field.finalValue} in ${field.label || fieldName}`,
+        target: makeFieldTarget(field.label || fieldName),
+        input: field.finalValue,
+        assertions,
+        executionParameters: DEFAULT_EXECUTION_PARAMETERS,
+        aiEnrichment: null,
+        sourceEventId,
+        plainEnglish: `Select date ${field.finalValue}`,
       };
     }
     default:

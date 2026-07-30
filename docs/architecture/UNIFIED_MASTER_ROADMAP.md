@@ -29,6 +29,7 @@ Those documents remain as historical references and architectural context. **All
    - [Phase 0b: Type Unification](#phase-0b-type-unification)
    - [Phase 0c: Classifier Consolidation](#phase-0c-classifier-consolidation)
    - [Phase 0d: SemanticInteraction Materialization](#phase-0d-semanticinteraction-materialization)
+   - [Phase 0e: Structural Semantic Enrichment](#phase-0e-structural-semantic-enrichment)
 6. [Phase 1: Persistent Semantic Layer](#phase-1-persistent-semantic-layer)
 7. [Phase 2: Capability Adoption Lifecycle](#phase-2-capability-adoption-lifecycle)
 8. [Phase 3: Capability-Derived IR Generation](#phase-3-capability-derived-ir-generation)
@@ -158,6 +159,7 @@ PHASE 0: PIPELINE FOUNDATION
   │  0b: Type unification           ─── gate ──→
   │  0c: Classifier consolidation  ─── gate ──→
   │  0d: SemanticInteraction        ─── gate ──→
+  │  0e: Structural Semantic         ─── gate ──→
   │
   ├──────────────────────────────────────┐
   ▼                                      ▼
@@ -565,6 +567,94 @@ Per `SEMANTIC_INTERACTION_BOUNDARY.md` and the three adjustments from `CMDRUNNER
 | SemanticInteraction loses fields the classifier populated | Map every `DetectedInteraction` field to a `SemanticInteraction` field explicitly. Create a field-coverage matrix and verify 100% before removing DetectedInteraction from the IR Bridge path |
 | Side panel display regression | Side panel reads from storage. Write a display characterization test: capture side panel HTML before, verify equivalent after |
 | Performance regression from richer types | Profile IR Bridge before and after. The type change is structural (more fields on the object), not algorithmic. Expected impact: negligible |
+
+---
+
+### Phase 0e: Structural Semantic Enrichment
+
+**Objective:** Transform action sequences (`subActions[]`) into state-based field representations (`ConfigurationSession`). Recognize configuration patterns (multi-field config, filter-apply, search-submit, toggle-batch) using only structural signals — zero application knowledge. Provide the contract that the Capability Model (Phase 2) will consume.
+
+**Dependencies:** Phase 0b (Observation Model — produces `subActions[]` + `isMultiConfig` on `ComponentInteraction.metadata`). Implementable on current codebase without Phase 0a–0d completion.
+
+**Design document:** `docs/architecture/STRUCTURAL_SEMANTIC_ENRICHMENT_DESIGN.md`
+
+#### The Three-Layer Distinction
+
+| Layer | Question | Data |
+|-------|----------|------|
+| **Layer 1: Observation** (Phase 0b) | What did the user physically do? | `subActions[]` — action sequence |
+| **Layer 2: Structural Semantic** (Phase 0e) | What state did those actions produce? | `ConfigurationSession` — fields with final values |
+| **Layer 3: Business Semantic** (Phase 2) | What did the user mean in this app? | Capability type + business field labels |
+
+Layer 2 is a **pure data transform** — input is `metadata.subActions`, output is `metadata.configurationSession`. No I/O, no DOM access, no application knowledge.
+
+#### Components Introduced
+
+| New Component | Purpose |
+|---------------|---------|
+| `ConfigurationSession` type | State-based representation: fields with final values + commit action |
+| `ConfigurationField` type | Single field: label, kind (counter/select/toggle/text/date), finalValue, delta |
+| `StructuralPattern` type | Pattern category: singleSelect, multiFieldConfig, filterApply, searchSubmit, toggleBatch, uncommitted |
+| `enrichConfigurationSession()` | Pure transform function: ComponentInteraction → ComponentInteraction (with configurationSession added) |
+
+#### Components Refactored
+
+| Component | Change |
+|-----------|--------|
+| Timeline renderer | Check for `configurationSession` before falling back to raw `subActions` rendering |
+| IR Bridge | Check for `configurationSession` for field-based expansion (counter→fill, select→click, toggle→check) |
+| Service Worker | Call `enrichConfigurationSession()` between reasoning and pipeline |
+
+#### Discrimination Rule
+
+Enrichment runs when: `subActions` exists AND (`confirm` subAction present OR multiple distinct fields). Simple single-select dropdowns are left untouched.
+
+#### Pattern Recognition
+
+| Pattern | Signature | Example |
+|---------|-----------|---------|
+| `singleSelect` | One selectOption, no commit | Trip Type → Round Trip |
+| `multiFieldConfig` | Counter + other types + commit | Passenger & Cabin selector |
+| `filterApply` | Multiple select/toggle + Apply commit | Filter panel |
+| `searchSubmit` | FillInput + Search commit | Advanced search |
+| `toggleBatch` | Multiple toggles + commit | Settings dialog |
+| `uncommitted` | Field changes, no commit | Panel closed without Done |
+
+#### Acceptance Criteria
+
+- [ ] `ConfigurationSession` + `ConfigurationField` + `StructuralPattern` types defined
+- [ ] `enrichConfigurationSession()` is a pure function (no side effects, no I/O)
+- [ ] Stepper accumulation: two increments on same field → one field with delta +2
+- [ ] Counter net-zero: increment + decrement → delta 0
+- [ ] Select mind-change: two selectOptions on same field → finalValue = last
+- [ ] Commit detection: confirm subAction → commitAction populated, excluded from fields
+- [ ] No commit: pattern = 'uncommitted', commitAction = null
+- [ ] Simple single-select not enriched (backward compatible)
+- [ ] Timeline renderer shows field-based summary when configurationSession present
+- [ ] IR Bridge uses configurationSession for optimal strategy when present
+- [ ] Idempotency: running enrichment twice produces same result
+- [ ] All existing tests pass (additive change, no regressions)
+- [ ] Build succeeds
+
+#### Phase Gate
+
+**GATE: 0e → Phase 1**
+- ConfigurationSession + ConfigurationField types frozen
+- enrichConfigurationSession() contract frozen
+- All tests pass
+
+#### Frozen Contracts
+
+| Contract | Status |
+|----------|--------|
+| **ConfigurationSession type** | ✅ FROZEN |
+| **ConfigurationField type** | ✅ FROZEN |
+| **StructuralPattern type** | ✅ FROZEN |
+| **enrichConfigurationSession() contract** | ✅ FROZEN — pure transform, idempotent |
+
+#### Reference
+
+Full design: `docs/architecture/STRUCTURAL_SEMANTIC_ENRICHMENT_DESIGN.md` (1,045 lines)
 
 ---
 
