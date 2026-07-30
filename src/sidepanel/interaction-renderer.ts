@@ -205,11 +205,19 @@ function buildInteractionDescription(interaction: ComponentInteraction): string 
         case 'toggle':
           return `${f.label}=${f.finalValue === 'true' ? 'on' : 'off'}`;
         case 'counter':
-          return `${f.label}=${f.finalValue || (f.delta !== undefined ? (f.delta > 0 ? `+${f.delta}` : `${f.delta}`) : '?')}`;
+          // If we have a final value, show "Field=N"; otherwise show delta "Field +N"
+          return f.finalValue
+            ? `${f.label}=${f.finalValue}`
+            : `${f.label} ${f.delta !== undefined ? (f.delta > 0 ? `+${f.delta}` : `${f.delta}`) : '+1'}`;
         default:
           return `${f.label}=${f.finalValue}`;
       }
     });
+    // Include the confirm action in the display (e.g., ", Done")
+    const commitLabel = session.commitAction?.label;
+    if (commitLabel) {
+      parts.push(commitLabel);
+    }
     const triggerName = session.triggerLabel ?? metadata?.targetName ?? '';
     const verb = session.commitAction ? 'Configure' : 'Changed';
     return `${verb} ${triggerName}: ${parts.join(', ')}`;

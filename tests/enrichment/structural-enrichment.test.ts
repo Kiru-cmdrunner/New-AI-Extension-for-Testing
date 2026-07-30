@@ -347,7 +347,7 @@ describe('renderConfigurationSummary', () => {
       ],
     };
     const summary = renderConfigurationSummary(session);
-    expect(summary).toBe('Configure Economy: Adults=2, Children=1, Premium Economy=premium');
+    expect(summary).toBe('Configure Economy: Adults=2, Children=1, Premium Economy=premium, Done');
   });
 
   it('renders uncommitted session with suffix', () => {
@@ -376,7 +376,7 @@ describe('renderConfigurationSummary', () => {
       ],
     };
     const summary = renderConfigurationSummary(session);
-    expect(summary).toBe('Configure Settings: Notifications=on, Newsletter=off');
+    expect(summary).toBe('Configure Settings: Notifications=on, Newsletter=off, Save');
   });
 
   it('renders counter fields with delta when no finalValue', () => {
@@ -390,7 +390,95 @@ describe('renderConfigurationSummary', () => {
       ],
     };
     const summary = renderConfigurationSummary(session);
-    expect(summary).toBe('Configure Passengers: Adults=+2');
+    // Counter fields render as "FieldName +N" (not "FieldName=+N")
+    expect(summary).toBe('Configure Passengers: Adults +2, Done');
+  });
+});
+
+// ── Bare +/- label handling and counter grouping ─────────────────────
+
+describe('Stepper label normalization and counter grouping', () => {
+  it('normalizes bare + label to Counter field name', () => {
+    const subActions: DropdownSubAction[] = [
+      { action: 'increment', label: '+', value: '2', target: { elementId: 'el-1', cssSelector: 'button.plus' } as any },
+    ];
+    const interaction = makeInteraction(subActions, { targetName: '1Economy' });
+    const enriched = enrichConfigurationSession(interaction);
+    const cs = enriched.metadata!.configurationSession as ConfigurationSession;
+    expect(cs.fields.length).toBe(1);
+    expect(cs.fields[0].kind).toBe('counter');
+    expect(cs.fields[0].delta).toBe(1);
+  });
+
+  it('separates 3 stepper buttons with bare + label by elementId', () => {
+    // Simulates AdaniOne: 3 different + buttons (Adults/Children/Infants),
+    // all labeled "+" but with different elementIds and CSS selectors
+    const subActions: DropdownSubAction[] = [
+      { action: 'increment', label: '+', value: '', target: { elementId: 'el-a', cssSelector: 'button.plus-adults', className: 'plus-icon' } as any },
+      { action: 'increment', label: '+', value: '', target: { elementId: 'el-b', cssSelector: 'button.plus-children', className: 'plus-icon' } as any },
+      { action: 'increment', label: '+', value: '', target: { elementId: 'el-c', cssSelector: 'button.plus-infants', className: 'plus-icon' } as any },
+      { action: 'selectOption', label: 'Premium Economy', value: 'Premium Economy', target: { elementId: 'el-pe' } as any },
+      { action: 'confirm', label: 'Done', value: undefined, target: { elementId: 'el-d' } as any },
+    ];
+    const interaction = makeInteraction(subActions, { targetName: '1Economy' });
+    const enriched = enrichConfigurationSession(interaction);
+    const cs = enriched.metadata!.configurationSession as ConfigurationSession;
+
+    // Should have 3 separate counter fields + 1 select field (NOT one merged counter +3)
+    const counterFields = cs.fields.filter(f => f.kind === 'counter');
+    expect(counterFields.length).toBe(3);
+    expect(counterFields.every(f => f.delta === 1)).toBe(true);
+
+    // Each counter should have inferred name from CSS selector
+    expect(counterFields.some(f => f.label === 'Adults')).toBe(true);
+    expect(counterFields.some(f => f.label === 'Children')).toBe(true);
+    expect(counterFields.some(f => f.label === 'Infants')).toBe(true);
+
+    // Select field for Premium Economy
+    const selectFields = cs.fields.filter(f => f.kind === 'select');
+    expect(selectFields.length).toBe(1);
+    expect(selectFields[0].label).toBe('Premium Economy');
+
+    // Commit action preserved
+    expect(cs.commitAction).not.toBeNull();
+    expect(cs.commitAction!.label).toBe('Done');
+  });
+
+  it('renders the full AdaniOne-style session summary with Done', () => {
+    const subActions: DropdownSubAction[] = [
+      { action: 'increment', label: '+', value: '', target: { elementId: 'el-a', cssSelector: 'button.plus-adults' } as any },
+      { action: 'increment', label: '+', value: '', target: { elementId: 'el-b', cssSelector: 'button.plus-children' } as any },
+      { action: 'increment', label: '+', value: '', target: { elementId: 'el-c', cssSelector: 'button.plus-infants' } as any },
+      { action: 'selectOption', label: 'Premium Economy', value: 'Premium Economy', target: { elementId: 'el-pe' } as any },
+      { action: 'confirm', label: 'Done', value: undefined, target: { elementId: 'el-d' } as any },
+    ];
+    const interaction = makeInteraction(subActions, { targetName: '1Economy' });
+    const enriched = enrichConfigurationSession(interaction);
+    const cs = enriched.metadata!.configurationSession as ConfigurationSession;
+    const summary = renderConfigurationSummary(cs);
+
+    // Should include all 3 counters + the option + Done
+    expect(summary).toContain('Configure 1Economy:');
+    expect(summary).toContain('Adults +1');
+    expect(summary).toContain('Children +1');
+    expect(summary).toContain('Infants +1');
+    expect(summary).toContain('Premium Economy=Premium Economy');
+    expect(summary).toContain('Done');
+  });
+
+  it('does NOT merge descriptive counter labels (Adults vs Children)', () => {
+    const subActions: DropdownSubAction[] = [
+      { action: 'increment', label: 'Adults', value: '2', target: { elementId: 'el-a' } as any },
+      { action: 'increment', label: 'Children', value: '1', target: { elementId: 'el-b' } as any },
+      { action: 'confirm', label: 'Done', value: undefined, target: { elementId: 'el-d' } as any },
+    ];
+    const interaction = makeInteraction(subActions, { targetName: 'Pax' });
+    const enriched = enrichConfigurationSession(interaction);
+    const cs = enriched.metadata!.configurationSession as ConfigurationSession;
+    // Two separate fields, not merged
+    expect(cs.fields.length).toBe(2);
+    expect(cs.fields[0].label).toBe('Adults');
+    expect(cs.fields[1].label).toBe('Children');
   });
 });
 

@@ -85,10 +85,16 @@ const ACTION_VERB_RE = /^(increase|decrease|add|remove|plus|minus|less|more|enab
  * Normalize a subAction label into a field name.
  *
  * For stepper labels ("Increase adults" → "Adults"), strips the action verb.
+ * For bare symbols ("+", "-") that have no contextual name, maps to "Counter".
  * For other labels, uses the label as-is.
  */
 function normalizeFieldName(label: string): string {
   if (!label || label === 'element') return label;
+
+  // Bare +/- symbols have no intrinsic field name — normalize to a neutral label
+  // so they don't group confusingly as "field name +" in the display.
+  if (/^\s*[+\-]\s*$/.test(label)) return 'Counter';
+
   const stripped = label.replace(ACTION_VERB_RE, '').trim();
   if (!stripped) return label; // fallback if stripping removed everything
   // Title-case: "adults" → "Adults", "travel class" → "Travel Class"
@@ -169,19 +175,66 @@ function computeDelta(group: DropdownSubAction[]): number {
 /**
  * Group subActions by their normalized field name.
  * Returns groups in the order their first member appeared.
+ *
+ * For counter actions (increment/decrement), if the label is generic ("Counter",
+ * "+", "-") we group by elementId to distinguish different physical buttons
+ * (e.g., Adults +, Children +, Infants + on AdaniOne). This prevents three
+ * separate +1 presses on different stepper buttons from being merged into
+ * a single "Counter +3" field.
  */
 function groupByField(
   subActions: DropdownSubAction[],
 ): Map<string, DropdownSubAction[]> {
   const groups = new Map<string, DropdownSubAction[]>();
   for (const sub of subActions) {
-    const key = normalizeFieldName(sub.label);
+    const fieldName = normalizeFieldName(sub.label);
+
+    // For counters with generic labels, append elementId to keep distinct
+    // stepper buttons as separate fields. If the label was already descriptive
+    // ("Adults", "Children"), keep using the label as the key.
+    let key = fieldName;
+    if (
+      (sub.action === 'increment' || sub.action === 'decrement') &&
+      (fieldName === 'Counter' || fieldName === '+' || fieldName === '-')
+    ) {
+      // Use a combination of label + elementId so each physical button
+      // becomes its own field. Also infer a better name from the element's
+      // CSS selector or class if possible.
+      const inferredName = inferCounterName(sub);
+      key = inferredName || `${fieldName} (${sub.target?.elementId ?? 'unknown'})`;
+    }
+
     if (!groups.has(key)) {
       groups.set(key, []);
     }
     groups.get(key)!.push(sub);
   }
   return groups;
+}
+
+/**
+ * Try to infer a meaningful field name for a counter (stepper) subAction
+ * from its target's CSS selector or class name.
+ * E.g., cssSelector "button.plus-adults" → "Adults"
+ */
+function inferCounterName(sub: DropdownSubAction): string | null {
+  // Check CSS selector for contextual keywords
+  const selector = sub.target?.cssSelector || '';
+  const selMatch = selector.match(/(?:adult|child|children|infant|senior|youth|teen|pax|passenger|room|guest)(?:[-_a-z]*)?/i);
+  if (selMatch) {
+    const name = selMatch[0].replace(/[-_]/g, ' ').trim();
+    if (name) return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+  }
+
+  // Check className for contextual keywords
+  const className = sub.target?.className || '';
+  const clsMatch = className.match(/(?:adult|child|children|infant|senior|youth|teen|pax|passenger|room|guest)(?:[-_a-z]*)?/i);
+  if (clsMatch) {
+    const name = clsMatch[0].replace(/[-_]/g, ' ').trim();
+    if (name) return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+  }
+
+  return null;
 }
 
 /**
@@ -375,11 +428,19 @@ export function renderConfigurationSummary(
       case 'toggle':
         return `${f.label}=${f.finalValue === 'true' ? 'on' : 'off'}`;
       case 'counter':
-        return `${f.label}=${f.finalValue || (f.delta !== undefined ? (f.delta > 0 ? `+${f.delta}` : `${f.delta}`) : '?')}`;
+        return f.finalValue
+          ? `${f.label}=${f.finalValue}`
+          : `${f.label} ${f.delta !== undefined ? (f.delta > 0 ? `+${f.delta}` : `${f.delta}`) : '+1'}`;
       default:
         return `${f.label}=${f.finalValue}`;
     }
   });
+
+  // Include the confirm action in the display (e.g., ", Done")
+  const commitLabel = session.commitAction?.label;
+  if (commitLabel) {
+    parts.push(commitLabel);
+  }
 
   const prefix = session.triggerLabel
     ? `${session.commitAction ? 'Configure' : 'Changed'} ${session.triggerLabel}`

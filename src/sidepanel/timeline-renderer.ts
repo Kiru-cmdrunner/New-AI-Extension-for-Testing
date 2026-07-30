@@ -359,11 +359,18 @@ export function actionDescription(interaction: DetectedInteraction): string {
             case 'toggle':
               return `${f.label}=${f.finalValue === 'true' ? 'on' : 'off'}`;
             case 'counter':
-              return `${f.label}=${f.finalValue || (f.delta !== undefined ? (f.delta > 0 ? `+${f.delta}` : `${f.delta}`) : '?')}`;
+              return f.finalValue
+                ? `${f.label}=${f.finalValue}`
+                : `${f.label} ${f.delta !== undefined ? (f.delta > 0 ? `+${f.delta}` : `${f.delta}`) : '+1'}`;
             default:
               return `${f.label}=${f.finalValue}`;
           }
         });
+        // Include the confirm action in the display
+        const commitLabel = (cs as { commitAction?: { label?: string } | null }).commitAction?.label;
+        if (commitLabel) {
+          parts.push(commitLabel);
+        }
         const prefix = targetName
           ? `${cs.commitAction ? 'Configure' : 'Changed'} ${targetName}`
           : `${cs.commitAction ? 'Configure' : 'Changed'}`;
