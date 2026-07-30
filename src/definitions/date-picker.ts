@@ -49,6 +49,20 @@ export const datePickerDefinition: ComponentDefinition = {
     const { tag, className, name } = event.target;
     const { inputType, ariaHasPopup } = event.domContext;
 
+    // ── Phase 0b: Behavioral signal detection (ARIA primary) ──
+
+    // 1. aria-haspopup="dialog" on an INPUT — standard ARIA signal for date picker
+    if (ariaHasPopup === 'dialog' && tag === 'INPUT') {
+      return { type: 'DatePicker' };
+    }
+
+    // 2. Native date input types
+    if (tag === 'INPUT' && (inputType === 'date' || inputType === 'datetime-local' || inputType === 'month' || inputType === 'week' || inputType === 'time')) {
+      return { type: 'DatePicker' };
+    }
+
+    // ── Phase 0b: CSS class detection (fallback) ──
+
     if (
       isDatePickerTrigger(tag, inputType, className, ariaHasPopup, name)
     ) {
@@ -56,8 +70,6 @@ export const datePickerDefinition: ComponentDefinition = {
     }
 
     // Also detect focus/click on date input wrapper (OXD: div.oxd-date-input)
-    // The date-triggering class is on the parent wrapper, not the input.
-    // Check ancestor classes for ALL trigger events (focus AND click).
     const ancestorClasses = event.domContext.ancestorClasses.join(' ');
     if (isDatePickerTrigger(tag, inputType, ancestorClasses, null, name)) {
       return { type: 'DatePicker' };
@@ -67,18 +79,22 @@ export const datePickerDefinition: ComponentDefinition = {
   },
 
   isInScope(event: ObservedEvent, ctx: ComponentContext): boolean {
-    // In scope if:
-    // 1. Event is on the trigger element (the date input)
-    // 2. Event is inside the calendar surface
-    // 3. Event is on a calendar cell
+    // Phase 0b: Surface-bound session identity.
+    // Primary path: surface containment (event.domContext.surfaceId === ctx.openedSurface).
+    // Fallback: CSS class-based calendar surface detection.
 
     const eventKey = elementKey(event.target);
     const triggerKey = elementKey(ctx.trigger);
 
-    // Same element as trigger
+    // Same element as trigger — always in scope
     if (eventKey === triggerKey) return true;
 
-    // Inside calendar surface (check target class + ancestors)
+    // Phase 0b: Surface containment check (primary path)
+    if (ctx.openedSurface && event.domContext.surfaceId) {
+      return event.domContext.surfaceId === ctx.openedSurface;
+    }
+
+    // Fallback: CSS class-based surface detection (legacy path)
     const inCalendarSurface = isInsideCalendarSurface(event.target.className) ||
       isInsideCalendarSurface(event.domContext.ancestorClasses.join(' '));
     if (inCalendarSurface) return true;
@@ -87,7 +103,6 @@ export const datePickerDefinition: ComponentDefinition = {
     if (isCalendarCell(event.target.ariaRole, event.target.className)) return true;
 
     // Fallback: inside calendar surface + date-like accessible name
-    // (React SPAs that use custom calendar implementations)
     if (inCalendarSurface && isCalendarCellWithFallback(
       event.target.ariaRole, event.target.className, event.target.accessibleName
     )) {
@@ -145,7 +160,10 @@ export const datePickerDefinition: ComponentDefinition = {
       }
 
       // Fallback: element inside a calendar surface with date-like text
-      const inCalendarSurface = isInsideCalendarSurface(event.target.className) ||
+      // Phase 0b: Check surface containment first (primary path)
+      const inSurfaceById = ctx.openedSurface && event.domContext.surfaceId === ctx.openedSurface;
+      const inCalendarSurface = inSurfaceById ||
+        isInsideCalendarSurface(event.target.className) ||
         isInsideCalendarSurface(event.domContext.ancestorClasses.join(' '));
       if (inCalendarSurface && isCalendarCellWithFallback(
         event.target.ariaRole, event.target.className, event.target.accessibleName

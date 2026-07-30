@@ -84,6 +84,19 @@ export interface DomContext {
   nativeMin?: string | null;
   /** Native max attribute. null if absent. */
   nativeMax?: string | null;
+
+  // ── Surface identity (Phase 0b: Observation Model) ──
+
+  /** Stable structural identity of the surface container element.
+   *  Null if the event occurred outside any surface.
+   *  Derived from the surface container's DOM position (tag + role + nth-child),
+   *  NOT from CSS class names (which mutate on re-render).
+   *  Architecture: docs/architecture/OBSERVATION_MODEL_DESIGN.md §9.2, §6.2 */
+  surfaceId?: string | null;
+  /** eventId of the event that caused this surface to appear.
+   *  Null if the surface was not caused by a recorded event (e.g., page-load modal).
+   *  Architecture: docs/architecture/OBSERVATION_MODEL_DESIGN.md §9.2 */
+  surfaceOpenedBy?: string | null;
 }
 
 // ── Observed Event ─────────────────────────────────────────────────────
@@ -267,6 +280,45 @@ export interface ComponentContext {
    * without polluting the ComponentContext type.
    */
   data: Record<string, unknown>;
+
+  // ── Surface binding (Phase 0b: Observation Model) ──
+
+  /** Surface this session opened (if the interaction creates a surface).
+   *  Set when a surface appears after the session activates.
+   *  Null for surface-less interactions (Click, TextEntry, Scroll).
+   *  Architecture: docs/architecture/OBSERVATION_MODEL_DESIGN.md §7.3 */
+  openedSurface?: string | null;
+
+  /** Surface this session lives inside (if the trigger was inside an
+   *  already-open surface). Set from triggerEvent.domContext.surfaceId.
+   *  Null for base-page interactions.
+   *  Architecture: docs/architecture/OBSERVATION_MODEL_DESIGN.md §7.3 */
+  insideSurface?: string | null;
+}
+
+// ── Surface Entry (Phase 0b: Observation Model) ───────────────────────
+
+/**
+ * Entry in the runtime's surface stack. Tracks open surfaces and their
+ * association to sessions.
+ *
+ * Architecture: docs/architecture/OBSERVATION_MODEL_DESIGN.md §17.3
+ */
+export interface SurfaceEntry {
+  /** Stable structural identity of the surface container. */
+  surfaceId: string;
+  /** Surface type: 'modal', 'popover', 'drawer', 'tooltip', 'sheet'. */
+  type: string;
+  /** ARIA role of the surface container, if any. */
+  role: string | null;
+  /** Human-readable label from aria-label, heading, or title. */
+  label: string | null;
+  /** eventId of the event that caused this surface to appear. */
+  openedByEventId: string | null;
+  /** Timestamp when the surface was first detected. */
+  openedAt: number;
+  /** Timestamp when the surface was closed. Null while open. */
+  closedAt: number | null;
 }
 
 // ── Component Definition ───────────────────────────────────────────────

@@ -347,8 +347,30 @@ export function actionDescription(interaction: DetectedInteraction): string {
 
     case 'NativeDropdown':
     case 'CustomDropdown':
-    case 'MultiSelect':
-      if (m.selectedValue) {
+    case 'MultiSelect': {
+      // Multi-config panel: display each subAction as a separate step
+      if (m.subActions && Array.isArray(m.subActions) && m.subActions.length > 0) {
+        const parts = (m.subActions as Array<{ action: string; label: string; value?: string }>).map(sa => {
+          switch (sa.action) {
+            case 'increment':
+              return `Increase ${sa.label}`;
+            case 'decrement':
+              return `Decrease ${sa.label}`;
+            case 'toggle':
+              return `${sa.value === 'checked' ? 'Check' : 'Uncheck'} ${sa.label}`;
+            case 'selectOption':
+              return `Select "${sa.value || sa.label}"`;
+            case 'fillInput':
+              return `Enter "${sa.value || ''}" in ${sa.label}`;
+            case 'confirm':
+              return 'Done';
+            default:
+              return sa.label;
+          }
+        });
+        const prefix = targetName ? `${targetName}: ` : '';
+        description = `${prefix}${parts.join(' → ')}`;
+      } else if (m.selectedValue) {
         description = targetName
           ? `Select "${m.selectedValue}" from ${targetName}`
           : `Select "${m.selectedValue}"`;
@@ -356,6 +378,7 @@ export function actionDescription(interaction: DetectedInteraction): string {
         description = `Select option${targetName ? ` from ${targetName}` : ''}`;
       }
       break;
+    }
 
     case 'Autocomplete':
       if (m.textValue && m.selectedValue) {

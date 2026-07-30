@@ -140,9 +140,17 @@ describe('Modern SPA Calendar & Dropdown Fix', () => {
     });
     runtime.process(optionClick);
 
+    // Surface closure: click outside to complete the dropdown
+    runtime.process(makeEvent('click', {
+      tag: 'BODY',
+      accessibleName: 'Page',
+      stableId: 'body',
+      cssSelector: 'body',
+    }));
+
     const dropdown = emitted.find((i) => i.type === 'Dropdown');
     expect(dropdown).toBeDefined();
-    expect(dropdown!.metadata.selectedValue).toBe('Premium Economy');
+    expect(dropdown!.metadata.allSelections).toContain('Premium Economy');
     expect(dropdown!.endState).toBe('completed');
   });
 
@@ -294,6 +302,16 @@ describe('Modern SPA Calendar & Dropdown Fix', () => {
       ancestorClasses: ['oxd-select-dropdown', 'oxd-form-row', 'orangehrm-container'],
     });
     runtime.process(optionClick);
+
+    // SPA change event on trigger (completes the dropdown)
+    runtime.process(makeEvent('change', {
+      tag: 'DIV',
+      ariaRole: 'combobox',
+      accessibleName: 'Status',
+      className: 'oxd-select-text',
+      stableId: 'oxd-status-trigger',
+      cssSelector: 'div.oxd-select-text',
+    }, {}, { valueAfter: 'Active' }));
 
     const dropdown = emitted.find((i) => i.type === 'Dropdown');
     expect(dropdown).toBeDefined();

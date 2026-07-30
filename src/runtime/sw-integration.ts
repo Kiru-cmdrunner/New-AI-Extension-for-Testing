@@ -66,8 +66,10 @@ export function initRecording(): void {
  */
 export function stopRecording(): ComponentInteraction[] {
   if (runtime) {
-    const flushed = runtime.flush();
-    liveInteractions.push(...flushed);
+    // flush() emits remaining interactions via the onEmit callback,
+    // which pushes them to liveInteractions already. Do NOT push the
+    // return value again — that would duplicate every flushed interaction.
+    runtime.flush();
     persistLiveInteractions();
   }
 

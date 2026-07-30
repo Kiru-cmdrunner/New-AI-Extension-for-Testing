@@ -227,8 +227,8 @@ describe('Hover: CSS overlay evidence signal', () => {
 
 // ── Dropdown isInScope Fix Tests ──────────────────────────────────────
 
-describe('Dropdown: isInScope does not swallow clicks on interactive elements', () => {
-  it('allows button click inside dropdown surface to fall through', () => {
+describe('Dropdown: isInScope claims all events inside multi-config surface', () => {
+  it('claims button click (stepper) inside dropdown surface as part of compound interaction', () => {
     const triggerEvent = makeEvent({
       eventType: 'click',
       target: makeTarget({
@@ -262,8 +262,10 @@ describe('Dropdown: isInScope does not swallow clicks on interactive elements', 
       },
     });
 
+    // Multi-config: ALL events inside the surface are claimed — the Dropdown
+    // session owns the entire compound interaction (steppers, options, Done).
     const dropdownInScope = dropdownDefinition.isInScope(stepperClick, ctx);
-    expect(dropdownInScope).toBe(false);
+    expect(dropdownInScope).toBe(true);
   });
 
   it('still claims dropdown option clicks inside surface', () => {

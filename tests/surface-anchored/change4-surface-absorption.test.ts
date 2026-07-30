@@ -132,7 +132,13 @@ describe('Surface-Anchored multiConfig Absorption', () => {
     });
 
     // Toggle button for Premium Economy — no role=radio, just a div with click
-    const toggleClick = makeInteraction('Click', {}, {
+    // In the real runtime, detectSurface() walks ancestors and finds the popover,
+    // so the interaction carries surfaceContext indicating it's inside the surface.
+    const toggleClick = makeInteraction('Click', {
+      surfaceContext: {
+        type: 'popover',
+      },
+    }, {
       accessibleName: 'Premium Economy',
       className: 'cabin-option',  // No overlap with 'pax-summary'
     });

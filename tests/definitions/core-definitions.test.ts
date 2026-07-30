@@ -216,6 +216,9 @@ describe('Dropdown Definition', () => {
     const option = { tag: 'DIV', ariaRole: 'option', className: 'oxd-select-option', accessibleName: 'Admin' };
     runtime.process(makeEvent('c2', 'click', option));
 
+    // SPA change event on trigger (surface closure after option selection)
+    runtime.process(makeEvent('c3', 'change', trigger, ctx, { valueAfter: 'Admin' }));
+
     const dropdown = emitted.find((e) => e.type === 'Dropdown');
     expect(dropdown).toBeDefined();
     expect(dropdown!.metadata.noOpSelection).toBe(true);
@@ -230,6 +233,9 @@ describe('Dropdown Definition', () => {
 
     const option = { tag: 'DIV', ariaRole: 'option', className: 'oxd-select-option', accessibleName: 'ESS' };
     runtime.process(makeEvent('c2', 'click', option));
+
+    // SPA change event on trigger
+    runtime.process(makeEvent('c3', 'change', trigger, ctx, { valueAfter: 'ESS' }));
 
     const dropdown = emitted.find((e) => e.type === 'Dropdown');
     expect(dropdown).toBeDefined();
@@ -261,9 +267,7 @@ describe('Dropdown Definition', () => {
   it('completes Dropdown when named div option clicked inside dropdown surface (AdaniOne)', () => {
     // AdaniOne renders travel class options as bare <div> elements with
     // accessible names but no ARIA roles or option CSS classes. The Dropdown
-    // lifecycle now captures these as selections and completes with the
-    // selectedValue — previously they fell through to Click discovery, which
-    // captured the click but LOST the selected value.
+    // lifecycle accumulates selections and completes on surface closure.
     const { runtime, emitted } = setupRuntime();
     const trigger = { tag: 'DIV', stableId: 'passenger-trigger', accessibleName: '2 • Premium Economy', className: 'passenger-selector' };
 
@@ -274,10 +278,13 @@ describe('Dropdown Definition', () => {
     const option = { tag: 'DIV', accessibleName: 'Premium Economy', className: 'class-option' };
     runtime.process(makeEvent('c2', 'click', option, { ancestorClasses: ['dropdown-surface'] }));
 
-    // The Dropdown should complete with the selected value
+    // Click outside the surface to trigger closure (completes the dropdown)
+    runtime.process(makeEvent('c3', 'click', { tag: 'BODY', accessibleName: 'Page', stableId: 'body' }));
+
+    // The Dropdown should complete with the accumulated selection
     const dropdown = emitted.find((e) => e.type === 'Dropdown');
     expect(dropdown).toBeDefined();
-    expect(dropdown!.metadata.selectedValue).toBe('Premium Economy');
+    expect(dropdown!.metadata.allSelections).toContain('Premium Economy');
     expect(dropdown!.endState).toBe('completed');
   });
 

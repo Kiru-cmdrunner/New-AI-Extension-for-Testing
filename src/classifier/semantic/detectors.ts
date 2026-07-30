@@ -95,13 +95,17 @@ export function isDropdownActivation(interaction: DetectedInteraction): boolean 
 
 /**
  * Check if an interaction is a click on a date picker trigger.
+ *
+ * Note: A DatePicker-typed interaction is a COMPLETION event (the user
+ * selected a date), NOT an activation. Treating it as activation causes
+ * a double-capture: the reasoner activates a new session on the
+ * already-classified date selection (Issue 6). The completion check
+ * (isDatePickerCompletion) handles DatePicker-typed interactions.
  */
 export function isDatePickerActivation(interaction: DetectedInteraction): boolean {
-  if (interaction.type === 'DatePicker') return true;
-  if (interaction.type === 'TimePicker') return true;
-  if (interaction.type === 'DateTimePicker') return true;
-
-  // Click on date input
+  // DatePicker/TimePicker/DateTimePicker types are completions, not activations.
+  // Only Click and TextEntry can activate a datePicker session (the trigger
+  // click on the date field, or typing in a date input).
   if (interaction.type === 'Click' || interaction.type === 'TextEntry') {
     const target = interaction.target;
     if (!target) return false;

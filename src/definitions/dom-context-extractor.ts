@@ -66,8 +66,11 @@ function getSurfaceLabel(el: Element): string | null {
 /**
  * Detect if the element or any of its ancestors is a dynamic UI surface
  * (modal, drawer, popover, tooltip) that appeared after a user interaction.
+ *
+ * Phase 0b: Now also returns the surface's structural identity (surfaceId)
+ * so the Component Runtime can bind events to sessions via surface containment.
  */
-function detectSurface(el: Element): { type: string; role: string | null; label: string | null } | null {
+function detectSurface(el: Element): { type: string; role: string | null; label: string | null; surfaceId: string | null } | null {
   let current: Element | null = el;
   let depth = 0;
   while (current && depth < MAX_ANCESTOR_DEPTH) {
@@ -75,20 +78,25 @@ function detectSurface(el: Element): { type: string; role: string | null; label:
     if (role) {
       const roleLower = role.toLowerCase();
       if (SURFACE_ROLE_MAP[roleLower]) {
-        return { type: SURFACE_ROLE_MAP[roleLower]!, role: roleLower, label: getSurfaceLabel(current) };
+        return {
+          type: SURFACE_ROLE_MAP[roleLower]!,
+          role: roleLower,
+          label: getSurfaceLabel(current),
+          surfaceId: computeSurfaceId(current),
+        };
       }
     }
     if (current.getAttribute('aria-modal') === 'true') {
-      return { type: 'modal', role: role ?? null, label: getSurfaceLabel(current) };
+      return { type: 'modal', role: role ?? null, label: getSurfaceLabel(current), surfaceId: computeSurfaceId(current) };
     }
     if (current.tagName === 'DIALOG') {
-      return { type: 'modal', role: 'dialog', label: getSurfaceLabel(current) };
+      return { type: 'modal', role: 'dialog', label: getSurfaceLabel(current), surfaceId: computeSurfaceId(current) };
     }
     const cls = current.getAttribute('class') || '';
     if (cls) {
       for (const { regex, type } of SURFACE_CLASS_PATTERNS) {
         if (regex.test(cls)) {
-          return { type, role: role ?? null, label: getSurfaceLabel(current) };
+          return { type, role: role ?? null, label: getSurfaceLabel(current), surfaceId: computeSurfaceId(current) };
         }
       }
     }
@@ -96,6 +104,66 @@ function detectSurface(el: Element): { type: string; role: string | null; label:
     depth++;
   }
   return null;
+}
+
+// ── Surface Identity (Phase 0b) ─────────────────────────────────────────
+
+/**
+ * Compute a stable structural identity for a surface container element.
+ *
+ * The identity is based on the element's position in the DOM tree (tag, role,
+ * nth-child index), NOT on CSS class names (which mutate when React re-renders).
+ *
+ * Priority:
+ *   1. data-testid → "testId:<value>"
+ *   2. id attribute → "id:<value>"
+ *   3. data-cy → "dataCy:<value>"
+ *   4. Structural path: tag[role=<role>] at nth-child(<index>) chained to root
+ *
+ * The structural path (priority 4) is stable across re-renders because it is
+ * based on DOM position, not styling. React may re-render the component, but
+ * as long as the element maintains the same position in the tree, the identity
+ * is preserved.
+ *
+ * Architecture: docs/architecture/OBSERVATION_MODEL_DESIGN.md §6.2
+ */
+function computeSurfaceId(el: Element): string | null {
+  // Priority 1-3: stable attributes
+  const testId = el.getAttribute('data-testid');
+  if (testId) return `surf:testId:${testId}`;
+
+  const id = el.id;
+  if (id) return `surf:id:${id}`;
+
+  const dataCy = el.getAttribute('data-cy');
+  if (dataCy) return `surf:dataCy:${dataCy}`;
+
+  // Priority 4: structural path (tag + role + nth-child position)
+  const parts: string[] = [];
+  let current: Element | null = el;
+  let depth = 0;
+  const MAX_SURFACE_ID_DEPTH = 5;
+
+  while (current && current !== document.body && current !== document.documentElement && depth < MAX_SURFACE_ID_DEPTH) {
+    const tag = current.tagName.toLowerCase();
+    const role = current.getAttribute('role');
+    const parent = current.parentElement;
+    let nth = 1;
+    if (parent) {
+      let sibling: Element | null = parent.firstElementChild;
+      while (sibling && sibling !== current) {
+        nth++;
+        sibling = sibling.nextElementSibling;
+      }
+    }
+    const rolePart = role ? `[role=${role}]` : '';
+    parts.unshift(`${tag}${rolePart}:nth(${nth})`);
+    current = parent;
+    depth++;
+  }
+
+  if (parts.length === 0) return null;
+  return `surf:struct:${parts.join('>')}`;
 }
 
 /**
@@ -123,6 +191,9 @@ export function extractDomContext(el: Element): DomContext {
     surfaceType: surface?.type ?? null,
     surfaceRole: surface?.role ?? null,
     surfaceLabel: surface?.label ?? null,
+    // Phase 0b: surface identity for session-surface binding
+    surfaceId: surface?.surfaceId ?? null,
+    surfaceOpenedBy: null, // populated by the runtime when it matches the trigger event
     ariaAutoComplete: getAttributeString(el, 'aria-autocomplete'),
     ariaValueNow: getAttributeString(el, 'aria-valuenow'),
     ariaValueText: getAttributeString(el, 'aria-valuetext'),

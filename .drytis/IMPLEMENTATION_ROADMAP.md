@@ -1,4 +1,10 @@
-# CmdRunner Platform — Implementation Roadmap
+# CmdRunner Platform — Implementation Roadmap (SUPERSEDED)
+
+> **⚠️ SUPERSEDED** — This document's phase definitions have been reconciled with `docs/architecture/IMPLEMENTATION_BASELINE.md` into the authoritative **`docs/architecture/UNIFIED_MASTER_ROADMAP.md`**.
+>
+> The strategic direction (Phases 1–10) remains valid. The early phases have been restructured into Pre-work + Phase 0a–0d sub-phases to incorporate operational improvements discovered during runtime validation.
+>
+> **For all phase definitions, sequencing, acceptance criteria, and dependencies, refer to `UNIFIED_MASTER_ROADMAP.md`.** This document is retained as a historical reference only.
 
 **From:** 7bfd949 (working recorder + Playwright generator, 3,810 passing tests)
 **To:** Full AI QA Automation Platform

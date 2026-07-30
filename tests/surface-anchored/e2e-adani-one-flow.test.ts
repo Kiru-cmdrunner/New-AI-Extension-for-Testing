@@ -218,7 +218,13 @@ describe('Adani One End-to-End Validation', () => {
       });
 
       // Change 4: absorbed even though no role=radio and no class overlap
-      const cabinToggle = makeInteraction('Click', {}, {
+      // In the real runtime, detectSurface() walks ancestors and finds the popover,
+      // so the interaction carries surfaceContext indicating it's inside the surface.
+      const cabinToggle = makeInteraction('Click', {
+        surfaceContext: {
+          type: 'popover',
+        },
+      }, {
         accessibleName: 'Premium Economy',
         tag: 'DIV',
         className: 'cabin-option',
@@ -290,10 +296,17 @@ describe('Adani One End-to-End Validation', () => {
           ariaRole: 'button',
         }),
         // Cabin class toggle — div with no role=radio
+        // In the real runtime, detectSurface() walks ancestors and finds the
+        // popover container, so domContext.surfaceType is set. This propagates
+        // through extractSurfaceContext() to interaction.metadata.surfaceContext.
         makeRecordedEvent('click', ts4, {
           accessibleName: 'Premium Economy',
           tag: 'DIV',
           className: 'cabin-option',
+        }, {
+          surfaceType: 'popover',
+          surfaceLabel: 'Passenger selector',
+          surfaceRole: 'dialog',
         }),
         // Done button — completion
         makeRecordedEvent('click', ts5, {

@@ -215,6 +215,125 @@ describe('DatePicker Dedup (Bug 3)', () => {
     const dps = emitted.filter((e) => e.type === 'DatePicker' && e.endState === 'completed');
     expect(dps.length).toBe(1);
   });
+
+  it('suppresses cross-element duplicate from post-click value poll (Adani One Bug)', () => {
+    // Real Adani One scenario:
+    // 1. Focus on date input → DatePicker lifecycle A starts (trigger = input)
+    // 2. Click calendar cell → lifecycle A completes (trigger = cell, dateValue = 'Aug 27')
+    // 3. Post-click value poll fires synthetic change on input → lifecycle B starts (trigger = input)
+    // 4. Lifecycle B completes immediately (change event on date input)
+    //    dateValue = '2026-08-27' (different format than #2)
+    // Cross-element dedup must suppress lifecycle B.
+    const { runtime, emitted } = setupRuntime();
+
+    const dateInput = makeTarget({
+      tag: 'INPUT', stableId: 'dep-date', className: 'react-datepicker__input',
+      accessibleName: 'Departure', ariaRole: 'textbox',
+    });
+    const dateInputCtx = makeContext({ inputType: 'text', ariaHasPopup: 'dialog' });
+
+    const calendarCell = makeTarget({
+      tag: 'DIV', ariaRole: 'gridcell', className: 'react-datepicker__day',
+      accessibleName: 'Choose Thursday, August 27th',
+    });
+    const calendarCellCtx = makeContext();
+
+    // 1. Focus on date input
+    runtime.process(makeEvent('f1', 'focus', dateInput, dateInputCtx, { timestamp: 1000 }));
+
+    // 2. Click calendar cell → lifecycle A completes
+    //    dateValue from accessibleName of cell
+    runtime.process(makeEvent('c2', 'click', calendarCell, calendarCellCtx, {
+      valueAfter: '2026-08-27', timestamp: 1500,
+    }));
+
+    // 3. Post-click poll: synthetic change event on the date input
+    //    This triggers a NEW DatePicker lifecycle (different elementKey from cell)
+    runtime.process(makeEvent('ch3', 'change', dateInput, dateInputCtx, {
+      valueAfter: '2026-08-27', timestamp: 1600,
+    }));
+
+    // Should have only ONE completed DatePicker interaction
+    const dps = emitted.filter((e) => e.type === 'DatePicker' && e.endState === 'completed');
+    expect(dps.length).toBe(1);
+    // The emitted interaction should be from the cell click (first one)
+    expect(dps[0]!.metadata.selectedDate).toContain('August 27th');
+  });
+
+  it('suppresses cross-element duplicate with different date formats but same day', () => {
+    // Variant: accessibleName format ("27") vs input value format ("27/08/2026")
+    // Day number extraction should match them as duplicates.
+    const { runtime, emitted } = setupRuntime();
+
+    const dateInput = makeTarget({
+      tag: 'INPUT', stableId: 'dep-date', className: 'react-datepicker__input',
+      accessibleName: 'Departure', ariaRole: 'textbox',
+    });
+    const dateInputCtx = makeContext({ inputType: 'text', ariaHasPopup: 'dialog' });
+
+    const calendarCell = makeTarget({
+      tag: 'DIV', ariaRole: 'gridcell', className: 'react-datepicker__day',
+      accessibleName: '27',
+    });
+
+    // Focus + cell click
+    runtime.process(makeEvent('f1', 'focus', dateInput, dateInputCtx, { timestamp: 1000 }));
+    runtime.process(makeEvent('c2', 'click', calendarCell, makeContext(), {
+      valueAfter: '2026-08-27', timestamp: 1500,
+    }));
+
+    // Synthetic change with different format
+    runtime.process(makeEvent('ch3', 'change', dateInput, dateInputCtx, {
+      valueAfter: '27/08/2026', timestamp: 1600,
+    }));
+
+    // One DatePicker — day number "27" matches
+    const dps = emitted.filter((e) => e.type === 'DatePicker' && e.endState === 'completed');
+    expect(dps.length).toBe(1);
+  });
+
+  it('preserves different dates as separate interactions', () => {
+    // Two different date selections should NOT be suppressed.
+    const { runtime, emitted } = setupRuntime();
+
+    const dateInput = makeTarget({
+      tag: 'INPUT', stableId: 'dep-date', className: 'react-datepicker__input',
+      accessibleName: 'Departure', ariaRole: 'textbox',
+    });
+    const dateInputCtx = makeContext({ inputType: 'text', ariaHasPopup: 'dialog' });
+
+    // First date selection: August 27
+    const cell1 = makeTarget({
+      tag: 'DIV', ariaRole: 'gridcell', className: 'react-datepicker__day',
+      accessibleName: 'Choose Thursday, August 27th',
+    });
+    runtime.process(makeEvent('f1', 'focus', dateInput, dateInputCtx, { timestamp: 1000 }));
+    runtime.process(makeEvent('c2', 'click', cell1, makeContext(), {
+      valueAfter: '2026-08-27', timestamp: 1500,
+    }));
+    // Synthetic change (should be suppressed — same day)
+    runtime.process(makeEvent('ch3', 'change', dateInput, dateInputCtx, {
+      valueAfter: '2026-08-27', timestamp: 1600,
+    }));
+
+    // Second date selection: September 27 — DIFFERENT date
+    const cell2 = makeTarget({
+      tag: 'DIV', ariaRole: 'gridcell', className: 'react-datepicker__day',
+      accessibleName: 'Choose Sunday, September 27th',
+    });
+    runtime.process(makeEvent('f4', 'focus', dateInput, dateInputCtx, { timestamp: 5000 }));
+    runtime.process(makeEvent('c5', 'click', cell2, makeContext(), {
+      valueAfter: '2026-09-27', timestamp: 5500,
+    }));
+    // Synthetic change (should be suppressed — same day as #2)
+    runtime.process(makeEvent('ch6', 'change', dateInput, dateInputCtx, {
+      valueAfter: '2026-09-27', timestamp: 5600,
+    }));
+
+    // Should have TWO completed DatePicker interactions (different dates)
+    const dps = emitted.filter((e) => e.type === 'DatePicker' && e.endState === 'completed');
+    expect(dps.length).toBe(2);
+  });
 });
 
 // ── Scroll Tests ─────────────────────────────────────────────────────

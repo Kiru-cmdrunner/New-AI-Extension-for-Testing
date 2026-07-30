@@ -1,9 +1,10 @@
 # Implementation Baseline & Target Architecture
 
-**Status:** DEFINITIVE — All future development follows this document.
+**Status:** DEFINITIVE for engine ownership, file inventory, and development rules — **§4 (roadmap) is SUPERSEDED** by `docs/architecture/UNIFIED_MASTER_ROADMAP.md`.
 **Created:** 2026-07-29
 **Baseline commit:** `77aa1d6` (master — merge of 7bfd949 + surface-anchored detection fixes)
 **Reference:** `docs/architecture/CMDRUNNER_ARCHITECTURAL_EVOLUTION.md` (architectural journey)
+**Roadmap:** `docs/architecture/UNIFIED_MASTER_ROADMAP.md` (authoritative phase definitions and sequencing)
 
 ---
 

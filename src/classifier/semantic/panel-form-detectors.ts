@@ -237,18 +237,50 @@ export function shouldAbsorbMultiConfig(
   if (noiseTypes.has(interaction.type)) return true;
 
   // ── Strategy 1: Surface-anchored absorption ────────────────────────────
-  // If the session was activated by a surface-opening click, absorb all
-  // interaction types that could be field adjustments inside the panel.
+  // If the session was activated by a surface-opening click, absorb interactions
+  // that are field adjustments inside the panel.
+  //
+  // Non-Click types (RadioButton, Checkbox, ToggleSwitch, Slider, TextEntry,
+  // NativeDropdown, CustomDropdown) are always absorbed — these only occur
+  // inside the panel.
+  //
+  // Click interactions require a boundary check: the click must be inside the
+  // surface (indicated by its own surfaceContext being non-null — the DOM context
+  // extractor walks ancestors and detects surface containers), OR be a stepper
+  // button (stepper +/- buttons are always inside the panel).
+  //
+  // Without this check, ANY click on the page would be absorbed, including
+  // buttons outside the panel (Issue 7: "Cheapest" fare button outside the
+  // flight options popover was silently swallowed).
   const triggerSurfaceCtx = session.triggerInteraction.metadata.surfaceContext;
   if (triggerSurfaceCtx?.openedByThisInteraction) {
-    // Absorb all Click, RadioButton, Checkbox, ToggleSwitch, Slider, TextEntry
-    // interactions. Completion (Done/Apply) is already checked before absorption,
-    // and PageNavigation is handled by the navigation lookback merge.
     const absorbableTypes = new Set([
-      'Click', 'RadioButton', 'Checkbox', 'ToggleSwitch', 'Slider', 'TextEntry',
+      'RadioButton', 'Checkbox', 'ToggleSwitch', 'Slider', 'TextEntry',
       'NativeDropdown', 'CustomDropdown',
     ]);
     if (absorbableTypes.has(interaction.type)) return true;
+
+    if (interaction.type === 'Click') {
+      // Stepper buttons are always absorbed (they're part of the panel)
+      if (detectStepperDirection(interaction) !== null) return true;
+
+      // Boundary check: the interaction itself has surfaceContext, meaning
+      // the DOM context extractor found a surface ancestor (popover/drawer/modal)
+      // at capture time. This confirms the click is inside the panel.
+      if (interaction.metadata.surfaceContext) return true;
+
+      // Fallback: CSS class-token overlap between trigger and click target
+      const triggerClass = session.triggerInteraction.target?.className ?? '';
+      const targetClass = interaction.target?.className ?? '';
+      if (triggerClass && targetClass) {
+        const triggerTokens = triggerClass.toLowerCase().split(/[\s-]/).filter(t => t.length > 3);
+        const targetTokens = targetClass.toLowerCase().split(/[\s-]/).filter(t => t.length > 3);
+        if (triggerTokens.some(t => targetTokens.includes(t))) return true;
+      }
+
+      // No boundary evidence — this Click is outside the panel.
+      // Do NOT absorb; fall through to outside-click cancellation.
+    }
   }
 
   // ── Strategy 2: CSS class-token overlap (fallback) ─────────────────────

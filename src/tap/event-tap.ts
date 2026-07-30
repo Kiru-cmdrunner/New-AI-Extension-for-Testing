@@ -127,6 +127,13 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
   let lastFocusedIsFormControl = false;
   /** Guard flag: prevent double-scheduling post-click checks (mousedown+click). */
   let postClickCheckPending = false;
+  /** Phase 0b: surfaceId at focus time. Used as a fallback for the synthetic
+   *  change event when the DOM mutates between focus and the post-click poll.
+   *  When the poll fires, we re-extract domContext (which gets the current
+   *  surfaceId). If that returns null (surface closed), we fall back to this
+   *  stored value so the synthetic event can still be claimed by the session
+   *  that opened the surface. */
+  let lastFocusedSurfaceId: string | null = null;
 
   /**
    * Check if an element is a form control whose value we should track.
@@ -244,6 +251,9 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
       lastFocusedEl = targetEl;
       lastFocusedValue = captureValue(targetEl);
       lastFocusedIsFormControl = isValueTrackable(targetEl);
+      // Phase 0b: capture surfaceId at focus time for post-click poll binding.
+      const focusDomContext = extractDomContext(targetEl);
+      lastFocusedSurfaceId = focusDomContext.surfaceId ?? null;
     }
 
     // On blur: defer value reading to the next macrotask so SPA frameworks
@@ -351,6 +361,15 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
       if (postClickValue !== undefined && postClickValue !== preClickValue) {
         const identity = extractIdentity(trackedEl);
         const domContext = extractDomContext(trackedEl);
+
+        // Phase 0b: If the live surfaceId is null (surface may have closed or
+        // DOM mutated), fall back to the surfaceId captured at focus time.
+        // This ensures the synthetic change event can be claimed by the session
+        // that opened the surface, even if the surface closed between the click
+        // and the poll.
+        if (!domContext.surfaceId && lastFocusedSurfaceId) {
+          domContext.surfaceId = lastFocusedSurfaceId;
+        }
 
         const syntheticChange: ObservedEvent = {
           eventId: nextEventId(),
@@ -522,6 +541,7 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
       lastFocusedValue = undefined;
       lastFocusedIsFormControl = false;
       postClickCheckPending = false;
+      lastFocusedSurfaceId = null;
     },
   };
 }

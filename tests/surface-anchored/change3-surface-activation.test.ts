@@ -83,7 +83,11 @@ describe('Surface-Anchored multiConfig Activation', () => {
       className: 'pax-summary',  // NOT in PANEL_TRIGGER_CLASSES
     });
 
-    const plusClick = makeInteraction('Click', {}, {
+    const plusClick = makeInteraction('Click', {
+      surfaceContext: {
+        type: 'popover',
+      },
+    }, {
       accessibleName: 'Add Adult',
     });
 

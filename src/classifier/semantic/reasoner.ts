@@ -525,7 +525,26 @@ export class SemanticReasoner {
       if (session.componentType === 'multiConfig' && shouldAbsorbMultiConfig(interaction, session)) {
         const field = extractConfigField(interaction);
         if (field) {
-          session.configuredFields[field.field] = field.value;
+          // Stepper values (+1 / -1) accumulate: 3 clicks of "+" on "Adults"
+          // should produce "+3", not "+1". Other field values (Selection,
+          // Selected, On, Off, text) overwrite as before.
+          if (field.value === '+1' || field.value === '-1') {
+            const current = session.configuredFields[field.field];
+            if (current !== undefined) {
+              const currentNum = parseInt(current, 10);
+              if (!Number.isNaN(currentNum)) {
+                const next = currentNum + (field.value === '+1' ? 1 : -1);
+                session.configuredFields[field.field] = next >= 0 ? `+${next}` : `${next}`;
+              } else {
+                // Current value is not a number — start accumulation from this click
+                session.configuredFields[field.field] = field.value;
+              }
+            } else {
+              session.configuredFields[field.field] = field.value;
+            }
+          } else {
+            session.configuredFields[field.field] = field.value;
+          }
         }
         session.absorbed.push(interaction);
         session.lastEventAt = timestamp;

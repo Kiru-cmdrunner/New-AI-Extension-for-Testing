@@ -598,6 +598,30 @@ export function build(input: IRBridgeInput): ExecutionIRPlan {
     const event = findCorrespondingEvent(interaction, eventIndex);
     const logicalAction = findLogicalAction(interaction, fragment);
 
+    // ── Multi-config dropdown expansion ──
+    // When a Dropdown interaction has subActions (steppers, options, toggles,
+    // confirm button), expand into one IR step per subAction. This produces
+    // the correct Playwright code: open → adjust Adults → select Premium
+    // Economy → click Done.
+    const subActions = interaction.metadata.subActions;
+    if (
+      subActions &&
+      Array.isArray(subActions) &&
+      subActions.length > 0 &&
+      interaction.metadata.isMultiConfig === true
+    ) {
+      for (const sub of subActions as Array<{ action: string; label: string; value?: string }>) {
+        const subStep = buildSubActionStep(
+          sub, interaction, event, logicalAction, stepCounter,
+        );
+        if (subStep) {
+          steps.push(subStep);
+          stepCounter++;
+        }
+      }
+      continue; // Skip the default single-step generation
+    }
+
     // Determine action
     const action = INTERACTION_TO_IR_ACTION[interaction.type] ?? IRAction.CLICK;
 
@@ -713,4 +737,153 @@ function deriveTags(
   }
 
   return tags.slice(0, 5); // Max 5 tags
+}
+
+// ── Multi-Config SubAction Expansion ──────────────────────────────────
+//
+// When a Dropdown interaction has subActions (compound interaction), each
+// subAction becomes its own IR step. The Playwright adapter then renders
+// each step as a separate code line:
+//
+//   await page.getByRole('button', { name: 'Economy' }).click();       // open
+//   await page.getByRole('button', { name: /Adults.*increase/ }).click(); // +
+//   await page.getByRole('radio', { name: 'Premium Economy' }).click();  // select
+//   await page.getByRole('button', { name: 'Done' }).click();            // confirm
+
+interface RawSubAction {
+  action: string;
+  label: string;
+  value?: string;
+}
+
+function buildSubActionStep(
+  sub: RawSubAction,
+  interaction: DetectedInteraction,
+  event: SessionEvent | undefined,
+  logicalAction: LogicalAction | undefined,
+  stepCounter: number,
+): IRStep | null {
+  const fieldName = logicalAction?.businessField ?? getElementDisplayName(interaction, event);
+  const assertions = deriveAssertions('', null);
+
+  switch (sub.action) {
+    case 'selectOption': {
+      const stepAction = IRAction.CLICK; // SPA option clicks, not selectOption()
+      return {
+        id: `step-${String(stepCounter + 1).padStart(4, '0')}`,
+        order: stepCounter,
+        action: stepAction,
+        description: `Select "${sub.value || sub.label}" in ${fieldName}`,
+        target: resolveElementTarget(
+          sub.label
+            ? { ...interaction.target, accessibleName: sub.value || sub.label }
+            : interaction.target,
+        ),
+        input: sub.value || sub.label,
+        assertions,
+        executionParameters: DEFAULT_EXECUTION_PARAMETERS,
+        aiEnrichment: null,
+        sourceEventId: interaction.eventIds[0] ?? event?.actionId,
+        plainEnglish: `Select ${sub.value || sub.label}`,
+      };
+    }
+    case 'increment': {
+      return {
+        id: `step-${String(stepCounter + 1).padStart(4, '0')}`,
+        order: stepCounter,
+        action: IRAction.CLICK,
+        description: `Increase ${sub.label} in ${fieldName}`,
+        target: resolveElementTarget(
+          sub.label
+            ? { ...interaction.target, accessibleName: sub.label, ariaLabel: `Increase ${sub.label}` }
+            : interaction.target,
+        ),
+        input: null,
+        assertions,
+        executionParameters: DEFAULT_EXECUTION_PARAMETERS,
+        aiEnrichment: null,
+        sourceEventId: interaction.eventIds[0] ?? event?.actionId,
+        plainEnglish: `Increase ${sub.label}`,
+      };
+    }
+    case 'decrement': {
+      return {
+        id: `step-${String(stepCounter + 1).padStart(4, '0')}`,
+        order: stepCounter,
+        action: IRAction.CLICK,
+        description: `Decrease ${sub.label} in ${fieldName}`,
+        target: resolveElementTarget(
+          sub.label
+            ? { ...interaction.target, accessibleName: sub.label, ariaLabel: `Decrease ${sub.label}` }
+            : interaction.target,
+        ),
+        input: null,
+        assertions,
+        executionParameters: DEFAULT_EXECUTION_PARAMETERS,
+        aiEnrichment: null,
+        sourceEventId: interaction.eventIds[0] ?? event?.actionId,
+        plainEnglish: `Decrease ${sub.label}`,
+      };
+    }
+    case 'toggle': {
+      const checked = sub.value === 'checked';
+      return {
+        id: `step-${String(stepCounter + 1).padStart(4, '0')}`,
+        order: stepCounter,
+        action: IRAction.TOGGLE,
+        description: `${checked ? 'Check' : 'Uncheck'} ${sub.label} in ${fieldName}`,
+        target: resolveElementTarget(
+          sub.label
+            ? { ...interaction.target, accessibleName: sub.label }
+            : interaction.target,
+        ),
+        input: checked,
+        assertions,
+        executionParameters: DEFAULT_EXECUTION_PARAMETERS,
+        aiEnrichment: null,
+        sourceEventId: interaction.eventIds[0] ?? event?.actionId,
+        plainEnglish: `${checked ? 'Check' : 'Uncheck'} ${sub.label}`,
+      };
+    }
+    case 'fillInput': {
+      return {
+        id: `step-${String(stepCounter + 1).padStart(4, '0')}`,
+        order: stepCounter,
+        action: IRAction.FILL,
+        description: `Enter "${sub.value || ''}" in ${sub.label || fieldName}`,
+        target: resolveElementTarget(
+          sub.label
+            ? { ...interaction.target, accessibleName: sub.label }
+            : interaction.target,
+        ),
+        input: sub.value || '',
+        assertions,
+        executionParameters: DEFAULT_EXECUTION_PARAMETERS,
+        aiEnrichment: null,
+        sourceEventId: interaction.eventIds[0] ?? event?.actionId,
+        plainEnglish: `Enter ${sub.value || ''} in ${sub.label || fieldName}`,
+      };
+    }
+    case 'confirm': {
+      return {
+        id: `step-${String(stepCounter + 1).padStart(4, '0')}`,
+        order: stepCounter,
+        action: IRAction.CLICK,
+        description: `Click Done/Apply in ${fieldName}`,
+        target: resolveElementTarget(
+          sub.label
+            ? { ...interaction.target, accessibleName: sub.label, ariaLabel: sub.label }
+            : { ...interaction.target, accessibleName: 'Done' },
+        ),
+        input: null,
+        assertions,
+        executionParameters: DEFAULT_EXECUTION_PARAMETERS,
+        aiEnrichment: null,
+        sourceEventId: interaction.eventIds[0] ?? event?.actionId,
+        plainEnglish: `Confirm ${fieldName} selections`,
+      };
+    }
+    default:
+      return null;
+  }
 }
