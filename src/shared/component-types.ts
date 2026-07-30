@@ -193,7 +193,8 @@ export type InteractionType =
   | 'Slider'
   | 'Tab'
   | 'Scroll'
-  | 'Navigation';
+  | 'Navigation'
+  | 'Stepper';
 
 // ── Component Lifecycle ────────────────────────────────────────────────
 
@@ -393,6 +394,19 @@ export interface ComponentDefinition {
    * Optional — defaults to false. Most definitions don't need this.
    */
   shouldCompleteOnOutside?(event: ObservedEvent, ctx: ComponentContext): boolean;
+
+  /**
+   * Should this component be completed (not interrupted) when the runtime
+   * flushes all active components (e.g., on navigation)?
+   *
+   * Return true for gesture-like components (Scroll) that have accumulated
+   * data and should be emitted as 'completed' even when flushed.
+   * Return false (or omit) for lifecycle components (TextEntry, Dropdown)
+   * that should be 'interrupted' when flushed by navigation.
+   *
+   * Optional — defaults to false.
+   */
+  shouldCompleteOnFlush?(ctx: ComponentContext): boolean;
 
   /**
    * Build the metadata for the emitted interaction.

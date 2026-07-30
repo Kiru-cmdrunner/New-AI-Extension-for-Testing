@@ -117,7 +117,7 @@ function isStepperMinusClass(className: string): boolean {
  * Falls back to inferring the field name from the CSS selector (e.g.,
  * "button.plus-adults" → "Adults") or a generic label.
  */
-function extractStepperLabel(event: ObservedEvent): string {
+export function extractStepperLabel(event: ObservedEvent): string {
   // Try aria-label first — "Increase Adults" → "Adults"
   const ariaLabel = event.target.ariaLabel || '';
   const fromAria = ariaLabel.replace(/\b(?:increase|decrease|add|remove|plus|minus|less|more)\b\s*/i, '').trim();
@@ -168,7 +168,7 @@ function extractStepperLabel(event: ObservedEvent): string {
   return '';
 }
 
-function isStepperPlus(event: ObservedEvent): boolean {
+export function isStepperPlus(event: ObservedEvent): boolean {
   const label = `${event.target.accessibleName || ''} ${event.target.ariaLabel || ''}`.trim();
 
   // Symbol check: standalone "+" character
@@ -184,7 +184,7 @@ function isStepperPlus(event: ObservedEvent): boolean {
   return false;
 }
 
-function isStepperMinus(event: ObservedEvent): boolean {
+export function isStepperMinus(event: ObservedEvent): boolean {
   const label = `${event.target.accessibleName || ''} ${event.target.ariaLabel || ''}`.trim();
 
   // Symbol check: standalone "-" character

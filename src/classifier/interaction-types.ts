@@ -58,6 +58,7 @@ export type InteractionType =
   | 'Popover'
   | 'Tooltip'
   | 'ModalDialog'
+  | 'Stepper'
   // Window & Frame
   | 'NewTab'
   | 'NewWindow'
@@ -178,6 +179,24 @@ export interface InteractionMetadata {
   }>;
   /** Whether the modal interaction had any sub-actions. */
   hasSubActions?: boolean;
+  // Stepper
+  /** Field name (Adults, Children, Quantity, etc.) */
+  fieldName?: string;
+  /** Total delta (net increment/decrement count) */
+  totalDelta?: number;
+  /** Number of + clicks */
+  incrementCount?: number;
+  /** Number of - clicks */
+  decrementCount?: number;
+  /** Sub-actions for the stepper */
+  stepperSubActions?: Array<{
+    action: string;
+    label: string;
+    field: string;
+    delta: number;
+  }>;
+  /** Delta for adapter passthrough */
+  stepperDelta?: number;
 }
 
 // ── Detection Result ────────────────────────────────────────────────────
@@ -201,7 +220,7 @@ export const INTERACTION_CATEGORIES: Record<string, InteractionType[]> = {
   Mouse: ['Click', 'DoubleClick', 'RightClick', 'Hover', 'DragDrop'],
   Keyboard: ['KeyboardShortcut'],
   'Text Entry': ['TextEntry'],
-  'Selection Controls': ['NativeDropdown', 'CustomDropdown', 'Autocomplete', 'MultiSelect', 'Checkbox', 'RadioButton', 'ToggleSwitch', 'Slider'],
+  'Selection Controls': ['NativeDropdown', 'CustomDropdown', 'Autocomplete', 'MultiSelect', 'Checkbox', 'RadioButton', 'ToggleSwitch', 'Slider', 'Stepper'],
   'Date & Time': ['DatePicker', 'TimePicker', 'DateTimePicker'],
   'File Upload': ['FileUpload', 'DragDropUpload'],
   'Navigation UI': ['Link', 'Tab', 'Menu', 'Breadcrumb'],
@@ -219,7 +238,7 @@ export const TIER1_TYPES: Set<InteractionType> = new Set([
   'KeyboardShortcut',
   'TextEntry',
   'NativeDropdown',
-  'Checkbox', 'RadioButton', 'ToggleSwitch', 'Slider',
+  'Checkbox', 'RadioButton', 'ToggleSwitch', 'Slider', 'Stepper',
   'DatePicker', 'TimePicker', 'DateTimePicker',
   'FileUpload',
   'Link', 'Tab', 'Menu', 'Breadcrumb',
@@ -275,6 +294,7 @@ export const TYPE_DISPLAY: Record<InteractionType, { label: string; icon: string
   Popover:         { label: 'Popover',          icon: '💬', color: '#f59e0b' },
   Tooltip:         { label: 'Tooltip',          icon: '💡', color: '#f59e0b' },
   ModalDialog:     { label: 'Modal Dialog',     icon: '🪟', color: '#f59e0b' },
+  Stepper:         { label: 'Stepper',          icon: '🔢', color: '#155e75' },
   NewTab:          { label: 'New Tab',         icon: '🗂️', color: '#3b82f6' },
   NewWindow:       { label: 'New Window',      icon: '🪟', color: '#3b82f6' },
   Iframe:          { label: 'Iframe',          icon: '🖼️', color: '#3b82f6' },

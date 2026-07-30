@@ -94,6 +94,7 @@ const INTERACTION_TO_IR_ACTION: Record<InteractionType, IRAction> = {
   BrowserAlert: IRAction.CLICK,
   Modal: IRAction.CLICK,
   ModalDialog: IRAction.CLICK,
+  Stepper: IRAction.CLICK,
   Drawer: IRAction.CLICK,
   Popover: IRAction.CLICK,
   Tooltip: IRAction.HOVER,
@@ -236,6 +237,17 @@ function generateDescription(
     case 'BrowserAlert': {
       const result = interaction.metadata.dialogResult ?? '';
       return `${result} the ${interaction.metadata.dialogType ?? 'dialog'}`;
+    }
+    case 'Stepper': {
+      const delta = Number(interaction.metadata.stepperDelta ?? 0);
+      const field = interaction.metadata.targetName ?? name;
+      if (delta > 0) return businessField ? `Increase ${businessField} by ${delta}` : `Increase ${field} by ${delta}`;
+      if (delta < 0) return businessField ? `Decrease ${businessField} by ${Math.abs(delta)}` : `Decrease ${field} by ${Math.abs(delta)}`;
+      return businessField ? `Adjust ${businessField}` : `Adjust ${field}`;
+    }
+    case 'ModalDialog': {
+      const title = interaction.metadata.modalTitle ?? name;
+      return businessField ? `Open the ${businessField} dialog` : `Open the "${title}" dialog`;
     }
     default:
       return businessField

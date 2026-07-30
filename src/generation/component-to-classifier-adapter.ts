@@ -41,6 +41,7 @@ const DEFAULT_SUBTYPE: Record<string, ClassifierInteractionType> = {
   DragDrop: 'DragDrop',
   KeyboardShortcut: 'KeyboardShortcut',
   ModalDialog: 'ModalDialog',
+  Stepper: 'Stepper',
 };
 
 /**
@@ -162,6 +163,15 @@ function adaptMetadata(ci: ComponentInteraction): InteractionMetadata {
       result.modalSubActions = meta.subActions as typeof result.modalSubActions;
     }
     if (meta.hasSubActions !== undefined) result.hasSubActions = meta.hasSubActions as boolean;
+  }
+
+  // Stepper
+  if (ci.type === 'Stepper') {
+    if (meta.fieldName) result.targetName = meta.fieldName as string;
+    if (meta.totalDelta !== undefined) result.stepperDelta = meta.totalDelta as number;
+    if (meta.subActions) {
+      result.stepperSubActions = meta.subActions as typeof result.stepperSubActions;
+    }
   }
 
   // ConfigurationSession (from structural enrichment)

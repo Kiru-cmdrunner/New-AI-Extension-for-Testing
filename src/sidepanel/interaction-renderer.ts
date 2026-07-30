@@ -45,6 +45,7 @@ const TYPE_DISPLAY: Record<string, TypeDisplay> = {
   DragDrop:     { icon: '📦', label: 'Drag & Drop',  color: '#0891b2' },
   KeyboardShortcut: { icon: '⌨️', label: 'Keyboard', color: '#7c3aed' },
   ModalDialog:  { icon: '🪟', label: 'Modal Dialog', color: '#f59e0b' },
+  Stepper:      { icon: '🔢', label: 'Stepper',      color: '#155e75' },
 };
 
 const DEFAULT_DISPLAY: TypeDisplay = { icon: '❓', label: 'Unknown', color: '#9ca3af' };
@@ -156,6 +157,19 @@ function fallbackActionDescription(interaction: ComponentInteraction): string {
       const title = String(metadata.pageTitle ?? '');
       if (title) return `Navigate to "${title}"`;
       return `Navigate to ${url}`;
+    }
+
+    case 'Stepper': {
+      const delta = Number(metadata.totalDelta ?? 0);
+      const field = String(metadata.fieldName ?? targetName);
+      if (delta > 0) return `Increase "${field}" by ${delta}`;
+      if (delta < 0) return `Decrease "${field}" by ${Math.abs(delta)}`;
+      return `Adjust "${field}"`;
+    }
+
+    case 'ModalDialog': {
+      const title = String(metadata.modalTitle ?? targetName);
+      return `Open "${title}" dialog`;
     }
 
     default:
