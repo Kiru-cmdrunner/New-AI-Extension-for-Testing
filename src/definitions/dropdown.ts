@@ -206,13 +206,18 @@ function isStepperMinus(event: ObservedEvent): boolean {
  * (e.g., generic clicks on non-interactive surface padding).
  */
 function classifySubAction(event: ObservedEvent): DropdownSubAction | null {
-  // Only classify click and change events as subActions — NOT mousedown.
+  // Only classify click, change, and input events as subActions — NOT mousedown.
   // Every real button press fires mousedown → click in sequence, so processing
   // both double-counts every interaction. In React SPAs, the element identity
   // may change between mousedown and click (re-render), which breaks dedup.
   // Using click only eliminates the duplication at the source.
   // (mousedown is still used for trigger detection / session discovery.)
-  if (event.eventType !== 'click' && event.eventType !== 'change') {
+  //
+  // input events are allowed for searchable dropdowns (autocomplete/typeahead):
+  // each keystroke fires an `input` event with the cumulative text. addSubAction
+  // replaces the previous fillInput on the same element so we keep only the
+  // final typed query.
+  if (event.eventType !== 'click' && event.eventType !== 'change' && event.eventType !== 'input') {
     return null;
   }
 
@@ -467,7 +472,9 @@ export const dropdownDefinition: ComponentDefinition = {
     // Only on click — not mousedown — to avoid completing the session
     // before the click event arrives (which would cause the click to be
     // processed as a separate Click interaction).
-    if (event.eventType === 'click' && isDoneButton(event)) {
+    // Guard: never treat the trigger element itself as a Done button (e.g.,
+    // a combobox named "Search" would false-positive match DONE_BUTTON_RE).
+    if (event.eventType === 'click' && eventKey !== triggerKey && isDoneButton(event)) {
       ctx.data.doneClicked = true;
       const sub = classifySubAction(event);
       if (sub) addSubAction(ctx, sub);
@@ -508,7 +515,30 @@ export const dropdownDefinition: ComponentDefinition = {
     }
 
     // ── Skip the trigger element itself — it's the opening action, not a subAction ──
-    if (eventKey === triggerKey) return null;
+    // Exception: `input` events on the trigger element for searchable dropdowns
+    // (combobox with search). The search input IS the trigger, and each keystroke
+    // fires an `input` event on it. We classify these as fillInput subActions
+    // so the typed search query is captured.
+    if (eventKey === triggerKey) {
+      if (event.eventType === 'input' && event.valueAfter?.trim()) {
+        const label = bestName(
+          event.target.accessibleName,
+          event.target.ariaLabel,
+          null,
+        );
+        addSubAction(ctx, {
+          action: 'fillInput',
+          label,
+          value: event.valueAfter,
+          target: event.target,
+          event,
+        });
+        if (!ctx.data.allSelections) ctx.data.allSelections = [];
+        (ctx.data.allSelections as string[]).push(event.valueAfter);
+        ctx.data.selectedValue = event.valueAfter;
+      }
+      return null;
+    }
 
     // ── Classify every other in-surface event into a subAction ──
     // This captures steppers, radio options, checkboxes, text inputs —
@@ -562,6 +592,17 @@ export const dropdownDefinition: ComponentDefinition = {
     const isMultiConfig = subActions.length > 1 ||
       subActions.some(s => s.action !== 'selectOption' && s.action !== 'confirm');
 
+    // Set SearchableDropdown subtype when the user typed in a search field
+    // inside the panel (autocomplete/typeahead). This drives rendering and
+    // IR step generation: the generated Playwright code will include a fill
+    // step for the search query before the option click.
+    if (!ctx.data.interactionSubtype || ctx.data.interactionSubtype === 'CustomDropdown') {
+      const hasFillInput = subActions.some(s => s.action === 'fillInput');
+      if (hasFillInput) {
+        ctx.data.interactionSubtype = 'SearchableDropdown';
+      }
+    }
+
     return {
       metadata: {
         targetName: triggerName,
@@ -604,6 +645,25 @@ export const dropdownDefinition: ComponentDefinition = {
 function addSubAction(ctx: ComponentContext, sub: DropdownSubAction): void {
   if (!ctx.data.subActions) ctx.data.subActions = [];
   const subs = ctx.data.subActions as DropdownSubAction[];
+
+  // ── Replace-on-update for fillInput (searchable dropdown) ──
+  // When consecutive `input` events fire on the SAME element (autocomplete
+  // typing), replace the previous fillInput's value instead of appending.
+  // This gives us the final typed query as a single subAction, not one per
+  // keystroke. Match by element identity (cssSelector or stableId).
+  if (sub.action === 'fillInput' && subs.length > 0) {
+    const last = subs[subs.length - 1];
+    if (last.action === 'fillInput') {
+      const lastKey = last.target?.cssSelector ?? last.target?.stableId ?? '';
+      const subKey = sub.target?.cssSelector ?? sub.target?.stableId ?? '';
+      if (lastKey && lastKey === subKey) {
+        // Replace the previous fillInput — same element, updated text
+        last.value = sub.value;
+        last.event = sub.event;
+        return;
+      }
+    }
+  }
 
   // Dedup: when both mousedown and click fire for the same target+action,
   // skip the second one. This is very common with SPA buttons (React, Angular)
