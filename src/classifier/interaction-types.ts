@@ -22,6 +22,8 @@ export type InteractionType =
   | 'RightClick'
   | 'Hover'
   | 'DragDrop'
+  // Keyboard
+  | 'KeyboardShortcut'
   // Text Entry
   | 'TextEntry'
   // Selection Controls
@@ -55,6 +57,7 @@ export type InteractionType =
   | 'Drawer'
   | 'Popover'
   | 'Tooltip'
+  | 'ModalDialog'
   // Window & Frame
   | 'NewTab'
   | 'NewWindow'
@@ -88,6 +91,23 @@ export interface InteractionMetadata {
   // Drag & Drop
   dropTarget?: string;
   sourceElement?: string;
+  // Keyboard Shortcut
+  /** Human-readable shortcut (e.g., "Ctrl+S", "Cmd+K", "Escape"). */
+  shortcutKey?: string;
+  /** Raw key value from the KeyboardEvent (e.g., "s", "Escape", "Enter"). */
+  keyValue?: string;
+  /** Raw code value from the KeyboardEvent (e.g., "KeyS", "Escape", "Enter"). */
+  keyCode?: string;
+  /** True if Ctrl was held. */
+  hasCtrl?: boolean;
+  /** True if Shift was held. */
+  hasShift?: boolean;
+  /** True if Alt/Option was held. */
+  hasAlt?: boolean;
+  /** True if Cmd (Mac metaKey) was held. */
+  hasCmd?: boolean;
+  /** Normalized key string for Playwright (e.g., "Control+s", "Escape"). */
+  playwrightKey?: string;
   // Element name (for Click, Menu, and other interactions)
   accessibleName?: string;
   // Date & Time
@@ -147,6 +167,17 @@ export interface InteractionMetadata {
   formSubmitAction?: string;
   /** For FormSubmit: interaction IDs of form fields in this submission. */
   formFields?: string[];
+  // ModalDialog
+  /** Title/label of the modal surface. */
+  modalTitle?: string;
+  /** Sub-actions captured inside the modal (selections, inputs, toggles). */
+  modalSubActions?: Array<{
+    action: string;
+    label: string;
+    value?: string;
+  }>;
+  /** Whether the modal interaction had any sub-actions. */
+  hasSubActions?: boolean;
 }
 
 // ── Detection Result ────────────────────────────────────────────────────
@@ -168,13 +199,14 @@ export interface DetectedInteraction {
 export const INTERACTION_CATEGORIES: Record<string, InteractionType[]> = {
   Navigation: ['PageNavigation', 'Back', 'Forward', 'Refresh'],
   Mouse: ['Click', 'DoubleClick', 'RightClick', 'Hover', 'DragDrop'],
+  Keyboard: ['KeyboardShortcut'],
   'Text Entry': ['TextEntry'],
   'Selection Controls': ['NativeDropdown', 'CustomDropdown', 'Autocomplete', 'MultiSelect', 'Checkbox', 'RadioButton', 'ToggleSwitch', 'Slider'],
   'Date & Time': ['DatePicker', 'TimePicker', 'DateTimePicker'],
   'File Upload': ['FileUpload', 'DragDropUpload'],
   'Navigation UI': ['Link', 'Tab', 'Menu', 'Breadcrumb'],
   Scrolling: ['PageScroll', 'ContainerScroll', 'InfiniteScroll'],
-  Dialogs: ['BrowserAlert', 'Modal', 'Drawer', 'Popover', 'Tooltip'],
+  Dialogs: ['BrowserAlert', 'Modal', 'ModalDialog', 'Drawer', 'Popover', 'Tooltip'],
   'Window & Frame': ['NewTab', 'NewWindow', 'Iframe'],
   Unknown: ['Unknown'],
 };
@@ -184,6 +216,7 @@ export const INTERACTION_CATEGORIES: Record<string, InteractionType[]> = {
 export const TIER1_TYPES: Set<InteractionType> = new Set([
   'PageNavigation', 'Back', 'Forward', 'Refresh',
   'Click', 'DoubleClick', 'RightClick', 'Hover', 'DragDrop',
+  'KeyboardShortcut',
   'TextEntry',
   'NativeDropdown',
   'Checkbox', 'RadioButton', 'ToggleSwitch', 'Slider',
@@ -191,7 +224,7 @@ export const TIER1_TYPES: Set<InteractionType> = new Set([
   'FileUpload',
   'Link', 'Tab', 'Menu', 'Breadcrumb',
   'PageScroll', 'ContainerScroll',
-  'BrowserAlert',
+  'BrowserAlert', 'ModalDialog',
   'NewTab', 'NewWindow', 'Iframe',
 ]);
 
@@ -214,6 +247,7 @@ export const TYPE_DISPLAY: Record<InteractionType, { label: string; icon: string
   RightClick:      { label: 'Right Click',     icon: '🖱️', color: '#dc2626' },
   Hover:           { label: 'Hover',           icon: '👁️', color: '#6b7280' },
   DragDrop:        { label: 'Drag & Drop',     icon: '📦', color: '#0891b2' },
+  KeyboardShortcut:{ label: 'Keyboard Shortcut', icon: '⌨️', color: '#7c3aed' },
   TextEntry:       { label: 'Text Entry',      icon: '⌨️', color: '#10b981' },
   NativeDropdown:  { label: 'Native Dropdown', icon: '📋', color: '#9333ea' },
   CustomDropdown:  { label: 'Custom Dropdown', icon: '📋', color: '#9333ea' },
@@ -240,6 +274,7 @@ export const TYPE_DISPLAY: Record<InteractionType, { label: string; icon: string
   Drawer:          { label: 'Drawer',          icon: '🗄️', color: '#f59e0b' },
   Popover:         { label: 'Popover',          icon: '💬', color: '#f59e0b' },
   Tooltip:         { label: 'Tooltip',          icon: '💡', color: '#f59e0b' },
+  ModalDialog:     { label: 'Modal Dialog',     icon: '🪟', color: '#f59e0b' },
   NewTab:          { label: 'New Tab',         icon: '🗂️', color: '#3b82f6' },
   NewWindow:       { label: 'New Window',      icon: '🪟', color: '#3b82f6' },
   Iframe:          { label: 'Iframe',          icon: '🖼️', color: '#3b82f6' },

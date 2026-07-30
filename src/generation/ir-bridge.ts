@@ -61,7 +61,8 @@ const INTERACTION_TO_IR_ACTION: Record<InteractionType, IRAction> = {
   DoubleClick: IRAction.CLICK,
   RightClick: IRAction.CLICK,
   Hover: IRAction.HOVER,
-  DragDrop: IRAction.CLICK,
+  DragDrop: IRAction.DRAG_DROP,
+  KeyboardShortcut: IRAction.PRESS_KEY,
   // Text Entry
   TextEntry: IRAction.FILL,
   // Selection Controls
@@ -92,6 +93,7 @@ const INTERACTION_TO_IR_ACTION: Record<InteractionType, IRAction> = {
   // Dialogs
   BrowserAlert: IRAction.CLICK,
   Modal: IRAction.CLICK,
+  ModalDialog: IRAction.CLICK,
   Drawer: IRAction.CLICK,
   Popover: IRAction.CLICK,
   Tooltip: IRAction.HOVER,
@@ -194,6 +196,16 @@ function generateDescription(
     }
     case 'Hover':
       return `Hover over the ${name}`;
+    case 'KeyboardShortcut': {
+      const shortcut = interaction.metadata.shortcutKey ?? 'key';
+      return `Press ${shortcut}`;
+    }
+    case 'DragDrop': {
+      const dropTarget = interaction.metadata.dropTarget ?? 'target';
+      return businessField
+        ? `Drag the ${businessField} to ${dropTarget}`
+        : `Drag the ${name} to ${dropTarget}`;
+    }
     case 'Slider': {
       const value = interaction.metadata.sliderValue ?? '';
       return businessField
@@ -287,6 +299,9 @@ function extractInputValue(
 
     case 'Slider':
       return interaction.metadata.sliderValue ?? null;
+
+    case 'KeyboardShortcut':
+      return interaction.metadata.playwrightKey ?? interaction.metadata.shortcutKey ?? null;
 
     case 'PageNavigation':
     case 'Back':
@@ -670,6 +685,46 @@ export function build(input: IRBridgeInput): ExecutionIRPlan {
       interaction.metadata.isMultiConfig === true
     ) {
       for (const sub of subActions as Array<{ action: string; label: string; value?: string }>) {
+        const subStep = buildSubActionStep(
+          sub, interaction, event, logicalAction, stepCounter,
+        );
+        if (subStep) {
+          steps.push(subStep);
+          stepCounter++;
+        }
+      }
+      continue; // Skip the default single-step generation
+    }
+
+    // ── ModalDialog subAction expansion ──
+    // A ModalDialog interaction captures all clicks/inputs inside the modal.
+    // Expand into one IR step per subAction: open modal (trigger click) →
+    // select option → check box → click confirm/close.
+    const modalSubActions = interaction.metadata.modalSubActions;
+    if (
+      modalSubActions &&
+      Array.isArray(modalSubActions) &&
+      modalSubActions.length > 0
+    ) {
+      // Step 1: the trigger click that opened the modal
+      const triggerLabel = interaction.metadata.accessibleName ?? interaction.metadata.modalTitle ?? 'Open modal';
+      steps.push({
+        id: `step-${String(stepCounter + 1).padStart(4, '0')}`,
+        order: stepCounter,
+        action: IRAction.CLICK,
+        description: `Open "${interaction.metadata.modalTitle ?? triggerLabel}" dialog`,
+        target: resolveElementTarget(interaction.target),
+        input: null,
+        assertions: deriveAssertions('', null),
+        executionParameters: DEFAULT_EXECUTION_PARAMETERS,
+        aiEnrichment: null,
+        sourceEventId: interaction.eventIds[0] ?? event?.actionId,
+        plainEnglish: `Open ${interaction.metadata.modalTitle ?? triggerLabel} dialog`,
+      });
+      stepCounter++;
+
+      // Steps 2..N: each subAction inside the modal
+      for (const sub of modalSubActions as Array<{ action: string; label: string; value?: string }>) {
         const subStep = buildSubActionStep(
           sub, interaction, event, logicalAction, stepCounter,
         );

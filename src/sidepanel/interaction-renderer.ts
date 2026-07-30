@@ -42,6 +42,9 @@ const TYPE_DISPLAY: Record<string, TypeDisplay> = {
   Tab:          { icon: '📂', label: 'Tab',           color: '#8b5cf6' },
   Scroll:       { icon: '📜', label: 'Scroll',        color: '#6b7280' },
   Navigation:   { icon: '🧭', label: 'Navigation',    color: '#0ea5e9' },
+  DragDrop:     { icon: '📦', label: 'Drag & Drop',  color: '#0891b2' },
+  KeyboardShortcut: { icon: '⌨️', label: 'Keyboard', color: '#7c3aed' },
+  ModalDialog:  { icon: '🪟', label: 'Modal Dialog', color: '#f59e0b' },
 };
 
 const DEFAULT_DISPLAY: TypeDisplay = { icon: '❓', label: 'Unknown', color: '#9ca3af' };
@@ -133,6 +136,14 @@ function fallbackActionDescription(interaction: ComponentInteraction): string {
 
     case 'Hover':
       return `Hover over "${targetName}"`;
+
+    case 'DragDrop': {
+      const dropTarget = String(metadata.dropTarget ?? 'target');
+      return `Drag "${targetName}" to "${dropTarget}"`;
+    }
+
+    case 'KeyboardShortcut':
+      return `Press ${String(metadata.shortcutKey ?? 'key')}`;
 
     case 'Link':
       return `Click "${targetName}" link`;

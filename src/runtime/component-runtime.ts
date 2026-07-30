@@ -294,9 +294,9 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     for (let i = this.activeStack.length - 1; i >= 0; i--) {
       const ctx = this.activeStack[i];
       const def = this.findDefForType(ctx.type);
-      // Gesture components (Scroll) complete naturally on flush, not interrupt.
-      // They accumulated their data and the gesture is done — it should be emitted.
-      const endState = def?.shouldCompleteOnOutside ? 'completed' : 'interrupted';
+      // Components that explicitly want flush-completion (e.g., Scroll has
+      // accumulated data) are completed. All others are interrupted.
+      const endState = def?.shouldCompleteOnFlush?.(ctx) ? 'completed' : 'interrupted';
       ctx.state = endState;
       ctx.endTime = Date.now();
       if (def) {
@@ -441,6 +441,38 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     def: ComponentDefinition,
     completion: ComponentCompletion,
   ): ComponentInteraction | null {
+    // ── Downcast protocol ──
+    // If the component is about to be completed with a non-completed
+    // endState (interrupted or abandoned), ask the definition if it
+    // should be converted to a simpler interaction type.
+    // E.g., a Dropdown that opened on a false-positive trigger (no panel
+    // opened, no option selected) downcasts to Click so the user's action
+    // remains visible instead of being filtered out.
+    if (
+      completion.endState !== 'completed' &&
+      def.downcast &&
+      ctx.type !== 'Click' // never downcast a Click
+    ) {
+      try {
+        const downcastType = def.downcast(ctx, completion);
+        if (downcastType && downcastType !== ctx.type) {
+          const targetDef = this.findDefForType(downcastType);
+          if (targetDef) {
+            // Mutate ctx so the emitted interaction carries the
+            // downcast type and the target def's metadata.
+            ctx.type = downcastType;
+            ctx.data = {}; // fresh data bag for the target definition
+            return this.completeComponent(ctx, targetDef, {
+              ...completion,
+              endState: 'completed',
+            });
+          }
+        }
+      } catch (err) {
+        this.logError(def.type, 'downcast', err);
+      }
+    }
+
     // Build metadata
     let metadata: Record<string, unknown> = {};
     try {
@@ -645,10 +677,24 @@ class ComponentRuntimeImpl implements ComponentRuntime {
       closedAt: null,
     };
 
-    // Try to bind to the most recent unbound surface-creating session
-    // (top of stack, first one that has openedSurface = null and is a
-    // surface-creating type)
-    const SURFACE_CREATING_TYPES: InteractionType[] = ['Dropdown', 'DatePicker'];
+    // Try to bind to the most recent unbound surface-creating session.
+    // Type-aware binding: each session type only binds compatible surface types.
+    // This prevents ModalDialog from stealing listbox/grid surfaces meant for
+    // Dropdown/DatePicker, and vice versa.
+    const SURFACE_CREATING_TYPES: InteractionType[] = ['Dropdown', 'DatePicker', 'ModalDialog'];
+
+    // Define which surface types each interaction type can claim.
+    // Dropdown → popover surfaces (option lists, menus, listboxes — all typed as 'popover')
+    // DatePicker → popover surfaces (calendars/grids also typed as 'popover')
+    // ModalDialog → modal surfaces only (role=dialog, aria-modal=true, <dialog>)
+    const SURFACE_COMPAT: Record<string, Set<string>> = {
+      Dropdown: new Set(['popover']),
+      DatePicker: new Set(['popover']),
+      ModalDialog: new Set(['modal', 'drawer']),
+    };
+
+    const surfaceType = entry.type;
+
     for (let i = this.activeStack.length - 1; i >= 0; i--) {
       const ctx = this.activeStack[i];
       if (
@@ -656,6 +702,10 @@ class ComponentRuntimeImpl implements ComponentRuntime {
         ctx.insideSurface === null &&
         SURFACE_CREATING_TYPES.includes(ctx.type)
       ) {
+        // Type-aware filtering: skip sessions that can't claim this surface type
+        const compatTypes = SURFACE_COMPAT[ctx.type];
+        if (compatTypes && !compatTypes.has(surfaceType)) continue;
+
         ctx.openedSurface = surfaceId;
         entry.openedByEventId = ctx.triggerEvent.eventId;
         break;
@@ -690,7 +740,7 @@ class ComponentRuntimeImpl implements ComponentRuntime {
 
     // If there are no open surfaces, nothing to close via surfaceId
     // But we may still need to close CSS-class-fallback sessions
-    const SURFACE_CREATING_TYPES: InteractionType[] = ['Dropdown', 'DatePicker'];
+    const SURFACE_CREATING_TYPES: InteractionType[] = ['Dropdown', 'DatePicker', 'ModalDialog'];
 
     for (let i = this.activeStack.length - 1; i >= 0; i--) {
       const ctx = this.activeStack[i];
@@ -822,7 +872,7 @@ class ComponentRuntimeImpl implements ComponentRuntime {
       // don't have openedSurface set. A new base-page trigger should still
       // complete them.
       if (!hasOpenedSurface) {
-        const SURFACE_CREATING_TYPES: InteractionType[] = ['Dropdown', 'DatePicker'];
+        const SURFACE_CREATING_TYPES: InteractionType[] = ['Dropdown', 'DatePicker', 'ModalDialog'];
         if (SURFACE_CREATING_TYPES.includes(ctx.type) && eventSurfaceId === null) {
           // CSS-class fallback session + new base-page trigger → complete it
           // Only if it has accumulated selections

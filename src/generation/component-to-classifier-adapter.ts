@@ -38,6 +38,9 @@ const DEFAULT_SUBTYPE: Record<string, ClassifierInteractionType> = {
   Tab: 'Tab',
   Scroll: 'PageScroll',
   Navigation: 'PageNavigation',
+  DragDrop: 'DragDrop',
+  KeyboardShortcut: 'KeyboardShortcut',
+  ModalDialog: 'ModalDialog',
 };
 
 /**
@@ -132,6 +135,33 @@ function adaptMetadata(ci: ComponentInteraction): InteractionMetadata {
   // Hover
   if (ci.type === 'Hover') {
     if (meta.hoverDuration) result.hoverDuration = meta.hoverDuration as number;
+  }
+
+  // DragDrop
+  if (ci.type === 'DragDrop') {
+    if (meta.dropTarget) result.dropTarget = meta.dropTarget as string;
+    if (meta.sourceElement) result.sourceElement = meta.sourceElement as string;
+  }
+
+  // KeyboardShortcut
+  if (ci.type === 'KeyboardShortcut') {
+    if (meta.shortcutKey) result.shortcutKey = meta.shortcutKey as string;
+    if (meta.keyValue) result.keyValue = meta.keyValue as string;
+    if (meta.keyCode) result.keyCode = meta.keyCode as string;
+    if (meta.playwrightKey) result.playwrightKey = meta.playwrightKey as string;
+    if (meta.hasCtrl !== undefined) result.hasCtrl = meta.hasCtrl as boolean;
+    if (meta.hasShift !== undefined) result.hasShift = meta.hasShift as boolean;
+    if (meta.hasAlt !== undefined) result.hasAlt = meta.hasAlt as boolean;
+    if (meta.hasCmd !== undefined) result.hasCmd = meta.hasCmd as boolean;
+  }
+
+  // ModalDialog
+  if (ci.type === 'ModalDialog') {
+    if (meta.modalTitle) result.modalTitle = meta.modalTitle as string;
+    if (meta.subActions) {
+      result.modalSubActions = meta.subActions as typeof result.modalSubActions;
+    }
+    if (meta.hasSubActions !== undefined) result.hasSubActions = meta.hasSubActions as boolean;
   }
 
   // ConfigurationSession (from structural enrichment)
