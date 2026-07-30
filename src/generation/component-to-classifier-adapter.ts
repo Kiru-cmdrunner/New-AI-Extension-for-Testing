@@ -126,7 +126,13 @@ function adaptMetadata(ci: ComponentInteraction): InteractionMetadata {
 
   // Slider
   if (ci.type === 'Slider') {
-    if (meta.value !== undefined) result.sliderValue = String(meta.value);
+    if (meta.sliderValue !== undefined) result.sliderValue = String(meta.sliderValue);
+    else if (meta.value !== undefined) result.sliderValue = String(meta.value);
+    if (meta.startValue !== undefined) result.startValue = meta.startValue as string;
+    if (meta.endValue !== undefined) result.endValue = meta.endValue as string;
+    if (meta.min !== undefined) result.sliderMin = meta.min as string;
+    if (meta.max !== undefined) result.sliderMax = meta.max as string;
+    if (meta.dragTracked !== undefined) result.dragTracked = meta.dragTracked as boolean;
   }
 
   // Navigation

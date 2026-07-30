@@ -124,6 +124,9 @@ export interface InteractionMetadata {
   sliderValue?: string;
   sliderMin?: string;
   sliderMax?: string;
+  startValue?: string;
+  endValue?: string;
+  dragTracked?: boolean;
   // Tab
   selectedTab?: string;
   // Breadcrumb
