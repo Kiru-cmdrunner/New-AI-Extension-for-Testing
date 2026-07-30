@@ -361,7 +361,7 @@ describe('renderConfigurationSummary', () => {
       ],
     };
     const summary = renderConfigurationSummary(session);
-    expect(summary).toBe('Changed Filters: Status=Active (not confirmed)');
+    expect(summary).toBe('Change Filters: Status=Active (not confirmed)');
   });
 
   it('renders toggle fields as on/off', () => {
@@ -457,12 +457,14 @@ describe('Stepper label normalization and counter grouping', () => {
     const cs = enriched.metadata!.configurationSession as ConfigurationSession;
     const summary = renderConfigurationSummary(cs);
 
-    // Should include all 3 counters + the option + Done
-    expect(summary).toContain('Configure 1Economy:');
+    // Trigger label "1Economy" is normalized to "Economy"
+    expect(summary).toContain('Configure Economy:');
     expect(summary).toContain('Adults +1');
     expect(summary).toContain('Children +1');
     expect(summary).toContain('Infants +1');
-    expect(summary).toContain('Premium Economy=Premium Economy');
+    // Label=value dedup: "Premium Economy=Premium Economy" → just "Premium Economy"
+    expect(summary).toContain('Premium Economy');
+    expect(summary).not.toContain('Premium Economy=Premium Economy');
     expect(summary).toContain('Done');
   });
 
@@ -512,6 +514,203 @@ describe('Stepper label normalization and counter grouping', () => {
     expect(summary).toContain('Passenger 2 +1');
     expect(summary).toContain('Passenger 3 +1');
     expect(summary).toContain('Done');
+  });
+});
+
+// ── Pattern-Aware Rendering Tests ─────────────────────────────────────
+
+describe('Pattern-aware rendering (generic, application-independent)', () => {
+
+  describe('singleSelect pattern', () => {
+    it('renders as: Select "Value" from Target', () => {
+      const session: ConfigurationSession = {
+        triggerLabel: 'Economy',
+        pattern: 'singleSelect',
+        commitAction: null,
+        rawInteractionType: 'Dropdown',
+        fields: [
+          { label: 'Premium Economy', kind: 'select', finalValue: 'Premium Economy', subActionCount: 1, evidence: [] },
+        ],
+      };
+      const summary = renderConfigurationSummary(session);
+      expect(summary).toBe('Select Premium Economy from Economy');
+    });
+
+    it('renders singleSelect with Done', () => {
+      const session: ConfigurationSession = {
+        triggerLabel: 'Country',
+        pattern: 'singleSelect',
+        commitAction: { action: 'confirm', label: 'Done', value: undefined } as any,
+        rawInteractionType: 'Dropdown',
+        fields: [
+          { label: 'United States', kind: 'select', finalValue: 'United States', subActionCount: 1, evidence: [] },
+        ],
+      };
+      const summary = renderConfigurationSummary(session);
+      expect(summary).toBe('Select United States from Country, Done');
+    });
+  });
+
+  describe('multiFieldConfig pattern', () => {
+    it('renders counters with finalValue as Field=N', () => {
+      const session: ConfigurationSession = {
+        triggerLabel: 'Passengers',
+        pattern: 'multiFieldConfig',
+        commitAction: { action: 'confirm', label: 'Done', value: undefined } as any,
+        rawInteractionType: 'Dropdown',
+        fields: [
+          { label: 'Adults', kind: 'counter', finalValue: '2', delta: 1, subActionCount: 1, evidence: [] },
+          { label: 'Children', kind: 'counter', finalValue: '1', delta: 1, subActionCount: 1, evidence: [] },
+        ],
+      };
+      const summary = renderConfigurationSummary(session);
+      expect(summary).toBe('Configure Passengers: Adults=2, Children=1, Done');
+    });
+
+    it('renders counters without finalValue as Field +N', () => {
+      const session: ConfigurationSession = {
+        triggerLabel: 'Passengers',
+        pattern: 'multiFieldConfig',
+        commitAction: { action: 'confirm', label: 'Done', value: undefined } as any,
+        rawInteractionType: 'Dropdown',
+        fields: [
+          { label: 'Adults', kind: 'counter', finalValue: '', delta: 2, subActionCount: 2, evidence: [] },
+        ],
+      };
+      const summary = renderConfigurationSummary(session);
+      expect(summary).toBe('Configure Passengers: Adults +2, Done');
+    });
+
+    it('renders mixed counters and selects', () => {
+      const session: ConfigurationSession = {
+        triggerLabel: '1Economy',
+        pattern: 'multiFieldConfig',
+        commitAction: { action: 'confirm', label: 'Done', value: undefined } as any,
+        rawInteractionType: 'Dropdown',
+        fields: [
+          { label: 'Adults', kind: 'counter', finalValue: '', delta: 1, subActionCount: 1, evidence: [] },
+          { label: 'Premium Economy', kind: 'select', finalValue: 'Premium Economy', subActionCount: 1, evidence: [] },
+        ],
+      };
+      const summary = renderConfigurationSummary(session);
+      // Trigger "1Economy" → "Economy", select value deduplicated
+      expect(summary).toBe('Configure Economy: Adults +1, Premium Economy, Done');
+    });
+  });
+
+  describe('filterApply pattern', () => {
+    it('renders as: Filter Target: field=value, Apply', () => {
+      const session: ConfigurationSession = {
+        triggerLabel: 'Results',
+        pattern: 'filterApply',
+        commitAction: { action: 'confirm', label: 'Apply', value: undefined } as any,
+        rawInteractionType: 'Dropdown',
+        fields: [
+          { label: 'Star Rating', kind: 'select', finalValue: '4', subActionCount: 1, evidence: [] },
+          { label: 'Price', kind: 'select', finalValue: 'Low to High', subActionCount: 1, evidence: [] },
+        ],
+      };
+      const summary = renderConfigurationSummary(session);
+      expect(summary).toBe('Filter Results: Star Rating=4, Price=Low to High, Apply');
+    });
+  });
+
+  describe('searchSubmit pattern', () => {
+    it('renders as: Search Target: "query", Search', () => {
+      const session: ConfigurationSession = {
+        triggerLabel: 'Flights',
+        pattern: 'searchSubmit',
+        commitAction: { action: 'confirm', label: 'Search', value: undefined } as any,
+        rawInteractionType: 'Dropdown',
+        fields: [
+          { label: 'Search', kind: 'text', finalValue: 'new york', subActionCount: 1, evidence: [] },
+        ],
+      };
+      const summary = renderConfigurationSummary(session);
+      expect(summary).toBe('Search Flights: "new york", Search');
+    });
+  });
+
+  describe('toggleBatch pattern', () => {
+    it('renders toggles as Field=on/off', () => {
+      const session: ConfigurationSession = {
+        triggerLabel: 'Settings',
+        pattern: 'toggleBatch',
+        commitAction: { action: 'confirm', label: 'Save', value: undefined } as any,
+        rawInteractionType: 'Dropdown',
+        fields: [
+          { label: 'Notifications', kind: 'toggle', finalValue: 'true', subActionCount: 1, evidence: [] },
+          { label: 'Newsletter', kind: 'toggle', finalValue: 'false', subActionCount: 1, evidence: [] },
+        ],
+      };
+      const summary = renderConfigurationSummary(session);
+      expect(summary).toBe('Configure Settings: Notifications=on, Newsletter=off, Save');
+    });
+  });
+
+  describe('uncommitted pattern', () => {
+    it('renders with (not confirmed) suffix', () => {
+      const session: ConfigurationSession = {
+        triggerLabel: 'Sort',
+        pattern: 'uncommitted',
+        commitAction: null,
+        rawInteractionType: 'Dropdown',
+        fields: [
+          { label: 'Sort Order', kind: 'select', finalValue: 'Relevance', subActionCount: 1, evidence: [] },
+        ],
+      };
+      const summary = renderConfigurationSummary(session);
+      expect(summary).toBe('Change Sort: Sort Order=Relevance (not confirmed)');
+    });
+  });
+});
+
+// ── Trigger Label Normalization Tests ─────────────────────────────────
+
+describe('Trigger label normalization (normalizeTriggerLabel)', () => {
+  // Test via renderConfigurationSummary since the function is applied there
+  it('strips leading digit: "1Economy" → "Economy"', () => {
+    const session: ConfigurationSession = {
+      triggerLabel: '1Economy',
+      pattern: 'singleSelect',
+      commitAction: null,
+      rawInteractionType: 'Dropdown',
+      fields: [{ label: 'Premium Economy', kind: 'select', finalValue: 'Premium Economy', subActionCount: 1, evidence: [] }],
+    };
+    expect(renderConfigurationSummary(session)).toContain('from Economy');
+  });
+
+  it('strips leading digit with separator: "3 · Passengers" → "Passengers"', () => {
+    const session: ConfigurationSession = {
+      triggerLabel: '3 · Passengers',
+      pattern: 'multiFieldConfig',
+      commitAction: { action: 'confirm', label: 'Done', value: undefined } as any,
+      rawInteractionType: 'Dropdown',
+      fields: [{ label: 'Adults', kind: 'counter', finalValue: '2', delta: 1, subActionCount: 1, evidence: [] }],
+    };
+    expect(renderConfigurationSummary(session)).toContain('Configure Passengers:');
+  });
+
+  it('strips trailing parenthetical: "Sort (Relevance)" → "Sort"', () => {
+    const session: ConfigurationSession = {
+      triggerLabel: 'Sort (Relevance)',
+      pattern: 'singleSelect',
+      commitAction: null,
+      rawInteractionType: 'Dropdown',
+      fields: [{ label: 'Relevance', kind: 'select', finalValue: 'Relevance', subActionCount: 1, evidence: [] }],
+    };
+    expect(renderConfigurationSummary(session)).toContain('from Sort');
+  });
+
+  it('preserves clean labels as-is', () => {
+    const session: ConfigurationSession = {
+      triggerLabel: 'Economy Class',
+      pattern: 'singleSelect',
+      commitAction: null,
+      rawInteractionType: 'Dropdown',
+      fields: [{ label: 'Business', kind: 'select', finalValue: 'Business', subActionCount: 1, evidence: [] }],
+    };
+    expect(renderConfigurationSummary(session)).toContain('from Economy Class');
   });
 });
 

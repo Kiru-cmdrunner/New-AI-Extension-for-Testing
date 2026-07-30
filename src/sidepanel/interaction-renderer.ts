@@ -18,6 +18,7 @@
  */
 
 import type { ComponentInteraction } from '../shared/component-types';
+import { renderConfigurationSummary, type ConfigurationSession } from '../enrichment/structural-enrichment';
 
 // ── Layer 1: Type Display Config ──────────────────────────────────────
 
@@ -195,32 +196,7 @@ function buildInteractionDescription(interaction: ComponentInteraction): string 
   // 1. Structural Semantic Enrichment (Phase 0e)
   const cs = metadata?.configurationSession;
   if (cs && typeof cs === 'object' && 'fields' in cs) {
-    const session = cs as {
-      fields: Array<{ label: string; kind: string; finalValue: string; delta?: number }>;
-      commitAction?: { label?: string } | null;
-      triggerLabel?: string;
-    };
-    const parts = session.fields.map((f) => {
-      switch (f.kind) {
-        case 'toggle':
-          return `${f.label}=${f.finalValue === 'true' ? 'on' : 'off'}`;
-        case 'counter':
-          // If we have a final value, show "Field=N"; otherwise show delta "Field +N"
-          return f.finalValue
-            ? `${f.label}=${f.finalValue}`
-            : `${f.label} ${f.delta !== undefined ? (f.delta > 0 ? `+${f.delta}` : `${f.delta}`) : '+1'}`;
-        default:
-          return `${f.label}=${f.finalValue}`;
-      }
-    });
-    // Include the confirm action in the display (e.g., ", Done")
-    const commitLabel = session.commitAction?.label;
-    if (commitLabel) {
-      parts.push(commitLabel);
-    }
-    const triggerName = session.triggerLabel ?? metadata?.targetName ?? '';
-    const verb = session.commitAction ? 'Configure' : 'Changed';
-    return `${verb} ${triggerName}: ${parts.join(', ')}`;
+    return renderConfigurationSummary(cs as ConfigurationSession);
   }
 
   // 2. Multi-config subActions (pre-enrichment live display, before stopRecording)

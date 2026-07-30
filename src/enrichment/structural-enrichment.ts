@@ -439,38 +439,159 @@ export function enrichConfigurationSessions(
 // ── Display Helpers (for timeline renderer) ───────────────────────────
 
 /**
+ * Normalize a trigger label by removing common noise from accessible names.
+ *
+ * Many UIs concatenate counts, badges, or status indicators into the trigger's
+ * accessible name: "1Economy", "3 Adults · Premium Economy", "Sort by (Relevance)".
+ * This function strips leading digits, separator characters, and parenthetical
+ * suffixes to produce a clean, readable label.
+ *
+ * Application-independent — uses only structural patterns in the string.
+ */
+export function normalizeTriggerLabel(raw: string): string {
+  if (!raw) return '';
+  let label = raw.trim();
+
+  // Remove leading digits + optional separator: "1Economy" → "Economy",
+  // "3 · Passengers" → "Passengers", "2x Rooms" → "Rooms"
+  label = label.replace(/^\d+\s*[*×x]?\s*[·••\-\|:»]?\s*/i, '');
+
+  // Remove trailing parenthetical or bracketed annotations:
+  // "Sort (Relevance)" → "Sort", "Filter [3]" → "Filter"
+  label = label.replace(/\s*[\(\[][^)\]]*[\)\]]\s*$/, '');
+
+  // Collapse internal whitespace
+  label = label.replace(/\s+/g, ' ').trim();
+
+  // If everything was stripped, return the original
+  return label || raw.trim();
+}
+
+/**
+ * Choose the display verb based on the structural pattern.
+ * This replaces the old "Configure if commit, Changed if not" logic with
+ * pattern-aware verb selection that reads naturally for each interaction type.
+ */
+function verbForPattern(
+  pattern: StructuralPattern,
+  hasCommit: boolean,
+): string {
+  switch (pattern) {
+    case 'singleSelect':
+      return 'Select';
+    case 'searchSubmit':
+      return 'Search';
+    case 'filterApply':
+      return 'Filter';
+    case 'toggleBatch':
+      return hasCommit ? 'Configure' : 'Toggle';
+    case 'multiFieldConfig':
+      return hasCommit ? 'Configure' : 'Change';
+    case 'uncommitted':
+      return 'Change';
+    default:
+      return hasCommit ? 'Configure' : 'Change';
+  }
+}
+
+/**
+ * Render a single configuration field as a readable string.
+ *
+ * Rules (application-independent):
+ * - toggle: "Field=on" or "Field=off"
+ * - counter with finalValue: "Field=N"
+ * - counter without finalValue: "Field +N" or "Field -N"
+ * - select/text/date where label===value: just "Value"
+ * - select/text/date where label≠value: "Field=Value"
+ */
+function renderField(f: ConfigurationField): string {
+  switch (f.kind) {
+    case 'toggle':
+      return `${f.label}=${f.finalValue === 'true' ? 'on' : 'off'}`;
+
+    case 'counter':
+      if (f.finalValue) {
+        return `${f.label}=${f.finalValue}`;
+      }
+      // No finalValue — show the delta
+      if (f.delta !== undefined && f.delta !== 0) {
+        return `${f.label} ${f.delta > 0 ? '+' : ''}${f.delta}`;
+      }
+      return `${f.label} +1`;
+
+    case 'select':
+    case 'text':
+    case 'date':
+    default:
+      // Deduplicate: if the field label IS the value, show only the value.
+      // "Premium Economy=Premium Economy" → "Premium Economy"
+      if (f.label && f.finalValue && f.label.toLowerCase() === f.finalValue.toLowerCase()) {
+        return f.finalValue;
+      }
+      // If we have both a label and a value, show "Label=Value"
+      if (f.label && f.finalValue) {
+        return `${f.label}=${f.finalValue}`;
+      }
+      // Fallback: show whichever we have
+      return f.finalValue || f.label || '?';
+  }
+}
+
+/**
  * Generate a human-readable summary of a ConfigurationSession.
- * Format: "Configure Economy: Adults=2, Children=1, Class=Premium Economy"
+ *
+ * The rendering is fully pattern-aware and application-independent:
+ * - Verb is chosen based on the structural pattern (Select, Configure, Filter, Search, Change)
+ * - Trigger label is normalized (leading digits and noise stripped)
+ * - Fields are rendered with label-value deduplication
+ * - Commit action label is appended when present
+ *
+ * Examples:
+ *   singleSelect:     Select "Premium Economy" from Economy
+ *   multiFieldConfig: Configure Passengers: Adults=2, Children=1, Premium Economy, Done
+ *   filterApply:      Filter Results: Star Rating=4, Price=Low to High, Apply
+ *   searchSubmit:     Search Flights: "new york", Search
+ *   toggleBatch:      Configure Settings: Notifications=on, Newsletter=off, Save
+ *   uncommitted:      Change Sort: Relevance (not confirmed)
  */
 export function renderConfigurationSummary(
   session: ConfigurationSession,
 ): string {
-  const parts = session.fields.map((f) => {
-    switch (f.kind) {
-      case 'toggle':
-        return `${f.label}=${f.finalValue === 'true' ? 'on' : 'off'}`;
-      case 'counter':
-        return f.finalValue
-          ? `${f.label}=${f.finalValue}`
-          : `${f.label} ${f.delta !== undefined ? (f.delta > 0 ? `+${f.delta}` : `${f.delta}`) : '+1'}`;
-      default:
-        return `${f.label}=${f.finalValue}`;
-    }
-  });
+  const verb = verbForPattern(session.pattern, session.commitAction !== null);
+  const triggerLabel = normalizeTriggerLabel(session.triggerLabel);
 
-  // Include the confirm action in the display (e.g., ", Done")
+  const parts = session.fields.map(renderField);
+
+  // Include the commit action label in the display (e.g., "Done", "Apply")
   const commitLabel = session.commitAction?.label;
   if (commitLabel) {
     parts.push(commitLabel);
   }
 
-  const prefix = session.triggerLabel
-    ? `${session.commitAction ? 'Configure' : 'Changed'} ${session.triggerLabel}`
-    : session.commitAction
-      ? 'Configure'
-      : 'Changed';
+  // For searchSubmit, render as: Search Target: "query", Search
+  // This avoids the awkward "Search: Search=query" repetition.
+  if (session.pattern === 'searchSubmit' && session.fields.length === 1) {
+    const queryValue = session.fields[0].finalValue || session.fields[0].label || '';
+    const commitPart = commitLabel ? `, ${commitLabel}` : '';
+    return triggerLabel
+      ? `${verb} ${triggerLabel}: "${queryValue}"${commitPart}`
+      : `${verb} "${queryValue}"${commitPart}`;
+  }
 
+  // For singleSelect, the format is more natural: Select Value from Target
+  if (session.pattern === 'singleSelect' && session.fields.length === 1) {
+    const valuePart = parts[0]; // The single field value
+    const commitPart = commitLabel ? `, ${commitLabel}` : '';
+    return triggerLabel
+      ? `${verb} ${valuePart} from ${triggerLabel}${commitPart}`
+      : `${verb} ${valuePart}${commitPart}`;
+  }
+
+  // For all other patterns: Verb Target: field1, field2, ...
   const suffix = !session.commitAction ? ' (not confirmed)' : '';
+  const prefix = triggerLabel
+    ? `${verb} ${triggerLabel}`
+    : verb;
 
   return `${prefix}: ${parts.join(', ')}${suffix}`;
 }
