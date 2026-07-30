@@ -120,6 +120,9 @@ export const scrollDefinition: ComponentDefinition = {
     const isPageScroll = trigger.tag === 'HTML' || trigger.tag === 'BODY'
       || trigger.elementKey === 'html' || trigger.elementKey === 'body';
 
+    // Set the interaction subtype for the adapter
+    ctx.data.interactionSubtype = isPageScroll ? 'PageScroll' : 'ContainerScroll';
+
     return {
       metadata: {
         scrollDeltaY: deltaY,

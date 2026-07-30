@@ -209,8 +209,8 @@ function buildInteractionDescription(interaction: ComponentInteraction): string 
   ) {
     const parts = (subActions as Array<{ action: string; label: string; value?: string }>).map((s) => {
       switch (s.action) {
-        case 'increment': return `+${s.label}`;
-        case 'decrement': return `−${s.label}`;
+        case 'increment': return s.label === '+' ? 'Increment' : `+${s.label}`;
+        case 'decrement': return s.label === '-' ? 'Decrement' : `−${s.label}`;
         case 'selectOption': return `Select ${s.label}`;
         case 'toggle': return `${s.label}=${s.value === 'checked' ? 'on' : 'off'}`;
         case 'fillInput': return `${s.label}="${s.value ?? ''}"`;
@@ -218,7 +218,21 @@ function buildInteractionDescription(interaction: ComponentInteraction): string 
         default: return s.label;
       }
     });
-    return `${metadata?.targetName ?? 'Config'}: ${parts.join(', ')}`;
+    // Count consecutive identical parts and compress for readability
+    // e.g., ["Increment", "Increment", "Increment"] → ["Increment ×3"]
+    const compressed: Array<{ base: string; count: number }> = [];
+    for (const part of parts) {
+      const last = compressed[compressed.length - 1];
+      if (last && last.base === part) {
+        last.count++;
+      } else {
+        compressed.push({ base: part, count: 1 });
+      }
+    }
+    const displayParts = compressed.map(c =>
+      c.count > 1 ? `${c.base} ×${c.count}` : c.base
+    );
+    return `${metadata?.targetName ?? 'Config'}: ${displayParts.join(', ')}`;
   }
 
   // 3. Business meaning (live enrichment)

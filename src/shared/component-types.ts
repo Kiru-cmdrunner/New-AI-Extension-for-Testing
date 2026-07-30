@@ -420,8 +420,15 @@ export interface ComponentDefinition {
 export interface ComponentInteraction {
   /** Unique interaction ID. */
   interactionId: string;
-  /** Interaction type. */
+  /** Interaction type (coarse — one of 13 component-model types). */
   type: InteractionType;
+  /**
+   * Fine-grained subtype mapping to the classifier's 40-type vocabulary.
+   * E.g., Dropdown → 'NativeDropdown' | 'CustomDropdown'.
+   * Navigation → 'PageNavigation' | 'Back' | 'Forward' | 'Refresh'.
+   * When unset, the adapter infers the subtype from the coarse type.
+   */
+  interactionSubtype?: string;
   /** Trigger element identity. */
   trigger: ElementIdentity;
   /** The triggering ObservedEvent. */

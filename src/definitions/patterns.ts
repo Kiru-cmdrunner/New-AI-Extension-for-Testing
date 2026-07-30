@@ -13,6 +13,7 @@
  * This keeps definitions testable without a browser.
  */
 
+import { PatternRegistry } from './pattern-registry';
 import type { ElementIdentity } from '../shared/types';
 
 // ── Best Name ──────────────────────────────────────────────────────────
@@ -80,7 +81,8 @@ export function isInteractiveElement(
   if (INTERACTIVE_TAGS.has(tag)) return true;
   if (ariaRole && INTERACTIVE_ROLES.has(ariaRole)) return true;
   if (tabIndex !== null && tabIndex >= 0) return true;
-  if (className && INTERACTIVE_CLASS_RE.test(className)) return true;
+  // Use the pattern registry instead of a hardcoded regex.
+  if (className && PatternRegistry.isInteractiveClass(className)) return true;
   return false;
 }
 
@@ -126,7 +128,8 @@ export function isDropdownTrigger(
 ): boolean {
   if (tag === 'SELECT') return true;
   if (ariaRole && DROPDOWN_TRIGGER_ROLES.has(ariaRole)) return true;
-  if (className && DROPDOWN_TRIGGER_CLASS_RE.test(className)) return true;
+  // Use the pattern registry instead of a hardcoded regex.
+  if (className && PatternRegistry.isDropdownTriggerClass(className)) return true;
   return false;
 }
 
@@ -138,7 +141,8 @@ export function isDropdownOption(
   className: string | null,
 ): boolean {
   if (ariaRole && DROPDOWN_OPTION_ROLES.has(ariaRole)) return true;
-  if (className && DROPDOWN_OPTION_CLASS_RE.test(className)) return true;
+  // Use the pattern registry instead of a hardcoded regex.
+  if (className && PatternRegistry.isDropdownOptionClass(className)) return true;
   return false;
 }
 
@@ -177,7 +181,7 @@ export function isDropdownOptionWithFallback(
  */
 export function isInsideDropdownSurface(className: string | null): boolean {
   if (!className) return false;
-  return DROPDOWN_SURFACE_CLASS_RE.test(className);
+  return PatternRegistry.isDropdownSurfaceClass(className);
 }
 
 /**
@@ -245,7 +249,7 @@ export function isDatePickerTrigger(
   // Native date/time inputs
   if (tag === 'INPUT' && inputType && DATE_INPUT_TYPES.has(inputType)) return true;
   // CSS class patterns
-  if (className && DATEPICKER_TRIGGER_CLASS_RE.test(className)) return true;
+  if (className && PatternRegistry.isDatePickerTriggerClass(className)) return true;
   // ARIA hasPopup on a text input near a calendar
   if (ariaHasPopup === 'dialog' && tag === 'INPUT') return true;
   // Name attribute hints (date, birth, dob, etc.)
@@ -263,10 +267,10 @@ export function isCalendarCell(
 ): boolean {
   if (ariaRole === 'gridcell' || ariaRole === 'option') {
     // Must also have a date-like class to avoid matching listbox options
-    if (className && DATEPICKER_CELL_CLASS_RE.test(className)) return true;
+    if (className && PatternRegistry.isDatePickerCellClass(className)) return true;
   }
   // Some calendars use buttons/cells without explicit roles
-  if (className && DATEPICKER_CELL_CLASS_RE.test(className)) return true;
+  if (className && PatternRegistry.isDatePickerCellClass(className)) return true;
   return false;
 }
 
@@ -360,7 +364,7 @@ export function looksLikeDateText(text: string): boolean {
  */
 export function isInsideCalendarSurface(className: string | null): boolean {
   if (!className) return false;
-  return CALENDAR_SURFACE_CLASS_RE.test(className);
+  return PatternRegistry.isCalendarSurfaceClass(className);
 }
 
 /**
@@ -376,8 +380,12 @@ export function isCalendarNavigationButton(
 ): boolean {
   // Role check: navigation buttons are typically buttons
   if (ariaRole !== 'button' && ariaRole !== null) return false;
-  // Class check
-  if (className && CALENDAR_NAV_BUTTON_RE.test(className)) return true;
+  // Class check — use the registry
+  const navPatterns = PatternRegistry.getMerged().calendarNavButtonClasses ?? [];
+  if (className && navPatterns.length > 0) {
+    const regex = new RegExp(`(?:${navPatterns.map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'i');
+    if (regex.test(className)) return true;
+  }
   // Name check: common navigation button names
   if (accessibleName) {
     const name = accessibleName.toLowerCase();

@@ -31,6 +31,7 @@ import {
   bestName,
   elementKey,
 } from './patterns';
+import { PatternRegistry } from './pattern-registry';
 
 // ── SubAction Model ───────────────────────────────────────────────────
 // Each in-surface event is classified into one of these action types.
@@ -93,11 +94,21 @@ const STEPPER_PLUS_SYMBOL_RE = /^\s*\+\s*$/;
 const STEPPER_MINUS_RE = /(?:^|\s|\b)(decrease|remove|minus|less)(?:\s|$|\b)/i;
 const STEPPER_MINUS_SYMBOL_RE = /(?:^|\s|\b)-(?:\s|$)/;
 
-/** CSS class patterns for icon-only stepper buttons. */
-const STEPPER_PLUS_CLASS_RE =
-  /(?:plus|increment|add-btn|add-button|counter-plus|stepper-plus|pax-plus|qty-plus|btn-plus|inc-btn|increase)/i;
-const STEPPER_MINUS_CLASS_RE =
-  /(?:minus|decrement|remove-btn|remove-button|counter-minus|stepper-minus|pax-minus|qty-minus|btn-minus|dec-btn|decrease)/i;
+/**
+ * Check if a className matches stepper plus button patterns.
+ * Uses the PatternRegistry for framework/domain-specific patterns.
+ */
+function isStepperPlusClass(className: string): boolean {
+  return PatternRegistry.isStepperPlusClass(className);
+}
+
+/**
+ * Check if a className matches stepper minus button patterns.
+ * Uses the PatternRegistry for framework/domain-specific patterns.
+ */
+function isStepperMinusClass(className: string): boolean {
+  return PatternRegistry.isStepperMinusClass(className);
+}
 
 /**
  * Extract a descriptive label for a stepper button from its aria-label,
@@ -119,8 +130,11 @@ function extractStepperLabel(event: ObservedEvent): string {
 
   // Try inferring from CSS selector — "button.plus-adults" → "Adults"
   // This helps icon-only buttons that have a contextual CSS class but no aria-label
+  // Only SPECIFIC keywords are used — generic panel-level words (pax, passenger)
+  // are excluded because they appear on ALL stepper buttons in the same panel
+  // and would merge distinct counters into one group.
   const selector = event.target.cssSelector || '';
-  const selectorMatch = selector.match(/(?:adult|child|children|infant|senior|youth|teen|pax|passenger|qty|quantity|counter|room|guest)(?:[-_a-z]*)?/i);
+  const selectorMatch = selector.match(/(?:adult|child|children|infant|senior|youth|teen)(?:[-_a-z]*)?/i);
   if (selectorMatch) {
     const inferred = selectorMatch[0]
       .replace(/[-_]/g, ' ')
@@ -134,13 +148,21 @@ function extractStepperLabel(event: ObservedEvent): string {
 
   // Try className — "plus-btn adults-stepper" → "Adults"
   const className = event.target.className || '';
-  const classMatch = className.match(/(?:adult|child|children|infant|senior|youth|teen|pax|passenger|room|guest)(?:[-_a-z]*)?/i);
+  const classMatch = className.match(/(?:adult|child|children|infant|senior|youth|teen)(?:[-_a-z]*)?/i);
   if (classMatch) {
     const inferred = classMatch[0].replace(/[-_]/g, ' ').trim();
     if (inferred) {
       return inferred.charAt(0).toUpperCase() + inferred.slice(1).toLowerCase();
     }
   }
+
+  // NOTE: Ancestor class label inference has been moved to the enrichment
+  // layer (structural-enrichment.ts inferCounterName). The capture layer
+  // must NOT infer from ancestors because shared ancestor classes (e.g.,
+  // a panel container with "child" in its class) would assign the same
+  // label to ALL stepper buttons, causing incorrect grouping. The
+  // enrichment layer groups by element identity (CSS selector) FIRST,
+  // then infers a label per-group, avoiding this merge bug.
 
   // Fallback: a generic label based on the action type
   return '';
@@ -155,9 +177,9 @@ function isStepperPlus(event: ObservedEvent): boolean {
   // Word form check: "increase", "add", "plus"
   if (STEPPER_PLUS_RE.test(label)) return true;
 
-  // CSS class check (for icon-only buttons with no text/aria-label)
+  // CSS class check via PatternRegistry (for icon-only buttons)
   const className = event.target.className || '';
-  if (className && STEPPER_PLUS_CLASS_RE.test(className)) return true;
+  if (className && isStepperPlusClass(className)) return true;
 
   return false;
 }
@@ -171,9 +193,9 @@ function isStepperMinus(event: ObservedEvent): boolean {
   // Word form check: "decrease", "remove", "minus"
   if (STEPPER_MINUS_RE.test(label)) return true;
 
-  // CSS class check (for icon-only buttons with no text/aria-label)
+  // CSS class check via PatternRegistry (for icon-only buttons)
   const className = event.target.className || '';
-  if (className && STEPPER_MINUS_CLASS_RE.test(className)) return true;
+  if (className && isStepperMinusClass(className)) return true;
 
   return false;
 }
@@ -454,6 +476,7 @@ export const dropdownDefinition: ComponentDefinition = {
 
     // ── Native SELECT change → complete immediately (single-select) ──
     if (event.eventType === 'change' && ctx.trigger.tag === 'SELECT') {
+      ctx.data.interactionSubtype = 'NativeDropdown';
       ctx.data.selectedValue = event.valueAfter ?? '';
       if (!ctx.data.allSelections) ctx.data.allSelections = [];
       (ctx.data.allSelections as string[]).push(event.valueAfter ?? '');
@@ -515,6 +538,10 @@ export const dropdownDefinition: ComponentDefinition = {
   },
 
   buildResult(ctx: ComponentContext, _completion: ComponentCompletion) {
+    // Set subtype: NativeDropdown for SELECT elements, CustomDropdown otherwise
+    if (!ctx.data.interactionSubtype) {
+      ctx.data.interactionSubtype = ctx.trigger.tag === 'SELECT' ? 'NativeDropdown' : 'CustomDropdown';
+    }
     const subActions = (ctx.data.subActions as DropdownSubAction[]) ?? [];
     const selectedValue = (ctx.data.selectedValue as string) ?? '';
     const allSelections = (ctx.data.allSelections as string[]) ?? [];
@@ -558,6 +585,11 @@ export const dropdownDefinition: ComponentDefinition = {
           targetElementId: s.target?.elementId ?? undefined,
           targetCssSelector: s.target?.cssSelector ?? undefined,
           targetClassName: s.target?.className ?? undefined,
+          // Preserve stableId for additional discrimination when elementId is empty
+          targetStableId: s.target?.stableId ?? undefined,
+          // Preserve ancestor classes so enrichment can infer field names from
+          // ancestor containers (e.g., "adults-section" → "Adults")
+          targetAncestorClasses: s.event?.domContext?.ancestorClasses ?? undefined,
         })),
         isMultiConfig,
         // Keep raw element identities for the generation layer (locators).

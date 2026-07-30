@@ -42,6 +42,11 @@ export const navigationDefinition: ComponentDefinition = {
   },
 
   buildResult(ctx: ComponentContext, _completion: ComponentCompletion) {
+    // Default navigation subtype — PageNavigation for all URL changes.
+    // Back/Forward/Refresh cannot be distinguished from synthetic navigation
+    // events alone (would need the browser's transition type).
+    ctx.data.interactionSubtype = 'PageNavigation';
+
     return {
       metadata: {
         pageUrl: ctx.triggerEvent.pageUrl,

@@ -182,6 +182,17 @@ function computeDelta(group: DropdownSubAction[]): number {
  * separate +1 presses on different stepper buttons from being merged into
  * a single "Counter +3" field.
  */
+/**
+ * Labels that are generic (apply to ALL stepper buttons in a panel) and
+ * should trigger discriminator-based grouping instead of being used as-is.
+ * "Pax" or "Passenger" on every button would merge distinct counters.
+ */
+const GENERIC_COUNTER_LABELS = new Set([
+  'Counter', '+', '-',
+  'Pax', 'Passenger', 'Passengers', 'Guest', 'Guests', 'Room', 'Rooms',
+  'Quantity', 'Qty', 'Count',
+]);
+
 function groupByField(
   subActions: DropdownSubAction[],
 ): Map<string, DropdownSubAction[]> {
@@ -191,25 +202,25 @@ function groupByField(
     const label: string = subAny.label ?? '';
     const fieldName = normalizeFieldName(label);
 
-    // For counters with generic labels, try to infer a better name from
-    // the target's CSS selector or class. If we can't infer one, use
-    // a sequential counter label ("Passenger 1", "Passenger 2") to keep
-    // distinct stepper buttons as separate, readable fields.
+    // For counters, ALWAYS group by element identity first — never by the
+    // inferred label. This ensures clicks on DIFFERENT stepper buttons
+    // (Adults +, Children +, Infants +) become separate groups even if they
+    // share a generic ancestor keyword (e.g., "child" on a panel container).
+    // Clicks on the SAME button (same CSS selector) correctly merge.
     let key = fieldName;
-    if (
-      (subAny.action === 'increment' || subAny.action === 'decrement') &&
-      (fieldName === 'Counter' || fieldName === '+' || fieldName === '-')
-    ) {
-      const inferredName = inferCounterName(sub);
+    if (subAny.action === 'increment' || subAny.action === 'decrement') {
       const elementId = subAny.targetElementId ?? subAny.target?.elementId ?? '';
-      if (inferredName) {
-        key = inferredName;
-      } else if (elementId) {
-        // Use elementId to distinguish but with a friendlier label.
-        // The renderer will show "Passenger +1" etc.
+      const cssSelector = subAny.targetCssSelector ?? subAny.target?.cssSelector ?? '';
+      const stableId = subAny.targetStableId ?? subAny.target?.stableId ?? '';
+
+      if (elementId) {
         key = `__counter_${elementId}`;
+      } else if (stableId) {
+        key = `__counter_id_${stableId}`;
+      } else if (cssSelector) {
+        key = `__counter_sel_${cssSelector}`;
       }
-      // else: fall through with generic "Counter" key (all merge)
+      // else: fall through with label-based key (last resort)
     }
 
     if (!groups.has(key)) {
@@ -233,18 +244,39 @@ function inferCounterName(sub: DropdownSubAction | Record<string, unknown>): str
   const cssSelector = (sub as any)?.targetCssSelector ?? (sub as any)?.target?.cssSelector ?? '';
   const className = (sub as any)?.targetClassName ?? (sub as any)?.target?.className ?? '';
 
+  // Only SPECIFIC keywords are used for name inference.
+  // Generic panel-level words (pax, passenger, room, guest) are excluded
+  // because they appear on ALL stepper buttons in the same panel and would
+  // merge distinct counters (Adults, Children, Infants) into one group.
+  const SPECIFIC_RE = /(?:adult|child(?:ren)?|infant|senior|youth|teen)/i;
+
   // Check CSS selector for contextual keywords
-  const selMatch = cssSelector.match?.(/(?:adult|child|children|infant|senior|youth|teen|pax|passenger|room|guest)(?:[-_a-z]*)?/i);
+  const selMatch = cssSelector.match?.(SPECIFIC_RE);
   if (selMatch) {
     const name = selMatch[0].replace(/[-_]/g, ' ').trim();
     if (name) return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
   }
 
   // Check className for contextual keywords
-  const clsMatch = className.match?.(/(?:adult|child|children|infant|senior|youth|teen|pax|passenger|room|guest)(?:[-_a-z]*)?/i);
+  const clsMatch = className.match?.(SPECIFIC_RE);
   if (clsMatch) {
     const name = clsMatch[0].replace(/[-_]/g, ' ').trim();
     if (name) return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+  }
+
+  // Check ancestor classes — AdaniOne and similar SPAs put passenger-type
+  // keywords on ancestor container elements (e.g., "adults-section",
+  // "pax-row-child") rather than on the button itself.
+  // Again, only SPECIFIC keywords — not pax/passenger which are panel-level.
+  const ancestorClasses = (sub as any)?.targetAncestorClasses ?? [];
+  for (const ac of ancestorClasses) {
+    // Match keyword with a trailing word boundary so we capture just "adults"
+    // from "adults-section", not "adults section".
+    const acMatch = ac?.match(/(?:adult|child(?:ren)?|infant|senior|youth|teen)s?(?=\W|$)/i);
+    if (acMatch) {
+      const name = acMatch[0].trim();
+      if (name) return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+    }
   }
 
   return null;
@@ -377,16 +409,30 @@ export function enrichConfigurationSession(
   // Count unnamed counter groups for sequential labeling
   let unnamedCounterIdx = 0;
   const fields: ConfigurationField[] = [];
-  for (const [label, group] of groups) {
+  for (const [key, group] of groups) {
     const kind = deriveKind(group[0].action);
     const finalValue = extractFinalValue(group, kind);
     const delta = kind === 'counter' ? computeDelta(group) : undefined;
 
-    // Convert internal __counter_<id> keys into sequential "Passenger N" labels
-    let displayLabel = label;
-    if (label.startsWith('__counter_')) {
-      unnamedCounterIdx++;
-      displayLabel = `Passenger ${unnamedCounterIdx}`;
+    // Assign display label for this group
+    let displayLabel = key;
+    if (key.startsWith('__counter_')) {
+      // Priority 1: If the subAction has a descriptive label (not bare + or -),
+      // use it. This covers aria-labels like "Adults", "Children".
+      const rawLabel = normalizeFieldName((group[0] as any).label ?? '');
+      if (rawLabel && !GENERIC_COUNTER_LABELS.has(rawLabel)) {
+        displayLabel = rawLabel;
+      } else {
+        // Priority 2: Infer from CSS selector, className, or ancestor classes
+        const inferred = inferCounterName(group[0]);
+        if (inferred) {
+          displayLabel = inferred;
+        } else {
+          // Priority 3: Generic sequential label
+          unnamedCounterIdx++;
+          displayLabel = `Passenger ${unnamedCounterIdx}`;
+        }
+      }
     }
 
     fields.push({

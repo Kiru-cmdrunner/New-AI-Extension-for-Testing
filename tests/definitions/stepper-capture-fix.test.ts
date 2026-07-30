@@ -641,4 +641,103 @@ describe('Stepper +/- Capture Fix', () => {
       expect(increment!.label).toBe('Children');
     });
   });
+
+  // ── NEW: Label extraction from ancestor classes (Counter +3 bug fix) ──
+
+  describe('Label extraction from ancestor classes (AdaniOne real-world)', () => {
+    it('preserves ancestor classes in buildResult metadata for enrichment (Adults)', () => {
+      // Capture layer no longer infers labels from ancestors — that's the
+      // enrichment layer's job. But the ancestorClasses must be preserved
+      // in the stripped metadata so inferCounterName() can use them later.
+      const { runtime, emitted } = setupRuntime();
+      const SURFACE = 'surf:testId:pax-panel';
+
+      openDropdown(runtime, SURFACE);
+
+      runtime.process(makeClickEvent({
+        accessibleName: '', tag: 'BUTTON', ariaRole: 'button',
+        className: 'plus-icon',
+        cssSelector: 'div > button.plus-icon',
+      }, {
+        surfaceId: SURFACE, surfaceType: 'popover',
+        ancestorClasses: ['adults-section', 'pax-panel'],
+      }));
+
+      runtime.process(makeClickEvent({
+        accessibleName: 'Done', tag: 'BUTTON', ariaRole: 'button',
+        cssSelector: 'div > button.done',
+      }, { surfaceId: SURFACE, surfaceType: 'popover' }));
+
+      const dropdown = emitted.find(e => e.type === 'Dropdown');
+      expect(dropdown).toBeDefined();
+      const subActions = dropdown!.metadata.subActions as any[];
+      const increment = subActions.find(s => s.action === 'increment');
+      expect(increment).toBeDefined();
+      // Label at capture layer is generic "+" — enrichment infers the name
+      expect(increment!.label).toBe('+');
+      // But ancestor classes ARE preserved for enrichment
+      expect(increment!.targetAncestorClasses).toBeDefined();
+      expect(increment!.targetAncestorClasses).toContain('adults-section');
+    });
+
+    it('preserves ancestor classes in buildResult metadata for enrichment (Infant)', () => {
+      const { runtime, emitted } = setupRuntime();
+      const SURFACE = 'surf:testId:pax-panel';
+
+      openDropdown(runtime, SURFACE);
+
+      runtime.process(makeClickEvent({
+        accessibleName: '', tag: 'BUTTON', ariaRole: 'button',
+        className: 'plus-icon',
+        cssSelector: 'div > button.plus-icon',
+      }, {
+        surfaceId: SURFACE, surfaceType: 'popover',
+        ancestorClasses: ['infant-block', 'pax-panel'],
+      }));
+
+      runtime.process(makeClickEvent({
+        accessibleName: 'Done', tag: 'BUTTON', ariaRole: 'button',
+        cssSelector: 'div > button.done',
+      }, { surfaceId: SURFACE, surfaceType: 'popover' }));
+
+      const dropdown = emitted.find(e => e.type === 'Dropdown');
+      expect(dropdown).toBeDefined();
+      const subActions = dropdown!.metadata.subActions as any[];
+      const increment = subActions.find(s => s.action === 'increment');
+      expect(increment).toBeDefined();
+      expect(increment!.label).toBe('+');
+      expect(increment!.targetAncestorClasses).toBeDefined();
+      expect(increment!.targetAncestorClasses).toContain('infant-block');
+    });
+
+    it('preserves ancestorClasses in buildResult metadata for enrichment', () => {
+      const { runtime, emitted } = setupRuntime();
+      const SURFACE = 'surf:testId:pax-panel';
+
+      openDropdown(runtime, SURFACE);
+
+      runtime.process(makeClickEvent({
+        accessibleName: '', tag: 'BUTTON', ariaRole: 'button',
+        className: 'plus-icon',
+        cssSelector: 'div > button.plus-icon',
+      }, {
+        surfaceId: SURFACE, surfaceType: 'popover',
+        ancestorClasses: ['children-row', 'pax-panel'],
+      }));
+
+      runtime.process(makeClickEvent({
+        accessibleName: 'Done', tag: 'BUTTON', ariaRole: 'button',
+        cssSelector: 'div > button.done',
+      }, { surfaceId: SURFACE, surfaceType: 'popover' }));
+
+      const dropdown = emitted.find(e => e.type === 'Dropdown');
+      expect(dropdown).toBeDefined();
+      const subActions = dropdown!.metadata.subActions as any[];
+      const increment = subActions.find(s => s.action === 'increment');
+      expect(increment).toBeDefined();
+      // Verify ancestorClasses is preserved in the stripped metadata
+      expect(increment!.targetAncestorClasses).toBeDefined();
+      expect(increment!.targetAncestorClasses).toContain('children-row');
+    });
+  });
 });

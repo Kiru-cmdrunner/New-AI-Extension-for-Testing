@@ -18,13 +18,9 @@
 
 import { StorageService } from '../storage/storage-service';
 import { detectInteractions } from '../classifier/interaction-detector';
-import { detectInteractionsV2 } from '../classifier/evidence/detector';
-import { compareClassifierOutputs, logComparisonResult } from '../classifier/evidence/ab-comparison';
-import { mergeV1V2, logMergeMetrics } from '../classifier/evidence/merge-layer';
-import { recognizeInteractions } from '../recorder/v2/interaction-recognizer';
 import { runPipeline } from '../recorder/pipeline/pipeline-runner';
-import { normalizeDateValue } from '../shared/date-normalizer';
 import { build as buildIRPlan } from '../generation/ir-bridge';
+import { adaptInteractions as adaptToDetected } from '../generation/component-to-classifier-adapter';
 import { PlaywrightCodeGenerator } from '../adapters/playwright/project-generator';
 import { DexieUnitOfWorkFactory } from '../repository/v2/dexie/dexie-unit-of-work-factory';
 import { persistSession } from '../repository/services/session-persistence-service';
@@ -34,7 +30,6 @@ import { checkStaleness } from '../domain/execution-ir/staleness';
 import { IRExecutorImpl } from '../execution/ir-executor-impl';
 import { createExecutionRun } from '../domain/entities/execution-run';
 import type { DetectedInteraction } from '../classifier/interaction-types';
-import { reasonAboutInteractions } from '../classifier/semantic';
 import type { UnderstandingResult } from '../domain/entities/understanding-result';
 import {
   RecordingState,
@@ -42,7 +37,7 @@ import {
   type UIState,
   type AppMessage,
 } from '../shared/types';
-import type { ObservedEvent, ComponentInteraction } from '../shared/component-types';
+import type { ObservedEvent } from '../shared/component-types';
 import {
   initRecording,
   stopRecording,
@@ -52,10 +47,6 @@ import {
   resetState,
   LIVE_INTERACTIONS_KEY,
 } from '../runtime/sw-integration';
-import {
-  filterProductionInteractions,
-  toIRActions,
-} from '../presentation/output-adapter';
 
 // ── Singletons ──────────────────────────────────────────────────────────
 
@@ -276,9 +267,6 @@ async function handleStopRecording(): Promise<void> {
   // Flush runtime and get all interactions
   const allInteractions = stopRecording();
 
-  // Filter to production interactions
-  const productionInteractions = filterProductionInteractions(allInteractions);
-
   // Store interactions for UI display
   await StorageService.setRaw(LIVE_INTERACTIONS_KEY, allInteractions);
 
@@ -329,90 +317,27 @@ async function handleStopRecording(): Promise<void> {
     };
   });
 
-  // ── Classifier Selection (Stage 3 Feature Flag) ──
-  // When recorderEngine is 'control', use the new Control Model recognizer.
-  // When 'legacy' (default), use the existing V1 + V2 + merge pipeline.
-  const prevUiStateForEngine = await StorageService.getUIState();
-  const useControlEngine = prevUiStateForEngine.recorderEngine === 'control';
+  // ── Unified Classifier Path (replaces V1/V2/Merge/Reasoner) ──
+  // The Component Runtime already classified every interaction with the
+  // correct lifecycle, subActions, and metadata. Instead of re-classifying
+  // the raw events through the V1/V2 detector pipeline, we adapt the
+  // ComponentInteractions directly to DetectedInteractions.
+  //
+  // This eliminates the dual-classification problem where the same events
+  // were classified twice through different logic, producing divergent results.
+  let mergedInteractions: DetectedInteraction[];
 
-  let mergedInteractions: DetectedInteraction[] | null = null;
-
-  if (useControlEngine) {
-    // ── Control Model Recognizer (Stage 3) ──
-    try {
-      const controlInteractions = recognizeInteractions(events);
-      mergedInteractions = controlInteractions;
-      await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS, controlInteractions);
-      await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, controlInteractions);
-      console.info(`[Control Engine] Recognized ${controlInteractions.length} interactions from ${events.length} events`);
-    } catch (e) {
-      console.warn('[Control Engine] error during recognition:', e);
-      // Fallback to V1 classifier so the UI always has data
-      const interactions = detectInteractions(events);
-      mergedInteractions = interactions;
-      await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS, interactions);
-      await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, interactions);
-    }
-  } else {
-    // ── Legacy V1/V2/Merge Pipeline ──
-    const interactions = detectInteractions(events);
-    await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS, interactions);
-
-    // V2 runs in parallel. The merge layer combines V2 (primary) with V1
-    // (fallback for events V2 couldn't confidently classify).
-    try {
-      const v2Interactions = detectInteractionsV2(events);
-      await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_V2, v2Interactions);
-
-      // Dev-only: log V1 vs V2 comparison disagreements to console
-      const comparison = compareClassifierOutputs(
-        interactions as { type: string; eventIds: string[] }[],
-        v2Interactions as { type: string; eventIds: string[] }[],
-      );
-      logComparisonResult(comparison);
-
-      // ── Merge Layer: V2-primary with V1 event-segment fallback ──
-      const { interactions: merged, metrics: mergeMetrics } =
-        mergeV1V2(v2Interactions, interactions, events.length);
-      mergedInteractions = merged;
-      await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, merged);
-
-      // Dev-only: log merge metrics
-      logMergeMetrics(mergeMetrics);
-    } catch (e) {
-      console.warn('[Evidence Engine V2] error during detection:', e);
-      // Fallback: if V2 or merge fails, use V1 results so the UI always has data
-      mergedInteractions = interactions;
-      await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, interactions);
-    }
-  } // end of engine selection
-
-  // ── Stage 5: Semantic Reasoning Engine ──
-  // Transform the merged interaction stream into semantically correct
-  // interactions. Composite UI components (dropdowns, date pickers,
-  // autocomplete, navigation) are collapsed into single semantic
-  // interactions that represent what the user accomplished.
-  let semanticInteractions: DetectedInteraction[] = mergedInteractions!;
   try {
-    const reasoningResult = reasonAboutInteractions(mergedInteractions!, events);
-    semanticInteractions = reasoningResult.interactions;
-    console.info('[Semantic Reasoner]', {
-      activated: reasoningResult.sessionsActivated,
-      completed: reasoningResult.sessionsCompleted,
-      cancelled: reasoningResult.sessionsCancelled,
-      absorbed: reasoningResult.interactionsAbsorbed,
-      passedThrough: reasoningResult.interactionsPassedThrough,
-      before: mergedInteractions!.length,
-      after: semanticInteractions.length,
-    });
-    // Store the semantically refined interactions as the merged result
-    // so downstream stages (pipeline, IR bridge) see the correct data.
-    mergedInteractions = semanticInteractions;
-    await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, semanticInteractions);
+    mergedInteractions = adaptToDetected(allInteractions);
+    console.info('[Component Adapter]', `Adapted ${mergedInteractions.length} interactions from ${allInteractions.length} component interactions`);
   } catch (e) {
-    console.warn('[Semantic Reasoner] error during reasoning:', e);
-    // Non-fatal — use the merged interactions as-is
+    console.warn('[Component Adapter] error during adaptation, falling back to V1 classifier:', e);
+    // Fallback: V1 classifier from raw events (safety net)
+    mergedInteractions = detectInteractions(events);
   }
+
+  await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS, mergedInteractions);
+  await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, mergedInteractions);
 
   // ── Recognition → Enrichment Pipeline (Phase 6) ──
   // Run the analysis pipeline on the recorded session. This produces:
@@ -426,7 +351,7 @@ async function handleStopRecording(): Promise<void> {
     const sessionId = `session-${Date.now()}`;
     const tab = await getActiveTab();
     const sourceUrl = tab?.url ?? undefined;
-    const pipelineResult = runPipeline(events, mergedInteractions!, sessionId, sourceUrl, useControlEngine ? 'control' : 'legacy');
+    const pipelineResult = runPipeline(events, mergedInteractions, sessionId, sourceUrl, 'legacy');
 
     await StorageService.setRaw(StorageKeys.DOMAIN_ENTITIES, {
       elements: pipelineResult.entities.elements,
@@ -468,7 +393,7 @@ async function handleStopRecording(): Promise<void> {
     const irPlan = buildIRPlan({
       events,
       interactions: mergedInteractions,
-      understanding,
+      understanding: understandingResult,
       recordingContext: {
         startUrl: recordingStartUrl || tab?.url || 'about:blank',
         title: recordingStartTitle || tab?.title || null,

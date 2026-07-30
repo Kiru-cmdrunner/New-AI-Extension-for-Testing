@@ -461,6 +461,8 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     const interaction: ComponentInteraction = {
       interactionId: `int-${this.interactionCounter}`,
       type: ctx.type,
+      // Allow definitions to set a fine-grained subtype via ctx.data
+      interactionSubtype: (ctx.data.interactionSubtype as string) || undefined,
       trigger: ctx.trigger,
       triggerEvent: ctx.triggerEvent,
       memberEvents: [...ctx.memberEvents],

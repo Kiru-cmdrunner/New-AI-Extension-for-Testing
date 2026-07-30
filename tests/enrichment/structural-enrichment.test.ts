@@ -430,9 +430,10 @@ describe('Stepper label normalization and counter grouping', () => {
     expect(counterFields.every(f => f.delta === 1)).toBe(true);
 
     // Each counter should have inferred name from CSS selector
-    expect(counterFields.some(f => f.label === 'Adults')).toBe(true);
+    // (regex captures root keyword: "adult" from "plus-adults")
+    expect(counterFields.some(f => f.label === 'Adult')).toBe(true);
     expect(counterFields.some(f => f.label === 'Children')).toBe(true);
-    expect(counterFields.some(f => f.label === 'Infants')).toBe(true);
+    expect(counterFields.some(f => f.label === 'Infant')).toBe(true);
 
     // Select field for Premium Economy
     const selectFields = cs.fields.filter(f => f.kind === 'select');
@@ -459,9 +460,9 @@ describe('Stepper label normalization and counter grouping', () => {
 
     // Trigger label "1Economy" is normalized to "Economy"
     expect(summary).toContain('Configure Economy:');
-    expect(summary).toContain('Adults +1');
+    expect(summary).toContain('Adult +1');
     expect(summary).toContain('Children +1');
-    expect(summary).toContain('Infants +1');
+    expect(summary).toContain('Infant +1');
     // Label=value dedup: "Premium Economy=Premium Economy" → just "Premium Economy"
     expect(summary).toContain('Premium Economy');
     expect(summary).not.toContain('Premium Economy=Premium Economy');
@@ -514,6 +515,130 @@ describe('Stepper label normalization and counter grouping', () => {
     expect(summary).toContain('Passenger 2 +1');
     expect(summary).toContain('Passenger 3 +1');
     expect(summary).toContain('Done');
+  });
+
+  // ── NEW: Tests for the Counter +3 bug fix ─────────────────────────────
+
+  it('separates counters when elementId is empty but CSS selectors differ (AdaniOne real-world bug)', () => {
+    // THE BUG: elementId is always '' in the EventTap pipeline, so the old
+    // code merged all 3 stepper clicks into one "Counter +3" field.
+    // This test simulates the actual stripped metadata from buildResult
+    // where elementId is empty (never assigned by SW).
+    const interaction = makeInteraction([], { targetName: '4Economy' });
+    (interaction as any).metadata.subActions = [
+      { action: 'increment', label: '+', value: '', targetElementId: '', targetCssSelector: 'div:nth-of-type(1) > button:nth-of-type(2)', targetClassName: 'plus-icon' },
+      { action: 'increment', label: '+', value: '', targetElementId: '', targetCssSelector: 'div:nth-of-type(2) > button:nth-of-type(2)', targetClassName: 'plus-icon' },
+      { action: 'increment', label: '+', value: '', targetElementId: '', targetCssSelector: 'div:nth-of-type(3) > button:nth-of-type(2)', targetClassName: 'plus-icon' },
+      { action: 'selectOption', label: 'Premium Economy', value: 'Premium Economy' },
+      { action: 'confirm', label: 'Done', value: undefined },
+    ];
+    const enriched = enrichConfigurationSession(interaction);
+    const cs = enriched.metadata!.configurationSession as ConfigurationSession;
+
+    // 3 SEPARATE counter fields (NOT one merged "Counter +3")
+    const counterFields = cs.fields.filter(f => f.kind === 'counter');
+    expect(counterFields.length).toBe(3);
+    expect(counterFields.every(f => f.delta === 1)).toBe(true);
+
+    // Sequential naming via CSS selector fallback
+    expect(counterFields[0].label).toBe('Passenger 1');
+    expect(counterFields[1].label).toBe('Passenger 2');
+    expect(counterFields[2].label).toBe('Passenger 3');
+
+    const summary = renderConfigurationSummary(cs);
+    expect(summary).not.toContain('Counter +3');
+    expect(summary).toContain('Passenger 1 +1');
+    expect(summary).toContain('Passenger 2 +1');
+    expect(summary).toContain('Passenger 3 +1');
+  });
+
+  it('does NOT merge counters when only generic "pax" keyword is shared (the Pax +3 bug)', () => {
+    // THE BUG: All stepper buttons share ancestor "pax-panel" but have NO
+    // specific keyword (adult/child/infant). Old code matched "pax" on all
+    // buttons → same label "Pax" → merged into "Pax +3".
+    // Fix: "pax" is a generic panel-level keyword, excluded from inference.
+    // Different CSS selectors should still separate them.
+    const interaction = makeInteraction([], { targetName: '4Economy' });
+    (interaction as any).metadata.subActions = [
+      { action: 'increment', label: '+', value: '', targetElementId: '', targetCssSelector: 'div:nth-of-type(1) > button.plus-icon', targetClassName: 'plus-icon', targetAncestorClasses: ['pax-panel', 'popover'] },
+      { action: 'increment', label: '+', value: '', targetElementId: '', targetCssSelector: 'div:nth-of-type(2) > button.plus-icon', targetClassName: 'plus-icon', targetAncestorClasses: ['pax-panel', 'popover'] },
+      { action: 'increment', label: '+', value: '', targetElementId: '', targetCssSelector: 'div:nth-of-type(3) > button.plus-icon', targetClassName: 'plus-icon', targetAncestorClasses: ['pax-panel', 'popover'] },
+      { action: 'selectOption', label: 'Premium Economy', value: 'Premium Economy' },
+      { action: 'confirm', label: 'Done', value: undefined },
+    ];
+    const enriched = enrichConfigurationSession(interaction);
+    const cs = enriched.metadata!.configurationSession as ConfigurationSession;
+
+    const counterFields = cs.fields.filter(f => f.kind === 'counter');
+    expect(counterFields.length).toBe(3);
+    expect(counterFields.every(f => f.delta === 1)).toBe(true);
+
+    const summary = renderConfigurationSummary(cs);
+    expect(summary).not.toContain('Pax +3');
+    expect(summary).not.toContain('Counter +3');
+  });
+
+  it('infers counter name from ancestor classes when button has no keywords', () => {
+    // AdaniOne puts "adults-section", "child-row", etc. on ancestor containers,
+    // NOT on the button itself. The button is just "button.plus-icon".
+    // Each button has a DIFFERENT CSS selector (different parent div).
+    const interaction = makeInteraction([], { targetName: '4Economy' });
+    (interaction as any).metadata.subActions = [
+      { action: 'increment', label: '+', value: '', targetElementId: '', targetCssSelector: 'div:nth-of-type(1) > button.plus-icon', targetClassName: 'plus-icon', targetAncestorClasses: ['adults-section', 'pax-panel', 'popover'] },
+      { action: 'increment', label: '+', value: '', targetElementId: '', targetCssSelector: 'div:nth-of-type(2) > button.plus-icon', targetClassName: 'plus-icon', targetAncestorClasses: ['children-row', 'pax-panel', 'popover'] },
+      { action: 'increment', label: '+', value: '', targetElementId: '', targetCssSelector: 'div:nth-of-type(3) > button.plus-icon', targetClassName: 'plus-icon', targetAncestorClasses: ['infant-block', 'pax-panel', 'popover'] },
+      { action: 'confirm', label: 'Done', value: undefined },
+    ];
+    const enriched = enrichConfigurationSession(interaction);
+    const cs = enriched.metadata!.configurationSession as ConfigurationSession;
+
+    const counterFields = cs.fields.filter(f => f.kind === 'counter');
+    expect(counterFields.length).toBe(3);
+    expect(counterFields.some(f => f.label === 'Adults')).toBe(true);
+    expect(counterFields.some(f => f.label === 'Children')).toBe(true);
+    expect(counterFields.some(f => f.label === 'Infant')).toBe(true);
+
+    const summary = renderConfigurationSummary(cs);
+    expect(summary).toContain('Adults +1');
+    expect(summary).toContain('Children +1');
+    expect(summary).toContain('Infant +1');
+  });
+
+  it('uses stableId as discriminator when elementId is empty but id attr exists', () => {
+    const interaction = makeInteraction([], { targetName: 'Economy' });
+    (interaction as any).metadata.subActions = [
+      { action: 'increment', label: '+', value: '', targetElementId: '', targetStableId: 'adult-plus', targetCssSelector: 'button', targetClassName: 'icon-btn' },
+      { action: 'increment', label: '+', value: '', targetElementId: '', targetStableId: 'child-plus', targetCssSelector: 'button', targetClassName: 'icon-btn' },
+      { action: 'confirm', label: 'Done', value: undefined },
+    ];
+    const enriched = enrichConfigurationSession(interaction);
+    const cs = enriched.metadata!.configurationSession as ConfigurationSession;
+
+    const counterFields = cs.fields.filter(f => f.kind === 'counter');
+    expect(counterFields.length).toBe(2);
+    expect(counterFields.every(f => f.delta === 1)).toBe(true);
+  });
+
+  it('groups multiple clicks on the SAME stepper button as one field with correct delta', () => {
+    // Same CSS selector = same button → should merge into one counter with delta +3
+    const interaction = makeInteraction([], { targetName: 'Economy' });
+    (interaction as any).metadata.subActions = [
+      { action: 'increment', label: '+', value: '', targetElementId: '', targetCssSelector: 'div:nth-of-type(1) > button:nth-of-type(2)', targetClassName: 'plus-icon' },
+      { action: 'increment', label: '+', value: '', targetElementId: '', targetCssSelector: 'div:nth-of-type(1) > button:nth-of-type(2)', targetClassName: 'plus-icon' },
+      { action: 'increment', label: '+', value: '', targetElementId: '', targetCssSelector: 'div:nth-of-type(1) > button:nth-of-type(2)', targetClassName: 'plus-icon' },
+      { action: 'confirm', label: 'Done', value: undefined },
+    ];
+    const enriched = enrichConfigurationSession(interaction);
+    const cs = enriched.metadata!.configurationSession as ConfigurationSession;
+
+    const counterFields = cs.fields.filter(f => f.kind === 'counter');
+    expect(counterFields.length).toBe(1);
+    expect(counterFields[0].delta).toBe(3);
+
+    const summary = renderConfigurationSummary(cs);
+    // Should show "Passenger 1 +3", NOT "Counter +3" or "Counter +1" 3 times
+    expect(summary).toContain('Passenger 1 +3');
+    expect(summary).not.toContain('Counter');
   });
 });
 
