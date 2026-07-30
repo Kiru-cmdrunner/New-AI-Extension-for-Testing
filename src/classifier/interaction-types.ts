@@ -26,6 +26,7 @@ export type InteractionType =
   | 'KeyboardShortcut'
   // Text Entry
   | 'TextEntry'
+  | 'RichTextEditor'
   // Selection Controls
   | 'NativeDropdown'
   | 'CustomDropdown'
@@ -197,6 +198,11 @@ export interface InteractionMetadata {
   }>;
   /** Delta for adapter passthrough */
   stepperDelta?: number;
+  // Rich Text Editor
+  /** Editor framework name (Quill, CKEditor, ProseMirror, etc.) */
+  editorType?: string;
+  /** Whether this TextEntry is a rich text editor */
+  isRichTextEditor?: boolean;
 }
 
 // ── Detection Result ────────────────────────────────────────────────────
@@ -219,7 +225,7 @@ export const INTERACTION_CATEGORIES: Record<string, InteractionType[]> = {
   Navigation: ['PageNavigation', 'Back', 'Forward', 'Refresh'],
   Mouse: ['Click', 'DoubleClick', 'RightClick', 'Hover', 'DragDrop'],
   Keyboard: ['KeyboardShortcut'],
-  'Text Entry': ['TextEntry'],
+  'Text Entry': ['TextEntry', 'RichTextEditor'],
   'Selection Controls': ['NativeDropdown', 'CustomDropdown', 'SearchableDropdown', 'Autocomplete', 'MultiSelect', 'Checkbox', 'RadioButton', 'ToggleSwitch', 'Slider', 'Stepper'],
   'Date & Time': ['DatePicker', 'TimePicker', 'DateTimePicker'],
   'File Upload': ['FileUpload', 'DragDropUpload'],
@@ -236,7 +242,7 @@ export const TIER1_TYPES: Set<InteractionType> = new Set([
   'PageNavigation', 'Back', 'Forward', 'Refresh',
   'Click', 'DoubleClick', 'RightClick', 'Hover', 'DragDrop',
   'KeyboardShortcut',
-  'TextEntry',
+  'TextEntry', 'RichTextEditor',
   'NativeDropdown',
   'Checkbox', 'RadioButton', 'ToggleSwitch', 'Slider', 'Stepper',
   'DatePicker', 'TimePicker', 'DateTimePicker',
@@ -268,6 +274,7 @@ export const TYPE_DISPLAY: Record<InteractionType, { label: string; icon: string
   DragDrop:        { label: 'Drag & Drop',     icon: '📦', color: '#0891b2' },
   KeyboardShortcut:{ label: 'Keyboard Shortcut', icon: '⌨️', color: '#7c3aed' },
   TextEntry:       { label: 'Text Entry',      icon: '⌨️', color: '#10b981' },
+  RichTextEditor:  { label: 'Rich Text Editor', icon: '📝', color: '#8b5cf6' },
   NativeDropdown:  { label: 'Native Dropdown', icon: '📋', color: '#9333ea' },
   CustomDropdown:  { label: 'Custom Dropdown', icon: '📋', color: '#9333ea' },
   Autocomplete:    { label: 'Autocomplete',    icon: '🔍', color: '#9333ea' },

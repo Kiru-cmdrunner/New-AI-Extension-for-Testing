@@ -65,6 +65,7 @@ const INTERACTION_TO_IR_ACTION: Record<InteractionType, IRAction> = {
   KeyboardShortcut: IRAction.PRESS_KEY,
   // Text Entry
   TextEntry: IRAction.FILL,
+  RichTextEditor: IRAction.FILL,
   // Selection Controls
   NativeDropdown: IRAction.SELECT,
   CustomDropdown: IRAction.SELECT,
@@ -152,7 +153,8 @@ function generateDescription(
   const businessField = logicalAction?.businessField;
 
   switch (interaction.type) {
-    case 'TextEntry': {
+    case 'TextEntry':
+    case 'RichTextEditor': {
       const value = event?.type === 'text' ? event.value : interaction.metadata.textValue ?? '';
       return businessField
         ? `Fill "${value}" in the ${businessField} field`
@@ -291,6 +293,7 @@ function extractInputValue(
 ): IRInput {
   switch (interaction.type) {
     case 'TextEntry':
+    case 'RichTextEditor':
       return event?.type === 'text' ? event.value : (interaction.metadata.textValue ?? null);
 
     case 'Checkbox':

@@ -20,6 +20,7 @@ import type {
   ObservedEvent,
 } from '../shared/component-types';
 import { isTextEntry, bestName } from './patterns';
+import { detectEditor } from './editor-adapters';
 
 export const textEntryDefinition: ComponentDefinition = {
   type: 'TextEntry',
@@ -106,6 +107,25 @@ export const textEntryDefinition: ComponentDefinition = {
       ctx.trigger.ariaLabel,
       ctx.trigger.placeholder,
     );
+
+    // ── Rich Text Editor Detection ──
+    // When the trigger element is contentEditable, run the editor adapter
+    // chain to identify the specific editor framework (Quill, CKEditor, etc.).
+    // This sets interactionSubtype and editorType metadata for downstream layers.
+    const isContentEditable = ctx.triggerEvent.domContext.isContentEditable;
+    if (isContentEditable) {
+      const editorType = detectEditor(ctx.trigger, ctx.triggerEvent.domContext);
+      ctx.data.interactionSubtype = 'RichTextEditor';
+      return {
+        metadata: {
+          targetName: name,
+          textValue,
+          userTyped,
+          editorType: editorType ?? 'ContentEditable',
+          isRichTextEditor: true,
+        },
+      };
+    }
 
     return {
       metadata: {

@@ -97,6 +97,9 @@ function adaptMetadata(ci: ComponentInteraction): InteractionMetadata {
   if (ci.type === 'TextEntry') {
     if (meta.textValue) result.textValue = meta.textValue as string;
     else if (meta.finalValue) result.textValue = meta.finalValue as string;
+    // Rich text editor metadata
+    if (meta.editorType) result.editorType = meta.editorType as string;
+    if (meta.isRichTextEditor !== undefined) result.isRichTextEditor = meta.isRichTextEditor as boolean;
   }
 
   // Checkbox / Toggle

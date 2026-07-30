@@ -99,7 +99,8 @@ function fallbackActionDescription(interaction: ComponentInteraction): string {
 
     case 'TextEntry': {
       const val = String(metadata.textValue ?? '');
-      return `Enter "${val}" in "${targetName}"`;
+      const editor = metadata.editorType ? ` (${metadata.editorType})` : '';
+      return `Enter "${val}" in "${targetName}"${editor}`;
     }
 
     case 'Dropdown': {
