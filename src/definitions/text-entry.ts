@@ -70,11 +70,26 @@ export const textEntryDefinition: ComponentDefinition = {
   },
 
   shouldCancelOnOutside(event: ObservedEvent, ctx: ComponentContext): boolean {
-    // Only cancel on 'click' (fires AFTER blur, so the TextEntry completes
-    // naturally). Never cancel on 'mousedown' — it fires BEFORE blur in the
-    // browser event order (mousedown → blur → click), which would abandon
-    // the TextEntry before it can complete.
-    if (event.eventType === 'click') {
+    // TextEntry should NEVER be cancelled by outside events. The blur event
+    // (which may be deferred in SPA frameworks) is the authoritative completion
+    // signal. If we cancel on click, we lose the deferred blur's value update.
+    //
+    // Previous behavior: cancelled on outside click. This caused a race condition
+    // in autocomplete flows where click fires BEFORE deferred blur:
+    //   mousedown → click → [deferred] blur
+    // The click would abandon the TextEntry before blur could update the value.
+    return false;
+  },
+
+  /**
+   * Auto-complete TextEntry when the user focuses a different element.
+   * This ensures the value is captured before the deferred blur arrives.
+   * Navigation still flushes as 'interrupted' via the runtime's flush() method.
+   */
+  shouldCompleteOnOutside(event: ObservedEvent, ctx: ComponentContext): boolean {
+    // Complete on focus elsewhere — the user moved to a new field.
+    // This captures the value before the deferred blur arrives.
+    if (event.eventType === 'focus') {
       const sameElement =
         event.target.stableId === ctx.trigger.stableId ||
         event.target.cssSelector === ctx.trigger.cssSelector;

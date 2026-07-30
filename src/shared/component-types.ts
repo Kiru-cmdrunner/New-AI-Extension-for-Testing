@@ -26,6 +26,7 @@ import type { ElementIdentity } from './types';
 export type BrowserEventType =
   | 'click'
   | 'mousedown'
+  | 'mouseup'
   | 'contextmenu'
   | 'focus'
   | 'blur'
@@ -36,6 +37,10 @@ export type BrowserEventType =
   | 'mousemove'
   | 'keydown'
   | 'scroll'
+  | 'dragstart'
+  | 'dragover'
+  | 'drop'
+  | 'dragend'
   | 'navigation';
 
 /**
@@ -194,6 +199,9 @@ export type InteractionType =
   | 'Tab'
   | 'Scroll'
   | 'Navigation'
+  | 'DragDrop'
+  | 'KeyboardShortcut'
+  | 'ModalDialog'
   | 'Stepper';
 
 // ── Component Lifecycle ────────────────────────────────────────────────
@@ -419,6 +427,24 @@ export interface ComponentDefinition {
     ctx: ComponentContext,
     completion: ComponentCompletion,
   ): { metadata: Record<string, unknown> };
+
+  /**
+   * Should this non-completed interaction be converted to a simpler type?
+   *
+   * Called when the component is about to be completed with a non-completed
+   * endState (interrupted or abandoned). If the definition returns a type,
+   * the runtime replaces the component's type with the returned type, finds
+   * the target definition, and calls its buildResult instead.
+   *
+   * Use case: A Dropdown session opens on a click that matched dropdown
+   * trigger patterns, but no option was ever selected (the element was
+   * just a regular button). Instead of emitting an empty Dropdown that
+   * gets filtered from the side panel, downcast to a Click so the user's
+   * action is still visible.
+   *
+   * Optional — defaults to undefined (no downcast).
+   */
+  downcast?(ctx: ComponentContext, completion: ComponentCompletion): InteractionType | null;
 }
 
 // ── Component Interaction (Output) ─────────────────────────────────────

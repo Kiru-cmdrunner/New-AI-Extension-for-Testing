@@ -48,6 +48,8 @@ export enum IRAction {
   TOGGLE = 'toggle',
   HOVER = 'hover',
   NAVIGATE = 'navigate',
+  DRAG_DROP = 'dragAndDrop',
+  PRESS_KEY = 'pressKey',
   VERIFY = 'verify',
   WAIT = 'wait',
 

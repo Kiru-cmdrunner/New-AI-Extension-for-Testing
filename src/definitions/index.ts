@@ -15,7 +15,10 @@
  */
 
 import type { ComponentDefinition } from '../shared/component-types';
+import { keyboardShortcutDefinition } from './keyboard-shortcut';
+import { modalDialogDefinition } from './modal-dialog';
 import { datePickerDefinition } from './date-picker';
+import { dragAndDropDefinition } from './drag-and-drop';
 import { dropdownDefinition } from './dropdown';
 import { sliderDefinition } from './slider';
 import { checkboxDefinition } from './checkbox';
@@ -35,8 +38,12 @@ import { clickDefinition } from './click';
  * The ComponentRuntime sorts this by priority (ascending) during discovery.
  *
  * Priority semantics (lower = higher priority in discovery order):
+ *   5 = KeyboardShortcut (keydown with modifiers or special keys)
  *   10 = most specific (DatePicker)
+ *   15 = DragDrop (before Dropdown/Slider — captures mousedown first)
  *   20 = Dropdown
+ *   22 = ModalDialog (after Dropdown — fires as catch-all for generic clicks
+ *        that might open modals; confirmed by modal-type surface binding)
  *   25 = Slider
  *   28 = Stepper (standalone +/- counters outside surfaces)
  *   30 = Checkbox
@@ -51,8 +58,11 @@ import { clickDefinition } from './click';
  *  180 = Click (universal fallback — always checked last)
  */
 export const ALL_DEFINITIONS: ComponentDefinition[] = [
-  datePickerDefinition,    // priority 10
+  keyboardShortcutDefinition, // priority 5
+  datePickerDefinition,     // priority 10
+  dragAndDropDefinition,    // priority 15
   dropdownDefinition,      // priority 20
+  modalDialogDefinition,    // priority 22
   sliderDefinition,        // priority 25
   stepperDefinition,       // priority 28
   checkboxDefinition,      // priority 30
@@ -71,7 +81,10 @@ export const ALL_DEFINITIONS: ComponentDefinition[] = [
  * For external consumers that need individual definitions.
  */
 export {
+  keyboardShortcutDefinition,
+  modalDialogDefinition,
   datePickerDefinition,
+  dragAndDropDefinition,
   dropdownDefinition,
   sliderDefinition,
   stepperDefinition,

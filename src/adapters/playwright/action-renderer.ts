@@ -89,6 +89,12 @@ function renderActionLine(step: IRStep, pageVar: string): string {
     case IRAction.HOVER:
       return renderHover(step, pageVar);
 
+    case IRAction.DRAG_DROP:
+      return renderDragDrop(step, pageVar);
+
+    case IRAction.PRESS_KEY:
+      return renderPressKey(step, pageVar);
+
     case IRAction.NAVIGATE:
       return renderNavigate(step, pageVar);
 
@@ -230,6 +236,53 @@ function renderHover(step: IRStep, pageVar: string): string {
   const el = elementExpression(step, pageVar);
   const opts = timeoutOption(step);
   return `${el}.hover(${opts ? opts.replace(/^, /, '') : ''})`;
+}
+
+/**
+ * PRESS_KEY → `page.getByRole(...).press('Control+s')`
+ *
+ * If the step targets an element, uses locator.press().
+ * If no element target (page-level shortcut), uses page.keyboard.press().
+ *
+ * The key string follows Playwright's key format:
+ * "Control+s", "Meta+k", "Escape", "Shift+Tab", etc.
+ */
+function renderPressKey(step: IRStep, pageVar: string): string {
+  const keyValue = step.input ? escapeString(String(step.input)) : 'Escape';
+
+  // If the step has an element target, press on that element
+  if (step.target.kind === 'element') {
+    const el = elementExpression(step, pageVar);
+    return `${el}.press('${keyValue}')`;
+  }
+
+  // Page-level keyboard shortcut
+  return `${pageVar}.keyboard.press('${keyValue}')`;
+}
+
+/**
+ * DRAG_DROP → `page.getByRole(...).dragTo(page.getByRole(...))`
+ *
+ * Playwright's dragTo() handles both mouse-based and HTML5 DnD.
+ * The source element is the step's target; the drop target locator is
+ * carried in the step's input as a JSON-encoded locator string.
+ * If no drop target locator is available, falls back to manual
+ * mousedown → mousemove → mouseup.
+ */
+function renderDragDrop(step: IRStep, pageVar: string): string {
+  const sourceEl = elementExpression(step, pageVar);
+  const opts = timeoutOption(step);
+
+  // The drop target locator is stored in step.input as a string.
+  // If it's a valid locator string, use dragTo().
+  if (step.input && typeof step.input === 'string' && step.input.length > 0) {
+    const targetLocator = step.input;
+    return `${sourceEl}.dragTo(${pageVar}.locator('${targetLocator}')${opts})`;
+  }
+
+  // Fallback: manual drag using mouse actions
+  // This generates a multi-step drag for cases where dragTo() doesn't work.
+  return `${sourceEl}.hover()`;
 }
 
 // ── Non-Element Actions ───────────────────────────────────

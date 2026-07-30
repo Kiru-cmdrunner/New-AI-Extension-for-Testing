@@ -220,7 +220,7 @@ export const INTERACTION_CATEGORIES: Record<string, InteractionType[]> = {
   Mouse: ['Click', 'DoubleClick', 'RightClick', 'Hover', 'DragDrop'],
   Keyboard: ['KeyboardShortcut'],
   'Text Entry': ['TextEntry'],
-  'Selection Controls': ['NativeDropdown', 'CustomDropdown', 'Autocomplete', 'MultiSelect', 'Checkbox', 'RadioButton', 'ToggleSwitch', 'Slider', 'Stepper'],
+  'Selection Controls': ['NativeDropdown', 'CustomDropdown', 'SearchableDropdown', 'Autocomplete', 'MultiSelect', 'Checkbox', 'RadioButton', 'ToggleSwitch', 'Slider', 'Stepper'],
   'Date & Time': ['DatePicker', 'TimePicker', 'DateTimePicker'],
   'File Upload': ['FileUpload', 'DragDropUpload'],
   'Navigation UI': ['Link', 'Tab', 'Menu', 'Breadcrumb'],

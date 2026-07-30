@@ -295,7 +295,7 @@ describe('TextEntry shouldCancelOnOutside (unit)', () => {
     expect(textEntryDefinition.shouldCancelOnOutside(mousedownElsewhere, ctx)).toBe(false);
   });
 
-  it('returns true for click on different element', () => {
+  it('does NOT cancel on click on different element (lets blur complete)', () => {
     const focusEvent = makeEvent('f1', 'focus',
       { tag: 'INPUT', stableId: 'user', cssSelector: 'input#user' },
       { inputType: 'text' }
@@ -306,8 +306,10 @@ describe('TextEntry shouldCancelOnOutside (unit)', () => {
       { tag: 'BUTTON', stableId: 'btn', cssSelector: 'button#btn' }
     );
 
-    // Should cancel on click (different element)
-    expect(textEntryDefinition.shouldCancelOnOutside(clickElsewhere, ctx)).toBe(true);
+    // Should NOT cancel on click — the blur event (possibly deferred in SPA
+    // frameworks) will complete the TextEntry naturally. Cancelling on click
+    // causes a race condition where the deferred blur's value is lost.
+    expect(textEntryDefinition.shouldCancelOnOutside(clickElsewhere, ctx)).toBe(false);
   });
 
   it('returns false for click on same element', () => {

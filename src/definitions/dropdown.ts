@@ -20,6 +20,7 @@ import type {
   ComponentTrigger,
   ComponentContext,
   ComponentCompletion,
+  InteractionType,
   ObservedEvent,
 } from '../shared/component-types';
 import {
@@ -565,6 +566,30 @@ export const dropdownDefinition: ComponentDefinition = {
     // break those checks. The definition waits passively for completion evidence
     // (option click or change event) or the runtime timeout.
     return false;
+  },
+
+  downcast(ctx: ComponentContext, _completion: ComponentCompletion): InteractionType | null {
+    // Downcast to Click when a Dropdown session opened on a false-positive
+    // trigger (the element matched dropdown trigger patterns but no panel
+    // actually opened and nothing was selected). This happens with SPA
+    // elements like fare-type tiles, travel-class cards, etc. that have
+    // dropdown-like CSS classes but are really just clickable buttons.
+    //
+    // Conditions:
+    // 1. No subActions were captured (no option clicked, no stepper toggled)
+    // 2. No selectedValue was captured (no value set)
+    // 3. No Done/Apply was clicked
+    //
+    // If ANY of these have data, the user did interact with a real dropdown
+    // panel, and the interrupted state is meaningful — we keep the Dropdown type.
+    const subActions = (ctx.data.subActions as DropdownSubAction[]) ?? [];
+    const selectedValue = (ctx.data.selectedValue as string) ?? '';
+    const doneClicked = ctx.data.doneClicked === true;
+
+    if (subActions.length === 0 && !selectedValue && !doneClicked) {
+      return 'Click' as InteractionType;
+    }
+    return null;
   },
 
   buildResult(ctx: ComponentContext, _completion: ComponentCompletion) {

@@ -105,6 +105,14 @@ export const scrollDefinition: ComponentDefinition = {
     return true;
   },
 
+  /**
+   * Scroll accumulates data during its lifecycle — even on navigation flush,
+   * the accumulated delta should be emitted as completed.
+   */
+  shouldCompleteOnFlush(_ctx: ComponentContext): boolean {
+    return true;
+  },
+
   buildResult(ctx: ComponentContext, _completion: ComponentCompletion) {
     // Calculate accumulated delta: difference between first and last scroll positions
     const firstY = ctx.triggerEvent.scrollDeltaY ?? 0;
