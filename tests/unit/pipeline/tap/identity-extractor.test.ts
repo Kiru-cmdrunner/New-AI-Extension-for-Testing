@@ -199,5 +199,54 @@ describe('Identity Extractor', () => {
       document.body.appendChild(div);
       expect(captureCheckedState(div)).toBe(true);
     });
+
+    // ── Descendant-based checked state detection (Amazon filter pattern) ──
+
+    it('should detect checked state from descendant input[type=checkbox]', () => {
+      const anchor = document.createElement('a');
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = true;
+      anchor.appendChild(checkbox);
+      document.body.appendChild(anchor);
+      expect(captureCheckedState(anchor)).toBe(true);
+    });
+
+    it('should detect checked state from descendant input[type=checkbox] unchecked', () => {
+      const anchor = document.createElement('a');
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = false;
+      anchor.appendChild(checkbox);
+      document.body.appendChild(anchor);
+      expect(captureCheckedState(anchor)).toBe(false);
+    });
+
+    it('should detect checked state from descendant aria-checked', () => {
+      const anchor = document.createElement('a');
+      const icon = document.createElement('i');
+      icon.setAttribute('aria-checked', 'true');
+      anchor.appendChild(icon);
+      document.body.appendChild(anchor);
+      expect(captureCheckedState(anchor)).toBe(true);
+    });
+
+    it('should detect checked state from descendant CSS class with "checkbox"', () => {
+      const anchor = document.createElement('a');
+      const icon = document.createElement('i');
+      icon.className = 'a-icon a-icon-checkbox';
+      anchor.appendChild(icon);
+      document.body.appendChild(anchor);
+      expect(captureCheckedState(anchor)).toBe(true);
+    });
+
+    it('should return undefined when no descendant has checked state', () => {
+      const anchor = document.createElement('a');
+      const span = document.createElement('span');
+      span.textContent = 'vivo';
+      anchor.appendChild(span);
+      document.body.appendChild(anchor);
+      expect(captureCheckedState(anchor)).toBeUndefined();
+    });
   });
 });

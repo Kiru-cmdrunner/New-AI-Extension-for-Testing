@@ -584,6 +584,55 @@ describe('InteractionRecognizer', () => {
       const result = recognizeInteractions(events);
       expect(result[0].type).toBe('Link');
     });
+
+    it('classifies checkbox-like link (Amazon filter) with checked transition as Checkbox', () => {
+      resetCounter();
+      const filterLink = makeElementIdentity({
+        accessibleName: 'Apply the filter vivo to narrow results',
+        tag: 'A',
+        ariaRole: 'link',
+        className: 'a-link-normal s-navigation-item',
+        cssSelector: 'a.s-navigation-item',
+      });
+      const events: RecordedEvent[] = [
+        makeClickEvent(filterLink, 1000, { checkedBefore: false, checkedAfter: true }),
+      ];
+      const result = recognizeInteractions(events);
+      expect(result[0].type).toBe('Checkbox');
+      expect(result[0].metadata.checked).toBe(true);
+    });
+
+    it('classifies checkbox-like link unchecking as Checkbox with checked=false', () => {
+      resetCounter();
+      const filterLink = makeElementIdentity({
+        accessibleName: 'Apply the filter Redmi to narrow results',
+        tag: 'A',
+        ariaRole: 'link',
+        className: 's-navigation-item',
+        cssSelector: 'a.s-navigation-item',
+      });
+      const events: RecordedEvent[] = [
+        makeClickEvent(filterLink, 1000, { checkedBefore: true, checkedAfter: false }),
+      ];
+      const result = recognizeInteractions(events);
+      expect(result[0].type).toBe('Checkbox');
+      expect(result[0].metadata.checked).toBe(false);
+    });
+
+    it('classifies plain link without checked transition as Link (no false positive)', () => {
+      resetCounter();
+      const link = makeElementIdentity({
+        accessibleName: 'Today\'s Deals',
+        tag: 'A',
+        ariaRole: 'link',
+        cssSelector: 'a#nav-todays-deals',
+      });
+      const events: RecordedEvent[] = [
+        makeClickEvent(link, 1000, { checkedBefore: null, checkedAfter: null }),
+      ];
+      const result = recognizeInteractions(events);
+      expect(result[0].type).toBe('Link');
+    });
   });
 
   describe('Hover', () => {
@@ -671,12 +720,12 @@ describe('InteractionRecognizer', () => {
   });
 
   describe('Engine Tag', () => {
-    it('tags all interactions with engine=control', () => {
+    it('tags button click with engine=evidence (classified by evidence engine)', () => {
       resetCounter();
       const btn = makeElementIdentity({ tag: 'BUTTON', ariaRole: 'button', cssSelector: 'button' });
       const events: RecordedEvent[] = [makeClickEvent(btn, 1000)];
       const result = recognizeInteractions(events);
-      expect(result[0].engine).toBe('control');
+      expect(result[0].engine).toBe('evidence');
     });
 
     it('uses ctrl- prefix for interaction IDs', () => {
@@ -800,8 +849,9 @@ describe('InteractionRecognizer', () => {
       const saveClick = result.find((r) => r.type === 'Click' && r.metadata.accessibleName === 'Save');
       expect(saveClick).toBeDefined();
 
-      // All should have engine=control
-      expect(result.every((r) => r.engine === 'control')).toBe(true);
+      // All should have engine tag set (either 'control' for recognized types
+      // or 'evidence' for ambiguous clicks resolved by the evidence engine)
+      expect(result.every((r) => r.engine === 'control' || r.engine === 'evidence')).toBe(true);
     });
 
     it('Nationality is NOT classified as Blood Type (regression test)', () => {

@@ -16,7 +16,7 @@ import type {
   ComponentCompletion,
   ObservedEvent,
 } from '../shared/component-types';
-import { isInteractiveElement, bestName } from './patterns';
+import { isInteractiveElement, bestName, isTextEntry } from './patterns';
 import { isStepperPlus, isStepperMinus } from './dropdown';
 
 export const clickDefinition: ComponentDefinition = {
@@ -32,6 +32,15 @@ export const clickDefinition: ComponentDefinition = {
     const tabIndex = null; // tabIndex not in ElementIdentity (captured in content script)
 
     if (!isInteractiveElement(tag, ariaRole, className, tabIndex)) {
+      return null;
+    }
+
+    // Text entry fields are owned by TextEntry, not Click.
+    // Click and TextEntry listen on different events (click vs focus), so
+    // priority-based discovery can't prevent both from triggering. Without
+    // this exclusion, every text input click produces a spurious Click
+    // before the TextEntry interaction.
+    if (isTextEntry(tag, event.domContext.inputType, ariaRole, event.domContext.isContentEditable)) {
       return null;
     }
 

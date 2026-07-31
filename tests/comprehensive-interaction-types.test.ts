@@ -257,7 +257,8 @@ describe('Phase 2 — Comprehensive Interaction Type Validation', () => {
       const result = detectInteractions(events);
       expect(result).toHaveLength(1);
       expect(result[0].type).toBe('Click');
-      expect(result[0].confidence).toBe(1.0);
+      // Click through evidence pipeline: button semantics → trigger intent, confidence 0.3
+      expect(result[0].confidence).toBe(0.3);
     });
 
     it('Click — icon button with aria-label', () => {
@@ -566,7 +567,8 @@ describe('Phase 2 — Comprehensive Interaction Type Validation', () => {
       const result = detectInteractions(events);
       expect(result).toHaveLength(1);
       expect(result[0].type).toBe('Link');
-      expect(result[0].confidence).toBe(1.0);
+      // Link through evidence pipeline: only anchor tag evidence → navigate weight 0.4
+      expect(result[0].confidence).toBe(0.4);
     });
 
     it('Link — external link with target=_blank', () => {

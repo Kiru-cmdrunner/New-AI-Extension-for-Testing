@@ -223,6 +223,10 @@ export interface DetectedInteraction {
   confidence: number;
   /** Which engine produced this interaction: 'v2' (Evidence Engine) or 'v1-fallback' (V1 detector). */
   engine?: string;
+  /** The semantic intent inferred by the evidence engine. Present when engine='evidence'. */
+  intent?: import('./evidence/types').SemanticIntent;
+  /** Full evidence audit trail. Present when engine='evidence'. */
+  evidenceTrail?: import('./evidence/types').IntentVote[];
 }
 
 // ── Category → Type Mapping ─────────────────────────────────────────────

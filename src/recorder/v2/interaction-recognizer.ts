@@ -19,6 +19,7 @@ import type { RecordedEvent, NavigationRecordedEvent, ElementRecordedEvent } fro
 import type { ElementIdentity } from '../../shared/types';
 import type { DetectedInteraction, InteractionType, InteractionMetadata } from '../../classifier/interaction-types';
 import { ActionIdGenerator } from '../../recorder/action-id';
+import { classifyByEvidence } from '../../classifier/evidence/evidence-classifier';
 
 // ════════════════════════════════════════════════════════════════════════
 // STAGE 1: EVENT GROUPER
@@ -150,6 +151,9 @@ interface ClassifyResult {
   type: InteractionType;
   metadata: InteractionMetadata;
   confidence: number;
+  engine?: string;
+  intent?: import('../../classifier/evidence/types').SemanticIntent;
+  evidenceTrail?: import('../../classifier/evidence/types').IntentVote[];
 }
 
 /**
@@ -450,10 +454,25 @@ function classifyGroup(group: EventGroup): ClassifyResult {
     }
   }
 
-  // ── Link ──────────────────────────────────────────────────────────────
+  // ── Evidence-Based Classification (ambiguous cases) ───────────────────
+  //
+  // All unambiguous fast-path rules exhausted. Delegate the Link vs Checkbox
+  // vs Click decision to the evidence engine, which fuses multiple weak
+  // signals into a confident classification.
 
-  if (target.tag === 'A' || target.ariaRole === 'link') {
-    return { type: 'Link', metadata: {}, confidence: 1.0 };
+  {
+    const clickEvent = events.find((e) => e.eventType === 'click') as ElementRecordedEvent | undefined;
+    if (clickEvent) {
+      const result = classifyByEvidence(target, clickEvent);
+      return {
+        type: result.type,
+        metadata: result.metadata,
+        confidence: result.confidence,
+        engine: 'evidence',
+        intent: result.intent,
+        evidenceTrail: result.evidence,
+      };
+    }
   }
 
   // ── Default Click ─────────────────────────────────────────────────────
@@ -571,7 +590,7 @@ export function recognizeInteractions(events: RecordedEvent[]): DetectedInteract
   const timestamps: number[] = [];
 
   for (const group of groups) {
-    const { type, metadata, confidence } = classifyGroup(group);
+    const { type, metadata, confidence, engine: evidenceEngine, intent, evidenceTrail } = classifyGroup(group);
     const firstEvent = group.events[0];
     const target = firstEvent.eventType === 'navigation' ? undefined : (firstEvent as ElementRecordedEvent).target;
 
@@ -591,7 +610,9 @@ export function recognizeInteractions(events: RecordedEvent[]): DetectedInteract
       target,
       metadata,
       confidence,
-      engine: 'control' as const,
+      engine: evidenceEngine ?? 'control',
+      ...(intent ? { intent } : {}),
+      ...(evidenceTrail ? { evidenceTrail } : {}),
     });
     timestamps.push(new Date(firstEvent.timestamp).getTime());
   }

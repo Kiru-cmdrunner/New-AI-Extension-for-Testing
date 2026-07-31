@@ -15,6 +15,7 @@ import type { RecordedEvent, NavigationRecordedEvent, ElementRecordedEvent } fro
 import type { ElementIdentity } from '../shared/types';
 import type { DetectedInteraction, InteractionType, InteractionMetadata } from './interaction-types';
 import { ActionIdGenerator } from '../recorder/action-id';
+import { classifyByEvidence } from './evidence/evidence-classifier';
 
 // ════════════════════════════════════════════════════════════════════════
 // STAGE 1: EVENT GROUPER
@@ -159,7 +160,7 @@ function getIdentityKey(identity: ElementIdentity): string {
  *
  * The classification order matters — more specific rules are checked first.
  */
-function classifyGroup(group: EventGroup): { type: InteractionType; metadata: InteractionMetadata; confidence: number } {
+function classifyGroup(group: EventGroup): { type: InteractionType; metadata: InteractionMetadata; confidence: number; engine?: string; intent?: import('./evidence/types').SemanticIntent; evidenceTrail?: import('./evidence/types').IntentVote[] } {
   const events = group.events;
   const firstEvent = events[0];
 
@@ -558,17 +559,42 @@ function classifyGroup(group: EventGroup): { type: InteractionType; metadata: In
     }
   }
 
-  // ── Link ──────────────────────────────────────────────────────────────
+  // ── Evidence-Based Classification (ambiguous cases) ───────────────────
+  //
+  // At this point, all unambiguous fast-path rules have been exhausted
+  // (Navigation, DatePicker, Slider, TextEntry, Checkbox, RadioButton,
+  // ToggleSwitch, FileUpload, etc.). What remains is the ambiguous decision:
+  // Link vs Checkbox vs Click. These look the same in the DOM (click on a
+  // generic element) but have different semantic intents.
+  //
+  // The evidence engine collects multiple weak signals and fuses them:
+  //   - aria-checked → toggle
+  //   - checked transition → toggle
+  //   - <a> tag → navigate
+  //   - CSS class patterns → toggle/navigate
+  //   - opens new tab → navigate
+  //
+  // This replaces the old priority-ordered safety net + Link + Click chain
+  // with a single evidence-based decision.
 
-  if (target.tag === 'A' || target.ariaRole === 'link') {
-    return {
-      type: 'Link',
-      metadata: {},
-      confidence: 1.0,
-    };
+  {
+    const clickEvent = events.find((e) => e.eventType === 'click') as ElementRecordedEvent | undefined;
+    if (clickEvent) {
+      const result = classifyByEvidence(target, clickEvent);
+      return {
+        type: result.type,
+        metadata: result.metadata,
+        confidence: result.confidence,
+        engine: 'evidence',
+        intent: result.intent,
+        evidenceTrail: result.evidence,
+      };
+    }
   }
 
   // ── Default Click ─────────────────────────────────────────────────────
+  // Fallback for events that aren't clicks (e.g., contextmenu without
+  // a prior right-click handler producing its own classification)
 
   if (eventTypes.includes('click')) {
     return {
@@ -809,7 +835,7 @@ export function detectInteractions(events: RecordedEvent[]): DetectedInteraction
   const groups = groupEvents(events);
 
   return groups.map((group) => {
-    const { type, metadata, confidence } = classifyGroup(group);
+    const { type, metadata, confidence, engine, intent, evidenceTrail } = classifyGroup(group);
     const firstEvent = group.events[0];
     const target = firstEvent.eventType === 'navigation'
       ? undefined
@@ -842,6 +868,9 @@ export function detectInteractions(events: RecordedEvent[]): DetectedInteraction
       target,
       metadata,
       confidence,
+      ...(engine ? { engine } : {}),
+      ...(intent ? { intent } : {}),
+      ...(evidenceTrail ? { evidenceTrail } : {}),
     };
   });
 }

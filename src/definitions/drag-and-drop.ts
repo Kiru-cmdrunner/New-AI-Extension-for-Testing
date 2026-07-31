@@ -37,7 +37,7 @@ import type {
   ObservedEvent,
 } from '../shared/component-types';
 import type { ElementIdentity } from '../shared/types';
-import { bestName } from './patterns';
+import { bestName, isInteractiveElement, isDropdownTrigger, isTextEntry } from './patterns';
 
 // ── Excluded elements ──────────────────────────────────────────────────
 
@@ -48,20 +48,33 @@ import { bestName } from './patterns';
 const EXCLUDED_TAGS = new Set([
   'SELECT', 'TEXTAREA',
   'INPUT', // checkboxes, radios, sliders, text fields — all have own defs
+  'A',     // links are click-activated; HTML5 dragstart still captures genuine drags
+  'BUTTON', // buttons are click-activated; same reasoning
 ]);
 
 /**
  * ARIA roles handled by other definitions (Dropdown, DatePicker, etc.).
+ * Includes roles for click-activated elements (link, button, menuitem, tab,
+ * treeitem) — these have their own semantic definitions and should never be
+ * claimed by DragDrop on mousedown. If genuinely draggable, dragstart fires.
  */
 const EXCLUDED_ROLES = new Set([
   'combobox', 'listbox', 'slider', 'checkbox', 'radio', 'switch',
   'textbox', 'spinbutton',
+  'link', 'button', 'menuitem', 'tab', 'treeitem', 'option',
 ]);
 
 /**
- * Should this element be excluded from DragDrop triggering?
- * Returns true for form controls and semantic elements that other
- * definitions handle.
+ * Should this element be excluded from mouse-based DragDrop triggering?
+ * Returns true for:
+ * - Form controls (INPUT, SELECT, TEXTAREA) — have own definitions
+ * - Click-activated semantic elements (A, BUTTON) — their mousedown→click
+ *   sequence is handled by Click/Link; a genuine drag still fires dragstart
+ *   via Path 2 (HTML5 DnD), so nothing is lost
+ * - ARIA roles owned by other definitions
+ *
+ * Exclusion is on mousedown only. dragstart always triggers DragDrop
+ * regardless of element type (Path 2 in detectTrigger).
  */
 function isExcluded(
   tag: string,
@@ -71,7 +84,7 @@ function isExcluded(
   if (EXCLUDED_TAGS.has(tag)) return true;
   if (ariaRole && EXCLUDED_ROLES.has(ariaRole)) return true;
   // Dropdown trigger (aria-haspopup=listbox) — let Dropdown handle it
-  if (ariaHasPopup === 'listbox') return true;
+  if (ariaHasPopup === 'listbox' || ariaHasPopup === 'dialog' || ariaHasPopup === 'true') return true;
   return false;
 }
 
@@ -114,12 +127,33 @@ export const dragAndDropDefinition: ComponentDefinition = {
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
     // Path 1: Mouse-based drag starts on mousedown
     if (event.eventType === 'mousedown') {
-      // Exclude form controls and semantic elements handled by other definitions.
-      // This prevents DragDrop from blocking Dropdown (SELECT/combobox),
-      // Slider (INPUT[type=range]), Checkbox, etc.
-      const { tag, ariaRole } = event.target;
-      const { ariaHasPopup } = event.domContext;
+      // Exclude form controls, semantic elements, and ANY interactive element.
+      // Interactive elements (buttons, links, dropdown triggers, etc.) are
+      // click-activated. The browser fires mousedown → mouseup → click for
+      // these; if DragDrop claims the mousedown and discards on mouseup (no
+      // drag), its downcast to Click creates a duplicate when the subsequent
+      // click event also discovers the real interaction (Dropdown, Click, etc.).
+      // Genuinely draggable elements still fire dragstart → Path 2.
+      const { tag, ariaRole, className } = event.target;
+      const { ariaHasPopup, inputType, isContentEditable } = event.domContext;
+      const ancestorClasses = event.domContext.ancestorClasses.join(' ');
       if (isExcluded(tag, ariaRole, ariaHasPopup)) {
+        return null;
+      }
+      // Interactive elements (CSS class patterns like btn, dropdown, option,
+      // etc.) are handled by their own definitions on click.
+      if (isInteractiveElement(tag, ariaRole, className, null)) {
+        return null;
+      }
+      // Dropdown triggers (CSS class patterns like dropdown, select, combobox)
+      // — even if not in INTERACTIVE_CLASS_RE, isDropdownTrigger checks a
+      // broader set of patterns and ancestor classes.
+      if (isDropdownTrigger(tag, ariaRole, className) ||
+          (ancestorClasses && isDropdownTrigger('', null, ancestorClasses))) {
+        return null;
+      }
+      // Text entry fields — owned by TextEntry definition.
+      if (isTextEntry(tag, inputType, ariaRole, isContentEditable)) {
         return null;
       }
       return { type: 'DragDrop' };
@@ -214,11 +248,13 @@ export const dragAndDropDefinition: ComponentDefinition = {
   },
 
   downcast(ctx: ComponentContext, completion: ComponentCompletion): InteractionType | null {
-    // When DragDrop is discarded (displacement < threshold = it was a click,
-    // not a drag) or abandoned before any drag was confirmed, downcast to
-    // Click. This ensures the user's click action is captured even when
-    // DragDrop absorbs the mousedown/mouseup events.
-    if (completion.endState === 'discarded' || 
+    // DragDrop downcasts to Click when:
+    // - discarded: no drag detected (mousedown→mouseup without displacement).
+    //   This ensures the user's click action is captured even when DragDrop
+    //   absorbed the mousedown/mouseup events.
+    // - abandoned: the session was interrupted before any drag was confirmed.
+    //   Same reasoning — preserve the user's click.
+    if (completion.endState === 'discarded' ||
         (completion.endState === 'abandoned' && ctx.data.dragDetected !== true)) {
       return 'Click' as InteractionType;
     }

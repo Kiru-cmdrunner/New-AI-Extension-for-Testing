@@ -64,6 +64,11 @@ export function getRole(el: Element): string | null {
   const explicit = el.getAttribute('role');
   if (explicit) return explicit;
 
+  // aria-checked implies checkbox semantics regardless of tag.
+  // Amazon renders filter toggles as <a aria-checked="true"> — without
+  // this check they'd be classified as Link instead of Checkbox.
+  if (el.getAttribute('aria-checked') !== null) return 'checkbox';
+
   const oxdRole = oxdInferRole(el);
   if (oxdRole) return oxdRole;
 

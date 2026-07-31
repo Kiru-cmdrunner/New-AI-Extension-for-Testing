@@ -168,29 +168,34 @@ describe('DragDrop Definition — Mouse-Based Drag', () => {
   it('discards when displacement < threshold (not a drag) → downcasts to Click', () => {
     const { runtime, emitted } = setupRuntime();
 
-    // mousedown
+    // mousedown on a DIV with NO interactive classes — DragDrop triggers.
+    // This simulates a genuine non-interactive container that the user
+    // accidentally clicks (e.g., a card body, a layout div).
     runtime.process(
       makeEvent('e1', 'mousedown', {
-        tag: 'BUTTON',
-        accessibleName: 'Click Me',
-        stableId: 'btn-1',
+        tag: 'DIV',
+        accessibleName: 'Card Body',
+        stableId: 'card-body-1',
+        className: 'card layout-container',
       }, {}, { clientX: 100, clientY: 100 }),
     );
 
     // mouseup at almost the same position (displacement = ~3px)
     runtime.process(
       makeEvent('e2', 'mouseup', {
-        tag: 'BUTTON',
-        accessibleName: 'Click Me',
+        tag: 'DIV',
+        accessibleName: 'Card Body',
+        className: 'card layout-container',
       }, {}, { clientX: 102, clientY: 102 }),
     );
 
-    // click should produce a normal Click interaction, not a completed DragDrop
+    // click should produce a normal Click interaction via DragDrop downcast
     runtime.process(
       makeEvent('e3', 'click', {
-        tag: 'BUTTON',
-        accessibleName: 'Click Me',
-        stableId: 'btn-1',
+        tag: 'DIV',
+        accessibleName: 'Card Body',
+        stableId: 'card-body-1',
+        className: 'card layout-container',
       }, {}, { clientX: 102, clientY: 102 }),
     );
 
@@ -198,10 +203,13 @@ describe('DragDrop Definition — Mouse-Based Drag', () => {
     const dragDrop = emitted.find((i) => i.type === 'DragDrop');
     expect(dragDrop).toBeUndefined();
 
-    // The downcast Click (from the discarded DragDrop) is the result
+    // The downcast Click (from the discarded DragDrop) is emitted
     const click = emitted.find((i) => i.type === 'Click');
     expect(click).toBeDefined();
-    expect(click!.metadata.targetName).toBe('Click Me');
+    expect(click!.metadata.targetName).toBe('Card Body');
+
+    // Exactly ONE interaction — no duplicate
+    expect(emitted.length).toBe(1);
   });
 
   it('records source and drop target element tags', () => {

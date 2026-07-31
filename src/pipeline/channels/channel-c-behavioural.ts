@@ -99,6 +99,35 @@ export function captureCheckedState(el: Element): boolean | undefined {
     }
   }
 
+  // Descendant-based fallback: Amazon renders filter toggles as <a> wrapping
+  // <input type="checkbox"> or <i class="a-icon-checkbox">. Walk descendants.
+  const descendantChecked = findDescendantCheckedStateC(el, 3);
+  if (descendantChecked !== undefined) return descendantChecked;
+
+  return undefined;
+}
+
+/**
+ * Walk descendants (max depth) to find a checked-state signal.
+ */
+function findDescendantCheckedStateC(el: Element, maxDepth: number): boolean | undefined {
+  if (maxDepth <= 0) return undefined;
+  const children = el.children;
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i];
+    if (child instanceof HTMLInputElement) {
+      if (child.type === 'checkbox' || child.type === 'radio') return child.checked;
+    }
+    const childAriaChecked = child.getAttribute('aria-checked');
+    if (childAriaChecked !== null) return childAriaChecked === 'true';
+    const childCls = (child.getAttribute('class') || '').toLowerCase();
+    if (childCls.includes('checkbox') || childCls.includes('checked')) {
+      if (childCls.includes('unchecked') || childCls.includes('not-checked')) return false;
+      return true;
+    }
+    const deeper = findDescendantCheckedStateC(child, maxDepth - 1);
+    if (deeper !== undefined) return deeper;
+  }
   return undefined;
 }
 

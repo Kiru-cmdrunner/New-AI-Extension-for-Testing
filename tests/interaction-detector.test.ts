@@ -120,7 +120,8 @@ describe('Detection — Click', () => {
     const interactions = detectInteractions(events);
 
     expect(interactions[0].type).toBe('Click');
-    expect(interactions[0].confidence).toBe(1.0);
+    // Evidence-based: button semantics → trigger intent, confidence 0.3
+    expect(interactions[0].confidence).toBe(0.3);
   });
 
   it('detects Click on a div with role=button', () => {
@@ -329,7 +330,8 @@ describe('Detection — Link', () => {
     const interactions = detectInteractions(events);
 
     expect(interactions[0].type).toBe('Link');
-    expect(interactions[0].confidence).toBe(1.0);
+    // Evidence-based: confidence from tag-anchor signal alone (0.4)
+    expect(interactions[0].confidence).toBe(0.4);
   });
 });
 

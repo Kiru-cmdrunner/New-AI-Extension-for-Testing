@@ -121,6 +121,47 @@ describe('Fix 1: No duplicate Click + Link for same click', () => {
     // Should produce exactly ONE interaction
     expect(emitted.length).toBe(1);
   });
+
+  it('genuine HTML5 drag on a link still captures DragDrop (not excluded from dragstart)', () => {
+    runtime.process(makeEvent('dragstart', {
+      tag: 'A',
+      accessibleName: 'Draggable Link',
+      ariaRole: 'link',
+      stableId: 'drag-link',
+      cssSelector: 'a.drag-link',
+    }, {}, { clientX: 100, clientY: 100 }));
+
+    runtime.process(makeEvent('drop', {
+      tag: 'DIV',
+      accessibleName: 'Drop Zone',
+      stableId: 'drop-zone',
+      cssSelector: 'div.drop-zone',
+    }, {}, { clientX: 200, clientY: 200 }));
+
+    const drag = emitted.find(i => i.type === 'DragDrop');
+    expect(drag).toBeDefined();
+    expect(drag!.metadata.sourceElement).toBe('Draggable Link');
+  });
+
+  it('genuine HTML5 drag on a button still captures DragDrop', () => {
+    runtime.process(makeEvent('dragstart', {
+      tag: 'BUTTON',
+      accessibleName: 'Draggable Button',
+      ariaRole: 'button',
+      stableId: 'drag-btn',
+      cssSelector: 'button.drag-btn',
+    }, {}, { clientX: 100, clientY: 100 }));
+
+    runtime.process(makeEvent('drop', {
+      tag: 'DIV',
+      accessibleName: 'Trash',
+      stableId: 'trash-zone',
+      cssSelector: 'div.trash-zone',
+    }, {}, { clientX: 200, clientY: 200 }));
+
+    const drag = emitted.find(i => i.type === 'DragDrop');
+    expect(drag).toBeDefined();
+  });
 });
 
 describe('Fix 2: Dropdown recognizes aria-haspopup="dialog"', () => {

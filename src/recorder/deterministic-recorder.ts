@@ -401,6 +401,10 @@ const FRAMEWORK_CLASS_ROLE_MAP: { pattern: RegExp; role: string }[] = [
 function getImplicitRole(el: Element): string | null {
   const explicitRole = el.getAttribute('role');
   if (explicitRole && explicitRole.trim()) return explicitRole.trim();
+  // aria-checked implies checkbox semantics regardless of tag.
+  // Sites like Amazon render filter toggles as <a aria-checked="true"> —
+  // without this check they'd be classified as Link instead of Checkbox.
+  if (el.getAttribute('aria-checked') !== null) return 'checkbox';
   const tag = el.tagName;
   if (tag === 'INPUT') {
     const type = el.getAttribute('type') || 'text';
@@ -897,6 +901,43 @@ function captureCheckedState(el: Element): boolean | undefined {
     }
   }
 
+  // Descendant-based fallback: the element itself has no detectable checked
+  // state, but it may wrap a native checkbox or an ARIA-checked child.
+  // Amazon renders filter toggles as <a> wrapping <input type="checkbox">
+  // or <i class="a-icon-checkbox">. Walk descendants (max depth 3) to find
+  // the underlying checked signal.
+  const descendantChecked = findDescendantCheckedState(el, 3);
+  if (descendantChecked !== undefined) return descendantChecked;
+
+  return undefined;
+}
+
+/**
+ * Walk descendants (max depth) to find a checked-state signal.
+ * Returns the checked state if found, undefined otherwise.
+ */
+function findDescendantCheckedState(el: Element, maxDepth: number): boolean | undefined {
+  if (maxDepth <= 0) return undefined;
+  const children = el.children;
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i];
+    // Native checkbox/radio
+    if (child instanceof HTMLInputElement) {
+      if (child.type === 'checkbox' || child.type === 'radio') return child.checked;
+    }
+    // aria-checked on child
+    const childAriaChecked = child.getAttribute('aria-checked');
+    if (childAriaChecked !== null) return childAriaChecked === 'true';
+    // CSS class with "checkbox" (e.g., Amazon's a-icon-checkbox)
+    const childCls = (child.getAttribute('class') || '').toLowerCase();
+    if (childCls.includes('checkbox') || childCls.includes('checked')) {
+      if (childCls.includes('unchecked') || childCls.includes('not-checked')) return false;
+      return true;
+    }
+    // Recurse
+    const deeper = findDescendantCheckedState(child, maxDepth - 1);
+    if (deeper !== undefined) return deeper;
+  }
   return undefined;
 }
 
