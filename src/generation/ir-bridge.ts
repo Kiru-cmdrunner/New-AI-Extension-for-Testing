@@ -146,16 +146,26 @@ function resolveUrlTarget(url: string): ResolvedTarget {
 // ── Frame Resolution ──────────────────────────────────────
 
 /**
+ * Regex to detect CSS-unsafe characters in id/name values.
+ * If matched, we CSS.escape the value. Otherwise pass through (common case).
+ */
+const CSS_ESCAPE_RE = /[^a-zA-Z0-9_-]/;
+
+/**
  * Resolve a frame locator from an element's iframe context.
  *
- * Priority chain:
- * 1. frameSelector (CSS selector from parent — same-origin only)
+ * Uses the service worker's authoritative frame tree data (`swAncestorUrls`)
+ * when available — this provides the complete ancestor chain for nested
+ * iframes. Falls back to the content script's single-frame data otherwise.
+ *
+ * ## Selector Priority (per frame in the chain)
+ * 1. frameSelector (CSS selector — same-origin only)
  * 2. frameName → iframe[name="..."]
  * 3. frameId → iframe#id
- * 4. frameSrc → iframe[src*="partial-url"] (always available)
+ * 4. frameSrc → iframe[src*="partial-url"] (cross-origin safe)
  * 5. frameIndex → fallback nth-of-type
  *
- * Returns null for top-frame elements (no iframeContext or inIframe false).
+ * Returns undefined for top-frame elements.
  */
 function resolveFrame(identity: ElementIdentity): ResolvedFrame | undefined {
   if (!identity.inIframe || !identity.iframeContext) {
@@ -164,60 +174,97 @@ function resolveFrame(identity: ElementIdentity): ResolvedFrame | undefined {
 
   const ctx: IframeContext = identity.iframeContext;
 
+  // ── Resolve the immediate parent frame selector ──
+  const immediateSelector = resolveFrameSelector(ctx);
+  if (!immediateSelector) return undefined;
+
+  // Use SW's authoritative depth if available, fall back to content script's
+  const depth = ctx.swDepth ?? ctx.frameDepth;
+
+  // ── Resolve ancestor chain for nested iframes ──
+  // swAncestorUrls is populated by the SW's FrameTree. It includes all frame URLs
+  // from the top frame down to the immediate parent:
+  //   [topFrameUrl, ancestor1Url, ..., immediateParentUrl]
+  //
+  // For ancestor chain (intermediate iframes that need frameLocator()):
+  // - Exclude index 0 (top frame — it's the page itself, not an iframe)
+  // - Exclude the last element (immediate parent — already handled by `selector`)
+  let ancestors: ResolvedFrame['ancestors'];
+
+  if (ctx.swAncestorUrls && ctx.swAncestorUrls.length > 2) {
+    // Slice from index 1 (skip top frame) to -1 (skip immediate parent)
+    const ancestorUrls = ctx.swAncestorUrls.slice(1, -1);
+    ancestors = ancestorUrls.map(url => resolveFrameFromUrl(url));
+  }
+
+  return {
+    selector: immediateSelector.selector,
+    strategy: immediateSelector.strategy,
+    frameSrc: ctx.frameSrc,
+    depth,
+    ...(ancestors && ancestors.length > 0 ? { ancestors } : {}),
+  };
+}
+
+/**
+ * Resolve a single frame selector from an IframeContext's DOM-derived fields.
+ *
+ * Priority: frameSelector > frameName > frameId > frameSrc > frameIndex
+ */
+function resolveFrameSelector(ctx: IframeContext): {
+  selector: string;
+  strategy: 'css' | 'name' | 'url' | 'index';
+} | null {
   // Priority 1: CSS selector (most reliable — same-origin only)
   if (ctx.frameSelector) {
-    return {
-      selector: ctx.frameSelector,
-      strategy: 'css',
-      frameSrc: ctx.frameSrc,
-      depth: ctx.frameDepth,
-    };
+    return { selector: ctx.frameSelector, strategy: 'css' };
   }
 
-  // Priority 2: name attribute
+  // Priority 2: name attribute — escape quotes to prevent selector injection
   if (ctx.frameName) {
-    return {
-      selector: `iframe[name="${ctx.frameName}"]`,
-      strategy: 'name',
-      frameSrc: ctx.frameSrc,
-      depth: ctx.frameDepth,
-    };
+    const escapedName = ctx.frameName.replace(/["\\]/g, '\\$&');
+    return { selector: `iframe[name="${escapedName}"]`, strategy: 'name' };
   }
 
-  // Priority 3: id attribute
+  // Priority 3: id attribute — escape special CSS characters
   if (ctx.frameId) {
-    return {
-      selector: `iframe#${ctx.frameId}`,
-      strategy: 'css',
-      frameSrc: ctx.frameSrc,
-      depth: ctx.frameDepth,
-    };
+    const escapedId = CSS_ESCAPE_RE.test(ctx.frameId)
+      ? CSS.escape(ctx.frameId)
+      : ctx.frameId;
+    return { selector: `iframe#${escapedId}`, strategy: 'css' };
   }
 
   // Priority 4: source URL partial match (always available — cross-origin safe)
   if (ctx.frameSrc) {
-    // Extract a meaningful URL fragment for matching
-    const src = ctx.frameSrc;
-    const urlPart = extractUrlFragment(src);
-    return {
-      selector: `iframe[src*="${urlPart}"]`,
-      strategy: 'url',
-      frameSrc: src,
-      depth: ctx.frameDepth,
-    };
+    const urlPart = extractUrlFragment(ctx.frameSrc);
+    const escapedUrl = urlPart.replace(/["\\]/g, '\\$&');
+    return { selector: `iframe[src*="${escapedUrl}"]`, strategy: 'url' };
   }
 
   // Priority 5: index-based fallback
   if (ctx.frameIndex !== null) {
-    return {
-      selector: `iframe >> nth=${ctx.frameIndex}`,
-      strategy: 'index',
-      frameSrc: ctx.frameSrc,
-      depth: ctx.frameDepth,
-    };
+    return { selector: `iframe >> nth=${ctx.frameIndex}`, strategy: 'index' };
   }
 
-  return undefined;
+  return null;
+}
+
+/**
+ * Resolve a frame selector from a URL alone (for ancestor frames where
+ * we only have the URL from the SW's FrameTree, not DOM attributes).
+ */
+function resolveFrameFromUrl(url: string): {
+  selector: string;
+  strategy: 'css' | 'name' | 'url' | 'index';
+  frameSrc?: string;
+} {
+  const urlPart = extractUrlFragment(url);
+  const escapedUrl = urlPart.replace(/["\\]/g, '\\$&');
+  return {
+    selector: `iframe[src*="${escapedUrl}"]`,
+    strategy: 'url',
+    frameSrc: url,
+  };
 }
 
 /**

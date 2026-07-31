@@ -153,6 +153,9 @@ function timeoutOption(step: IRStep): string {
  *
  * For iframe-embedded elements (step.frame present), wraps in frameLocator():
  *   page.frameLocator('iframe#payment').getByRole('button', { name: 'Pay' })
+ *
+ * For nested iframes (depth > 1), chains frameLocators:
+ *   page.frameLocator('iframe#outer').frameLocator('iframe#inner').getByRole(...)
  */
 function elementExpression(step: IRStep, pageVar: string): string {
   if (step.target.kind !== 'element') {
@@ -167,7 +170,19 @@ function elementExpression(step: IRStep, pageVar: string): string {
 
   // If the element is inside an iframe, prefix with frameLocator()
   if (step.frame) {
-    return `${pageVar}.frameLocator('${escapeString(step.frame.selector)}').${rendered.expression}`;
+    let prefix = pageVar;
+
+    // Chain ancestor frameLocators first (outermost → innermost ancestors)
+    if (step.frame.ancestors && step.frame.ancestors.length > 0) {
+      for (const ancestor of step.frame.ancestors) {
+        prefix += `.frameLocator('${escapeString(ancestor.selector)}')`;
+      }
+    }
+
+    // Immediate parent frameLocator
+    prefix += `.frameLocator('${escapeString(step.frame.selector)}')`;
+
+    return `${prefix}.${rendered.expression}`;
   }
 
   return baseExpr;

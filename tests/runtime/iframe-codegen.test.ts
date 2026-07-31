@@ -297,31 +297,77 @@ describe('Iframe codegen — regression', () => {
   });
 });
 
-// ── Known Limitation ──────────────────────────────────────────────────
+// ── Nested Iframe Chaining (Phase 3) ──────────────────────────────────
 
-describe('Iframe codegen — known limitations', () => {
-  it('depth > 1 iframes produce a single frameLocator (no chaining)', () => {
-    // KNOWN LIMITATION: The content script's IframeContext captures only the
-    // immediate parent frame, not the full ancestor chain. Nested iframes
-    // (iframe-within-iframe) get a single frameLocator wrapping the immediate
-    // parent. Full chaining requires enhancing the content script to walk
-    // window.parent and collect ancestor frame selectors.
-    //
-    // This test documents the current behavior — it is NOT a bug.
+describe('Iframe codegen — nested iframe chaining (swAncestorUrls)', () => {
+  it('produces chained frameLocator() for depth-2 with SW ancestor data', () => {
     const target = makeIframeTarget({
       iframeContext: makeIframeContext({
         frameSelector: 'iframe#inner-widget',
-        frameDepth: 2, // nested
+        frameSrc: 'https://card.stripe.com/field',
+        frameDepth: 2,
+        // SW enrichment: ancestor chain [topUrl, outerIframeUrl, immediateParentUrl]
+        swDepth: 2,
+        swAncestorUrls: [
+          'https://app.example.com',
+          'https://payment.example.com',
+          'https://card.stripe.com/field',
+        ],
+      } as any),
+    });
+    const interaction = makeInteraction('Click', target);
+
+    const steps = buildPlan([interaction]);
+    expect(steps[0].frame).toBeDefined();
+    expect(steps[0].frame!.depth).toBe(2);
+    expect(steps[0].frame!.ancestors).toBeDefined();
+    expect(steps[0].frame!.ancestors!.length).toBe(1); // outer iframe
+
+    const code = renderAction(steps[0]);
+    // Should have 2 frameLocator calls: outer + inner
+    const locatorCount = (code.match(/frameLocator/g) || []).length;
+    expect(locatorCount).toBe(2);
+  });
+
+  it('produces chained frameLocator() for depth-3 with SW ancestor data', () => {
+    const target = makeIframeTarget({
+      iframeContext: makeIframeContext({
+        frameSelector: 'iframe#deepest',
+        frameSrc: 'https://d.com/page',
+        frameDepth: 3,
+        swDepth: 3,
+        swAncestorUrls: [
+          'https://a.com',
+          'https://b.com',
+          'https://c.com',
+          'https://d.com/page',
+        ],
+      } as any),
+    });
+    const interaction = makeInteraction('Click', target);
+
+    const steps = buildPlan([interaction]);
+    expect(steps[0].frame!.ancestors!.length).toBe(2); // 2 ancestors + 1 immediate = 3 total
+
+    const code = renderAction(steps[0]);
+    const locatorCount = (code.match(/frameLocator/g) || []).length;
+    expect(locatorCount).toBe(3);
+  });
+
+  it('still works for depth-1 (no ancestor chain)', () => {
+    const target = makeIframeTarget({
+      iframeContext: makeIframeContext({
+        frameSelector: 'iframe#simple',
+        frameDepth: 1,
       }),
     });
     const interaction = makeInteraction('Click', target);
 
     const steps = buildPlan([interaction]);
-    const code = renderAction(steps[0]);
+    expect(steps[0].frame!.ancestors).toBeUndefined();
 
-    // Single frameLocator (immediate parent) — not chained
+    const code = renderAction(steps[0]);
     const locatorCount = (code.match(/frameLocator/g) || []).length;
     expect(locatorCount).toBe(1);
-    expect(code).toContain("frameLocator('iframe#inner-widget')");
   });
 });

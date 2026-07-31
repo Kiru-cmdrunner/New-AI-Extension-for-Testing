@@ -257,3 +257,125 @@ window.addEventListener('pageshow', () => {
 if (sessionStorage.getItem(RECORDING_KEY) === 'true') {
   startRecording();
 }
+
+// ── Iframe Selector Reporting (Phase 4: Hybrid Locator Strategy) ──────
+
+/**
+ * Report same-origin iframe selectors to the service worker's FrameTree.
+ *
+ * The content script inside a cross-origin iframe cannot read the parent's DOM
+ * (same-origin policy). The service worker knows the frame tree (URLs, frame IDs)
+ * but cannot inspect the DOM to get CSS selectors. This function bridges that gap:
+ *
+ * - Only runs in the TOP FRAME (window === window.top).
+ * - Scans document.querySelectorAll('iframe') for same-origin iframes.
+ * - Reports each iframe's CSS selector, name, id, and src to the SW.
+ * - The SW correlates by URL and merges into the FrameTree.
+ *
+ * This gives best-of-both-worlds:
+ * - Same-origin iframes: precise CSS selectors from the content script
+ * - Cross-origin iframes: URL-based selectors from the SW frame tree
+ * - Nested iframes: ancestor chain from the SW frame tree + same-origin enrichment
+ *
+ * Architecture: .drytis/IFRAME_ARCHITECTURE_ROADMAP.md §4
+ */
+
+function reportSameOriginIframeSelectors(): void {
+  // Only run in the top frame
+  if (window !== window.top) return;
+
+  try {
+    const iframes = document.querySelectorAll('iframe');
+    const entries: Array<{
+      frameSelector: string;
+      frameName: string | null;
+      frameId: string | null;
+      frameIndex: number;
+      frameSrc: string | null;
+    }> = [];
+
+    iframes.forEach((iframe, index) => {
+      // Try to read the iframe's URL (throws for cross-origin)
+      let frameSrc: string | null = null;
+      try {
+        frameSrc = iframe.contentWindow?.location?.href ?? null;
+      } catch {
+        // Cross-origin — contentWindow.location is inaccessible
+        // Fall back to the src attribute (may differ from actual URL after redirects)
+        frameSrc = iframe.src || null;
+      }
+
+      entries.push({
+        frameSelector: generateIframeSelector(iframe),
+        frameName: iframe.name || null,
+        frameId: iframe.id || null,
+        frameIndex: index,
+        frameSrc,
+      });
+    });
+
+    if (entries.length > 0 && chrome?.runtime?.sendMessage) {
+      chrome.runtime.sendMessage(
+        { type: 'IFRAME_SELECTORS', payload: entries },
+        // Don't retry — this is advisory enrichment, not critical data
+        () => { void chrome.runtime.lastError; },
+      );
+    }
+  } catch {
+    // Permission or timing issue — non-fatal
+  }
+}
+
+/**
+ * Generate a CSS selector for an iframe element.
+ * Uses the same priority chain as identity extraction: id > name > data-testid > nth-of-type.
+ */
+function generateIframeSelector(iframe: HTMLIFrameElement): string {
+  // Priority 1: id attribute
+  if (iframe.id) {
+    return `iframe#${CSS.escape(iframe.id)}`;
+  }
+
+  // Priority 2: name attribute
+  if (iframe.name) {
+    return `iframe[name="${iframe.name}"]`;
+  }
+
+  // Priority 3: data-testid
+  const testId = iframe.getAttribute('data-testid');
+  if (testId) {
+    return `iframe[data-testid="${testId}"]`;
+  }
+
+  // Priority 4: nth-of-type among sibling iframes
+  const parent = iframe.parentElement;
+  if (parent) {
+    const siblings = Array.from(parent.querySelectorAll(':scope > iframe'));
+    const nth = siblings.indexOf(iframe) + 1;
+    const parentSelector = parent.id ? `#${CSS.escape(parent.id)}` : '';
+    return `${parentSelector} iframe:nth-of-type(${nth})`;
+  }
+
+  // Fallback: just tag name
+  return 'iframe';
+}
+
+// Report iframe selectors when the DOM is ready (after startRecording)
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  reportSameOriginIframeSelectors();
+} else {
+  document.addEventListener('DOMContentLoaded', () => {
+    reportSameOriginIframeSelectors();
+  });
+}
+
+// Re-report on dynamic iframe additions (MutationObserver)
+if (window === window.top) {
+  const iframeObserver = new MutationObserver(() => {
+    reportSameOriginIframeSelectors();
+  });
+  iframeObserver.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
+}

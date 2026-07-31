@@ -112,7 +112,7 @@ async function defaultCreateTab(url: string): Promise<number> {
 
 async function defaultInjectScript(tabId: number): Promise<void> {
   await chrome.scripting.executeScript({
-    target: { tabId },
+    target: { tabId, allFrames: true },
     files: ['src/execution/executor-content-script.js'],
   });
 }

@@ -38,6 +38,7 @@ import {
   type AppMessage,
 } from '../shared/types';
 import type { ObservedEvent } from '../shared/component-types';
+import { FrameTree } from './frame-tree';
 import {
   initRecording,
   stopRecording,
@@ -93,15 +94,19 @@ async function pingTabContentScript(tabId: number): Promise<boolean> {
  */
 async function injectContentScript(tabId: number): Promise<boolean> {
   try {
-    // Read the content script path from the manifest (handles Vite hashing)
+    // Read ALL content script paths from the manifest (handles Vite hashing).
+    // Previously only injected content_scripts[0].js[0], missing the V2
+    // control-recorder. Now iterates all entries across all content_scripts.
     const manifest = chrome.runtime.getManifest();
-    const csEntry = manifest.content_scripts?.[0]?.js?.[0];
-    if (!csEntry) return false;
+    const allScripts = manifest.content_scripts?.flatMap(cs => cs.js ?? []) ?? [];
+    if (allScripts.length === 0) return false;
 
-    await chrome.scripting.executeScript({
-      target: { tabId, allFrames: true },
-      files: [csEntry],
-    });
+    for (const script of allScripts) {
+      await chrome.scripting.executeScript({
+        target: { tabId, allFrames: true },
+        files: [script],
+      });
+    }
     return true;
   } catch {
     return false;
@@ -243,6 +248,16 @@ async function handleStartRecording(): Promise<void> {
   // missing from already-open tabs.)
   if (tab?.id) {
     await ensureContentScriptInjected(tab.id);
+
+    // ── Phase 2: Build initial frame tree ──
+    // The FrameTree provides authoritative frame topology for all iframes
+    // in the tab, regardless of origin. Events from iframe content scripts
+    // are enriched with this data when they arrive via sender.tab.frameId.
+    try {
+      await FrameTree.forTab(tab.id).refresh(tab.id);
+    } catch {
+      // webNavigation may not be available — non-fatal
+    }
   }
 
   // Update UI state (preserve recorderEngine flag for Stage 2 feature flag)
@@ -491,8 +506,19 @@ async function handleStopRecording(): Promise<void> {
 
 // ── OBSERVED_EVENT handler (Component Runtime) ──────────────────────────
 
-async function handleObservedEvent(payload: ObservedEvent): Promise<void> {
+async function handleObservedEvent(
+  payload: ObservedEvent,
+  sender?: chrome.runtime.MessageSender,
+): Promise<void> {
   await ensureSessionRestored();
+
+  // ── Phase 2: Enrich with Frame Tree context ──
+  // The service worker is the only component that can see the complete frame
+  // tree across all origins. Use sender.tab.frameId to look up the authoritative
+  // frame context and enrich the event's IframeContext.
+  if (sender?.tab?.id !== undefined && sender.frameId !== undefined) {
+    enrichEventWithFrameTree(payload, sender.tab.id, sender.frameId);
+  }
 
   // Process through the Component Runtime
   const emitted = processObservedEvent(payload);
@@ -505,6 +531,51 @@ async function handleObservedEvent(payload: ObservedEvent): Promise<void> {
     }).catch(() => {
       // Side panel may not be open — ignore
     });
+  }
+}
+
+/**
+ * Enrich an ObservedEvent with authoritative frame tree data from the SW.
+ *
+ * The content script inside a cross-origin iframe can only provide frameSrc
+ * and frameDepth. The SW's FrameTree (built from chrome.webNavigation) knows
+ * the complete topology: all ancestor URLs and the true depth.
+ *
+ * This enrichment replaces the content script's limited single-parent view
+ * with the SW's authoritative frame chain — essential for nested iframe codegen.
+ */
+function enrichEventWithFrameTree(
+  event: ObservedEvent,
+  tabId: number,
+  frameId: number,
+): void {
+  if (frameId === 0) return; // top frame — no enrichment needed
+
+  const tree = FrameTree.forTab(tabId);
+  const node = tree.get(frameId);
+  if (!node) return;
+
+  // If the element already has an iframeContext (from the content script),
+  // enhance it with the SW's authoritative ancestor data.
+  if (event.target.inIframe && event.target.iframeContext) {
+    const ctx = event.target.iframeContext;
+    ctx.swFrameId = node.frameId;
+    ctx.swDepth = node.depth;
+    ctx.swAncestorUrls = [...node.ancestorUrls, node.url];
+  } else if (event.target.inIframe) {
+    // Content script detected iframe but no context was extracted (cross-origin)
+    event.target.iframeContext = {
+      frameSrc: node.url,
+      frameName: null,
+      frameId: null,
+      frameSelector: null,
+      frameXPath: null,
+      frameIndex: null,
+      frameDepth: node.depth,
+      swFrameId: node.frameId,
+      swDepth: node.depth,
+      swAncestorUrls: [...node.ancestorUrls, node.url],
+    };
   }
 }
 
@@ -704,7 +775,18 @@ function broadcastExecutionResult(
 // ── Navigation capture ──────────────────────────────────────────────────
 
 chrome.webNavigation.onCommitted.addListener(async (details) => {
-  // Only capture main frame navigations
+  // ── Phase 2: Refresh the frame tree for ALL navigations ──
+  // Previously filtered non-top-frame navigations entirely (frameId !== 0 → return),
+  // which left the frame tree stale for iframe navigations. Now we refresh the
+  // tree for every navigation, then only emit synthetic navigation events for
+  // the top frame.
+  try {
+    await FrameTree.forTab(details.tabId).refresh(details.tabId);
+  } catch {
+    // webNavigation may not be available — continue
+  }
+
+  // Only emit synthetic navigation events for main frame navigations
   if (details.frameId !== 0) return;
 
   await ensureSessionRestored();
@@ -791,7 +873,7 @@ async function isRecordingActive(): Promise<boolean> {
 
 // ── Message routing ─────────────────────────────────────────────────────
 
-chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
   if (!message || typeof message !== 'object') return;
 
   const msg = message as AppMessage;
@@ -838,9 +920,24 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
 
     case 'OBSERVED_EVENT': {
       const msg = message as { type: string; payload: ObservedEvent };
-      handleObservedEvent(msg.payload);
+      handleObservedEvent(msg.payload, sender);
       sendResponse({ ok: true });
       return true;
+    }
+
+    case 'IFRAME_SELECTORS': {
+      // Phase 4: Hybrid locator strategy
+      // Top-frame content script reports same-origin iframe selectors.
+      // The SW merges these into the FrameTree for precise CSS-based
+      // frameLocator() codegen (replacing URL-guess fallbacks).
+      if (sender.tab?.id !== undefined) {
+        const msg = message as {
+          type: string;
+          payload: import('../background/frame-tree').FrameSelectorEntry[];
+        };
+        FrameTree.forTab(sender.tab.id).mergeSelectors(msg.payload);
+      }
+      break;
     }
 
     default:

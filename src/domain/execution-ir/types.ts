@@ -167,9 +167,13 @@ export type IRInput = string | number | boolean | null;
  * Resolved frame locator for iframe-embedded elements.
  * When present on an IRStep, the adapter must wrap element actions in
  * frameLocator() calls to reach elements inside iframes.
+ *
+ * For nested iframes (depth > 1), `ancestors` carries the outer frame chain
+ * so the adapter can generate chained frameLocator() calls:
+ *   page.frameLocator(outer).frameLocator(inner).getByRole(...)
  */
 export interface ResolvedFrame {
-  /** Playwright frameLocator selector (e.g., 'iframe#payment', 'iframe[name="stripe"]'). */
+  /** Playwright frameLocator selector for the immediate parent iframe. */
   readonly selector: string;
   /** How the selector was derived — guides adapter-specific rendering. */
   readonly strategy: 'css' | 'name' | 'url' | 'index';
@@ -177,6 +181,21 @@ export interface ResolvedFrame {
   readonly frameSrc?: string;
   /** Depth in the iframe nesting (1 = direct child of top-level page). */
   readonly depth: number;
+  /**
+   * Ancestor frame selectors, outermost-first. For nested iframes.
+   * Each entry represents one frameLocator() in the chain.
+   *
+   * Example for depth=2 (page → outer-iframe → inner-iframe → element):
+   *   ancestors[0] = outer iframe selector
+   *   (selector)   = inner iframe selector (immediate parent)
+   *
+   * Undefined or empty for depth=1 (single-level iframe).
+   */
+  readonly ancestors?: ReadonlyArray<{
+    readonly selector: string;
+    readonly strategy: 'css' | 'name' | 'url' | 'index';
+    readonly frameSrc?: string;
+  }>;
 }
 
 /**

@@ -158,7 +158,18 @@ export interface ElementIdentity extends RawElementIdentity {
   elementId: string;
 }
 
-/** Context about an iframe an action occurred inside. */
+/**
+ * Context about an iframe an action occurred inside.
+ *
+ * Fields `frameName`, `frameId`, `frameSelector`, `frameXPath`, and `frameIndex`
+ * are populated by the content script for same-origin iframes only (requires
+ * `window.parent.document` access). Cross-origin iframes have only `frameSrc`
+ * and `frameDepth` from the content script.
+ *
+ * The service worker's FrameTree enriches these with the ancestor chain
+ * (`swAncestorUrls`, `swFrameId`, `swDepth`) for nested iframe code generation.
+ * See `FrameTreeEnrichment`.
+ */
 export interface IframeContext {
   /** The iframe's own URL (from window.location.href). */
   frameSrc: string;
@@ -174,6 +185,28 @@ export interface IframeContext {
   frameIndex: number | null;
   /** How many levels deep this frame is (1 = direct child of top). */
   frameDepth: number;
+
+  // ── Service Worker Frame Tree Enrichment (Phase 2) ──
+  // Populated by the SW when it receives the event via sender.tab.frameId.
+  // These fields provide authoritative frame topology that the content script
+  // cannot determine (especially for cross-origin and nested iframes).
+
+  /**
+   * Chrome frame ID assigned by the service worker's FrameTree.
+   * Used to correlate events across the frame tree.
+   */
+  swFrameId?: number;
+  /**
+   * Authoritative depth from the SW's FrameTree (may differ from frameDepth
+   * if the content script's walk was incomplete for cross-origin parents).
+   */
+  swDepth?: number;
+  /**
+   * Ancestor frame URLs, outermost-first: [topUrl, outerIframeUrl, ...].
+   * Used to build nested frameLocator() chains in code generation.
+   * The last element is the immediate parent iframe's URL.
+   */
+  swAncestorUrls?: string[];
 }
 
 // ── Session Events ───────────────────────────────────────────────────────
