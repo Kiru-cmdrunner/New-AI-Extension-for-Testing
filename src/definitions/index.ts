@@ -23,7 +23,6 @@ import { dragAndDropDefinition } from './drag-and-drop';
 import { dropdownDefinition } from './dropdown';
 import { sliderDefinition } from './slider';
 import { checkboxDefinition } from './checkbox';
-import { stepperDefinition } from './stepper';
 import { fileUploadDefinition } from './file-upload';
 import { radioButtonDefinition } from './radio-button';
 import { tagInputDefinition } from './tag-input';
@@ -48,7 +47,6 @@ import { clickDefinition } from './click';
  *   22 = ModalDialog (after Dropdown — fires as catch-all for generic clicks
  *        that might open modals; confirmed by modal-type surface binding)
  *   25 = Slider
- *   28 = Stepper (standalone +/- counters outside surfaces)
  *   30 = Checkbox
  *   35 = FileUpload
  *   40 = RadioButton
@@ -68,7 +66,6 @@ export const ALL_DEFINITIONS: ComponentDefinition[] = [
   dropdownDefinition,      // priority 20
   modalDialogDefinition,    // priority 22
   sliderDefinition,        // priority 25
-  stepperDefinition,       // priority 28
   checkboxDefinition,      // priority 30
   fileUploadDefinition,    // priority 35
   radioButtonDefinition,   // priority 40
@@ -94,7 +91,6 @@ export {
   dragAndDropDefinition,
   dropdownDefinition,
   sliderDefinition,
-  stepperDefinition,
   checkboxDefinition,
   fileUploadDefinition,
   radioButtonDefinition,

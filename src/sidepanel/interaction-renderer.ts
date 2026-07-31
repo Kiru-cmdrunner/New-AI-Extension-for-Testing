@@ -20,6 +20,58 @@
 import type { ComponentInteraction } from '../shared/component-types';
 import { renderConfigurationSummary, type ConfigurationSession } from '../enrichment/structural-enrichment';
 
+// ── Visibility Tiers ───────────────────────────────────────────────────
+
+/**
+ * Controls how an interaction type is rendered in the side panel.
+ *
+ * - 'primary':    Full-weight timeline card. The user thinks of this as a
+ *                 deliberate step in their workflow.
+ * - 'contextual': Compact, dimmed card. Useful for developer awareness but
+ *                 not a deliberate user action (e.g., scrolling).
+ * - 'internal':   Never rendered as a standalone card. The interaction is
+ *                 captured by the engine for subAction classification, IR
+ *                 generation, or enrichment, but it doesn't represent a
+ *                 meaningful standalone step.
+ */
+type VisibilityTier = 'primary' | 'contextual' | 'internal';
+
+const VISIBILITY_TIER: Record<string, VisibilityTier> = {
+  // Primary — deliberate user actions
+  Click:             'primary',
+  TextEntry:         'primary',
+  Dropdown:          'primary',
+  DatePicker:        'primary',
+  Slider:            'primary',
+  Checkbox:          'primary',
+  RadioButton:       'primary',
+  FileUpload:        'primary',
+  Navigation:        'primary',
+  DragDrop:          'primary',
+  KeyboardShortcut:  'primary',
+  HotkeySequence:    'primary',
+  ModalDialog:       'primary',
+  TagInput:          'primary',
+  OtpInput:          'primary',
+  Hover:             'primary', // confidence-gated at capture time
+  Tab:               'primary',
+  Link:              'primary',
+
+  // Contextual — transit / awareness, not deliberate
+  Scroll:            'contextual',
+
+  // Internal — never standalone
+  Stepper:           'internal',
+};
+
+/**
+ * Check if an interaction should be suppressed from the timeline.
+ * Internal-tier types are never rendered as standalone cards.
+ */
+function shouldSuppress(interaction: ComponentInteraction): boolean {
+  return VISIBILITY_TIER[interaction.type] === 'internal';
+}
+
 // ── Layer 1: Type Display Config ──────────────────────────────────────
 
 interface TypeDisplay {
@@ -94,8 +146,15 @@ function fallbackActionDescription(interaction: ComponentInteraction): string {
   const targetName = String(metadata.targetName ?? 'element');
 
   switch (type) {
-    case 'Click':
+    case 'Click': {
+      // Stepper clicks that escaped their parent surface are captured as
+      // Click with { isStepper: true, stepperDirection: 'increment'|'decrement' }
+      if (metadata.isStepper === true) {
+        const dir = metadata.stepperDirection === 'increment' ? 'Increase' : 'Decrease';
+        return `${dir} "${targetName}"`;
+      }
       return `Click "${targetName}"`;
+    }
 
     case 'TextEntry': {
       const val = String(metadata.textValue ?? '');
@@ -307,9 +366,18 @@ export function createInteractionElement(interaction: ComponentInteraction): HTM
   el.className = 'timeline-event interaction-event';
 
   const display = TYPE_DISPLAY[interaction.type] ?? DEFAULT_DISPLAY;
+  const tier = VISIBILITY_TIER[interaction.type] ?? 'primary';
 
-  // Border color by type
-  el.style.borderLeft = `3px solid ${display.color}`;
+  // Contextual tier: reduced visual weight (dimmed, compact)
+  if (tier === 'contextual') {
+    el.style.opacity = '0.6';
+    el.style.fontSize = '0.85em';
+    el.style.padding = '4px 8px';
+    el.style.borderLeft = `2px solid ${display.color}40`;
+  } else {
+    // Border color by type
+    el.style.borderLeft = `3px solid ${display.color}`;
+  }
 
   // ── Layer 1: Type badge ──
   const badge = document.createElement('span');
@@ -400,6 +468,8 @@ export function renderInteractions(
   }
 
   for (const interaction of interactions) {
+    // Suppress internal-tier types (e.g., standalone Stepper)
+    if (shouldSuppress(interaction)) continue;
     container.appendChild(createInteractionElement(interaction));
   }
 }
@@ -413,6 +483,8 @@ export function renderProductionInteractions(
   interactions: ComponentInteraction[],
 ): void {
   const production = interactions.filter((i) => {
+    // Suppress internal-tier types
+    if (shouldSuppress(i)) return false;
     if (i.endState !== 'completed') return false;
     switch (i.type) {
       case 'TextEntry':

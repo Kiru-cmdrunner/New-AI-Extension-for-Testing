@@ -17,6 +17,7 @@ import type {
   ObservedEvent,
 } from '../shared/component-types';
 import { isInteractiveElement, bestName } from './patterns';
+import { isStepperPlus, isStepperMinus } from './dropdown';
 
 export const clickDefinition: ComponentDefinition = {
   type: 'Click',
@@ -62,6 +63,14 @@ export const clickDefinition: ComponentDefinition = {
     if (isDoubleClick) {
       ctx.data.interactionSubtype = 'DoubleClick';
     }
+
+    // Detect bare stepper clicks (standalone +/- buttons not inside a panel).
+    // These produce a Click with stepper metadata so the rendering layer can
+    // display them appropriately, while keeping the type system simple.
+    const isStepperPlusClick = isStepperPlus(ctx.triggerEvent);
+    const isStepperMinusClick = isStepperMinus(ctx.triggerEvent);
+    const isStepper = isStepperPlusClick || isStepperMinusClick;
+
     return {
       metadata: {
         targetName: bestName(
@@ -74,6 +83,10 @@ export const clickDefinition: ComponentDefinition = {
         clientX: ctx.triggerEvent.clientX,
         clientY: ctx.triggerEvent.clientY,
         ...(isDoubleClick ? { doubleClick: true } : {}),
+        ...(isStepper ? {
+          isStepper: true,
+          stepperDirection: isStepperPlusClick ? 'increment' : 'decrement',
+        } : {}),
       },
     };
   },

@@ -751,6 +751,8 @@ export function renderDetectedInteractions(
   }
 
   for (const interaction of interactions) {
+    // Suppress internal-tier types (standalone Stepper should never appear)
+    if (interaction.type === 'Stepper') continue;
     container.appendChild(createDetectedInteractionElement(interaction));
   }
 }

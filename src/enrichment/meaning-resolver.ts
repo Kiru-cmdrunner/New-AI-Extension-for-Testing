@@ -124,8 +124,13 @@ export function resolveMeaning(
   // ── Interaction-type-specific meaning (fallback) ─────────────────
 
   switch (type) {
-    case 'Click':
+    case 'Click': {
+      if (metadata.isStepper === true) {
+        const dir = metadata.stepperDirection === 'increment' ? 'Increase' : 'Decrease';
+        return `${dir} "${targetName}"`;
+      }
       return `Click "${targetName}"`;
+    }
 
     case 'TextEntry': {
       const val = String(metadata.textValue ?? '');

@@ -448,8 +448,8 @@ describe('DateRangePicker', () => {
 // ── Registry Tests ─────────────────────────────────────────────────────
 
 describe('Definition Registry', () => {
-  it('includes all 20 definitions in ALL_DEFINITIONS', () => {
-    expect(ALL_DEFINITIONS.length).toBeGreaterThanOrEqual(20);
+  it('includes all 19 definitions in ALL_DEFINITIONS (Stepper removed)', () => {
+    expect(ALL_DEFINITIONS.length).toBeGreaterThanOrEqual(19);
   });
 
   it('includes TagInput at priority 45', () => {
