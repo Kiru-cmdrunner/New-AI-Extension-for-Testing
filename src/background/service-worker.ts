@@ -19,6 +19,7 @@
 import { StorageService } from '../storage/storage-service';
 import { runPipeline } from '../recorder/pipeline/pipeline-runner';
 import { build as buildIRPlan } from '../generation/ir-bridge';
+import { enrichInteractions } from '../generation/interaction-enrichment';
 import { PlaywrightCodeGenerator } from '../adapters/playwright/project-generator';
 import { DexieUnitOfWorkFactory } from '../repository/v2/dexie/dexie-unit-of-work-factory';
 import { persistSession } from '../repository/services/session-persistence-service';
@@ -392,6 +393,14 @@ async function handleStopRecording(): Promise<void> {
 
     const tab = await getActiveTab();
 
+    // Run the Interaction Enrichment Pass (E1) — resolves locators and
+    // derives assertions with backfilled locators before IR generation.
+    // Architecture: .drytis/TIER2A_DESIGN.md §3
+    const enrichment = enrichInteractions({
+      interactions: allInteractions,
+      fragment: understandingResult?.fragment ?? null,
+    });
+
     const irPlan = buildIRPlan({
       events: events as unknown as SessionEvent[],
       interactions: allInteractions,
@@ -401,7 +410,7 @@ async function handleStopRecording(): Promise<void> {
         title: recordingStartTitle || tab?.title || null,
       },
       testCaseName: (await StorageService.getTestCaseDraft())?.name ?? 'Recorded Test',
-    });
+    }, enrichment);
 
     await StorageService.setRaw(StorageKeys.EXECUTION_IR_PLAN, irPlan);
 

@@ -51,6 +51,7 @@ import {
 } from '../domain/locator-ranking';
 import type { IRBridgeInput } from './ir-bridge-input';
 import { deriveStateAssertions } from './assertion-deriver';
+import type { EnrichmentOutput } from './interaction-enrichment';
 
 // ── Bridge Interaction Type ──────────────────────────────────────────
 //
@@ -176,7 +177,7 @@ const DEFAULT_BRIDGE_TYPE: Record<string, BridgeInteractionType> = {
  *
  * It is a pure, lossless transform — same input always produces the same output.
  */
-function toBridgeInteraction(ci: ComponentInteraction): BridgeInteraction {
+export function toBridgeInteraction(ci: ComponentInteraction): BridgeInteraction {
   // Resolve type
   const subtype = ci.interactionSubtype as BridgeInteractionType | undefined;
   const type: BridgeInteractionType =
@@ -308,7 +309,9 @@ function toBridgeInteraction(ci: ComponentInteraction): BridgeInteraction {
     rawEventTypes: [...new Set((ci.memberEvents ?? []).map((e) => e.eventType))],
     target: ci.trigger,
     metadata: result,
-    confidence: ci.endState === 'completed' ? 1.0 : 0.5,
+    // Use evidence-calibrated confidence when available; fall back to
+    // endState-based heuristic for interactions that bypassed annotation.
+    confidence: ci.confidence ?? (ci.endState === 'completed' ? 1.0 : 0.5),
   };
 }
 
@@ -385,7 +388,7 @@ const INTERACTION_TO_IR_ACTION: Record<BridgeInteractionType, IRAction> = {
  *
  * @see src/domain/locator-ranking.ts for the shared ranking logic.
  */
-function resolveLocatorsForIR(identity: ElementIdentity): ResolvedLocator[] {
+export function resolveLocatorsForIR(identity: ElementIdentity): ResolvedLocator[] {
   const candidates = extractCandidatesFromIdentity(identity);
   const ranked = rankLocatorCandidates(candidates);
   // RankedLocator is structurally compatible with ResolvedLocator
@@ -834,7 +837,7 @@ function extractAIEnrichment(event: SessionEvent | undefined): AIUnderstanding |
  * Maps DOM constraints captured by the enrichment pipeline into
  * executable validation assertions.
  */
-function deriveAssertions(
+export function deriveAssertions(
   elementId: string,
   fragment: ApplicationKnowledgeFragment | null,
 ): IRAssertion[] {
@@ -1102,12 +1105,19 @@ function applyReadabilityRules(steps: IRStep[]): IRStep[] {
  * @param input Encapsulated bridge inputs (see IRBridgeInput)
  * @returns ExecutionIRPlan — the unified execution representation
  */
-export function build(input: IRBridgeInput): ExecutionIRPlan {
+export function build(input: IRBridgeInput, enrichment?: EnrichmentOutput): ExecutionIRPlan {
   const { events, recordingContext, testCaseName } = input;
   const fragment = input.understanding?.fragment ?? null;
 
   // Convert ComponentInteraction[] → BridgeInteraction[] (internal normalization)
   const interactions = input.interactions.map(toBridgeInteraction);
+
+  // Build a lookup from interactionId to original ComponentInteraction for
+  // accessing semantic fields (intent, evidenceTrail) not present on BridgeInteraction.
+  const componentInteractionById = new Map<string, ComponentInteraction>();
+  for (const ci of input.interactions) {
+    componentInteractionById.set(ci.interactionId, ci);
+  }
 
   const eventIndex = buildEventIndex(events);
   const steps: IRStep[] = [];
@@ -1276,21 +1286,53 @@ export function build(input: IRBridgeInput): ExecutionIRPlan {
     // Source event ID
     const sourceEventId = interaction.eventIds[0] ?? event?.actionId;
 
-    // Derive assertions from knowledge fragment
-    const elementId = target.kind === 'element' ? target.elementId : '';
-    const constraintAssertions = deriveAssertions(elementId, fragment);
+    // Derive assertions. When enrichment output is provided (Interaction
+    // Enrichment Pass), use pre-derived assertions with already-backfilled
+    // locators. Otherwise, fall back to inline derivation + backfill.
+    let assertions: IRAssertion[];
+    if (enrichment) {
+      assertions = enrichment.assertions.get(interaction.interactionId) ?? [];
+    } else {
+      // Backward-compatible path: derive + backfill inline
+      const elementId = target.kind === 'element' ? target.elementId : '';
+      const constraintAssertions = deriveAssertions(elementId, fragment);
+      const stateAssertions = deriveStateAssertions(interaction);
+      const rawAssertions = [...constraintAssertions, ...stateAssertions];
 
-    // Phase 2: Derive state-based assertions from interaction metadata
-    const stateAssertions = deriveStateAssertions(interaction);
-
-    // Merge: constraint assertions first (from knowledge), then state assertions
-    const assertions = [...constraintAssertions, ...stateAssertions];
+      // Backfill resolved locators into assertion targets (F5 fix).
+      // deriveStateAssertions() creates targets with empty resolvedLocators[].
+      // Without locators, the Playwright assertion renderer crashes. Copy the
+      // step's resolved locators into every element-kind assertion target.
+      const targetLocators = target.kind === 'element' ? target.resolvedLocators : [];
+      const targetElementId = target.kind === 'element' ? target.elementId : '';
+      const targetElementName = target.kind === 'element' ? target.elementName : '';
+      assertions = rawAssertions.map((assertion) => {
+        if (assertion.target.kind === 'element') {
+          return {
+            ...assertion,
+            target: {
+              ...assertion.target,
+              resolvedLocators: targetLocators,
+              elementId: targetElementId || assertion.target.elementId,
+              elementName: targetElementName || assertion.target.elementName,
+            },
+          };
+        }
+        return assertion;
+      });
+    }
 
     // Execution parameters — default, with wait strategy based on confidence
     const executionParameters = {
       ...DEFAULT_EXECUTION_PARAMETERS,
       waitStrategy: interaction.confidence < 0.7 ? ('visible' as const) : DEFAULT_EXECUTION_PARAMETERS.waitStrategy,
     };
+
+    // Map semantic intent and evidence trail from the original ComponentInteraction.
+    // These fields are set by the evidence engine in onEmit via annotateWithEvidence().
+    const originalCi = componentInteractionById.get(interaction.interactionId);
+    const intent = originalCi?.intent;
+    const evidenceTrail = originalCi?.evidenceTrail;
 
     steps.push({
       id: `step-${String(stepCounter + 1).padStart(4, '0')}`,
@@ -1305,6 +1347,8 @@ export function build(input: IRBridgeInput): ExecutionIRPlan {
       sourceEventId,
       plainEnglish,
       ...(frame ? { frame } : {}),
+      ...(intent ? { intent } : {}),
+      ...(evidenceTrail?.length ? { evidenceTrail } : {}),
     });
 
     stepCounter++;

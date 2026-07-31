@@ -1,6 +1,6 @@
 {
-  "testCaseId": "tc-1785528372631",
-  "testCaseVersionId": "tcv-1785528372631",
+  "testCaseId": "tc-1785532310697",
+  "testCaseVersionId": "tcv-1785532310697",
   "testCaseVersionNumber": 1,
   "title": "Golden Master Test",
   "tags": [],
@@ -263,10 +263,29 @@
           "severity": "hard",
           "target": {
             "kind": "element",
-            "elementId": "",
-            "elementName": "",
+            "elementId": "elem-0001",
+            "elementName": "Test Button",
             "pageOrComponent": "",
-            "resolvedLocators": []
+            "resolvedLocators": [
+              {
+                "type": "role",
+                "value": "button[name=\"Test Button\"]",
+                "priority": 1,
+                "confidence": 0.62
+              },
+              {
+                "type": "accessibleName",
+                "value": "Test Button",
+                "priority": 2,
+                "confidence": 0.62
+              },
+              {
+                "type": "css",
+                "value": "body > button",
+                "priority": 3,
+                "confidence": 0.35
+              }
+            ]
           },
           "property": "value"
         }
@@ -320,10 +339,29 @@
           "severity": "hard",
           "target": {
             "kind": "element",
-            "elementId": "",
-            "elementName": "",
+            "elementId": "elem-0001",
+            "elementName": "Test Button",
             "pageOrComponent": "",
-            "resolvedLocators": []
+            "resolvedLocators": [
+              {
+                "type": "role",
+                "value": "button[name=\"Test Button\"]",
+                "priority": 1,
+                "confidence": 0.62
+              },
+              {
+                "type": "accessibleName",
+                "value": "Test Button",
+                "priority": 2,
+                "confidence": 0.62
+              },
+              {
+                "type": "css",
+                "value": "body > button",
+                "priority": 3,
+                "confidence": 0.35
+              }
+            ]
           },
           "property": "checked"
         }
@@ -377,10 +415,29 @@
           "severity": "hard",
           "target": {
             "kind": "element",
-            "elementId": "",
-            "elementName": "",
+            "elementId": "elem-0001",
+            "elementName": "Test Button",
             "pageOrComponent": "",
-            "resolvedLocators": []
+            "resolvedLocators": [
+              {
+                "type": "role",
+                "value": "button[name=\"Test Button\"]",
+                "priority": 1,
+                "confidence": 0.62
+              },
+              {
+                "type": "accessibleName",
+                "value": "Test Button",
+                "priority": 2,
+                "confidence": 0.62
+              },
+              {
+                "type": "css",
+                "value": "body > button",
+                "priority": 3,
+                "confidence": 0.35
+              }
+            ]
           },
           "property": "value"
         }
@@ -434,10 +491,29 @@
           "severity": "hard",
           "target": {
             "kind": "element",
-            "elementId": "",
-            "elementName": "",
+            "elementId": "elem-0001",
+            "elementName": "Test Button",
             "pageOrComponent": "",
-            "resolvedLocators": []
+            "resolvedLocators": [
+              {
+                "type": "role",
+                "value": "button[name=\"Test Button\"]",
+                "priority": 1,
+                "confidence": 0.62
+              },
+              {
+                "type": "accessibleName",
+                "value": "Test Button",
+                "priority": 2,
+                "confidence": 0.62
+              },
+              {
+                "type": "css",
+                "value": "body > button",
+                "priority": 3,
+                "confidence": 0.35
+              }
+            ]
           },
           "property": "value"
         }
@@ -491,10 +567,29 @@
           "severity": "hard",
           "target": {
             "kind": "element",
-            "elementId": "",
-            "elementName": "",
+            "elementId": "elem-0001",
+            "elementName": "Test Button",
             "pageOrComponent": "",
-            "resolvedLocators": []
+            "resolvedLocators": [
+              {
+                "type": "role",
+                "value": "button[name=\"Test Button\"]",
+                "priority": 1,
+                "confidence": 0.62
+              },
+              {
+                "type": "accessibleName",
+                "value": "Test Button",
+                "priority": 2,
+                "confidence": 0.62
+              },
+              {
+                "type": "css",
+                "value": "body > button",
+                "priority": 3,
+                "confidence": 0.35
+              }
+            ]
           },
           "property": "value"
         }

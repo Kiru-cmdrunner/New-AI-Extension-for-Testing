@@ -239,6 +239,26 @@ export interface IRStep {
    * elements inside iframes.
    */
   readonly frame?: ResolvedFrame;
+
+  // ── Semantic enrichment (optional — populated by Interaction Enrichment Pass) ──
+
+  /**
+   * Semantic intent inferred by the evidence engine (toggle, select, input,
+   * navigate, trigger, explore). Undefined if evidence annotation didn't run.
+   * Architecture: .drytis/TIER2A_DESIGN.md §4.2
+   */
+  readonly intent?: string;
+  /**
+   * Evidence trail — the audit trail showing why this interaction was
+   * classified with its current type and confidence. Array of IntentVote
+   * objects. Undefined if evidence annotation didn't run.
+   */
+  readonly evidenceTrail?: ReadonlyArray<{
+    intent: string;
+    weight: number;
+    source: string;
+    reason: string;
+  }>;
 }
 
 // ── 2.8 IREnvironment ─────────────────────────────────────
