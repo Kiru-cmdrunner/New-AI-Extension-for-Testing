@@ -129,7 +129,7 @@ export const tagInputDefinition: ComponentDefinition = {
     const { inputType, isContentEditable } = event.domContext;
 
     // Must be a text-type input
-    if (!isTextInput(tag, inputType) && !isContentEditable) return false;
+    if (!isTextInput(tag, inputType) && !isContentEditable) return null;
 
     // Must be inside a tag-input container
     if (!isInsideTagContainer(event)) return null;

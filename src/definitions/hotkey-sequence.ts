@@ -249,24 +249,3 @@ export const hotkeySequenceDefinition: ComponentDefinition = {
     };
   },
 };
-
-/**
- * Check if a timeout has expired for a HotkeySequence session.
- * Exported so the runtime can call it on its sweep cycle.
- */
-export function hasSequenceTimedOut(ctx: ComponentContext, now: number): boolean {
-  const firstKeyTime = ctx.data.firstKeyTime as number;
-  if (!firstKeyTime) return false;
-  return now - firstKeyTime > SEQUENCE_TIMEOUT_MS;
-}
-
-/**
- * Called by the runtime when a HotkeySequence is first triggered to
- * record the first key's data into the context.
- */
-export function recordFirstKey(event: ObservedEvent, ctx: ComponentContext): void {
-  ctx.data.firstKey = event.key;
-  ctx.data.firstKeyCode = event.code;
-  ctx.data.firstKeyEvent = event;
-  ctx.data.firstKeyTime = event.timestamp;
-}

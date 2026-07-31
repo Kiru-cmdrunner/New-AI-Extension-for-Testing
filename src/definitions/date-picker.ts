@@ -53,14 +53,6 @@ const RANGE_PAIR_RE =
   /(?:start.?date.*end.?date|end.?date.*start.?date|check.?in.*check.?out|check.?out.*check.?in|depart.*return|return.*depart|from.?date.*to.?date|to.?date.*from.?date|outbound.*inbound|inbound.*outbound|range)/i;
 
 /**
- * Individual field names that indicate ONE side of a range pair.
- * These alone do NOT prove a range — they're used to match adjacent
- * fields on the page.
- */
-const RANGE_FIELD_RE =
-  /(?:start.?date|end.?date|check.?in|check.?out|depart|return|outbound|inbound|from.?date|to.?date)/i;
-
-/**
  * Check if this date picker is likely a range picker.
  * Signals: container classes, ARIA labels, input names.
  *

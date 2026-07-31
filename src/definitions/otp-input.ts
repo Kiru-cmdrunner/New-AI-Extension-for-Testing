@@ -195,6 +195,12 @@ export const otpInputDefinition: ComponentDefinition = {
           digits.set(idx, char);
         }
         ctx.data.lastInputTimestamp = event.timestamp;
+
+        // Auto-complete heuristic: if a multi-char paste covers all slots,
+        // complete immediately. This handles the common "paste full OTP" flow.
+        if (char.length > 1 && digits.size >= char.length) {
+          return { endState: 'completed' };
+        }
       }
       return null;
     }

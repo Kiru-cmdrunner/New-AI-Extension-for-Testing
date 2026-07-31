@@ -438,11 +438,10 @@ describe('DateRangePicker', () => {
 
     // Should produce one DatePicker with range data
     const dp = emitted.find(i => i.type === 'DatePicker');
-    if (dp) {
-      expect(dp.metadata.isDateRange).toBe(true);
-      expect(dp.metadata.startDate).toBeTruthy();
-      expect(dp.metadata.endDate).toBeTruthy();
-    }
+    expect(dp).toBeDefined();
+    expect(dp!.metadata.isDateRange).toBe(true);
+    expect(dp!.metadata.startDate).toBeTruthy();
+    expect(dp!.metadata.endDate).toBeTruthy();
   });
 });
 
@@ -481,5 +480,158 @@ describe('Definition Registry', () => {
     const priorities = ALL_DEFINITIONS.map(d => d.priority);
     const sorted = [...priorities].sort((a, b) => a - b);
     expect(priorities).toEqual(sorted);
+  });
+});
+
+// ── Tree Dropdown Tests ─────────────────────────────────────────────────
+
+describe('Tree Dropdown', () => {
+  let emitted: ComponentInteraction[];
+  let runtime: ComponentRuntime;
+
+  beforeEach(() => {
+    evtCounter = 0;
+    emitted = [];
+    runtime = createRuntime([...ALL_DEFINITIONS], {
+      onEmit: (i) => emitted.push(i),
+    });
+  });
+
+  it('classifies expand/collapse clicks via aria-expanded transitions', () => {
+    const TRIGGER = {
+      tag: 'DIV',
+      accessibleName: 'Category',
+      ariaRole: 'combobox',
+      stableId: 'tree-trigger',
+      cssSelector: 'div.tree-trigger',
+    };
+
+    // Open dropdown
+    runtime.process(makeEvent('click', TRIGGER, {
+      ariaHasPopup: 'listbox',
+    }));
+
+    // Click a tree node that expands (ariaExpanded: true = expanded after click)
+    runtime.process(makeEvent('click', {
+      tag: 'DIV',
+      accessibleName: 'Electronics',
+      ariaRole: 'treeitem',
+      className: 'tree-node',
+      stableId: 'node-electronics',
+      cssSelector: 'div.tree-node',
+    }, {
+      surfaceId: 'tree-surface',
+      surfaceType: 'popover',
+      ariaExpanded: 'true',
+    }));
+
+    // Close
+    runtime.process(makeEvent('click', {
+      tag: 'BODY',
+      accessibleName: '',
+      stableId: 'body',
+      cssSelector: 'body',
+    }));
+
+    const dropdown = emitted.find(i => i.type === 'Dropdown');
+    expect(dropdown).toBeDefined();
+    const expandAction = dropdown!.metadata.subActions?.find(
+      (s: any) => s.action === 'expandNode'
+    );
+    expect(expandAction).toBeDefined();
+  });
+});
+
+// ── Range Slider Tests ─────────────────────────────────────────────────
+
+describe('Range Slider', () => {
+  let emitted: ComponentInteraction[];
+  let runtime: ComponentRuntime;
+
+  beforeEach(() => {
+    evtCounter = 0;
+    emitted = [];
+    runtime = createRuntime([...ALL_DEFINITIONS], {
+      onEmit: (i) => emitted.push(i),
+    });
+  });
+
+  it('sets RangeSlider subtype when dual-handle class evidence exists', () => {
+    const TARGET = {
+      tag: 'INPUT',
+      accessibleName: 'Min Price',
+      ariaRole: 'slider',
+      stableId: 'range-min',
+      cssSelector: 'input.range-min',
+    };
+    const DOM = {
+      inputType: 'range',
+      nativeMin: '0',
+      nativeMax: '500',
+      ancestorClasses: ['range-slider-container'],
+      ariaValueNow: '100',
+      ariaValueMin: '0',
+      ariaValueMax: '500',
+    };
+
+    runtime.process(makeEvent('mousedown', TARGET, DOM, {
+      clientX: 50,
+      valueBefore: '100',
+      valueAfter: '100',
+    }));
+    runtime.process(makeEvent('mousemove', TARGET, DOM, {
+      clientX: 150,
+      valueBefore: '100',
+      valueAfter: '250',
+    }));
+    runtime.process(makeEvent('mouseup', TARGET, DOM, {
+      clientX: 150,
+      valueBefore: '250',
+      valueAfter: '250',
+    }));
+    runtime.process(makeEvent('click', TARGET, DOM, {
+      valueBefore: '250',
+      valueAfter: '250',
+    }));
+
+    const slider = emitted.find(i => i.type === 'Slider');
+    expect(slider).toBeDefined();
+    expect(slider!.interactionSubtype).toBe('RangeSlider');
+  });
+
+  it('does NOT set RangeSlider when no dual-handle class evidence', () => {
+    const TARGET = {
+      tag: 'INPUT',
+      accessibleName: 'Price Range',
+      ariaRole: 'slider',
+      stableId: 'plain-slider',
+      cssSelector: 'input.slider',
+    };
+    const DOM = {
+      inputType: 'range',
+      nativeMin: '0',
+      nativeMax: '100',
+      ancestorClasses: ['slider-container'],
+      ariaValueNow: '50',
+    };
+
+    runtime.process(makeEvent('mousedown', TARGET, DOM, {
+      clientX: 50,
+      valueBefore: '50',
+      valueAfter: '50',
+    }));
+    runtime.process(makeEvent('mouseup', TARGET, DOM, {
+      clientX: 100,
+      valueBefore: '50',
+      valueAfter: '75',
+    }));
+    runtime.process(makeEvent('click', TARGET, DOM, {
+      valueBefore: '75',
+      valueAfter: '75',
+    }));
+
+    const slider = emitted.find(i => i.type === 'Slider');
+    expect(slider).toBeDefined();
+    expect(slider!.interactionSubtype).toBe('NativeSlider');
   });
 });
