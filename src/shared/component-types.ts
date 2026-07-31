@@ -25,6 +25,7 @@ import type { ElementIdentity } from './types';
  */
 export type BrowserEventType =
   | 'click'
+  | 'dblclick'
   | 'mousedown'
   | 'mouseup'
   | 'contextmenu'
@@ -202,7 +203,10 @@ export type InteractionType =
   | 'DragDrop'
   | 'KeyboardShortcut'
   | 'ModalDialog'
-  | 'Stepper';
+  | 'Stepper'
+  | 'TagInput'
+  | 'OtpInput'
+  | 'HotkeySequence';
 
 // ── Component Lifecycle ────────────────────────────────────────────────
 

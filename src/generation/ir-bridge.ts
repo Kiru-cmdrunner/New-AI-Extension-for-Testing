@@ -97,6 +97,9 @@ const INTERACTION_TO_IR_ACTION: Record<InteractionType, IRAction> = {
   Modal: IRAction.CLICK,
   ModalDialog: IRAction.CLICK,
   Stepper: IRAction.CLICK,
+  TagInput: IRAction.FILL,
+  OtpInput: IRAction.FILL,
+  HotkeySequence: IRAction.PRESS_KEY,
   Drawer: IRAction.CLICK,
   Popover: IRAction.CLICK,
   Tooltip: IRAction.HOVER,
@@ -448,6 +451,22 @@ function generateDescription(
       const title = interaction.metadata.modalTitle ?? name;
       return businessField ? `Open the ${businessField} dialog` : `Open the "${title}" dialog`;
     }
+    case 'TagInput': {
+      const tags = (interaction.metadata.tags as string[]) ?? [];
+      const field = businessField ?? name;
+      if (tags.length === 1) return `Add tag "${tags[0]}" to ${field}`;
+      if (tags.length > 1) return `Add tags ${tags.map(t => `"${t}"`).join(', ')} to ${field}`;
+      return `Type in ${field}`;
+    }
+    case 'OtpInput': {
+      const value = (interaction.metadata.otpValue as string) ?? '';
+      const field = businessField ?? name;
+      return `Enter ${value} in the ${field}`;
+    }
+    case 'HotkeySequence': {
+      const sequence = (interaction.metadata.sequenceDisplay as string) ?? 'key sequence';
+      return `Press ${sequence}`;
+    }
     default:
       return businessField
         ? `Click the ${businessField}`
@@ -511,6 +530,15 @@ function extractInputValue(
 
     case 'Slider':
       return interaction.metadata.sliderValue ?? null;
+
+    case 'TagInput':
+      return ((interaction.metadata.tags as string[]) ?? []).join(', ') || null;
+
+    case 'OtpInput':
+      return interaction.metadata.otpValue ?? null;
+
+    case 'HotkeySequence':
+      return interaction.metadata.playwrightSequence ?? interaction.metadata.sequenceDisplay ?? null;
 
     case 'KeyboardShortcut':
       return interaction.metadata.playwrightKey ?? interaction.metadata.shortcutKey ?? null;

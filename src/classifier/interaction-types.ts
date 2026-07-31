@@ -60,6 +60,9 @@ export type InteractionType =
   | 'Tooltip'
   | 'ModalDialog'
   | 'Stepper'
+  | 'TagInput'
+  | 'OtpInput'
+  | 'HotkeySequence'
   // Window & Frame
   | 'NewTab'
   | 'NewWindow'
@@ -227,8 +230,8 @@ export interface DetectedInteraction {
 export const INTERACTION_CATEGORIES: Record<string, InteractionType[]> = {
   Navigation: ['PageNavigation', 'Back', 'Forward', 'Refresh'],
   Mouse: ['Click', 'DoubleClick', 'RightClick', 'Hover', 'DragDrop'],
-  Keyboard: ['KeyboardShortcut'],
-  'Text Entry': ['TextEntry', 'RichTextEditor'],
+  Keyboard: ['KeyboardShortcut', 'HotkeySequence'],
+  'Text Entry': ['TextEntry', 'RichTextEditor', 'TagInput', 'OtpInput'],
   'Selection Controls': ['NativeDropdown', 'CustomDropdown', 'SearchableDropdown', 'Autocomplete', 'MultiSelect', 'Checkbox', 'RadioButton', 'ToggleSwitch', 'Slider', 'Stepper'],
   'Date & Time': ['DatePicker', 'TimePicker', 'DateTimePicker'],
   'File Upload': ['FileUpload', 'DragDropUpload'],
@@ -305,6 +308,9 @@ export const TYPE_DISPLAY: Record<InteractionType, { label: string; icon: string
   Tooltip:         { label: 'Tooltip',          icon: '💡', color: '#f59e0b' },
   ModalDialog:     { label: 'Modal Dialog',     icon: '🪟', color: '#f59e0b' },
   Stepper:         { label: 'Stepper',          icon: '🔢', color: '#155e75' },
+  TagInput:        { label: 'Tag Input',        icon: '🏷️', color: '#8b5cf6' },
+  OtpInput:        { label: 'OTP Input',        icon: '🔐', color: '#dc2626' },
+  HotkeySequence:  { label: 'Hotkey Sequence',  icon: '⌨️', color: '#059669' },
   NewTab:          { label: 'New Tab',         icon: '🗂️', color: '#3b82f6' },
   NewWindow:       { label: 'New Window',      icon: '🪟', color: '#3b82f6' },
   Iframe:          { label: 'Iframe',          icon: '🖼️', color: '#3b82f6' },

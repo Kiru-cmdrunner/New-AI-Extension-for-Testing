@@ -16,6 +16,7 @@
 
 import type { ComponentDefinition } from '../shared/component-types';
 import { keyboardShortcutDefinition } from './keyboard-shortcut';
+import { hotkeySequenceDefinition } from './hotkey-sequence';
 import { modalDialogDefinition } from './modal-dialog';
 import { datePickerDefinition } from './date-picker';
 import { dragAndDropDefinition } from './drag-and-drop';
@@ -25,6 +26,8 @@ import { checkboxDefinition } from './checkbox';
 import { stepperDefinition } from './stepper';
 import { fileUploadDefinition } from './file-upload';
 import { radioButtonDefinition } from './radio-button';
+import { tagInputDefinition } from './tag-input';
+import { otpInputDefinition } from './otp-input';
 import { textEntryDefinition } from './text-entry';
 import { hoverDefinition } from './hover';
 import { linkDefinition } from './link';
@@ -59,6 +62,7 @@ import { clickDefinition } from './click';
  */
 export const ALL_DEFINITIONS: ComponentDefinition[] = [
   keyboardShortcutDefinition, // priority 5
+  hotkeySequenceDefinition,   // priority 6
   datePickerDefinition,     // priority 10
   dragAndDropDefinition,    // priority 15
   dropdownDefinition,      // priority 20
@@ -68,6 +72,8 @@ export const ALL_DEFINITIONS: ComponentDefinition[] = [
   checkboxDefinition,      // priority 30
   fileUploadDefinition,    // priority 35
   radioButtonDefinition,   // priority 40
+  tagInputDefinition,      // priority 45
+  otpInputDefinition,      // priority 46
   textEntryDefinition,     // priority 50
   hoverDefinition,         // priority 60
   tabDefinition,           // priority 65
@@ -82,6 +88,7 @@ export const ALL_DEFINITIONS: ComponentDefinition[] = [
  */
 export {
   keyboardShortcutDefinition,
+  hotkeySequenceDefinition,
   modalDialogDefinition,
   datePickerDefinition,
   dragAndDropDefinition,
@@ -91,6 +98,8 @@ export {
   checkboxDefinition,
   fileUploadDefinition,
   radioButtonDefinition,
+  tagInputDefinition,
+  otpInputDefinition,
   textEntryDefinition,
   hoverDefinition,
   linkDefinition,

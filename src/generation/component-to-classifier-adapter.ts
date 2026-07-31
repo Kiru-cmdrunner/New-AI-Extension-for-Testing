@@ -42,6 +42,9 @@ const DEFAULT_SUBTYPE: Record<string, ClassifierInteractionType> = {
   KeyboardShortcut: 'KeyboardShortcut',
   ModalDialog: 'ModalDialog',
   Stepper: 'Stepper',
+  TagInput: 'TagInput',
+  OtpInput: 'OtpInput',
+  HotkeySequence: 'HotkeySequence',
 };
 
 /**

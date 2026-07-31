@@ -180,6 +180,23 @@ export const sliderDefinition: ComponentDefinition = {
     const isNative = trigger.tag === 'INPUT' && domCtx.inputType === 'range';
     ctx.data.interactionSubtype = isNative ? 'NativeSlider' : 'AriaSlider';
 
+    // ── Range Slider Detection ──
+    // Dual-handle sliders expose two handles in the same container.
+    // Detect via container classes with explicit range indicators.
+    // Avoid matching based on the label alone ("Price Range") since
+    // single-handle sliders frequently have "range" in their name.
+    // Require explicit dual-handle class evidence: range-slider,
+    // dual-range, multi-thumb, dual-handle.
+    const sliderLabel = targetName.toLowerCase();
+    const containerClasses = (domCtx.ancestorClasses ?? []).join(' ').toLowerCase();
+    const DUAL_HANDLE_RE = /(?:range[-_]?slider|dual[-_]?range|dual[-_]?handle|multi[-_]?thumb|dual[-_]?slider)/i;
+    const isRangeHandle =
+      DUAL_HANDLE_RE.test(containerClasses) ||
+      DUAL_HANDLE_RE.test(sliderLabel);
+    if (isRangeHandle) {
+      ctx.data.interactionSubtype = 'RangeSlider';
+    }
+
     // Extract min/max from ARIA or native attributes
     const min = domCtx.ariaValueMin ?? domCtx.nativeMin ?? null;
     const max = domCtx.ariaValueMax ?? domCtx.nativeMax ?? null;

@@ -224,7 +224,9 @@ describe('Searchable Dropdown (Autocomplete)', () => {
 
     const dropdown = emitted.find((i) => i.type === 'Dropdown');
     expect(dropdown).toBeDefined();
-    expect(dropdown!.interactionSubtype).toBe('SearchableDropdown');
+    // Type → select pattern is classified as Autocomplete (user typed search
+    // text AND selected a filtered option from the result list)
+    expect(dropdown!.interactionSubtype).toBe('Autocomplete');
   });
 
   it('does NOT set SearchableDropdown subtype for plain dropdowns (no typing)', () => {

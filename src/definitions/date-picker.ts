@@ -38,6 +38,56 @@ import {
   elementKey,
 } from './patterns';
 
+// ── Date Range Detection ──────────────────────────────────────────────
+
+/**
+ * CSS class / ARIA patterns that indicate a date-range picker.
+ * These widgets have two date inputs (start + end) and the user selects
+ * two dates from the same calendar.
+ *
+ * IMPORTANT: range detection requires PAIR indicators (both start/end,
+ * check-in/check-out, depart/return, from/to). A single "depart" or
+ * "check-in" field alone is a single-date picker, not a range.
+ */
+const RANGE_PAIR_RE =
+  /(?:start.?date.*end.?date|end.?date.*start.?date|check.?in.*check.?out|check.?out.*check.?in|depart.*return|return.*depart|from.?date.*to.?date|to.?date.*from.?date|outbound.*inbound|inbound.*outbound|range)/i;
+
+/**
+ * Individual field names that indicate ONE side of a range pair.
+ * These alone do NOT prove a range — they're used to match adjacent
+ * fields on the page.
+ */
+const RANGE_FIELD_RE =
+  /(?:start.?date|end.?date|check.?in|check.?out|depart|return|outbound|inbound|from.?date|to.?date)/i;
+
+/**
+ * Check if this date picker is likely a range picker.
+ * Signals: container classes, ARIA labels, input names.
+ *
+ * A range picker is detected when we find explicit range indicators:
+ *   - CSS class with "range" in it
+ *   - Label containing BOTH pair indicators (e.g., "Check-in – Check-out")
+ *   - Container class explicitly naming range-picker
+ *
+ * A single "depart" or "check-in" field is NOT a range — it's one
+ * date input in what may be two separate fields.
+ */
+function isLikelyDateRange(ctx: ComponentContext): boolean {
+  // Check for explicit "range" class indicators
+  const { ariaLabel, name, className } = ctx.trigger;
+  const allLabels = [ariaLabel, name, className].filter(Boolean).join(' ');
+  if (allLabels && /(?:range.?picker|dual.?date|date.?range|range.?input)/i.test(allLabels)) return true;
+
+  // Check for PAIR indicators in the same string (both sides of a range)
+  if (allLabels && RANGE_PAIR_RE.test(allLabels)) return true;
+
+  // Check ancestor classes for explicit range indicators
+  const ancestorClasses = ctx.triggerEvent.domContext.ancestorClasses.join(' ');
+  if (/(?:range.?picker|dual.?date|date.?range|range.?input)/i.test(ancestorClasses)) return true;
+
+  return false;
+}
+
 export const datePickerDefinition: ComponentDefinition = {
   type: 'DatePicker',
   priority: 10,
@@ -156,6 +206,23 @@ export const datePickerDefinition: ComponentDefinition = {
         const dateValue = (ctx.data.dateValue as string) || '';
         if (!dateValue.trim()) return null;
 
+        // ── Date Range support ──
+        // If this looks like a range picker and this is the FIRST date
+        // selection, record it as startDate and stay active.
+        if (!ctx.data.rangeStarted && isLikelyDateRange(ctx)) {
+          ctx.data.rangeStarted = true;
+          ctx.data.startDate = dateValue;
+          ctx.data.selectedDate = dateValue; // backward compat for first date
+          return null; // stay active — wait for end date
+        }
+
+        // If this is the SECOND date in a range
+        if (ctx.data.rangeStarted) {
+          ctx.data.endDate = dateValue;
+          ctx.data.interactionSubtype = 'DateRangePicker';
+          return { endState: 'completed' };
+        }
+
         return { endState: 'completed' };
       }
 
@@ -252,6 +319,22 @@ export const datePickerDefinition: ComponentDefinition = {
       ctx.trigger.ariaLabel,
       ctx.trigger.placeholder,
     );
+
+    // ── Date Range Picker output ──
+    if (ctx.data.rangeStarted) {
+      const startDate = (ctx.data.startDate as string) ?? '';
+      const endDate = (ctx.data.endDate as string) ?? '';
+      return {
+        metadata: {
+          targetName: name,
+          selectedDate: endDate || startDate, // backward compat
+          dateValue: endDate || startDate,
+          startDate,
+          endDate,
+          isDateRange: true,
+        },
+      };
+    }
 
     return {
       metadata: {

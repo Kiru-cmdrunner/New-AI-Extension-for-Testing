@@ -22,7 +22,7 @@ export const clickDefinition: ComponentDefinition = {
   type: 'Click',
   priority: 180,
   triggerEventTypes: new Set<BrowserEventType>([
-    'click', 'contextmenu',
+    'click', 'dblclick', 'contextmenu',
   ]),
 
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
@@ -58,6 +58,10 @@ export const clickDefinition: ComponentDefinition = {
   },
 
   buildResult(ctx: ComponentContext, _completion: ComponentCompletion) {
+    const isDoubleClick = ctx.triggerEvent.eventType === 'dblclick';
+    if (isDoubleClick) {
+      ctx.data.interactionSubtype = 'DoubleClick';
+    }
     return {
       metadata: {
         targetName: bestName(
@@ -69,6 +73,7 @@ export const clickDefinition: ComponentDefinition = {
         targetRole: ctx.trigger.ariaRole,
         clientX: ctx.triggerEvent.clientX,
         clientY: ctx.triggerEvent.clientY,
+        ...(isDoubleClick ? { doubleClick: true } : {}),
       },
     };
   },

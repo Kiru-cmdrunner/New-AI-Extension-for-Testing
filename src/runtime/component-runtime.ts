@@ -442,14 +442,15 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     completion: ComponentCompletion,
   ): ComponentInteraction | null {
     // ── Downcast protocol ──
-    // If the component is about to be completed with a non-completed
-    // endState (interrupted or abandoned), ask the definition if it
-    // should be converted to a simpler interaction type.
+    // Ask the definition if it should be converted to a simpler interaction
+    // type. This fires regardless of endState — a component can legitimately
+    // complete (e.g., focus→blur on a TagInput) while producing no meaningful
+    // data. Definitions guard their own data internally and return null when
+    // they have real content, so this is safe for completed interactions.
     // E.g., a Dropdown that opened on a false-positive trigger (no panel
     // opened, no option selected) downcasts to Click so the user's action
     // remains visible instead of being filtered out.
     if (
-      completion.endState !== 'completed' &&
       def.downcast &&
       ctx.type !== 'Click' // never downcast a Click
     ) {

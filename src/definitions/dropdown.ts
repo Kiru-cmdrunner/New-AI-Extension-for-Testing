@@ -45,7 +45,9 @@ export type SubActionType =
   | 'decrement'       // Click "-" on a stepper (e.g., Adults: 2→1)
   | 'toggle'          // Toggle a checkbox
   | 'fillInput'       // Type into a text input inside the panel
-  | 'confirm';        // Click Done/Apply/Confirm
+  | 'confirm'         // Click Done/Apply/Confirm
+  | 'expandNode'      // Expand a tree node (aria-expanded: false → true)
+  | 'collapseNode';   // Collapse a tree node (aria-expanded: true → false)
 
 export interface DropdownSubAction {
   /** What kind of action this is. */
@@ -231,6 +233,26 @@ function classifySubAction(event: ObservedEvent): DropdownSubAction | null {
   // Done/Apply button → confirm
   if (event.eventType === 'click' && isDoneButton(event)) {
     return { action: 'confirm', label, target: event.target, event };
+  }
+
+  // ── Tree node expand/collapse ──
+  // Elements with aria-expanded that toggle state are tree/group nodes.
+  // Uses the value transition of ariaExpanded (before → after).
+  if (event.eventType === 'click' && event.domContext.ariaExpanded !== null && event.domContext.ariaExpanded !== undefined) {
+    const isExpanded = event.domContext.ariaExpanded;
+    const isTreeLike = event.target.ariaRole === 'treeitem'
+      || event.target.ariaRole === 'group'
+      || event.target.ariaRole === 'row'
+      || (event.target.className && /tree|node|expand|collapse|accordion/i.test(event.target.className));
+    if (isTreeLike || event.target.ariaRole === 'treeitem') {
+      return {
+        action: isExpanded ? 'expandNode' : 'collapseNode',
+        label,
+        value: isExpanded ? 'expanded' : 'collapsed',
+        target: event.target,
+        event,
+      };
+    }
   }
 
   // Checkbox / toggle — check BEFORE stepper (ariaRole is more reliable
@@ -622,9 +644,16 @@ export const dropdownDefinition: ComponentDefinition = {
     // IR step generation: the generated Playwright code will include a fill
     // step for the search query before the option click.
     if (!ctx.data.interactionSubtype || ctx.data.interactionSubtype === 'CustomDropdown') {
-      const hasFillInput = subActions.some(s => s.action === 'fillInput');
+      const fillInputActions = subActions.filter(s => s.action === 'fillInput');
+      const hasFillInput = fillInputActions.length > 0;
       if (hasFillInput) {
-        ctx.data.interactionSubtype = 'SearchableDropdown';
+        // Distinguish Autocomplete from SearchableDropdown:
+        // Autocomplete = user typed text AND selected a filtered option.
+        // SearchableDropdown = user typed text (may or may not have selected).
+        const hasOptionSelection = subActions.some(
+          s => s.action === 'selectOption' && s.value !== undefined,
+        );
+        ctx.data.interactionSubtype = hasOptionSelection ? 'Autocomplete' : 'SearchableDropdown';
       }
     }
 

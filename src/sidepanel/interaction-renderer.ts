@@ -182,6 +182,24 @@ function fallbackActionDescription(interaction: ComponentInteraction): string {
       return `Open "${title}" dialog`;
     }
 
+    case 'TagInput': {
+      const tags = (metadata.tags as string[]) ?? [];
+      if (tags.length === 0) return `Type in "${targetName}"`;
+      if (tags.length === 1) return `Add tag "${tags[0]}"`;
+      return `Add ${tags.length} tags: ${tags.join(', ')}`;
+    }
+
+    case 'OtpInput': {
+      const value = String(metadata.otpValue ?? '');
+      const count = Number(metadata.inputCount ?? 0);
+      return `Enter OTP: ${value || '...'}${count ? ` (${count} digits)` : ''}`;
+    }
+
+    case 'HotkeySequence': {
+      const seq = (metadata.sequenceDisplay as string) ?? 'key sequence';
+      return `Press ${seq}`;
+    }
+
     default:
       return `${type} on "${targetName}"`;
   }
