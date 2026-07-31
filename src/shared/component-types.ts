@@ -92,6 +92,36 @@ export interface DomContext {
   /** Native max attribute. null if absent. */
   nativeMax?: string | null;
 
+  // ── Navigation signals (Phase 2: Capability gap) ──
+
+  /** Whether the clicked element opens a new browser tab (target=_blank or window.open without features). */
+  opensNewTab?: boolean | null;
+  /** Whether the clicked element opens a new browser window (window.open with width/height features). */
+  opensNewWindow?: boolean | null;
+  /** URL that will be opened in the new tab/window (from href or window.open argument). */
+  openedUrl?: string | null;
+
+  // ── Validation & Form Context (Phase 2: Enrichment Layer) ──
+
+  /** Minimum length validation constraint (from minlength attribute or aria-valuemin). null if absent. */
+  minLength?: number | null;
+  /** Maximum length validation constraint (from maxlength attribute). null if absent. */
+  maxLength?: number | null;
+  /** Regex pattern validation constraint (from pattern attribute). null if absent. */
+  pattern?: string | null;
+  /** Minimum numeric value (from min attribute). null if absent. */
+  min?: string | null;
+  /** Maximum numeric value (from max attribute). null if absent. */
+  max?: string | null;
+  /** Step increment for numeric inputs (from step attribute). null if absent. */
+  step?: string | null;
+  /** Accepted file types for file inputs (from accept attribute). null if absent. */
+  acceptedFileTypes?: string | null;
+  /** ID of the containing <form> element, if any. null if not inside a form. */
+  formId?: string | null;
+  /** Name of the containing <form> element, if any. null if not inside a form. */
+  formName?: string | null;
+
   // ── Surface identity (Phase 0b: Observation Model) ──
 
   /** Stable structural identity of the surface container element.
@@ -207,7 +237,10 @@ export type InteractionType =
   | 'Stepper'
   | 'TagInput'
   | 'OtpInput'
-  | 'HotkeySequence';
+  | 'HotkeySequence'
+  | 'NewTab'
+  | 'NewWindow'
+  | 'Breadcrumb';
 
 // ── Component Lifecycle ────────────────────────────────────────────────
 
@@ -505,6 +538,25 @@ export interface ComponentInteraction {
   componentFramework?: string;
   /** Layer 3: Human-readable business meaning (e.g. 'Sort by Name', 'Close dialog'). */
   businessMeaning?: string;
+
+  // ── Semantic Annotation (Phase 2: Evidence Engine) ──────────────────
+  //
+  // Populated by the semantic annotation layer after the Component Runtime
+  // classifies the interaction. These fields are optional because the
+  // annotation layer runs as a post-classification pass.
+  //
+  // For lifecycle definitions (TextEntry, DatePicker, etc.): intent is
+  // statically mapped from type, confidence is 1.0.
+  // For ambiguous clicks: the full evidence pipeline runs.
+  //
+  // Architecture: .drytis/PHASE2_DESIGN.md §3.2
+
+  /** Semantic intent inferred by the evidence engine. */
+  intent?: import('../classifier/evidence/types').SemanticIntent;
+  /** Evidence-based confidence (0.0–1.0). */
+  confidence?: number;
+  /** Full evidence audit trail for explainability. */
+  evidenceTrail?: import('../classifier/evidence/types').IntentVote[];
 }
 
 // ── Runtime Configuration ──────────────────────────────────────────────

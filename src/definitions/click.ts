@@ -73,6 +73,11 @@ export const clickDefinition: ComponentDefinition = {
       ctx.data.interactionSubtype = 'DoubleClick';
     }
 
+    const isRightClick = ctx.triggerEvent.eventType === 'contextmenu';
+    if (isRightClick) {
+      ctx.data.interactionSubtype = 'RightClick';
+    }
+
     // Detect bare stepper clicks (standalone +/- buttons not inside a panel).
     // These produce a Click with stepper metadata so the rendering layer can
     // display them appropriately, while keeping the type system simple.
@@ -92,6 +97,7 @@ export const clickDefinition: ComponentDefinition = {
         clientX: ctx.triggerEvent.clientX,
         clientY: ctx.triggerEvent.clientY,
         ...(isDoubleClick ? { doubleClick: true } : {}),
+        ...(isRightClick ? { rightClick: true } : {}),
         ...(isStepper ? {
           isStepper: true,
           stepperDirection: isStepperPlusClick ? 'increment' : 'decrement',

@@ -17,7 +17,6 @@
  */
 
 import { StorageService } from '../storage/storage-service';
-import { detectInteractions } from '../classifier/interaction-detector';
 import { runPipeline } from '../recorder/pipeline/pipeline-runner';
 import { build as buildIRPlan } from '../generation/ir-bridge';
 import { adaptInteractions as adaptToDetected } from '../generation/component-to-classifier-adapter';
@@ -342,16 +341,10 @@ async function handleStopRecording(): Promise<void> {
   //
   // This eliminates the dual-classification problem where the same events
   // were classified twice through different logic, producing divergent results.
-  let mergedInteractions: DetectedInteraction[];
-
-  try {
-    mergedInteractions = adaptToDetected(allInteractions);
-    console.info('[Component Adapter]', `Adapted ${mergedInteractions.length} interactions from ${allInteractions.length} component interactions`);
-  } catch (e) {
-    console.warn('[Component Adapter] error during adaptation, falling back to V1 classifier:', e);
-    // Fallback: V1 classifier from raw events (safety net)
-    mergedInteractions = detectInteractions(events);
-  }
+  // Phase 2: The adapter is now defensive (per-interaction try/catch), so it
+  // never throws on the full batch. The V1 fallback classifier is no longer needed.
+  const mergedInteractions: DetectedInteraction[] = adaptToDetected(allInteractions);
+  console.info('[Component Adapter]', `Adapted ${mergedInteractions.length} interactions from ${allInteractions.length} component interactions`);
 
   await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS, mergedInteractions);
   await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, mergedInteractions);
@@ -368,7 +361,7 @@ async function handleStopRecording(): Promise<void> {
     const sessionId = `session-${Date.now()}`;
     const tab = await getActiveTab();
     const sourceUrl = tab?.url ?? undefined;
-    const pipelineResult = runPipeline(events, mergedInteractions, sessionId, sourceUrl, 'legacy');
+    const pipelineResult = runPipeline(events, mergedInteractions, sessionId, sourceUrl, 'control');
 
     await StorageService.setRaw(StorageKeys.DOMAIN_ENTITIES, {
       elements: pipelineResult.entities.elements,

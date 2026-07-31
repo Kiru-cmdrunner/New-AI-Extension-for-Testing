@@ -27,10 +27,14 @@ import { fileUploadDefinition } from './file-upload';
 import { radioButtonDefinition } from './radio-button';
 import { tagInputDefinition } from './tag-input';
 import { otpInputDefinition } from './otp-input';
+import { stepperDefinition } from './stepper';
 import { textEntryDefinition } from './text-entry';
 import { hoverDefinition } from './hover';
 import { linkDefinition } from './link';
 import { tabDefinition } from './tab';
+import { breadcrumbDefinition } from './breadcrumb';
+import { newTabDefinition } from './new-tab';
+import { newWindowDefinition } from './new-window';
 import { scrollDefinition } from './scroll';
 import { navigationDefinition } from './navigation';
 import { clickDefinition } from './click';
@@ -66,6 +70,7 @@ export const ALL_DEFINITIONS: ComponentDefinition[] = [
   dropdownDefinition,      // priority 20
   modalDialogDefinition,    // priority 22
   sliderDefinition,        // priority 25
+  stepperDefinition,       // priority 28
   checkboxDefinition,      // priority 30
   fileUploadDefinition,    // priority 35
   radioButtonDefinition,   // priority 40
@@ -74,6 +79,9 @@ export const ALL_DEFINITIONS: ComponentDefinition[] = [
   textEntryDefinition,     // priority 50
   hoverDefinition,         // priority 60
   tabDefinition,           // priority 65
+  breadcrumbDefinition,    // priority 68
+  newTabDefinition,        // priority 68
+  newWindowDefinition,     // priority 68
   linkDefinition,          // priority 70
   scrollDefinition,        // priority 110
   navigationDefinition,    // priority 120
@@ -96,10 +104,14 @@ export {
   radioButtonDefinition,
   tagInputDefinition,
   otpInputDefinition,
+  stepperDefinition,
   textEntryDefinition,
   hoverDefinition,
   linkDefinition,
   tabDefinition,
+  breadcrumbDefinition,
+  newTabDefinition,
+  newWindowDefinition,
   scrollDefinition,
   navigationDefinition,
   clickDefinition,

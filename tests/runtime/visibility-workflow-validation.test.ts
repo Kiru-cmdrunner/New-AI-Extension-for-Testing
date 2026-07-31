@@ -71,7 +71,8 @@ function makeEvent(
  * Internal-tier types (Stepper) are suppressed.
  */
 function visibleInteractions(emitted: ComponentInteraction[]): ComponentInteraction[] {
-  const INTERNAL = new Set(['Stepper']);
+  // Phase 2: Stepper is now a registered first-class type, no longer filtered.
+  const INTERNAL = new Set<string>([]);
   return emitted.filter(i => !INTERNAL.has(i.type));
 }
 
@@ -184,20 +185,20 @@ describe('Workflow Validation: E-commerce Cart', () => {
     runtime = createRuntime([...ALL_DEFINITIONS], { onEmit: (i) => emitted.push(i) });
   });
 
-  it('bare quantity stepper outside panel produces Click (not Stepper)', () => {
+  it('bare quantity stepper outside panel produces Stepper (Phase 2: registered)', () => {
     // On many e-commerce pages, the quantity stepper is inline on the product
-    // page, not inside a dropdown/modal. The + click should be a Click with
-    // stepper metadata, not a standalone Stepper card.
+    // page, not inside a dropdown/modal. With Stepper registered (Phase 2),
+    // the + click is now a Stepper interaction.
     runtime.process(makeEvent('click', {
       tag: 'BUTTON', accessibleName: '+',
       ariaLabel: 'Increase quantity', className: 'qty-plus',
       stableId: 'qty-btn-plus', cssSelector: 'button.qty-plus',
     }));
+    runtime.flush();
 
     const visible = visibleInteractions(emitted);
     expect(visible).toHaveLength(1);
-    expect(visible[0].type).toBe('Click');
-    expect(visible[0].metadata.isStepper).toBe(true);
+    expect(visible[0].type).toBe('Stepper');
   });
 });
 

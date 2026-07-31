@@ -1,5 +1,5 @@
 /**
- * FeatureView: a lightweight facade over RecordedEvent + ElementIdentity + DomContext.
+ * FeatureView: a lightweight facade over ObservedEvent + ElementIdentity + DomContext.
  *
  * This is NOT a copy of the data — it holds references to the original types
  * and adds computed helpers that prevent evidence generators from reimplementing
@@ -7,25 +7,29 @@
  *
  * Evidence generators receive a FeatureViewInput (the read-only computed subset).
  * This keeps generators decoupled from the raw event/identity/dom context structure.
+ *
+ * Phase 2: Rewired from ElementRecordedEvent (V1 type) to ObservedEvent
+ * (Component Runtime type). The FeatureViewInput interface is unchanged —
+ * generators don't notice the difference.
  */
 
 import type { ElementIdentity } from '../../shared/types';
-import type { ElementRecordedEvent } from '../../recorder/recorded-event';
+import type { ObservedEvent } from '../../shared/component-types';
 import type { FeatureViewInput } from './types';
 
 /**
- * Build a FeatureViewInput from the raw event data.
+ * Build a FeatureViewInput from the Component Runtime's event data.
  *
  * This is the ONLY function that touches the raw event structure — all evidence
  * generators consume the FeatureViewInput interface instead. If the recorder
  * changes how it captures data, only this function needs updating.
  *
- * @param target  The element identity from the recorded event
- * @param event   The click event (or the first element event in the group)
+ * @param target  The element identity from the observed event
+ * @param event   The click event (trigger event from the ComponentInteraction)
  */
 export function buildFeatureView(
   target: ElementIdentity,
-  event: ElementRecordedEvent,
+  event: ObservedEvent,
 ): FeatureViewInput {
   const domCtx = event.domContext;
 
@@ -54,7 +58,7 @@ export function buildFeatureView(
     checkedBefore,
     checkedAfter,
 
-    // Structural signals (from DomContext — captured but historically ignored by classifier)
+    // Structural signals (from DomContext)
     surfaceType: domCtx?.surfaceType ?? null,
     ancestorRoles: domCtx?.ancestorRoles ?? [],
 

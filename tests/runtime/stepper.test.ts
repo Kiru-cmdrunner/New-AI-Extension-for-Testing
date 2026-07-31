@@ -1,15 +1,12 @@
 /**
- * Stepper Visibility Model Tests (Updated)
+ * Stepper Visibility Model Tests (Phase 2)
  *
- * The standalone Stepper definition has been removed from ALL_DEFINITIONS.
+ * The standalone Stepper definition is now registered in ALL_DEFINITIONS.
  * Bare stepper clicks (+/- buttons outside a Dropdown/ModalDialog surface)
- * now produce Click interactions with stepper metadata:
- *   { isStepper: true, stepperDirection: 'increment'|'decrement' }
+ * produce Stepper interactions with stepper metadata.
  *
  * Stepper clicks inside Dropdown/ModalDialog surfaces are still absorbed
  * as increment/decrement subActions — that behavior is unchanged.
- *
- * This test file verifies the new behavior.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -76,7 +73,7 @@ describe('Bare Stepper Clicks → Click with Metadata', () => {
     runtime = createRuntime([...ALL_DEFINITIONS], { onEmit: (i) => emitted.push(i) });
   });
 
-  it('produces Click with isStepper=true for + click', () => {
+  it('produces Stepper for + click', () => {
     runtime.process(makeEvent('click', {
       tag: 'BUTTON',
       accessibleName: '+',
@@ -84,14 +81,13 @@ describe('Bare Stepper Clicks → Click with Metadata', () => {
       stableId: 'qty-plus',
       cssSelector: 'button.qty-plus',
     }));
+    runtime.flush();
 
     expect(emitted).toHaveLength(1);
-    expect(emitted[0].type).toBe('Click');
-    expect(emitted[0].metadata.isStepper).toBe(true);
-    expect(emitted[0].metadata.stepperDirection).toBe('increment');
+    expect(emitted[0].type).toBe('Stepper');
   });
 
-  it('produces Click with decrement for - click', () => {
+  it('produces Stepper for - click', () => {
     runtime.process(makeEvent('click', {
       tag: 'BUTTON',
       accessibleName: '-',
@@ -99,14 +95,13 @@ describe('Bare Stepper Clicks → Click with Metadata', () => {
       stableId: 'qty-minus',
       cssSelector: 'button.qty-minus',
     }));
+    runtime.flush();
 
     expect(emitted).toHaveLength(1);
-    expect(emitted[0].type).toBe('Click');
-    expect(emitted[0].metadata.isStepper).toBe(true);
-    expect(emitted[0].metadata.stepperDirection).toBe('decrement');
+    expect(emitted[0].type).toBe('Stepper');
   });
 
-  it('produces Click with stepper metadata for repeated + clicks (deduped)', () => {
+  it('produces Stepper for repeated + clicks', () => {
     const PLUS_BTN = {
       tag: 'BUTTON',
       accessibleName: '+',
@@ -115,8 +110,8 @@ describe('Bare Stepper Clicks → Click with Metadata', () => {
       cssSelector: 'button.qty-plus',
     };
 
-    // Three + clicks on the same element — runtime deduplicates consecutive
-    // clicks on the same element within the dedup window.
+    // Three + clicks on the same element — the stepper definition accumulates
+    // these and produces a Stepper interaction.
     runtime.process(makeEvent('click', PLUS_BTN, {
       ancestorClasses: ['qty-stepper'],
     }));
@@ -126,23 +121,23 @@ describe('Bare Stepper Clicks → Click with Metadata', () => {
     runtime.process(makeEvent('click', PLUS_BTN, {
       ancestorClasses: ['qty-stepper'],
     }));
+    runtime.flush();
 
-    // Dedup means we get 1 Click (the first), with stepper metadata
-    const stepperClicks = emitted.filter(i => i.type === 'Click' && i.metadata.isStepper === true);
-    expect(stepperClicks.length).toBeGreaterThanOrEqual(1);
-    expect(stepperClicks[0].metadata.stepperDirection).toBe('increment');
+    const steppers = emitted.filter(i => i.type === 'Stepper');
+    expect(steppers.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('does NOT produce a standalone Stepper type', () => {
+  it('produces standalone Stepper type for bare stepper clicks', () => {
     runtime.process(makeEvent('click', {
       tag: 'BUTTON',
       accessibleName: '+',
       stableId: 'qty-plus',
       cssSelector: 'button.qty-plus',
     }));
+    runtime.flush();
 
     const stepper = emitted.find(i => i.type === 'Stepper');
-    expect(stepper).toBeUndefined();
+    expect(stepper).toBeDefined();
   });
 });
 

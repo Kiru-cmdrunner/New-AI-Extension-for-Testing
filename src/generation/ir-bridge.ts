@@ -48,6 +48,7 @@ import {
   rankLocatorCandidates,
 } from '../domain/locator-ranking';
 import type { IRBridgeInput } from './ir-bridge-input';
+import { deriveStateAssertions } from './assertion-deriver';
 
 // ── Interaction Type → IRAction Mapping ────────────────────
 
@@ -1011,7 +1012,13 @@ export function build(input: IRBridgeInput): ExecutionIRPlan {
 
     // Derive assertions from knowledge fragment
     const elementId = target.kind === 'element' ? target.elementId : '';
-    const assertions = deriveAssertions(elementId, fragment);
+    const constraintAssertions = deriveAssertions(elementId, fragment);
+
+    // Phase 2: Derive state-based assertions from interaction metadata
+    const stateAssertions = deriveStateAssertions(interaction);
+
+    // Merge: constraint assertions first (from knowledge), then state assertions
+    const assertions = [...constraintAssertions, ...stateAssertions];
 
     // Execution parameters — default, with wait strategy based on confidence
     const executionParameters = {

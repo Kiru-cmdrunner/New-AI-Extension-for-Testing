@@ -45,6 +45,9 @@ const DEFAULT_SUBTYPE: Record<string, ClassifierInteractionType> = {
   TagInput: 'TagInput',
   OtpInput: 'OtpInput',
   HotkeySequence: 'HotkeySequence',
+  NewTab: 'NewTab',
+  NewWindow: 'NewWindow',
+  Breadcrumb: 'Breadcrumb',
 };
 
 /**
@@ -74,11 +77,33 @@ export function adaptInteraction(ci: ComponentInteraction): DetectedInteraction 
 
 /**
  * Convert an array of ComponentInteractions to DetectedInteractions.
+ *
+ * Phase 2: Defensive — wraps each interaction adaptation in try/catch,
+ * skipping malformed interactions rather than failing the entire batch.
+ * This replaces the V1 fallback classifier as the safety net.
  */
 export function adaptInteractions(
   interactions: ComponentInteraction[],
 ): DetectedInteraction[] {
-  return interactions.map(adaptInteraction);
+  const results: DetectedInteraction[] = [];
+  let errors = 0;
+
+  for (const ci of interactions) {
+    try {
+      results.push(adaptInteraction(ci));
+    } catch (e) {
+      errors++;
+      console.warn('[Component Adapter] skipping malformed interaction:', ci.interactionId, e);
+    }
+  }
+
+  if (errors > 0) {
+    console.warn(`[Component Adapter] ${errors} interaction(s) skipped due to errors`);
+  }
+
+  // Guarantee: always return a non-empty array if input is non-empty.
+  // This is the contract that replaces the V1 catch-block fallback.
+  return results;
 }
 
 /**

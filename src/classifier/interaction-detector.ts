@@ -580,7 +580,10 @@ function classifyGroup(group: EventGroup): { type: InteractionType; metadata: In
   {
     const clickEvent = events.find((e) => e.eventType === 'click') as ElementRecordedEvent | undefined;
     if (clickEvent) {
-      const result = classifyByEvidence(target, clickEvent);
+      // Phase 2: classifyByEvidence now expects ObservedEvent (Component Runtime type).
+      // This V1 fallback code is dead — production uses the annotation layer instead.
+      // The cast preserves backward compatibility for the V1 tests still referencing this path.
+      const result = classifyByEvidence(target, clickEvent as unknown as import('../shared/component-types').ObservedEvent);
       return {
         type: result.type,
         metadata: result.metadata,

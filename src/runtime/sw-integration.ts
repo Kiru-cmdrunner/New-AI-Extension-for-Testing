@@ -17,6 +17,7 @@ import { createRuntime, type ComponentRuntime } from './component-runtime';
 import { ALL_DEFINITIONS } from '../definitions';
 import { enrichInteraction } from '../enrichment';
 import { enrichConfigurationSession } from '../enrichment/structural-enrichment';
+import { annotateWithEvidence } from '../classifier/evidence/annotation-layer';
 import type {
   ObservedEvent,
   ComponentInteraction,
@@ -50,6 +51,8 @@ export function initRecording(): void {
       // Bug 1 fix: debounce timer was killed by MV3 SW termination
       // before the Login button form-submit navigation
       enrichInteraction(interaction);
+      // Phase 2: Semantic annotation — attach intent, confidence, evidence trail
+      annotateWithEvidence(interaction);
       liveInteractions.push(interaction);
       persistLiveInteractions();
     },
@@ -152,6 +155,8 @@ export async function restoreFromStorage(): Promise<boolean> {
     const config: RuntimeConfig = {
       onEmit: (interaction: ComponentInteraction) => {
         enrichInteraction(interaction);
+        // Phase 2: Semantic annotation — consistent with primary path
+        annotateWithEvidence(interaction);
         liveInteractions.push(interaction);
         persistLiveInteractions();
       },

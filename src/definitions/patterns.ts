@@ -474,3 +474,35 @@ export function isSlider(tag: string, inputType: string | null, ariaRole: string
 export function isTab(ariaRole: string | null): boolean {
   return ariaRole === 'tab';
 }
+
+// ── Breadcrumb Patterns (Phase 2) ──────────────────────────────────────
+
+/**
+ * CSS class patterns that identify breadcrumb elements.
+ */
+const BREADCRUMB_CLASS_RE = /\b(?:breadcrumb|crumb|breadcrumbs|bcrumb|trail)\b/i;
+
+/**
+ * Is this element a breadcrumb item?
+ *
+ * Breadcrumbs are navigation elements showing the page's location in a
+ * site hierarchy. They're typically <li> or <a> elements inside a
+ * container with a breadcrumb class.
+ */
+export function isBreadcrumb(
+  className: string | null,
+  ancestorClasses: string[],
+): boolean {
+  // Check the element's own class
+  if (className && BREADCRUMB_CLASS_RE.test(className)) {
+    return true;
+  }
+  // Check ancestor classes — breadcrumb items are often plain <li>/<a>
+  // inside a nav.breadcrumb container
+  for (const ac of ancestorClasses) {
+    if (ac && BREADCRUMB_CLASS_RE.test(ac)) {
+      return true;
+    }
+  }
+  return false;
+}

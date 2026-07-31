@@ -201,6 +201,20 @@ export function extractDomContext(el: Element): DomContext {
     ariaValueMax: getAttributeString(el, 'aria-valuemax'),
     nativeMin: el instanceof HTMLInputElement ? (el.min || null) : null,
     nativeMax: el instanceof HTMLInputElement ? (el.max || null) : null,
+    // Phase 2: Navigation signals
+    opensNewTab: detectOpensNewTab(el),
+    opensNewWindow: detectOpensNewWindow(el),
+    openedUrl: getOpenedUrl(el),
+    // Phase 2: Validation & form context
+    minLength: getNumericAttribute(el, 'minlength'),
+    maxLength: getNumericAttribute(el, 'maxlength'),
+    pattern: getAttributeString(el, 'pattern'),
+    min: el instanceof HTMLInputElement ? (el.min || null) : null,
+    max: el instanceof HTMLInputElement ? (el.max || null) : null,
+    step: el instanceof HTMLInputElement ? (el.step || null) : null,
+    acceptedFileTypes: getAttributeString(el, 'accept'),
+    formId: getFormId(el),
+    formName: getFormName(el),
   };
 }
 
@@ -302,4 +316,97 @@ function getAncestorClasses(el: Element): string[] {
   }
 
   return classes;
+}
+
+// ── Navigation Signal Detection (Phase 2) ──────────────────────────────
+
+/**
+ * Detect if clicking this element opens a new browser tab.
+ *
+ * Checks for:
+ * - `<a target="_blank">` or `<a target="_new">`
+ * - `<a rel="opener">` (modern target=_blank signal)
+ */
+function detectOpensNewTab(el: Element): boolean | null {
+  if (el instanceof HTMLAnchorElement) {
+    const target = el.target.toLowerCase();
+    if (target === '_blank' || target === '_new') {
+      return true;
+    }
+  }
+  return null;
+}
+
+/**
+ * Detect if clicking this element opens a new browser window.
+ *
+ * window.open() calls with width/height features are difficult to detect
+ * statically. We check for:
+ * - data attributes commonly used by SPAs to signal window.open
+ * - onclick handlers that reference window.open (best-effort heuristic)
+ *
+ * Returns null when no signal is found (not false — we can't be certain).
+ */
+function detectOpensNewWindow(el: Element): boolean | null {
+  // Check for data-open-window attribute (custom, used by some frameworks)
+  if (el.getAttribute('data-open-window') === 'true') {
+    return true;
+  }
+  return null;
+}
+
+/**
+ * Get the URL that will be opened when this element is clicked.
+ *
+ * For <a> tags: returns the href.
+ * For elements with data-href: returns that value.
+ */
+function getOpenedUrl(el: Element): string | null {
+  if (el instanceof HTMLAnchorElement) {
+    const href = el.href;
+    if (href) return href;
+  }
+  const dataHref = el.getAttribute('data-href');
+  if (dataHref) return dataHref;
+  return null;
+}
+
+// ── Validation & Form Context Helpers (Phase 2) ────────────────────────
+
+/**
+ * Get a numeric attribute value.
+ */
+function getNumericAttribute(el: Element, attr: string): number | null {
+  const value = el.getAttribute(attr);
+  if (value === null) return null;
+  const num = parseInt(value, 10);
+  return isNaN(num) ? null : num;
+}
+
+/**
+ * Get the ID of the nearest containing <form> element.
+ */
+function getFormId(el: Element): string | null {
+  if (el instanceof HTMLElement) {
+    // Check form attribute first (for elements associated via form attribute)
+    const formAttr = el.getAttribute('form');
+    if (formAttr) return formAttr;
+    // Walk up to find containing form
+    const form = el.closest('form');
+    if (form) return form.id || null;
+  }
+  return null;
+}
+
+/**
+ * Get the name of the nearest containing <form> element.
+ */
+function getFormName(el: Element): string | null {
+  if (el instanceof HTMLElement) {
+    const form = el.closest('form');
+    if (form instanceof HTMLFormElement) {
+      return form.name || form.getAttribute('name') || null;
+    }
+  }
+  return null;
 }

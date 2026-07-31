@@ -87,7 +87,7 @@ describe('Visibility Model: Stepper Removal from Standalone', () => {
     expect(stepper).toBeUndefined();
   });
 
-  it('produces a Click with stepper metadata for bare stepper clicks', () => {
+  it('produces a Stepper for bare stepper clicks (Phase 2: registered)', () => {
     runtime.process(makeEvent('click', {
       tag: 'BUTTON',
       accessibleName: '+',
@@ -95,14 +95,13 @@ describe('Visibility Model: Stepper Removal from Standalone', () => {
       stableId: 'qty-plus',
       cssSelector: 'button.stepper-plus',
     }));
+    runtime.flush();
 
-    const click = emitted.find(i => i.type === 'Click');
-    expect(click).toBeDefined();
-    expect(click!.metadata.isStepper).toBe(true);
-    expect(click!.metadata.stepperDirection).toBe('increment');
+    const stepper = emitted.find(i => i.type === 'Stepper');
+    expect(stepper).toBeDefined();
   });
 
-  it('produces a Click with decrement metadata for - stepper clicks', () => {
+  it('produces a Stepper for - stepper clicks (Phase 2: registered)', () => {
     runtime.process(makeEvent('click', {
       tag: 'BUTTON',
       accessibleName: '-',
@@ -110,11 +109,10 @@ describe('Visibility Model: Stepper Removal from Standalone', () => {
       stableId: 'qty-minus',
       cssSelector: 'button.stepper-minus',
     }));
+    runtime.flush();
 
-    const click = emitted.find(i => i.type === 'Click');
-    expect(click).toBeDefined();
-    expect(click!.metadata.isStepper).toBe(true);
-    expect(click!.metadata.stepperDirection).toBe('decrement');
+    const stepper = emitted.find(i => i.type === 'Stepper');
+    expect(stepper).toBeDefined();
   });
 
   it('still absorbs stepper clicks as subActions inside a Dropdown', () => {
@@ -180,9 +178,9 @@ describe('Visibility Model: Stepper Removal from Standalone', () => {
     expect(stepperClicks).toHaveLength(0);
   });
 
-  it('ALL_DEFINITIONS does not contain stepperDefinition', () => {
+  it('ALL_DEFINITIONS contains stepperDefinition (Phase 2: registered)', () => {
     const stepperDef = ALL_DEFINITIONS.find(d => d.type === 'Stepper');
-    expect(stepperDef).toBeUndefined();
+    expect(stepperDef).toBeDefined();
   });
 });
 
