@@ -40,7 +40,6 @@ import type {
   ObservedEvent,
 } from '../shared/component-types';
 import {
-  isInteractiveElement,
   bestName,
 } from './patterns';
 
@@ -130,11 +129,12 @@ export const hoverDefinition: ComponentDefinition = {
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
     if (event.eventType !== 'mouseenter') return null;
 
-    const { tag, ariaRole, className } = event.target;
-    if (!isInteractiveElement(tag, ariaRole, className, null)) {
-      return null;
-    }
-
+    // Hover captures mouseenter on ANY element — real-world hover targets
+    // include product cards, list items, table rows, and divs with custom
+    // JS handlers. Restricting to interactive elements would miss the most
+    // common hover use cases. The confidence-based lifecycle (dwell time,
+    // ariaExpanded transition, overlay patterns) filters out accidental
+    // hovers on static content.
     return { type: 'Hover' };
   },
 

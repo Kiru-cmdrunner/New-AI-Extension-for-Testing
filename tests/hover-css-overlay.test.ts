@@ -198,12 +198,18 @@ describe('Hover: CSS overlay evidence signal', () => {
   });
 
   it('does NOT promote hover for plain element without overlay CSS', () => {
+    // After Phase 3 Tier 1 fix: Hover's detectTrigger no longer gates on
+    // isInteractiveElement — any mouseenter triggers a session. The
+    // confidence-based lifecycle (dwell time, evidence signals) decides
+    // whether to emit or discard. detectTrigger returning non-null is
+    // correct; the filtering happens in handleEvent on mouseleave.
     const enter = makeEvent({
       target: makeTarget({ className: 'content-area', tag: 'DIV' }),
     });
 
     const trigger = hoverDefinition.detectTrigger(enter);
-    expect(trigger).toBeNull();
+    expect(trigger).not.toBeNull();
+    expect(trigger!.type).toBe('Hover');
   });
 
   it('does NOT promote hover with CSS evidence but dwell < 500ms', () => {

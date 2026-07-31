@@ -66,6 +66,31 @@ const SEEN_EVENTS_CAP = 500;
  */
 const MAX_LIFECYCLE_DURATION_MS = 15_000;
 
+/**
+ * Try to parse a date string into a Date. Handles ISO (2026-08-27),
+ * DMY (27/08/2026), and human-readable formats (August 27, 2026).
+ * Returns null if parsing fails or the result is invalid.
+ */
+function tryParseDate(value: string): Date | null {
+  // ISO format: 2026-08-27 or 2026-08-27T00:00:00
+  const iso = value.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) {
+    const d = new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+    return isNaN(d.getTime()) ? null : d;
+  }
+  // DMY format: 27/08/2026 or 27/8/26
+  const dmy = value.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  if (dmy) {
+    const year = Number(dmy[3]);
+    const fullYear = year < 100 ? 2000 + year : year;
+    const d = new Date(fullYear, Number(dmy[2]) - 1, Number(dmy[1]));
+    return isNaN(d.getTime()) ? null : d;
+  }
+  // Fallback: native Date parsing
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 // ── Factory ───────────────────────────────────────────────────────────
 
 /**
@@ -620,8 +645,22 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     if (ctx.type === 'DatePicker') {
       const prevDate = String(last.metadata.dateValue ?? '');
       const newDate = String(metadata.dateValue ?? '');
-      // If both have dateValues and they differ, NOT a duplicate
-      if (prevDate && newDate && prevDate !== newDate) return false;
+      // If both have dateValues and they differ, NOT a duplicate —
+      // unless they represent the same day in different formats
+      // (e.g. "2026-08-27" vs "27/08/2026"). Day-number comparison
+      // catches format-variant duplicates from React SPA value polling.
+      if (prevDate && newDate && prevDate !== newDate) {
+        // Try to parse as Date objects — handles ISO (2026-08-27),
+        // DMY (27/08/2026), and other standard formats. If both parse
+        // to the same calendar date, it's a duplicate.
+        const prevParsed = tryParseDate(prevDate);
+        const newParsed = tryParseDate(newDate);
+        if (prevParsed && newParsed && prevParsed.getTime() === newParsed.getTime()) {
+          // Same calendar date — suppress duplicate
+        } else {
+          return false;
+        }
+      }
     }
 
     // Scroll is exempt from temporal dedup — gesture coalescing already

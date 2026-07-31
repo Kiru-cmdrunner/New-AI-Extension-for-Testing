@@ -57,7 +57,7 @@ const DRAG_LIFECYCLE_EVENTS = new Set<BrowserEventType>([
 export const sliderDefinition: ComponentDefinition = {
   type: 'Slider',
   priority: 25,
-  triggerEventTypes: new Set<BrowserEventType>(['mousedown', 'click', 'focus']),
+  triggerEventTypes: new Set<BrowserEventType>(['mousedown', 'click', 'focus', 'change']),
 
   // ── Trigger ────────────────────────────────────────────────────────
 
@@ -77,8 +77,8 @@ export const sliderDefinition: ComponentDefinition = {
   isInScope(event: ObservedEvent, ctx: ComponentContext): boolean {
     const triggerType = ctx.triggerEvent.eventType;
 
-    // Click/focus path: immediate completion, no extended scope
-    if (triggerType === 'click' || triggerType === 'focus') {
+    // Click/focus/change path: immediate completion, no extended scope
+    if (triggerType === 'click' || triggerType === 'focus' || triggerType === 'change') {
       return false;
     }
 
@@ -98,8 +98,8 @@ export const sliderDefinition: ComponentDefinition = {
   handleEvent(event: ObservedEvent, ctx: ComponentContext): ComponentCompletion | null {
     const triggerType = ctx.triggerEvent.eventType;
 
-    // Click/focus path: immediate completion
-    if (triggerType === 'click' || triggerType === 'focus') {
+    // Click/focus/change path: immediate completion
+    if (triggerType === 'click' || triggerType === 'focus' || triggerType === 'change') {
       return { endState: 'completed' };
     }
 

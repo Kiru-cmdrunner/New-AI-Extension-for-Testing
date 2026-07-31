@@ -343,7 +343,7 @@ export const dropdownDefinition: ComponentDefinition = {
   type: 'Dropdown',
   priority: 20,
   triggerEventTypes: new Set<BrowserEventType>([
-    'click', 'mousedown', 'focus',
+    'click', 'mousedown', 'focus', 'change',
   ]),
 
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {

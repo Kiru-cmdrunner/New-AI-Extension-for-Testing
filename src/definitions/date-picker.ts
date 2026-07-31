@@ -84,7 +84,7 @@ export const datePickerDefinition: ComponentDefinition = {
   type: 'DatePicker',
   priority: 10,
   triggerEventTypes: new Set<BrowserEventType>([
-    'focus', 'click',
+    'focus', 'click', 'change',
   ]),
 
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {

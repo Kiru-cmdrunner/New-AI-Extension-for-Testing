@@ -27,11 +27,16 @@ export const clickDefinition: ComponentDefinition = {
   ]),
 
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
-    // Only trigger on interactive elements
     const { tag, ariaRole, className } = event.target;
     const tabIndex = null; // tabIndex not in ElementIdentity (captured in content script)
 
-    if (!isInteractiveElement(tag, ariaRole, className, tabIndex)) {
+    // dblclick and contextmenu are inherently intentional — nobody
+    // accidentally double-clicks or right-clicks. Bypass the interactive
+    // element gate for these event types so table rows, cells, cards, and
+    // other non-button elements that have JS handlers are captured.
+    const isIntentionalEvent = event.eventType === 'dblclick' || event.eventType === 'contextmenu';
+
+    if (!isIntentionalEvent && !isInteractiveElement(tag, ariaRole, className, tabIndex)) {
       return null;
     }
 
