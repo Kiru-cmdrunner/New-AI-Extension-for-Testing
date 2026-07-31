@@ -361,6 +361,31 @@ export const dropdownDefinition: ComponentDefinition = {
       return { type: 'Dropdown' };
     }
 
+    // 1b. aria-haspopup="dialog" or "true" — many React SPA dropdowns render
+    // their panel as a Dialog component. These are functionally dropdowns
+    // (selection from a list/options), even though the surface uses
+    // role="dialog". We claim these as Dropdowns at priority 20 (before
+    // ModalDialog at priority 22) because:
+    //   - They typically contain selectable options, steppers, checkboxes
+    //   - The user's intent is "configure and select", not "interact with a modal"
+    //   - The Dropdown lifecycle handles subActions (steppers, options, Done)
+    //   - ModalDialog has no subAction model for steppers/options
+    // CSS-class evidence (below) helps disambiguate dropdown-dialogs from
+    // true modal dialogs — if the element also matches dropdown trigger CSS
+    // patterns, it's a dropdown.
+    if (ariaHasPopup === 'dialog' || ariaHasPopup === 'true') {
+      // Check if this element also has dropdown-like CSS classes or ancestor
+      // patterns. If so, claim as Dropdown. Otherwise let ModalDialog handle it.
+      if (isDropdownTrigger(tag, ariaRole, className)) {
+        return { type: 'Dropdown' };
+      }
+      // Also check ancestor classes (AdaniOne uses nested trigger structures)
+      const ancestorClasses = event.domContext.ancestorClasses.join(' ');
+      if (ancestorClasses && isDropdownTrigger('', null, ancestorClasses)) {
+        return { type: 'Dropdown' };
+      }
+    }
+
     // 2. role="combobox" — standard ARIA combobox (native SELECT, custom widgets)
     if (ariaRole === 'combobox') {
       return { type: 'Dropdown' };

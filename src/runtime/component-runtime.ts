@@ -222,12 +222,24 @@ class ComponentRuntimeImpl implements ComponentRuntime {
         }
 
         if (shouldCancel) {
+          const originalType = ctx.type;
           ctx.state = 'abandoned';
           ctx.endTime = event.timestamp;
           const interaction = this.completeComponent(ctx, def, {
             endState: 'abandoned',
           });
-          if (interaction) emitted.push(interaction);
+          if (interaction) {
+            emitted.push(interaction);
+            // Only mark as handled if the abandoned component DOWNCASTED to a
+            // different type (e.g., DragDrop → Click). In that case, the
+            // downcasted interaction has consumed the event — discovery must
+            // not re-discover it. If the component emitted its OWN type (e.g.,
+            // Hover abandoned without downcast), the original click still
+            // needs to go through discovery to produce a Click.
+            if (interaction.type !== originalType) {
+              handled = true;
+            }
+          }
           this.activeStack.splice(i, 1);
         } else {
           // Check if the component should complete (e.g., Scroll gesture ended)
@@ -241,12 +253,18 @@ class ComponentRuntimeImpl implements ComponentRuntime {
           }
 
           if (shouldComplete) {
+            const originalType = ctx.type;
             ctx.state = 'completed';
             ctx.endTime = event.timestamp;
             const interaction = this.completeComponent(ctx, def, {
               endState: 'completed',
             });
-            if (interaction) emitted.push(interaction);
+            if (interaction && interaction.type !== originalType) {
+              emitted.push(interaction);
+              handled = true;
+            } else if (interaction) {
+              emitted.push(interaction);
+            }
             this.activeStack.splice(i, 1);
           }
         }
@@ -685,11 +703,14 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     const SURFACE_CREATING_TYPES: InteractionType[] = ['Dropdown', 'DatePicker', 'ModalDialog'];
 
     // Define which surface types each interaction type can claim.
-    // Dropdown → popover surfaces (option lists, menus, listboxes — all typed as 'popover')
+    // Dropdown → popover AND modal surfaces (React SPAs often render dropdown
+    //   panels as role="dialog" → classified as 'modal'. The Dropdown lifecycle
+    //   handles this correctly — steppers, options, and Done buttons work the
+    //   same regardless of surface role.)
     // DatePicker → popover surfaces (calendars/grids also typed as 'popover')
     // ModalDialog → modal surfaces only (role=dialog, aria-modal=true, <dialog>)
     const SURFACE_COMPAT: Record<string, Set<string>> = {
-      Dropdown: new Set(['popover']),
+      Dropdown: new Set(['popover', 'modal']),
       DatePicker: new Set(['popover']),
       ModalDialog: new Set(['modal', 'drawer']),
     };
