@@ -152,8 +152,17 @@ export function resolveMeaning(
     }
 
     case 'Slider': {
-      const val = metadata.value != null ? String(metadata.value) : '';
-      return val ? `Set "${targetName}" to ${val}` : `Click slider "${targetName}"`;
+      const val = metadata.sliderValue != null
+        ? String(metadata.sliderValue)
+        : metadata.value != null
+          ? String(metadata.value)
+          : '';
+      const range = metadata.min != null && metadata.max != null
+        ? ` (${metadata.min}-${metadata.max})`
+        : '';
+      return val
+        ? `Set slider "${targetName}" to ${val}${range}`
+        : `Adjust slider "${targetName}"${range}`;
     }
 
     case 'FileUpload': {

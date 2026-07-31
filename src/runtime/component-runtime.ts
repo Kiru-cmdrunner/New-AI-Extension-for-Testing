@@ -748,7 +748,35 @@ class ComponentRuntimeImpl implements ComponentRuntime {
       if (!SURFACE_CREATING_TYPES.includes(ctx.type)) continue;
 
       if (ctx.openedSurface) {
-        // SurfaceId-based session: close it
+        // SurfaceId-based session: close it.
+        // BUT: protect against premature closure when the click is actually
+        // inside the surface but lacks a surfaceId (React portal rendering,
+        // async DOM mutation, or detection gaps). CSS-class-visible surface
+        // elements should NOT close the session — they'll be handled by the
+        // session's handleEvent instead.
+        //
+        // NOTE: We do NOT check accessible name for stepper/confirm here —
+        // a base-page "Done" button with no surfaceId and no surface CSS
+        // classes is genuinely outside the panel and should close it.
+
+        // CSS-class-visible surface check: if the click target or its ancestors
+        // match dropdown/calendar surface patterns, it's likely an in-panel click
+        // that simply lacked a surfaceId. Don't close — let handleEvent claim it.
+        const isInsideSurfaceByClass =
+          isInsideDropdownSurface(event.target.className) ||
+          isInsideDropdownSurface(event.domContext.ancestorClasses.join(' ')) ||
+          isInsideCalendarSurface(event.target.className) ||
+          isInsideCalendarSurface(event.domContext.ancestorClasses.join(' '));
+        if (isInsideSurfaceByClass) continue;
+
+        // Stepper-button protection: ONLY when the click target has stepper-like
+        // CSS classes (not just accessible name "+"). CSS classes are a stronger
+        // signal that this is an in-panel widget rendered outside surfaceId.
+        const targetClassName = event.target.className || '';
+        if (targetClassName && /(?:plus|minus|increment|decrement|add-btn|remove-btn|counter-plus|counter-minus|stepper-plus|stepper-minus|pax-plus|pax-minus|qty-plus|qty-minus|inc-btn|dec-btn|increase|decrease)/i.test(targetClassName)) {
+          continue;
+        }
+
         const def = this.findDefForType(ctx.type);
         ctx.state = 'completed';
         ctx.endTime = event.timestamp;

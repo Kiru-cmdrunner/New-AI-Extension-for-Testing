@@ -590,25 +590,29 @@ export const dropdownDefinition: ComponentDefinition = {
     return false;
   },
 
-  downcast(ctx: ComponentContext, _completion: ComponentCompletion): InteractionType | null {
+  downcast(ctx: ComponentContext, completion: ComponentCompletion): InteractionType | null {
     // Downcast to Click when a Dropdown session opened on a false-positive
     // trigger (the element matched dropdown trigger patterns but no panel
     // actually opened and nothing was selected). This happens with SPA
     // elements like fare-type tiles, travel-class cards, etc. that have
     // dropdown-like CSS classes but are really just clickable buttons.
     //
-    // Conditions:
-    // 1. No subActions were captured (no option clicked, no stepper toggled)
-    // 2. No selectedValue was captured (no value set)
-    // 3. No Done/Apply was clicked
+    // CRITICAL: A Dropdown that DID open a surface (ctx.openedSurface is set)
+    // should NEVER be downcast — the surface opening proves it was a real
+    // dropdown, even if no subActions were captured (timing/detection gaps).
+    // Downcasting a surface-bound Dropdown would erase the full context.
     //
-    // If ANY of these have data, the user did interact with a real dropdown
-    // panel, and the interrupted state is meaningful — we keep the Dropdown type.
+    // Conditions for downcast:
+    // 1. No surface was ever bound (ctx.openedSurface === null)
+    // 2. No subActions were captured (no option clicked, no stepper toggled)
+    // 3. No selectedValue was captured (no value set)
+    // 4. No Done/Apply was clicked
+    const hasSurface = ctx.openedSurface !== null;
     const subActions = (ctx.data.subActions as DropdownSubAction[]) ?? [];
     const selectedValue = (ctx.data.selectedValue as string) ?? '';
     const doneClicked = ctx.data.doneClicked === true;
 
-    if (subActions.length === 0 && !selectedValue && !doneClicked) {
+    if (!hasSurface && subActions.length === 0 && !selectedValue && !doneClicked) {
       return 'Click' as InteractionType;
     }
     return null;
