@@ -36,8 +36,10 @@ import {
   StorageKeys,
   type UIState,
   type AppMessage,
+  type SessionEvent,
 } from '../shared/types';
 import type { ObservedEvent } from '../shared/component-types';
+import type { ElementRecordedEvent, DomContext, RecordedEvent } from '../recorder/recorded-event';
 import { FrameTree } from './frame-tree';
 import {
   initRecording,
@@ -309,7 +311,7 @@ async function handleStopRecording(): Promise<void> {
   });
 
   // Convert ObservedEvent[] → RecordedEvent[] for V1 classifier compatibility
-  const events: import('./recorder/recorded-event').RecordedEvent[] = observedEvents.map((oe) => {
+  const events: RecordedEvent[] = observedEvents.map((oe) => {
     if (oe.eventType === 'navigation') {
       return {
         eventId: oe.eventId,
@@ -321,14 +323,14 @@ async function handleStopRecording(): Promise<void> {
     }
     return {
       eventId: oe.eventId,
-      eventType: oe.eventType as any,
+      eventType: oe.eventType as ElementRecordedEvent['eventType'],
       timestamp: new Date(oe.timestamp).toISOString(),
       target: oe.target,
       valueBefore: oe.valueBefore,
       valueAfter: oe.valueAfter,
       checkedBefore: oe.checkedBefore,
       checkedAfter: oe.checkedAfter,
-      domContext: oe.domContext as any,
+      domContext: oe.domContext as DomContext | undefined,
     };
   });
 
@@ -406,7 +408,7 @@ async function handleStopRecording(): Promise<void> {
     const tab = await getActiveTab();
 
     const irPlan = buildIRPlan({
-      events,
+      events: events as unknown as SessionEvent[],
       interactions: mergedInteractions,
       understanding: understandingResult,
       recordingContext: {
@@ -447,7 +449,7 @@ async function handleStopRecording(): Promise<void> {
           fragment: null,
           capability: null,
         },
-        events,
+        events: events as unknown as readonly Record<string, unknown>[],
         interactions: mergedInteractions,
         url: (await getActiveTab())?.url ?? '',
         irPlan,
@@ -615,7 +617,7 @@ async function handleRunTest(): Promise<void> {
   let irWasStale = false;
   try {
     const uowFactory = new DexieUnitOfWorkFactory();
-    const uow = await uowFactory.create();
+    const uow = uowFactory.create();
 
     // Collect all element IDs referenced by the IR plan
     const elementIds = new Set<string>();
@@ -625,34 +627,34 @@ async function handleRunTest(): Promise<void> {
       }
     }
 
-    // Load referenced elements from the Repository
-    const referencedElements: import('../domain/entities/element').Element[] = [];
-    for (const elementId of elementIds) {
-      const el = await uow.elements.getById(elementId);
-      if (el) referencedElements.push(el);
-    }
+    await uow.execute(async (repos) => {
+      // Load referenced elements from the Repository
+      const referencedElements: import('../domain/entities/element').Element[] = [];
+      for (const elementId of elementIds) {
+        const el = await repos.elements.getById(elementId);
+        if (el) referencedElements.push(el);
+      }
 
-    // Build a minimal artifact-like object for staleness check
-    // (The IR plan in storage doesn't have generatedAt, so we use
-    // a synthetic timestamp from the plan's steps or the storage time)
-    const irGeneratedAt = irPlanResult[StorageKeys.EXECUTION_IR_PLAN + '_generated_at'] as string
-      ?? new Date(0).toISOString(); // epoch if unknown
+      // Build a minimal artifact-like object for staleness check
+      // (The IR plan in storage doesn't have generatedAt, so we use
+      // a synthetic timestamp from the plan's steps or the storage time)
+      const irGeneratedAt = irPlanResult[StorageKeys.EXECUTION_IR_PLAN + '_generated_at'] as string
+        ?? new Date(0).toISOString(); // epoch if unknown
 
-    const stalenessReport = checkStaleness(
-      { id: 'cached', testCaseVersionId: irPlan.testCaseVersionId, plan: irPlan, generatedAt: irGeneratedAt, generatorVersion: 'ir-bridge-1.0', renderings: {} } as import('../domain/execution-ir/types').ExecutionIRArtifact,
-      referencedElements,
-      'ir-bridge-1.0',
-    );
+      const stalenessReport = checkStaleness(
+        { id: 'cached', testCaseVersionId: irPlan.testCaseVersionId, plan: irPlan, generatedAt: irGeneratedAt, generatorVersion: 'ir-bridge-1.0', renderings: {} } as import('../domain/execution-ir/types').ExecutionIRArtifact,
+        referencedElements,
+        'ir-bridge-1.0',
+      );
 
-    if (stalenessReport.status === 'stale') {
-      irWasStale = true;
-      console.warn('[Execution] IR is stale:', stalenessReport.reasons);
-      // In a full implementation, we would regenerate the IR here via the IR Bridge.
-      // For now, proceed with the stale IR — the runtime healing in the executor
-      // will compensate by healing locators during execution.
-    }
-
-    await uow.rollback?.();
+      if (stalenessReport.status === 'stale') {
+        irWasStale = true;
+        console.warn('[Execution] IR is stale:', stalenessReport.reasons);
+        // In a full implementation, we would regenerate the IR here via the IR Bridge.
+        // For now, proceed with the stale IR — the runtime healing in the executor
+        // will compensate by healing locators during execution.
+      }
+    });
   } catch (stalenessErr) {
     // Non-fatal — staleness check is an optimization, not a requirement
     console.warn('[Execution] Staleness check failed:', stalenessErr);
@@ -663,7 +665,6 @@ async function handleRunTest(): Promise<void> {
 
   // Track healed elements via a counter (the override map is internal to the executor)
   let healedCount = 0;
-  const healedElementIds: string[] = [];
   const result = await executor.execute(irPlan, {
     onStepComplete: (step, stepResult) => {
       // Track healed elements for post-execution invalidation
@@ -710,9 +711,10 @@ async function handleRunTest(): Promise<void> {
     });
 
     const uowFactory = new DexieUnitOfWorkFactory();
-    const uow = await uowFactory.create();
-    await uow.executionRuns.save(run);
-    await uow.commit();
+    const uow = uowFactory.create();
+    await uow.execute(async (repos) => {
+      await repos.executionRuns.save(run);
+    });
     executionRunId = run.id;
 
     console.info('[Execution] ExecutionRun persisted:', executionRunId);
@@ -822,7 +824,7 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
   // Create a navigation ObservedEvent and process it
   const navEvent: ObservedEvent = {
     eventId: `nav-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    eventType: 'navigation' as any,
+    eventType: 'navigation',
     timestamp: Date.now(),
     isTrusted: true,
     target: {

@@ -6,7 +6,7 @@
  * mutate later, so all identity information must be captured NOW.
  *
  * The logic is adapted from the proven implementation in
- * deterministic-recorder.ts (v10.4.18). Key behaviors preserved:
+ * phase5 recorder (removed v1) (v10.4.18). Key behaviors preserved:
  *   - 10-tier accessible name cascade
  *   - Implicit ARIA role mapping
  *   - CSS selector and XPath generation

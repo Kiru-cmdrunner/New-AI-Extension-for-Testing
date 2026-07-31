@@ -28,7 +28,6 @@ import type {
   CapabilityInput,
   ValidationRule,
   OutcomeDescriptor,
-  EnrichmentEvent,
 } from '../../domain/entities/capability-candidate';
 import type { ApplicationKnowledgeFragment } from '../../domain/entities/application-knowledge';
 

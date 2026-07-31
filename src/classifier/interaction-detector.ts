@@ -364,7 +364,7 @@ function classifyGroup(group: EventGroup): { type: InteractionType; metadata: In
         inputType === 'range' ||
         (target.cssSelector && /type=["']?range["']?/i.test(target.cssSelector))) {
       const changeEvent = events.find((e) => e.eventType === 'change' || e.eventType === 'input') as ElementRecordedEvent | undefined;
-      const sliderValue = changeEvent?.valueAfter ?? events.find((e) => e.eventType === 'blur')?.valueAfter ?? '';
+      const sliderValue = changeEvent?.valueAfter ?? (events.find((e) => e.eventType === 'blur') as ElementRecordedEvent | undefined)?.valueAfter ?? '';
       const dCtx = eventWithDomCtx?.domContext;
       // For custom sliders, value may come from captureValue (aria-valuenow)
       const sliderValueFinal = sliderValue || dCtx?.ariaValueText || dCtx?.ariaValueNow || '';
@@ -525,8 +525,8 @@ function classifyGroup(group: EventGroup): { type: InteractionType; metadata: In
     if (dialog) {
       const meta: InteractionMetadata = {
         dialogType: dialog,
-        dialogMessage: clickEvt?.domContext?.dialogMessage,
-        dialogResult: clickEvt?.domContext?.dialogResult,
+        dialogMessage: clickEvt?.domContext?.dialogMessage ?? undefined,
+        dialogResult: clickEvt?.domContext?.dialogResult ?? undefined,
       };
       return { type: 'BrowserAlert', metadata: meta, confidence: 1.0 };
     }

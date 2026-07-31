@@ -123,7 +123,7 @@ export class FrameTree {
    * Builds the complete parent→child topology with ancestor chains.
    */
   async refresh(tabId: number): Promise<void> {
-    let allFrames: chrome.webNavigation.GetAllFrameResultDetails[] | undefined;
+    let allFrames: chrome.webNavigation.GetAllFrameResultDetails[] | null;
     try {
       allFrames = await chrome.webNavigation.getAllFrames({ tabId });
     } catch {

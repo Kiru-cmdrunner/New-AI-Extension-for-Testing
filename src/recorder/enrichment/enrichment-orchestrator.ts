@@ -103,7 +103,7 @@ export function enrichSession(input: EnrichmentInput): ApplicationKnowledgeFragm
           ...contract.constraints,
           validOptions: component.optionSet,
         },
-      };
+      } as unknown as typeof contract;
     }
     return contract;
   });

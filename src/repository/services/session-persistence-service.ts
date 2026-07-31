@@ -21,12 +21,11 @@
  * Reference: Phase 10 architecture — Recording → Understanding → Generation → Repository
  */
 
-import type { UnitOfWorkFactory, UnitOfWork } from '../v2/interfaces/unit-of-work';
+import type { UnitOfWorkFactory } from '../v2/interfaces/unit-of-work';
 import type { UnderstandingResult } from '../../domain/entities/understanding-result';
 import type { SessionEvent } from '../../shared/types';
 import type { DetectedInteraction } from '../../classifier/interaction-types';
 import type { ExecutionIRPlan } from '../../domain/execution-ir/types';
-import type { CapabilityCandidate } from '../../domain/entities/capability-candidate';
 import {
   createRecordingSession,
 } from '../../domain/entities/recording-session';
@@ -44,7 +43,7 @@ export interface SessionPersistenceInput {
   /** The UnderstandingResult from the Understanding Layer. */
   readonly understanding: UnderstandingResult;
   /** Raw session events (archival tier). */
-  readonly events: SessionEvent[];
+  readonly events: SessionEvent[] | ReadonlyArray<Record<string, unknown>>;
   /** Raw classified interactions (archival tier). */
   readonly interactions: DetectedInteraction[];
   /** The URL where the recording started. */
@@ -98,7 +97,7 @@ export async function persistSession(
     const session = createRecordingSession({
       projectId,
       understandingResult: input.understanding,
-      rawEvents: [...input.events],
+      rawEvents: [...(input.events as SessionEvent[])],
       rawInteractions: [...input.interactions],
       url: input.url,
     });

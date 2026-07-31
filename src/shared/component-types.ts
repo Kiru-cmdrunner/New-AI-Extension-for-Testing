@@ -14,6 +14,7 @@
  */
 
 import type { ElementIdentity } from './types';
+export type { ElementIdentity };
 
 // ── Browser Events ─────────────────────────────────────────────────────
 
@@ -222,7 +223,8 @@ export type ComponentState =
   | 'active'
   | 'completed'
   | 'abandoned'
-  | 'interrupted';
+  | 'interrupted'
+  | 'discarded';
 
 /**
  * The end state of a completed or terminated component.

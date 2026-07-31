@@ -35,11 +35,12 @@ export {
 
 // ── Core recording state ─────────────────────────────────────────────────
 
-/** The three recording states displayed in the side panel. */
+/** Recording states displayed in the side panel. */
 export enum RecordingState {
   Ready = 'ready',
   Recording = 'recording',
   Stopped = 'stopped',
+  Error = 'error',
 }
 
 /** Keys used for chrome.storage.local persistence. */
@@ -96,8 +97,10 @@ export interface UIState {
   recordingState: RecordingState;
   /** ISO timestamp of the last state change (for future use). */
   lastChanged: string;
-  /** Stage 2 feature flag: 'legacy' (deterministic-recorder) or 'control' (control-recorder v2). */
+  /** Stage 2 feature flag: 'legacy' (phase5 recorder) or 'control' (control-recorder v2). */
   recorderEngine?: 'legacy' | 'control';
+  /** Error message when recordingState is Error. */
+  errorMessage?: string;
 }
 
 /** The default UI state written on first install or missing state. */
@@ -564,6 +567,8 @@ export type AppMessage =
   | { type: 'STATE_UPDATE'; payload: UIState }
   | { type: 'RUN_TEST' }
   | { type: 'EXECUTION_RESULT'; status: 'passed' | 'failed' | 'error'; stepCount: number; passedSteps: number; durationMs: number; healedElements: number }
+  | { type: 'OBSERVED_EVENT'; payload: import('./component-types').ObservedEvent }
+  | { type: 'IFRAME_SELECTORS'; payload: Array<{ frameSelector: string; frameName: string | null; frameId: string | null; frameIndex: number; frameSrc: string | null }> }
   | {
       type: 'RECORDED_EVENT';
       eventType: 'click' | 'dblclick' | 'contextmenu' | 'focus' | 'blur' | 'change' | 'input' | 'scroll' | 'mouseenter' | 'dragstart' | 'drop' | 'dateSelect';
@@ -592,6 +597,8 @@ export function isAppMessage(value: unknown): value is AppMessage {
       'STATE_UPDATE',
       'RUN_TEST',
       'EXECUTION_RESULT',
+      'OBSERVED_EVENT',
+      'IFRAME_SELECTORS',
       'RECORDED_EVENT',
     ].includes(msg['type'])
   );

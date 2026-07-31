@@ -3,9 +3,9 @@
  *
  * This content script uses the Control Model for target resolution. When the
  * feature flag is set to 'control', this script captures events instead of
- * deterministic-recorder.ts.
+ * phase5 recorder (removed v1).
  *
- * KEY DIFFERENCE from deterministic-recorder.ts:
+ * KEY DIFFERENCE from phase5 recorder (removed v1):
  * - Events are resolved via model.matchEvent() which returns the CORRECT
  *   control (Nationality → "Nationality", not "Blood Type")
  * - The same RECORDED_EVENT message format is sent so the downstream pipeline
@@ -16,7 +16,7 @@
  * - Reads `recorder_engine` from chrome.storage.local (via ui_state changes)
  * - Both content scripts are injected declaratively, but only one activates
  *   based on the flag value
- * - Default is 'legacy' (deterministic-recorder.ts)
+ * - Default is 'legacy' (phase5 recorder (removed v1))
  */
 
 import { ControlModel } from './control-model';
@@ -713,7 +713,7 @@ if ((window as any)[V2_GUARD]) {
     }, HOVER_DWELL_MS);
   }
 
-  function onMouseLeave(event: MouseEvent): void {
+  function onMouseLeave(_event: MouseEvent): void {
     if (!shouldCapture()) return;
     // Mouse left the element before dwell threshold — cancel pending hover
     cancelPendingHover();

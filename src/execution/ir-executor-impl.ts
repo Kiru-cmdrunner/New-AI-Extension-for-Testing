@@ -32,8 +32,8 @@ import type {
   ExecutionIRPlan,
   IRStep,
   ResolvedLocator,
-  ResolvedTarget,
 } from '../domain/execution-ir/types';
+import type { ElementIdentity } from '../shared/types';
 import type {
   IRExecutor,
   IRExecutionOptions,
@@ -41,8 +41,6 @@ import type {
   IRStepResult,
   IRAssertionResult,
 } from '../domain/execution-ir/adapters/ir-executor';
-import type { RankedLocator } from '../domain/locator-ranking';
-import { LocatorStrategyType } from '../domain/enums';
 import { extractCandidatesFromIdentity, rankLocatorCandidates } from '../domain/locator-ranking';
 import { DexieUnitOfWorkFactory } from '../repository/v2/dexie/dexie-unit-of-work-factory';
 import { healElementAndPersist } from '../repository/services/healing-service';
@@ -261,9 +259,6 @@ export class IRExecutorImpl implements IRExecutor {
     const stepStartTime = performance.now();
 
     // Resolve target
-    let resolvedElement: Element | null = null;
-    let resolvedIdentity: Record<string, string | null> | null = null;
-
     if (step.target.kind === 'element') {
       const elementId = step.target.elementId;
       const locators = overrideMap.get(elementId) ?? step.target.resolvedLocators;
@@ -275,9 +270,7 @@ export class IRExecutorImpl implements IRExecutor {
         requireVisible: step.executionParameters.waitStrategy !== 'none',
       });
 
-      if (resolveResponse.found && resolveResponse.identity) {
-        resolvedIdentity = resolveResponse.identity;
-      } else {
+      if (!resolveResponse.found) {
         // Locator resolution failed → trigger runtime healing
         const healed = await this.attemptRuntimeHealing(
           tabId,
@@ -294,9 +287,7 @@ export class IRExecutorImpl implements IRExecutor {
             requireVisible: step.executionParameters.waitStrategy !== 'none',
           });
 
-          if (retryResponse.found && retryResponse.identity) {
-            resolvedIdentity = retryResponse.identity;
-          } else {
+          if (!retryResponse.found) {
             // Still not found after healing — step fails
             return {
               stepId: step.id,
@@ -434,7 +425,7 @@ export class IRExecutorImpl implements IRExecutor {
 
       // 2. Rank locators from the live DOM identity
       const candidates = extractCandidatesFromIdentity(
-        extractResponse.identity as Record<string, string | null>,
+        extractResponse.identity as unknown as ElementIdentity,
       );
       const ranked = rankLocatorCandidates(candidates);
 
@@ -442,22 +433,20 @@ export class IRExecutorImpl implements IRExecutor {
 
       // 3. Call healElementAndPersist() via the Repository
       const uowFactory = new DexieUnitOfWorkFactory();
-      const uow = await uowFactory.create();
-      const healed = await healElementAndPersist(
-        {
-          elementId,
-          newStrategies: ranked,
-          context: {
-            sourceSessionId: `execution-${Date.now()}`,
-            reason: 'Runtime locator resolution failure',
-            proposedBy: 'runtime-healer',
-            healedAt: new Date().toISOString(),
+      const healed = await uowFactory.create().execute(async (repos) => {
+        return healElementAndPersist(
+          {
+            elementId,
+            newStrategies: ranked,
+            context: {
+              sourceSessionId: `execution-${Date.now()}`,
+              reason: 'Runtime locator resolution failure',
+              proposedBy: 'runtime-healer',
+            },
           },
-        },
-        uow.elements,
-      );
-
-      await uow.commit();
+          repos.elements,
+        );
+      });
 
       if (!healed) return false;
 

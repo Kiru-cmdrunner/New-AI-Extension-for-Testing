@@ -18,11 +18,10 @@ import {
 import { StorageService } from '../storage/storage-service';
 import { sendMessage } from '../shared/messaging';
 import { RepositoryService } from '../repository/repository-service';
-import { renderEventTimeline } from './timeline-renderer';
 import { renderProductionInteractions } from './interaction-renderer';
-import type { RecordedEvent, ReplayJson } from '../recorder/recorded-event';
+import type { ReplayJson } from '../recorder/recorded-event';
 import type { ComponentInteraction } from '../shared/component-types';
-import type { ExecutionIRPlan, IRStep, IRAssertion } from '../domain/execution-ir/types';
+import type { ExecutionIRPlan, IRAssertion } from '../domain/execution-ir/types';
 import type { GeneratedFile } from '../domain/execution-ir/adapters/ir-code-generator';
 
 /** Storage key for Component Runtime interactions. */
@@ -86,7 +85,6 @@ const tcBadgeName = document.getElementById('tc-badge-name')!;
 const timelineEvents = document.getElementById('recording-interactions-list')!;
 const timelineCount = document.getElementById('recording-interactions-count')!;
 const csStatus = document.getElementById('cs-status')!;
-const csIndicator = document.getElementById('cs-indicator')!;
 const csStatusText = document.getElementById('cs-status-text')!;
 
 // Stopped view
@@ -304,15 +302,6 @@ chrome.runtime.onMessage.addListener((message: unknown) => {
 });
 
 // ── Timeline Rendering ─────────────────────────────────────
-
-function renderTimeline(container: HTMLElement, events: RecordedEvent[]): void {
-  renderEventTimeline(container, events);
-}
-
-function renderRecordingTimeline(container: HTMLElement, countEl: HTMLElement, events: RecordedEvent[]): void {
-  countEl.textContent = String(events.length);
-  renderEventTimeline(container, events);
-}
 
 // ── Recording Context Helpers ──────────────────────────────
 
@@ -1077,7 +1066,6 @@ function setupLiveListeners(): void {
   // emits interactions. We also rely on storage updates from LIVE_INTERACTIONS_KEY.
   chrome.runtime.onMessage.addListener((message: any) => {
     if (message?.type === 'INTERACTION_CAPTURED' && message.interaction) {
-      const interaction = message.interaction as ComponentInteraction;
       if (!views['recording'].hidden) {
         // Live update: reload all interactions from storage
         chrome.storage.local.get(LIVE_INTERACTIONS_KEY).then((result) => {

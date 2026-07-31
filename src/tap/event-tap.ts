@@ -38,19 +38,6 @@ const MOUSEMOVE_MIN_INTERVAL_MS = 50;
 const DEFERRED_BLUR_DELAY_MS = 0;
 
 /**
- * Maximum time to wait for a framework to update the DOM after a click on
- * a dropdown/autocomplete option (ms). React batches state updates; the
- * actual DOM update happens asynchronously after the click handler.
- *
- * Single-poll at 50ms was too short for heavy SPAs (AdaniOne, etc.) where
- * React state flush + re-render routinely takes 100-300ms. The value was
- * read before the framework updated it, producing stale captures.
- *
- * Now replaced by a multi-poll schedule (see POST_CLICK_POLL_INTERVALS_MS).
- */
-const POST_CLICK_CHECK_DELAY_MS = 150;
-
-/**
  * Multi-poll intervals for post-click value detection (ms).
  *
  * After a click inside a dropdown/calendar/autocomplete surface, we poll

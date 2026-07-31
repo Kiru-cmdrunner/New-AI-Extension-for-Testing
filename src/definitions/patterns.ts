@@ -56,14 +56,6 @@ const INTERACTIVE_ROLES = new Set([
 ]);
 
 /**
- * CSS class patterns that indicate a custom interactive element.
- * Frameworks apply these to wrapper divs that act as buttons, links, etc.
- * Includes common patterns from modern React/Vue/Angular apps.
- */
-const INTERACTIVE_CLASS_RE =
-  /(btn|button|clickable|selectable|dropdown|menu-item|nav-item|tab-item|chip|toggle|action|stepper|counter|increment|decrement|qty|quantity|plus|minus|add-btn|remove-btn|arrow|chevron|expand|collapse|option|menuitem|choice|pickable|tile|fare-option|class-option|travel-class)/i;
-
-/**
  * Is this element interactive (worth capturing as a Click)?
  *
  * Checks tag, ARIA role, tabIndex, and class patterns. Returns false for
@@ -102,21 +94,6 @@ const DROPDOWN_OPTION_ROLES = new Set([
   'option',
 ]);
 
-/**
- * CSS class patterns for dropdown triggers and options.
- * Covers OXD (OrangeHRM), MUI, Ant Design, Bootstrap, React-Select.
- */
-const DROPDOWN_TRIGGER_CLASS_RE =
-  /(oxd-select-text|select|combobox|dropdown|antd.*select|MuiSelect|selector|traveler|traveller|passenger|pax|cabin|class-selector|trip-type|economy|journey-type|fare-type|travel-class)/i;
-
-const DROPDOWN_OPTION_CLASS_RE =
-  /(oxd-select-option|select-option|option-item|list-option|ant-select-item|selectable-item|choice-item|pax-option|class-option|fare-option|travel-class-option|tile-option|radio-tile|chip-option|menu-item-option|list-item-option)/i;
-
-/**
- * CSS class patterns for the dropdown surface (the open listbox container).
- */
-const DROPDOWN_SURFACE_CLASS_RE =
-  /(oxd-select-dropdown|select-dropdown|listbox|dropdown-menu|popover|overlay|popup|drawer-content|sheet-content|bottom-sheet|modal-body)/i;
 
 /**
  * Is this element a dropdown trigger?
@@ -204,37 +181,9 @@ const DATE_INPUT_TYPES = new Set([
   'date', 'time', 'datetime-local', 'month', 'week',
 ]);
 
-/**
- * CSS class patterns for date picker triggers.
- * Covers OXD, MUI DatePicker, Ant Design DatePicker, React-DatePicker,
- * and common React SPA patterns (AdaniOne, etc.).
- */
-const DATEPICKER_TRIGGER_CLASS_RE =
-  /(oxd-date-input|datepicker|date-picker|date-input|calendar-input|depart-on|departure-date|return-on|arrival-date|journey-date|travel-date|trip-date)/i;
 
-/**
- * CSS class patterns for calendar cells (actual selectable dates).
- * Covers OXD, MUI DatePicker, Ant Design DatePicker, React-DatePicker,
- * and common patterns found in React SPAs (AdaniOne, etc.).
- */
-const DATEPICKER_CELL_CLASS_RE =
-  /(oxd-date-day|calendar-day|datepicker-day|day-cell|flatpickr-day|react-datepicker__day|date-day|calendar-date|picker-day|cell-day|day-number|calendar-number|date-number)/i;
 
-/**
- * CSS class patterns for the calendar surface (the open calendar container).
- * Expanded to cover React SPA patterns.
- */
-const CALENDAR_SURFACE_CLASS_RE =
-  /(oxd-date-input-dropdown|oxd-calendar|calendar|datepicker|flatpickr-calendar|react-datepicker|date-picker-dropdown|date-dropdown|date-picker-panel|calendar-panel|picker-panel)/i;
 
-/**
- * CSS class patterns for calendar NAVIGATION buttons (Next/Prev Month, etc.).
- * These must NOT complete the date picker lifecycle — they are lifecycle-internal.
- *
- * Architecture: §4.7 (DatePicker navigation button false positives fix)
- */
-const CALENDAR_NAV_BUTTON_RE =
-  /(oxd-calendar-switch-button|calendar.*nav|datepicker.*nav|prev|next|today|switch|chevron)/i;
 
 /**
  * Is this element a date picker trigger?

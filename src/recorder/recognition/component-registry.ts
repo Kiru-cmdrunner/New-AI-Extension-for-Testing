@@ -27,7 +27,6 @@ import {
   addObservedTransition,
   promoteToConfirmed,
   rejectComponent,
-  setBusinessField,
 } from '../../domain/entities/component-grouping';
 import type { RecognitionResult } from './structural-recognizer';
 
@@ -344,7 +343,6 @@ export class ComponentRegistry {
       constituents,
       recognitionSource: result.recognitionSource,
       recognitionConfidence: result.confidence,
-      lifecycleState: ComponentLifecycleState.TENTATIVE,
     });
 
     this.components.set(groupingId, component);

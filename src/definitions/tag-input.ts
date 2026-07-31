@@ -125,7 +125,7 @@ export const tagInputDefinition: ComponentDefinition = {
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
     if (event.eventType !== 'focus') return null;
 
-    const { tag, ariaRole } = event.target;
+    const { tag } = event.target;
     const { inputType, isContentEditable } = event.domContext;
 
     // Must be a text-type input

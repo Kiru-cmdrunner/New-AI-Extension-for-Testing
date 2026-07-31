@@ -31,7 +31,7 @@
  *             identity label — renaming would break the accumulated context.
  */
 
-import { MissingFieldError, ValueObjectError } from '../errors/invariant-errors';
+import { MissingFieldError } from '../errors/invariant-errors';
 
 // ── Sub-types ─────────────────────────────────────────────
 
@@ -261,7 +261,11 @@ export function enrichCapability(
   }
 
   const now = new Date().toISOString();
-  const changes: EnrichmentChange = {
+  const changes: {
+    added: Record<string, string[]>;
+    modified: Array<{ field: string; from: unknown; to: unknown }>;
+    conflicts: Array<{ field: string; existing: unknown; candidate: unknown; resolution: string }>;
+  } = {
     added: {},
     modified: [],
     conflicts: [],

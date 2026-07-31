@@ -23,7 +23,6 @@ import type {
   ComponentTrigger,
   RuntimeConfig,
   InteractionType,
-  ElementIdentity,
   SurfaceEntry,
 } from '../shared/component-types';
 import { DEDUP_WINDOW_MS } from '../shared/component-types';

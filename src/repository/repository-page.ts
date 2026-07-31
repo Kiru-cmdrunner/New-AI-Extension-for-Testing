@@ -146,7 +146,7 @@ function renderCapabilities(): void {
   capabilityList.innerHTML = '';
 
   let totalCount = 0;
-  for (const [projectId, group] of displayCapabilities) {
+  for (const [, group] of displayCapabilities) {
     if (group.caps.length === 0) continue;
 
     totalCount += group.caps.length;
@@ -405,7 +405,7 @@ function renderOutcomes(outcomes: readonly CapabilityOutcome[]): HTMLElement {
   return section;
 }
 
-function renderBusinessRules(rules: readonly Capability['businessRules']): HTMLElement {
+function renderBusinessRules(rules: Capability['businessRules']): HTMLElement {
   const section = createSection('Business Rules');
 
   const list = document.createElement('div');
@@ -436,7 +436,7 @@ function renderBusinessRules(rules: readonly Capability['businessRules']): HTMLE
   return section;
 }
 
-function renderFailureModes(modes: readonly Capability['failureModes']): HTMLElement {
+function renderFailureModes(modes: Capability['failureModes']): HTMLElement {
   const section = createSection('Known Failure Modes');
 
   const list = document.createElement('div');
@@ -932,7 +932,7 @@ function escapeHtml(text: string): string {
 // ════════ ELEMENTS VIEW (Phase 11.5) ══════════════════════════
 
 import type { Element } from '../domain/entities/element';
-import { ElementStatus, LocatorStrategyType } from '../domain/enums';
+import { ElementStatus } from '../domain/enums';
 
 async function refreshElements(): Promise<void> {
   const query = searchInput.value.trim().toLowerCase();
@@ -955,7 +955,7 @@ async function refreshElements(): Promise<void> {
 
   elementList.innerHTML = '';
   let totalCount = 0;
-  for (const [projectId, group] of result) {
+  for (const [, group] of result) {
     if (group.elements.length === 0) continue;
     totalCount += group.elements.length;
 

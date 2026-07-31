@@ -239,8 +239,8 @@ export const modalDialogDefinition: ComponentDefinition = {
     // surfaces). If no modal surface appears within the session lifetime, the
     // session is abandoned and downcasts to Click.
 
-    const { ariaHasPopup, ariaRole } = event.domContext;
-    const { tag } = event.target;
+    const { ariaHasPopup } = event.domContext;
+    const { tag, ariaRole } = event.target;
 
     // ── Exclusions (let other definitions handle their triggers) ──
     if (ariaHasPopup === 'listbox' || ariaRole === 'combobox') return null;

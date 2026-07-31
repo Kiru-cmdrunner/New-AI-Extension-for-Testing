@@ -21,9 +21,6 @@ import type { ExecutionRun } from '../../../domain/entities/execution-run';
 /** Database name — versioned for future migrations. */
 const DB_NAME = 'cmdrunner_repository';
 
-/** Schema version. V1: 6 tables. V2: added capabilities + recordingSessions. V3: added executionRuns. */
-const DB_VERSION = 3;
-
 /**
  * Row types for Dexie storage. These extend the domain entities with
  * IndexedDB-specific indexing metadata. The domain entities themselves

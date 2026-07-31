@@ -76,6 +76,8 @@ export interface InteractionMetadata {
   // Navigation
   url?: string;
   title?: string;
+  pageUrl?: string;
+  pageTitle?: string;
   transitionType?: string;
   // Text Entry
   textValue?: string;
@@ -209,6 +211,27 @@ export interface InteractionMetadata {
   editorType?: string;
   /** Whether this TextEntry is a rich text editor */
   isRichTextEditor?: boolean;
+  // ── IR Bridge / Display Layer Extensions ──
+  /** Target element name (used by IR Bridge for step naming). */
+  targetName?: string;
+  /** Tags for OTP input sequences. */
+  tags?: string[];
+  /** OTP value for OtpInput interactions. */
+  otpValue?: string;
+  /** Human-readable display for key sequences. */
+  sequenceDisplay?: string;
+  /** Playwright-formatted key sequence string. */
+  playwrightSequence?: string;
+  /** True when a dropdown has multiple configuration states. */
+  isMultiConfig?: boolean;
+  /** True when this interaction opened a configuration session. */
+  configurationSession?: boolean;
+  /** Sub-actions for dropdowns (each sub-selection inside a multi-step dropdown). */
+  subActions?: Array<{
+    action: string;
+    label: string;
+    value?: string;
+  }>;
 }
 
 // ── Detection Result ────────────────────────────────────────────────────
@@ -236,7 +259,7 @@ export const INTERACTION_CATEGORIES: Record<string, InteractionType[]> = {
   Mouse: ['Click', 'DoubleClick', 'RightClick', 'Hover', 'DragDrop'],
   Keyboard: ['KeyboardShortcut', 'HotkeySequence'],
   'Text Entry': ['TextEntry', 'RichTextEditor', 'TagInput', 'OtpInput'],
-  'Selection Controls': ['NativeDropdown', 'CustomDropdown', 'SearchableDropdown', 'Autocomplete', 'MultiSelect', 'Checkbox', 'RadioButton', 'ToggleSwitch', 'Slider', 'Stepper'],
+  'Selection Controls': ['NativeDropdown', 'CustomDropdown', 'Autocomplete', 'MultiSelect', 'Checkbox', 'RadioButton', 'ToggleSwitch', 'Slider', 'Stepper'],
   'Date & Time': ['DatePicker', 'TimePicker', 'DateTimePicker'],
   'File Upload': ['FileUpload', 'DragDropUpload'],
   'Navigation UI': ['Link', 'Tab', 'Menu', 'Breadcrumb'],

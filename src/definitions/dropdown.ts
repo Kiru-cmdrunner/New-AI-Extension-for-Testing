@@ -26,7 +26,6 @@ import type {
 import {
   isDropdownTrigger,
   isDropdownOption,
-  isDropdownOptionWithFallback,
   isInsideDropdownSurface,
   normalizeDisplayValue,
   bestName,
@@ -491,7 +490,7 @@ export const dropdownDefinition: ComponentDefinition = {
     if (
       (event.eventType === 'click' || event.eventType === 'mousedown') &&
       isDoneButton(event) &&
-      (ctx.data.allSelections?.length > 0 || ctx.data.subActions?.length > 0) &&
+      ((Array.isArray(ctx.data.allSelections) && ctx.data.allSelections.length > 0) || (Array.isArray(ctx.data.subActions) && ctx.data.subActions.length > 0)) &&
       !ctx.data.doneClicked
     ) {
       return true;
@@ -535,10 +534,11 @@ export const dropdownDefinition: ComponentDefinition = {
       ctx.data.selectedValue = event.valueAfter ?? '';
       if (!ctx.data.allSelections) ctx.data.allSelections = [];
       (ctx.data.allSelections as string[]).push(event.valueAfter ?? '');
+      const selectedValue = ctx.data.selectedValue as string | undefined;
       addSubAction(ctx, {
         action: 'selectOption',
-        label: ctx.data.selectedValue,
-        value: ctx.data.selectedValue,
+        label: selectedValue ?? '',
+        value: selectedValue,
         target: event.target,
         event,
       });
@@ -615,7 +615,7 @@ export const dropdownDefinition: ComponentDefinition = {
     return false;
   },
 
-  downcast(ctx: ComponentContext, completion: ComponentCompletion): InteractionType | null {
+  downcast(ctx: ComponentContext, _completion: ComponentCompletion): InteractionType | null {
     // Downcast to Click when a Dropdown session opened on a false-positive
     // trigger (the element matched dropdown trigger patterns but no panel
     // actually opened and nothing was selected). This happens with SPA

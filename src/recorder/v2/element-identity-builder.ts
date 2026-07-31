@@ -5,7 +5,7 @@
  * consumed by the service worker's classification pipeline).
  *
  * This bridges the control-centric model to the existing downstream pipeline.
- * The critical difference from deterministic-recorder.ts's extractIdentity():
+ * The critical difference from phase5 recorder (removed v1)'s extractIdentity():
  * this builder uses the Control Model's resolved target, not the raw DOM event
  * target. This is what fixes the Nationality→Blood Type bug.
  */
@@ -76,7 +76,7 @@ function extractIframeContext(): { inIframe: boolean; ctx?: IframeContext } {
 
   try {
     // These may throw for cross-origin iframes
-    const iframeElements = window.top.document.querySelectorAll('iframe');
+    const iframeElements = window.top!.document.querySelectorAll('iframe');
     for (let i = 0; i < iframeElements.length; i++) {
       const iframe = iframeElements[i];
       if (iframe.contentWindow === window) {
@@ -161,7 +161,7 @@ export function buildElementIdentity(ctrl: ControlNode, el: Element): ElementIde
     identity.iframeContext = iframeInfo.ctx;
   }
 
-  // Synthetic elementId (same priority as deterministic-recorder.ts)
+  // Synthetic elementId (same priority as phase5 recorder (removed v1))
   identity.elementId =
     identity.stableId ||
     identity.testId ||

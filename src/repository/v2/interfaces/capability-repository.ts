@@ -6,7 +6,7 @@
  * referential integrity checks (can't delete a capability with active test cases).
  */
 
-import type { Capability, EnrichCapabilityInput } from '../../../domain/entities/capability';
+import type { Capability } from '../../../domain/entities/capability';
 
 export interface CapabilityRepository {
   /** Get a capability by ID. Returns undefined if not found. */

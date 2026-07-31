@@ -204,7 +204,7 @@ export const hotkeySequenceDefinition: ComponentDefinition = {
     return true;
   },
 
-  downcast(ctx: ComponentContext, completion: ComponentCompletion): InteractionType | null {
+  downcast(ctx: ComponentContext, _completion: ComponentCompletion): InteractionType | null {
     // If only one key was captured (timeout or flush), downcast to KeyboardShortcut
     if (!ctx.data.secondKey) {
       ctx.data.downcastedToShortcut = true;

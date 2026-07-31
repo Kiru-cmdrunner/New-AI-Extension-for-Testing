@@ -14,6 +14,7 @@
  */
 
 import type { ElementIdentity, RecordingContext } from '../shared/types';
+export type { ElementIdentity };
 
 // ── DOM Context ────────────────────────────────────────────────────────
 

@@ -158,7 +158,7 @@ const CSS_UNSAFE_CHAR_RE = /[^a-zA-Z0-9_-]/;
  * CSS.escape polyfill for contexts where the global CSS object is unavailable
  * (e.g. service workers have no DOM, no window, no CSS global).
  * Mirrors the guarded pattern used in identity-extractor.ts, locator-resolver.ts,
- * and deterministic-recorder.ts.
+ * and phase5 recorder (removed v1).
  */
 function cssEscape(value: string): string {
   if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
@@ -898,7 +898,7 @@ export function build(input: IRBridgeInput): ExecutionIRPlan {
           action: IRAction.CLICK,
           description: `Click ${commitLabel}`,
           target: resolveElementTarget(
-            { ...interaction.target, elementId: `${interaction.target.elementId ?? 'elem'}::${commitLabel}`, accessibleName: commitLabel },
+            { ...interaction.target!, elementId: `${interaction.target?.elementId ?? 'elem'}::${commitLabel}`, accessibleName: commitLabel },
           ),
           input: null,
           assertions: deriveAssertions('', null),
@@ -953,7 +953,7 @@ export function build(input: IRBridgeInput): ExecutionIRPlan {
         order: stepCounter,
         action: IRAction.CLICK,
         description: `Open "${interaction.metadata.modalTitle ?? triggerLabel}" dialog`,
-        target: resolveElementTarget(interaction.target),
+        target: resolveElementTarget(interaction.target!),
         input: null,
         assertions: deriveAssertions('', null),
         executionParameters: DEFAULT_EXECUTION_PARAMETERS,
@@ -1124,6 +1124,9 @@ function buildSubActionStep(
 ): IRStep | null {
   const fieldName = logicalAction?.businessField ?? getElementDisplayName(interaction, event);
   const assertions = deriveAssertions('', null);
+  // Target is always defined when this function is called (subAction interactions
+  // have targets by construction). Use non-null assertion for the type system.
+  const target = interaction.target!;
 
   switch (sub.action) {
     case 'selectOption': {
@@ -1135,8 +1138,8 @@ function buildSubActionStep(
         description: `Select "${sub.value || sub.label}" in ${fieldName}`,
         target: resolveElementTarget(
           sub.label
-            ? { ...interaction.target, accessibleName: sub.value || sub.label }
-            : interaction.target,
+            ? { ...target, accessibleName: sub.value || sub.label }
+            : target,
         ),
         input: sub.value || sub.label,
         assertions,
@@ -1154,8 +1157,8 @@ function buildSubActionStep(
         description: `Increase ${sub.label} in ${fieldName}`,
         target: resolveElementTarget(
           sub.label
-            ? { ...interaction.target, accessibleName: sub.label, ariaLabel: `Increase ${sub.label}` }
-            : interaction.target,
+            ? { ...target, accessibleName: sub.label, ariaLabel: `Increase ${sub.label}` }
+            : target,
         ),
         input: null,
         assertions,
@@ -1173,8 +1176,8 @@ function buildSubActionStep(
         description: `Decrease ${sub.label} in ${fieldName}`,
         target: resolveElementTarget(
           sub.label
-            ? { ...interaction.target, accessibleName: sub.label, ariaLabel: `Decrease ${sub.label}` }
-            : interaction.target,
+            ? { ...target, accessibleName: sub.label, ariaLabel: `Decrease ${sub.label}` }
+            : target,
         ),
         input: null,
         assertions,
@@ -1193,8 +1196,8 @@ function buildSubActionStep(
         description: `${checked ? 'Check' : 'Uncheck'} ${sub.label} in ${fieldName}`,
         target: resolveElementTarget(
           sub.label
-            ? { ...interaction.target, accessibleName: sub.label }
-            : interaction.target,
+            ? { ...target, accessibleName: sub.label }
+            : target,
         ),
         input: checked,
         assertions,
@@ -1212,8 +1215,8 @@ function buildSubActionStep(
         description: `Enter "${sub.value || ''}" in ${sub.label || fieldName}`,
         target: resolveElementTarget(
           sub.label
-            ? { ...interaction.target, accessibleName: sub.label }
-            : interaction.target,
+            ? { ...target, accessibleName: sub.label }
+            : target,
         ),
         input: sub.value || '',
         assertions,
@@ -1231,8 +1234,8 @@ function buildSubActionStep(
         description: `Click Done/Apply in ${fieldName}`,
         target: resolveElementTarget(
           sub.label
-            ? { ...interaction.target, accessibleName: sub.label, ariaLabel: sub.label }
-            : { ...interaction.target, accessibleName: 'Done' },
+            ? { ...target, accessibleName: sub.label, ariaLabel: sub.label }
+            : { ...target, accessibleName: 'Done' },
         ),
         input: null,
         assertions,
@@ -1278,7 +1281,7 @@ function buildFieldStep(
 
   // Try to get a target from the evidence chain (element identity)
   const evidenceTarget = field.evidence?.[0]?.target;
-  const baseTarget = evidenceTarget ?? interaction.target;
+  const baseTarget = (evidenceTarget ?? interaction.target)!;
 
   // Each field step gets a unique elementId so readability rules
   // (OR-1 merge consecutive CLICK same elementId, OR-2 merge consecutive

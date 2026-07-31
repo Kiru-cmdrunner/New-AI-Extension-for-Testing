@@ -2,7 +2,7 @@
  * Storage Service — the single entry point for chrome.storage.local.
  * All other modules use this service; direct chrome.storage calls are avoided.
  */
-import { RecordingState, StorageKeys, UIState, DEFAULT_UI_STATE, SessionEvent, RecordingContext, AIConfig, DEFAULT_AI_CONFIG, TestStep, AIProviderId, ProviderSettings, defaultProviderSettings, TestRepository, TestCaseDraft, PlaywrightGeneratorOutput } from '../shared/types';
+import { RecordingState, StorageKeys, UIState, DEFAULT_UI_STATE, SessionEvent, RecordingContext, AIConfig, DEFAULT_AI_CONFIG, TestStep, AIProviderId, ProviderSettings, defaultProviderSettings, TestRepository, TestCaseDraft } from '../shared/types';
 
 export class StorageService {
   // ── UI State ────────────────────────────────────────────
@@ -177,7 +177,7 @@ export class StorageService {
    * Returns an unsubscribe function.
    */
   static onKeyChanged(
-    key: StorageKeys,
+    key: StorageKeys | string,
     callback: (newValue: unknown) => void,
   ): () => void {
     const listener = (
@@ -305,14 +305,14 @@ export class StorageService {
    * Persist any value under a storage key.
    * Used for keys that don't have a dedicated typed method (e.g. REPLAY_JSON).
    */
-  static async setRaw(key: StorageKeys, value: unknown): Promise<void> {
+  static async setRaw(key: StorageKeys | string, value: unknown): Promise<void> {
     await chrome.storage.local.set({ [key]: value });
   }
 
   /**
    * Read a raw value by storage key.
    */
-  static async getRaw(key: StorageKeys): Promise<unknown> {
+  static async getRaw(key: StorageKeys | string): Promise<unknown> {
     const result = await chrome.storage.local.get(key);
     return result[key];
   }

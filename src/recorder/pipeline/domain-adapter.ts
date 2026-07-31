@@ -216,7 +216,7 @@ function buildDomTreePath(identity: ElementIdentity): string {
  * ElementRecordedEvent doesn't carry a URL directly. When available,
  * we construct it from the identity or use a fallback.
  */
-function buildSourceUrl(event: ElementRecordedEvent): string {
+function buildSourceUrl(_event: ElementRecordedEvent): string {
   // ElementRecordedEvent doesn't have a url field, but NavigationRecordedEvent does.
   // We use 'about:blank' as a placeholder — the caller can override with the
   // tab URL when available (the service worker has the tab's URL).

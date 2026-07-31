@@ -126,7 +126,7 @@ export const scrollDefinition: ComponentDefinition = {
     // Identify the scroll target — is it the page or a nested container?
     const trigger = ctx.triggerEvent.target;
     const isPageScroll = trigger.tag === 'HTML' || trigger.tag === 'BODY'
-      || trigger.elementKey === 'html' || trigger.elementKey === 'body';
+      || trigger.tag.toLowerCase() === 'html' || trigger.tag.toLowerCase() === 'body';
 
     // Set the interaction subtype for the adapter
     ctx.data.interactionSubtype = isPageScroll ? 'PageScroll' : 'ContainerScroll';

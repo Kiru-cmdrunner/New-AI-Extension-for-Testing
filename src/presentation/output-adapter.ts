@@ -16,8 +16,7 @@
  * Architecture: `.drytis/specs/m0a-architecture-validation.md` §2.2 Stage 6
  */
 
-import type { ComponentInteraction } from './component-types';
-import type { InteractionType } from './component-types';
+import type { ComponentInteraction, InteractionType } from '../shared/component-types';
 
 // ── Production Interaction Filter ────────────────────────────────────
 
@@ -217,8 +216,8 @@ export function toIRAction(interaction: ComponentInteraction): IRAction | null {
     case 'Navigation':
       return {
         type: 'NAVIGATE',
-        target: { name: metadata.pageTitle ?? metadata.pageUrl ?? 'page' },
-        value: metadata.pageUrl,
+        target: { name: (metadata.pageTitle ?? metadata.pageUrl ?? 'page') as string },
+        value: metadata.pageUrl as string | undefined,
         ...enrichment,
       };
 

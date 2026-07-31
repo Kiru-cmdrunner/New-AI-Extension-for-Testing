@@ -24,7 +24,6 @@
  */
 
 import {
-  PatternType,
   ComponentRole,
   RecognitionSource,
   TransitionOperation,
@@ -112,7 +111,7 @@ export interface SignalDetectionResult {
 function detectSignals(
   transitions: ObservedTransition[],
   rootElementId: string,
-  relatedElementIds: Set<string>,
+  _relatedElementIds: Set<string>,
 ): SignalDetectionResult {
   const signals = new Map<EvidenceSignal, number>();
   const signalElements = new Map<EvidenceSignal, string[]>();
@@ -305,7 +304,7 @@ function evaluateCondition(
   condition: SignatureCondition,
   detection: SignalDetectionResult,
   transitions: ObservedTransition[],
-  rootElementId: string,
+  _rootElementId: string,
 ): boolean {
   const count = detection.signals.get(condition.signal) ?? 0;
   const minNeeded = condition.minOccurrences ?? 1;
@@ -365,10 +364,10 @@ function matchSignature(
  */
 function assignBehavioralConstituents(
   rootElementId: string,
-  relatedElementIds: string[],
+  _relatedElementIds: string[],
   detection: SignalDetectionResult,
   transitions: ObservedTransition[],
-  def: PatternDefinition,
+  _def: PatternDefinition,
 ): Array<{ elementId: string; role: ComponentRole }> {
   const constituents: Array<{ elementId: string; role: ComponentRole }> = [];
 

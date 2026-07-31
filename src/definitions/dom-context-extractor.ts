@@ -147,7 +147,7 @@ function computeSurfaceId(el: Element): string | null {
   while (current && current !== document.body && current !== document.documentElement && depth < MAX_SURFACE_ID_DEPTH) {
     const tag = current.tagName.toLowerCase();
     const role = current.getAttribute('role');
-    const parent = current.parentElement;
+    const parent: Element | null = current.parentElement;
     let nth = 1;
     if (parent) {
       let sibling: Element | null = parent.firstElementChild;

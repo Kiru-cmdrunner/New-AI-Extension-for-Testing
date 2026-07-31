@@ -19,10 +19,10 @@
 
 import type { DetectedInteraction, InteractionMetadata } from '../../classifier/interaction-types';
 import type { ElementIdentity } from '../../shared/types';
-import type { RecordedEvent } from '../recorder/recorded-event';
+import type { RecordedEvent } from '../recorded-event';
 import type { DomainEntities } from '../pipeline/domain-adapter';
 import { UiElement, createUiElement } from '../../domain/entities/ui-element';
-import { createObservedTransition, emptyElementState } from '../../domain/entities/observed-transition';
+import { createObservedTransition, emptyElementState, type ObservedTransition } from '../../domain/entities/observed-transition';
 import {
   TransitionOperation,
   RelevanceLevel,

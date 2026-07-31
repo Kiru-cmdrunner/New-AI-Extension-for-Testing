@@ -20,8 +20,6 @@ import {
   RecognitionSource,
   ComponentLifecycleState,
   ComponentRole,
-  TransitionOperation,
-  PatternType,
   type RelevanceLevel,
 } from '../../domain/enums';
 import type { ObservedTransition } from '../../domain/entities/observed-transition';
@@ -38,9 +36,8 @@ import {
   createEvidence,
   resolveIdentity,
   type EvidenceEntry,
-  type EvidenceDisposition,
 } from './component-registry';
-import { getPattern, type PatternDefinition } from './pattern-catalogue';
+import { getPattern } from './pattern-catalogue';
 
 // ── Orchestrator Types ───────────────────────────────────
 
@@ -204,8 +201,8 @@ export function processInteraction(
 
   const structuralInput: RecognitionInput = {
     element: input.element,
-    ancestorRoles: input.ancestorRoles,
-    siblingElementRoles: input.siblingElementRoles,
+    ancestorRoles: [...input.ancestorRoles],
+    siblingElementRoles: input.siblingElementRoles ? [...input.siblingElementRoles] : undefined,
   };
 
   const structuralResult = recognize(structuralInput);

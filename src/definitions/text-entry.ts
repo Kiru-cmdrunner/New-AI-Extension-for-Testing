@@ -30,7 +30,7 @@ export const textEntryDefinition: ComponentDefinition = {
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
     if (event.eventType !== 'focus') return null;
 
-    const { tag, ariaRole, placeholder } = event.target;
+    const { tag, ariaRole } = event.target;
     const { inputType, isContentEditable } = event.domContext;
 
     if (!isTextEntry(tag, inputType, ariaRole, isContentEditable)) {
@@ -70,7 +70,7 @@ export const textEntryDefinition: ComponentDefinition = {
     return null;
   },
 
-  shouldCancelOnOutside(event: ObservedEvent, ctx: ComponentContext): boolean {
+  shouldCancelOnOutside(_event: ObservedEvent, _ctx: ComponentContext): boolean {
     // TextEntry should NEVER be cancelled by outside events. The blur event
     // (which may be deferred in SPA frameworks) is the authoritative completion
     // signal. If we cancel on click, we lose the deferred blur's value update.

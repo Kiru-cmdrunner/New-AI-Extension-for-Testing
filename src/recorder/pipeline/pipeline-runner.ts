@@ -26,9 +26,8 @@ import type { DomInspector } from '../enrichment/dom-inspector';
 import type { UiElement } from '../../domain/entities/ui-element';
 import type { ObservedTransition } from '../../domain/entities/observed-transition';
 import type { ComponentGrouping } from '../../domain/entities/component-grouping';
-import type { RecordedEvent } from '../recorder/recorded-event';
+import type { RecordedEvent } from '../recorded-event';
 import type { DetectedInteraction } from '../../classifier/interaction-types';
-import type { ElementIdentity } from '../../shared/types';
 import type { ApplicationKnowledgeFragment } from '../../domain/entities/application-knowledge';
 import type { CapabilityCandidate } from '../../domain/entities/capability-candidate';
 import { deriveCapability } from '../enrichment/capability-deriver';
@@ -53,34 +52,6 @@ function toRoleInfo(element: UiElement): ElementRoleInfo {
     ariaRole: element.identity.ariaRole,
     tag: element.identity.tag,
   };
-}
-
-/**
- * Parse ancestor role strings (from DomContext.ancestorRoles) into ElementRoleInfo[].
- * Each string is either "tag" or "tag[role=role]".
- * Since we don't have stable element IDs for ancestors, we synthesize them.
- */
-function parseAncestorRoles(
-  ancestorStrings: string[] | undefined,
-  elementId: string,
-): ElementRoleInfo[] {
-  if (!ancestorStrings || ancestorStrings.length === 0) return [];
-
-  return ancestorStrings.map((entry, index) => {
-    const match = entry.match(/^(.+?)\[role=(.+)\]$/);
-    if (match) {
-      return {
-        elementId: `${elementId}-ancestor-${index}`,
-        ariaRole: match[2],
-        tag: match[1],
-      };
-    }
-    return {
-      elementId: `${elementId}-ancestor-${index}`,
-      ariaRole: null,
-      tag: entry,
-    };
-  });
 }
 
 /**
@@ -130,12 +101,6 @@ function runRecognition(
     }
 
     const roleInfo = toRoleInfo(element);
-    const ancestorRoles = parseAncestorRoles(
-      element.identity.elementId === transition.elementId
-        ? undefined // ancestors are on DomContext, not UiElement — see note below
-        : undefined,
-      element.elementId,
-    );
 
     // Collect related transitions for behavioral recognition
     const relatedTransitions = transitionsByElement.get(transition.elementId) ?? [];

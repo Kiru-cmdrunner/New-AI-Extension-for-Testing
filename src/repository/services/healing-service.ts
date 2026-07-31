@@ -252,8 +252,8 @@ function resolveFreshLocators(identity: ElementIdentity): RankedLocator[] {
  * Returns true if at least one locator type has changed.
  */
 function detectLocatorChanges(
-  stored: readonly Element['locatorStrategies'],
-  fresh: readonly RankedLocator[],
+  stored: Element['locatorStrategies'],
+  fresh: RankedLocator[],
 ): boolean {
   // Check if any fresh locator type has a different value than the stored one
   for (const freshLocator of fresh) {
