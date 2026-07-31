@@ -370,9 +370,36 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 }
 
 // Re-report on dynamic iframe additions (MutationObserver)
+// Only fires when an <iframe> element is actually added or removed — NOT on
+// every DOM mutation (class change, text insertion, style update, etc.).
+// Includes a trailing debounce to coalesce bursts of iframe additions.
 if (window === window.top) {
-  const iframeObserver = new MutationObserver(() => {
-    reportSameOriginIframeSelectors();
+  let iframeDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const iframeObserver = new MutationObserver((mutations) => {
+    // Filter: only act if at least one mutation added/removed an iframe
+    const hasIframeMutation = mutations.some((m) => {
+      // Check added nodes
+      for (const node of m.addedNodes) {
+        if (node.nodeName === 'IFRAME') return true;
+        if (node instanceof Element && node.querySelector?.('iframe')) return true;
+      }
+      // Check removed nodes
+      for (const node of m.removedNodes) {
+        if (node.nodeName === 'IFRAME') return true;
+        if (node instanceof Element && node.querySelector?.('iframe')) return true;
+      }
+      return false;
+    });
+
+    if (!hasIframeMutation) return;
+
+    // Debounce: coalesce bursts (e.g. a framework rendering many components)
+    if (iframeDebounceTimer) clearTimeout(iframeDebounceTimer);
+    iframeDebounceTimer = setTimeout(() => {
+      reportSameOriginIframeSelectors();
+      iframeDebounceTimer = null;
+    }, 250);
   });
   iframeObserver.observe(document.documentElement, {
     childList: true,

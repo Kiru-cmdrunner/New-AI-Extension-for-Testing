@@ -774,17 +774,34 @@ function broadcastExecutionResult(
 
 // ── Navigation capture ──────────────────────────────────────────────────
 
+/**
+ * Debounced frame tree refresh — coalesces bursts of simultaneous navigations
+ * (e.g. SPA loading many iframes at once) into a single getAllFrames call.
+ */
+const frameTreeRefreshTimers = new Map<number, ReturnType<typeof setTimeout>>();
+
+function scheduleFrameTreeRefresh(tabId: number): void {
+  // Clear any pending refresh for this tab
+  const existing = frameTreeRefreshTimers.get(tabId);
+  if (existing) clearTimeout(existing);
+  // Schedule a trailing refresh after 100ms of quiet
+  frameTreeRefreshTimers.set(tabId, setTimeout(async () => {
+    frameTreeRefreshTimers.delete(tabId);
+    try {
+      await FrameTree.forTab(tabId).refresh(tabId);
+    } catch {
+      // Tab may be closed or permission denied
+    }
+  }, 100));
+}
+
 chrome.webNavigation.onCommitted.addListener(async (details) => {
   // ── Phase 2: Refresh the frame tree for ALL navigations ──
   // Previously filtered non-top-frame navigations entirely (frameId !== 0 → return),
   // which left the frame tree stale for iframe navigations. Now we refresh the
-  // tree for every navigation, then only emit synthetic navigation events for
-  // the top frame.
-  try {
-    await FrameTree.forTab(details.tabId).refresh(details.tabId);
-  } catch {
-    // webNavigation may not be available — continue
-  }
+  // tree for every navigation (debounced), then only emit synthetic navigation
+  // events for the top frame.
+  scheduleFrameTreeRefresh(details.tabId);
 
   // Only emit synthetic navigation events for main frame navigations
   if (details.frameId !== 0) return;
@@ -982,6 +999,17 @@ chrome.runtime.onInstalled.addListener(() => {
   // Set the side panel to open when the extension icon is clicked
   if (chrome.sidePanel?.setPanelBehavior) {
     chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+  }
+});
+
+// ── Tab lifecycle: clean up per-tab resources ───────────────────────────
+
+chrome.tabs.onRemoved.addListener((tabId) => {
+  FrameTree.clearTab(tabId);
+  const timer = frameTreeRefreshTimers.get(tabId);
+  if (timer) {
+    clearTimeout(timer);
+    frameTreeRefreshTimers.delete(tabId);
   }
 });
 

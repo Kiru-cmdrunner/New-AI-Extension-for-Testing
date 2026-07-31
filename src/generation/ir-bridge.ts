@@ -147,9 +147,29 @@ function resolveUrlTarget(url: string): ResolvedTarget {
 
 /**
  * Regex to detect CSS-unsafe characters in id/name values.
- * If matched, we CSS.escape the value. Otherwise pass through (common case).
+ * Non-global: used only with .test() (global flag causes lastIndex statefulness).
  */
-const CSS_ESCAPE_RE = /[^a-zA-Z0-9_-]/;
+const CSS_UNSAFE_CHAR_RE = /[^a-zA-Z0-9_-]/;
+
+/**
+ * CSS.escape polyfill for contexts where the global CSS object is unavailable
+ * (e.g. service workers have no DOM, no window, no CSS global).
+ * Mirrors the guarded pattern used in identity-extractor.ts, locator-resolver.ts,
+ * and deterministic-recorder.ts.
+ */
+function cssEscape(value: string): string {
+  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
+    return CSS.escape(value);
+  }
+  // Polyfill: escape ALL special chars (global flag required for replace)
+  return value.replace(/[^a-zA-Z0-9_-]/g, (ch) => `\\${ch}`);
+}
+
+/**
+ * URLs that don't resolve to meaningful iframe[src*=...] selectors.
+ * Multiple iframes can share these (e.g. multiple srcdoc editors).
+ */
+const AMBIGUOUS_FRAME_URLS = new Set(['about:srcdoc', 'about:blank']);
 
 /**
  * Resolve a frame locator from an element's iframe context.
@@ -228,14 +248,15 @@ function resolveFrameSelector(ctx: IframeContext): {
 
   // Priority 3: id attribute — escape special CSS characters
   if (ctx.frameId) {
-    const escapedId = CSS_ESCAPE_RE.test(ctx.frameId)
-      ? CSS.escape(ctx.frameId)
+    const escapedId = CSS_UNSAFE_CHAR_RE.test(ctx.frameId)
+      ? cssEscape(ctx.frameId)
       : ctx.frameId;
     return { selector: `iframe#${escapedId}`, strategy: 'css' };
   }
 
   // Priority 4: source URL partial match (always available — cross-origin safe)
-  if (ctx.frameSrc) {
+  // Ambiguous URLs (about:srcdoc, about:blank) can't uniquely identify an iframe
+  if (ctx.frameSrc && !AMBIGUOUS_FRAME_URLS.has(ctx.frameSrc)) {
     const urlPart = extractUrlFragment(ctx.frameSrc);
     const escapedUrl = urlPart.replace(/["\\]/g, '\\$&');
     return { selector: `iframe[src*="${escapedUrl}"]`, strategy: 'url' };
@@ -252,12 +273,25 @@ function resolveFrameSelector(ctx: IframeContext): {
 /**
  * Resolve a frame selector from a URL alone (for ancestor frames where
  * we only have the URL from the SW's FrameTree, not DOM attributes).
+ *
+ * For ambiguous URLs (about:srcdoc, about:blank), the URL cannot be used
+ * to uniquely identify an iframe. We fall back to a broader selector and
+ * rely on frameLocator() chaining from the parent to disambiguate.
  */
 function resolveFrameFromUrl(url: string): {
   selector: string;
   strategy: 'css' | 'name' | 'url' | 'index';
   frameSrc?: string;
 } {
+  // Ambiguous URLs — can't match by src attribute meaningfully
+  if (AMBIGUOUS_FRAME_URLS.has(url)) {
+    return {
+      selector: 'iframe',
+      strategy: 'index',
+      frameSrc: url,
+    };
+  }
+
   const urlPart = extractUrlFragment(url);
   const escapedUrl = urlPart.replace(/["\\]/g, '\\$&');
   return {
@@ -269,18 +303,36 @@ function resolveFrameFromUrl(url: string): {
 
 /**
  * Extract a stable URL fragment for iframe src matching.
- * Uses the pathname's last segment (usually most distinctive).
+ *
+ * Strategy:
+ * 1. Last path segment (usually most distinctive) — e.g. "checkout" from /api/checkout
+ * 2. If query params exist, append the first param key+value for disambiguation
+ *    (e.g. "checkout?session=a" to distinguish multiple same-path iframes)
+ * 3. Fall back to hostname
  */
 function extractUrlFragment(url: string): string {
   try {
     const parsed = new URL(url);
     // Prefer the last path segment — usually most distinctive
     const segments = parsed.pathname.split('/').filter(Boolean);
-    if (segments.length > 0) {
-      return segments[segments.length - 1];
+    const pathPart = segments.length > 0
+      ? segments[segments.length - 1]
+      : parsed.hostname;
+
+    // If query params exist, include the first one for disambiguation
+    // This handles common patterns like /widget?session=A vs /widget?session=B
+    const searchParams = parsed.searchParams;
+    if (searchParams.toString()) {
+      const firstParam = Array.from(searchParams.entries())[0];
+      if (firstParam) {
+        const [key, value] = firstParam;
+        // Use a short, safe fragment of the value to keep selectors manageable
+        const valuePart = value.slice(0, 20).replace(/["\\]/g, '');
+        return `${pathPart}?${key}=${valuePart}`;
+      }
     }
-    // Fall back to hostname
-    return parsed.hostname;
+
+    return pathPart;
   } catch {
     // Not a valid URL — return as-is (may be a relative path)
     return url.slice(-30);

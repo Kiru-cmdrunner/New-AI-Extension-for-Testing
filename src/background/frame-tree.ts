@@ -206,7 +206,7 @@ export class FrameTree {
       const ancestorNode = this.frames.get(ancestorId);
       if (!ancestorNode) continue;
 
-      const selectorEntry = ancestorUrl ? this.selectorMap.get(ancestorUrl) : undefined;
+      const selectorEntry = ancestorUrl ? this.getSelectorForUrl(ancestorUrl) : undefined;
 
       chain.push({
         ...ancestorNode,
@@ -216,7 +216,7 @@ export class FrameTree {
     }
 
     // Include the immediate frame itself (the iframe the element lives in)
-    const immediateSelector = node.url ? this.selectorMap.get(node.url) : undefined;
+    const immediateSelector = node.url ? this.getSelectorForUrl(node.url) : undefined;
     chain.push({
       ...node,
       selector: immediateSelector?.frameSelector,
@@ -250,19 +250,46 @@ export class FrameTree {
   // ── Hybrid Selector Merge ──────────────────────────────────────────
 
   /**
+   * URLs that are ambiguous — multiple iframes can share them.
+   * For these, we store entries by CSS selector instead of URL to avoid
+   * collisions where one srcdoc/blank iframe overwrites another.
+   */
+  private static readonly AMBIGUOUS_URLS = new Set([
+    'about:srcdoc',
+    'about:blank',
+  ]);
+
+  /**
+   * Secondary map for ambiguous-URL iframes, keyed by CSS selector.
+   * Allows lookup by selector when URL is not disambiguating.
+   */
+  private selectorByCssMap = new Map<string, FrameSelectorEntry>();
+
+  /**
    * Merge same-origin iframe selectors reported by the top-frame content script.
    *
    * The content script scans `document.querySelectorAll('iframe')` and reports
    * each iframe's CSS selector, name, id, and src. The FrameTree correlates
    * these with Chrome frame IDs by URL matching.
    *
+   * For ambiguous URLs (about:srcdoc, about:blank), entries are stored by
+   * CSS selector to prevent collisions.
+   *
    * This gives best-of-both-worlds:
    * - Same-origin iframes: precise CSS selectors from the content script
    * - Cross-origin iframes: URL-based selectors from the SW frame tree
+   * - Ambiguous-URL iframes (srcdoc/blank): CSS-selector-keyed disambiguation
    */
   mergeSelectors(entries: FrameSelectorEntry[]): void {
     for (const entry of entries) {
-      if (entry.frameSrc) {
+      if (!entry.frameSrc) continue;
+
+      if (FrameTree.AMBIGUOUS_URLS.has(entry.frameSrc)) {
+        // Ambiguous URL — key by CSS selector to prevent collision
+        if (entry.frameSelector) {
+          this.selectorByCssMap.set(entry.frameSelector, entry);
+        }
+      } else {
         this.selectorMap.set(entry.frameSrc, entry);
       }
     }
@@ -272,7 +299,17 @@ export class FrameTree {
    * Look up a CSS selector for a frame URL (from the hybrid map).
    */
   getSelectorForUrl(url: string): FrameSelectorEntry | undefined {
-    return this.selectorMap.get(url);
+    const direct = this.selectorMap.get(url);
+    if (direct) return direct;
+
+    // For ambiguous URLs, try to find a match in the CSS-selector map
+    if (FrameTree.AMBIGUOUS_URLS.has(url)) {
+      // Return the first entry — caller should prefer DOM-derived selector
+      const entries = Array.from(this.selectorByCssMap.values());
+      return entries[0];
+    }
+
+    return undefined;
   }
 
   /**
@@ -280,5 +317,6 @@ export class FrameTree {
    */
   clearSelectors(): void {
     this.selectorMap.clear();
+    this.selectorByCssMap.clear();
   }
 }
