@@ -4,20 +4,18 @@
  * Replaces the legacy event-centric domain adapter when recorderEngine='control'.
  * Instead of creating one transition per raw event (focus, input, change, blur =
  * 4 transitions for one TextEntry), this adapter creates ONE transition per
- * DetectedInteraction — producing clean, interaction-level domain entities.
+ * interaction — producing clean, interaction-level domain entities.
  *
- * Benefits over the legacy adapter:
- *   - 4-5× fewer transitions (1 per interaction, not per raw event)
- *   - Richer state extraction (from interaction.metadata, not individual events)
- *   - Cleaner evidence descriptions (from the semantic interaction type)
- *   - No noise transitions (scroll, focus, blur without classification)
- *   - Recognition pipeline receives interaction-level granularity
+ * Phase 3 — Type System Unification: now accepts ComponentInteraction[] directly,
+ * eliminating the dependency on the classifier's DetectedInteraction type.
+ * The interaction type is resolved using the same subtype→default→'Unknown'
+ * resolution as the former adapter.
  *
  * Produces the same DomainEntities interface so all downstream consumers
  * (recognition orchestrator, enrichment, healing) work unchanged.
  */
 
-import type { DetectedInteraction, InteractionMetadata } from '../../classifier/interaction-types';
+import type { ComponentInteraction } from '../../shared/component-types';
 import type { ElementIdentity } from '../../shared/types';
 import type { RecordedEvent } from '../recorded-event';
 import type { DomainEntities } from '../pipeline/domain-adapter';
@@ -100,6 +98,47 @@ function resolveOperation(type: string): TransitionOperation {
 }
 
 /**
+ * Resolve the bridge interaction type from a ComponentInteraction.
+ * Same resolution as the former adapter: subtype → DEFAULT_BRIDGE_TYPE → 'Unknown'.
+ */
+const DEFAULT_V2_TYPE: Record<string, string> = {
+  Click: 'Click',
+  TextEntry: 'TextEntry',
+  Dropdown: 'CustomDropdown',
+  Checkbox: 'Checkbox',
+  RadioButton: 'RadioButton',
+  DatePicker: 'DatePicker',
+  Hover: 'Hover',
+  Link: 'Link',
+  FileUpload: 'FileUpload',
+  Slider: 'Slider',
+  Tab: 'Tab',
+  Scroll: 'PageScroll',
+  Navigation: 'PageNavigation',
+  DragDrop: 'DragDrop',
+  KeyboardShortcut: 'KeyboardShortcut',
+  ModalDialog: 'ModalDialog',
+  Stepper: 'Stepper',
+  TagInput: 'TagInput',
+  OtpInput: 'OtpInput',
+  HotkeySequence: 'HotkeySequence',
+  NewTab: 'NewTab',
+  NewWindow: 'NewWindow',
+  Breadcrumb: 'Breadcrumb',
+};
+
+function resolveType(ci: ComponentInteraction): string {
+  return ci.interactionSubtype || DEFAULT_V2_TYPE[ci.type] || 'Unknown';
+}
+
+/**
+ * Get the event IDs from a ComponentInteraction.
+ */
+function getEventIds(ci: ComponentInteraction): string[] {
+  return (ci.memberEvents ?? []).map((e) => e.eventId);
+}
+
+/**
  * Extract the state BEFORE an interaction from the metadata and raw events.
  *
  * For the control engine, we don't always have a "before" state because
@@ -107,11 +146,10 @@ function resolveOperation(type: string): TransitionOperation {
  * events' valueBefore when available, otherwise empty state.
  */
 function buildStateBefore(
-  interaction: DetectedInteraction,
+  ci: ComponentInteraction,
   eventsById: Map<string, RecordedEvent>,
 ): { value: string | null; checked: boolean | null; expanded: boolean | null; selected: boolean | null } {
-  // Try to find the "before" state from the first event in the interaction
-  const firstEventId = interaction.eventIds[0];
+  const firstEventId = getEventIds(ci)[0];
   const firstEvent = eventsById.get(firstEventId);
 
   if (firstEvent && firstEvent.eventType !== 'navigation') {
@@ -130,7 +168,7 @@ function buildStateBefore(
 /**
  * Extract the state AFTER an interaction from the metadata.
  */
-function buildStateAfter(metadata: InteractionMetadata): {
+function buildStateAfter(metadata: Record<string, unknown>): {
   value: string | null;
   checked: boolean | null;
   expanded: boolean | null;
@@ -138,15 +176,13 @@ function buildStateAfter(metadata: InteractionMetadata): {
 } {
   // Extract the final value from metadata based on interaction type
   const value =
-    metadata.textValue
-    ?? metadata.selectedValue
-    ?? metadata.dateValue
-    ?? metadata.timeValue
-    ?? metadata.dateTimeValue
-    ?? metadata.sliderValue
+    (metadata.textValue as string)
+    ?? (metadata.selectedValue as string)
+    ?? (metadata.dateValue as string)
+    ?? (metadata.sliderValue as string)
     ?? null;
 
-  const checked = metadata.checked ?? null;
+  const checked = (metadata.checked as boolean) ?? null;
 
   return {
     value,
@@ -160,24 +196,23 @@ function buildStateAfter(metadata: InteractionMetadata): {
  * Build evidence array from interaction metadata.
  */
 function buildEvidence(
-  interaction: DetectedInteraction,
+  ci: ComponentInteraction,
   eventsById: Map<string, RecordedEvent>,
+  resolvedType: string,
 ): { type: TransitionEvidenceType; description: string; before: string | null; after: string | null }[] {
   const evidence: { type: TransitionEvidenceType; description: string; before: string | null; after: string | null }[] = [];
-  const meta = interaction.metadata;
+  const meta = ci.metadata;
 
   // Value-based evidence
   const afterValue =
-    meta.textValue
-    ?? meta.selectedValue
-    ?? meta.dateValue
-    ?? meta.timeValue
-    ?? meta.dateTimeValue
-    ?? meta.sliderValue;
+    (meta.textValue as string)
+    ?? (meta.selectedValue as string)
+    ?? (meta.selectedDate as string)
+    ?? (meta.sliderValue as string)
+    ?? null;
 
   if (afterValue !== undefined && afterValue !== null) {
-    // Try to get the "before" value from the first event
-    const firstEventId = interaction.eventIds[0];
+    const firstEventId = getEventIds(ci)[0];
     const firstEvent = eventsById.get(firstEventId);
     const beforeValue = firstEvent && firstEvent.eventType !== 'navigation'
       ? (firstEvent as { valueBefore: string | null }).valueBefore
@@ -185,45 +220,48 @@ function buildEvidence(
 
     evidence.push({
       type: TransitionEvidenceType.VALUE_CHANGE,
-      description: buildInteractionDescription(interaction),
+      description: buildInteractionDescription(ci, resolvedType),
       before: beforeValue,
       after: afterValue,
     });
   }
 
   // Checked-state evidence
-  if (meta.checked !== undefined && meta.checked !== null) {
-    const firstEventId = interaction.eventIds[0];
+  const checked = meta.checked as boolean | undefined;
+  if (checked !== undefined && checked !== null) {
+    const firstEventId = getEventIds(ci)[0];
     const firstEvent = eventsById.get(firstEventId);
     const beforeChecked = firstEvent && firstEvent.eventType !== 'navigation'
       ? (firstEvent as { checkedBefore: boolean | null }).checkedBefore
       : null;
 
-    if (beforeChecked !== meta.checked) {
+    if (beforeChecked !== checked) {
       evidence.push({
         type: TransitionEvidenceType.STATE_CHANGE,
-        description: `State changed to ${meta.checked ? 'checked' : 'unchecked'}`,
+        description: `State changed to ${checked ? 'checked' : 'unchecked'}`,
         before: beforeChecked !== null ? String(beforeChecked) : null,
-        after: String(meta.checked),
+        after: String(checked),
       });
     }
   }
 
   // Navigation evidence
-  if (meta.url) {
+  const navEvent = ci.triggerEvent;
+  const url = (meta.url as string) ?? navEvent?.pageUrl;
+  if (url) {
     evidence.push({
       type: TransitionEvidenceType.NAVIGATION,
-      description: `Navigated to ${meta.url}`,
+      description: `Navigated to ${url}`,
       before: null,
-      after: meta.url,
+      after: url,
     });
   }
 
-  // If no evidence was generated, create a minimal one so the transition is never empty
+  // If no evidence was generated, create a minimal one
   if (evidence.length === 0) {
     evidence.push({
       type: TransitionEvidenceType.VALUE_CHANGE,
-      description: buildInteractionDescription(interaction),
+      description: buildInteractionDescription(ci, resolvedType),
       before: null,
       after: null,
     });
@@ -235,40 +273,36 @@ function buildEvidence(
 /**
  * Build a human-readable description of the interaction.
  */
-function buildInteractionDescription(interaction: DetectedInteraction): string {
-  const meta = interaction.metadata;
-  const name = interaction.target?.accessibleName ?? 'element';
+function buildInteractionDescription(ci: ComponentInteraction, resolvedType: string): string {
+  const meta = ci.metadata;
+  const name = ci.trigger?.accessibleName ?? 'element';
 
-  switch (interaction.type) {
+  switch (resolvedType) {
     case 'TextEntry':
-      return `Entered "${meta.textValue ?? ''}" into ${name}`;
+      return `Entered "${(meta.textValue as string) ?? ''}" into ${name}`;
     case 'NativeDropdown':
     case 'CustomDropdown':
-      return `Selected "${meta.selectedValue ?? ''}" from ${name}`;
+      return `Selected "${(meta.selectedValue as string) ?? ''}" from ${name}`;
     case 'Checkbox':
-      return `${meta.checked ? 'Checked' : 'Unchecked'} ${name}`;
+      return `${(meta.checked as boolean) ? 'Checked' : 'Unchecked'} ${name}`;
     case 'RadioButton':
-      return `Selected ${meta.selectedValue ?? name}`;
+      return `Selected ${(meta.selectedValue as string) ?? name}`;
     case 'ToggleSwitch':
-      return `${meta.checked ? 'Enabled' : 'Disabled'} ${name}`;
+      return `${(meta.checked as boolean) ? 'Enabled' : 'Disabled'} ${name}`;
     case 'DatePicker':
-      return `Selected date ${meta.dateValue ?? meta.displayValue ?? ''} for ${name}`;
-    case 'TimePicker':
-      return `Selected time ${meta.timeValue ?? ''} for ${name}`;
-    case 'DateTimePicker':
-      return `Selected datetime ${meta.dateTimeValue ?? ''} for ${name}`;
+      return `Selected date ${(meta.dateValue as string) ?? (meta.displayValue as string) ?? ''} for ${name}`;
     case 'Slider':
-      return `Adjusted ${name} to ${meta.sliderValue ?? ''}`;
+      return `Adjusted ${name} to ${(meta.sliderValue as string) ?? ''}`;
     case 'FileUpload':
       return meta.fileCount ? `Uploaded ${meta.fileCount} file(s) to ${name}` : `Uploaded file to ${name}`;
     case 'DragDrop':
     case 'DragDropUpload':
-      return `Dragged and dropped onto ${meta.dropTarget ?? name}`;
+      return `Dragged and dropped onto ${(meta.dropTarget as string) ?? name}`;
     case 'PageNavigation':
     case 'Back':
     case 'Forward':
     case 'Refresh':
-      return `Navigated to ${meta.url ?? name}`;
+      return `Navigated to ${(meta.url as string) ?? name}`;
     case 'Hover':
       return `Hovered over ${name}`;
     case 'Link':
@@ -276,7 +310,7 @@ function buildInteractionDescription(interaction: DetectedInteraction): string {
     case 'Click':
       return `Clicked ${name}`;
     default:
-      return `${interaction.type} on ${name}`;
+      return `${resolvedType} on ${name}`;
   }
 }
 
@@ -303,7 +337,7 @@ function buildDomTreePath(identity: ElementIdentity): string {
  */
 export function adaptToDomainEntitiesV2(
   events: RecordedEvent[],
-  interactions: DetectedInteraction[],
+  interactions: ComponentInteraction[],
   sourceUrl: string,
 ): DomainEntities {
   // Index events by ID for O(1) lookup of "before" state
@@ -315,30 +349,37 @@ export function adaptToDomainEntitiesV2(
   const elementMap = new Map<string, UiElement>();
   const transitions: ObservedTransition[] = [];
 
-  for (const interaction of interactions) {
-    // Navigation interactions don't have a target element
-    if (!interaction.target) {
+  for (const ci of interactions) {
+    const resolvedType = resolveType(ci);
+    const eventIds = getEventIds(ci);
+
+    // Navigation interactions don't have a meaningful target element.
+    // In the unified type system, trigger is always set, so we check the resolved type.
+    const isNavigation = resolvedType === 'PageNavigation'
+      || resolvedType === 'Back'
+      || resolvedType === 'Forward'
+      || resolvedType === 'Refresh';
+    if (isNavigation) {
       const transition = createObservedTransition({
-        transitionId: interaction.interactionId,
+        transitionId: ci.interactionId,
         elementId: '__page__',
-        operation: resolveOperation(interaction.type),
-        timestamp: extractTimestamp(interaction, eventsById),
+        operation: resolveOperation(resolvedType),
+        timestamp: extractTimestamp(ci, eventsById),
         relevance: RelevanceLevel.DELIBERATE,
         stateBefore: emptyElementState(),
         stateAfter: emptyElementState(),
-        evidence: buildEvidence(interaction, eventsById),
+        evidence: buildEvidence(ci, eventsById, resolvedType),
       });
       transitions.push(transition);
       continue;
     }
 
-    const identity = interaction.target;
+    const identity = ci.trigger;
     const elementId = identity.elementId;
 
     // Create UiElement if not already seen
     if (!elementMap.has(elementId)) {
-      // Look up DOM attributes from the first event for this interaction
-      const firstEvent = eventsById.get(interaction.eventIds[0]);
+      const firstEvent = eventsById.get(eventIds[0]);
       const domAttributes = firstEvent && firstEvent.eventType !== 'navigation'
         ? (firstEvent as { domContext?: { domAttributes?: Record<string, string> } }).domContext?.domAttributes ?? {}
         : {};
@@ -354,16 +395,16 @@ export function adaptToDomainEntitiesV2(
     }
 
     // Create one transition for the interaction
-    const operation = resolveOperation(interaction.type);
-    const stateBefore = buildStateBefore(interaction, eventsById);
-    const stateAfter = buildStateAfter(interaction.metadata);
-    const evidence = buildEvidence(interaction, eventsById);
+    const operation = resolveOperation(resolvedType);
+    const stateBefore = buildStateBefore(ci, eventsById);
+    const stateAfter = buildStateAfter(ci.metadata);
+    const evidence = buildEvidence(ci, eventsById, resolvedType);
 
     const transition = createObservedTransition({
-      transitionId: interaction.interactionId,
+      transitionId: ci.interactionId,
       elementId,
       operation,
-      timestamp: extractTimestamp(interaction, eventsById),
+      timestamp: extractTimestamp(ci, eventsById),
       relevance: RelevanceLevel.DELIBERATE,
       stateBefore,
       stateAfter,
@@ -382,10 +423,10 @@ export function adaptToDomainEntitiesV2(
  * Extract the timestamp for an interaction from its first event.
  */
 function extractTimestamp(
-  interaction: DetectedInteraction,
+  ci: ComponentInteraction,
   eventsById: Map<string, RecordedEvent>,
 ): number {
-  const firstEventId = interaction.eventIds[0];
+  const firstEventId = getEventIds(ci)[0];
   const firstEvent = eventsById.get(firstEventId);
   if (firstEvent) {
     const ts = new Date(firstEvent.timestamp).getTime();

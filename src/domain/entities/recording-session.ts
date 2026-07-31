@@ -27,7 +27,7 @@
 import { MissingFieldError } from '../errors/invariant-errors';
 import type { UnderstandingResult } from './understanding-result';
 import type { SessionEvent } from '../../shared/types';
-import type { DetectedInteraction } from '../../classifier/interaction-types';
+import type { ComponentInteraction } from '../../shared/component-types';
 
 /** A single recording session and its derived understanding. */
 export interface RecordingSession {
@@ -39,7 +39,7 @@ export interface RecordingSession {
 
   // ── Archival (Tier 3) ──
   readonly rawEvents: readonly SessionEvent[];
-  readonly rawInteractions: readonly DetectedInteraction[];
+  readonly rawInteractions: readonly ComponentInteraction[];
 
   // ── Metadata ──
   readonly url: string;
@@ -55,7 +55,7 @@ export interface CreateRecordingSessionInput {
   projectId: string;
   understandingResult: UnderstandingResult;
   rawEvents: SessionEvent[];
-  rawInteractions: DetectedInteraction[];
+  rawInteractions: ComponentInteraction[];
   url: string;
   duration?: number;
 }

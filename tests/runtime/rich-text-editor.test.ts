@@ -20,8 +20,8 @@ import type {
 import type { ElementIdentity } from '../../src/shared/types';
 import { build as buildIRPlan } from '../../src/generation/ir-bridge';
 import type { IRBridgeInput } from '../../src/generation/ir-bridge-input';
-import type { DetectedInteraction } from '../../src/classifier/interaction-types';
 import type { IRStep } from '../../src/domain/execution-ir/types';
+import { makeComponentInteraction as makeCI, makeElementIdentity } from '../helpers/component-interaction-fixture';
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -293,34 +293,19 @@ function makeIRInteraction(
   type: string,
   metadata: Record<string, unknown>,
   identity?: Partial<ElementIdentity>,
-): DetectedInteraction {
-  return {
-    interactionId: `int-${type}-1`,
-    type: type as any,
-    eventIds: ['evt-1'],
-    rawEventTypes: ['input', 'blur'],
-    target: {
+): ComponentInteraction {
+  return makeCI(type, {
+    trigger: makeElementIdentity({
       tag: 'DIV',
       accessibleName: identity?.accessibleName ?? 'Rich Editor',
       ariaRole: 'textbox',
-      ariaLabel: null,
-      ariaLabelledBy: null,
-      placeholder: null,
-      stableId: null,
       cssSelector: identity?.cssSelector ?? '.ql-editor',
-      elementId: '',
-      testId: null,
-      className: '',
-      ancestorClasses: [],
-      href: null,
-      tabIndex: -1,
-    },
-    metadata: metadata as any,
-    confidence: 0.9,
-  } as DetectedInteraction;
+    }),
+    metadata,
+  });
 }
 
-function buildPlan(interactions: DetectedInteraction[]): IRStep[] {
+function buildPlan(interactions: ComponentInteraction[]): IRStep[] {
   const input: IRBridgeInput = {
     events: [],
     interactions,

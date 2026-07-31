@@ -13,7 +13,7 @@
  */
 
 import type { RecordedEvent, ElementRecordedEvent, NavigationRecordedEvent } from '../recorded-event';
-import type { DetectedInteraction } from '../../classifier/interaction-types';
+import type { ComponentInteraction } from '../../shared/component-types';
 import type { ElementIdentity } from '../../shared/types';
 import { UiElement, createUiElement } from '../../domain/entities/ui-element';
 import { ObservedTransition, createObservedTransition, emptyElementState } from '../../domain/entities/observed-transition';
@@ -111,11 +111,12 @@ const NOISE_EVENT_TYPES = new Set(['scroll', 'focus', 'blur']);
  */
 function resolveOperation(
   event: ElementRecordedEvent,
-  interactionByEventId: Map<string, DetectedInteraction>,
+  interactionByEventId: Map<string, ComponentInteraction>,
 ): TransitionOperation {
-  const interaction = interactionByEventId.get(event.eventId);
-  if (interaction) {
-    const mapped = INTERACTION_TO_OPERATION[interaction.type];
+  const ci = interactionByEventId.get(event.eventId);
+  if (ci) {
+    const resolvedType = ci.interactionSubtype || ci.type;
+    const mapped = INTERACTION_TO_OPERATION[resolvedType];
     if (mapped) return mapped;
   }
 
@@ -129,16 +130,15 @@ function resolveOperation(
 /**
  * Determine the relevance level of a transition.
  *
- * If a DetectedInteraction covers the event, it's DELIBERATE (the classifier
- * deemed it meaningful). Scroll/focus/blur without classification are NOISE.
- * Everything else is SUPPORTING.
+ * If an interaction covers the event, it's DELIBERATE.
+ * Scroll/focus/blur without classification are NOISE.
  */
 function resolveRelevance(
   event: ElementRecordedEvent,
-  interactionByEventId: Map<string, DetectedInteraction>,
+  interactionByEventId: Map<string, ComponentInteraction>,
 ): RelevanceLevel {
-  const interaction = interactionByEventId.get(event.eventId);
-  if (interaction) return RelevanceLevel.DELIBERATE;
+  const ci = interactionByEventId.get(event.eventId);
+  if (ci) return RelevanceLevel.DELIBERATE;
   if (NOISE_EVENT_TYPES.has(event.eventType)) return RelevanceLevel.NOISE;
   return RelevanceLevel.SUPPORTING;
 }
@@ -243,14 +243,14 @@ function getElementId(identity: ElementIdentity): string {
  */
 export function adaptToDomainEntities(
   events: RecordedEvent[],
-  interactions: DetectedInteraction[] = [],
+  interactions: ComponentInteraction[] = [],
   sourceUrl?: string,
 ): DomainEntities {
   // Index interactions by event ID for O(1) lookup
-  const interactionByEventId = new Map<string, DetectedInteraction>();
-  for (const interaction of interactions) {
-    for (const eventId of interaction.eventIds) {
-      interactionByEventId.set(eventId, interaction);
+  const interactionByEventId = new Map<string, ComponentInteraction>();
+  for (const ci of interactions) {
+    for (const eventId of (ci.memberEvents ?? []).map(e => e.eventId)) {
+      interactionByEventId.set(eventId, ci);
     }
   }
 

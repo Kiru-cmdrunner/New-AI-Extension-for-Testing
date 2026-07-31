@@ -1,0 +1,74 @@
+{
+  "testCaseId": "tc-1785524223881",
+  "testCaseVersionId": "tcv-1785524223881",
+  "testCaseVersionNumber": 1,
+  "title": "Golden Master Test",
+  "tags": [],
+  "environment": {
+    "baseUrl": "https://example.com",
+    "browser": "chrome",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "steps": [
+    {
+      "id": "step-0001",
+      "order": 0,
+      "action": "selectDate",
+      "description": "Select 2024-03-15 in the Test Button",
+      "target": {
+        "kind": "element",
+        "elementId": "elem-0001",
+        "elementName": "Test Button",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "type": "role",
+            "value": "button[name=\"Test Button\"]",
+            "priority": 1,
+            "confidence": 0.62
+          },
+          {
+            "type": "accessibleName",
+            "value": "Test Button",
+            "priority": 2,
+            "confidence": 0.62
+          },
+          {
+            "type": "css",
+            "value": "body > button",
+            "priority": 3,
+            "confidence": 0.35
+          }
+        ]
+      },
+      "input": "2024-03-15",
+      "assertions": [
+        {
+          "type": "equality",
+          "comparison": "equals",
+          "expectedValue": "2024-03-15",
+          "severity": "hard",
+          "target": {
+            "kind": "element",
+            "elementId": "",
+            "elementName": "",
+            "pageOrComponent": "",
+            "resolvedLocators": []
+          },
+          "property": "value"
+        }
+      ],
+      "executionParameters": {
+        "timeoutMs": 30000,
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "waitStrategy": "visible"
+      },
+      "aiEnrichment": null,
+      "plainEnglish": "Select 2024-03-15 in the Test Button"
+    }
+  ]
+}

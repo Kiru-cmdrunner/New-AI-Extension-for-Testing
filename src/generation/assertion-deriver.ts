@@ -19,7 +19,7 @@ import {
   ValidationSeverity,
 } from '../domain/enums';
 import type { IRAssertion } from '../domain/execution-ir/types';
-import type { DetectedInteraction } from '../classifier/interaction-types';
+import type { BridgeInteraction } from './ir-bridge';
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -63,7 +63,7 @@ function makeAssertion(
  * @returns Array of assertions derived from the interaction's evidence
  */
 export function deriveStateAssertions(
-  interaction: DetectedInteraction,
+  interaction: BridgeInteraction,
 ): IRAssertion[] {
   const assertions: IRAssertion[] = [];
   const meta = interaction.metadata;
@@ -209,7 +209,7 @@ export function deriveStateAssertions(
  * Derive state-based assertions for all interactions.
  */
 export function deriveStateAssertionsBatch(
-  interactions: DetectedInteraction[],
+  interactions: BridgeInteraction[],
 ): Map<string, IRAssertion[]> {
   const result = new Map<string, IRAssertion[]>();
   for (const interaction of interactions) {

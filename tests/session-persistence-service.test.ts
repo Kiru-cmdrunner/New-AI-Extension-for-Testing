@@ -18,7 +18,6 @@ import type { UnderstandingResult } from '../src/domain/entities/understanding-r
 import type { ExecutionIRPlan } from '../src/domain/execution-ir/types';
 import type { CapabilityCandidate } from '../src/domain/entities/capability-candidate';
 import type { SessionEvent } from '../src/shared/types';
-import type { DetectedInteraction } from '../src/classifier/interaction-types';
 
 // ── Helpers ────────────────────────────────────────────────
 

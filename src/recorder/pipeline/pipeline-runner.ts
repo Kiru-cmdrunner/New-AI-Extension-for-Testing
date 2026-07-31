@@ -27,7 +27,7 @@ import type { UiElement } from '../../domain/entities/ui-element';
 import type { ObservedTransition } from '../../domain/entities/observed-transition';
 import type { ComponentGrouping } from '../../domain/entities/component-grouping';
 import type { RecordedEvent } from '../recorded-event';
-import type { DetectedInteraction } from '../../classifier/interaction-types';
+import type { ComponentInteraction } from '../../shared/component-types';
 import type { ApplicationKnowledgeFragment } from '../../domain/entities/application-knowledge';
 import type { CapabilityCandidate } from '../../domain/entities/capability-candidate';
 import { deriveCapability } from '../enrichment/capability-deriver';
@@ -138,7 +138,7 @@ function runRecognition(
  */
 export function runPipeline(
   events: RecordedEvent[],
-  interactions: DetectedInteraction[],
+  interactions: ComponentInteraction[],
   sessionId: string,
   sourceUrl?: string,
   engine?: 'legacy' | 'control',

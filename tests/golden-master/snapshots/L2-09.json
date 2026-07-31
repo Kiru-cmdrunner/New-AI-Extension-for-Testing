@@ -1,0 +1,143 @@
+{
+  "testCaseId": "tc-1785524223893",
+  "testCaseVersionId": "tcv-1785524223893",
+  "testCaseVersionNumber": 1,
+  "title": "Golden Master Test",
+  "tags": [],
+  "environment": {
+    "baseUrl": "https://example.com",
+    "browser": "chrome",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "steps": [
+    {
+      "id": "step-0001",
+      "order": 0,
+      "action": "fill",
+      "description": "Set Adults to 2 in Test Button",
+      "target": {
+        "kind": "element",
+        "elementId": "elem-0001::Adults",
+        "elementName": "Adults",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "type": "role",
+            "value": "button[name=\"Adults\"]",
+            "priority": 1,
+            "confidence": 0.8
+          },
+          {
+            "type": "accessibleName",
+            "value": "Adults",
+            "priority": 2,
+            "confidence": 0.8
+          },
+          {
+            "type": "css",
+            "value": "body > button",
+            "priority": 3,
+            "confidence": 0.35
+          }
+        ]
+      },
+      "input": "2",
+      "assertions": [],
+      "executionParameters": {
+        "timeoutMs": 30000,
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "waitStrategy": "visible"
+      },
+      "aiEnrichment": null,
+      "plainEnglish": "Set Adults to 2"
+    },
+    {
+      "id": "step-0002",
+      "order": 1,
+      "action": "click",
+      "description": "Select \"Premium\" in Test Button",
+      "target": {
+        "kind": "element",
+        "elementId": "elem-0001::Class",
+        "elementName": "Premium",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "type": "role",
+            "value": "button[name=\"Premium\"]",
+            "priority": 1,
+            "confidence": 0.8
+          },
+          {
+            "type": "accessibleName",
+            "value": "Premium",
+            "priority": 2,
+            "confidence": 0.8
+          },
+          {
+            "type": "css",
+            "value": "body > button",
+            "priority": 3,
+            "confidence": 0.35
+          }
+        ]
+      },
+      "input": "Premium",
+      "assertions": [],
+      "executionParameters": {
+        "timeoutMs": 30000,
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "waitStrategy": "visible"
+      },
+      "aiEnrichment": null,
+      "plainEnglish": "Select Premium"
+    },
+    {
+      "id": "step-0003",
+      "order": 2,
+      "action": "click",
+      "description": "Click Done",
+      "target": {
+        "kind": "element",
+        "elementId": "elem-0001::Done",
+        "elementName": "Done",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "type": "role",
+            "value": "button[name=\"Done\"]",
+            "priority": 1,
+            "confidence": 0.62
+          },
+          {
+            "type": "accessibleName",
+            "value": "Done",
+            "priority": 2,
+            "confidence": 0.62
+          },
+          {
+            "type": "css",
+            "value": "body > button",
+            "priority": 3,
+            "confidence": 0.35
+          }
+        ]
+      },
+      "input": null,
+      "assertions": [],
+      "executionParameters": {
+        "timeoutMs": 30000,
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "waitStrategy": "visible"
+      },
+      "aiEnrichment": null,
+      "plainEnglish": "Confirm Economy"
+    }
+  ]
+}

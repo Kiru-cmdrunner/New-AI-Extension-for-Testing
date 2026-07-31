@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { deriveStateAssertions } from '../../src/generation/assertion-deriver';
-import type { DetectedInteraction } from '../../src/classifier/interaction-types';
+import type { BridgeInteraction } from '../../src/generation/ir-bridge';
 import { ValidationType, ValidationComparison, ValidationSeverity } from '../../src/domain/enums';
 
 // ── Helpers ─────────────────────────────────────────────────────────────
@@ -12,14 +12,15 @@ import { ValidationType, ValidationComparison, ValidationSeverity } from '../../
 function makeInteraction(
   type: string,
   metadata: Record<string, unknown>,
-): DetectedInteraction {
+): BridgeInteraction {
   return {
     interactionId: 'int-1',
-    type: type as DetectedInteraction['type'],
+    type: type as BridgeInteraction['type'],
     eventIds: ['evt-1'],
     rawEventTypes: ['click'],
     metadata,
     confidence: 1.0,
+    target: undefined,
   };
 }
 

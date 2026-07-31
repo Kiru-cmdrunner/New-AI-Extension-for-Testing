@@ -1,0 +1,193 @@
+{
+  "testCaseId": "tc-1785524223897",
+  "testCaseVersionId": "tcv-1785524223897",
+  "testCaseVersionNumber": 1,
+  "title": "Golden Master Test",
+  "tags": [],
+  "environment": {
+    "baseUrl": "https://example.com",
+    "browser": "chrome",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "steps": [
+    {
+      "id": "step-0001",
+      "order": 0,
+      "action": "click",
+      "description": "Click the Test Button",
+      "target": {
+        "kind": "element",
+        "elementId": "elem-0001",
+        "elementName": "Test Button",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "type": "role",
+            "value": "button[name=\"Test Button\"]",
+            "priority": 1,
+            "confidence": 0.62
+          },
+          {
+            "type": "accessibleName",
+            "value": "Test Button",
+            "priority": 2,
+            "confidence": 0.62
+          },
+          {
+            "type": "css",
+            "value": "body > button",
+            "priority": 3,
+            "confidence": 0.35
+          }
+        ]
+      },
+      "input": null,
+      "assertions": [],
+      "executionParameters": {
+        "timeoutMs": 30000,
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "waitStrategy": "visible"
+      },
+      "aiEnrichment": null,
+      "plainEnglish": "Click the Test Button"
+    },
+    {
+      "id": "step-0002",
+      "order": 1,
+      "action": "fill",
+      "description": "Fill \"query\" in the Test Button",
+      "target": {
+        "kind": "element",
+        "elementId": "elem-0001",
+        "elementName": "Test Button",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "type": "role",
+            "value": "button[name=\"Test Button\"]",
+            "priority": 1,
+            "confidence": 0.62
+          },
+          {
+            "type": "accessibleName",
+            "value": "Test Button",
+            "priority": 2,
+            "confidence": 0.62
+          },
+          {
+            "type": "css",
+            "value": "body > button",
+            "priority": 3,
+            "confidence": 0.35
+          }
+        ]
+      },
+      "input": "query",
+      "assertions": [
+        {
+          "type": "equality",
+          "comparison": "equals",
+          "expectedValue": "query",
+          "severity": "hard",
+          "target": {
+            "kind": "element",
+            "elementId": "",
+            "elementName": "",
+            "pageOrComponent": "",
+            "resolvedLocators": []
+          },
+          "property": "value"
+        }
+      ],
+      "executionParameters": {
+        "timeoutMs": 30000,
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "waitStrategy": "visible"
+      },
+      "aiEnrichment": null,
+      "plainEnglish": "Fill \"query\" in the Test Button"
+    },
+    {
+      "id": "step-0003",
+      "order": 2,
+      "action": "click",
+      "description": "Click the Test Button",
+      "target": {
+        "kind": "element",
+        "elementId": "elem-0001",
+        "elementName": "Test Button",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "type": "role",
+            "value": "button[name=\"Test Button\"]",
+            "priority": 1,
+            "confidence": 0.62
+          },
+          {
+            "type": "accessibleName",
+            "value": "Test Button",
+            "priority": 2,
+            "confidence": 0.62
+          },
+          {
+            "type": "css",
+            "value": "body > button",
+            "priority": 3,
+            "confidence": 0.35
+          }
+        ]
+      },
+      "input": null,
+      "assertions": [],
+      "executionParameters": {
+        "timeoutMs": 30000,
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "waitStrategy": "visible"
+      },
+      "aiEnrichment": null,
+      "plainEnglish": "Click the Test Button"
+    },
+    {
+      "id": "step-0004",
+      "order": 3,
+      "action": "navigate",
+      "description": "Navigate to https://example.com",
+      "target": {
+        "kind": "url",
+        "url": "https://example.com"
+      },
+      "input": "https://example.com",
+      "assertions": [
+        {
+          "type": "urlMatch",
+          "comparison": "equals",
+          "expectedValue": "https://example.com",
+          "severity": "hard",
+          "target": {
+            "kind": "element",
+            "elementId": "",
+            "elementName": "",
+            "pageOrComponent": "",
+            "resolvedLocators": []
+          },
+          "property": "url"
+        }
+      ],
+      "executionParameters": {
+        "timeoutMs": 30000,
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "waitStrategy": "visible"
+      },
+      "aiEnrichment": null,
+      "plainEnglish": "Navigate to https://example.com"
+    }
+  ]
+}

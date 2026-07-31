@@ -1,0 +1,344 @@
+{
+  "testCaseId": "tc-1785524223896",
+  "testCaseVersionId": "tcv-1785524223896",
+  "testCaseVersionNumber": 1,
+  "title": "Golden Master Test",
+  "tags": [],
+  "environment": {
+    "baseUrl": "https://example.com",
+    "browser": "chrome",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "steps": [
+    {
+      "id": "step-0001",
+      "order": 0,
+      "action": "fill",
+      "description": "Fill \"John Doe\" in the Test Button",
+      "target": {
+        "kind": "element",
+        "elementId": "elem-0001",
+        "elementName": "Test Button",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "type": "role",
+            "value": "button[name=\"Test Button\"]",
+            "priority": 1,
+            "confidence": 0.62
+          },
+          {
+            "type": "accessibleName",
+            "value": "Test Button",
+            "priority": 2,
+            "confidence": 0.62
+          },
+          {
+            "type": "css",
+            "value": "body > button",
+            "priority": 3,
+            "confidence": 0.35
+          }
+        ]
+      },
+      "input": "John Doe",
+      "assertions": [
+        {
+          "type": "equality",
+          "comparison": "equals",
+          "expectedValue": "John Doe",
+          "severity": "hard",
+          "target": {
+            "kind": "element",
+            "elementId": "",
+            "elementName": "",
+            "pageOrComponent": "",
+            "resolvedLocators": []
+          },
+          "property": "value"
+        }
+      ],
+      "executionParameters": {
+        "timeoutMs": 30000,
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "waitStrategy": "visible"
+      },
+      "aiEnrichment": null,
+      "plainEnglish": "Fill \"John Doe\" in the Test Button"
+    },
+    {
+      "id": "step-0002",
+      "order": 1,
+      "action": "select",
+      "description": "Select \"USA\" from the Test Button",
+      "target": {
+        "kind": "element",
+        "elementId": "elem-0001",
+        "elementName": "Test Button",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "type": "role",
+            "value": "button[name=\"Test Button\"]",
+            "priority": 1,
+            "confidence": 0.62
+          },
+          {
+            "type": "accessibleName",
+            "value": "Test Button",
+            "priority": 2,
+            "confidence": 0.62
+          },
+          {
+            "type": "css",
+            "value": "body > button",
+            "priority": 3,
+            "confidence": 0.35
+          }
+        ]
+      },
+      "input": "USA",
+      "assertions": [
+        {
+          "type": "equality",
+          "comparison": "equals",
+          "expectedValue": "USA",
+          "severity": "hard",
+          "target": {
+            "kind": "element",
+            "elementId": "",
+            "elementName": "",
+            "pageOrComponent": "",
+            "resolvedLocators": []
+          },
+          "property": "value"
+        }
+      ],
+      "executionParameters": {
+        "timeoutMs": 30000,
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "waitStrategy": "visible"
+      },
+      "aiEnrichment": null,
+      "plainEnglish": "Select \"USA\" from the Test Button"
+    },
+    {
+      "id": "step-0003",
+      "order": 2,
+      "action": "toggle",
+      "description": "Check the Test Button",
+      "target": {
+        "kind": "element",
+        "elementId": "elem-0001",
+        "elementName": "Test Button",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "type": "role",
+            "value": "button[name=\"Test Button\"]",
+            "priority": 1,
+            "confidence": 0.62
+          },
+          {
+            "type": "accessibleName",
+            "value": "Test Button",
+            "priority": 2,
+            "confidence": 0.62
+          },
+          {
+            "type": "css",
+            "value": "body > button",
+            "priority": 3,
+            "confidence": 0.35
+          }
+        ]
+      },
+      "input": true,
+      "assertions": [
+        {
+          "type": "presence",
+          "comparison": "isTrue",
+          "expectedValue": true,
+          "severity": "hard",
+          "target": {
+            "kind": "element",
+            "elementId": "",
+            "elementName": "",
+            "pageOrComponent": "",
+            "resolvedLocators": []
+          },
+          "property": "checked"
+        }
+      ],
+      "executionParameters": {
+        "timeoutMs": 30000,
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "waitStrategy": "visible"
+      },
+      "aiEnrichment": null,
+      "plainEnglish": "Check the Test Button"
+    },
+    {
+      "id": "step-0004",
+      "order": 3,
+      "action": "fill",
+      "description": "Fill \"john@test.com\" in the Test Button",
+      "target": {
+        "kind": "element",
+        "elementId": "elem-0001",
+        "elementName": "Test Button",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "type": "role",
+            "value": "button[name=\"Test Button\"]",
+            "priority": 1,
+            "confidence": 0.62
+          },
+          {
+            "type": "accessibleName",
+            "value": "Test Button",
+            "priority": 2,
+            "confidence": 0.62
+          },
+          {
+            "type": "css",
+            "value": "body > button",
+            "priority": 3,
+            "confidence": 0.35
+          }
+        ]
+      },
+      "input": "john@test.com",
+      "assertions": [
+        {
+          "type": "equality",
+          "comparison": "equals",
+          "expectedValue": "john@test.com",
+          "severity": "hard",
+          "target": {
+            "kind": "element",
+            "elementId": "",
+            "elementName": "",
+            "pageOrComponent": "",
+            "resolvedLocators": []
+          },
+          "property": "value"
+        }
+      ],
+      "executionParameters": {
+        "timeoutMs": 30000,
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "waitStrategy": "visible"
+      },
+      "aiEnrichment": null,
+      "plainEnglish": "Fill \"john@test.com\" in the Test Button"
+    },
+    {
+      "id": "step-0005",
+      "order": 4,
+      "action": "selectDate",
+      "description": "Select 2024-06-01 in the Test Button",
+      "target": {
+        "kind": "element",
+        "elementId": "elem-0001",
+        "elementName": "Test Button",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "type": "role",
+            "value": "button[name=\"Test Button\"]",
+            "priority": 1,
+            "confidence": 0.62
+          },
+          {
+            "type": "accessibleName",
+            "value": "Test Button",
+            "priority": 2,
+            "confidence": 0.62
+          },
+          {
+            "type": "css",
+            "value": "body > button",
+            "priority": 3,
+            "confidence": 0.35
+          }
+        ]
+      },
+      "input": "2024-06-01",
+      "assertions": [
+        {
+          "type": "equality",
+          "comparison": "equals",
+          "expectedValue": "2024-06-01",
+          "severity": "hard",
+          "target": {
+            "kind": "element",
+            "elementId": "",
+            "elementName": "",
+            "pageOrComponent": "",
+            "resolvedLocators": []
+          },
+          "property": "value"
+        }
+      ],
+      "executionParameters": {
+        "timeoutMs": 30000,
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "waitStrategy": "visible"
+      },
+      "aiEnrichment": null,
+      "plainEnglish": "Select 2024-06-01 in the Test Button"
+    },
+    {
+      "id": "step-0006",
+      "order": 5,
+      "action": "click",
+      "description": "Click the Test Button",
+      "target": {
+        "kind": "element",
+        "elementId": "elem-0001",
+        "elementName": "Test Button",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "type": "role",
+            "value": "button[name=\"Test Button\"]",
+            "priority": 1,
+            "confidence": 0.62
+          },
+          {
+            "type": "accessibleName",
+            "value": "Test Button",
+            "priority": 2,
+            "confidence": 0.62
+          },
+          {
+            "type": "css",
+            "value": "body > button",
+            "priority": 3,
+            "confidence": 0.35
+          }
+        ]
+      },
+      "input": null,
+      "assertions": [],
+      "executionParameters": {
+        "timeoutMs": 30000,
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "waitStrategy": "visible"
+      },
+      "aiEnrichment": null,
+      "plainEnglish": "Click the Test Button"
+    }
+  ]
+}

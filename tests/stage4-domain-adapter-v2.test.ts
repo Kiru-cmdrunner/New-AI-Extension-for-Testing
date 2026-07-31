@@ -8,11 +8,14 @@
  * - Produces UiElements with correct identity
  * - Builds meaningful evidence descriptions
  * - Is compatible with the healing service (UiElement.identity)
+ *
+ * Migrated from DetectedInteraction → ComponentInteraction.
  */
 
 import { describe, it, expect } from 'vitest';
 import { adaptToDomainEntitiesV2 } from '../src/recorder/v2/domain-adapter-v2';
-import type { DetectedInteraction } from '../src/classifier/interaction-types';
+import type { ComponentInteraction } from '../src/shared/component-types';
+import type { ObservedEvent } from '../src/shared/component-types';
 import type { RecordedEvent, ElementRecordedEvent } from '../src/recorder/recorded-event';
 import type { ElementIdentity } from '../src/shared/types';
 import { TransitionOperation, RelevanceLevel, TransitionEvidenceType } from '../src/domain/enums';
@@ -58,27 +61,92 @@ function makeEvent(
     valueAfter: null,
     checkedBefore: null,
     checkedAfter: null,
+    clientX: 0,
+    clientY: 0,
+    key: null,
+    code: null,
+    shiftKey: false,
+    ctrlKey: false,
+    altKey: false,
+    metaKey: false,
+    scrollDeltaY: null,
+    scrollDeltaX: null,
+    pageUrl: 'https://example.com',
+    pageTitle: 'Test Page',
+    domContext: {},
+    isTrusted: true,
     ...overrides,
   };
 }
+
+/**
+ * Build a minimal ObservedEvent with a specific event ID.
+ * Used as memberEvents in ComponentInteraction.
+ */
+function makeObservedEventWithId(eventId: string, target: ElementIdentity): ObservedEvent {
+  return {
+    eventId,
+    eventType: 'click',
+    timestamp: Date.now(),
+    isTrusted: true,
+    target,
+    domContext: {},
+    valueBefore: null,
+    valueAfter: null,
+    checkedBefore: null,
+    checkedAfter: null,
+    clientX: 0,
+    clientY: 0,
+    key: null,
+    code: null,
+    shiftKey: false,
+    ctrlKey: false,
+    altKey: false,
+    metaKey: false,
+    scrollDeltaY: null,
+    scrollDeltaX: null,
+    pageUrl: 'https://example.com',
+    pageTitle: 'Test Page',
+  };
+}
+
+// ── Classifier type → Component type reverse mapping ────────────────────
+
+const CLASSIFIER_TO_COMPONENT: Record<string, string> = {
+  Click: 'Click', DoubleClick: 'Click', RightClick: 'Click',
+  TextEntry: 'TextEntry',
+  NativeDropdown: 'Dropdown', CustomDropdown: 'Dropdown',
+  Autocomplete: 'Dropdown', MultiSelect: 'Dropdown',
+  Checkbox: 'Checkbox', ToggleSwitch: 'Checkbox',
+  RadioButton: 'RadioButton',
+  DatePicker: 'DatePicker', TimePicker: 'DatePicker', DateTimePicker: 'DatePicker',
+  Hover: 'Hover', Link: 'Link', FileUpload: 'FileUpload',
+  Slider: 'Slider', PageNavigation: 'Navigation',
+  DragDrop: 'DragDrop', Unknown: 'Click',
+};
 
 function makeInteraction(
   type: string,
   target: ElementIdentity | undefined,
   eventIds: string[],
-  metadata: any = {},
-  overrides: Partial<DetectedInteraction> = {},
-): DetectedInteraction {
+  metadata: Record<string, unknown> = {},
+): ComponentInteraction {
+  const componentType = CLASSIFIER_TO_COMPONENT[type] ?? 'Click';
+  const isSubtype = type !== componentType;
+  const trigger = target ?? makeIdentity();
+  const memberEvents: ObservedEvent[] = eventIds.map(id => makeObservedEventWithId(id, trigger));
+
   return {
     interactionId: `ctrl-${String(++eventCounter).padStart(4, '0')}`,
-    type: type as DetectedInteraction['type'],
-    eventIds,
-    rawEventTypes: eventIds.map(() => 'click'),
-    target,
+    type: componentType as ComponentInteraction['type'],
+    ...(isSubtype ? { interactionSubtype: type } : {}),
+    trigger,
+    triggerEvent: memberEvents[0] ?? makeObservedEventWithId('evt-fallback', trigger),
+    memberEvents,
+    startTime: Date.now(),
+    endTime: Date.now(),
+    endState: 'completed',
     metadata,
-    confidence: 1.0,
-    engine: 'control',
-    ...overrides,
   };
 }
 
@@ -138,7 +206,7 @@ describe('DomainAdapterV2', () => {
         makeEvent('click', btn),
       ];
 
-      const interactions: DetectedInteraction[] = [
+      const interactions: ComponentInteraction[] = [
         makeInteraction('TextEntry', input1, events.slice(0, 3).map((e) => e.eventId), { textValue: 'test@test.com' }),
         makeInteraction('TextEntry', input2, events.slice(3, 6).map((e) => e.eventId), { textValue: 'pass123' }),
         makeInteraction('Click', btn, events.slice(6).map((e) => e.eventId)),
@@ -273,7 +341,7 @@ describe('DomainAdapterV2', () => {
       resetCounter();
       const target = makeIdentity({ accessibleName: 'Save', tag: 'BUTTON', ariaRole: 'button' });
       const events: RecordedEvent[] = [makeEvent('click', target), makeEvent('click', target)];
-      const interactions: DetectedInteraction[] = [
+      const interactions: ComponentInteraction[] = [
         makeInteraction('Click', target, [events[0].eventId]),
         makeInteraction('Click', target, [events[1].eventId]),
       ];
@@ -450,7 +518,7 @@ describe('DomainAdapterV2', () => {
 
       // Create events (simplified — just enough for "before" state lookup)
       const events: RecordedEvent[] = [];
-      const interactions: DetectedInteraction[] = [];
+      const interactions: ComponentInteraction[] = [];
 
       // 1. Navigation
       const navEvent = { eventId: `evt-${String(++eventCounter).padStart(4, '0')}`, eventType: 'navigation' as const, timestamp: new Date(ts).toISOString(), url: 'https://orange.test/dashboard', title: 'Dashboard' };

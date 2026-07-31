@@ -8,7 +8,6 @@
  * of ElementRecordedEvent (V1 type). The core pipeline is unchanged.
  */
 
-import type { InteractionType, InteractionMetadata } from '../interaction-types';
 import type { ElementIdentity } from '../../shared/types';
 import type { ObservedEvent } from '../../shared/component-types';
 import type { SemanticIntent, IntentVote } from './types';
@@ -22,10 +21,10 @@ import { deriveType, deriveMetadata } from './type-deriver';
  * The caller assembles this into a ComponentInteraction annotation.
  */
 export interface EvidenceClassification {
-  /** The derived InteractionType (backward compatible). */
-  type: InteractionType;
+  /** The derived interaction type string (e.g. 'Checkbox', 'ToggleSwitch', 'Link'). */
+  type: string;
   /** Metadata for the interaction (checked state, accessible name). */
-  metadata: InteractionMetadata;
+  metadata: { checked?: boolean; accessibleName?: string };
   /** Confidence from evidence fusion (0.0–1.0). */
   confidence: number;
   /** The winning semantic intent. */

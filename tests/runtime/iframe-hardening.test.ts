@@ -13,9 +13,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { build as buildIRPlan } from '../../src/generation/ir-bridge';
 import type { IRBridgeInput } from '../../src/generation/ir-bridge-input';
-import type { DetectedInteraction } from '../../src/classifier/interaction-types';
+import type { ComponentInteraction } from '../../src/shared/component-types';
 import type { ElementIdentity, IframeContext } from '../../src/shared/types';
 import { renderAction } from '../../src/adapters/playwright/action-renderer';
+import { makeComponentInteraction as makeCI } from '../helpers/component-interaction-fixture';
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -60,19 +61,14 @@ function makeInteraction(
   type: string,
   target: ElementIdentity,
   metadata: Record<string, unknown> = {},
-): DetectedInteraction {
-  return {
-    interactionId: `int-${type}-1`,
-    type: type as any,
-    eventIds: ['evt-1'],
-    rawEventTypes: ['click'],
-    target,
-    metadata: metadata as any,
-    confidence: 0.9,
-  } as DetectedInteraction;
+): ComponentInteraction {
+  return makeCI(type, {
+    trigger: target,
+    metadata,
+  });
 }
 
-function buildPlan(interactions: DetectedInteraction[]) {
+function buildPlan(interactions: ComponentInteraction[]) {
   const input: IRBridgeInput = {
     events: [],
     interactions,

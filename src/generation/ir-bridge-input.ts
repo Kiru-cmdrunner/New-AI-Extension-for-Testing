@@ -4,19 +4,21 @@
  * The IR bridge is the integration point where three recording outputs converge
  * into a single ExecutionIRPlan:
  *   - SessionEvent[] (mechanical execution record — locators, values, DOM context)
- *   - DetectedInteraction[] (classified interaction — type, metadata, confidence)
+ *   - ComponentInteraction[] (classified interaction — type, metadata, confidence)
  *   - ApplicationKnowledgeFragment (semantic enrichment — assertions, business fields, workflow)
  *
- * Each input provides unique, non-overlapping data. See
- * docs/handover/14-target-generation-architecture.md for the full analysis.
+ * Each input provides unique, non-overlapping data.
  *
  * Design principle: IRBridgeInput is a stable interface. Future inputs
  * (e.g., EnvironmentProfile, TestData) can be added as optional fields
  * without breaking existing callers.
+ *
+ * Phase 3 — Type System Unification: interactions type changed from
+ * DetectedInteraction[] to ComponentInteraction[].
  */
 
 import type { SessionEvent } from '../shared/types';
-import type { DetectedInteraction } from '../classifier/interaction-types';
+import type { ComponentInteraction } from '../shared/component-types';
 import type { UnderstandingResult } from '../domain/entities/understanding-result';
 
 /**
@@ -32,22 +34,12 @@ export interface IRBridgeRecordingContext {
 
 /**
  * Encapsulated input for the IR bridge's build() method.
- *
- * The IR Bridge consumes the UnderstandingResult — the aggregate output of
- * the Understanding Layer — as its input boundary. The fragment within
- * provides assertions, business field labels, and workflow structure.
- * The capability is available for future use (test naming, metadata) but
- * is not required for IR plan generation.
- *
- * Design principle: IRBridgeInput is a stable interface. Future inputs
- * (e.g., EnvironmentProfile, TestData) can be added as optional fields
- * without breaking existing callers.
  */
 export interface IRBridgeInput {
   /** Raw event timeline — provides locators, input values, DOM context. */
   readonly events: SessionEvent[];
-  /** Classified interactions — provides type classification, metadata, confidence. */
-  readonly interactions: DetectedInteraction[];
+  /** Classified interactions — type classification, metadata, confidence. */
+  readonly interactions: ComponentInteraction[];
   /**
    * Understanding Layer output — contains the fragment (structural understanding)
    * and capability (semantic understanding). The bridge reads fragment for

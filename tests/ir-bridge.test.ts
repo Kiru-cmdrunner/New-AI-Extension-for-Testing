@@ -23,7 +23,8 @@ import type { IRBridgeInput } from '../src/generation/ir-bridge-input';
 import { IRAction } from '../src/domain/execution-ir/types';
 import { LocatorStrategyType, ValidationType, ValidationComparison } from '../src/domain/enums';
 import type { SessionEvent, ElementIdentity } from '../src/shared/types';
-import type { DetectedInteraction, InteractionType } from '../src/classifier/interaction-types';
+import type { ComponentInteraction } from '../src/shared/component-types';
+import { makeComponentInteraction as makeCI, makeObservedEvent } from './helpers/component-interaction-fixture';
 import type { ApplicationKnowledgeFragment } from '../src/domain/entities/application-knowledge';
 import type { UnderstandingResult } from '../src/domain/entities/understanding-result';
 
@@ -52,21 +53,51 @@ function makeElementIdentity(overrides: Partial<ElementIdentity> = {}): ElementI
   };
 }
 
+/**
+ * Build a ComponentInteraction for testing.
+ * The `type` argument is the resolved type (e.g., 'NativeDropdown', 'Click').
+ * Accepts DetectedInteraction-style overrides (target, eventIds, etc.)
+ * and translates them to ComponentInteraction fields.
+ *
+ * Key differences from old DetectedInteraction fixtures:
+ * - `target` → `trigger` (ElementIdentity)
+ * - `eventIds` → translated to `memberEvents` with matching IDs
+ * - When `eventIds` is explicitly `[]`, no memberEvents are set
+ *   (signals "no correlatable events" to the bridge)
+ * - When `target` is explicitly `undefined`, the interaction has no trigger
+ */
 function makeInteraction(
-  type: InteractionType,
-  overrides: Partial<DetectedInteraction> = {},
-): DetectedInteraction {
-  return {
-    interactionId: 'int-0001',
-    type,
-    eventIds: ['click-0001'],
-    rawEventTypes: ['click'],
-    target: makeElementIdentity(),
-    metadata: {},
-    confidence: 0.9,
-    engine: 'v2',
-    ...overrides,
-  };
+  type: string,
+  overrides: Record<string, unknown> = {},
+): ComponentInteraction {
+  const hasExplicitTarget = 'target' in overrides;
+  const trigger = hasExplicitTarget
+    ? (overrides.target as ElementIdentity | undefined)
+    : makeElementIdentity();
+  const metadata = (overrides.metadata as Record<string, unknown>) ?? {};
+  const endState = (overrides.endState as ComponentInteraction['endState']) ?? 'completed';
+  const interactionId = (overrides.interactionId as string) ?? 'int-0001';
+  const eventIds = overrides.eventIds as string[] | undefined;
+
+  // If eventIds explicitly provided (including empty array), derive memberEvents from them
+  let memberEvents: ObservedEvent[] | undefined;
+  if (eventIds !== undefined) {
+    if (eventIds.length > 0) {
+      const eventTarget = trigger ?? makeElementIdentity();
+      memberEvents = eventIds.map(id => makeObservedEvent({ eventId: id, target: eventTarget }));
+    } else {
+      // Explicitly empty eventIds → no memberEvents
+      memberEvents = [];
+    }
+  }
+
+  return makeCI(type, {
+    metadata,
+    trigger,
+    endState,
+    interactionId,
+    memberEvents,
+  });
 }
 
 function makeInput(
@@ -281,10 +312,13 @@ describe('IR Bridge — build()', () => {
       }
     });
 
-    it('uses no target when no element identity available', () => {
-      const interaction = makeInteraction('Click', { target: undefined, eventIds: [] });
+    it('uses element target from trigger even with no correlatable events', () => {
+      // In the unified system, trigger is always present (ElementIdentity is required).
+      // The bridge resolves the target from interaction.target when no event matches.
+      const identity = makeElementIdentity({ elementId: 'minimal' });
+      const interaction = makeInteraction('Click', { target: identity, eventIds: [] });
       const plan = build(makeInput({ events: [], interactions: [interaction] }));
-      expect(plan.steps[0].target.kind).toBe('none');
+      expect(plan.steps[0].target.kind).toBe('element');
     });
 
     it('resolves from interaction.target when no matching event', () => {

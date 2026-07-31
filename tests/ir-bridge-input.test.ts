@@ -12,7 +12,7 @@ import { describe, it, expect } from 'vitest';
 import { IRAction, DEFAULT_EXECUTION_PARAMETERS, type IRStep, type ExecutionIRPlan } from '../src/domain/execution-ir/types';
 import type { IRBridgeInput, IRBridgeRecordingContext } from '../src/generation/ir-bridge-input';
 import type { SessionEvent, AIUnderstanding } from '../src/shared/types';
-import type { DetectedInteraction } from '../src/classifier/interaction-types';
+import type { ComponentInteraction } from '../src/shared/component-types';
 import type { ApplicationKnowledgeFragment } from '../src/domain/entities/application-knowledge';
 import type { UnderstandingResult } from '../src/domain/entities/understanding-result';
 
@@ -175,7 +175,7 @@ describe('IRBridgeInput Model (Milestone 8.1)', () => {
   describe('IRBridgeInput', () => {
     it('encapsulates all required inputs', () => {
       const events: SessionEvent[] = [];
-      const interactions: DetectedInteraction[] = [];
+      const interactions: ComponentInteraction[] = [];
 
       const input: IRBridgeInput = {
         events,

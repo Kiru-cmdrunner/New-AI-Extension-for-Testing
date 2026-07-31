@@ -19,7 +19,6 @@
 import { StorageService } from '../storage/storage-service';
 import { runPipeline } from '../recorder/pipeline/pipeline-runner';
 import { build as buildIRPlan } from '../generation/ir-bridge';
-import { adaptInteractions as adaptToDetected } from '../generation/component-to-classifier-adapter';
 import { PlaywrightCodeGenerator } from '../adapters/playwright/project-generator';
 import { DexieUnitOfWorkFactory } from '../repository/v2/dexie/dexie-unit-of-work-factory';
 import { persistSession } from '../repository/services/session-persistence-service';
@@ -28,7 +27,6 @@ import { healFromRecording } from '../repository/services/healing-service';
 import { checkStaleness } from '../domain/execution-ir/staleness';
 import { IRExecutorImpl } from '../execution/ir-executor-impl';
 import { createExecutionRun } from '../domain/entities/execution-run';
-import type { DetectedInteraction } from '../classifier/interaction-types';
 import type { UnderstandingResult } from '../domain/entities/understanding-result';
 import {
   RecordingState,
@@ -333,21 +331,15 @@ async function handleStopRecording(): Promise<void> {
     };
   });
 
-  // ── Unified Classifier Path (replaces V1/V2/Merge/Reasoner) ──
-  // The Component Runtime already classified every interaction with the
-  // correct lifecycle, subActions, and metadata. Instead of re-classifying
-  // the raw events through the V1/V2 detector pipeline, we adapt the
-  // ComponentInteractions directly to DetectedInteractions.
-  //
-  // This eliminates the dual-classification problem where the same events
-  // were classified twice through different logic, producing divergent results.
-  // Phase 2: The adapter is now defensive (per-interaction try/catch), so it
-  // never throws on the full batch. The V1 fallback classifier is no longer needed.
-  const mergedInteractions: DetectedInteraction[] = adaptToDetected(allInteractions);
-  console.info('[Component Adapter]', `Adapted ${mergedInteractions.length} interactions from ${allInteractions.length} component interactions`);
+  // ── Unified Classifier Path ──
+  // Phase 3: The Component Runtime's ComponentInteraction[] is passed directly
+  // to the pipeline and IR Bridge. No adapter needed — the bridge normalizes
+  // internally via toBridgeInteraction().
+  console.info('[Pipeline]', `${allInteractions.length} component interactions ready for pipeline`);
 
-  await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS, mergedInteractions);
-  await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, mergedInteractions);
+  // Store interactions for side-panel timeline display
+  await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS, allInteractions);
+  await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, allInteractions);
 
   // ── Recognition → Enrichment Pipeline (Phase 6) ──
   // Run the analysis pipeline on the recorded session. This produces:
@@ -361,7 +353,7 @@ async function handleStopRecording(): Promise<void> {
     const sessionId = `session-${Date.now()}`;
     const tab = await getActiveTab();
     const sourceUrl = tab?.url ?? undefined;
-    const pipelineResult = runPipeline(events, mergedInteractions, sessionId, sourceUrl, 'control');
+    const pipelineResult = runPipeline(events, allInteractions, sessionId, sourceUrl, 'control');
 
     await StorageService.setRaw(StorageKeys.DOMAIN_ENTITIES, {
       elements: pipelineResult.entities.elements,
@@ -402,7 +394,7 @@ async function handleStopRecording(): Promise<void> {
 
     const irPlan = buildIRPlan({
       events: events as unknown as SessionEvent[],
-      interactions: mergedInteractions,
+      interactions: allInteractions,
       understanding: understandingResult,
       recordingContext: {
         startUrl: recordingStartUrl || tab?.url || 'about:blank',
@@ -443,7 +435,7 @@ async function handleStopRecording(): Promise<void> {
           capability: null,
         },
         events: events as unknown as readonly Record<string, unknown>[],
-        interactions: mergedInteractions,
+        interactions: allInteractions,
         url: (await getActiveTab())?.url ?? '',
         irPlan,
         projectId: draft?.projectId ?? null,
@@ -462,7 +454,7 @@ async function handleStopRecording(): Promise<void> {
 
       // ── Phase 11: Cross-Session Element Healing ──
       try {
-        const domainEntities = adaptToDomainEntities(events, mergedInteractions, (await getActiveTab())?.url ?? '');
+        const domainEntities = adaptToDomainEntities(events, allInteractions, (await getActiveTab())?.url ?? '');
         if (domainEntities.elements.length > 0 && persistenceResult.projectId) {
           const healingResult = await healFromRecording(
             persistenceResult.projectId,

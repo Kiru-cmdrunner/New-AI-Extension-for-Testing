@@ -15,7 +15,7 @@ import { build } from '../../src/generation/ir-bridge';
 import type { IRBridgeInput } from '../../src/generation/ir-bridge-input';
 import type { ComponentInteraction } from '../../src/shared/component-types';
 import type { DropdownSubAction } from '../../src/definitions/dropdown';
-import type { SessionEvent } from '../../src/shared/types';
+import { makeComponentInteraction as makeCI, makeElementIdentity } from '../helpers/component-interaction-fixture';
 import { IRAction } from '../../src/domain/execution-ir/types';
 
 // ── Helpers ───────────────────────────────────────────────────────────
@@ -23,52 +23,18 @@ import { IRAction } from '../../src/domain/execution-ir/types';
 function makeInteraction(
   subActions: DropdownSubAction[],
 ): ComponentInteraction {
-  return {
-    type: 'CustomDropdown',
-    trigger: {
-      tagName: 'BUTTON',
-      ariaRole: 'button',
-      ariaLabel: 'Economy',
+  return makeCI('CustomDropdown', {
+    trigger: makeElementIdentity({
       accessibleName: 'Economy',
-      inputType: null,
-      cssClasses: ['economy-trigger'],
-    } as any,
-    target: {
-      tagName: 'BUTTON',
       ariaRole: 'button',
-      ariaLabel: 'Economy',
-      accessibleName: 'Economy',
-      inputType: null,
-      cssClasses: ['economy-trigger'],
-    } as any,
-    eventIds: ['evt-1', 'evt-2', 'evt-3', 'evt-4'],
+      tag: 'BUTTON',
+    }),
     metadata: {
       subActions,
       isMultiConfig: true,
       targetName: 'Economy',
     },
-  } as unknown as ComponentInteraction;
-}
-
-function makeSessionEvent(actionId: string, accessibleName: string): SessionEvent {
-  return {
-    actionId,
-    timestamp: Date.now(),
-    action: 'click',
-    target: {
-      tagName: 'BUTTON',
-      ariaRole: 'button',
-      ariaLabel: accessibleName,
-      accessibleName,
-      inputType: null,
-      cssClasses: [],
-    },
-    valueBefore: null,
-    valueAfter: null,
-    modifierKeys: [],
-    url: 'https://example.com',
-    timestampISO: new Date().toISOString(),
-  } as unknown as SessionEvent;
+  });
 }
 
 function buildPlanFromSubActions(
@@ -78,17 +44,13 @@ function buildPlanFromSubActions(
   const interaction = enrichConfigurationSession(makeInteraction(subActions));
 
   // Step 2: Build IR plan
-  const events: SessionEvent[] = subActions.map((s, i) =>
-    makeSessionEvent(`evt-${i + 1}`, s.label),
-  );
-
   const input: IRBridgeInput = {
-    events,
+    events: [],
     interactions: [interaction],
     understanding: null,
     recordingContext: {
       startUrl: 'https://example.com',
-      pageTitle: 'Test Page',
+      title: 'Test Page',
     },
     testCaseName: 'test-case',
   };
@@ -214,19 +176,20 @@ describe('IR Bridge: configurationSession field-based expansion', () => {
 
   describe('non-enriched interactions still work (regression)', () => {
     it('generates a single step for a simple dropdown without subActions', () => {
-      const interaction: ComponentInteraction = {
-        type: 'CustomDropdown',
-        trigger: { tagName: 'BUTTON', ariaRole: 'button', ariaLabel: 'One Way', accessibleName: 'One Way', inputType: null, cssClasses: [] } as any,
-        target: { tagName: 'BUTTON', ariaRole: 'button', ariaLabel: 'One Way', accessibleName: 'Design', inputType: null, cssClasses: [] } as any,
-        eventIds: ['evt-1'],
+      const interaction = makeCI('CustomDropdown', {
+        trigger: makeElementIdentity({
+          accessibleName: 'One Way',
+          ariaRole: 'button',
+          tag: 'BUTTON',
+        }),
         metadata: { selectedValue: 'Round Trip', targetName: 'One Way' },
-      } as unknown as ComponentInteraction;
+      });
 
       const input: IRBridgeInput = {
-        events: [makeSessionEvent('evt-1', 'Round Trip')],
+        events: [],
         interactions: [interaction],
         understanding: null,
-        recordingContext: { startUrl: 'https://example.com', pageTitle: 'Test' },
+        recordingContext: { startUrl: 'https://example.com', title: 'Test' },
         testCaseName: 'test-case',
       };
 

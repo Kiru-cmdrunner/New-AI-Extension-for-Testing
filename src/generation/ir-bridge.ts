@@ -3,9 +3,11 @@
  * into a unified ExecutionIRPlan.
  *
  * Phase 8 — Milestone 8.2
+ * Phase 3 — Type System Unification: bridge now accepts ComponentInteraction[]
+ * directly. The adapter and classifier type vocabulary are eliminated.
  *
- * Architecture (see docs/handover/14-target-generation-architecture.md):
- *   SessionEvent[] + DetectedInteraction[] + ApplicationKnowledgeFragment
+ * Architecture (see .drytis/PHASE3_DESIGN.md):
+ *   SessionEvent[] + ComponentInteraction[] + ApplicationKnowledgeFragment
  *     → IR Bridge → ExecutionIRPlan
  *
  * The bridge is a pure function: same inputs → same plan, every time.
@@ -14,7 +16,7 @@
  *
  * Each input provides unique, non-overlapping data:
  *   SessionEvent[] — locators, input values, DOM context, AI enrichment
- *   DetectedInteraction[] — type classification (40 types), metadata, confidence
+ *   ComponentInteraction[] — type classification, metadata, confidence
  *   KnowledgeFragment — assertions, business field labels, workflow structure
  */
 
@@ -37,7 +39,7 @@ import {
   ValidationSeverity,
 } from '../domain/enums';
 import type { SessionEvent, ElementIdentity, AIUnderstanding, IframeContext } from '../shared/types';
-import type { DetectedInteraction, InteractionType } from '../classifier/interaction-types';
+import type { ComponentInteraction } from '../shared/component-types';
 import type {
   ApplicationKnowledgeFragment,
   InteractionContract,
@@ -50,9 +52,269 @@ import {
 import type { IRBridgeInput } from './ir-bridge-input';
 import { deriveStateAssertions } from './assertion-deriver';
 
+// ── Bridge Interaction Type ──────────────────────────────────────────
+//
+// Internal type that replaces the external DetectedInteraction. The bridge
+// accepts ComponentInteraction[] directly and converts to BridgeInteraction
+// internally via toBridgeInteraction(). This eliminates the dependency on
+// the classifier's type vocabulary (interaction-types.ts).
+//
+// The conversion preserves the exact same type resolution and metadata
+// normalization that component-to-classifier-adapter.ts performed, ensuring
+// byte-identical IR plan output (golden master equivalence).
+
+/**
+ * Resolved interaction type used internally by the IR Bridge.
+ *
+ * These values correspond to the entries in INTERACTION_TO_IR_ACTION below.
+ * They are the same string literals that the former classifier InteractionType
+ * used — preserved for behavioral equivalence.
+ */
+type BridgeInteractionType =
+  | 'Click'
+  | 'DoubleClick'
+  | 'RightClick'
+  | 'Hover'
+  | 'DragDrop'
+  | 'KeyboardShortcut'
+  | 'TextEntry'
+  | 'RichTextEditor'
+  | 'NativeDropdown'
+  | 'CustomDropdown'
+  | 'Autocomplete'
+  | 'MultiSelect'
+  | 'Checkbox'
+  | 'RadioButton'
+  | 'ToggleSwitch'
+  | 'Slider'
+  | 'DatePicker'
+  | 'TimePicker'
+  | 'DateTimePicker'
+  | 'FileUpload'
+  | 'DragDropUpload'
+  | 'Link'
+  | 'Tab'
+  | 'Menu'
+  | 'Breadcrumb'
+  | 'PageScroll'
+  | 'ContainerScroll'
+  | 'InfiniteScroll'
+  | 'BrowserAlert'
+  | 'Modal'
+  | 'ModalDialog'
+  | 'Stepper'
+  | 'TagInput'
+  | 'OtpInput'
+  | 'HotkeySequence'
+  | 'Drawer'
+  | 'Popover'
+  | 'Tooltip'
+  | 'NewTab'
+  | 'NewWindow'
+  | 'Iframe'
+  | 'PageNavigation'
+  | 'Back'
+  | 'Forward'
+  | 'Refresh'
+  | 'Unknown';
+
+/**
+ * The internal interaction shape consumed by all bridge functions.
+ * Mirrors the former DetectedInteraction but without the external type dependency.
+ *
+ * Exported so assertion-deriver.ts (and other bridge-internal modules)
+ * can share the same type without depending on the classifier vocabulary.
+ */
+export interface BridgeInteraction {
+  interactionId: string;
+  type: BridgeInteractionType;
+  eventIds: string[];
+  rawEventTypes: string[];
+  target: ElementIdentity | undefined;
+  metadata: Record<string, unknown>;
+  confidence: number;
+}
+
+/**
+ * Map coarse component types to their default bridge types.
+ * Used when interactionSubtype is not explicitly set by the definition.
+ * Preserves the exact same mapping as the former DEFAULT_SUBTYPE.
+ */
+const DEFAULT_BRIDGE_TYPE: Record<string, BridgeInteractionType> = {
+  Click: 'Click',
+  TextEntry: 'TextEntry',
+  Dropdown: 'CustomDropdown',
+  Checkbox: 'Checkbox',
+  RadioButton: 'RadioButton',
+  DatePicker: 'DatePicker',
+  Hover: 'Hover',
+  Link: 'Link',
+  FileUpload: 'FileUpload',
+  Slider: 'Slider',
+  Tab: 'Tab',
+  Scroll: 'PageScroll',
+  Navigation: 'PageNavigation',
+  DragDrop: 'DragDrop',
+  KeyboardShortcut: 'KeyboardShortcut',
+  ModalDialog: 'ModalDialog',
+  Stepper: 'Stepper',
+  TagInput: 'TagInput',
+  OtpInput: 'OtpInput',
+  HotkeySequence: 'HotkeySequence',
+  NewTab: 'NewTab',
+  NewWindow: 'NewWindow',
+  Breadcrumb: 'Breadcrumb',
+};
+
+/**
+ * Normalize a ComponentInteraction into the internal BridgeInteraction.
+ *
+ * This function internalizes the exact same logic that the former
+ * component-to-classifier-adapter.ts performed:
+ *   1. Type resolution: interactionSubtype → DEFAULT_BRIDGE_TYPE → 'Unknown'
+ *   2. Metadata normalization: field renaming per type
+ *
+ * It is a pure, lossless transform — same input always produces the same output.
+ */
+function toBridgeInteraction(ci: ComponentInteraction): BridgeInteraction {
+  // Resolve type
+  const subtype = ci.interactionSubtype as BridgeInteractionType | undefined;
+  const type: BridgeInteractionType =
+    subtype ||
+    DEFAULT_BRIDGE_TYPE[ci.type] ||
+    'Unknown';
+
+  // Normalize metadata (same logic as former adaptMetadata)
+  const meta = ci.metadata ?? {};
+  const result: Record<string, unknown> = {};
+
+  // Common fields
+  if (meta.targetName) result.accessibleName = meta.targetName;
+  if (meta.selectedValue) result.selectedValue = meta.selectedValue;
+
+  // TextEntry
+  if (ci.type === 'TextEntry') {
+    if (meta.textValue) result.textValue = meta.textValue;
+    else if (meta.finalValue) result.textValue = meta.finalValue;
+    if (meta.editorType) result.editorType = meta.editorType;
+    if (meta.isRichTextEditor !== undefined) result.isRichTextEditor = meta.isRichTextEditor;
+  }
+
+  // Checkbox / Toggle
+  if (ci.type === 'Checkbox') {
+    if (meta.checked !== undefined) result.checked = meta.checked;
+  }
+
+  // DatePicker
+  if (ci.type === 'DatePicker') {
+    if (meta.selectedDate) result.dateValue = meta.selectedDate;
+    if (meta.displayValue) result.displayValue = meta.displayValue;
+    if (meta.dateAmbiguous) result.dateAmbiguous = meta.dateAmbiguous;
+  }
+
+  // FileUpload
+  if (ci.type === 'FileUpload') {
+    if (meta.fileName) result.files = [meta.fileName];
+    if (meta.fileCount !== undefined) result.fileCount = meta.fileCount;
+  }
+
+  // Slider
+  if (ci.type === 'Slider') {
+    if (meta.sliderValue !== undefined) result.sliderValue = String(meta.sliderValue);
+    else if (meta.value !== undefined) result.sliderValue = String(meta.value);
+    if (meta.startValue !== undefined) result.startValue = meta.startValue;
+    if (meta.endValue !== undefined) result.endValue = meta.endValue;
+    if (meta.min !== undefined) result.sliderMin = meta.min;
+    if (meta.max !== undefined) result.sliderMax = meta.max;
+    if (meta.dragTracked !== undefined) result.dragTracked = meta.dragTracked;
+  }
+
+  // Navigation
+  if (ci.type === 'Navigation') {
+    const navEvent = ci.triggerEvent;
+    if (navEvent?.pageUrl) result.url = navEvent.pageUrl;
+    if (navEvent?.pageTitle) result.title = navEvent.pageTitle;
+  }
+
+  // Hover
+  if (ci.type === 'Hover') {
+    if (meta.hoverDuration) result.hoverDuration = meta.hoverDuration;
+  }
+
+  // DragDrop
+  if (ci.type === 'DragDrop') {
+    if (meta.dropTarget) result.dropTarget = meta.dropTarget;
+    if (meta.sourceElement) result.sourceElement = meta.sourceElement;
+  }
+
+  // KeyboardShortcut
+  if (ci.type === 'KeyboardShortcut') {
+    if (meta.shortcutKey) result.shortcutKey = meta.shortcutKey;
+    if (meta.keyValue) result.keyValue = meta.keyValue;
+    if (meta.keyCode) result.keyCode = meta.keyCode;
+    if (meta.playwrightKey) result.playwrightKey = meta.playwrightKey;
+    if (meta.hasCtrl !== undefined) result.hasCtrl = meta.hasCtrl;
+    if (meta.hasShift !== undefined) result.hasShift = meta.hasShift;
+    if (meta.hasAlt !== undefined) result.hasAlt = meta.hasAlt;
+    if (meta.hasCmd !== undefined) result.hasCmd = meta.hasCmd;
+  }
+
+  // ModalDialog
+  if (ci.type === 'ModalDialog') {
+    if (meta.modalTitle) result.modalTitle = meta.modalTitle;
+    if (meta.subActions) result.modalSubActions = meta.subActions;
+    if (meta.hasSubActions !== undefined) result.hasSubActions = meta.hasSubActions;
+  }
+
+  // Stepper
+  if (ci.type === 'Stepper') {
+    if (meta.fieldName) result.targetName = meta.fieldName;
+    if (meta.totalDelta !== undefined) result.stepperDelta = meta.totalDelta;
+    if (meta.subActions) result.stepperSubActions = meta.subActions;
+  }
+
+  // ConfigurationSession — pass through for field-based IR expansion
+  if (meta.configurationSession) {
+    result.configurationSession = meta.configurationSession;
+    const cs = meta.configurationSession as Record<string, unknown>;
+    if (cs.fields) {
+      const fields = cs.fields as Array<{
+        label: string;
+        finalValue?: string;
+        delta?: number;
+      }>;
+      const configured: Record<string, string> = {};
+      for (const f of fields) {
+        if (f.finalValue) {
+          configured[f.label] = f.finalValue;
+        } else if (f.delta !== undefined) {
+          configured[f.label] = `${f.delta > 0 ? '+' : ''}${f.delta}`;
+        }
+      }
+      if (Object.keys(configured).length > 0) {
+        result.configuredFields = configured;
+        result.semanticAction = 'configure';
+      }
+    }
+    if (cs.triggerLabel) {
+      result.panelLabel = cs.triggerLabel;
+    }
+  }
+
+  return {
+    interactionId: ci.interactionId,
+    type,
+    eventIds: (ci.memberEvents ?? []).map((e) => e.eventId),
+    rawEventTypes: [...new Set((ci.memberEvents ?? []).map((e) => e.eventType))],
+    target: ci.trigger,
+    metadata: result,
+    confidence: ci.endState === 'completed' ? 1.0 : 0.5,
+  };
+}
+
 // ── Interaction Type → IRAction Mapping ────────────────────
 
-const INTERACTION_TO_IR_ACTION: Record<InteractionType, IRAction> = {
+const INTERACTION_TO_IR_ACTION: Record<BridgeInteractionType, IRAction> = {
   // Navigation
   PageNavigation: IRAction.NAVIGATE,
   Back: IRAction.NAVIGATE,
@@ -346,7 +608,7 @@ function extractUrlFragment(url: string): string {
 // ── Description Generation ─────────────────────────────────
 
 function generateDescription(
-  interaction: DetectedInteraction,
+  interaction: BridgeInteraction,
   event: SessionEvent | undefined,
   logicalAction: LogicalAction | undefined,
 ): string {
@@ -476,7 +738,7 @@ function generateDescription(
 }
 
 function generatePlainEnglish(
-  interaction: DetectedInteraction,
+  interaction: BridgeInteraction,
   event: SessionEvent | undefined,
   logicalAction: LogicalAction | undefined,
 ): string {
@@ -487,7 +749,7 @@ function generatePlainEnglish(
 }
 
 function getElementDisplayName(
-  interaction: DetectedInteraction,
+  interaction: BridgeInteraction,
   event: SessionEvent | undefined,
 ): string {
   if (interaction.target?.accessibleName) {
@@ -499,56 +761,57 @@ function getElementDisplayName(
   if (event && 'elementIdentity' in event) {
     return event.elementIdentity.accessibleName || event.elementIdentity.ariaLabel || event.elementIdentity.tag;
   }
-  return interaction.metadata.accessibleName ?? 'element';
+  return (interaction.metadata.accessibleName as string) ?? 'element';
 }
 
 // ── Input Value Extraction ─────────────────────────────────
 
 function extractInputValue(
-  interaction: DetectedInteraction,
+  interaction: BridgeInteraction,
   event: SessionEvent | undefined,
 ): IRInput {
+  const m = interaction.metadata;
   switch (interaction.type) {
     case 'TextEntry':
     case 'RichTextEditor':
-      return event?.type === 'text' ? event.value : (interaction.metadata.textValue ?? null);
+      return event?.type === 'text' ? event.value : ((m.textValue as string) ?? null);
 
     case 'Checkbox':
     case 'ToggleSwitch':
-      return event?.type === 'checkbox' ? event.checked : (interaction.metadata.checked ?? null);
+      return event?.type === 'checkbox' ? event.checked : ((m.checked as boolean) ?? null);
 
     case 'NativeDropdown':
     case 'CustomDropdown':
     case 'Autocomplete':
     case 'MultiSelect':
     case 'RadioButton':
-      return event?.type === 'select' ? event.value : (interaction.metadata.selectedValue ?? null);
+      return event?.type === 'select' ? event.value : ((m.selectedValue as string) ?? null);
 
     case 'DatePicker':
     case 'TimePicker':
     case 'DateTimePicker':
-      return event?.type === 'dateSelect' ? event.isoValue : (interaction.metadata.dateValue ?? null);
+      return event?.type === 'dateSelect' ? event.isoValue : ((m.dateValue as string) ?? null);
 
     case 'Slider':
-      return interaction.metadata.sliderValue ?? null;
+      return (m.sliderValue as string) ?? null;
 
     case 'TagInput':
-      return ((interaction.metadata.tags as string[]) ?? []).join(', ') || null;
+      return ((m.tags as string[]) ?? []).join(', ') || null;
 
     case 'OtpInput':
-      return interaction.metadata.otpValue ?? null;
+      return (m.otpValue as string) ?? null;
 
     case 'HotkeySequence':
-      return interaction.metadata.playwrightSequence ?? interaction.metadata.sequenceDisplay ?? null;
+      return (m.playwrightSequence as string) ?? (m.sequenceDisplay as string) ?? null;
 
     case 'KeyboardShortcut':
-      return interaction.metadata.playwrightKey ?? interaction.metadata.shortcutKey ?? null;
+      return (m.playwrightKey as string) ?? (m.shortcutKey as string) ?? null;
 
     case 'PageNavigation':
     case 'Back':
     case 'Forward':
     case 'Refresh':
-      return event?.type === 'navigation' ? event.url : (interaction.metadata.url ?? null);
+      return event?.type === 'navigation' ? event.url : ((m.url as string) ?? null);
 
     default:
       return null;
@@ -706,7 +969,7 @@ function buildEventIndex(events: SessionEvent[]): Map<string, SessionEvent> {
  * DetectedInteraction.eventIds links back to the raw events.
  */
 function findCorrespondingEvent(
-  interaction: DetectedInteraction,
+  interaction: BridgeInteraction,
   eventIndex: Map<string, SessionEvent>,
 ): SessionEvent | undefined {
   for (const eventId of interaction.eventIds) {
@@ -721,7 +984,7 @@ function findCorrespondingEvent(
  * Uses timestamp proximity — the LogicalAction whose timestamp is closest.
  */
 function findLogicalAction(
-  interaction: DetectedInteraction,
+  interaction: BridgeInteraction,
   fragment: ApplicationKnowledgeFragment | null,
 ): LogicalAction | undefined {
   if (!fragment) return undefined;
@@ -745,7 +1008,7 @@ function findLogicalAction(
  * Interaction types that produce no meaningful test step.
  * Filtered out during IR plan construction.
  */
-const NOISE_TYPES: Set<InteractionType> = new Set([
+const NOISE_TYPES: Set<BridgeInteractionType> = new Set([
   'PageScroll',
   'ContainerScroll',
   'InfiniteScroll',
@@ -840,8 +1103,11 @@ function applyReadabilityRules(steps: IRStep[]): IRStep[] {
  * @returns ExecutionIRPlan — the unified execution representation
  */
 export function build(input: IRBridgeInput): ExecutionIRPlan {
-  const { events, interactions, recordingContext, testCaseName } = input;
+  const { events, recordingContext, testCaseName } = input;
   const fragment = input.understanding?.fragment ?? null;
+
+  // Convert ComponentInteraction[] → BridgeInteraction[] (internal normalization)
+  const interactions = input.interactions.map(toBridgeInteraction);
 
   const eventIndex = buildEventIndex(events);
   const steps: IRStep[] = [];
@@ -983,7 +1249,7 @@ export function build(input: IRBridgeInput): ExecutionIRPlan {
     // Resolve target
     let target: ResolvedTarget;
     if (action === IRAction.NAVIGATE) {
-      const url = event?.type === 'navigation' ? event.url : (interaction.metadata.url ?? recordingContext.startUrl);
+      const url = event?.type === 'navigation' ? event.url : ((interaction.metadata.url as string) ?? recordingContext.startUrl);
       target = resolveUrlTarget(url);
     } else if (interaction.target) {
       target = resolveElementTarget(interaction.target);
@@ -1124,7 +1390,7 @@ interface RawSubAction {
 
 function buildSubActionStep(
   sub: RawSubAction,
-  interaction: DetectedInteraction,
+  interaction: BridgeInteraction,
   event: SessionEvent | undefined,
   logicalAction: LogicalAction | undefined,
   stepCounter: number,
@@ -1276,7 +1542,7 @@ interface ConfigFieldData {
 
 function buildFieldStep(
   field: ConfigFieldData,
-  interaction: DetectedInteraction,
+  interaction: BridgeInteraction,
   event: SessionEvent | undefined,
   logicalAction: LogicalAction | undefined,
   stepCounter: number,

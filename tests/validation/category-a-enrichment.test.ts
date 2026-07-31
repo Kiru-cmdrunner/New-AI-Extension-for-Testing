@@ -20,47 +20,30 @@ import { build } from '../../src/generation/ir-bridge';
 import type { IRBridgeInput } from '../../src/generation/ir-bridge-input';
 import type { ComponentInteraction } from '../../src/shared/component-types';
 import type { DropdownSubAction } from '../../src/definitions/dropdown';
-import type { SessionEvent } from '../../src/shared/types';
+import { makeComponentInteraction as makeCI, makeElementIdentity } from '../helpers/component-interaction-fixture';
 import { IRAction } from '../../src/domain/execution-ir/types';
 
 // ── Helpers ───────────────────────────────────────────────────────────
-
-function makeTarget(name: string, tag = 'BUTTON', role = 'button'): any {
-  return {
-    tagName: tag, ariaRole: role, ariaLabel: name, accessibleName: name,
-    inputType: null, cssClasses: [],
-    elementId: `elem-${name.toLowerCase().replace(/\s+/g, '-')}`,
-  };
-}
 
 function makeInteraction(
   subActions: DropdownSubAction[],
   triggerName = 'Economy',
 ): ComponentInteraction {
-  return {
-    type: 'Dropdown',
-    trigger: makeTarget(triggerName),
-    target: makeTarget(triggerName),
-    eventIds: subActions.map((_, i) => `evt-${i + 1}`),
+  return makeCI('CustomDropdown', {
+    trigger: makeElementIdentity({
+      accessibleName: triggerName,
+      ariaRole: 'button',
+      tag: 'BUTTON',
+    }),
     metadata: { subActions, isMultiConfig: true, targetName: triggerName },
-  } as unknown as ComponentInteraction;
-}
-
-function makeEvent(actionId: string, name: string): SessionEvent {
-  return {
-    actionId, timestamp: Date.now() + Math.random(),
-    action: 'click', target: makeTarget(name),
-    valueBefore: null, valueAfter: null, modifierKeys: [],
-    url: 'https://example.com', timestampISO: new Date().toISOString(),
-  } as unknown as SessionEvent;
+  });
 }
 
 function buildFromSubActions(subActions: DropdownSubAction[], triggerName = 'Economy') {
   const interaction = enrichConfigurationSession(makeInteraction(subActions, triggerName));
-  const events = subActions.map((s, i) => makeEvent(`evt-${i + 1}`, s.label));
   const input: IRBridgeInput = {
-    events, interactions: [interaction], understanding: null,
-    recordingContext: { startUrl: 'https://example.com', pageTitle: 'Test' },
+    events: [], interactions: [interaction], understanding: null,
+    recordingContext: { startUrl: 'https://example.com', title: 'Test' },
     testCaseName: 'test',
   };
   return build(input);

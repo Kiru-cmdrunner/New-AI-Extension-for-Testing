@@ -17,9 +17,31 @@ import type {
   NavigationRecordedEvent,
   ElementRecordedEvent,
 } from '../recorder/recorded-event';
-import type { DetectedInteraction } from '../classifier/interaction-types';
-import { TYPE_DISPLAY } from '../classifier/interaction-types';
+import type { ComponentInteraction } from '../shared/component-types';
 import { renderConfigurationSummary, type ConfigurationSession } from '../enrichment/structural-enrichment';
+
+/**
+ * Resolve the display type for a ComponentInteraction.
+ * Uses interactionSubtype if set, otherwise the coarse type.
+ */
+function resolveDisplayType(ci: ComponentInteraction): string {
+  return ci.interactionSubtype || ci.type;
+}
+
+/**
+ * Resolve the target ElementIdentity from a ComponentInteraction.
+ */
+function resolveTarget(ci: ComponentInteraction): ElementIdentity | undefined {
+  return ci.trigger;
+}
+
+/**
+ * Read a metadata field as a number, with fallback.
+ */
+function metaNum(meta: Record<string, unknown>, key: string): number | undefined {
+  const v = meta[key];
+  return typeof v === 'number' ? v : undefined;
+}
 
 // ── Identity chips ──────────────────────────────────────────────────────
 
@@ -206,12 +228,12 @@ export function renderEventTimeline(
 /**
  * Format metadata into a readable summary string.
  */
-function formatInteractionMetadata(interaction: DetectedInteraction): string {
+function formatInteractionMetadata(interaction: ComponentInteraction): string {
   const m = interaction.metadata;
   const parts: string[] = [];
 
-  // checked and scrollPosition are already conveyed in the action description
-  if (m.hoverDuration) parts.push(`${m.hoverDuration}ms`);
+  const hoverDuration = metaNum(m, 'hoverDuration');
+  if (hoverDuration) parts.push(`${hoverDuration}ms`);
 
   return parts.join(' · ');
 }
@@ -291,41 +313,38 @@ const GENERIC_TAGS = new Set([
   'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LABEL', 'OPTION',
 ]);
 
-export function actionDescription(interaction: DetectedInteraction): string {
-  const type = interaction.type;
+export function actionDescription(interaction: ComponentInteraction): string {
+  const type = resolveDisplayType(interaction);
   const m = interaction.metadata;
   // Get a meaningful name — fall back through accessibleName → ariaLabel → name
-  // but skip generic tag names (INPUT, SELECT, etc.) which aren't useful to display
-  const rawName = interaction.target?.accessibleName
-    || interaction.target?.ariaLabel
-    || interaction.target?.name
+  const tgt = resolveTarget(interaction);
+  const rawName = tgt?.accessibleName
+    || tgt?.ariaLabel
+    || tgt?.name
     || '';
-  const nameFromTag = interaction.target?.tag || '';
+  const nameFromTag = tgt?.tag || '';
   const nameCandidate = rawName || (GENERIC_TAGS.has(nameFromTag) ? '' : nameFromTag);
   const targetName = cleanFieldLabel(nameCandidate);
 
   let description: string;
 
   // ── Semantic Action Override ──
-  // When the semantic reasoner enriches an interaction with a semanticAction,
-  // it overrides the normal type-based description to describe what the user
-  // accomplished rather than which event fired.
   if (m.semanticAction === 'configure' && m.configuredFields) {
-    const fields = Object.entries(m.configuredFields)
+    const fields = Object.entries(m.configuredFields as Record<string, string>)
       .map(([field, value]) => `${field}=${value}`)
       .join(', ');
-    const label = m.panelLabel || targetName || 'Options';
+    const label = (m.panelLabel as string) || targetName || 'Options';
     description = fields
       ? `Configure ${label}: ${fields}`
       : `Configure ${label}`;
     return description;
   }
 
-  // PageNavigation with formSubmitAction: describe as authentication
   if (m.semanticAction === 'authenticate') {
-    const action = m.formSubmitAction || 'Login';
-    if (m.url) {
-      description = `Log in (${action}) → ${urlToDisplay(m.url)}`;
+    const action = (m.formSubmitAction as string) || 'Login';
+    const url = m.url as string;
+    if (url) {
+      description = `Log in (${action}) → ${urlToDisplay(url)}`;
     } else {
       description = `Log in (${action})`;
     }
@@ -333,7 +352,7 @@ export function actionDescription(interaction: DetectedInteraction): string {
   }
   switch (type) {
     case 'PageNavigation':
-      description = m.url ? `Navigate to ${urlToDisplay(m.url)}` : `Navigate${targetName ? ` "${targetName}"` : ''}`;
+      description = m.url ? `Navigate to ${urlToDisplay(m.url as string)}` : `Navigate${targetName ? ` "${targetName}"` : ''}`;
       break;
 
     case 'TextEntry':
@@ -489,7 +508,7 @@ export function actionDescription(interaction: DetectedInteraction): string {
       break;
 
     case 'FileUpload': {
-      const files = m.files ?? [];
+      const files = (m.files as string[]) ?? [];
       const method = m.uploadMethod === 'drag-drop' ? ' by drag-drop' : '';
       if (files.length === 1) {
         description = targetName
@@ -506,7 +525,7 @@ export function actionDescription(interaction: DetectedInteraction): string {
     }
 
     case 'DragDropUpload': {
-      const files = m.files ?? [];
+      const files = (m.files as string[]) ?? [];
       const area = targetName || 'Upload Area';
       if (files.length === 1) {
         description = `Drag "${files[0]}" to "${area}"`;
@@ -522,13 +541,17 @@ export function actionDescription(interaction: DetectedInteraction): string {
       description = `Hover over "${targetName}"`;
       break;
 
-    case 'PageScroll':
-      description = `Scroll page${m.scrollPosition ? ` to (${m.scrollPosition.x}, ${m.scrollPosition.y})` : ''}`;
+    case 'PageScroll': {
+      const pos = m.scrollPosition as { x: number; y: number } | undefined;
+      description = `Scroll page${pos ? ` to (${pos.x}, ${pos.y})` : ''}`;
       break;
+    }
 
-    case 'ContainerScroll':
-      description = `Scroll "${targetName}"${m.scrollPosition ? ` to (${m.scrollPosition.x}, ${m.scrollPosition.y})` : ''}`;
+    case 'ContainerScroll': {
+      const pos = m.scrollPosition as { x: number; y: number } | undefined;
+      description = `Scroll "${targetName}"${pos ? ` to (${pos.x}, ${pos.y})` : ''}`;
       break;
+    }
 
     case 'DragDrop':
       description = m.sourceElement && m.dropTarget
@@ -557,8 +580,8 @@ export function actionDescription(interaction: DetectedInteraction): string {
       break;
 
     case 'BrowserAlert': {
-      const dtype = m.dialogType ?? 'alert';
-      const msg = m.dialogMessage;
+      const dtype = (m.dialogType as string) ?? 'alert';
+      const msg = m.dialogMessage as string | undefined;
       const prefixes: Record<string, string> = {
         alert: 'Alert',
         confirm: 'Confirm',
@@ -621,15 +644,15 @@ export function actionDescription(interaction: DetectedInteraction): string {
 
     default:
       description = targetName
-        ? `${TYPE_DISPLAY[type]?.label ?? type} "${targetName}"`
-        : `${TYPE_DISPLAY[type]?.label ?? type}`;
+        ? `${type} "${targetName}"`
+        : `${type}`;
   }
 
   // ── Iframe enrichment suffix ──
-  // If the interaction occurred inside an iframe, append the iframe context
-  // to the description. This enriches ANY interaction type with iframe info.
-  if (m.iframeSrc || m.iframeName) {
-    const frameName = m.iframeName || 'iframe';
+  const iframeSrc = m.iframeSrc as string | undefined;
+  const iframeName = m.iframeName as string | undefined;
+  if (iframeSrc || iframeName) {
+    const frameName = iframeName || 'iframe';
     description += ` (in ${frameName})`;
   }
 
@@ -637,7 +660,7 @@ export function actionDescription(interaction: DetectedInteraction): string {
 }
 
 /**
- * Create a DOM element for a DetectedInteraction.
+ * Create a DOM element for a ComponentInteraction.
  *
  * Card structure:
  *   [Summary]  (always visible)
@@ -645,14 +668,14 @@ export function actionDescription(interaction: DetectedInteraction): string {
  *   [▶ Details] (collapsed by default)
  *     raw event types · confidence · engine badge
  */
-export function createDetectedInteractionElement(interaction: DetectedInteraction): HTMLElement {
+export function createComponentInteractionElement(interaction: ComponentInteraction): HTMLElement {
   const el = document.createElement('div');
   el.className = 'timeline-event interaction-event';
 
-  const display = TYPE_DISPLAY[interaction.type] ?? TYPE_DISPLAY.Unknown;
+  const displayType = resolveDisplayType(interaction);
 
   // Border color by type
-  el.style.borderLeft = `3px solid ${display.color}`;
+  el.style.borderLeft = `3px solid var(--timeline-accent, #4a90d9)`;
 
   // ── Summary section (always visible) ───────────────────────────────────
 
@@ -662,9 +685,7 @@ export function createDetectedInteractionElement(interaction: DetectedInteractio
   // Type icon + label badge
   const badge = document.createElement('span');
   badge.className = 'timeline-event__type interaction-badge';
-  badge.textContent = `${display.icon} ${display.label}`;
-  badge.style.backgroundColor = `${display.color}15`;
-  badge.style.color = display.color;
+  badge.textContent = displayType;
   summary.appendChild(badge);
 
   // Interaction ID
@@ -701,25 +722,19 @@ export function createDetectedInteractionElement(interaction: DetectedInteractio
   detailsContent.hidden = true;
 
   // Raw event types
+  const rawEventTypes = [...new Set(interaction.memberEvents.map(e => e.eventType))];
   const eventsEl = document.createElement('p');
   eventsEl.className = 'element-identity__chips';
-  eventsEl.textContent = `Events: [${interaction.rawEventTypes.join(', ')}]`;
+  eventsEl.textContent = `Events: [${rawEventTypes.join(', ')}]`;
   detailsContent.appendChild(eventsEl);
 
   // Confidence badge — now in developer details only
-  if (interaction.confidence < 1.0) {
+  const confidence = interaction.endState === 'completed' ? 1.0 : 0.5;
+  if (confidence < 1.0) {
     const confEl = document.createElement('p');
     confEl.className = 'timeline-event__value';
-    confEl.textContent = `Confidence: ${(interaction.confidence * 100).toFixed(0)}%`;
+    confEl.textContent = `Confidence: ${(confidence * 100).toFixed(0)}%`;
     detailsContent.appendChild(confEl);
-  }
-
-  // Engine badge — also in developer details
-  if (interaction.engine) {
-    const engineEl = document.createElement('p');
-    engineEl.className = 'timeline-event__value';
-    engineEl.textContent = `Engine: ${interaction.engine === 'v2' ? 'V2' : interaction.engine === 'control' ? 'Control' : 'V1'}`;
-    detailsContent.appendChild(engineEl);
   }
 
   detailsToggle.addEventListener('click', () => {
@@ -736,9 +751,9 @@ export function createDetectedInteractionElement(interaction: DetectedInteractio
 /**
  * Render detected interactions into a container.
  */
-export function renderDetectedInteractions(
+export function renderComponentInteractions(
   container: HTMLElement,
-  interactions: DetectedInteraction[],
+  interactions: ComponentInteraction[],
 ): void {
   container.innerHTML = '';
 
@@ -753,6 +768,6 @@ export function renderDetectedInteractions(
   for (const interaction of interactions) {
     // Suppress internal-tier types (standalone Stepper should never appear)
     if (interaction.type === 'Stepper') continue;
-    container.appendChild(createDetectedInteractionElement(interaction));
+    container.appendChild(createComponentInteractionElement(interaction));
   }
 }

@@ -10,8 +10,20 @@
  * The other intents (select, input, explore) are for future phases.
  */
 
-import type { InteractionType } from '../interaction-types';
 import type { SemanticIntent, FeatureViewInput } from './types';
+
+/**
+ * Resolved interaction type from the evidence engine's intent inference.
+ * Uses the same string literal vocabulary the IR Bridge expects.
+ */
+type DerivedInteractionType =
+  | 'ToggleSwitch'
+  | 'Checkbox'
+  | 'NewTab'
+  | 'NewWindow'
+  | 'Link'
+  | 'Click'
+  | 'Hover';
 
 /**
  * Derive an InteractionType from a semantic intent and the feature view.
@@ -27,7 +39,7 @@ import type { SemanticIntent, FeatureViewInput } from './types';
 export function deriveType(
   intent: SemanticIntent,
   f: FeatureViewInput,
-): InteractionType {
+): DerivedInteractionType {
   switch (intent) {
     case 'toggle':
       // role=switch → ToggleSwitch; everything else is a Checkbox
