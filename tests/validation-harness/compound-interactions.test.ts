@@ -78,7 +78,8 @@ describe('Compound Interactions [SIMULATED]', () => {
     it('classifies as DragDrop with displacement data', () => {
       const dragHandle = makeTarget({
         tag: 'DIV', ariaRole: 'button', accessibleName: 'Drag card',
-        testId: 'card-drag-handle', cssSelector: 'div[data-testid="card-drag-handle"]',
+        className: 'drag-handle card-grip',
+        testId: 'card-drag-handle', cssSelector: 'div.drag-handle[data-testid="card-drag-handle"]',
         xPath: '//div[@data-testid="card-drag-handle"]',
       });
       const dropZone = makeTarget({

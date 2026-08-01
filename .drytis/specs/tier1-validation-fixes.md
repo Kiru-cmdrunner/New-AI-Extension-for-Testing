@@ -1,39 +1,38 @@
-# Tier 1 Fixes — Validation-Driven P1 Issues
+# Tier 1 Validation Fixes Spec
 
-## Context
-Phase 3 real-world validation identified 5 P1 issues that block common real-world interactions.
-These are systemic architectural gaps, not edge cases. All fixes are refactoring/correction — no new features.
+## Goal
+Fix the two highest-priority findings from the expanded validation:
+- T1-1 (GROUP-A, P1): `isInteractiveElement` gate blocks table/grid elements
+- T1-2 (GROUP-D, P2): TextEntry requires focus→blur lifecycle, no fallback
 
-## Acceptance Criteria
+## T1-1: Expand isInteractiveElement for table/grid roles + DragDrop drag-handle recognition
 
-### Fix 1: `change` Event Support (A4, A6, C2)
-- [ ] DatePicker definition: add `'change'` to `triggerEventTypes`
-- [ ] DatePicker definition: `detectTrigger` recognizes `<input type="date">` on `change` event
-- [ ] Slider definition: add `'change'` to `triggerEventTypes`
-- [ ] Slider definition: `detectTrigger` recognizes `<input type="range">` on `change` event
-- [ ] Dropdown definition: add `'change'` to `triggerEventTypes`
-- [ ] Dropdown definition: `detectTrigger` recognizes `<select>` on `change` event
-- [ ] Validation tests A4, A6, C2 emit correct interaction type (not NONE)
+### Files to change
+1. `src/definitions/patterns.ts` — Add `columnheader`, `rowheader`, `row` to INTERACTIVE_ROLES
+2. `src/definitions/drag-and-drop.ts` — Add drag-handle class pattern detection before isInteractiveElement gate
+3. `tests/validation-harness/multi-step-workflows.test.ts` — Update WF-04 assertion (should now produce interactions)
+4. `tests/validation-harness/compound-interactions.test.ts` — Update CI-01 fixture (realistic drag handle)
 
-### Fix 2: Relax `isInteractiveElement` Gate (C1, B3a, B3b)
-- [ ] `dblclick` events bypass `isInteractiveElement` check (Click definition)
-- [ ] `contextmenu` events bypass `isInteractiveElement` check (Click definition)
-- [ ] Hover definition relaxes or removes interactive-element requirement for mouseenter
-- [ ] Validation tests B3a (DoubleClick on TR), B3b (RightClick on TD), C1 (Hover on DIV) emit correct interaction type
+### Acceptance Criteria
+- [ ] WF-04 (data table): TH click produces ≥1 interaction
+- [ ] WF-04: TR click produces ≥1 interaction  
+- [ ] FW-AGG-02 (AGGrid header): produces ≥1 interaction
+- [ ] CI-01 (mouse drag): produces ≥1 DragDrop interaction
+- [ ] No regression in existing tests
+- [ ] tsc --noEmit clean for src/
 
-### Fix 3: Playwright Iframe `frameLocator()` (F2)
-- [ ] Playwright test renderer checks `target.inIframe` / `iframeContext`
-- [ ] When `inIframe` is true, generates `page.frameLocator('...').locator('...')` pattern
-- [ ] Validation test F2 produces Playwright code containing `frameLocator`
+## T1-2: TextEntry fallback for input-only events
 
-### Regression
-- [ ] `tsc --noEmit` — zero errors
-- [ ] Full test suite passes (excluding known flaky perf benchmark)
-- [ ] Golden master: 130/130 pass
-- [ ] Existing validation tests still pass (30/30)
+### Files to change
+1. `src/definitions/text-entry.ts` — Add 'input' to triggerEventTypes; add fallback trigger when input arrives without active session
 
-## Out of Scope
-- Evidence engine re-wiring (Tier 2)
-- Assertion deriver expansion (Tier 2)
-- OTP/TagInput/ToggleSwitch fixes (Tier 3)
-- New definitions
+### Acceptance Criteria
+- [ ] CI-04 (input-only): produces ≥1 TextEntry interaction
+- [ ] No regression: focus→blur path still works identically
+- [ ] No regression in golden master
+- [ ] tsc --noEmit clean for src/
+
+## Verification
+- Full test suite passes (except pre-existing flaky benchmark)
+- Golden master 131/131
+- Validation harness: all tests pass

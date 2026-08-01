@@ -65,6 +65,17 @@ const EXCLUDED_ROLES = new Set([
 ]);
 
 /**
+ * CSS class patterns that indicate a drag handle — an element specifically
+ * designed to be grabbed for drag-and-drop, even if it also has an
+ * interactive role like role="button" or role="gridcell".
+ *
+ * When detected, the element is allowed through the DragDrop trigger gate
+ * even if it would normally be excluded as an interactive element.
+ * (Expanded validation finding GROUP-A, CI-01.)
+ */
+const DRAG_HANDLE_CLASS_RE = /(?:^|\s)(?:drag[-_]?(?:handle|grip|grab)|sortable[-_]?(?:handle|item)|dnd[-_]?handle|resiz(?:e|able)[-_]?(?:handle|grip)|grip[-_]?handle|move[-_]?handle|handlebar)(?:\s|$)/i;
+
+/**
  * Should this element be excluded from mouse-based DragDrop triggering?
  * Returns true for:
  * - Form controls (INPUT, SELECT, TEXTAREA) — have own definitions
@@ -137,12 +148,23 @@ export const dragAndDropDefinition: ComponentDefinition = {
       const { tag, ariaRole, className } = event.target;
       const { ariaHasPopup, inputType, isContentEditable } = event.domContext;
       const ancestorClasses = event.domContext.ancestorClasses.join(' ');
-      if (isExcluded(tag, ariaRole, ariaHasPopup)) {
+      
+      // Drag handles: elements with drag-handle CSS class patterns are always
+      // allowed through, even if they have interactive roles like role="button"
+      // or are excluded as form controls. These elements are designed for
+      // dragging AND may have a click fallback, but the DragDrop definition's
+      // displacement check (> 10px) will correctly discard non-drag mousedowns.
+      // (Expanded validation finding GROUP-A, CI-01.)
+      const allClasses = `${className ?? ''} ${ancestorClasses}`;
+      const isDragHandle = DRAG_HANDLE_CLASS_RE.test(allClasses);
+
+      if (!isDragHandle && isExcluded(tag, ariaRole, ariaHasPopup)) {
         return null;
       }
       // Interactive elements (CSS class patterns like btn, dropdown, option,
-      // etc.) are handled by their own definitions on click.
-      if (isInteractiveElement(tag, ariaRole, className, null)) {
+      // etc.) are handled by their own definitions on click — UNLESS the element
+      // is a drag handle, in which case DragDrop claims it.
+      if (!isDragHandle && isInteractiveElement(tag, ariaRole, className, null)) {
         return null;
       }
       // Dropdown triggers (CSS class patterns like dropdown, select, combobox)

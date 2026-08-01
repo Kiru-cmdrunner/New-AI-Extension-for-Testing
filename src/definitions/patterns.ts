@@ -48,11 +48,21 @@ const INTERACTIVE_TAGS = new Set([
   'BUTTON', 'A', 'SELECT', 'INPUT', 'TEXTAREA', 'SUMMARY', 'OPTION',
 ]);
 
-/** ARIA roles that indicate interactivity. */
+/**
+ * ARIA roles that indicate interactivity.
+ *
+ * Table/grid roles (columnheader, rowheader, row) are included because data
+ * tables and grids are common click targets — sort headers, selectable rows,
+ * and AG Grid cells all rely on these roles. Without them, the Click gate
+ * produces 0 interactions for entire categories of UI patterns.
+ * (Expanded validation finding GROUP-A, WF-04/FW-AGG-02.)
+ */
 const INTERACTIVE_ROLES = new Set([
   'button', 'link', 'combobox', 'listbox', 'option', 'checkbox', 'radio',
   'switch', 'tab', 'menuitem', 'menuitemcheckbox', 'menuitemradio',
   'textbox', 'spinbutton', 'slider', 'treeitem', 'gridcell',
+  // Table / grid roles — sortable headers, selectable rows
+  'columnheader', 'rowheader', 'row',
 ]);
 
 /**

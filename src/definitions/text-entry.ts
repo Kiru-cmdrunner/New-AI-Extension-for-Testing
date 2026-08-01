@@ -2,11 +2,17 @@
  * TextEntry Definition — Text Input Lifecycle (Priority 50)
  *
  * Triggers on focus of a text input/textarea/contentEditable.
+ * Also triggers on input events as a fallback when no focus event was
+ * captured (programmatic value changes, autofill, incomplete event streams).
  * Completes on blur IF the user actually typed (userTyped=true) AND
  * the value is non-empty. Otherwise, no-op (filtered by presentation).
  *
  * Bug 4 fix: userTyped flag prevents capturing focus+blur on pre-filled
  * fields without any actual typing.
+ *
+ * Input-only fallback (GROUP-D fix): if input events arrive without a
+ * preceding focus, TextEntry starts on the first input event and completes
+ * on flush or blur.
  *
  * Architecture: `.drytis/specs/m0a-architecture-validation.md` §2.3
  */
@@ -25,19 +31,45 @@ import { detectEditor } from './editor-adapters';
 export const textEntryDefinition: ComponentDefinition = {
   type: 'TextEntry',
   priority: 50,
-  triggerEventTypes: new Set<BrowserEventType>(['focus']),
+  triggerEventTypes: new Set<BrowserEventType>(['focus', 'input']),
 
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
-    if (event.eventType !== 'focus') return null;
+    // Primary path: focus triggers TextEntry
+    if (event.eventType === 'focus') {
+      const { tag, ariaRole } = event.target;
+      const { inputType, isContentEditable } = event.domContext;
 
-    const { tag, ariaRole } = event.target;
-    const { inputType, isContentEditable } = event.domContext;
+      if (!isTextEntry(tag, inputType, ariaRole, isContentEditable)) {
+        return null;
+      }
 
-    if (!isTextEntry(tag, inputType, ariaRole, isContentEditable)) {
-      return null;
+      return { type: 'TextEntry' };
     }
 
-    return { type: 'TextEntry' };
+    // Fallback path: input events without a preceding focus.
+    // This captures programmatic value changes, autofill, and incomplete
+    // event streams where focus was missed. The runtime only calls
+    // detectTrigger when no active component claimed the event (step 4),
+    // so this won't fire if a focus-triggered TextEntry session is already
+    // active for this element.
+    // (Expanded validation finding GROUP-D, CI-04.)
+    if (event.eventType === 'input') {
+      const { tag, ariaRole } = event.target;
+      const { inputType, isContentEditable } = event.domContext;
+
+      if (!isTextEntry(tag, inputType, ariaRole, isContentEditable)) {
+        return null;
+      }
+
+      // Only trigger if there's actual value being entered
+      if (event.valueAfter == null || event.valueAfter === '') {
+        return null;
+      }
+
+      return { type: 'TextEntry' };
+    }
+
+    return null;
   },
 
   isInScope(event: ObservedEvent, ctx: ComponentContext): boolean {
