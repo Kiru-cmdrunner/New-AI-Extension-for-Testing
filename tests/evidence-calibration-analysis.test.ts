@@ -17,6 +17,25 @@ import { classifyByEvidence } from '../src/classifier/evidence/evidence-classifi
 import { getScoreBreakdown } from '../src/classifier/evidence/diagnostics';
 import type { IntentVote, SemanticIntent } from '../src/classifier/evidence/types';
 
+// R3: classifyByEvidence now accepts ComponentInteraction — wrap target+event
+function classifyEvidence(
+  target: ElementIdentity,
+  event: ElementRecordedEvent,
+) {
+  const interaction = {
+    interactionId: 0,
+    type: 'Click' as const,
+    trigger: target,
+    triggerEvent: event as unknown as import('../src/shared/component-types').ObservedEvent,
+    memberEvents: [],
+    startTime: 0,
+    endTime: 0,
+    endState: 'completed' as const,
+    metadata: {},
+  };
+  return classifyByEvidence(interaction);
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────
 
 function makeIdentity(overrides: Partial<ElementIdentity> = {}): ElementIdentity {
@@ -149,7 +168,7 @@ describe('Evidence Calibration Analysis', () => {
       const event = scenario.event;
       // Fix: the event needs to reference the correct target
       const fixedEvent = { ...event, target };
-      const result = classifyByEvidence(target, fixedEvent);
+      const result = classifyEvidence(target, fixedEvent);
       const breakdown = getScoreBreakdown(result.evidence);
 
       // Check classification correctness
@@ -255,7 +274,7 @@ describe('Evidence Calibration Analysis', () => {
     const buckets = { '0.00': 0, '0.01-0.30': 0, '0.31-0.60': 0, '0.61-0.80': 0, '0.81-1.00': 0 };
     for (const scenario of scenarios) {
       const fixedEvent = { ...scenario.event, target: scenario.target };
-      const result = classifyByEvidence(scenario.target, fixedEvent);
+      const result = classifyEvidence(scenario.target, fixedEvent);
       const c = result.confidence;
       if (c === 0) buckets['0.00']++;
       else if (c <= 0.3) buckets['0.01-0.30']++;
@@ -276,12 +295,12 @@ describe('Evidence Calibration Analysis', () => {
     if (ariaChecked && ariaChecked.fires > 0) {
       const toggleWins = scenarios.filter(s => {
         const fixedEvent = { ...s.event, target: s.target };
-        const r = classifyByEvidence(s.target, fixedEvent);
+        const r = classifyEvidence(s.target, fixedEvent);
         return r.intent === 'toggle';
       }).length;
       const ariaCheckedToggleWins = scenarios.filter(s => {
         const fixedEvent = { ...s.event, target: s.target };
-        const r = classifyByEvidence(s.target, fixedEvent);
+        const r = classifyEvidence(s.target, fixedEvent);
         return r.intent === 'toggle' && r.evidence.some(e => e.source === 'aria-checked');
       }).length;
       lines.push(`  aria-checked contributes to ${ariaCheckedToggleWins}/${toggleWins} toggle wins`);
@@ -291,7 +310,7 @@ describe('Evidence Calibration Analysis', () => {
     const triggerScenarios = scenarios.filter(s => s.expectedIntent === 'trigger');
     const triggerZeroConf = triggerScenarios.filter(s => {
       const fixedEvent = { ...s.event, target: s.target };
-      const r = classifyByEvidence(s.target, fixedEvent);
+      const r = classifyEvidence(s.target, fixedEvent);
       return r.confidence === 0;
     });
     if (triggerZeroConf.length > 0) {

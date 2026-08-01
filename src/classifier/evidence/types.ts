@@ -11,6 +11,8 @@
  * To extend: add a new EvidenceGenerator to the registry in generators.ts.
  */
 
+import type { AttributeChange } from '../../shared/component-types';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Semantic Intent — the six fundamental things a user can intend to do
 // ─────────────────────────────────────────────────────────────────────────────
@@ -144,4 +146,43 @@ export interface FeatureViewInput {
 
   // Element type checks
   readonly isLink: boolean;
+
+  // ── R3.1: Behavioral & structural field expansion ──
+  //
+  // These fields were always captured by the recorder but not propagated
+  // to the evidence engine. They enable behavioral reasoning about
+  // interactions beyond the checked-transition signals above.
+
+  /** Element value before the click (from focus/mousedown tracking). null if N/A. */
+  readonly valueBefore: string | null;
+  /** Element value after the click (from post-handler re-snapshot). null if N/A. */
+  readonly valueAfter: string | null;
+
+  /** Value of aria-expanded on the clicked element. null if absent. */
+  readonly ariaExpanded: boolean | null;
+  /** Value of aria-haspopup. null if absent. */
+  readonly ariaHasPopup: string | null;
+  /** Value of aria-autocomplete. null if absent. */
+  readonly ariaAutoComplete: string | null;
+  /** Value of aria-valuenow. null if absent. */
+  readonly ariaValueNow: string | null;
+
+  /** For <input> elements: el.type (text, checkbox, etc.). null for non-input. */
+  readonly inputType: string | null;
+  /** Whether the element is contenteditable. */
+  readonly isContentEditable: boolean;
+
+  /** Ancestor chain classes (up to 10 levels). Empty if none. */
+  readonly ancestorClasses: string[];
+
+  // ── R3.4: Post-handler attribute transitions ──
+  //
+  // When the Click lifecycle deferral is active, these fields carry the
+  // attribute changes produced by the page's own click handler — captured
+  // by the content-script setTimeout(0) re-snapshot.
+
+  /** Whether any tracked attributes changed after the click handler ran. */
+  readonly hasAttributeTransition: boolean;
+  /** The full list of attribute transitions detected (may be empty). */
+  readonly attributeChanges: ReadonlyArray<AttributeChange>;
 }

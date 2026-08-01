@@ -7,7 +7,7 @@
  * Usage:
  *   import { formatReasoningTrace, formatCompact } from './diagnostics';
  *
- *   const result = classifyByEvidence(target, clickEvent);
+ *   const result = classifyByEvidence(interaction);
  *   console.log(formatReasoningTrace(result));
  *   // → full multi-line reasoning trace
  *

@@ -30,6 +30,12 @@ export function mockChromeStorage(data: Record<string, unknown> = {}) {
         }
         store = { ...store, ...cloned };
       }),
+      remove: vi.fn(async (keys: string | string[]) => {
+        const keyArr = Array.isArray(keys) ? keys : [keys];
+        for (const k of keyArr) {
+          delete store[k];
+        }
+      }),
     },
     onChanged: {
       addListener: vi.fn((fn: typeof onChangedListeners[0]) => {

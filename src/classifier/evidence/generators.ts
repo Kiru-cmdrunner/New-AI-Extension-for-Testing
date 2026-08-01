@@ -7,11 +7,16 @@
  *
  * Weight calibration principles:
  *   - Standards-based signals (aria-checked, role=checkbox) are strong: 0.7–0.9
- *   - Behavioral signals (checked transition) are strong: 0.5–0.7
- *   - Structural signals (surface, className) are weak supplementary: 0.1–0.25
+ *   - Behavioral signals (checked transition, value change, attr transition): 0.5–0.7
+ *   - Structural signals (surface, className, ancestor context): 0.1–0.4
+ *   - Class-name heuristics (semantic token matching): 0.4–0.5
  *   - Negative evidence (suppressing an intent) caps at -0.3 — it shouldn't
  *     overwhelm a strong positive signal, but helps disambiguate when signals
  *     are evenly matched.
+ *
+ * R3.3: Added 4 behavioral generators for select, input, and explore intents.
+ * These read the expanded FeatureViewInput fields (R3.1) to reason about
+ * behavioral effects observed after the page's click handler ran (R3.4).
  */
 
 import type { EvidenceGenerator, IntentVote, FeatureViewInput } from './types';
@@ -211,7 +216,222 @@ export const navigationEvidence: EvidenceGenerator = {
   },
 };
 
-// ── Registry ─────────────────────────────────────────────────────────────
+// ── R3.3: Behavioral Evidence Generators ──────────────────────────────────
+
+/**
+ * R3.3 Value Change Evidence: detects when the clicked element's value
+ * changed (valueBefore ≠ valueAfter) or the element is contentEditable.
+ *
+ * These are behavioral signals that the interaction provided a value —
+ * the defining characteristic of 'input' intent. They fire AFTER the page's
+ * click handler has run (via the Click lifecycle deferral, R3.4), so the
+ * value transition reflects the handler's effect.
+ */
+export const valueChangeEvidence: EvidenceGenerator = {
+  id: 'value-change',
+  generate(f: FeatureViewInput): IntentVote[] {
+    const evidence: IntentVote[] = [];
+
+    // Value transition detected — strong behavioral signal for input intent
+    if (f.valueBefore !== null && f.valueAfter !== null && f.valueBefore !== f.valueAfter) {
+      evidence.push({
+        intent: 'input',
+        weight: 0.6,
+        source: 'value-transition',
+        reason: 'Element value changed after click (behavioral)',
+      });
+      // Suppress trigger — a value change means this isn't a pure action button
+      evidence.push({
+        intent: 'trigger',
+        weight: -0.2,
+        source: 'value-transition',
+        reason: 'Value change suppresses trigger intent',
+      });
+    }
+
+    // ContentEditable — structural-but-strong signal for input intent
+    if (f.isContentEditable) {
+      evidence.push({
+        intent: 'input',
+        weight: 0.5,
+        source: 'content-editable',
+        reason: 'Element is contentEditable (always input)',
+      });
+    }
+
+    return evidence;
+  },
+};
+
+/**
+ * R3.3 Panel Emergence Evidence: detects when a click causes a panel/overlay
+ * to appear or expand. This is the defining behavioral signal for 'select'
+ * intent (dropdowns, comboboxes, menus, popovers).
+ *
+ * Signals (in order of strength):
+ *   1. aria-expanded attribute transition (behavioral, post-handler): +0.6
+ *   2. aria-expanded statically true (structural ARIA): +0.5
+ *   3. aria-haspopup present (structural hint): +0.3
+ */
+export const panelEmergenceEvidence: EvidenceGenerator = {
+  id: 'panel-emergence',
+  generate(f: FeatureViewInput): IntentVote[] {
+    const evidence: IntentVote[] = [];
+
+    // Attribute transition on aria-expanded — definitive behavioral signal
+    const hasExpandedTransition = f.hasAttributeTransition &&
+      f.attributeChanges.some(c => c.attribute === 'aria-expanded');
+
+    if (hasExpandedTransition) {
+      evidence.push({
+        intent: 'select',
+        weight: 0.6,
+        source: 'aria-expanded-transition',
+        reason: 'aria-expanded attribute changed after click (behavioral)',
+      });
+    } else if (f.ariaExpanded === true) {
+      // Statically expanded — structural ARIA signal
+      evidence.push({
+        intent: 'select',
+        weight: 0.5,
+        source: 'aria-expanded-static',
+        reason: 'Element has aria-expanded=true (structural)',
+      });
+    }
+
+    // aria-haspopup — structural hint (weaker, a declaration of intent)
+    if (f.ariaHasPopup) {
+      evidence.push({
+        intent: 'select',
+        weight: 0.3,
+        source: 'aria-haspopup',
+        reason: `Element has aria-haspopup="${f.ariaHasPopup}"`,
+      });
+    }
+
+    // If we have any select evidence, suppress navigate
+    if (evidence.length > 0) {
+      evidence.push({
+        intent: 'navigate',
+        weight: -0.2,
+        source: 'panel-emergence',
+        reason: 'Panel/popup element suppresses navigation intent',
+      });
+    }
+
+    return evidence;
+  },
+};
+
+// Regex patterns for semantic class tokens in selection/toggle state changes
+const SELECTION_CLASS_RE = /(?:^|\s)(?:select|active|chosen|current|picked|highlight)(?:ed|ed-item)?(?:\s|$)/i;
+const TOGGLE_CLASS_RE = /(?:^|\s)(?:check|toggle|on|enabled|open)(?:ed)?(?:\s|$)/i;
+
+/**
+ * R3.3 Selection State Evidence: detects class attribute transitions that
+ * indicate a selection or toggle state change. This is the key generator
+ * for novel implementations (div-checkboxes, custom segmented controls)
+ * where no ARIA or standard HTML signals exist.
+ *
+ * Fires only when the Click lifecycle's post-handler re-snapshot detected
+ * a class attribute change. The generator examines the class token that was
+ * added/removed and matches it against semantic patterns.
+ *
+ * Weight: +0.5 for behavioral class-state transitions. This is intentionally
+ * above structural tag evidence (+0.4 for <a> tag) so behavioral signals
+ * override misleading structural signals in the link-styled-toggle scenario.
+ */
+export const selectionStateEvidence: EvidenceGenerator = {
+  id: 'selection-state',
+  generate(f: FeatureViewInput): IntentVote[] {
+    const evidence: IntentVote[] = [];
+
+    if (!f.hasAttributeTransition) return evidence;
+
+    // Find class attribute transitions
+    for (const change of f.attributeChanges) {
+      if (change.attribute !== 'class') continue;
+
+      const beforeClasses = (change.before ?? '').toLowerCase();
+      const afterClasses = (change.after ?? '').toLowerCase();
+
+      // Determine which class tokens were added (after but not before)
+      const beforeSet = new Set(beforeClasses.split(/\s+/).filter(Boolean));
+      const afterSet = new Set(afterClasses.split(/\s+/).filter(Boolean));
+
+      // Check for added tokens that match selection patterns
+      for (const token of afterSet) {
+        if (beforeSet.has(token)) continue; // token was already present
+
+        // Selection-related token gained → select intent
+        if (SELECTION_CLASS_RE.test(token) || SELECTION_CLASS_RE.test(` ${token} `)) {
+          evidence.push({
+            intent: 'select',
+            weight: 0.5,
+            source: 'class-selection-transition',
+            reason: `Class gained selection token "${token}" (behavioral)`,
+          });
+          break; // one match is sufficient
+        }
+
+        // Toggle-related token gained → toggle intent
+        if (TOGGLE_CLASS_RE.test(token) || TOGGLE_CLASS_RE.test(` ${token} `)) {
+          evidence.push({
+            intent: 'toggle',
+            weight: 0.5,
+            source: 'class-toggle-transition',
+            reason: `Class gained toggle token "${token}" (behavioral)`,
+          });
+          break;
+        }
+      }
+
+      // If no added token matched, check removed tokens (de-selection)
+      if (evidence.length === 0) {
+        for (const token of beforeSet) {
+          if (afterSet.has(token)) continue;
+
+          if (SELECTION_CLASS_RE.test(token) || SELECTION_CLASS_RE.test(` ${token} `)) {
+            // Selection token removed — still a selection interaction
+            evidence.push({
+              intent: 'select',
+              weight: 0.4,
+              source: 'class-deselection-transition',
+              reason: `Class removed selection token "${token}" (behavioral)`,
+            });
+            break;
+          }
+        }
+      }
+    }
+
+    return evidence;
+  },
+};
+
+/**
+ * R3.3 Slider Value Evidence: detects when the clicked element has an
+ * aria-valuenow attribute, indicating it's a slider or progress indicator.
+ * This is a structural ARIA signal that helps the select intent path
+ * derive the Slider type.
+ */
+export const sliderValueEvidence: EvidenceGenerator = {
+  id: 'slider-value',
+  generate(f: FeatureViewInput): IntentVote[] {
+    const evidence: IntentVote[] = [];
+
+    if (f.ariaValueNow !== null) {
+      evidence.push({
+        intent: 'select',
+        weight: 0.5,
+        source: 'aria-valuenow',
+        reason: 'Element has aria-valuenow (slider/progress)',
+      });
+    }
+
+    return evidence;
+  },
+};
 
 /**
  * Trigger evidence: votes for 'trigger' intent on elements that look like
@@ -268,4 +488,9 @@ export const EVIDENCE_GENERATORS: EvidenceGenerator[] = [
   structuralEvidence,
   navigationEvidence,
   triggerEvidence,
+  // R3.3: Behavioral generators for select, input intents
+  valueChangeEvidence,
+  panelEmergenceEvidence,
+  selectionStateEvidence,
+  sliderValueEvidence,
 ];

@@ -13,7 +13,7 @@
  * Principle: AP1 (Separation of evidence and classification)
  */
 
-import type { BrowserEventType, ObservedEvent, DomContext } from '../shared/component-types';
+import type { BrowserEventType, ObservedEvent, DomContext, AttributeChange } from '../shared/component-types';
 import {
   extractIdentity,
   resolveTarget,
@@ -27,6 +27,20 @@ const SCROLL_MIN_INTERVAL_MS = 16;
 
 /** Minimum interval between mousemove events (ms) — throttle to ~20fps max. */
 const MOUSEMOVE_MIN_INTERVAL_MS = 50;
+
+/**
+ * Attributes tracked for post-click behavioral re-snapshot (R3.4).
+ * These are the attributes most commonly modified by click handlers
+ * to signal state changes (selection, expansion, toggle, visibility).
+ */
+const ATTRIBUTES_TO_TRACK = [
+  'class',
+  'aria-expanded',
+  'aria-checked',
+  'aria-selected',
+  'style',
+  'aria-pressed',
+];
 
 /**
  * Delay for deferred blur value capture (ms).
@@ -114,6 +128,27 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
   let lastFocusedIsFormControl = false;
   /** Guard flag: prevent double-scheduling post-click checks (mousedown+click). */
   let postClickCheckPending = false;
+
+  // ── R3.4: Post-Click Attribute Re-Snapshot ──────────────────────────
+
+  /** Whether the tap is still active (false after stop()). Prevents
+   *  setTimeout(0) callbacks from emitting after the tap is stopped. */
+  let isActive = true;
+
+  //
+  // After a click, the page's event handler may modify the element's
+  // attributes (class toggle, aria-expanded set, etc.). The EventTap
+  // fires in the CAPTURE phase — before the handler. So the initial
+  // ObservedEvent captures the PRE-handler state.
+  //
+  // To capture the POST-handler state, we schedule a setTimeout(0)
+  // re-snapshot that fires after the synchronous event dispatch completes
+  // (capture + bubble + default action + handler). If attributes changed,
+  // we emit a synthetic 'attribute-change' event carrying the diff.
+
+  /** Pre-click attribute snapshot for the current click target. */
+  let preClickAttrs: Map<string, string | null> | null = null;
+
   /** Phase 0b: surfaceId at focus time. Used as a fallback for the synthetic
    *  change event when the DOM mutates between focus and the post-click poll.
    *  When the poll fires, we re-extract domContext (which gets the current
@@ -265,6 +300,17 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
       schedulePostClickValueCheck();
     }
 
+    // R3.4: Capture pre-click attributes and schedule a setTimeout(0) re-snapshot.
+    // The re-snapshot fires after the page's click handler and captures
+    // behavioral state changes (class toggle, aria-expanded set, etc.).
+    // Only schedule for click/dblclick/contextmenu events (not mousedown —
+    // mousedown+click fire for the same interaction, and we want the re-snapshot
+    // tied to the click, not the mousedown).
+    if (eventType === 'click' || eventType === 'dblclick' || eventType === 'contextmenu') {
+      preClickAttrs = snapshotAttributes(targetEl);
+      schedulePostClickAttributeSnapshot(targetEl, preClickAttrs);
+    }
+
     // Extract identity at capture time (immutable snapshot)
     const identity = extractIdentity(targetEl);
 
@@ -399,6 +445,117 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
     setTimeout(pollOnce, POST_CLICK_POLL_INTERVALS_MS[0]);
   }
 
+  // ── R3.4: Post-Click Attribute Re-Snapshot ──────────────────────────
+
+  /**
+   * Snapshot the tracked attributes of an element.
+   * Returns a Map of attribute name → value (null if absent).
+   */
+  function snapshotAttributes(el: Element): Map<string, string | null> {
+    const attrs = new Map<string, string | null>();
+    for (const attr of ATTRIBUTES_TO_TRACK) {
+      attrs.set(attr, el.getAttribute(attr));
+    }
+    return attrs;
+  }
+
+  /**
+   * Diff two attribute snapshots. Returns AttributeChange[] for attributes
+   * that changed (before ≠ after).
+   */
+  function diffAttributes(
+    before: Map<string, string | null>,
+    after: Map<string, string | null>,
+  ): AttributeChange[] {
+    const changes: AttributeChange[] = [];
+    for (const attr of ATTRIBUTES_TO_TRACK) {
+      const b = before.get(attr) ?? null;
+      const a = after.get(attr) ?? null;
+      if (b !== a) {
+        changes.push({ attribute: attr, before: b, after: a });
+      }
+    }
+    return changes;
+  }
+
+  /**
+   * Schedule a setTimeout(0) re-snapshot of the clicked element's attributes.
+   *
+   * This fires AFTER the current synchronous event dispatch completes
+   * (capture + bubble + default action + page handler). If any tracked
+   * attributes changed, a synthetic 'attribute-change' event is emitted
+   * carrying the diff. If no attributes changed, an 'attribute-change'
+   * event is STILL emitted with an empty diff — this signals the Click
+   * lifecycle that the re-snapshot completed (Step 6 Click lifecycle
+   * depends on this event to finalize completion).
+   *
+   * Architecture: R3.4 — Click lifecycle deferral + behavioral re-snapshot
+   */
+  function schedulePostClickAttributeSnapshot(
+    targetEl: Element,
+    preAttrs: Map<string, string | null>,
+  ): void {
+    setTimeout(() => {
+      // Don't emit if the tap has been stopped (test cleanup, etc.)
+      if (!isActive) return;
+      if (!targetEl.isConnected) {
+        // Element removed from DOM — emit empty diff so Click can complete
+        emitAttributeChangeEvent(targetEl, [], preAttrs);
+        return;
+      }
+
+      const postAttrs = snapshotAttributes(targetEl);
+      const changes = diffAttributes(preAttrs, postAttrs);
+
+      // Always emit — even with empty diff. The Click lifecycle needs this
+      // signal to complete. An empty diff means "handler didn't modify
+      // tracked attributes" — still valid behavioral evidence (absence of
+      // change is information).
+      emitAttributeChangeEvent(targetEl, changes, preAttrs);
+    }, 0);
+  }
+
+  /**
+   * Emit a synthetic 'attribute-change' event with attribute transitions.
+   */
+  function emitAttributeChangeEvent(
+    targetEl: Element,
+    changes: AttributeChange[],
+    _preAttrs: Map<string, string | null>,
+  ): void {
+    const identity = extractIdentity(targetEl);
+    const domContext = extractDomContext(targetEl);
+    // Attach attribute changes to the domContext
+    domContext.attributeChanges = changes;
+
+    const syntheticEvent: ObservedEvent = {
+      eventId: nextEventId(),
+      eventType: 'attribute-change' as BrowserEventType,
+      timestamp: Date.now(),
+      isTrusted: true,
+      target: identity,
+      domContext,
+      valueBefore: null,
+      valueAfter: null,
+      checkedBefore: null,
+      checkedAfter: null,
+      clientX: null,
+      clientY: null,
+      key: null,
+      code: null,
+      shiftKey: false,
+      ctrlKey: false,
+      altKey: false,
+      metaKey: false,
+      scrollDeltaY: null,
+      scrollDeltaX: null,
+      pageUrl: location.href,
+      pageTitle: document.title,
+    };
+
+    config.onEvent(syntheticEvent);
+  }
+
   // ── Event assembly ──────────────────────────────────────────────────
 
   function assembleObservedEvent(
@@ -511,6 +668,8 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
 
   return {
     stop(): void {
+      isActive = false;
+
       for (const { type, listener, options } of listeners) {
         document.removeEventListener(type, listener, options);
       }

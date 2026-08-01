@@ -527,6 +527,195 @@ export function buildLayer2Fixtures(): ComponentInteraction[] {
     },
   }));
 
+  // ── R3: Behavioral Classification Fixtures ──
+  //
+  // These fixtures represent Click interactions where post-handler
+  // behavioral data (attributeChanges) drove the classification.
+  // The evidence engine used these transitions to classify the interaction
+  // beyond what structural signals alone could determine.
+
+  // Div-checkbox: custom checkbox with no ARIA, no input — class toggle detected
+  fixtures.push(makeComponentInteraction('Click', {
+    interactionSubtype: 'Checkbox',
+    trigger: makeElementIdentity({
+      tag: 'DIV',
+      ariaRole: null,
+      className: 'opt selected',
+      accessibleName: 'Vivo Filter',
+      stableId: 'div|opt|0',
+      cssSelector: 'body > div.opt',
+      xPath: '/html/body/div',
+    }),
+    triggerEvent: {
+      eventId: 'evt-r3-001',
+      eventType: 'click',
+      timestamp: Date.now(),
+      isTrusted: true,
+      target: makeElementIdentity({
+        tag: 'DIV',
+        ariaRole: null,
+        className: 'opt',
+        accessibleName: 'Vivo Filter',
+        stableId: 'div|opt|0',
+      }),
+      domContext: {
+        attributeChanges: [
+          { attribute: 'class', before: 'opt', after: 'opt selected' },
+        ],
+      },
+      valueBefore: null,
+      valueAfter: null,
+      checkedBefore: null,
+      checkedAfter: null,
+      clientX: 50,
+      clientY: 100,
+      key: null,
+      code: null,
+      shiftKey: false,
+      ctrlKey: false,
+      altKey: false,
+      metaKey: false,
+      scrollDeltaY: null,
+      scrollDeltaX: null,
+      pageUrl: 'https://example.com/filters',
+      pageTitle: 'Products',
+    },
+    metadata: {
+      targetName: 'Vivo Filter',
+      targetTag: 'DIV',
+      targetRole: null,
+      clientX: 50,
+      clientY: 100,
+      attributeChanges: [
+        { attribute: 'class', before: 'opt', after: 'opt selected' },
+      ],
+    },
+    intent: 'toggle',
+    confidence: 0.5,
+  }));
+
+  // Novel combobox: custom div with no ARIA — aria-expanded set by handler
+  fixtures.push(makeComponentInteraction('Click', {
+    interactionSubtype: 'Dropdown',
+    trigger: makeElementIdentity({
+      tag: 'DIV',
+      ariaRole: null,
+      className: 'combo expanded',
+      accessibleName: 'Country Selector',
+      stableId: 'div|combo|0',
+      cssSelector: 'body > div.combo',
+      xPath: '/html/body/div',
+    }),
+    triggerEvent: {
+      eventId: 'evt-r3-002',
+      eventType: 'click',
+      timestamp: Date.now(),
+      isTrusted: true,
+      target: makeElementIdentity({
+        tag: 'DIV',
+        ariaRole: null,
+        className: 'combo',
+        accessibleName: 'Country Selector',
+        stableId: 'div|combo|0',
+      }),
+      domContext: {
+        attributeChanges: [
+          { attribute: 'aria-expanded', before: null, after: 'true' },
+          { attribute: 'class', before: 'combo', after: 'combo expanded' },
+        ],
+      },
+      valueBefore: null,
+      valueAfter: null,
+      checkedBefore: null,
+      checkedAfter: null,
+      clientX: 200,
+      clientY: 150,
+      key: null,
+      code: null,
+      shiftKey: false,
+      ctrlKey: false,
+      altKey: false,
+      metaKey: false,
+      scrollDeltaY: null,
+      scrollDeltaX: null,
+      pageUrl: 'https://example.com/form',
+      pageTitle: 'Form',
+    },
+    metadata: {
+      targetName: 'Country Selector',
+      targetTag: 'DIV',
+      targetRole: null,
+      clientX: 200,
+      clientY: 150,
+      attributeChanges: [
+        { attribute: 'aria-expanded', before: null, after: 'true' },
+        { attribute: 'class', before: 'combo', after: 'combo expanded' },
+      ],
+    },
+    intent: 'select',
+    confidence: 0.6,
+  }));
+
+  // Link-styled toggle: <a> tag with class toggle (misleading structural signal)
+  fixtures.push(makeComponentInteraction('Click', {
+    interactionSubtype: 'Checkbox',
+    trigger: makeElementIdentity({
+      tag: 'A',
+      ariaRole: 'link',
+      className: 'filter-link active',
+      accessibleName: 'Price Filter',
+      stableId: 'a|filter-link|0',
+      cssSelector: 'body > a.filter-link',
+      xPath: '/html/body/a',
+    }),
+    triggerEvent: {
+      eventId: 'evt-r3-003',
+      eventType: 'click',
+      timestamp: Date.now(),
+      isTrusted: true,
+      target: makeElementIdentity({
+        tag: 'A',
+        ariaRole: 'link',
+        className: 'filter-link',
+        accessibleName: 'Price Filter',
+        stableId: 'a|filter-link|0',
+      }),
+      domContext: {
+        attributeChanges: [
+          { attribute: 'class', before: 'filter-link', after: 'filter-link active' },
+        ],
+      },
+      valueBefore: null,
+      valueAfter: null,
+      checkedBefore: null,
+      checkedAfter: null,
+      clientX: 300,
+      clientY: 200,
+      key: null,
+      code: null,
+      shiftKey: false,
+      ctrlKey: false,
+      altKey: false,
+      metaKey: false,
+      scrollDeltaY: null,
+      scrollDeltaX: null,
+      pageUrl: 'https://example.com/shop',
+      pageTitle: 'Shop',
+    },
+    metadata: {
+      targetName: 'Price Filter',
+      targetTag: 'A',
+      targetRole: 'link',
+      clientX: 300,
+      clientY: 200,
+      attributeChanges: [
+        { attribute: 'class', before: 'filter-link', after: 'filter-link active' },
+      ],
+    },
+    intent: 'toggle',
+    confidence: 0.5,
+  }));
+
   return fixtures;
 }
 

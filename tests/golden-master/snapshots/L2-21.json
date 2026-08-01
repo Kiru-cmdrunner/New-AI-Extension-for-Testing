@@ -1,6 +1,6 @@
 {
-  "testCaseId": "tc-1785574745789",
-  "testCaseVersionId": "tcv-1785574745789",
+  "testCaseId": "tc-1785574745804",
+  "testCaseVersionId": "tcv-1785574745804",
   "testCaseVersionNumber": 1,
   "title": "Golden Master Test",
   "tags": [],
@@ -16,29 +16,29 @@
     {
       "id": "step-0001",
       "order": 0,
-      "action": "click",
-      "description": "Click the \"Test Button\" link",
+      "action": "toggle",
+      "description": "Uncheck the Vivo Filter",
       "target": {
         "kind": "element",
         "elementId": "elem-0001",
-        "elementName": "Test Button",
+        "elementName": "Vivo Filter",
         "pageOrComponent": "main",
         "resolvedLocators": [
           {
-            "type": "role",
-            "value": "button[name=\"Test Button\"]",
+            "type": "css",
+            "value": "#div|opt|0",
             "priority": 1,
-            "confidence": 0.62
+            "confidence": 0.72
           },
           {
             "type": "accessibleName",
-            "value": "Test Button",
+            "value": "Vivo Filter",
             "priority": 2,
             "confidence": 0.62
           },
           {
             "type": "css",
-            "value": "body > button",
+            "value": "body > div.opt",
             "priority": 3,
             "confidence": 0.35
           }
@@ -53,7 +53,8 @@
         "waitStrategy": "visible"
       },
       "aiEnrichment": null,
-      "plainEnglish": "Click the \"Test Button\" link"
+      "plainEnglish": "Uncheck the Vivo Filter",
+      "intent": "toggle"
     }
   ]
 }

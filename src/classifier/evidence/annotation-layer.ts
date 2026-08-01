@@ -76,6 +76,18 @@ const TYPE_TO_INTENT: Record<string, SemanticIntent> = {
  */
 const RECLASSIFY_THRESHOLD = 0.5;
 
+/**
+ * R3.5: Unrecognized interaction threshold.
+ *
+ * If the evidence engine produces a classification with confidence below
+ * this threshold AND no generator produced meaningful evidence (max weight
+ * < this threshold), the interaction is flagged as 'unrecognized'.
+ *
+ * This surfaces truly novel interactions instead of silently degrading them
+ * to Click. The side panel can display a "low confidence" indicator.
+ */
+const UNRECOGNIZED_THRESHOLD = 0.3;
+
 // ── Public API ─────────────────────────────────────────────────────────
 
 /**
@@ -116,10 +128,7 @@ export function annotateAll(interactions: ComponentInteraction[]): ComponentInte
  */
 function annotateClick(interaction: ComponentInteraction): ComponentInteraction {
   try {
-    const classification = classifyByEvidence(
-      interaction.trigger,
-      interaction.triggerEvent,
-    );
+    const classification = classifyByEvidence(interaction);
 
     // Attach semantic fields
     interaction.intent = classification.intent;
@@ -136,11 +145,22 @@ function annotateClick(interaction: ComponentInteraction): ComponentInteraction 
       // Don't reclassify if the evidence says Click — it's already Click
       interaction.interactionSubtype = classification.type as string;
     }
+
+    // R3.5: Flag unrecognized interactions — low confidence AND no meaningful evidence
+    const maxEvidenceWeight = classification.evidence.length > 0
+      ? Math.max(...classification.evidence.map(e => Math.abs(e.weight)))
+      : 0;
+    if (classification.confidence < UNRECOGNIZED_THRESHOLD && maxEvidenceWeight < UNRECOGNIZED_THRESHOLD) {
+      interaction.metadata.unrecognized = true;
+      interaction.metadata.recognitionNote = 'No evidence generator produced meaningful signal for this interaction';
+    }
   } catch {
     // If the evidence engine fails, fall back to static annotation
     interaction.intent = 'trigger';
     interaction.confidence = 0;
     interaction.evidenceTrail = [];
+    interaction.metadata.unrecognized = true;
+    interaction.metadata.recognitionNote = 'Evidence engine error during classification';
   }
 
   return interaction;

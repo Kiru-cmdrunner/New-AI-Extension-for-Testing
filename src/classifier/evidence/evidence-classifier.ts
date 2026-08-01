@@ -6,10 +6,14 @@
  *
  * Phase 2: Rewired to accept ObservedEvent (Component Runtime type) instead
  * of ElementRecordedEvent (V1 type). The core pipeline is unchanged.
+ *
+ * R3: Signature changed from (target, event) to accept the full
+ * ComponentInteraction. This gives buildFeatureView access to attribute
+ * transitions stored in metadata by the Click lifecycle (R3.4), enabling
+ * behavioral generators to reason about post-handler state changes.
  */
 
-import type { ElementIdentity } from '../../shared/types';
-import type { ObservedEvent } from '../../shared/component-types';
+import type { ComponentInteraction, AttributeChange } from '../../shared/component-types';
 import type { SemanticIntent, IntentVote } from './types';
 import { buildFeatureView } from './feature-view';
 import { EVIDENCE_GENERATORS } from './generators';
@@ -23,8 +27,8 @@ import { deriveType, deriveMetadata } from './type-deriver';
 export interface EvidenceClassification {
   /** The derived interaction type string (e.g. 'Checkbox', 'ToggleSwitch', 'Link'). */
   type: string;
-  /** Metadata for the interaction (checked state, accessible name). */
-  metadata: { checked?: boolean; accessibleName?: string };
+  /** Metadata for the interaction (checked state, accessible name, etc.). */
+  metadata: { checked?: boolean; accessibleName?: string; inputValue?: string; selectedValue?: string };
   /** Confidence from evidence fusion (0.0–1.0). */
   confidence: number;
   /** The winning semantic intent. */
@@ -36,20 +40,26 @@ export interface EvidenceClassification {
 /**
  * Classify an interaction using evidence-based intent inference.
  *
- * Phase 2: Called by the semantic annotation layer for ambiguous Click
- * interactions. The caller passes the trigger element identity and the
- * trigger observed event from the ComponentInteraction.
+ * R3: Accepts the full ComponentInteraction instead of just (target, event).
+ * This allows buildFeatureView to receive attribute transitions from the
+ * Click lifecycle's post-handler re-snapshot (stored in metadata by buildResult).
  *
- * @param target  The element identity from the observed event
- * @param event   The trigger observed event from the ComponentInteraction
+ * @param interaction  The ComponentInteraction to classify
  * @returns Evidence classification result (type + metadata + confidence + audit trail)
  */
 export function classifyByEvidence(
-  target: ElementIdentity,
-  event: ObservedEvent,
+  interaction: ComponentInteraction,
 ): EvidenceClassification {
+  // R3.4: Extract attribute transitions from metadata (set by Click buildResult)
+  const attributeChanges: AttributeChange[] | undefined =
+    interaction.metadata.attributeChanges as AttributeChange[] | undefined;
+
   // Step 1: Build the normalized feature view
-  const features = buildFeatureView(target, event);
+  const features = buildFeatureView(
+    interaction.trigger,
+    interaction.triggerEvent,
+    attributeChanges,
+  );
 
   // Step 2: Run all evidence generators
   const allEvidence = EVIDENCE_GENERATORS.flatMap((gen) => gen.generate(features));

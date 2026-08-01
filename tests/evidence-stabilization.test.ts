@@ -91,7 +91,20 @@ function classify(
   target: ElementIdentity,
   event: ElementRecordedEvent,
 ) {
-  const result = classifyByEvidence(target, event);
+  // R3: classifyByEvidence now accepts ComponentInteraction.
+  // Wrap the test's target+event into a minimal interaction.
+  const interaction = {
+    interactionId: 0,
+    type: 'Click' as const,
+    trigger: target,
+    triggerEvent: event as unknown as import('../src/shared/component-types').ObservedEvent,
+    memberEvents: [],
+    startTime: 0,
+    endTime: 0,
+    endState: 'completed' as const,
+    metadata: {},
+  };
+  const result = classifyByEvidence(interaction);
   const breakdown = getScoreBreakdown(result.evidence);
   return { result, breakdown };
 }

@@ -43,7 +43,27 @@ export type BrowserEventType =
   | 'dragover'
   | 'drop'
   | 'dragend'
-  | 'navigation';
+  | 'navigation'
+  | 'attribute-change';
+
+/**
+ * A single attribute transition captured by the post-click re-snapshot.
+ *
+ * The EventTap snapshots the target element's attributes at capture time
+ * (before the page's click handler runs), then re-snapshots after the
+ * handler via setTimeout(0). If attributes changed, the diff is recorded
+ * as AttributeChange[] and carried on the DomContext.
+ *
+ * Architecture: R3.4 — Click lifecycle deferral + behavioral re-snapshot
+ */
+export interface AttributeChange {
+  /** Attribute name (e.g., 'class', 'aria-expanded', 'aria-checked'). */
+  attribute: string;
+  /** Value before the click handler ran. null if attribute was absent. */
+  before: string | null;
+  /** Value after the click handler ran. null if attribute was removed. */
+  after: string | null;
+}
 
 /**
  * DOM context captured at event time — structural information the
@@ -145,6 +165,14 @@ export interface DomContext {
   trackOffsetLeft?: number | null;
   /** Nearest track ancestor's offsetWidth. 0 if no track ancestor found. */
   trackOffsetWidth?: number | null;
+
+  // ── Attribute Transitions (R3.4: Post-handler behavioral re-snapshot) ──
+
+  /** Attribute changes detected by the post-click re-snapshot. Present on
+   *  synthetic 'attribute-change' events emitted by the EventTap after the
+   *  page's click handler has run. Empty array if no tracked attributes changed.
+   *  Architecture: R3.4 — Click lifecycle deferral */
+  attributeChanges?: AttributeChange[];
 }
 
 // ── Observed Event ─────────────────────────────────────────────────────
