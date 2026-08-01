@@ -21,7 +21,7 @@
   "options_page": "src/settings/index.html",
   "web_accessible_resources": [
     {
-      "resources": ["src/repository/index.html", "src/recorder/v2/control-recorder.ts"],
+      "resources": ["src/repository/index.html"],
       "matches": ["<all_urls>"]
     }
   ],
@@ -29,14 +29,6 @@
     {
       "matches": ["<all_urls>"],
       "js": ["src/recorder/phase5/recorder-entry.ts"],
-      "all_frames": true,
-      "match_about_blank": true,
-      "match_origin_as_fallback": true,
-      "run_at": "document_start"
-    },
-    {
-      "matches": ["<all_urls>"],
-      "js": ["src/recorder/v2/control-recorder.ts"],
       "all_frames": true,
       "match_about_blank": true,
       "match_origin_as_fallback": true,

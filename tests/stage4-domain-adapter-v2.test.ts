@@ -13,7 +13,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { adaptToDomainEntitiesV2 } from '../src/recorder/v2/domain-adapter-v2';
+import { adaptToDomainEntitiesV2 } from '../src/recorder/pipeline/domain-adapter-v2';
 import type { ComponentInteraction } from '../src/shared/component-types';
 import type { ObservedEvent } from '../src/shared/component-types';
 import type { RecordedEvent, ElementRecordedEvent } from '../src/recorder/recorded-event';

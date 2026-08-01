@@ -490,7 +490,7 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
   // ── Register listeners ──────────────────────────────────────────────
 
   const eventTypes: string[] = [
-    'click', 'mousedown', 'mouseup', 'contextmenu',
+    'click', 'dblclick', 'mousedown', 'mouseup', 'contextmenu',
     'focus', 'blur',
     'input', 'change',
     'mouseenter', 'mouseleave', 'mousemove',

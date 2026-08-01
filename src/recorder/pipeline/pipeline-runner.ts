@@ -15,9 +15,8 @@
  * Milestone 6.3-6.4 — Phase 6 wiring.
  */
 
-import { adaptToDomainEntities } from './domain-adapter';
-import { adaptToDomainEntitiesV2 } from '../v2/domain-adapter-v2';
-import type { DomainEntities } from './domain-adapter';
+import { adaptToDomainEntitiesV2 } from './domain-adapter-v2';
+import type { DomainEntities } from './domain-adapter-v2';
 import { processInteraction, type OrchestratorInput } from '../recognition/orchestrator';
 import type { ElementRoleInfo } from '../recognition/structural-recognizer';
 import { ComponentRegistry } from '../recognition/component-registry';
@@ -129,11 +128,10 @@ function runRecognition(
 /**
  * Run the full analysis pipeline on a recorded session.
  *
- * @param events - Recorded events from the deterministic recorder.
- * @param interactions - Detected interactions from the V1/V2 classifier.
+ * @param events - Recorded events from the recorder.
+ * @param interactions - Classified interactions from the Component Runtime.
  * @param sessionId - Session identifier for the fragment.
  * @param sourceUrl - URL of the recorded page.
- * @param engine - 'control' to use interaction-centric domain adapter, 'legacy' for event-centric
  * @returns Pipeline results including entities, components, and fragment.
  */
 export function runPipeline(
@@ -141,13 +139,9 @@ export function runPipeline(
   interactions: ComponentInteraction[],
   sessionId: string,
   sourceUrl?: string,
-  engine?: 'legacy' | 'control',
 ): PipelineResult {
   // ── Step 1: Domain Adapter ──
-  const entities =
-    engine === 'control'
-      ? adaptToDomainEntitiesV2(events, interactions, sourceUrl ?? 'about:blank')
-      : adaptToDomainEntities(events, interactions, sourceUrl);
+  const entities = adaptToDomainEntitiesV2(events, interactions, sourceUrl ?? 'about:blank');
 
   // ── Step 2: Recognition ──
   const components = runRecognition(entities);

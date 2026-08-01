@@ -1,7 +1,7 @@
 /**
  * Domain Adapter V2 — Interaction-Centric Domain Entity Mapping
  *
- * Replaces the legacy event-centric domain adapter when recorderEngine='control'.
+ * The canonical domain adapter, converting raw RecordedEvents into interaction-centric domain entities.
  * Instead of creating one transition per raw event (focus, input, change, blur =
  * 4 transitions for one TextEntry), this adapter creates ONE transition per
  * interaction — producing clean, interaction-level domain entities.
@@ -18,7 +18,6 @@
 import type { ComponentInteraction } from '../../shared/component-types';
 import type { ElementIdentity } from '../../shared/types';
 import type { RecordedEvent } from '../recorded-event';
-import type { DomainEntities } from '../pipeline/domain-adapter';
 import { UiElement, createUiElement } from '../../domain/entities/ui-element';
 import { createObservedTransition, emptyElementState, type ObservedTransition } from '../../domain/entities/observed-transition';
 import {
@@ -26,6 +25,17 @@ import {
   RelevanceLevel,
   TransitionEvidenceType,
 } from '../../domain/enums';
+
+// ── Domain Entities Interface ──────────────────────────────────────────
+
+/**
+ * Domain entities produced by the domain adapter.
+ * Consumed by recognition orchestrator, enrichment, and healing.
+ */
+export interface DomainEntities {
+  elements: UiElement[];
+  transitions: ObservedTransition[];
+}
 
 // ── Interaction → Operation Mapping ─────────────────────────────────────
 

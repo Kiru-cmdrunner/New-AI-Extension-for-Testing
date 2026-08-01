@@ -97,8 +97,6 @@ export interface UIState {
   recordingState: RecordingState;
   /** ISO timestamp of the last state change (for future use). */
   lastChanged: string;
-  /** Stage 2 feature flag: 'legacy' (phase5 recorder) or 'control' (control-recorder v2). */
-  recorderEngine?: 'legacy' | 'control';
   /** Error message when recordingState is Error. */
   errorMessage?: string;
 }
@@ -107,7 +105,6 @@ export interface UIState {
 export const DEFAULT_UI_STATE: UIState = {
   recordingState: RecordingState.Ready,
   lastChanged: new Date(0).toISOString(),
-  recorderEngine: 'legacy',
 };
 
 // ── Element Identity ─────────────────────────────────────────────────────

@@ -70,7 +70,6 @@ describe('StorageService', () => {
         [StorageKeys.UI_STATE]: {
           recordingState: RecordingState.Ready,
           lastChanged: DEFAULT_UI_STATE.lastChanged,
-          recorderEngine: 'legacy',
         },
       });
     });

@@ -23,7 +23,7 @@ import { enrichInteractions } from '../generation/interaction-enrichment';
 import { PlaywrightCodeGenerator } from '../adapters/playwright/project-generator';
 import { DexieUnitOfWorkFactory } from '../repository/v2/dexie/dexie-unit-of-work-factory';
 import { persistSession } from '../repository/services/session-persistence-service';
-import { adaptToDomainEntities } from '../recorder/pipeline/domain-adapter';
+import { adaptToDomainEntitiesV2 } from '../recorder/pipeline/domain-adapter-v2';
 import { healFromRecording } from '../repository/services/healing-service';
 import { checkStaleness } from '../domain/execution-ir/staleness';
 import { IRExecutorImpl } from '../execution/ir-executor-impl';
@@ -95,8 +95,7 @@ async function pingTabContentScript(tabId: number): Promise<boolean> {
 async function injectContentScript(tabId: number): Promise<boolean> {
   try {
     // Read ALL content script paths from the manifest (handles Vite hashing).
-    // Previously only injected content_scripts[0].js[0], missing the V2
-    // control-recorder. Now iterates all entries across all content_scripts.
+    // Iterates all entries across all content_scripts for robust injection.
     const manifest = chrome.runtime.getManifest();
     const allScripts = manifest.content_scripts?.flatMap(cs => cs.js ?? []) ?? [];
     if (allScripts.length === 0) return false;
@@ -260,12 +259,10 @@ async function handleStartRecording(): Promise<void> {
     }
   }
 
-  // Update UI state (preserve recorderEngine flag for Stage 2 feature flag)
-  const prevUiState = await StorageService.getUIState();
+  // Update UI state
   const uiState: UIState = {
     recordingState: RecordingState.Recording,
     lastChanged: new Date().toISOString(),
-    recorderEngine: prevUiState.recorderEngine || 'legacy',
   };
   await StorageService.setUIState(uiState);
 
@@ -354,7 +351,7 @@ async function handleStopRecording(): Promise<void> {
     const sessionId = `session-${Date.now()}`;
     const tab = await getActiveTab();
     const sourceUrl = tab?.url ?? undefined;
-    const pipelineResult = runPipeline(events, allInteractions, sessionId, sourceUrl, 'control');
+    const pipelineResult = runPipeline(events, allInteractions, sessionId, sourceUrl);
 
     await StorageService.setRaw(StorageKeys.DOMAIN_ENTITIES, {
       elements: pipelineResult.entities.elements,
@@ -463,7 +460,7 @@ async function handleStopRecording(): Promise<void> {
 
       // ── Phase 11: Cross-Session Element Healing ──
       try {
-        const domainEntities = adaptToDomainEntities(events, allInteractions, (await getActiveTab())?.url ?? '');
+        const domainEntities = adaptToDomainEntitiesV2(events, allInteractions, (await getActiveTab())?.url ?? '');
         if (domainEntities.elements.length > 0 && persistenceResult.projectId) {
           const healingResult = await healFromRecording(
             persistenceResult.projectId,
@@ -487,12 +484,10 @@ async function handleStopRecording(): Promise<void> {
     console.warn('[Repository V2] error during session persistence:', e);
   }
 
-  // Update UI state (preserve recorderEngine flag)
-  const prevUiState = await StorageService.getUIState();
+  // Update UI state
   const uiState: UIState = {
     recordingState: RecordingState.Stopped,
     lastChanged: new Date().toISOString(),
-    recorderEngine: prevUiState.recorderEngine || 'legacy',
   };
   await StorageService.setUIState(uiState);
 

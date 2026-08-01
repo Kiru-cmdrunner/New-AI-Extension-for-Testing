@@ -2,311 +2,311 @@
   "L1-01": {
     "description": "Layer1: Click",
     "stepCount": 1,
-    "serializedHash": "287440543"
+    "serializedHash": "-310780449"
   },
   "L1-02": {
     "description": "Layer1: Click (DoubleClick)",
     "stepCount": 1,
-    "serializedHash": "-1595558307"
+    "serializedHash": "2101187997"
   },
   "L1-03": {
     "description": "Layer1: Click (RightClick)",
     "stepCount": 1,
-    "serializedHash": "-1595558307"
+    "serializedHash": "2101187997"
   },
   "L1-04": {
     "description": "Layer1: TextEntry",
     "stepCount": 1,
-    "serializedHash": "1311830197"
+    "serializedHash": "1658085365"
   },
   "L1-05": {
     "description": "Layer1: TextEntry (RichTextEditor)",
     "stepCount": 1,
-    "serializedHash": "-93285059"
+    "serializedHash": "-1632787331"
   },
   "L1-06": {
     "description": "Layer1: Dropdown",
     "stepCount": 1,
-    "serializedHash": "1891817684"
+    "serializedHash": "1848825876"
   },
   "L1-07": {
     "description": "Layer1: Dropdown (NativeDropdown)",
     "stepCount": 1,
-    "serializedHash": "552278940"
+    "serializedHash": "1089469148"
   },
   "L1-08": {
     "description": "Layer1: Dropdown (Autocomplete)",
     "stepCount": 1,
-    "serializedHash": "474601316"
+    "serializedHash": "431609508"
   },
   "L1-09": {
     "description": "Layer1: Dropdown (MultiSelect)",
     "stepCount": 1,
-    "serializedHash": "-1986190260"
+    "serializedHash": "-474356852"
   },
   "L1-10": {
     "description": "Layer1: Checkbox",
     "stepCount": 1,
-    "serializedHash": "1538108162"
+    "serializedHash": "626076226"
   },
   "L1-11": {
     "description": "Layer1: Checkbox (ToggleSwitch)",
     "stepCount": 1,
-    "serializedHash": "1538108162"
+    "serializedHash": "626076226"
   },
   "L1-12": {
     "description": "Layer1: RadioButton",
     "stepCount": 1,
-    "serializedHash": "2046845889"
+    "serializedHash": "991606931"
   },
   "L1-13": {
     "description": "Layer1: DatePicker",
     "stepCount": 1,
-    "serializedHash": "-1590618940"
+    "serializedHash": "-1234284456"
   },
   "L1-14": {
     "description": "Layer1: Hover",
     "stepCount": 1,
-    "serializedHash": "-1737293589"
+    "serializedHash": "-1273207875"
   },
   "L1-15": {
     "description": "Layer1: Link",
     "stepCount": 1,
-    "serializedHash": "752419871"
+    "serializedHash": "1646490865"
   },
   "L1-16": {
     "description": "Layer1: FileUpload",
     "stepCount": 1,
-    "serializedHash": "1623547376"
+    "serializedHash": "746973404"
   },
   "L1-17": {
     "description": "Layer1: Slider",
     "stepCount": 1,
-    "serializedHash": "1497274113"
+    "serializedHash": "412264147"
   },
   "L1-18": {
     "description": "Layer1: Tab",
     "stepCount": 1,
-    "serializedHash": "1999264571"
+    "serializedHash": "-572246471"
   },
   "L1-19": {
     "description": "Layer1: Scroll",
     "stepCount": 0,
-    "serializedHash": "953574857"
+    "serializedHash": "-483862457"
   },
   "L1-20": {
     "description": "Layer1: Scroll (ContainerScroll)",
     "stepCount": 0,
-    "serializedHash": "953574857"
+    "serializedHash": "-1304355963"
   },
   "L1-21": {
     "description": "Layer1: Navigation",
     "stepCount": 1,
-    "serializedHash": "-757267511"
+    "serializedHash": "755248395"
   },
   "L1-22": {
     "description": "Layer1: Navigation (Back)",
     "stepCount": 1,
-    "serializedHash": "-340870524"
+    "serializedHash": "-428173242"
   },
   "L1-23": {
     "description": "Layer1: Navigation (Forward)",
     "stepCount": 1,
-    "serializedHash": "-340870524"
+    "serializedHash": "-1626698424"
   },
   "L1-24": {
     "description": "Layer1: Navigation (Refresh)",
     "stepCount": 1,
-    "serializedHash": "-1539395706"
+    "serializedHash": "-1626698424"
   },
   "L1-25": {
     "description": "Layer1: DragDrop",
     "stepCount": 1,
-    "serializedHash": "1712700963"
+    "serializedHash": "356353185"
   },
   "L1-26": {
     "description": "Layer1: KeyboardShortcut",
     "stepCount": 1,
-    "serializedHash": "648941649"
+    "serializedHash": "934664973"
   },
   "L1-27": {
     "description": "Layer1: ModalDialog",
     "stepCount": 1,
-    "serializedHash": "1343908993"
+    "serializedHash": "-1562527105"
   },
   "L1-28": {
     "description": "Layer1: ModalDialog",
     "stepCount": 1,
-    "serializedHash": "-1440304779"
+    "serializedHash": "831634291"
   },
   "L1-29": {
     "description": "Layer1: Stepper",
     "stepCount": 1,
-    "serializedHash": "-472313207"
+    "serializedHash": "1732923655"
   },
   "L1-30": {
     "description": "Layer1: TagInput",
     "stepCount": 1,
-    "serializedHash": "601291220"
+    "serializedHash": "1031568406"
   },
   "L1-31": {
     "description": "Layer1: OtpInput",
     "stepCount": 1,
-    "serializedHash": "362027214"
+    "serializedHash": "-422688752"
   },
   "L1-32": {
     "description": "Layer1: HotkeySequence",
     "stepCount": 1,
-    "serializedHash": "1252475915"
+    "serializedHash": "-1862976051"
   },
   "L1-33": {
     "description": "Layer1: NewTab",
     "stepCount": 1,
-    "serializedHash": "689989083"
+    "serializedHash": "-1791230759"
   },
   "L1-34": {
     "description": "Layer1: NewWindow",
     "stepCount": 1,
-    "serializedHash": "689989083"
+    "serializedHash": "-1791230759"
   },
   "L1-35": {
     "description": "Layer1: Breadcrumb",
     "stepCount": 1,
-    "serializedHash": "689989083"
+    "serializedHash": "-1791230759"
   },
   "L2-01": {
     "description": "Layer2: edge-Click",
     "stepCount": 1,
-    "serializedHash": "-1193009767"
+    "serializedHash": "-1791230759"
   },
   "L2-02": {
     "description": "Layer2: edge-TextEntry",
     "stepCount": 1,
-    "serializedHash": "903241419"
+    "serializedHash": "-592887991"
   },
   "L2-03": {
     "description": "Layer2: edge-Slider",
     "stepCount": 1,
-    "serializedHash": "1437433635"
+    "serializedHash": "432016289"
   },
   "L2-04": {
     "description": "Layer2: edge-Slider",
     "stepCount": 1,
-    "serializedHash": "1126713539"
+    "serializedHash": "-265537533"
   },
   "L2-05": {
     "description": "Layer2: edge-Checkbox",
     "stepCount": 1,
-    "serializedHash": "-1443292269"
+    "serializedHash": "819527957"
   },
   "L2-06": {
     "description": "Layer2: edge-DatePicker",
     "stepCount": 1,
-    "serializedHash": "-1826986232"
+    "serializedHash": "1560615878"
   },
   "L2-07": {
     "description": "Layer2: edge-FileUpload",
     "stepCount": 1,
-    "serializedHash": "-1745885972"
+    "serializedHash": "-465505556"
   },
   "L2-08": {
     "description": "Layer2: edge-Dropdown",
     "stepCount": 1,
-    "serializedHash": "-188238806"
+    "serializedHash": "-279545880"
   },
   "L2-09": {
     "description": "Layer2: edge-Dropdown",
     "stepCount": 3,
-    "serializedHash": "1530420050"
+    "serializedHash": "1419176274"
   },
   "L2-10": {
     "description": "Layer2: edge-Click",
     "stepCount": 1,
-    "serializedHash": "1747928275"
+    "serializedHash": "-1505134893"
   },
   "L2-11": {
     "description": "Layer2: edge-TextEntry",
     "stepCount": 1,
-    "serializedHash": "-805342583"
+    "serializedHash": "998124487"
   },
   "L2-12": {
     "description": "Layer2: edge-Navigation",
     "stepCount": 1,
-    "serializedHash": "-80354406"
+    "serializedHash": "-1195754000"
   },
   "L2-13": {
     "description": "Layer2: edge-Click",
     "stepCount": 1,
-    "serializedHash": "1670680272"
+    "serializedHash": "1760329638"
   },
   "L2-14": {
     "description": "Layer2: edge-Click",
     "stepCount": 1,
-    "serializedHash": "2011526949"
+    "serializedHash": "1235218509"
   },
   "L2-15": {
     "description": "Layer2: edge-Click",
     "stepCount": 1,
-    "serializedHash": "547306260"
+    "serializedHash": "-378813892"
   },
   "L2-16": {
     "description": "Layer2: edge-Checkbox-ToggleSwitch",
     "stepCount": 1,
-    "serializedHash": "1937286981"
+    "serializedHash": "1225197467"
   },
   "L2-17": {
     "description": "Layer2: edge-Stepper",
     "stepCount": 1,
-    "serializedHash": "-778133711"
+    "serializedHash": "-1306489829"
   },
   "L3-01": {
     "description": "Layer3: sequence-1 (5 interactions)",
     "stepCount": 5,
-    "serializedHash": "2047561797"
+    "serializedHash": "250338157"
   },
   "L3-02": {
     "description": "Layer3: sequence-2 (7 interactions)",
     "stepCount": 6,
-    "serializedHash": "925031170"
+    "serializedHash": "1977852012"
   },
   "L3-03": {
     "description": "Layer3: sequence-3 (6 interactions)",
     "stepCount": 4,
-    "serializedHash": "461612814"
+    "serializedHash": "606252774"
   },
   "L3-04": {
     "description": "Layer3: sequence-4 (4 interactions)",
     "stepCount": 4,
-    "serializedHash": "-2026677421"
+    "serializedHash": "85830825"
   },
   "L3-05": {
     "description": "Layer3: sequence-5 (3 interactions)",
     "stepCount": 2,
-    "serializedHash": "280424719"
+    "serializedHash": "-1559770397"
   },
   "L3-06": {
     "description": "Layer3: sequence-6 (5 interactions)",
     "stepCount": 3,
-    "serializedHash": "-1798269745"
+    "serializedHash": "397700389"
   },
   "L3-07": {
     "description": "Layer3: sequence-7 (5 interactions)",
     "stepCount": 5,
-    "serializedHash": "-1394826135"
+    "serializedHash": "-283649259"
   },
   "L3-08": {
     "description": "Layer3: sequence-8 (4 interactions)",
     "stepCount": 4,
-    "serializedHash": "78220002"
+    "serializedHash": "373791926"
   },
   "L3-09": {
     "description": "Layer3: sequence-9 (5 interactions)",
     "stepCount": 3,
-    "serializedHash": "-1723557154"
+    "serializedHash": "1703703434"
   },
   "L3-10": {
     "description": "Layer3: sequence-10 (21 interactions)",
     "stepCount": 11,
-    "serializedHash": "1876136161"
+    "serializedHash": "1164367245"
   }
 }
