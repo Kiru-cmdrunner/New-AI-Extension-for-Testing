@@ -1,6 +1,6 @@
 # P2: Capability-Derived IR Generation — Design Document
 
-**Status:** DESIGN (not yet implemented)
+**Status:** IMPLEMENTED & VALIDATED — frozen at `57128cb`
 **Baseline:** R4 frozen at `b4d558a`
 **Dependencies:** P1 (frozen at `b3e14fe`), R4 (frozen at `b4d558a`)
 **Roadmap:** §6 P2 — transforms approved capability knowledge into disposable executable IR.

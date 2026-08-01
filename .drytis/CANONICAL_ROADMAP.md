@@ -260,13 +260,26 @@ These extend the recorder into a full test automation platform. All depend on R1
 
 **Completion criteria:** Candidate → review → approve → version lifecycle functional. ≥70% field overlap matching. UI for capability review in side panel.
 
-### P2: Capability-Derived IR Generation
+### P2: Capability-Derived IR Generation — ✅ COMPLETE
+
+**Status:** Implemented, validated end-to-end, frozen at `57128cb`.
 
 **Architectural objective:** Generate ExecutionIRPlan from approved capabilities (not from recordings). Enables re-execution and data-driven testing.
 
-**What's missing:** `CapabilityIRGenerator`, `DataResolver` (DataRequirement → concrete values), `AssertionResolver` (SuccessCriterion → IRAssertion with locators).
+**What was built:** 7 modules in `src/domain/generation/`:
+- `p2-types.ts` — Type definitions (P2GenerationInput, ResolutionWarning, CapabilityIRResult)
+- `data-resolver.ts` — TestData validation against DataRequirement constraints (kind, required, min/max, pattern, options)
+- `element-binding-resolver.ts` — DataRequirement.field → session elementId via LogicalAction.businessField → Component.rootElementId
+- `element-target-resolver.ts` — Full 18-field identity recovery from rawInteractions + ancestorRoles from DomContext → R4 matchElements → MATCHED/AMBIGUOUS/UNMATCHED
+- `ir-action-mapper.ts` — InputMethod → IRAction mapping (dropdown→SELECT, toggle→TOGGLE, slider→FILL, text→FILL, datePicker→SELECT_DATE, fileUpload→FILL)
+- `success-criterion-resolver.ts` — SuccessCriterion → IRAssertion (navigation→URL_MATCH, elementVisible→VISIBILITY, valueEquals→ATTRIBUTE_MATCH, textPresent→TEXT_MATCH)
+- `capability-ir-generator.ts` — Orchestrator assembling ExecutionIRPlan (NAVIGATE → field steps → VERIFY)
 
-**Dependencies:** P1 (needs approved capabilities).
+**Target resolution:** Dynamic at generation time via sourceSessionId → rawInteractions → full ElementIdentity recovery → R4 matchElements. No frozen elementBindings. P2 is read-only w.r.t. Element Repository (never creates/heals/updates Elements).
+
+**Validated:** 48 P2 gate tests, 7-scenario end-to-end walkthrough, all R1-R4/P1 regression gates pass.
+
+**Dependencies:** P1 (frozen at `b3e14fe`), R4 (frozen at `b4d558a`).
 
 ### P3: AI Test Generation Engine
 
