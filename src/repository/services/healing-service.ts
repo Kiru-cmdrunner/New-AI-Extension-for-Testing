@@ -19,6 +19,7 @@
 import { matchElements } from './element-matching-service';
 import { healElement, type Element, type HealContext } from '../../domain/entities/element';
 import type { CreateElementInput, UpdateElementInput } from '../../domain/entities/element';
+import type { ElementIdentityRecord } from '../../domain/entities/element';
 import type { ElementRepository } from '../v2/interfaces/element-repository';
 import {
   extractCandidatesFromIdentity,
@@ -61,6 +62,8 @@ export interface HealElementInput {
   readonly newStrategies: RankedLocator[];
   /** Healing provenance — who, why, from which session/run. */
   readonly context: HealContext;
+  /** R4: Fresh identity from the observation (field-level merge into stored). */
+  readonly updatedIdentity?: ElementIdentityRecord | null;
 }
 
 // ── Source-Agnostic Core ─────────────────────────────────────
@@ -101,6 +104,7 @@ export async function healElementAndPersist(
       confidence: r.confidence,
     })),
     context: input.context,
+    updatedIdentity: input.updatedIdentity ?? null,
   });
 
   const changes: UpdateElementInput = {
@@ -113,10 +117,34 @@ export async function healElementAndPersist(
     status: healed.status,
     healHistory: healed.healHistory,
     lastHealedAt: healed.lastHealedAt,
+    identity: healed.identity,
   };
 
   await elements.update(healed.id, changes);
   return healed;
+}
+
+/**
+ * R4: Build an ElementIdentityRecord from a fresh UiElement.
+ *
+ * Extracts the 9 durable identity fields from the UiElement's ElementIdentity
+ * and ancestorRoles. Used when creating new Elements during healing and when
+ * updating identity during heal.
+ */
+function buildIdentityRecord(fresh: UiElement): ElementIdentityRecord {
+  return {
+    accessibleName: fresh.identity.accessibleName || null,
+    ariaRole: fresh.identity.ariaRole ?? null,
+    tag: fresh.identity.tag || null,
+    name: fresh.identity.name ?? null,
+    ariaLabel: fresh.identity.ariaLabel ?? null,
+    ancestorRoles: fresh.ancestorRoles
+      ? [...fresh.ancestorRoles]
+      : null,
+    testId: fresh.identity.testId ?? null,
+    dataCy: fresh.identity.dataCy ?? null,
+    dataQa: fresh.identity.dataQa ?? null,
+  };
 }
 
 // ── Recording-Specific Orchestrator ──────────────────────────
@@ -159,7 +187,7 @@ export async function healFromRecording(
     let healedCount = 0;
 
     // 3. Heal matched elements where locators have changed
-    for (const match of matchResult.matches) {
+    for (const match of matchResult.matched) {
       const freshLocators = resolveFreshLocators(match.freshUiElement.identity);
       const storedLocators = match.storedElement.locatorStrategies;
 
@@ -176,6 +204,7 @@ export async function healFromRecording(
               reason: 'css-shifted',
               proposedBy: 'cross-session-matching',
             },
+            updatedIdentity: buildIdentityRecord(match.freshUiElement),
           },
           repos.elements,
         );
@@ -198,7 +227,23 @@ export async function healFromRecording(
       }
     }
 
-    // 4. Create new elements for unmatched fresh elements
+    // 4. Log ambiguous matches (skip — do NOT heal or create duplicates)
+    for (const amb of matchResult.ambiguous) {
+      const candidateNames = amb.candidates
+        .map((c) => `${c.storedElement.logicalName} (${c.matchScore.toFixed(2)})`)
+        .join(', ');
+      console.warn(
+        `[Healing] Ambiguous match for "${amb.freshUiElement.identity.accessibleName}": ` +
+        `${amb.candidates.length} candidates [${candidateNames}] — skipping`,
+      );
+      details.push({
+        elementId: amb.candidates[0].storedElement.id,
+        logicalName: amb.freshUiElement.identity.accessibleName ?? amb.freshUiElement.elementId,
+        action: 'unchanged',
+      });
+    }
+
+    // 5. Create new elements for unmatched fresh elements
     let createdCount = 0;
     for (const fresh of matchResult.unmatched) {
       const locators = resolveFreshLocators(fresh.identity);
@@ -214,6 +259,7 @@ export async function healFromRecording(
           priority: r.priority,
           confidence: r.confidence,
         })),
+        identity: buildIdentityRecord(fresh),
       };
 
       const newElement = await repos.elements.create(createInput);
@@ -227,7 +273,7 @@ export async function healFromRecording(
     }
 
     return {
-      examined: matchResult.matches.length,
+      examined: matchResult.matched.length + matchResult.ambiguous.length,
       healed: healedCount,
       created: createdCount,
       details,

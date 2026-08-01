@@ -55,6 +55,12 @@ export interface UiElement {
   readonly componentId: string | null;
   /** The role this element plays in its component, or null if standalone. */
   readonly componentRole: ComponentRole | null;
+  /**
+   * R4: Ancestor role chain from the first observed event's DomContext.
+   * Up to 10 ancestors, format "tag[role=role]", index 0 = parent.
+   * Undefined if DomContext.ancestorRoles was not available.
+   */
+  readonly ancestorRoles?: readonly string[];
 }
 
 /** Input for creating a UiElement. */
@@ -66,6 +72,8 @@ export interface CreateUiElementInput {
   domTreePath: string;
   componentId?: string | null;
   componentRole?: ComponentRole | null;
+  /** R4: Ancestor role chain from recording-time DomContext. */
+  ancestorRoles?: readonly string[];
 }
 
 /**
@@ -200,6 +208,7 @@ export function createUiElement(input: CreateUiElementInput): UiElement {
     ),
     componentId: input.componentId?.trim() || null,
     componentRole: input.componentRole ?? null,
+    ancestorRoles: input.ancestorRoles,
   };
 }
 

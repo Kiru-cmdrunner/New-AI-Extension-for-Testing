@@ -394,12 +394,18 @@ export function adaptToDomainEntitiesV2(
         ? (firstEvent as { domContext?: { domAttributes?: Record<string, string> } }).domContext?.domAttributes ?? {}
         : {};
 
+      // R4: Extract ancestorRoles from first event's DomContext
+      const ancestorRoles = firstEvent && firstEvent.eventType !== 'navigation'
+        ? (firstEvent as { domContext?: { ancestorRoles?: string[] } }).domContext?.ancestorRoles
+        : undefined;
+
       const uiElement = createUiElement({
         elementId,
         identity,
         domAttributes,
         sourceUrl,
         domTreePath: buildDomTreePath(identity),
+        ancestorRoles,
       });
       elementMap.set(elementId, uiElement);
     }

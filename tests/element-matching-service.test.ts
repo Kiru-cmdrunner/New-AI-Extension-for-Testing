@@ -1,8 +1,11 @@
 /**
- * Element Matching Service Tests — Phase 11 Milestone 11.2
+ * Element Matching Service Tests (R4) — three-category matching with
+ * identity-aware scoring, ambiguity detection, and margin checks.
  *
- * Tests the weighted identity signature matching between fresh UiElements
- * from a new recording and stored Element entities from the Repository.
+ * R4 changes:
+ *   - Result uses matched/ambiguous/unmatched instead of matches/unmatched
+ *   - matchElements() no longer accepts a threshold parameter
+ *   - Pre-R4 stored Elements (no identity) use fallback signature
  */
 
 import { describe, it, expect } from 'vitest';
@@ -10,13 +13,11 @@ import {
   matchElements,
   computeSimilarity,
   extractSignature,
-  extractStoredSignature,
   MATCH_THRESHOLD,
-  type ElementMatchResult,
 } from '../src/repository/services/element-matching-service';
 import { createElement, type Element } from '../src/domain/entities/element';
 import { createUiElement, type UiElement } from '../src/domain/entities/ui-element';
-import { ElementStatus, LocatorStrategyType } from '../src/domain/enums';
+import { LocatorStrategyType } from '../src/domain/enums';
 import type { ElementIdentity } from '../src/shared/types';
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -70,18 +71,25 @@ function makeStoredElement(overrides: Partial<Element> = {}): Element {
 // ── computeSimilarity ────────────────────────────────────────
 
 describe('computeSimilarity', () => {
-  it('returns 1.0 for identical signatures', () => {
+  it('returns ~1.0 for identical signatures without ancestorRoles', () => {
+    // Without ancestorRoles, both-missing returns neutral (0.5) for that
+    // dimension, so identical signatures score 0.95 (not 1.0).
     const sig = extractSignature(makeIdentity(), 'https://app.com/login');
+    expect(computeSimilarity(sig, sig)).toBeCloseTo(0.95, 10);
+  });
+
+  it('returns 1.0 for identical signatures with ancestorRoles', () => {
+    const sig = extractSignature(makeIdentity(), 'https://app.com/login', ['form', 'body']);
     expect(computeSimilarity(sig, sig)).toBe(1.0);
   });
 
   it('returns low score for completely different elements', () => {
     const sigA = extractSignature(
-      makeIdentity({ accessibleName: 'Submit', tag: 'BUTTON', ariaRole: 'button' }),
+      makeIdentity({ accessibleName: 'Submit', tag: 'BUTTON', ariaRole: 'button', testId: 'submit-btn' }),
       'https://app.com/login',
     );
     const sigB = extractSignature(
-      makeIdentity({ accessibleName: 'Email Input', tag: 'INPUT', ariaRole: 'textbox' }),
+      makeIdentity({ accessibleName: 'Email Input', tag: 'INPUT', ariaRole: 'textbox', testId: 'email-input' }),
       'https://app.com/register',
     );
     const score = computeSimilarity(sigA, sigB);
@@ -89,7 +97,6 @@ describe('computeSimilarity', () => {
   });
 
   it('matches on accessibleName even when CSS changes', () => {
-    // The whole point: CSS selectors are excluded from matching
     const sigA = extractSignature(
       makeIdentity({ accessibleName: 'Submit', testId: 'submit-btn' }),
       'https://app.com/login',
@@ -98,8 +105,7 @@ describe('computeSimilarity', () => {
       makeIdentity({ accessibleName: 'Submit', testId: 'submit-btn', cssSelector: 'button.different-class' }),
       'https://app.com/login',
     );
-    // CSS is not in the signature, so these match
-    expect(computeSimilarity(sigA, sigB)).toBe(1.0);
+    expect(computeSimilarity(sigA, sigB)).toBeCloseTo(0.95, 10);
   });
 });
 
@@ -112,9 +118,9 @@ describe('matchElements', () => {
       const stored = [makeStoredElement()];
       const result = matchElements(fresh, stored);
 
-      expect(result.matches).toHaveLength(1);
+      expect(result.matched).toHaveLength(1);
       expect(result.unmatched).toHaveLength(0);
-      expect(result.matches[0].matchScore).toBeGreaterThanOrEqual(MATCH_THRESHOLD);
+      expect(result.matched[0].matchScore).toBeGreaterThanOrEqual(MATCH_THRESHOLD);
     });
 
     it('matches despite CSS selector change', () => {
@@ -122,7 +128,7 @@ describe('matchElements', () => {
       const stored = [makeStoredElement()];
       const result = matchElements(fresh, stored);
 
-      expect(result.matches).toHaveLength(1);
+      expect(result.matched).toHaveLength(1);
       expect(result.unmatched).toHaveLength(0);
     });
 
@@ -131,7 +137,7 @@ describe('matchElements', () => {
       const stored = [makeStoredElement()];
       const result = matchElements(fresh, stored);
 
-      expect(result.matches).toHaveLength(1);
+      expect(result.matched).toHaveLength(1);
     });
   });
 
@@ -141,7 +147,7 @@ describe('matchElements', () => {
       const stored = [makeStoredElement()];
       const result = matchElements(fresh, stored);
 
-      expect(result.matches).toHaveLength(0);
+      expect(result.matched).toHaveLength(0);
       expect(result.unmatched).toHaveLength(1);
     });
 
@@ -150,7 +156,7 @@ describe('matchElements', () => {
       const stored = [makeStoredElement()];
       const result = matchElements(fresh, stored);
 
-      expect(result.matches).toHaveLength(0);
+      expect(result.matched).toHaveLength(0);
       expect(result.unmatched).toHaveLength(1);
     });
   });
@@ -158,13 +164,10 @@ describe('matchElements', () => {
   describe('partial identity', () => {
     it('matches when testId is missing but accessibleName and role match', () => {
       const fresh = [makeUiElement({ testId: null, accessibleName: 'Submit', ariaRole: 'button', tag: 'BUTTON' })];
-      // Stored element has testId, fresh doesn't — still should match on name+role
       const stored = [makeStoredElement()];
       const result = matchElements(fresh, stored);
 
-      // Should match because accessibleName + role + tag are strong enough
-      // Even though testId is missing on fresh side
-      expect(result.matches).toHaveLength(1);
+      expect(result.matched).toHaveLength(1);
     });
 
     it('matches when page scope differs but identity is strong', () => {
@@ -172,8 +175,7 @@ describe('matchElements', () => {
       const stored = [makeStoredElement({ pageOrComponent: 'login-page' })];
       const result = matchElements(fresh, stored);
 
-      // testId match + name match should overcome page scope difference
-      expect(result.matches).toHaveLength(1);
+      expect(result.matched).toHaveLength(1);
     });
   });
 
@@ -183,7 +185,7 @@ describe('matchElements', () => {
       const stored = [makeStoredElement()];
       const result = matchElements(fresh, stored);
 
-      expect(result.matches).toHaveLength(1);
+      expect(result.matched).toHaveLength(1);
     });
 
     it('handles elements with no business IDs', () => {
@@ -195,8 +197,7 @@ describe('matchElements', () => {
       })];
       const result = matchElements(fresh, stored);
 
-      // Should still match on accessibleName + role + tag
-      expect(result.matches).toHaveLength(1);
+      expect(result.matched).toHaveLength(1);
     });
   });
 
@@ -219,7 +220,7 @@ describe('matchElements', () => {
       ];
       const result = matchElements(fresh, stored);
 
-      expect(result.matches).toHaveLength(2);
+      expect(result.matched).toHaveLength(2);
       expect(result.unmatched).toHaveLength(0);
     });
 
@@ -231,13 +232,12 @@ describe('matchElements', () => {
       const stored = [makeStoredElement()];
       const result = matchElements(fresh, stored);
 
-      expect(result.matches).toHaveLength(1);
+      expect(result.matched).toHaveLength(1);
       expect(result.unmatched).toHaveLength(1);
       expect(result.unmatched[0].elementId).toBe('e2');
     });
 
     it('uses greedy matching (highest score first)', () => {
-      // Two fresh elements, two stored — ensure no cross-matching
       const fresh = [
         makeUiElement({ elementId: 'e1', testId: 'submit-btn', accessibleName: 'Submit' }),
         makeUiElement({ elementId: 'e2', testId: 'cancel-btn', accessibleName: 'Cancel' }),
@@ -256,10 +256,9 @@ describe('matchElements', () => {
 
       const result = matchElements(fresh, stored);
 
-      expect(result.matches).toHaveLength(2);
-      // Each fresh element matched the correct stored element
-      const match1 = result.matches.find((m) => m.freshUiElement.elementId === 'e1');
-      const match2 = result.matches.find((m) => m.freshUiElement.elementId === 'e2');
+      expect(result.matched).toHaveLength(2);
+      const match1 = result.matched.find((m) => m.freshUiElement.elementId === 'e1');
+      const match2 = result.matched.find((m) => m.freshUiElement.elementId === 'e2');
       expect(match1).toBeDefined();
       expect(match1!.storedElement.logicalName).toBe('Submit');
       expect(match2).toBeDefined();
@@ -272,7 +271,7 @@ describe('matchElements', () => {
       const fresh = [makeUiElement()];
       const result = matchElements(fresh, []);
 
-      expect(result.matches).toHaveLength(0);
+      expect(result.matched).toHaveLength(0);
       expect(result.unmatched).toHaveLength(1);
     });
 
@@ -280,18 +279,8 @@ describe('matchElements', () => {
       const stored = [makeStoredElement()];
       const result = matchElements([], stored);
 
-      expect(result.matches).toHaveLength(0);
+      expect(result.matched).toHaveLength(0);
       expect(result.unmatched).toHaveLength(0);
-    });
-
-    it('handles custom threshold', () => {
-      const fresh = [makeUiElement({ testId: null, accessibleName: 'Submit', ariaRole: 'button', tag: 'BUTTON' })];
-      const stored = [makeStoredElement()];
-      const result = matchElements(fresh, stored, 0.99);
-
-      // With a very high threshold, the partial match should be rejected
-      expect(result.matches).toHaveLength(0);
-      expect(result.unmatched).toHaveLength(1);
     });
   });
 });

@@ -1,29 +1,29 @@
 /**
- * Element Matching Service — matches fresh UiElements from a new recording
+ * Element Matching Service (R4) — matches fresh UiElements from a new recording
  * against stored Element entities from the Repository.
  *
- * Uses a weighted identity signature comparison that deliberately ignores
- * fragile locators (CSS, XPath) and focuses on stable signals:
- *   - accessibleName (30%) — survives CSS changes
- *   - ariaRole / tag (25%) — structural identity
- *   - ancestorRoleChain (25%) — DOM topology context
- *   - testId / dataCy / dataQa (15%) — business identifiers
- *   - pageOrComponent scope (5%) — same page constraint
+ * R4 changes from the original:
+ *   - Element entity now carries a durable ElementIdentityRecord (9 fields).
+ *   - Scoring uses 8 independently-weighted dimensions (no averaging).
+ *   - Three-category result: MATCHED, AMBIGUOUS, UNMATCHED.
+ *   - Ambiguity detection via margin check (best vs second-best candidate).
+ *   - Identity fields read from Element.identity when available; falls back
+ *     to reverse-engineering from locatorStrategies for pre-R4 Elements.
  *
- * Threshold: ≥ 0.70 = match, < 0.70 = new element
+ * All weights, thresholds, and margins are named policy constants so they
+ * can be calibrated without restructuring the algorithm.
  *
- * This is NOT the same as the Capability matcher — capabilities match on
- * business purpose; elements match on DOM identity.
+ * Design: .drytis/specs/r4-element-identity-matching-foundation.md §5.4
  */
 
 import type { UiElement } from '../../domain/entities/ui-element';
-import type { Element } from '../../domain/entities/element';
+import type { Element, ElementIdentityRecord } from '../../domain/entities/element';
 import type { ElementIdentity } from '../../shared/types';
 import { LocatorStrategyType } from '../../domain/enums';
 
 // ── Types ────────────────────────────────────────────────────
 
-/** A match between a fresh UiElement and a stored Element. */
+/** A confident match between a fresh UiElement and a stored Element. */
 export interface ElementMatch {
   /** The stored Element from the Repository. */
   readonly storedElement: Element;
@@ -31,76 +31,157 @@ export interface ElementMatch {
   readonly freshUiElement: UiElement;
   /** Match score (0.0–1.0). */
   readonly matchScore: number;
+  /** Score margin between this match and the next-best candidate. */
+  readonly margin: number;
 }
 
-/** Result of matching a batch of fresh elements against stored elements. */
+/** An ambiguous match — multiple candidates above threshold, cannot distinguish. */
+export interface AmbiguousMatch {
+  /** The fresh UiElement that has multiple candidates. */
+  readonly freshUiElement: UiElement;
+  /** All stored candidates that scored above threshold. */
+  readonly candidates: ReadonlyArray<{
+    readonly storedElement: Element;
+    readonly matchScore: number;
+  }>;
+}
+
+/**
+ * Result of matching a batch of fresh elements against stored elements.
+ *
+ * Three categories:
+ *   - matched:   confidently paired (score ≥ threshold, margin ≥ MIN_MARGIN)
+ *   - ambiguous: multiple candidates, cannot safely distinguish
+ *   - unmatched: no candidate above threshold (new element)
+ */
 export interface ElementMatchResult {
-  /** Elements that matched existing Repository entries (score ≥ threshold). */
-  readonly matches: ElementMatch[];
-  /** Fresh elements that didn't match anything (new elements). */
+  readonly matched: ElementMatch[];
+  readonly ambiguous: AmbiguousMatch[];
   readonly unmatched: UiElement[];
 }
 
-// ── Match Score Weights ──────────────────────────────────────
-
-const WEIGHTS = {
-  ACCESSIBLE_NAME: 0.30,
-  ROLE_TAG: 0.25,
-  ANCESTOR_CHAIN: 0.25,
-  BUSINESS_IDS: 0.15,
-  PAGE_SCOPE: 0.05,
-} as const;
-
-/** Minimum score to consider two elements the same. */
-const MATCH_THRESHOLD = 0.70;
-
-// ── Identity Signature Extraction ────────────────────────────
+// ── Identity Signature ──────────────────────────────────────
 
 /**
- * Extract the stable identity signals from an ElementIdentity.
- *
- * These are the fields used for matching — deliberately excludes
- * cssSelector and xPath (fragile, change between builds).
+ * Normalised identity signature used for scoring.
+ * Extracted from either a fresh UiElement or a stored Element.
  */
 interface IdentitySignature {
   accessibleName: string;
   ariaRole: string | null;
   tag: string;
-  testId: string | null;
-  dataCy: string | null;
-  dataQa: string | null;
-  /** Ancestor role chain from DomContext (if available). */
+  /** HTML `name` attribute — backend-facing form field identifier. */
+  name: string | null;
+  /** Explicit `aria-label` attribute. */
+  ariaLabel: string | null;
+  /** Ancestor role chain from DomContext. */
   ancestorRoles: string[] | null;
+  /** `data-testid` value. */
+  testId: string | null;
+  /** `data-cy` value. */
+  dataCy: string | null;
+  /** `data-qa` value. */
+  dataQa: string | null;
   /** Source URL / page scope. */
   sourceUrl: string;
 }
 
-function extractSignature(identity: ElementIdentity, sourceUrl?: string, ancestorRoles?: string[]): IdentitySignature {
+// ── R4 Scoring Policy Constants ──────────────────────────────
+//
+// All weights and thresholds are named so they can be tuned
+// without restructuring the algorithm.
+
+export const SCORING_POLICY = {
+  WEIGHTS: {
+    /** Business identifiers (testId/dataCy/dataQa) — definitive when present. */
+    BUSINESS_IDS: 0.25,
+    /** Accessible name — primary semantic label. */
+    ACCESSIBLE_NAME: 0.20,
+    /** HTML name attribute — backend-facing form field identifier. */
+    FORM_NAME: 0.15,
+    /** ARIA role — semantic contract (combobox, textbox, etc.). */
+    ARIA_ROLE: 0.10,
+    /** Explicit aria-label — independent of accessible name. */
+    ARIA_LABEL: 0.10,
+    /** Ancestor role chain — structural context (section/dialog/form). */
+    ANCESTOR_ROLES: 0.10,
+    /** HTML tag name — very stable but low disambiguation power. */
+    TAG: 0.05,
+    /** Source URL / page scope. */
+    PAGE_SCOPE: 0.05,
+  },
+  /** Minimum score for a candidate to be considered. */
+  MATCH_THRESHOLD: 0.70,
+  /** Minimum gap between best and second-best candidate for MATCHED. */
+  MIN_MARGIN: 0.05,
+  /** Neutral score when a field is missing on one or both sides. */
+  NEUTRAL: 0.5,
+  /** Score when ancestorRoles are missing on both sides (was 1.0 pre-R4). */
+  NEUTRAL_BOTH_MISSING: 0.5,
+  /** Score when ancestorRoles present on only one side. */
+  ANCESTOR_ONE_SIDE: 0.25,
+} as const;
+
+// Backward-compatible export name
+const MATCH_THRESHOLD = SCORING_POLICY.MATCH_THRESHOLD;
+
+// ── Signature Extraction ────────────────────────────────────
+
+/**
+ * Extract signature from a fresh UiElement's ElementIdentity.
+ * Includes ancestorRoles from the UiElement (R4 propagation from DomContext).
+ */
+function extractSignature(
+  identity: ElementIdentity,
+  sourceUrl?: string,
+  ancestorRoles?: readonly string[],
+): IdentitySignature {
   return {
     accessibleName: identity.accessibleName ?? '',
     ariaRole: identity.ariaRole,
     tag: identity.tag ?? '',
-    testId: identity.testId,
-    dataCy: identity.dataCy,
-    dataQa: identity.dataQa,
-    ancestorRoles: ancestorRoles ?? null,
+    name: identity.name ?? null,
+    ariaLabel: identity.ariaLabel ?? null,
+    ancestorRoles: ancestorRoles ? [...ancestorRoles] : null,
+    testId: identity.testId ?? null,
+    dataCy: identity.dataCy ?? null,
+    dataQa: identity.dataQa ?? null,
     sourceUrl: sourceUrl ?? '',
   };
 }
 
 /**
  * Extract signature from a stored Element.
- * Stored elements don't have the full ElementIdentity — they have locatorStrategies.
- * We extract what we can from the element's metadata.
+ *
+ * R4 path: If the Element has an `identity` record (ElementIdentityRecord),
+ * use it directly — this is the durable semantic identity captured at
+ * recording time.
+ *
+ * Fallback path: For pre-R4 Elements (identity === null or undefined),
+ * reverse-engineer what we can from logicalName, pageOrComponent, and
+ * locatorStrategies (scanning for TEST_ID type entries).
  */
 function extractStoredSignature(element: Element): IdentitySignature {
-  // The stored Element has logicalName (which was derived from accessibleName)
-  // and pageOrComponent (scope). We don't have the full identity, but we can
-  // extract testId from the locatorStrategies (TEST_ID type).
-  let testId: string | null = null;
+  // R4 path: use stored identity record
+  if (element.identity) {
+    const id: ElementIdentityRecord = element.identity;
+    return {
+      accessibleName: id.accessibleName ?? element.logicalName,
+      ariaRole: id.ariaRole,
+      tag: id.tag ?? '',
+      name: id.name,
+      ariaLabel: id.ariaLabel,
+      ancestorRoles: id.ancestorRoles ? [...id.ancestorRoles] : null,
+      testId: id.testId,
+      dataCy: id.dataCy,
+      dataQa: id.dataQa,
+      sourceUrl: element.pageOrComponent,
+    };
+  }
 
+  // Pre-R4 fallback: reverse-engineer from locators + metadata
+  let testId: string | null = null;
   for (const strategy of element.locatorStrategies) {
-    // TEST_ID strategies store the raw attribute value
     if (strategy.type === LocatorStrategyType.TEST_ID && !testId) {
       testId = strategy.value;
     }
@@ -108,17 +189,19 @@ function extractStoredSignature(element: Element): IdentitySignature {
 
   return {
     accessibleName: element.logicalName,
-    ariaRole: null, // Not stored on Element entity
-    tag: '', // Not stored on Element entity
+    ariaRole: null,
+    tag: '',
+    name: null,
+    ariaLabel: null,
+    ancestorRoles: null,
     testId,
     dataCy: null,
     dataQa: null,
-    ancestorRoles: null, // Not stored on Element entity
     sourceUrl: element.pageOrComponent,
   };
 }
 
-// ── Similarity Scoring ───────────────────────────────────────
+// ── Scoring Helpers ─────────────────────────────────────────
 
 /**
  * Jaccard similarity for two arrays of strings.
@@ -134,78 +217,106 @@ function jaccardSimilarity(a: string[], b: string[]): number {
 }
 
 /**
- * String equality score: 1.0 for exact match, 0.0 otherwise.
- * Case-insensitive for accessibility names.
+ * String equality: 1.0 for exact match (case-insensitive), 0.0 otherwise.
+ * Both empty → 1.0 (both missing = consistent).
  */
-function stringEqual(a: string, b: string, caseInsensitive = true): number {
-  if (!a && !b) return 1.0; // Both empty = match
-  if (!a || !b) return 0.0; // One empty = no match
-  const cmp = caseInsensitive ? a.toLowerCase() === b.toLowerCase() : a === b;
-  return cmp ? 1.0 : 0.0;
+function stringEqual(a: string, b: string): number {
+  if (!a && !b) return 1.0;
+  if (!a || !b) return 0.0;
+  return a.toLowerCase() === b.toLowerCase() ? 1.0 : 0.0;
 }
 
 /**
- * String equality with neutral handling for unknown fields.
- * When one side is empty/missing, returns NEUTRAL_SCORE instead of 0.
- * This prevents penalizing stored elements that don't persist every identity field.
+ * Neutral string equality for nullable fields.
+ * When both sides are missing → NEUTRAL_BOTH_MISSING (0.5).
+ * When one side is missing → NEUTRAL (0.5).
+ * When both present → exact match (1.0) or mismatch (0.0).
  */
-function stringEqualNeutral(a: string | null, b: string | null, neutralScore = 0.5): number {
+function stringEqualNeutral(
+  a: string | null,
+  b: string | null,
+  neutralScore = SCORING_POLICY.NEUTRAL,
+): number {
   const aVal = a?.trim() ?? '';
   const bVal = b?.trim() ?? '';
-  if (!aVal && !bVal) return 1.0; // Both missing = match
-  if (!aVal || !bVal) return neutralScore; // One missing = unknown (not mismatch)
+  if (!aVal && !bVal) return 1.0; // Both missing = consistent
+  if (!aVal || !bVal) return neutralScore; // One missing = unknown
   return aVal.toLowerCase() === bVal.toLowerCase() ? 1.0 : 0.0;
 }
 
 /**
- * Compute a weighted similarity score between two identity signatures.
+ * Business ID scoring (testId/dataCy/dataQa).
  *
- * Uses neutral scoring for fields missing on one side — this handles the
- * asymmetric case where stored Elements don't persist every identity field
- * (e.g., ariaRole, tag) that fresh UiElements have.
+ * If both sides have at least one ID: any match → 1.0, else 0.0.
+ * If neither has any: neutral (0.5).
+ * If one has and the other doesn't: neutral (0.5).
+ */
+function scoreBusinessIds(a: IdentitySignature, b: IdentitySignature): number {
+  const aIds = [a.testId, a.dataCy, a.dataQa].filter((v): v is string => !!v?.trim());
+  const bIds = [b.testId, b.dataCy, b.dataQa].filter((v): v is string => !!v?.trim());
+
+  if (aIds.length > 0 && bIds.length > 0) {
+    // Both have IDs — any intersection = match, otherwise strong negative
+    const aSet = new Set(aIds.map((s) => s.toLowerCase()));
+    const bSet = new Set(bIds.map((s) => s.toLowerCase()));
+    const hasMatch = [...aSet].some((v) => bSet.has(v));
+    return hasMatch ? 1.0 : 0.0;
+  }
+  return SCORING_POLICY.NEUTRAL; // Neither side or one-side missing
+}
+
+// ── Similarity Scoring (R4: 8 independent dimensions) ────────
+
+/**
+ * Compute weighted similarity between two identity signatures.
+ *
+ * R4: Each field scored independently with its own weight.
+ * No averaging or collapsing of fields.
  *
  * Returns 0.0–1.0.
  */
 function computeSimilarity(a: IdentitySignature, b: IdentitySignature): number {
+  const W = SCORING_POLICY.WEIGHTS;
+
   let score = 0;
 
-  // 1. Accessible name (30%) — strongest signal, available on both sides
-  score += WEIGHTS.ACCESSIBLE_NAME * stringEqual(a.accessibleName, b.accessibleName);
+  // 1. Business IDs (25%)
+  score += W.BUSINESS_IDS * scoreBusinessIds(a, b);
 
-  // 2. Role + tag (25%) — neutral scoring because stored elements may not have these
-  const roleScore = stringEqualNeutral(a.ariaRole, b.ariaRole);
-  const tagScore = stringEqualNeutral(a.tag, b.tag);
-  score += WEIGHTS.ROLE_TAG * ((roleScore + tagScore) / 2);
+  // 2. Accessible name (20%) — exact match
+  score += W.ACCESSIBLE_NAME * stringEqual(a.accessibleName, b.accessibleName);
 
-  // 3. Ancestor role chain (25%) — Jaccard similarity
-  if (a.ancestorRoles && a.ancestorRoles.length > 0 && b.ancestorRoles && b.ancestorRoles.length > 0) {
-    score += WEIGHTS.ANCESTOR_CHAIN * jaccardSimilarity(a.ancestorRoles, b.ancestorRoles);
-  } else if ((!a.ancestorRoles || a.ancestorRoles.length === 0) && (!b.ancestorRoles || b.ancestorRoles.length === 0)) {
-    // Both missing — count as match (ancestors weren't captured on either side)
-    score += WEIGHTS.ANCESTOR_CHAIN * 1.0;
+  // 3. Form name (15%) — strong disambiguator for same-name fields
+  score += W.FORM_NAME * stringEqualNeutral(a.name, b.name);
+
+  // 4. ARIA role (10%)
+  score += W.ARIA_ROLE * stringEqualNeutral(a.ariaRole, b.ariaRole);
+
+  // 5. ARIA label (10%) — independent of accessible name
+  score += W.ARIA_LABEL * stringEqualNeutral(a.ariaLabel, b.ariaLabel);
+
+  // 6. Ancestor roles (10%) — Jaccard with corrected neutral scoring
+  if (
+    a.ancestorRoles && a.ancestorRoles.length > 0 &&
+    b.ancestorRoles && b.ancestorRoles.length > 0
+  ) {
+    score += W.ANCESTOR_ROLES * jaccardSimilarity(a.ancestorRoles, b.ancestorRoles);
+  } else if (
+    (!a.ancestorRoles || a.ancestorRoles.length === 0) &&
+    (!b.ancestorRoles || b.ancestorRoles.length === 0)
+  ) {
+    // Both missing — NEUTRAL, NOT 1.0 (R4 fix)
+    score += W.ANCESTOR_ROLES * SCORING_POLICY.NEUTRAL_BOTH_MISSING;
   } else {
     // One has, one doesn't — partial penalty
-    score += WEIGHTS.ANCESTOR_CHAIN * 0.25;
+    score += W.ANCESTOR_ROLES * SCORING_POLICY.ANCESTOR_ONE_SIDE;
   }
 
-  // 4. Business identifiers (15%) — if both have IDs, they must match.
-  // If one has and the other doesn't, use neutral (the ID may have been
-  // added/removed between versions — not strong evidence either way).
-  const aBusinessId = a.testId ?? a.dataCy ?? a.dataQa;
-  const bBusinessId = b.testId ?? b.dataCy ?? b.dataQa;
-  if (aBusinessId && bBusinessId) {
-    // Both have business IDs — strong signal
-    score += WEIGHTS.BUSINESS_IDS * stringEqual(aBusinessId, bBusinessId);
-  } else if (!aBusinessId && !bBusinessId) {
-    // Neither has business IDs — neutral
-    score += WEIGHTS.BUSINESS_IDS * 0.5;
-  } else {
-    // One has, one doesn't — neutral (ID may have been added/removed)
-    score += WEIGHTS.BUSINESS_IDS * 0.5;
-  }
+  // 7. Tag (5%)
+  score += W.TAG * stringEqualNeutral(a.tag, b.tag);
 
-  // 5. Page scope (5%) — same page or component
-  score += WEIGHTS.PAGE_SCOPE * stringEqualNeutral(a.sourceUrl, b.sourceUrl);
+  // 8. Page scope (5%)
+  score += W.PAGE_SCOPE * stringEqualNeutral(a.sourceUrl, b.sourceUrl);
 
   return score;
 }
@@ -215,69 +326,167 @@ function computeSimilarity(a: IdentitySignature, b: IdentitySignature): number {
 /**
  * Match a batch of fresh UiElements against stored Elements.
  *
- * For each fresh element, finds the best matching stored element (if any).
- * Uses greedy matching: highest-scoring pairs are matched first.
+ * R4 algorithm:
+ *   For each fresh element F:
+ *     1. Score F against every stored element S.
+ *     2. Collect all S where score ≥ MATCH_THRESHOLD → candidates[].
+ *     3. If no candidates → UNMATCHED.
+ *     4. If exactly 1 candidate → MATCHED.
+ *     5. If best.margin ≥ MIN_MARGIN → MATCHED (best candidate).
+ *     6. Otherwise → AMBIGUOUS (all candidates returned).
+ *
+ * Then apply greedy 1:1 claiming on MATCHED pairs only.
+ * AMBIGUOUS and UNMATCHED are returned as-is.
  *
  * @param freshElements UiElements from the new recording session.
  * @param storedElements Elements from the Repository (scoped to project).
- * @param threshold Minimum score to consider a match (default: 0.70).
- * @returns Match results: matches[] and unmatched[].
+ * @returns Three-category match result.
  */
 export function matchElements(
   freshElements: readonly UiElement[],
   storedElements: readonly Element[],
-  threshold: number = MATCH_THRESHOLD,
 ): ElementMatchResult {
-  // Build all candidate pairs with their scores
-  const candidates: Array<{ fresh: UiElement; stored: Element; score: number }> = [];
+  // Phase 1: Score every fresh × stored pair and classify each fresh element
+  interface ScoredCandidate {
+    fresh: UiElement;
+    stored: Element;
+    score: number;
+  }
+
+  const matched: ElementMatch[] = [];
+  const ambiguous: AmbiguousMatch[] = [];
+  const unmatched: UiElement[] = [];
+
+  // Track which fresh elements have been classified (not yet claimed)
+  const classifiedFresh = new Set<string>();
+
+  // Collect all high-scoring candidates per fresh element
+  const allCandidates = new Map<string, ScoredCandidate[]>();
 
   for (const fresh of freshElements) {
     const freshSig = extractSignature(
       fresh.identity,
       fresh.sourceUrl,
-      // ancestorRoles come from the DomContext on the recorded event,
-      // not on the UiElement. For matching purposes, we use sourceUrl as
-      // the page scope and skip ancestor chain if not available.
-      undefined,
+      fresh.ancestorRoles,
     );
 
+    const candidates: ScoredCandidate[] = [];
     for (const stored of storedElements) {
       const storedSig = extractStoredSignature(stored);
       const score = computeSimilarity(freshSig, storedSig);
-      if (score >= threshold) {
+      if (score >= MATCH_THRESHOLD) {
         candidates.push({ fresh, stored, score });
       }
     }
+
+    allCandidates.set(fresh.elementId, candidates);
   }
 
-  // Greedy matching: sort by score descending, match highest first
-  candidates.sort((a, b) => b.score - a.score);
+  // Phase 2: Classify each fresh element based on its candidates
+  for (const fresh of freshElements) {
+    const candidates = allCandidates.get(fresh.elementId) ?? [];
 
-  const matchedFresh = new Set<string>();
-  const matchedStored = new Set<string>();
-  const matches: ElementMatch[] = [];
-
-  for (const { fresh, stored, score } of candidates) {
-    // Skip if either side is already matched (1:1 matching)
-    if (matchedFresh.has(fresh.elementId) || matchedStored.has(stored.id)) {
+    if (candidates.length === 0) {
+      // No candidate above threshold
+      unmatched.push(fresh);
+      classifiedFresh.add(fresh.elementId);
       continue;
     }
 
-    matches.push({
+    if (candidates.length === 1) {
+      // Single candidate — MATCHED (margin = infinity, no competition)
+      // Classification is tentative; greedy claiming happens below
+      continue;
+    }
+
+    // Multiple candidates — sort by score descending
+    candidates.sort((a, b) => b.score - a.score);
+
+    const best = candidates[0];
+    const second = candidates[1];
+    const margin = best.score - second.score;
+
+    if (margin >= SCORING_POLICY.MIN_MARGIN) {
+      // Clear winner — will be claimed in greedy phase
+      continue;
+    } else {
+      // Ambiguous — cannot distinguish
+      ambiguous.push({
+        freshUiElement: fresh,
+        candidates: candidates.map((c) => ({
+          storedElement: c.stored,
+          matchScore: c.score,
+        })),
+      });
+      classifiedFresh.add(fresh.elementId);
+    }
+  }
+
+  // Phase 3: Greedy 1:1 claiming on MATCHED pairs only
+  // Collect all confidently-matchable pairs (single-candidate or margin-clear)
+  const greedyCandidates: ScoredCandidate[] = [];
+  for (const fresh of freshElements) {
+    if (classifiedFresh.has(fresh.elementId)) continue; // Already classified
+
+    const candidates = allCandidates.get(fresh.elementId) ?? [];
+    if (candidates.length === 1) {
+      greedyCandidates.push(candidates[0]);
+    } else if (candidates.length > 1) {
+      // Multiple candidates with sufficient margin — take the best
+      candidates.sort((a, b) => b.score - a.score);
+      greedyCandidates.push(candidates[0]);
+    }
+  }
+
+  // Sort by score descending — highest confidence first
+  greedyCandidates.sort((a, b) => b.score - a.score);
+
+  const claimedFresh = new Set<string>();
+  const claimedStored = new Set<string>();
+
+  for (const { fresh, stored, score } of greedyCandidates) {
+    if (claimedFresh.has(fresh.elementId) || claimedStored.has(stored.id)) {
+      // Conflict — this fresh element's best candidate was claimed by another.
+      // It becomes unmatched (its match was taken by a higher-scoring pair).
+      continue;
+    }
+
+    // Compute margin for this match
+    const candidates = allCandidates.get(fresh.elementId) ?? [];
+    let margin = Infinity;
+    if (candidates.length > 1) {
+      const sorted = [...candidates].sort((a, b) => b.score - a.score);
+      margin = sorted[0].score - sorted[1].score;
+    }
+
+    matched.push({
       storedElement: stored,
       freshUiElement: fresh,
       matchScore: score,
+      margin,
     });
-    matchedFresh.add(fresh.elementId);
-    matchedStored.add(stored.id);
+    claimedFresh.add(fresh.elementId);
+    claimedStored.add(stored.id);
   }
 
-  // Collect unmatched fresh elements
-  const unmatched = freshElements.filter((e) => !matchedFresh.has(e.elementId));
+  // Any fresh elements not classified and not claimed → unmatched
+  for (const fresh of freshElements) {
+    if (
+      !classifiedFresh.has(fresh.elementId) &&
+      !claimedFresh.has(fresh.elementId)
+    ) {
+      unmatched.push(fresh);
+    }
+  }
 
-  return { matches, unmatched };
+  return { matched, ambiguous, unmatched };
 }
 
 // ── Exported helpers (for testing) ───────────────────────────
 
-export { extractSignature, extractStoredSignature, computeSimilarity, MATCH_THRESHOLD };
+export {
+  extractSignature,
+  extractStoredSignature,
+  computeSimilarity,
+  MATCH_THRESHOLD,
+};

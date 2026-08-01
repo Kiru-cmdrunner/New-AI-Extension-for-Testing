@@ -67,6 +67,40 @@ export function createLocatorStrategy(input: CreateLocatorStrategyInput): Locato
   };
 }
 
+// ── ElementIdentityRecord (R4: durable semantic identity) ──
+
+/**
+ * Stable semantic identity for an Element — used by ElementMatchingService
+ * for cross-session reconciliation and healing. Populated at creation time
+ * from ElementIdentity. All fields are nullable for backward compatibility
+ * with pre-R4 Elements (identity === null).
+ *
+ * Design: .drytis/specs/r4-element-identity-matching-foundation.md §4
+ *
+ * This is NOT a locator — it describes "what this element IS" semantically,
+ * not "how to physically find it." Locators live in locatorStrategies[].
+ */
+export interface ElementIdentityRecord {
+  /** Accessible name at capture time (frozen; NOT the editable logicalName). */
+  readonly accessibleName: string | null;
+  /** ARIA role (explicit or implicit). */
+  readonly ariaRole: string | null;
+  /** HTML tag name. */
+  readonly tag: string | null;
+  /** HTML `name` attribute — backend-facing form field identifier. */
+  readonly name: string | null;
+  /** `aria-label` attribute — explicit per-element label. */
+  readonly ariaLabel: string | null;
+  /** Up to 10 ancestor role strings from recording-time DomContext. */
+  readonly ancestorRoles: readonly string[] | null;
+  /** `data-testid` attribute value. */
+  readonly testId: string | null;
+  /** `data-cy` attribute value. */
+  readonly dataCy: string | null;
+  /** `data-qa` attribute value. */
+  readonly dataQa: string | null;
+}
+
 // ── Element (aggregate root) ──────────────────────────────
 
 /** Element entity — a logical UI element with ranked locator strategies. */
@@ -85,6 +119,15 @@ export interface Element {
   readonly lastHealedAt: string | null;
   /** History of heal events. Empty if never healed. */
   readonly healHistory: HealEvent[];
+
+  // ── R4: Durable semantic identity (null for pre-R4 Elements) ──
+  /**
+   * Frozen semantic identity captured at recording time. Used by
+   * ElementMatchingService for cross-session matching. Separated from
+   * logicalName (which is user-editable) to prevent UI renames from
+   * breaking matching. Null for Elements created before R4.
+   */
+  readonly identity: ElementIdentityRecord | null;
 }
 
 /** Input for creating a new Element. */
@@ -94,6 +137,8 @@ export interface CreateElementInput {
   description?: string;
   pageOrComponent?: string;
   locatorStrategies: CreateLocatorStrategyInput[];
+  /** R4: Durable semantic identity. Omitted for pre-R4 compatibility. */
+  identity?: ElementIdentityRecord | null;
 }
 
 /** Update input — only metadata fields change; locatorStrategies has its own update path. */
@@ -107,6 +152,8 @@ export interface UpdateElementInput {
   healHistory?: HealEvent[];
   /** Last healed timestamp. */
   lastHealedAt?: string | null;
+  /** R4: Updated identity from fresh observation during healing. */
+  identity?: ElementIdentityRecord | null;
 }
 
 /** [future] A self-healing event record. Schema-ready; not used in V1 logic. */
@@ -137,6 +184,12 @@ export interface HealElementInput {
   readonly newStrategies: CreateLocatorStrategyInput[];
   /** Context about the healing operation. */
   readonly context: HealContext;
+  /**
+   * R4: Fresh semantic identity from the observation that triggered healing.
+   * When provided, non-null fields overwrite the stored identity; null fields
+   * are preserved from the stored identity (don't lose information).
+   */
+  readonly updatedIdentity?: ElementIdentityRecord | null;
 }
 
 /**
@@ -144,6 +197,35 @@ export interface HealElementInput {
  */
 function strategiesEqual(a: LocatorStrategy, b: LocatorStrategy): boolean {
   return a.type === b.type && a.value === b.value;
+}
+
+/**
+ * R4: Merge a fresh identity record into a stored identity.
+ *
+ * Non-null fields from `fresh` overwrite the corresponding stored field.
+ * Null fields on `fresh` are preserved from `stored` (don't lose
+ * information just because the recorder didn't capture it this time).
+ *
+ * If `stored` is null (pre-R4 Element), the fresh identity becomes the
+ * new identity (may still be null if fresh is also null).
+ */
+function mergeIdentity(
+  stored: ElementIdentityRecord | null,
+  fresh: ElementIdentityRecord | null,
+): ElementIdentityRecord | null {
+  if (!fresh) return stored;
+  if (!stored) return fresh;
+  return {
+    accessibleName: fresh.accessibleName ?? stored.accessibleName,
+    ariaRole: fresh.ariaRole ?? stored.ariaRole,
+    tag: fresh.tag ?? stored.tag,
+    name: fresh.name ?? stored.name,
+    ariaLabel: fresh.ariaLabel ?? stored.ariaLabel,
+    ancestorRoles: fresh.ancestorRoles ?? stored.ancestorRoles,
+    testId: fresh.testId ?? stored.testId,
+    dataCy: fresh.dataCy ?? stored.dataCy,
+    dataQa: fresh.dataQa ?? stored.dataQa,
+  };
 }
 
 /**
@@ -237,12 +319,16 @@ export function healElement(existing: Element, input: HealElementInput): Element
     newStrategies: merged,
   };
 
+  // R4: Merge fresh identity into stored identity (field-level merge)
+  const mergedIdentity = mergeIdentity(existing.identity, input.updatedIdentity ?? null);
+
   return {
     ...existing,
     locatorStrategies: merged,
     status: ElementStatus.ACTIVE,
     lastHealedAt: now,
     healHistory: [...existing.healHistory, healEvent],
+    identity: mergedIdentity,
     updatedAt: now,
   };
 }
@@ -303,6 +389,7 @@ export function createElement(input: CreateElementInput): Element {
     updatedAt: now,
     lastHealedAt: null,
     healHistory: [],
+    identity: input.identity ?? null,
   };
 }
 
@@ -349,6 +436,7 @@ export function updateElement(existing: Element, input: UpdateElementInput): Ele
     locatorStrategies,
     healHistory: input.healHistory ?? existing.healHistory,
     lastHealedAt: input.lastHealedAt ?? existing.lastHealedAt,
+    identity: input.identity !== undefined ? input.identity : existing.identity,
     updatedAt: new Date().toISOString(),
   };
 }
