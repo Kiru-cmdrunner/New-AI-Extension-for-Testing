@@ -39,7 +39,7 @@ export class DexieCapabilityRepository implements CapabilityRepository {
 
   async findByReviewState(reviewState: string): Promise<Capability[]> {
     return this.capabilities
-      .filter((c) => (c as Capability & { reviewState?: string }).reviewState === reviewState)
+      .filter((c) => c.reviewState === reviewState)
       .toArray();
   }
 }

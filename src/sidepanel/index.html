@@ -48,6 +48,12 @@
           </svg>
           <span>Browse Repository</span>
         </button>
+        <button id="capabilities-btn" class="btn btn--secondary btn--lg">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+          <span>Capabilities</span>
+        </button>
       </div>
 
       <!-- ════════ NEW TEST CASE VIEW ════════ -->
@@ -244,9 +250,7 @@
           <div class="repo-status__header">
             <h2 class="repo-status__title">📋 Capability Review</h2>
           </div>
-          <div class="repo-status__body" id="capability-review-body">
-            <p class="repo-status__hint">A capability candidate is pending review.</p>
-          </div>
+          <div class="repo-status__body" id="capability-review-body"></div>
         </div>
 
         <!-- ══════ Element Healing Summary (Phase 11.5) ══════ -->
@@ -289,6 +293,23 @@
         <div class="stopped-actions">
           <button id="record-another-btn" class="btn btn--primary">New Test Case</button>
         </div>
+      </div>
+
+      <!-- ════════ CAPABILITIES VIEW ════════ -->
+      <div id="capabilities-view" class="view" hidden>
+        <div class="form-header">
+          <h2 class="form-header__title">Capability Inventory</h2>
+          <p class="form-header__subtitle">Review, manage, and version application capabilities.</p>
+        </div>
+        <div id="capabilities-inventory-body"></div>
+        <div class="stopped-actions">
+          <button id="capabilities-back-btn" class="btn btn--secondary">← Back</button>
+        </div>
+      </div>
+
+      <!-- ════════ CAPABILITY DETAIL VIEW ════════ -->
+      <div id="capability-detail-view" class="view" hidden>
+        <div id="capability-detail-body"></div>
       </div>
 
     </main>

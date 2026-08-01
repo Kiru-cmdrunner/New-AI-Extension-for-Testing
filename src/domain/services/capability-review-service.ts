@@ -15,7 +15,7 @@
  */
 
 import type { CapabilityCandidate, CapabilityInput } from '../entities/capability-candidate';
-import type { CapabilityReview, CapabilityReviewEdits, CapabilityReviewState, MatchSuggestionSummary } from '../entities/capability-review';
+import type { CapabilityReview, CapabilityReviewEdits, MatchSuggestionSummary } from '../entities/capability-review';
 import type { Capability } from '../entities/capability';
 import type { CapabilityVersion } from '../entities/capability-version';
 import type { P2CapabilityContract } from '../entities/p2-capability-contract';
@@ -188,20 +188,12 @@ export function processDecision(
     });
   }
 
-  // Extend capability with P1 fields (dataRequirements, successCriteria, reviewState, currentVersion)
-  // These are additive to the existing Capability interface via casting.
-  const existingP1Fields = existingCapability
-    ? (existingCapability as Capability & { dataRequirements?: DataRequirement[]; successCriteria?: SuccessCriterion[]; reviewState?: string; currentVersion?: number })
-    : null;
+  // Set P1 lifecycle fields on the capability (typed fields on Capability interface)
+  const nextVersionNumber = existingCapability?.currentVersion
+    ? existingCapability.currentVersion + 1
+    : 1;
 
-  const nextVersionNumber = existingP1Fields?.currentVersion ? existingP1Fields.currentVersion + 1 : 1;
-
-  const capabilityWithP1: Capability & {
-    reviewState: CapabilityReviewState;
-    currentVersion: number;
-    dataRequirements: DataRequirement[];
-    successCriteria: SuccessCriterion[];
-  } = {
+  const capabilityWithP1: Capability = {
     ...capability,
     reviewState: 'approved',
     currentVersion: nextVersionNumber,

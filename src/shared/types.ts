@@ -602,6 +602,8 @@ export function isAppMessage(value: unknown): value is AppMessage {
       'OBSERVED_EVENT',
       'IFRAME_SELECTORS',
       'RECORDED_EVENT',
+      'APPROVE_CAPABILITY_REVIEW',
+      'REJECT_CAPABILITY_REVIEW',
     ].includes(msg['type'])
   );
 }

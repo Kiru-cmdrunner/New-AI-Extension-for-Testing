@@ -274,10 +274,10 @@ export function capabilityToVersion(
       : capability.purpose,
     dataRequirements: review.edits.inputsEdited && review.edits.editedDataRequirements
       ? [...review.edits.editedDataRequirements]
-      : (capability as Capability & { dataRequirements?: DataRequirement[] }).dataRequirements ?? [],
+      : [...capability.dataRequirements],
     successCriteria: review.edits.successCriteriaEdited && review.edits.editedSuccessCriteria
       ? [...review.edits.editedSuccessCriteria]
-      : (capability as Capability & { successCriteria?: SuccessCriterion[] }).successCriteria ?? [],
+      : [...capability.successCriteria],
     validationRules: capability.validationRules.map((r) => ({
       field: r.fieldLabel,
       type: r.ruleType,

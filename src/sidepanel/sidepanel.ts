@@ -23,19 +23,26 @@ import type { ReplayJson } from '../recorder/recorded-event';
 import type { ComponentInteraction } from '../shared/component-types';
 import type { ExecutionIRPlan, IRAssertion } from '../domain/execution-ir/types';
 import type { GeneratedFile } from '../domain/execution-ir/adapters/ir-code-generator';
+import type { CapabilityCandidate } from '../domain/entities/capability-candidate';
+import type { CapabilityReview } from '../domain/entities/capability-review';
+import { renderReviewCard, showReviewStatus } from './components/capability-review-card';
+import { renderCapabilityInventory } from './components/capability-inventory';
+import { renderCapabilityDetail } from './components/capability-detail';
 
 /** Storage key for Component Runtime interactions. */
 const LIVE_INTERACTIONS_KEY = 'cmdrunner_live_interactions';
 
 // ── View Management ────────────────────────────────────────
 
-type ViewName = 'home' | 'new-tc' | 'recording' | 'stopped';
+type ViewName = 'home' | 'new-tc' | 'recording' | 'stopped' | 'capabilities' | 'capability-detail';
 
 const views: Record<ViewName, HTMLElement> = {
   'home': document.getElementById('home-view')!,
   'new-tc': document.getElementById('new-tc-view')!,
   'recording': document.getElementById('recording-view')!,
   'stopped': document.getElementById('stopped-view')!,
+  'capabilities': document.getElementById('capabilities-view')!,
+  'capability-detail': document.getElementById('capability-detail-view')!,
 };
 
 function showView(name: ViewName): void {
@@ -117,6 +124,12 @@ const repoStatusBody = document.getElementById('repo-status-body')!;
 // Capability review section (P1)
 const capabilityReviewSection = document.getElementById('capability-review-section')!;
 const capabilityReviewBody = document.getElementById('capability-review-body')!;
+
+// Capabilities inventory view (P1)
+const capabilitiesBtn = document.getElementById('capabilities-btn')!;
+const capabilitiesInventoryBody = document.getElementById('capabilities-inventory-body')!;
+const capabilitiesBackBtn = document.getElementById('capabilities-back-btn')!;
+const capabilityDetailBody = document.getElementById('capability-detail-body')!;
 
 const healingStatusSection = document.getElementById('healing-status-section')!;
 const healingStatusBody = document.getElementById('healing-status-body')!;
@@ -761,35 +774,99 @@ async function loadPendingCapabilityReview(): Promise<{ reviewId: string; decisi
 }
 
 /**
- * Render the capability review status in the stopped view.
+ * Render the full capability review card in the stopped view.
  *
- * This shows whether a capability candidate is pending review. The actual
- * review UI (approve/reject/edit) is a future P1 enhancement — for now we
- * surface the review status so the user knows a review is pending.
+ * Loads the candidate, interactions, and review data from storage,
+ * then delegates to the capability-review-card component for rendering.
+ * Wires approve/reject/override/edit callbacks to the service worker.
  */
-function renderCapabilityReview(data: { reviewId: string; decision: string }): void {
-  capabilityReviewBody.innerHTML = '';
+async function renderCapabilityReview(data: { reviewId: string; decision: string }): Promise<void> {
+  try {
+    // Load candidate from storage
+    const candidateRaw = await StorageService.getRaw(StorageKeys.CAPABILITY_CANDIDATE);
+    if (!candidateRaw) {
+      capabilityReviewSection.hidden = true;
+      return;
+    }
+    const candidate = candidateRaw as CapabilityCandidate;
 
-  const row = document.createElement('div');
-  row.className = 'repo-status__row';
+    // Load interactions for evidence display
+    const interactionsRaw = await StorageService.getRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED);
+    const interactions: ComponentInteraction[] = Array.isArray(interactionsRaw)
+      ? interactionsRaw as ComponentInteraction[]
+      : [];
 
-  const label = document.createElement('span');
-  label.className = 'repo-status__label';
-  label.textContent = 'Status:';
-  row.appendChild(label);
+    // Build a minimal review object from the stored reviewId + decision
+    const review: CapabilityReview = {
+      reviewId: data.reviewId,
+      sessionId: '',
+      capabilityCandidateId: candidate.capabilityId,
+      state: 'pending',
+      matchSuggestion: {
+        decision: data.decision === 'auto-merge' ? 'auto-merge' : data.decision === 'ambiguous' ? 'ambiguous' : 'new-capability',
+        bestMatchId: null,
+        bestMatchScore: null,
+        bestMatchName: null,
+      },
+      reviewedAt: null,
+      reviewedBy: null,
+      reviewNote: null,
+      edits: {
+        nameChanged: false,
+        purposeChanged: false,
+        inputsEdited: false,
+        successCriteriaEdited: false,
+        editedName: null,
+        editedPurpose: null,
+        editedDataRequirements: null,
+        editedSuccessCriteria: null,
+      },
+      resultCapabilityId: null,
+      resultVersionId: null,
+    };
 
-  const badge = document.createElement('span');
-  badge.className = 'repo-status__badge repo-status__badge--ambiguous';
-  badge.textContent = 'Pending Review';
-  row.appendChild(badge);
+    // Load success indicators from the knowledge fragment
+    let successIndicators: import('../domain/entities/application-knowledge').SuccessIndicator[] = [];
+    try {
+      const fragmentRaw = await StorageService.getRaw(StorageKeys.KNOWLEDGE_FRAGMENT);
+      if (fragmentRaw && typeof fragmentRaw === 'object') {
+        const fragment = fragmentRaw as { behavioralContracts?: Array<{ successIndicators?: typeof successIndicators }> };
+        successIndicators = fragment.behavioralContracts?.flatMap((bc) => bc.successIndicators ?? []) ?? [];
+      }
+    } catch { /* non-fatal */ }
 
-  const matchHint = document.createElement('span');
-  matchHint.className = 'repo-status__value';
-  matchHint.textContent = `Match: ${data.decision.replace(/-/g, ' ')}`;
-  row.appendChild(matchHint);
-
-  capabilityReviewBody.appendChild(row);
-  capabilityReviewSection.hidden = false;
+    // Render the review card via the component
+    renderReviewCard(
+      capabilityReviewBody,
+      { review, candidate, interactions, successIndicators },
+      {
+        onApprove: (reviewId: string) => {
+          sendMessage({ type: 'APPROVE_CAPABILITY_REVIEW', reviewId }).catch(() => {});
+          showReviewStatus(capabilityReviewBody, 'Approved — capability saved to inventory.', 'success');
+          // Disable action buttons
+          const card = capabilityReviewBody.querySelector('.capability-review-card');
+          if (card) card.classList.add('capability-review-card--decided');
+        },
+        onReject: (reviewId: string) => {
+          sendMessage({ type: 'REJECT_CAPABILITY_REVIEW', reviewId }).catch(() => {});
+          showReviewStatus(capabilityReviewBody, 'Rejected — candidate discarded.', 'info');
+          const card = capabilityReviewBody.querySelector('.capability-review-card');
+          if (card) card.classList.add('capability-review-card--decided');
+        },
+        onOverrideMatch: (_reviewId: string) => {
+          showReviewStatus(capabilityReviewBody, 'Override Match not yet implemented in this UI.', 'info');
+        },
+        onEditComplete: (_reviewId: string, _edits) => {
+          showReviewStatus(capabilityReviewBody, 'Edits will be applied on approval.', 'info');
+        },
+      },
+    );
+    capabilityReviewSection.hidden = false;
+  } catch (e) {
+    // If anything fails, show a minimal fallback
+    console.warn('[P1] Failed to render capability review card:', e);
+    capabilityReviewSection.hidden = true;
+  }
 }
 
 // ── Healing Summary (Phase 11.5) ──────────────────────────
@@ -1277,6 +1354,25 @@ repoBtn.addEventListener('click', () => {
   chrome.tabs.create({ url: chrome.runtime.getURL('src/repository/index.html') });
 });
 
+// P1: Capabilities inventory
+capabilitiesBtn.addEventListener('click', async () => {
+  await renderCapabilityInventory(capabilitiesInventoryBody, {
+    onOpenReview: (_reviewId: string) => {
+      // Navigate to stopped view which shows the review card
+      showView('stopped');
+    },
+    onOpenCapability: (capabilityId: string) => {
+      showView('capability-detail');
+      renderCapabilityDetail(capabilityDetailBody, capabilityId, {
+        onBack: () => showView('capabilities'),
+      });
+    },
+  });
+  showView('capabilities');
+});
+
+capabilitiesBackBtn.addEventListener('click', () => goHome());
+
 // ── Init ───────────────────────────────────────────────────
 
 async function init(): Promise<void> {
@@ -1350,7 +1446,7 @@ async function init(): Promise<void> {
     // Load capability review status (P1)
     const pendingReview = await loadPendingCapabilityReview();
     if (pendingReview) {
-      renderCapabilityReview(pendingReview);
+      await renderCapabilityReview(pendingReview);
     } else {
       capabilityReviewSection.hidden = true;
     }

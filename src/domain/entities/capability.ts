@@ -32,6 +32,9 @@
  */
 
 import { MissingFieldError } from '../errors/invariant-errors';
+import type { DataRequirement } from './data-requirement';
+import type { SuccessCriterion } from './success-criterion';
+import type { CapabilityReviewState } from './capability-review';
 
 // ── Sub-types ─────────────────────────────────────────────
 
@@ -127,6 +130,16 @@ export interface Capability {
   readonly purpose: string;
   readonly confidence: CapabilityConfidence;
 
+  // ── P1: Capability Lifecycle Management fields ──
+  /** Review state: tracks whether this capability has been reviewed/approved. */
+  readonly reviewState: CapabilityReviewState;
+  /** Current version number (0 = not yet versioned, increments on each approval). */
+  readonly currentVersion: number;
+  /** Formal data requirements (populated when first version is approved). */
+  readonly dataRequirements: DataRequirement[];
+  /** Formal success criteria (populated when first version is approved). */
+  readonly successCriteria: SuccessCriterion[];
+
   // ── Accumulated understanding (grows over time) ──
   readonly inputs: CapabilityInput[];
   readonly validationRules: CapabilityValidationRule[];
@@ -188,6 +201,11 @@ export function createCapability(input: CreateCapabilityInput): Capability {
     name,
     purpose: input.purpose?.trim() ?? '',
     confidence: 'candidate',
+    // P1 fields — initialized per INV-P1-1/2/3
+    reviewState: 'pending',
+    currentVersion: 0,
+    dataRequirements: [],
+    successCriteria: [],
     inputs: [...input.inputs],
     validationRules: [...input.validationRules],
     observedOutcomes: [...input.observedOutcomes],

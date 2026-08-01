@@ -453,6 +453,11 @@ async function handleStopRecording(): Promise<void> {
       await StorageService.setRaw(StorageKeys.PENDING_CAPABILITY_REVIEW, persistenceResult.reviewId);
       await StorageService.setRaw(StorageKeys.REPOSITORY_CAPABILITY_DECISION, persistenceResult.capabilityDecision);
 
+      // P1: Store the capability candidate for the side panel review card
+      if (understandingResult?.capability) {
+        await StorageService.setRaw(StorageKeys.CAPABILITY_CANDIDATE, understandingResult.capability);
+      }
+
       console.info('[Repository V2] Session persisted:', {
         sessionId: persistenceResult.sessionId,
         reviewId: persistenceResult.reviewId,
@@ -966,10 +971,25 @@ async function handleCapabilityReviewDecision(
       await repos.capabilityVersions.create(result.version);
     }
 
+    if (result.capability) {
+      // Update the capability inventory in chrome.storage.local for the side panel.
+      // CAPABILITY_INVENTORY holds a Capability[] array for inventory display.
+      const existing = await StorageService.getRaw(StorageKeys.CAPABILITY_INVENTORY);
+      const inventory: import('../domain/entities/capability').Capability[] =
+        Array.isArray(existing) ? existing as import('../domain/entities/capability').Capability[] : [];
+      const idx = inventory.findIndex((c) => c.id === result.capability!.id);
+      if (idx >= 0) {
+        inventory[idx] = result.capability;
+      } else {
+        inventory.push(result.capability);
+      }
+      await StorageService.setRaw(StorageKeys.CAPABILITY_INVENTORY, inventory);
+    }
+
     if (result.contract) {
-      // Store the P2 contract in chrome.storage.local for P2/P3 consumption
+      // Store the P2 contract for P2/P3 consumption (separate from inventory)
       await StorageService.setRaw(
-        StorageKeys.CAPABILITY_INVENTORY,
+        StorageKeys.CAPABILITY_INVENTORY + '_contract',
         result.contract,
       );
     }

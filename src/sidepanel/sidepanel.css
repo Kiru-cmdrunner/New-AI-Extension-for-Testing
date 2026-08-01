@@ -1566,3 +1566,419 @@ body {
   background: #f3f4f6;
   color: #6b7280;
 }
+
+/* ════════════════════════════════════════════════════════════════
+   P1: Capability Review Card
+   ════════════════════════════════════════════════════════════════ */
+
+.capability-review-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.capability-review-card--decided button {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.cap-review__header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cap-review__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cap-review__value {
+  font-size: 13px;
+  color: #1f2937;
+}
+
+.cap-review__name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.cap-review__purpose {
+  font-size: 13px;
+  color: #4b5563;
+  margin-top: 2px;
+}
+
+.cap-review__match-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.cap-review__badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cap-review__badge--auto-merge { background: #dbeafe; color: #1e40af; }
+.cap-review__badge--ambiguous { background: #fef3c7; color: #92400e; }
+.cap-review__badge--new-capability { background: #d1fae5; color: #065f46; }
+
+.cap-review__section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cap-review__section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cap-review__data-table {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cap-review__data-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 0.5fr 1.5fr;
+  gap: 4px;
+  font-size: 12px;
+  padding: 3px 0;
+}
+
+.cap-review__data-row--header .cap-review__data-cell {
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.cap-review__data-cell {
+  color: #374151;
+  word-break: break-word;
+}
+
+.cap-review__criterion {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 3px 0;
+}
+
+.cap-review__icon {
+  color: #10b981;
+  font-weight: bold;
+}
+
+.cap-review__timeout {
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+.cap-review__empty {
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.cap-review__interaction-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cap-review__interaction-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  padding: 2px 0;
+  color: #4b5563;
+}
+
+.cap-review__interaction-row--low-confidence {
+  background: #fef3c7;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.cap-review__interaction-index {
+  color: #9ca3af;
+  min-width: 24px;
+}
+
+.cap-review__interaction-type {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.cap-review__interaction-desc {
+  color: #6b7280;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cap-review__interaction-confidence {
+  color: #9ca3af;
+  font-size: 10px;
+}
+
+.cap-review__interaction-flag {
+  color: #dc2626;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.cap-review__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.cap-review__btn-approve,
+.cap-review__btn-reject,
+.cap-review__btn-override {
+  flex-shrink: 0;
+}
+
+.cap-review__status {
+  width: 100%;
+  font-size: 12px;
+  padding: 6px 0;
+  min-height: 20px;
+}
+
+.cap-review__status--success { color: #059669; }
+.cap-review__status--error { color: #dc2626; }
+.cap-review__status--info { color: #2563eb; }
+
+.cap-review__edit-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.cap-review__edit-input {
+  flex: 1;
+  padding: 3px 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.cap-review__edit-input--small {
+  max-width: 60px;
+  flex: 0 0 60px;
+}
+
+.cap-review__edit-select {
+  padding: 3px 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+  font-size: 12px;
+  background: white;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   P1: Capability Inventory
+   ════════════════════════════════════════════════════════════════ */
+
+.cap-inventory__section {
+  margin-bottom: 16px;
+}
+
+.cap-inventory__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px 0;
+}
+
+.cap-inventory__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-size: 13px;
+}
+
+.cap-inventory__item:hover {
+  background: #f9fafb;
+}
+
+.cap-inventory__item--pending {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.cap-inventory__item--pending:hover {
+  background: #fef3c7;
+}
+
+.cap-inventory__item-name {
+  font-weight: 500;
+  color: #1f2937;
+  flex: 1;
+}
+
+.cap-inventory__version-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: #e0e7ff;
+  color: #3730a3;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cap-inventory__item-meta {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.cap-inventory__empty {
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+  padding: 12px 0;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   P1: Capability Detail
+   ════════════════════════════════════════════════════════════════ */
+
+.cap-detail__header {
+  margin-bottom: 16px;
+}
+
+.cap-detail__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 4px 0;
+}
+
+.cap-detail__purpose {
+  font-size: 13px;
+  color: #4b5563;
+  margin: 0 0 6px 0;
+}
+
+.cap-detail__meta {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.cap-detail__section {
+  margin-bottom: 16px;
+}
+
+.cap-detail__section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cap-detail__req-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 13px;
+}
+
+.cap-detail__req-name {
+  font-weight: 500;
+  color: #1f2937;
+  flex: 1;
+}
+
+.cap-detail__req-badges {
+  display: flex;
+  gap: 4px;
+}
+
+.cap-detail__badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.cap-detail__badge--method {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.cap-detail__badge--required {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.cap-detail__criterion-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.cap-detail__criterion-desc {
+  color: #1f2937;
+}
+
+.cap-detail__empty {
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.cap-detail__version-info {
+  font-size: 12px;
+  color: #4b5563;
+  margin: 4px 0;
+}
+
+.cap-detail__provenance {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.cap-detail__not-found {
+  font-size: 14px;
+  color: #dc2626;
+  padding: 20px 0;
+}
