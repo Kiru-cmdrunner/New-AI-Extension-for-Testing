@@ -359,17 +359,18 @@ describe('R4 M: Matching Outcomes', () => {
   it('M10: testId changed, all else same → MATCHED', () => {
     const fresh = [makeUiElement({
       elementId: 'e1', accessibleName: 'Submit', testId: 'submit-button',
-      ariaRole: 'button', tag: 'BUTTON',
-    })];
+      ariaRole: 'button', tag: 'BUTTON', name: 'submit',
+    }, { ancestorRoles: ['form', 'body'] })];
     const stored = [makeStoredElement({
       logicalName: 'Submit', testId: 'submit-btn',
       identity: makeIdentityRecord({
         accessibleName: 'Submit', testId: 'submit-btn', ariaRole: 'button', tag: 'BUTTON',
+        name: 'submit', ancestorRoles: ['form', 'body'],
       }),
     })];
     const result = matchElements(fresh, stored);
 
-    // testId mismatch but accessibleName + ariaRole + tag match
+    // testId mismatch but accessibleName + ariaRole + tag + name + ancestors match
     expect(result.matched).toHaveLength(1);
   });
 
@@ -419,12 +420,42 @@ describe('R4 M: Matching Outcomes', () => {
     expect(result.matched).toHaveLength(1);
   });
 
-  it('M14: pre-R4 Element, same name, no testId → AMBIGUOUS if multiple', () => {
+  it('M14: R4 Elements with identical weak identity, no testId → AMBIGUOUS if multiple', () => {
+    const fresh = [makeUiElement({
+      elementId: 'e1', accessibleName: 'Delete', testId: null,
+      ariaRole: 'button', tag: 'BUTTON',
+    }, { sourceUrl: 'https://app.com/login' })];
+    // Two R4 elements with identical identity — cannot distinguish
+    const identicalIdentity = makeIdentityRecord({
+      accessibleName: 'Delete', testId: null, ariaRole: 'button', tag: 'BUTTON',
+      name: null, ariaLabel: null, ancestorRoles: null,
+    });
+    const stored = [
+      makeStoredElement({
+        identity: identicalIdentity, logicalName: 'Delete',
+        pageOrComponent: 'https://app.com/login',
+        locatorStrategies: [{ type: LocatorStrategyType.CSS, value: '.del1', priority: 1, confidence: 0.4 }],
+      }),
+      makeStoredElement({
+        identity: identicalIdentity, logicalName: 'Delete',
+        pageOrComponent: 'https://app.com/login',
+        locatorStrategies: [{ type: LocatorStrategyType.CSS, value: '.del2', priority: 1, confidence: 0.4 }],
+      }),
+    ];
+    const result = matchElements(fresh, stored);
+
+    // Two identical R4 elements with same identity → same score → AMBIGUOUS
+    expect(result.ambiguous).toHaveLength(1);
+  });
+
+  it('M14b: pre-R4 Elements (no identity) with no testId → UNMATCHED (insufficient evidence)', () => {
+    // Pre-R4 elements lack ariaRole/tag in their fallback signature, so
+    // corrected scoring places them below threshold (0.625 < 0.70).
+    // This is safe — insufficient identity → cannot confidently match.
     const fresh = [makeUiElement({
       elementId: 'e1', accessibleName: 'Delete', testId: null,
       ariaRole: 'button', tag: 'BUTTON',
     })];
-    // Two pre-R4 elements with same name, no testId
     const stored = [
       makeStoredElement({
         identity: null, logicalName: 'Delete', testId: null,
@@ -437,8 +468,9 @@ describe('R4 M: Matching Outcomes', () => {
     ];
     const result = matchElements(fresh, stored);
 
-    // Pre-R4 fallback has weaker identity — should be AMBIGUOUS
-    expect(result.ambiguous).toHaveLength(1);
+    // Pre-R4 fallback score 0.625 < 0.70 → UNMATCHED (not AMBIGUOUS)
+    expect(result.unmatched).toHaveLength(1);
+    expect(result.ambiguous).toHaveLength(0);
   });
 
   it('M15: no candidates above threshold → UNMATCHED', () => {

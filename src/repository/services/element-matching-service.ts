@@ -227,10 +227,14 @@ function stringEqual(a: string, b: string): number {
 }
 
 /**
- * Neutral string equality for nullable fields.
- * When both sides are missing → NEUTRAL_BOTH_MISSING (0.5).
- * When one side is missing → NEUTRAL (0.5).
- * When both present → exact match (1.0) or mismatch (0.0).
+ * Neutral string equality for nullable identity fields.
+ *
+ * MATCH:  both present and equal → 1.0
+ * CONFLICT: both present and differ → 0.0
+ * UNKNOWN: one or both missing → NEUTRAL (0.5)
+ *
+ * Shared absence is NOT evidence of agreement — it means we don't know.
+ * This prevents scores from inflating when identity information is sparse.
  */
 function stringEqualNeutral(
   a: string | null,
@@ -239,8 +243,7 @@ function stringEqualNeutral(
 ): number {
   const aVal = a?.trim() ?? '';
   const bVal = b?.trim() ?? '';
-  if (!aVal && !bVal) return 1.0; // Both missing = consistent
-  if (!aVal || !bVal) return neutralScore; // One missing = unknown
+  if (!aVal || !bVal) return neutralScore; // Either missing = unknown
   return aVal.toLowerCase() === bVal.toLowerCase() ? 1.0 : 0.0;
 }
 

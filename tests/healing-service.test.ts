@@ -19,6 +19,7 @@ import type { UiElement } from '../src/domain/entities/ui-element';
 import type { ElementIdentity } from '../src/shared/types';
 import { LocatorStrategyType, ElementStatus } from '../src/domain/enums';
 import type { CmdRunnerDatabase } from '../src/repository/v2/dexie/dexie-database';
+import type { ElementIdentityRecord } from '../src/domain/entities/element';
 
 // ── Test Helpers ────────────────────────────────────────────
 
@@ -71,6 +72,7 @@ async function seedElement(
   locatorType: LocatorStrategyType,
   locatorValue: string,
   pageOrComponent = 'https://app.example.com/orders',
+  identity: ElementIdentityRecord | null = null,
 ): Promise<string> {
   const elementId = `stored-${logicalName.toLowerCase().replace(/\s/g, '-')}`;
   await db.elements.add({
@@ -94,6 +96,7 @@ async function seedElement(
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
     lastHealedAt: null,
+    identity,
   });
   return elementId;
 }
@@ -147,8 +150,11 @@ describe('Healing Service', () => {
     });
 
     it('heals a matched element when the locator value has changed', async () => {
-      // Seed with CSS locator '#old-submit'
-      await seedElement(db, 'proj-1', 'Submit', LocatorStrategyType.CSS, '#old-submit');
+      // Seed with CSS locator '#old-submit' and R4 identity matching the fresh element
+      await seedElement(db, 'proj-1', 'Submit', LocatorStrategyType.CSS, '#old-submit',
+        'https://app.example.com/orders',
+        { accessibleName: 'Submit', ariaRole: 'button', tag: 'BUTTON', name: null,
+          ariaLabel: null, ancestorRoles: null, testId: 'submit-btn', dataCy: null, dataQa: null });
 
       // Fresh recording: same element, different CSS, plus testId
       const freshElements: UiElement[] = [
@@ -214,7 +220,10 @@ describe('Healing Service', () => {
 
     it('handles a mixed scenario: some healed, some unchanged, some created', async () => {
       // Seed: Submit with CSS '#old-submit', Cancel with TEST_ID + ACCESSIBLE_NAME
-      await seedElement(db, 'proj-1', 'Submit', LocatorStrategyType.CSS, '#old-submit');
+      await seedElement(db, 'proj-1', 'Submit', LocatorStrategyType.CSS, '#old-submit',
+        'https://app.example.com/orders',
+        { accessibleName: 'Submit', ariaRole: 'button', tag: 'BUTTON', name: null,
+          ariaLabel: null, ancestorRoles: null, testId: 'submit-btn', dataCy: null, dataQa: null });
       await db.elements.add({
         id: 'stored-cancel',
         projectId: 'proj-1',
@@ -230,6 +239,8 @@ describe('Healing Service', () => {
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
         lastHealedAt: null,
+        identity: { accessibleName: 'Cancel', ariaRole: 'button', tag: 'BUTTON', name: null,
+          ariaLabel: null, ancestorRoles: null, testId: 'cancel-btn', dataCy: null, dataQa: null },
       });
 
       // Fresh:
@@ -264,7 +275,10 @@ describe('Healing Service', () => {
     });
 
     it('persists healed elements with heal history entries', async () => {
-      await seedElement(db, 'proj-1', 'Submit', LocatorStrategyType.CSS, '#old-submit');
+      await seedElement(db, 'proj-1', 'Submit', LocatorStrategyType.CSS, '#old-submit',
+        'https://app.example.com/orders',
+        { accessibleName: 'Submit', ariaRole: 'button', tag: 'BUTTON', name: null,
+          ariaLabel: null, ancestorRoles: null, testId: 'submit-btn', dataCy: null, dataQa: null });
 
       const freshElements: UiElement[] = [
         makeUiElement('el-1', makeIdentity({
@@ -303,7 +317,10 @@ describe('Healing Service', () => {
 
     it('detects new locator types as changes (stored lacks test_id, fresh has it)', async () => {
       // Stored: only CSS
-      await seedElement(db, 'proj-1', 'Submit', LocatorStrategyType.CSS, '#submit-btn');
+      await seedElement(db, 'proj-1', 'Submit', LocatorStrategyType.CSS, '#submit-btn',
+        'https://app.example.com/orders',
+        { accessibleName: 'Submit', ariaRole: 'button', tag: 'BUTTON', name: null,
+          ariaLabel: null, ancestorRoles: null, testId: 'submit-btn', dataCy: null, dataQa: null });
 
       // Fresh: same CSS + new testId
       const freshElements: UiElement[] = [

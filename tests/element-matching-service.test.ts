@@ -71,16 +71,21 @@ function makeStoredElement(overrides: Partial<Element> = {}): Element {
 // ── computeSimilarity ────────────────────────────────────────
 
 describe('computeSimilarity', () => {
-  it('returns ~1.0 for identical signatures without ancestorRoles', () => {
+  it('returns high score for identical signatures without ancestorRoles', () => {
     // Without ancestorRoles, both-missing returns neutral (0.5) for that
-    // dimension, so identical signatures score 0.95 (not 1.0).
+    // dimension. With the R4 calibration correction (stringEqualNeutral
+    // both-missing → 0.5 for name/ariaRole/ariaLabel/tag/sourceUrl),
+    // identical signatures without ancestors score 0.825 (not 1.0).
     const sig = extractSignature(makeIdentity(), 'https://app.com/login');
-    expect(computeSimilarity(sig, sig)).toBeCloseTo(0.95, 10);
+    expect(computeSimilarity(sig, sig)).toBeCloseTo(0.825, 10);
   });
 
-  it('returns 1.0 for identical signatures with ancestorRoles', () => {
+  it('returns high score for identical signatures with ancestorRoles', () => {
+    // With ancestorRoles present and matching, that dimension scores 1.0.
+    // But name/ariaLabel remain null in the test identity, contributing
+    // neutral (0.5) each. Score = 0.875.
     const sig = extractSignature(makeIdentity(), 'https://app.com/login', ['form', 'body']);
-    expect(computeSimilarity(sig, sig)).toBe(1.0);
+    expect(computeSimilarity(sig, sig)).toBeCloseTo(0.875, 10);
   });
 
   it('returns low score for completely different elements', () => {
@@ -105,7 +110,7 @@ describe('computeSimilarity', () => {
       makeIdentity({ accessibleName: 'Submit', testId: 'submit-btn', cssSelector: 'button.different-class' }),
       'https://app.com/login',
     );
-    expect(computeSimilarity(sigA, sigB)).toBeCloseTo(0.95, 10);
+    expect(computeSimilarity(sigA, sigB)).toBeCloseTo(0.825, 10);
   });
 });
 
@@ -164,7 +169,14 @@ describe('matchElements', () => {
   describe('partial identity', () => {
     it('matches when testId is missing but accessibleName and role match', () => {
       const fresh = [makeUiElement({ testId: null, accessibleName: 'Submit', ariaRole: 'button', tag: 'BUTTON' })];
-      const stored = [makeStoredElement()];
+      const stored = [makeStoredElement({
+        pageOrComponent: 'https://app.com/login',
+        identity: {
+          accessibleName: 'Submit', ariaRole: 'button', tag: 'BUTTON',
+          name: null, ariaLabel: null, ancestorRoles: null,
+          testId: null, dataCy: null, dataQa: null,
+        },
+      })];
       const result = matchElements(fresh, stored);
 
       expect(result.matched).toHaveLength(1);
@@ -194,6 +206,12 @@ describe('matchElements', () => {
         locatorStrategies: [
           { type: LocatorStrategyType.CSS, value: '.btn', priority: 1, confidence: 0.4 },
         ],
+        pageOrComponent: 'https://app.com/login',
+        identity: {
+          accessibleName: 'Submit', ariaRole: 'button', tag: 'BUTTON',
+          name: null, ariaLabel: null, ancestorRoles: null,
+          testId: null, dataCy: null, dataQa: null,
+        },
       })];
       const result = matchElements(fresh, stored);
 
