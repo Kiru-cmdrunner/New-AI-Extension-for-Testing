@@ -249,6 +249,7 @@ function deriveInputs(fragment: ApplicationKnowledgeFragment): CapabilityInput[]
       lengthRange: constraints?.lengthRange ?? null,
       format: constraints?.format ?? null,
       validOptions: constraints?.validOptions ?? null,
+      sourceInteractionType: action.sourceInteractionType,
     });
   }
 

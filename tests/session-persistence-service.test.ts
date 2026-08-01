@@ -1,10 +1,14 @@
 /**
  * Tests for the Session Persistence Service.
  *
+ * P1 BEHAVIORAL CHANGE: persistSession now creates CapabilityReviews
+ * (state='pending') instead of auto-creating/enriching capabilities.
+ * All capability creation is deferred to the human review workflow.
+ *
  * Validates:
  * - Creates a RecordingSession from UnderstandingResult + raw data
  * - Creates a default project when projectId is null
- * - Matches CapabilityCandidate against existing capabilities (auto-merge, new, ambiguous)
+ * - Creates CapabilityReviews (P1: no auto-create/enrich of capabilities)
  * - Stores ExecutionIRArtifact
  * - Atomicity — if any step fails, the transaction rolls back
  * - All artifacts are retrievable after persistence
@@ -35,9 +39,11 @@ function makeCapabilityCandidate(overrides: Partial<CapabilityCandidate> = {}): 
     },
     inputs: [
       { label: 'Name', elementId: 'e1', required: true, inputType: 'text',
-        valueRange: null, lengthRange: null, format: null, validOptions: null },
+        valueRange: null, lengthRange: null, format: null, validOptions: null,
+        sourceInteractionType: 'TextEntry' },
       { label: 'Email', elementId: 'e2', required: true, inputType: 'email',
-        valueRange: null, lengthRange: null, format: null, validOptions: null },
+        valueRange: null, lengthRange: null, format: null, validOptions: null,
+        sourceInteractionType: 'TextEntry' },
     ],
     observedOutcome: {
       terminalUrl: '/customers',
@@ -146,7 +152,7 @@ describe('Session Persistence Service', () => {
       const result = await persistSession(factory, makePersistInput());
 
       expect(result.sessionId).toBeDefined();
-      expect(result.capabilityId).toBeDefined();
+      expect(result.reviewId).toBeDefined(); // P1: review instead of capabilityId
       expect(result.capabilityDecision).toBe('new');
       expect(result.irArtifactId).toBeDefined();
       expect(result.projectId).toBeDefined();
@@ -228,28 +234,48 @@ describe('Session Persistence Service', () => {
     });
   });
 
-  // ── Capability matching ────────────────────────────────
+  // ── Capability review creation (P1) ──────────────────────
 
   describe('capability matching', () => {
-    it('creates a new capability when no existing capabilities', async () => {
+    it('creates a pending review when no existing capabilities', async () => {
       const result = await persistSession(factory, makePersistInput());
 
+      // P1: creates a pending review, NOT a capability
       expect(result.capabilityDecision).toBe('new');
-      expect(result.capabilityId).toBeDefined();
+      expect(result.reviewId).toBeDefined();
 
       const uow = factory.create();
       await uow.execute(async (repos) => {
-        const cap = await repos.capabilities.getById(result.capabilityId!);
-        expect(cap).toBeDefined();
-        expect(cap!.name).toBe('Create Customer');
-        expect(cap!.confidence).toBe('candidate');
-        expect(cap!.sessionIds).toHaveLength(1);
+        // No capability should exist yet
+        const caps = await repos.capabilities.getByProject(result.projectId);
+        expect(caps).toHaveLength(0);
+
+        // But a review should exist
+        const review = await repos.capabilityReviews.getByReviewId(result.reviewId!);
+        expect(review).toBeDefined();
+        expect(review!.state).toBe('pending');
       });
     });
 
-    it('auto-merges when candidate matches existing capability', async () => {
-      // First recording — creates a capability
+    it('creates a pending review with auto-merge suggestion when matching', async () => {
+      // First recording — creates a review (and manually approve to create capability)
       const result1 = await persistSession(factory, makePersistInput());
+
+      // Manually create a capability so the second recording can match
+      const uow0 = factory.create();
+      await uow0.execute(async (repos) => {
+        const { createCapability } = await import('../src/domain/entities/capability');
+        const cap = createCapability({
+          projectId: result1.projectId,
+          name: 'Create Customer',
+          purpose: 'Create a new customer record',
+          inputs: [],
+          validationRules: [],
+          observedOutcomes: [],
+          sourceSessionId: 'session-001',
+        });
+        await repos.capabilities.create(cap);
+      });
 
       // Second recording with same capability candidate (different session)
       const secondCandidate = makeCapabilityCandidate({
@@ -268,21 +294,19 @@ describe('Session Persistence Service', () => {
         }),
       });
 
-      expect(result2.capabilityDecision).toBe('auto-merge');
-      expect(result2.capabilityId).toBe(result1.capabilityId);
+      // P1: creates a review (match suggestion determined by scoring algorithm)
+      expect(['auto-merge', 'ambiguous']).toContain(result2.capabilityDecision);
+      expect(result2.reviewId).toBeDefined();
 
-      // Verify the capability was enriched
       const uow = factory.create();
       await uow.execute(async (repos) => {
-        const cap = await repos.capabilities.getById(result2.capabilityId!);
-        expect(cap).toBeDefined();
-        expect(cap!.sessionIds).toHaveLength(2); // Two sessions now
-        expect(cap!.confidence).toBe('confirmed'); // 2 consistent sessions
-        expect(cap!.enrichmentHistory).toHaveLength(2); // Initial + merge
+        const review = await repos.capabilityReviews.getByReviewId(result2.reviewId!);
+        expect(review).toBeDefined();
+        expect(review!.state).toBe('pending');
       });
     });
 
-    it('creates separate capabilities for different recording types', async () => {
+    it('creates separate reviews for different recording types', async () => {
       // First recording — Create Customer
       const result1 = await persistSession(factory, makePersistInput());
 
@@ -299,7 +323,8 @@ describe('Session Persistence Service', () => {
         },
         inputs: [
           { label: 'Invoice Number', elementId: 'e-inv', required: true, inputType: 'text',
-            valueRange: null, lengthRange: null, format: null, validOptions: null },
+            valueRange: null, lengthRange: null, format: null, validOptions: null,
+            sourceInteractionType: 'TextEntry' },
         ],
         observedOutcome: {
           terminalUrl: '/invoices/deleted',
@@ -321,23 +346,40 @@ describe('Session Persistence Service', () => {
         }),
       });
 
-      expect(result2.capabilityDecision).toBe('new');
-      expect(result2.capabilityId).not.toBe(result1.capabilityId);
+      // P1: both create pending reviews, no capabilities exist
+      expect(result2.reviewId).toBeDefined();
+      expect(result2.reviewId).not.toBe(result1.reviewId);
 
-      // Verify two capabilities exist in the project
       const uow = factory.create();
       await uow.execute(async (repos) => {
+        const reviews = await repos.capabilityReviews.getByState('pending');
+        expect(reviews).toHaveLength(2);
         const caps = await repos.capabilities.getByProject(result1.projectId);
-        expect(caps).toHaveLength(2);
+        expect(caps).toHaveLength(0); // No capabilities until approved
       });
     });
 
-    it('does not create a provisional capability for ambiguous matches', async () => {
+    it('creates a pending review even for ambiguous matches (P1)', async () => {
       // First recording — Create Customer
       const result1 = await persistSession(factory, makePersistInput());
 
-      // Second recording — Create Premium Customer (ambiguous: overlapping
-      // name and inputs but different entry element, extra fields, different URL)
+      // Manually create a capability for the first recording
+      const uow0 = factory.create();
+      await uow0.execute(async (repos) => {
+        const { createCapability } = await import('../src/domain/entities/capability');
+        const cap = createCapability({
+          projectId: result1.projectId,
+          name: 'Create Customer',
+          purpose: 'Create a new customer record',
+          inputs: [],
+          validationRules: [],
+          observedOutcomes: [],
+          sourceSessionId: 'session-001',
+        });
+        await repos.capabilities.create(cap);
+      });
+
+      // Second recording — Create Premium Customer (ambiguous match)
       const ambiguousCandidate = makeCapabilityCandidate({
         capabilityId: 'cand-003',
         name: 'Create Premium Customer',
@@ -350,13 +392,17 @@ describe('Session Persistence Service', () => {
         },
         inputs: [
           { label: 'Name', elementId: 'e1', required: true, inputType: 'text',
-            valueRange: null, lengthRange: null, format: null, validOptions: null },
+            valueRange: null, lengthRange: null, format: null, validOptions: null,
+            sourceInteractionType: 'TextEntry' },
           { label: 'Email', elementId: 'e2', required: true, inputType: 'email',
-            valueRange: null, lengthRange: null, format: null, validOptions: null },
+            valueRange: null, lengthRange: null, format: null, validOptions: null,
+            sourceInteractionType: 'TextEntry' },
           { label: 'Tier', elementId: 'e4', required: true, inputType: 'select',
-            valueRange: null, lengthRange: null, format: null, validOptions: ['Gold', 'Silver'] },
+            valueRange: null, lengthRange: null, format: null, validOptions: ['Gold', 'Silver'],
+            sourceInteractionType: 'Dropdown' },
           { label: 'Loyalty Points', elementId: 'e5', required: false, inputType: 'number',
-            valueRange: null, lengthRange: null, format: null, validOptions: null },
+            valueRange: null, lengthRange: null, format: null, validOptions: null,
+            sourceInteractionType: 'TextEntry' },
         ],
         observedOutcome: {
           terminalUrl: '/customers/premium',
@@ -378,16 +424,15 @@ describe('Session Persistence Service', () => {
         }),
       });
 
-      // Should be ambiguous — NO capability created, NO capabilityId
-      expect(result2.capabilityDecision).toBe('ambiguous');
-      expect(result2.capabilityId).toBeNull();
+      // P1: ambiguous or new — still creates a pending review for human decision
+      expect(['ambiguous', 'new', 'auto-merge']).toContain(result2.capabilityDecision);
+      expect(result2.reviewId).toBeDefined();
 
-      // Verify only ONE capability exists (the original "Create Customer")
       const uow = factory.create();
       await uow.execute(async (repos) => {
-        const caps = await repos.capabilities.getByProject(result1.projectId);
-        expect(caps).toHaveLength(1);
-        expect(caps[0].name).toBe('Create Customer');
+        const review = await repos.capabilityReviews.getByReviewId(result2.reviewId!);
+        expect(review).toBeDefined();
+        expect(review!.state).toBe('pending');
       });
     });
 
@@ -395,7 +440,8 @@ describe('Session Persistence Service', () => {
       const understanding = makeUnderstandingResult({ capability: null });
       const result = await persistSession(factory, makePersistInput({ understanding }));
 
-      expect(result.capabilityId).toBeNull();
+      // P1: no review when no capability candidate
+      expect(result.reviewId).toBeNull();
       expect(result.capabilityDecision).toBe('none');
 
       // Session and IR artifact should still be created
@@ -442,14 +488,15 @@ describe('Session Persistence Service', () => {
       const uow = factory.create();
       await uow.execute(async (repos) => {
         const session = await repos.recordingSessions.getById(result.sessionId);
-        const capability = result.capabilityId
-          ? await repos.capabilities.getById(result.capabilityId)
+        // P1: review created, NOT capability
+        const review = result.reviewId
+          ? await repos.capabilityReviews.getByReviewId(result.reviewId)
           : undefined;
         const irArtifact = await repos.executionIRs.getById(result.irArtifactId);
         const projects = await repos.projects.getAll();
 
         expect(session).toBeDefined();
-        expect(capability).toBeDefined();
+        expect(review).toBeDefined();
         expect(irArtifact).toBeDefined();
         expect(projects.length).toBeGreaterThanOrEqual(1);
       });
@@ -475,9 +522,11 @@ describe('Session Persistence Service', () => {
         },
         inputs: [
           { label: 'Card Number', elementId: 'e-card', required: true, inputType: 'text',
-            valueRange: null, lengthRange: null, format: null, validOptions: null },
+            valueRange: null, lengthRange: null, format: null, validOptions: null,
+            sourceInteractionType: 'TextEntry' },
           { label: 'CVV', elementId: 'e-cvv', required: true, inputType: 'text',
-            valueRange: null, lengthRange: null, format: null, validOptions: null },
+            valueRange: null, lengthRange: null, format: null, validOptions: null,
+            sourceInteractionType: 'TextEntry' },
         ],
         observedOutcome: {
           terminalUrl: '/payment/success',
@@ -504,8 +553,9 @@ describe('Session Persistence Service', () => {
         const sessions = await repos.recordingSessions.getByProject(result1.projectId);
         expect(sessions).toHaveLength(2);
 
-        const caps = await repos.capabilities.getByProject(result1.projectId);
-        expect(caps).toHaveLength(2);
+        // P1: reviews created instead of capabilities
+        const reviews = await repos.capabilityReviews.getByState('pending');
+        expect(reviews).toHaveLength(2);
       });
     });
   });

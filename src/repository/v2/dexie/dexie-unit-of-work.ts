@@ -18,6 +18,8 @@ import type { ExecutionIRRepository } from '../interfaces/execution-ir-repositor
 import type { CapabilityRepository } from '../interfaces/capability-repository';
 import type { RecordingSessionRepository } from '../interfaces/recording-session-repository';
 import type { ExecutionRunRepository } from '../interfaces/execution-run-repository';
+import type { CapabilityReviewRepository } from './dexie-capability-review-repository';
+import type { CapabilityVersionRepository } from './dexie-capability-version-repository';
 import type { CmdRunnerDatabase } from './dexie-database';
 import { DexieProjectRepository } from './dexie-project-repository';
 import { DexieTestCaseRepository } from './dexie-test-case-repository';
@@ -27,6 +29,8 @@ import { DexieExecutionIRRepository } from './dexie-execution-ir-repository';
 import { DexieCapabilityRepository } from './dexie-capability-repository';
 import { DexieRecordingSessionRepository } from './dexie-recording-session-repository';
 import { DexieExecutionRunRepository } from './dexie-execution-run-repository';
+import { DexieCapabilityReviewRepository } from './dexie-capability-review-repository';
+import { DexieCapabilityVersionRepository } from './dexie-capability-version-repository';
 
 /** A set of repositories that all operate on the same Dexie transaction. */
 class TransactionalRepositorySet implements RepositorySet {
@@ -38,6 +42,8 @@ class TransactionalRepositorySet implements RepositorySet {
   readonly capabilities: CapabilityRepository;
   readonly recordingSessions: RecordingSessionRepository;
   readonly executionRuns: ExecutionRunRepository;
+  readonly capabilityReviews: CapabilityReviewRepository;
+  readonly capabilityVersions: CapabilityVersionRepository;
 
   constructor(db: CmdRunnerDatabase) {
     this.projects = new DexieProjectRepository(db.projects);
@@ -48,6 +54,8 @@ class TransactionalRepositorySet implements RepositorySet {
     this.capabilities = new DexieCapabilityRepository(db.capabilities);
     this.recordingSessions = new DexieRecordingSessionRepository(db.recordingSessions);
     this.executionRuns = new DexieExecutionRunRepository(db.executionRuns);
+    this.capabilityReviews = new DexieCapabilityReviewRepository(db.capabilityReviews);
+    this.capabilityVersions = new DexieCapabilityVersionRepository(db.capabilityVersions);
   }
 }
 
@@ -68,6 +76,8 @@ export class DexieUnitOfWork implements UnitOfWork {
         this.db.capabilities,
         this.db.recordingSessions,
         this.db.executionRuns,
+        this.db.capabilityReviews,
+        this.db.capabilityVersions,
       ],
       async () => {
         const repos = new TransactionalRepositorySet(this.db);

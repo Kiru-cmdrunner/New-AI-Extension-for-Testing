@@ -13,6 +13,7 @@
  */
 
 import type { IntrinsicCapability, ComponentRole } from '../enums';
+import type { InteractionType } from '../../shared/component-types';
 
 // ── InteractionContract (derived view) ───────────────────
 
@@ -157,6 +158,16 @@ export interface LogicalAction {
   readonly resultingChange: ResultingChange | null;
   /** Timestamp of the first composing transition (for temporal ordering). */
   readonly timestamp: number;
+  /**
+   * The InteractionType that the recorder classified for the originating
+   * component interaction. Carried through from ComponentInteraction.type
+   * via the component's patternType. Used by P1 to derive inputMethod on
+   * DataRequirement.
+   *
+   * Null for standalone transitions or when the component's pattern type
+   * does not map to a known InteractionType.
+   */
+  readonly sourceInteractionType: InteractionType | null;
 }
 
 /**

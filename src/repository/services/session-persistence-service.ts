@@ -6,7 +6,8 @@
  * pipeline and the Repository. It:
  *   1. Creates a RecordingSession from UnderstandingResult + raw data
  *   2. Matches the CapabilityCandidate against existing capabilities
- *   3. Creates a new Capability or enriches an existing one
+ *   3. Creates a CapabilityReview (pending) deferring capability creation
+ *      to the human review workflow (P1 change)
  *   4. Stores the ExecutionIRPlan as an ExecutionIRArtifact
  *
  * All operations are wrapped in a UnitOfWork transaction for atomicity.
@@ -30,14 +31,9 @@ import {
   createRecordingSession,
 } from '../../domain/entities/recording-session';
 import {
-  createCapability,
-  enrichCapability,
-} from '../../domain/entities/capability';
-import {
   matchCapability,
-  candidateToCreateInput,
-  candidateToEnrichInput,
 } from './capability-matching-service';
+import { createReview } from '../../domain/services/capability-review-service';
 
 export interface SessionPersistenceInput {
   /** The UnderstandingResult from the Understanding Layer. */
@@ -59,9 +55,9 @@ export interface SessionPersistenceInput {
 export interface SessionPersistenceResult {
   /** The created RecordingSession ID. */
   readonly sessionId: string;
-  /** The Capability ID (new or existing). */
-  readonly capabilityId: string | null;
-  /** Whether the capability was newly created or merged. */
+  /** The CapabilityReview ID if a review was created, null otherwise. */
+  readonly reviewId: string | null;
+  /** The matching decision for the candidate. */
   readonly capabilityDecision: 'new' | 'auto-merge' | 'ambiguous' | 'none';
   /** The ExecutionIRArtifact ID. */
   readonly irArtifactId: string;
@@ -103,8 +99,17 @@ export async function persistSession(
     });
     await repos.recordingSessions.create(session);
 
-    // ── 3. Match and create/enrich Capability ──
-    let capabilityId: string | null = null;
+    // ── 3. Match candidate and create CapabilityReview (P1) ──
+    //
+    // P1 BEHAVIORAL CHANGE: Previously this step auto-created or auto-merged
+    // capabilities. Now it defers ALL capability creation/enrichment to the
+    // review workflow. A CapabilityReview (state='pending') is created
+    // regardless of the match score. The reviewer decides what to do.
+    //
+    // The candidate is already safely persisted inside the RecordingSession's
+    // UnderstandingResult — the review just gates whether a Capability entity
+    // is materialized.
+    let reviewId: string | null = null;
     let capabilityDecision: 'new' | 'auto-merge' | 'ambiguous' | 'none' = 'none';
 
     const candidate = input.understanding.capability;
@@ -112,34 +117,15 @@ export async function persistSession(
       const existingCapabilities = await repos.capabilities.getByProject(projectId);
       const matchResult = matchCapability(candidate, existingCapabilities);
 
-      if (matchResult.decision === 'auto-merge' && matchResult.mergeTargetId) {
-        // Enrich existing capability
-        const existing = await repos.capabilities.getById(matchResult.mergeTargetId);
-        if (existing) {
-          const enrichInput = candidateToEnrichInput(candidate);
-          const enriched = enrichCapability(existing, enrichInput);
-          await repos.capabilities.update(enriched);
-          capabilityId = enriched.id;
-          capabilityDecision = 'auto-merge';
-        }
-      } else if (matchResult.decision === 'new-capability' || existingCapabilities.length === 0) {
-        // Create new capability
-        const createInput = candidateToCreateInput(candidate, projectId);
-        const capability = createCapability(createInput);
-        await repos.capabilities.create(capability);
-        capabilityId = capability.id;
-        capabilityDecision = 'new';
-      } else {
-        // Ambiguous — don't create a Capability. The candidate is already
-        // safely persisted inside the RecordingSession's UnderstandingResult.
-        // The human can later:
-        //   - Merge: call enrichCapability(existing, candidate) — one atomic op
-        //   - New: call createCapability(candidate) — one atomic op
-        // No provisional Capability is created to avoid cleanup complexity
-        // (re-linking test cases, merging enrichment data, deleting duplicates).
-        capabilityId = null;
-        capabilityDecision = 'ambiguous';
-      }
+      // Map to the return type
+      capabilityDecision = matchResult.decision === 'new-capability'
+        ? 'new'
+        : matchResult.decision;
+
+      // Create a review regardless of match score — human gates the decision
+      const review = createReview(candidate, matchResult, session.id);
+      await repos.capabilityReviews.create(review);
+      reviewId = review.reviewId;
     }
 
     // ── 4. Store ExecutionIRPlan as ExecutionIRArtifact ──
@@ -158,7 +144,7 @@ export async function persistSession(
 
     return {
       sessionId: session.id,
-      capabilityId,
+      reviewId,
       capabilityDecision,
       irArtifactId: irArtifact.id,
       projectId,

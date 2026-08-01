@@ -18,6 +18,8 @@ import type { ExecutionIRRepository } from './execution-ir-repository';
 import type { CapabilityRepository } from './capability-repository';
 import type { RecordingSessionRepository } from './recording-session-repository';
 import type { ExecutionRunRepository } from './execution-run-repository';
+import type { CapabilityReviewRepository } from '../dexie/dexie-capability-review-repository';
+import type { CapabilityVersionRepository } from '../dexie/dexie-capability-version-repository';
 
 /**
  * Unit of Work — provides access to repositories within a transactional scope.
@@ -55,6 +57,8 @@ export interface RepositorySet {
   readonly capabilities: CapabilityRepository;
   readonly recordingSessions: RecordingSessionRepository;
   readonly executionRuns: ExecutionRunRepository;
+  readonly capabilityReviews: CapabilityReviewRepository;
+  readonly capabilityVersions: CapabilityVersionRepository;
 }
 
 /**

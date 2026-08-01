@@ -17,6 +17,8 @@ import type { ExecutionIRArtifact } from '../../../domain/execution-ir/types';
 import type { Capability } from '../../../domain/entities/capability';
 import type { RecordingSession } from '../../../domain/entities/recording-session';
 import type { ExecutionRun } from '../../../domain/entities/execution-run';
+import type { CapabilityReview } from '../../../domain/entities/capability-review';
+import type { CapabilityVersion } from '../../../domain/entities/capability-version';
 
 /** Database name — versioned for future migrations. */
 const DB_NAME = 'cmdrunner_repository';
@@ -59,6 +61,12 @@ export type RecordingSessionRow = RecordingSession;
 /** ExecutionRun row — identical to domain ExecutionRun. */
 export type ExecutionRunRow = ExecutionRun;
 
+/** CapabilityReview row — identical to domain CapabilityReview. */
+export type CapabilityReviewRow = CapabilityReview;
+
+/** CapabilityVersion row — identical to domain CapabilityVersion. */
+export type CapabilityVersionRow = CapabilityVersion;
+
 /**
  * The CmdRunner Dexie database.
  *
@@ -79,6 +87,8 @@ export class CmdRunnerDatabase extends Dexie {
   capabilities!: Table<CapabilityRow, string>;
   recordingSessions!: Table<RecordingSessionRow, string>;
   executionRuns!: Table<ExecutionRunRow, string>;
+  capabilityReviews!: Table<CapabilityReviewRow, string>;
+  capabilityVersions!: Table<CapabilityVersionRow, string>;
 
   constructor() {
     super(DB_NAME);
@@ -126,6 +136,27 @@ export class CmdRunnerDatabase extends Dexie {
       recordingSessions: 'id, projectId',
       // V3 new table
       executionRuns: 'id, testCaseVersionId, projectId',
+    });
+
+    // V4: Added CapabilityReview + CapabilityVersion tables (P1).
+    // capabilityReviews: indexed by state (find pending), sessionId, candidateId.
+    // capabilityVersions: indexed by capabilityId, versionNumber, sourceSessionId.
+    this.version(4).stores({
+      // V1 tables
+      projects: 'id, status',
+      elements: 'id, projectId, [projectId+pageOrComponent], status',
+      testCases: 'id, projectId, *tags, status, priority',
+      testCaseVersions: 'id, testCaseId, [testCaseId+versionNumber]',
+      sourceArtifacts: 'id, projectId, [projectId+type]',
+      executionIRs: 'id, testCaseVersionId',
+      // V2 tables
+      capabilities: 'id, projectId, *sessionIds',
+      recordingSessions: 'id, projectId',
+      // V3 table
+      executionRuns: 'id, testCaseVersionId, projectId',
+      // V4 new tables
+      capabilityReviews: 'reviewId, capabilityCandidateId, sessionId, state, reviewedAt',
+      capabilityVersions: 'versionId, capabilityId, versionNumber, sourceSessionId, createdAt',
     });
   }
 }

@@ -23,6 +23,8 @@
  * Reference: Phase 9.5 architectural design discussion
  */
 
+import type { InteractionType } from '../../shared/component-types';
+
 // ── Capability Input (what the capability accepts) ───────
 
 /**
@@ -46,6 +48,14 @@ export interface CapabilityInput {
   readonly format: { regex: string; description: string } | null;
   /** Valid options for selectables. */
   readonly validOptions: string[] | null;
+  /**
+   * The InteractionType that the recorder classified for the originating
+   * interaction. Carried through from LogicalAction.sourceInteractionType.
+   * Used by P1 to derive inputMethod on DataRequirement.
+   *
+   * Null for standalone transitions or when no pattern type maps.
+   */
+  readonly sourceInteractionType: InteractionType | null;
 }
 
 // ── Validation Rule (what makes input valid) ─────────────

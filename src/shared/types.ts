@@ -70,6 +70,9 @@ export enum StorageKeys {
   REPOSITORY_SESSION_ID = 'repo_session_id',
   REPOSITORY_CAPABILITY_ID = 'repo_capability_id',
   REPOSITORY_CAPABILITY_DECISION = 'repo_capability_decision',
+  // ── P1: Capability Lifecycle Management ──
+  PENDING_CAPABILITY_REVIEW = 'pending_capability_review',
+  CAPABILITY_INVENTORY = 'capability_inventory',
   // ── Phase 11: Self-Healing Locators ──
   ELEMENT_HEAL_RESULT = 'element_heal_result',
   // ── Phase 12: Execution Engine ──
@@ -576,7 +579,9 @@ export type AppMessage =
       checkedBefore: boolean | null;
       checkedAfter: boolean | null;
       domContext?: import('../recorder/recorded-event').DomContext;
-    };
+    }
+  | { type: 'APPROVE_CAPABILITY_REVIEW'; reviewId: string; note?: string }
+  | { type: 'REJECT_CAPABILITY_REVIEW'; reviewId: string; note?: string };
 
 /** Type guard: narrows an unknown value to AppMessage. */
 export function isAppMessage(value: unknown): value is AppMessage {

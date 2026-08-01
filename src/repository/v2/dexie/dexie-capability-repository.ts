@@ -36,4 +36,10 @@ export class DexieCapabilityRepository implements CapabilityRepository {
     // array element that equals sessionId.
     return this.capabilities.where('sessionIds').equals(sessionId).toArray();
   }
+
+  async findByReviewState(reviewState: string): Promise<Capability[]> {
+    return this.capabilities
+      .filter((c) => (c as Capability & { reviewState?: string }).reviewState === reviewState)
+      .toArray();
+  }
 }

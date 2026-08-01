@@ -29,6 +29,7 @@ import { checkStaleness } from '../domain/execution-ir/staleness';
 import { IRExecutorImpl } from '../execution/ir-executor-impl';
 import { createExecutionRun } from '../domain/entities/execution-run';
 import type { UnderstandingResult } from '../domain/entities/understanding-result';
+import { processDecision } from '../domain/services/capability-review-service';
 import {
   RecordingState,
   StorageKeys,
@@ -449,12 +450,12 @@ async function handleStopRecording(): Promise<void> {
       });
 
       await StorageService.setRaw(StorageKeys.REPOSITORY_SESSION_ID, persistenceResult.sessionId);
-      await StorageService.setRaw(StorageKeys.REPOSITORY_CAPABILITY_ID, persistenceResult.capabilityId);
+      await StorageService.setRaw(StorageKeys.PENDING_CAPABILITY_REVIEW, persistenceResult.reviewId);
       await StorageService.setRaw(StorageKeys.REPOSITORY_CAPABILITY_DECISION, persistenceResult.capabilityDecision);
 
       console.info('[Repository V2] Session persisted:', {
         sessionId: persistenceResult.sessionId,
-        capabilityId: persistenceResult.capabilityId,
+        reviewId: persistenceResult.reviewId,
         capabilityDecision: persistenceResult.capabilityDecision,
       });
 
@@ -879,6 +880,112 @@ async function isRecordingActive(): Promise<boolean> {
   }
 }
 
+// ── P1: Capability Review Decision Handler ────────────────────────────
+
+/**
+ * Handle APPROVE_CAPABILITY_REVIEW / REJECT_CAPABILITY_REVIEW messages.
+ *
+ * Loads the review from Dexie, processes the decision via the review
+ * service, persists the resulting capability/version/contract, and
+ * clears the pending review from chrome.storage.local.
+ */
+async function handleCapabilityReviewDecision(
+  action: 'APPROVE_CAPABILITY_REVIEW' | 'REJECT_CAPABILITY_REVIEW',
+  payload: { reviewId?: string; note?: string },
+): Promise<void> {
+  const reviewId = payload.reviewId;
+  if (!reviewId) {
+    console.warn('[P1] No reviewId in review decision message');
+    return;
+  }
+
+  const uowFactory = new DexieUnitOfWorkFactory();
+  const uow = uowFactory.create();
+
+  await uow.execute(async (repos) => {
+    // Load the review
+    const review = await repos.capabilityReviews.getByReviewId(reviewId);
+    if (!review) {
+      console.warn('[P1] Review not found:', reviewId);
+      return;
+    }
+    if (review.state !== 'pending') {
+      console.warn('[P1] Review already decided:', reviewId, review.state);
+      return;
+    }
+
+    // Load the recording session to get the candidate + entry URL
+    const session = await repos.recordingSessions.getById(review.sessionId);
+    if (!session) {
+      console.warn('[P1] Session not found:', review.sessionId);
+      return;
+    }
+
+    const candidate = session.understandingResult.capability;
+    if (!candidate) {
+      console.warn('[P1] No capability candidate in session');
+      return;
+    }
+
+    // Load existing capability for merge (if match suggestion exists)
+    let existingCapability: import('../domain/entities/capability').Capability | null = null;
+    if (review.matchSuggestion.bestMatchId) {
+      const found = await repos.capabilities.getById(review.matchSuggestion.bestMatchId);
+      if (found) existingCapability = found;
+    }
+
+    const decision = action === 'APPROVE_CAPABILITY_REVIEW' ? 'approve' : 'reject';
+
+    // Process the decision through the review service
+    const result = processDecision(
+      review,
+      decision,
+      review.edits, // no edits for now (reviewer edits are future UI)
+      'user',
+      candidate,
+      existingCapability,
+      session.url ?? '',
+      session.understandingResult.fragment.behavioralContracts
+        ?.flatMap((bc) => bc.successIndicators) ?? [],
+    );
+
+    // Persist results
+    await repos.capabilityReviews.update(result.review);
+
+    if (result.capability) {
+      // Check if it's a new or existing capability
+      const existing = await repos.capabilities.getById(result.capability.id);
+      if (existing) {
+        await repos.capabilities.update(result.capability);
+      } else {
+        await repos.capabilities.create(result.capability);
+      }
+    }
+
+    if (result.version) {
+      await repos.capabilityVersions.create(result.version);
+    }
+
+    if (result.contract) {
+      // Store the P2 contract in chrome.storage.local for P2/P3 consumption
+      await StorageService.setRaw(
+        StorageKeys.CAPABILITY_INVENTORY,
+        result.contract,
+      );
+    }
+
+    // Clear the pending review
+    await StorageService.setRaw(StorageKeys.PENDING_CAPABILITY_REVIEW, null);
+
+    console.info('[P1] Capability review processed:', {
+      reviewId,
+      decision,
+      capabilityId: result.capability?.id ?? null,
+      versionId: result.version?.versionId ?? null,
+    });
+  });
+}
+
 // ── Message routing ─────────────────────────────────────────────────────
 
 chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
@@ -945,6 +1052,14 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
         };
         FrameTree.forTab(sender.tab.id).mergeSelectors(msg.payload);
       }
+      break;
+    }
+
+    case 'APPROVE_CAPABILITY_REVIEW':
+    case 'REJECT_CAPABILITY_REVIEW': {
+      handleCapabilityReviewDecision(msg.type, message as { reviewId?: string; note?: string }).catch((e) => {
+        console.warn('[P1] Review decision error:', e);
+      });
       break;
     }
 

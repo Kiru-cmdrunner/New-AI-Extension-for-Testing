@@ -35,4 +35,10 @@ export interface CapabilityRepository {
    * Used by the matching service to find potential matches.
    */
   findBySessionId(sessionId: string): Promise<Capability[]>;
+
+  /**
+   * Find capabilities by review state.
+   * Used by the P1 review workflow.
+   */
+  findByReviewState(reviewState: string): Promise<Capability[]>;
 }

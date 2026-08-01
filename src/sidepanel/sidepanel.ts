@@ -113,6 +113,11 @@ const irFilesCount = document.getElementById('ir-files-count')!;
 // Repository status section (Phase 10.4)
 const repoStatusSection = document.getElementById('repo-status-section')!;
 const repoStatusBody = document.getElementById('repo-status-body')!;
+
+// Capability review section (P1)
+const capabilityReviewSection = document.getElementById('capability-review-section')!;
+const capabilityReviewBody = document.getElementById('capability-review-body')!;
+
 const healingStatusSection = document.getElementById('healing-status-section')!;
 const healingStatusBody = document.getElementById('healing-status-body')!;
 
@@ -668,7 +673,7 @@ async function loadDetectedInteractions(): Promise<ComponentInteraction[] | null
 
 interface RepoStatusData {
   sessionId: string | null;
-  capabilityId: string | null;
+  reviewId: string | null;
   capabilityDecision: string | null;
 }
 
@@ -676,14 +681,14 @@ async function loadRepositoryStatus(): Promise<RepoStatusData | null> {
   try {
     const result = await chrome.storage.local.get([
       StorageKeys.REPOSITORY_SESSION_ID,
-      StorageKeys.REPOSITORY_CAPABILITY_ID,
+      StorageKeys.PENDING_CAPABILITY_REVIEW,
       StorageKeys.REPOSITORY_CAPABILITY_DECISION,
     ]);
     const sessionId = result[StorageKeys.REPOSITORY_SESSION_ID] ?? null;
     if (!sessionId) return null;
     return {
       sessionId,
-      capabilityId: result[StorageKeys.REPOSITORY_CAPABILITY_ID] ?? null,
+      reviewId: result[StorageKeys.PENDING_CAPABILITY_REVIEW] ?? null,
       capabilityDecision: result[StorageKeys.REPOSITORY_CAPABILITY_DECISION] ?? null,
     };
   } catch {
@@ -706,30 +711,85 @@ function renderRepositoryStatus(data: RepoStatusData): void {
   sessionRow.append(sessionLabel, sessionValue);
   repoStatusBody.appendChild(sessionRow);
 
-  // Capability decision row
-  const decisionRow = document.createElement('div');
-  decisionRow.className = 'repo-status__row';
+  // Capability review row
+  const reviewRow = document.createElement('div');
+  reviewRow.className = 'repo-status__row';
 
-  const decisionLabel = document.createElement('span');
-  decisionLabel.className = 'repo-status__label';
-  decisionLabel.textContent = 'Capability:';
-  decisionRow.appendChild(decisionLabel);
+  const reviewLabel = document.createElement('span');
+  reviewLabel.className = 'repo-status__label';
+  reviewLabel.textContent = 'Capability:';
+  reviewRow.appendChild(reviewLabel);
 
   const badge = document.createElement('span');
   const decision = data.capabilityDecision ?? 'none';
   badge.className = `repo-status__badge repo-status__badge--${decision}`;
   badge.textContent = decision.replace(/-/g, ' ');
-  decisionRow.appendChild(badge);
+  reviewRow.appendChild(badge);
 
-  if (data.capabilityId) {
-    const capId = document.createElement('span');
-    capId.className = 'repo-status__value';
-    capId.textContent = data.capabilityId.slice(0, 8);
-    decisionRow.appendChild(capId);
+  if (data.reviewId) {
+    const reviewStatus = document.createElement('span');
+    reviewStatus.className = 'repo-status__value';
+    reviewStatus.textContent = 'Pending Review';
+    reviewRow.appendChild(reviewStatus);
   }
 
-  repoStatusBody.appendChild(decisionRow);
+  repoStatusBody.appendChild(reviewRow);
   repoStatusSection.hidden = false;
+}
+
+// ── Capability Review (P1) ───────────────────────────────
+
+/**
+ * Load the pending capability review from chrome.storage.local.
+ * Returns null if no review is pending.
+ */
+async function loadPendingCapabilityReview(): Promise<{ reviewId: string; decision: string } | null> {
+  try {
+    const result = await chrome.storage.local.get([
+      StorageKeys.PENDING_CAPABILITY_REVIEW,
+      StorageKeys.REPOSITORY_CAPABILITY_DECISION,
+    ]);
+    const reviewId = result[StorageKeys.PENDING_CAPABILITY_REVIEW] ?? null;
+    if (!reviewId) return null;
+    return {
+      reviewId,
+      decision: result[StorageKeys.REPOSITORY_CAPABILITY_DECISION] ?? 'none',
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Render the capability review status in the stopped view.
+ *
+ * This shows whether a capability candidate is pending review. The actual
+ * review UI (approve/reject/edit) is a future P1 enhancement — for now we
+ * surface the review status so the user knows a review is pending.
+ */
+function renderCapabilityReview(data: { reviewId: string; decision: string }): void {
+  capabilityReviewBody.innerHTML = '';
+
+  const row = document.createElement('div');
+  row.className = 'repo-status__row';
+
+  const label = document.createElement('span');
+  label.className = 'repo-status__label';
+  label.textContent = 'Status:';
+  row.appendChild(label);
+
+  const badge = document.createElement('span');
+  badge.className = 'repo-status__badge repo-status__badge--ambiguous';
+  badge.textContent = 'Pending Review';
+  row.appendChild(badge);
+
+  const matchHint = document.createElement('span');
+  matchHint.className = 'repo-status__value';
+  matchHint.textContent = `Match: ${data.decision.replace(/-/g, ' ')}`;
+  row.appendChild(matchHint);
+
+  capabilityReviewBody.appendChild(row);
+  capabilityReviewSection.hidden = false;
 }
 
 // ── Healing Summary (Phase 11.5) ──────────────────────────
@@ -1285,6 +1345,14 @@ async function init(): Promise<void> {
       renderRepositoryStatus(repoStatus);
     } else {
       repoStatusSection.hidden = true;
+    }
+
+    // Load capability review status (P1)
+    const pendingReview = await loadPendingCapabilityReview();
+    if (pendingReview) {
+      renderCapabilityReview(pendingReview);
+    } else {
+      capabilityReviewSection.hidden = true;
     }
 
     // Load healing summary (Phase 11.5)

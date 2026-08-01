@@ -51,7 +51,39 @@ import type { ComponentGrouping } from '../../domain/entities/component-grouping
 import type { ObservedTransition } from '../../domain/entities/observed-transition';
 import type { LogicalAction, ResultingChange } from '../../domain/entities/application-knowledge';
 import type { PatternDefinition } from '../recognition/pattern-catalogue';
+import type { InteractionType } from '../../shared/component-types';
 import { TransitionOperation, RelevanceLevel } from '../../domain/enums';
+import { PatternType } from '../../domain/enums';
+
+/**
+ * Map a ComponentGrouping's PatternType to an InteractionType.
+ *
+ * This bridges the knowledge model (PatternType enum) and the recorder's
+ * semantic classification (InteractionType). P1 uses this to populate
+ * LogicalAction.sourceInteractionType, which is then mapped to
+ * DataRequirement.inputMethod.
+ *
+ * PatternType values that don't correspond to data-input interactions
+ * (modal, tabs, accordion, table, custom) return null — they don't
+ * produce DataRequirements.
+ */
+const PATTERN_TO_INTERACTION_TYPE: ReadonlyMap<PatternType, InteractionType> = new Map([
+  [PatternType.DROPDOWN, 'Dropdown'],
+  [PatternType.COMBOBOX, 'Dropdown'],
+  [PatternType.CHECKBOX, 'Checkbox'],
+  [PatternType.RADIO_GROUP, 'RadioButton'],
+  [PatternType.DATE_PICKER, 'DatePicker'],
+  [PatternType.SLIDER, 'Slider'],
+]);
+
+/**
+ * Resolve the InteractionType for a component based on its pattern type.
+ * Returns null for patterns that don't map to data-input interactions.
+ */
+function resolveInteractionType(patternType: string): InteractionType | null {
+  const pt = patternType as PatternType;
+  return PATTERN_TO_INTERACTION_TYPE.get(pt) ?? null;
+}
 
 /**
  * Options for the semantic aggregator.
@@ -274,6 +306,7 @@ function buildComponentAction(
     lifecycleComplete: occurrence.lifecycleComplete,
     resultingChange: deriveResultingChange(occurrence.transitions),
     timestamp: occurrence.transitions[0].timestamp,
+    sourceInteractionType: resolveInteractionType(component.patternType),
   };
 }
 
@@ -289,6 +322,7 @@ function buildStandaloneAction(t: ObservedTransition): LogicalAction {
     lifecycleComplete: true,
     resultingChange: deriveResultingChange([t]),
     timestamp: t.timestamp,
+    sourceInteractionType: null,
   };
 }
 
