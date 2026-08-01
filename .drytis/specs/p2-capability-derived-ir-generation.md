@@ -1,687 +1,998 @@
 # P2: Capability-Derived IR Generation — Design Document
 
-> **Status:** DESIGN — not yet implemented
-> **Baseline:** Post-P1 frozen baseline `b3e14fe`
-> **Depends on:** P1 (Capability Lifecycle Management) ✅
-> **Feeds:** P3 (AI Test Generation), P4/P5 (Execution)
-> **Design principle:** *"Observation is immutable, capability is versioned, IR is disposable, implementation is replaceable."*
+**Status:** DESIGN (not yet implemented)
+**Baseline:** R4 frozen at `b4d558a`
+**Dependencies:** P1 (frozen at `b3e14fe`), R4 (frozen at `b4d558a`)
+**Roadmap:** §6 P2 — transforms approved capability knowledge into disposable executable IR.
 
 ---
 
-## §1. Objective
+## 0. Purpose
 
-Generate an `ExecutionIRPlan` from an approved `P2CapabilityContract` — without requiring the flow to be recorded again. This transforms the product from a record-and-replay tool into a capability-driven test platform: record once, approve the capability, then generate executable test plans with different data against the current application state.
+P2 transforms an approved `P2CapabilityContract` — which describes *what* a
+capability does at the semantic level (data requirements, success criteria,
+entry point) — into one or more disposable `ExecutionIRPlan` instances that
+describe *how* to execute that capability against a specific application.
+
+**The core transformation:**
+
+```
+P2CapabilityContract
+  → test data resolution (generate concrete values per DataRequirement)
+  → field/element binding (map each field to a semantic identity)
+  → R4 Element Repository resolution (MATCHED/AMBIGUOUS/UNMATCHED)
+  → locator resolution (Element.locatorStrategies → ResolvedLocator[])
+  → IR action generation (inputMethod → IRAction)
+  → success-criterion assertion generation (SuccessCriterion → IRAssertion)
+  → ExecutionIRPlan
+```
+
+**What P2 achieves:** The product evolves from "record and replay" to a
+capability-driven test platform. After a single recording is reviewed and
+approved, P2 can generate executable test plans for arbitrary data sets
+without requiring another recording.
+
+**What P2 consumes:**
+- `P2CapabilityContract` — sole input interface, published by P1 review approval
+- `RecordingSession` (via `sourceSessionId`) — for semantic field/element binding
+- `Element` Repository (via `ElementMatchingService`) — for durable element identity + healed locators
+
+**What P2 produces:**
+- `ExecutionIRPlan[]` — one per requested data variant (P3 will generate the variants; P2 takes a single `TestData` map as input)
+
+**What P2 does NOT do:**
+- P3 (AI Test Data Generation) — P2 accepts a `TestData` map; it does not invent data
+- P4/P5 (Execution) — P2 produces IR plans; it does not execute them
+- P6 (AI Failure Analysis) — downstream of execution
+- Recorder modification — P2 does not touch the recorder pipeline
+- Capability management — P2 reads approved contracts; it does not create/modify capabilities
+- Element creation/healing — P2 resolves targets; it does not create or heal Elements
+- Ambiguity guessing — P2 surfaces AMBIGUOUS/UNMATCHED targets; it never guesses
 
 ---
 
-## §2. What P2 Consumes
+## 1. Architectural Boundaries
 
-P2's **sole input** is the `P2CapabilityContract` (INV-P1-B4: P2/P3 never read `CapabilityCandidate` directly).
+### 1.1 Responsibility Matrix
 
-```typescript
-interface P2CapabilityContract {
-  capabilityId: string;
-  versionId: string;              // immutable version reference
-  versionNumber: number;
-  name: string;
-  purpose: string;
-  dataRequirements: DataRequirement[];
-  successCriteria: SuccessCriterion[];
-  entryPoint: { url: string; elementName: string | null };
-  sourceSessionId: string;        // provenance → RecordingSession
-  approvedAt: string;
-}
-```
-
-P2 also reads:
-- **Element Repository** — to resolve targets (locators for each field)
-- **Test data supplied by the caller** — P2 does NOT generate test data (that is P3)
-- **IREnvironment** — baseUrl, browser, viewport
-
-P2 does NOT read:
-- `CapabilityCandidate` or `ApplicationKnowledgeFragment` (recorder artifacts)
-- `ComponentInteraction[]` or `SessionEvent[]` (recording raw data)
-- The IR Bridge (recording-time generation path)
-- The evidence engine or classifier
-
----
-
-## §3. Target Resolution — The Central Design Problem
-
-### §3.1 The Gap
-
-`DataRequirement` tells P2 *what operation* to perform (`inputMethod: 'slider'`) and *what data* (`kind: 'number'`, constraints), but not *which element* on the live page. The contract intentionally excludes locators — that abstraction was established in P1.
-
-P2 must bridge: `DataRequirement.field` → concrete `ResolvedLocator[]` on the live application.
-
-### §3.2 Analysis of the Two Approaches
-
-**Approach A: Session Recovery at Generation Time**
-- `sourceSessionId` → `RecordingSession` → `rawInteractions[]` → find interaction by field → `ElementIdentity` → `resolveLocatorsForIR(identity)`
-- **Problem:** `rawInteractions` is archival tier (INV-RS3: "never queried by downstream consumers"). Sessions may be pruned. Matching `DataRequirement.field` to a specific interaction is fragile (name matching against metadata).
-- **Problem:** ElementIdentity from the recording is a point-in-time snapshot. If the DOM has changed, these locators are stale. The Element Repository has healed locators; the session does not.
-- **Problem:** Coupling P2 to session data violates the tier design. P2 becomes dependent on archival data that the architecture explicitly says should not be queried.
-
-**Approach B: Element Repository via Element Bindings**
-- Store Element Repository UUID on the contract at review approval time
-- At generation, load `Element` by UUID → read `locatorStrategies[]` → `resolveElementTarget(element)`
-- **Advantage:** Always uses current, healed locators
-- **Advantage:** Same path as the existing `DefaultIRGenerator` (ATC IR generation)
-- **Advantage:** No session dependency at generation time
-- **Advantage:** Element UUIDs are stable across DOM changes, healing, and capability versioning
-- **Concern:** How to populate the Element UUID at approval time
-
-### §3.3 Decision: Approach B with Session-Assisted Population
-
-**P2 proposes adding `elementBindings` to `P2CapabilityContract`.**
-
-```typescript
-interface P2CapabilityContract {
-  // ... existing fields ...
-  /**
-   * Maps DataRequirement.field → Element Repository UUID.
-   * Populated at review approval time. Enables P2 to resolve
-   * targets without session data at generation time.
-   *
-   * Empty map if no bindings could be resolved — P2 falls back
-   * to session recovery or flags steps as unresolved.
-   */
-  readonly elementBindings: ReadonlyMap<string, string>;
-}
-```
-
-This is an **additive change** to a P1 entity. It does not modify DataRequirement (which stays pure). The bindings are a separate concern — they sit on the contract, not on the semantic abstraction.
-
-**Why this is the correct long-term architecture:**
-
-1. **Locators heal over time.** The Element Repository's `healElement()` updates locatorStrategies while preserving the Element UUID. By referencing UUIDs, P2-generated plans always use the latest healed locators. Session recovery would use stale point-in-time snapshots.
-
-2. **Capability versions are immutable.** When a capability is edited (creating a new version), the elementBindings snapshot is frozen in that version. Future healing updates the Element but not the UUID — so the old version's plans still work with current locators when regenerated.
-
-3. **Two fields with similar names.** Element UUIDs are globally unique. Name-based matching (Approach A) would be ambiguous when two fields share a label. UUIDs eliminate this.
-
-4. **Same semantic field appears multiple times on a page.** Each instance is a separate Element with its own UUID. The binding links to the specific one.
-
-5. **Capability executed long after recording.** The Element Repository persists independently of sessions. Even if the original session is pruned (archival tier cleanup), the Elements remain.
-
-6. **P3 generates many variants.** P3 calls P2 repeatedly with different test data. Each call resolves Element UUIDs in O(1) — no session lookup per call.
-
-7. **Target cannot be resolved confidently.** When no Element binding exists, P2 flags the step as unresolved. The user can manually bind it. No silent failures.
-
-### §3.4 Element Binding Population (at P1 Review Approval)
-
-At review approval time, `processDecision()` already loads the session to get the candidate and success indicators. The element binding population adds one step:
-
-```
-For each CapabilityInput in candidate.inputs[]:
-  1. Get fragment elementId (e.g., "elem-0007")
-  2. Load fragment.elements[] → find UiElementSummary by elementId → get accessibleName
-  3. Load Element Repository for project (repos.elements.getByProject)
-  4. Match via ElementMatchingService.extractSignature() → find best Element
-  5. Store Element UUID in elementBindings[field]
-```
-
-This uses the **existing** `ElementMatchingService` — no new matching logic. If no match is found (e.g., healing hasn't created the Element yet, or the element was a navigation-only element), the field gets no binding. P2 handles this gracefully (§3.5).
-
-**Note:** This is a P1 completion change (populating elementBindings in `processDecision`), not a P2 implementation step. P2's design assumes elementBindings may already be populated. P2 should work whether bindings exist or not.
-
-### §3.5 Unresolved Target Handling
-
-When `elementBindings[field]` is missing or the Element UUID can't be loaded:
-
-1. **Session Recovery Fallback:** P2 attempts Approach A as a last resort — loads `RecordingSession` by `sourceSessionId`, searches `rawInteractions[]` for a matching field, extracts `ElementIdentity`, uses `resolveLocatorsForIR(identity)`. This produces locators but they may be stale.
-
-2. **Unresolved Flag:** If both the Element Repository and session recovery fail, the IRStep is produced with `target: { kind: 'none' }` and a `resolutionWarning` field is set. The Playwright code generator emits a TODO comment. The execution engine skips the step with a "target not resolved" status.
-
-3. **No Silent Failure:** Unresolved targets are always visible in the generated plan. The user can manually provide locators or re-record.
-
----
-
-## §4. Architecture
-
-### §4.1 New Components
-
-P2 introduces four new modules. All live in `src/generation/capability-ir/`:
-
-```
-src/generation/capability-ir/
-  ├── capability-ir-generator.ts    — orchestrator (entry point)
-  ├── data-resolver.ts              — DataRequirement → concrete test value
-  ├── element-binding-resolver.ts   — DataRequirement.field → ElementTarget
-  └── success-criterion-resolver.ts — SuccessCriterion → IRAssertion[]
-```
-
-### §4.2 CapabilityIRGenerator (Orchestrator)
-
-```typescript
-interface CapabilityIRGeneratorInput {
-  readonly contract: P2CapabilityContract;
-  readonly testData: ReadonlyMap<string, IRInput>;  // field → value, supplied by caller
-  readonly elements: ReadonlyMap<string, Element>;   // pre-loaded by caller
-  readonly environment: IREnvironment;
-  readonly sessionFallback?: RecordingSession | null; // optional, for target recovery
-}
-
-interface CapabilityIRGenerator {
-  generate(input: CapabilityIRGeneratorInput): ExecutionIRArtifact;
-  readonly version: string;  // 'cap-ir-gen-1.0.0'
-}
-```
-
-**Generation Process:**
-
-```
-1. Navigate step (from contract.entryPoint.url)
-2. For each DataRequirement:
-   a. Resolve test value via DataResolver
-   b. Resolve target via ElementBindingResolver
-   c. Map inputMethod → IRAction
-   d. Build IRStep
-3. Entry point click step (from contract.entryPoint.elementName)
-4. For each SuccessCriterion:
-   a. Resolve to IRAssertion via SuccessCriterionResolver
-5. Attach assertions to the entry point click step
-6. Inject WAIT_FOR_ELEMENT before element-interacting steps
-7. Wrap in ExecutionIRArtifact
-```
-
-**Design:** The generator is a **pure function** — no side effects, no storage access. The caller (service layer) pre-loads Elements and supplies test data. This matches the existing `DefaultIRGenerator` design pattern.
-
-### §4.3 DataResolver
-
-```typescript
-interface DataResolver {
-  /**
-   * Resolve a DataRequirement to a concrete test value.
-   * Priority: caller-supplied testData > defaultValue > constraint-derived.
-   */
-  resolve(requirement: DataRequirement, testData: IRInput | undefined): IRInput;
-}
-```
-
-**Resolution priority:**
-1. **Caller-supplied** (from `testData` map) — always wins. P3 supplies these; manual execution supplies these.
-2. **defaultValue** (from DataRequirement) — if the reviewer set one during P1 review.
-3. **Constraint-derived fallback** — generated from `kind` + `constraints`:
-   - `select` → first option from `constraints.options`
-   - `boolean` → `true`
-   - `number` → midpoint of `constraints.min`/`constraints.max` (or 0)
-   - `text` → empty string `""` (or pattern-matching placeholder if `constraints.pattern`)
-   - `date` → today's date
-   - `email` → `"test@example.com"`
-
-**Critical boundary:** DataResolver does NOT generate intelligent test variants. That is P3 (AI Test Generation). DataResolver produces only the minimal value needed to execute the capability. P3 overrides `testData` with generated variants.
-
-### §4.4 ElementBindingResolver
-
-```typescript
-interface ElementBindingResolver {
-  /**
-   * Resolve a DataRequirement.field to an ElementTarget with locators.
-   * Returns { target: ResolvedTarget, confidence: number, source: string }.
-   */
-  resolve(
-    field: string,
-    elementBindings: ReadonlyMap<string, string>,
-    elements: ReadonlyMap<string, Element>,
-    sessionFallback?: RecordingSession | null,
-  ): ElementBindingResult;
-}
-
-interface ElementBindingResult {
-  readonly target: ResolvedTarget;
-  readonly confidence: number;   // 0.0-1.0
-  readonly source: 'element-repository' | 'session-recovery' | 'unresolved';
-}
-```
-
-**Resolution cascade:**
-1. **Element Repository (primary):** Look up `elementBindings[field]` → UUID → `elements.get(uuid)` → `resolveElementTarget(element)`. Confidence: 0.95 (healed, current).
-2. **Session Recovery (fallback):** Load `sessionFallback.rawInteractions[]` → find interaction whose metadata field matches → extract `ElementIdentity` → `resolveLocatorsForIR(identity)`. Confidence: 0.60 (point-in-time, may be stale).
-3. **Unresolved:** `target: { kind: 'none' }`. Confidence: 0.0. Step flagged with `resolutionWarning`.
-
-**Reuse:** `resolveElementTarget()` is imported directly from `src/domain/execution-ir/generator.ts`. `resolveLocatorsForIR()` is imported from `src/generation/ir-bridge.ts`. No duplication.
-
-**Boundary:** ElementBindingResolver does NOT match elements by name or fuzzy logic. It reads pre-resolved bindings from the contract. The matching happened at review approval time via `ElementMatchingService`. This keeps P2 deterministic and testable.
-
-### §4.5 SuccessCriterionResolver
-
-```typescript
-interface SuccessCriterionResolver {
-  resolve(
-    criteria: readonly SuccessCriterion[],
-    elementBindings: ReadonlyMap<string, string>,
-    elements: ReadonlyMap<string, Element>,
-    contract: P2CapabilityContract,
-  ): IRAssertion[];
-}
-```
-
-**Mapping table:**
-
-| SuccessCriterion.type | IRAssertion.type | IRAssertion.comparison | Target Resolution |
-|---|---|---|---|
-| `navigation` | `URL_MATCH` | `EQUALS` | `UrlTarget { url: target.urlPattern }` |
-| `elementVisible` | `VISIBILITY` | `IS_TRUE` | Element from `target.elementLocator` or elementBindings |
-| `elementAbsent` | `VISIBILITY` | `IS_FALSE` | Element from `target.elementLocator` |
-| `valueEquals` | `EQUALITY` | `EQUALS` | Element + `expectedValue` |
-| `textPresent` | `TEXT_MATCH` | `CONTAINS` | Element from `target.elementLocator` |
-| `custom` | `CUSTOM` | `NONE` | Element if locator provided |
-
-**Target resolution for assertions:**
-
-Success criteria have a `target` field (`SuccessTarget`) that may contain `elementLocator` (a CSS selector string from the original recording). P2 resolves this in priority order:
-
-1. If `elementLocator` is present and looks like a CSS selector → create `ElementTarget` with a single `CSS` locator
-2. If no `elementLocator` → attempt elementBindings match by criterion description
-3. If neither works → `NoTarget` with the assertion still emitted (runtime evaluation may still work for URL-based assertions)
-
-**Severity:** All success-criteria-derived assertions are `HARD` — they represent the capability's definition of success. This differs from recording-time assertions (which mix HARD and SOFT).
-
-**Reuse:** The IRAssertion type, ValidationType, ValidationComparison, and ValidationSeverity enums are all reused from `src/domain/enums.ts` and `src/domain/execution-ir/types.ts`. The assertion renderer (`src/adapters/playwright/assertion-renderer.ts`) already handles all these types — no renderer changes needed.
-
----
-
-## §5. InputMethod → IRAction Mapping
-
-P2 maps at the `InputMethod` abstraction level (not `InteractionType`). This is deliberately coarser:
-
-| InputMethod | IRAction | Rationale |
+| Concern | Owner | P2 Interaction |
 |---|---|---|
-| `dropdown` | `SELECT` | Select an option from a list |
-| `toggle` | `TOGGLE` | Flip a boolean state |
-| `slider` | `FILL` | Set a numeric value (same as recording-time IR Bridge) |
-| `text` | `FILL` | Type text into an input |
-| `datePicker` | `SELECT_DATE` | Pick a date |
-| `fileUpload` | `FILL` | Provide a file path |
-| `null` | `CLICK` | Fallback for non-data-input triggers (buttons, links) |
+| Approved capability knowledge | P1 (CapabilityVersion, P2CapabilityContract) | Read-only consumption |
+| Durable element identity | R4 (ElementIdentityRecord, Element entity) | Read-only consumption |
+| Element matching | R4 (ElementMatchingService) | Delegation via `matchElements()` |
+| Element healing/creation | Healing Service | P2 does NOT call; healing runs in the recording pipeline |
+| Locator ranking | `locator-ranking.ts`, `generator.ts:resolveElementTarget` | Reuses `resolveElementTarget(element)` |
+| IR types | `execution-ir/types.ts` | Produces ExecutionIRPlan |
+| Test data generation | P3 | P2 accepts `TestData` input; P3 will call P2 |
+| Execution | P4/P5 | Consumes ExecutionIRPlan output |
 
-This is a **lossless collapse** — `InputMethod` was designed in P1 as a many-to-one mapping from `InteractionType`. The 23 `InteractionType` values collapse to 6 `InputMethod` values, which collapse to 6 `IRAction` values. No semantic information is lost because the collapse already happened at the P1 boundary.
+### 1.2 Hard Invariants
 
-**Entry point element** (the "Apply Filters" button, "Submit" button, etc.) always maps to `CLICK`, regardless of its `inputMethod`.
+- **INV-P2-1:** P2 must never call `createElement`, `healElement`, `updateElement`, or any mutation method on the Element Repository.
+- **INV-P2-2:** P2 must never guess an AMBIGUOUS target. If `matchElements` returns AMBIGUOUS for a field's target element, P2 produces an IR plan with a `NoTarget` placeholder and a resolution warning, not an assumed element.
+- **INV-P2-3:** P2 must never guess an UNMATCHED target. If no stored Element matches, P2 produces `NoTarget` + warning, not a fabricated target.
+- **INV-P2-4:** P2 must not modify P1 or R4 types. All new types are additive.
+- **INV-P2-5:** P2 must not depend on the recorder pipeline. It reads only from persisted sessions and the Element Repository.
+- **INV-P2-6:** P2 must produce plans compatible with the existing `ExecutionIRPlan` type — no new IR types or action variants.
+- **INV-P2-7:** P2 must produce deterministic output for the same `(contract, testData, environment)` tuple.
 
 ---
 
-## §6. Complete Filter Products Trace
+## 2. Data Flow: End-to-End Trace
 
-### Contract Input
+### 2.1 Filter Products Example
+
+**Approved P2CapabilityContract (from P1 review):**
+
+```
+name: "Filter Products"
+purpose: "Filter product catalog by category, sale status, and price"
+sourceSessionId: "sess-abc123"
+entryPoint: { url: "/products", elementName: null }
+
+dataRequirements:
+  - field: "category", label: "Category", kind: "select",
+    inputMethod: "dropdown", required: true,
+    constraints: { options: ["Electronics", "Books", "Clothing", null] }
+  - field: "onSale", label: "On Sale", kind: "boolean",
+    inputMethod: "toggle", required: false,
+    constraints: {}
+  - field: "maxPrice", label: "Maximum Price", kind: "number",
+    inputMethod: "slider", required: false,
+    constraints: { min: 0, max: 1000, step: 50 }
+
+successCriteria:
+  - id: "sc1", type: "elementVisible",
+    target: { kind: "element", elementLocator: "Product List", urlPattern: null },
+    expectedValue: null, timeout: 5000
+  - id: "sc2", type: "textPresent",
+    target: { kind: "page", elementLocator: null, urlPattern: null },
+    expectedValue: "Electronics", timeout: 3000
+```
+
+**Test data variant 1 (from P3 in the future, or manually specified):**
+
+```
+{ category: "Electronics", onSale: true, maxPrice: 500 }
+```
+
+**Step 1 — Test Data Resolution (DataResolver)**
+
+For each DataRequirement, resolve the concrete value from the TestData map:
+
+| field | kind | inputMethod | constraint | resolved value |
+|---|---|---|---|---|
+| category | select | dropdown | options: [Electronics, Books, ...] | `"Electronics"` |
+| onSale | boolean | toggle | — | `true` |
+| maxPrice | number | slider | min:0, max:1000, step:50 | `500` |
+
+Validation: each value satisfies its constraints. If a value is missing or invalid,
+emit a data resolution warning and skip that field's IR step.
+
+**Step 2 — Field/Element Binding (ElementBindingResolver)**
+
+For each DataRequirement, resolve the session-scoped element that was the
+recording-time target of this field. The binding pipeline:
+
+```
+contract.dataRequirements[].field
+  → contract.sourceSessionId → RecordingSession
+  → session.understandingResult.fragment.elements: UiElementSummary[]
+  → session.understandingResult.fragment.logicalActions: LogicalAction[]
+  → match LogicalAction.businessField === DataRequirement.field
+  → get LogicalAction's componentId → find component.rootElementId
+  → find UiElementSummary by elementId
+  → build fresh UiElement-like identity from UiElementSummary
+```
+
+For Filter Products:
+
+| field | logical action match | component | UiElementSummary |
+|---|---|---|---|
+| category | businessField="category" | comp-001 | { elementId: "elem-0007", tag: "select", role: "combobox", accessibleName: "Category" } |
+| onSale | businessField="onSale" | comp-002 | { elementId: "elem-0012", tag: "input", role: "checkbox", accessibleName: "On Sale" } |
+| maxPrice | businessField="maxPrice" | comp-003 | { elementId: "elem-0018", tag: "input", role: "slider", accessibleName: "Maximum Price" } |
+
+If no logical action matches (reviewer manually added a data requirement), fall
+back to matching UiElementSummary by accessibleName === DataRequirement.label.
+
+If no session element matches either path, the field is **unbound** — produce
+`NoTarget` + resolution warning.
+
+**Step 3 — R4 Element Repository Resolution**
+
+For each bound session element, match against the project's Element Repository
+using R4's `matchElements()`:
 
 ```typescript
-const contract: P2CapabilityContract = {
-  capabilityId: "cap-filter-products",
-  versionId: "cap-filter-products-v1",
-  versionNumber: 1,
-  name: "Filter Products",
-  purpose: "Filter the product list by category, sale status, and price",
-  dataRequirements: [
-    { field: "category", label: "Category", kind: "select", inputMethod: "dropdown",
-      constraints: { options: ["Electronics", "Clothing", "Books"] } },
-    { field: "onSale", label: "On Sale", kind: "boolean", inputMethod: "toggle",
-      constraints: {} },
-    { field: "maxPrice", label: "Maximum Price", kind: "number", inputMethod: "slider",
-      constraints: { min: 0, max: 1000, step: 10 } },
+// Build fresh UiElement from UiElementSummary + session identity info
+const freshElements: UiElement[] = sessionElements.map(buildFreshUiElement);
+const storedElements: Element[] = await repos.elements.getByProject(projectId);
+const result = matchElements(freshElements, storedElements);
+```
+
+For Filter Products:
+
+| field | session element | match result | Element UUID | locators |
+|---|---|---|---|---|
+| category | elem-0007 (combobox, "Category") | MATCHED (0.95) | uuid-a1b2 | [testId:category-select, role:combobox[name="Category"]] |
+| onSale | elem-0012 (checkbox, "On Sale") | MATCHED (0.90) | uuid-c3d4 | [testId:on-sale-toggle, role:checkbox[name="On Sale"]] |
+| maxPrice | elem-0018 (slider, "Maximum Price") | MATCHED (0.92) | uuid-e5f6 | [css:input[type="range"], aria:slider] |
+
+If any field resolves to AMBIGUOUS or UNMATCHED, P2 still produces a plan but
+with that field's target as `NoTarget` and a warning. The plan is structurally
+valid but marked as needing human attention before execution.
+
+**Step 4 — Locator Resolution**
+
+For each MATCHED field, reuse the existing `resolveElementTarget(element)` from
+`generator.ts`:
+
+```typescript
+import { resolveElementTarget } from '../domain/execution-ir/generator';
+
+const target: ElementTarget = resolveElementTarget(matchedElement);
+// → { kind: 'element', elementId: 'uuid-a1b2', elementName: 'Category',
+//     pageOrComponent: '/products',
+//     resolvedLocators: [
+//       { type: TEST_ID, value: 'category-select', priority: 1, confidence: 0.95 },
+//       { type: ROLE, value: 'combobox[name="Category"]', priority: 2, confidence: 0.80 },
+//     ] }
+```
+
+This reuses the existing locator-resolution path — Element.locatorStrategies are
+already ranked and valid (healing maintains them). No re-ranking needed.
+
+**Step 5 — IR Action Generation (inputMethod → IRAction)**
+
+Map each DataRequirement's `inputMethod` to the appropriate `IRAction`:
+
+| inputMethod | IRAction | input handling |
+|---|---|---|
+| `dropdown` | `IRAction.SELECT` | `input: string` (option label) |
+| `toggle` | `IRAction.TOGGLE` | `input: boolean` (checked state) |
+| `slider` | `IRAction.FILL` | `input: number` (target value) |
+| `text` | `IRAction.FILL` | `input: string` (text to type) |
+| `datePicker` | `IRAction.SELECT_DATE` | `input: string` (ISO date) |
+| `fileUpload` | `IRAction.FILL` | `input: string` (file path) |
+| `null` | `IRAction.FILL` | fallback to text input |
+
+For Filter Products:
+
+| field | inputMethod | IRAction | resolved value | target |
+|---|---|---|---|---|
+| category | dropdown | SELECT | "Electronics" | ElementTarget(uuid-a1b2) |
+| onSale | toggle | TOGGLE | true | ElementTarget(uuid-c3d4) |
+| maxPrice | slider | FILL | 500 | ElementTarget(uuid-e5f6) |
+
+**Step 6 — Success Criterion Assertion Generation**
+
+Map each SuccessCriterion to `IRAssertion[]`:
+
+| SuccessType | ValidationType | ValidationComparison | target resolution |
+|---|---|---|---|
+| `navigation` | `URL_MATCH` | `MATCHES` | UrlTarget(urlPattern) |
+| `elementVisible` | `VISIBILITY` | `IS_TRUE` | ElementTarget via binding |
+| `elementAbsent` | `VISIBILITY` | `IS_FALSE` | ElementTarget via binding |
+| `valueEquals` | `ATTRIBUTE_MATCH` | `EQUALS` | ElementTarget via binding |
+| `textPresent` | `TEXT_MATCH` | `CONTAINS` | UrlTarget(page scope) |
+| `custom` | `CUSTOM` | `EQUALS` | NoTarget |
+
+For Filter Products:
+
+| criterion | type | assertion | target |
+|---|---|---|---|
+| sc1 (elementVisible: Product List) | VISIBILITY, IS_TRUE | check element visible | ElementTarget (match by accessibleName "Product List") |
+| sc2 (textPresent: "Electronics") | TEXT_MATCH, CONTAINS | check page contains text | UrlTarget("/products") |
+
+Success-criterion target resolution uses the same binding pipeline: try
+`elementLocator` as accessibleName → match against session elements →
+ElementMatchingService → Element Repository. If the criterion target is a URL
+pattern, produce `UrlTarget` directly.
+
+**Step 7 — Assemble ExecutionIRPlan**
+
+```typescript
+const plan: ExecutionIRPlan = {
+  testCaseId: `p2-${contract.capabilityId}`,
+  testCaseVersionId: `p2-${contract.versionId}-data-${variantId}`,
+  testCaseVersionNumber: contract.versionNumber,
+  title: `${contract.name} — ${variantLabel}`,
+  tags: ['capability-derived', 'p2'],
+  environment: { baseUrl, browser: 'chrome', viewport: { width: 1280, height: 720 } },
+  steps: [
+    // Injected navigation step
+    { id: 'step-0', order: 0, action: IRAction.NAVIGATE,
+      description: `Navigate to ${contract.entryPoint.url}`,
+      target: { kind: 'url', url: `${baseUrl}${contract.entryPoint.url}` },
+      input: null,
+      assertions: [], executionParameters: DEFAULT_EXECUTION_PARAMETERS },
+    // Field steps
+    { id: 'step-1', order: 1, action: IRAction.SELECT,
+      description: 'Select "Electronics" from Category dropdown',
+      target: ElementTarget(uuid-a1b2),
+      input: 'Electronics',
+      assertions: [], executionParameters: DEFAULT_EXECUTION_PARAMETERS },
+    { id: 'step-2', order: 2, action: IRAction.TOGGLE,
+      description: 'Toggle On Sale to true',
+      target: ElementTarget(uuid-c3d4),
+      input: true,
+      assertions: [], executionParameters: DEFAULT_EXECUTION_PARAMETERS },
+    { id: 'step-3', order: 3, action: IRAction.FILL,
+      description: 'Set Maximum Price to 500',
+      target: ElementTarget(uuid-e5f6),
+      input: 500,
+      assertions: [], executionParameters: DEFAULT_EXECUTION_PARAMETERS },
+    // Success criteria as assertions on the last step
+    { id: 'step-4', order: 4, action: IRAction.VERIFY,
+      description: 'Verify success criteria',
+      target: { kind: 'none' },
+      input: null,
+      assertions: [
+        { type: VISIBILITY, comparison: IS_TRUE, expectedValue: true,
+          severity: HARD, target: ElementTarget(productListUuid), property: 'visible' },
+        { type: TEXT_MATCH, comparison: CONTAINS, expectedValue: 'Electronics',
+          severity: SOFT, target: { kind: 'url', url: `${baseUrl}/products` }, property: 'text' },
+      ],
+      executionParameters: DEFAULT_EXECUTION_PARAMETERS },
   ],
-  successCriteria: [
-    { id: "sc-1", type: "elementVisible", target: { kind: "element",
-      elementLocator: ".results-grid" }, expectedValue: null, timeout: 5000 },
-  ],
-  entryPoint: { url: "https://shop.example.com/products", elementName: "Apply Filters" },
-  sourceSessionId: "session-abc123",
-  approvedAt: "2026-08-01T12:00:00Z",
-  elementBindings: {
-    "category": "elem-uuid-001",
-    "onSale": "elem-uuid-002",
-    "maxPrice": "elem-uuid-003",
-    // "Apply Filters" entry point resolved by name → elem-uuid-004
-  },
 };
 ```
 
-### Caller-Supplied Test Data
+### 2.2 Different Data Sets — No Re-recording Required
 
-```typescript
-const testData = new Map([
-  ["category", "Electronics"],
-  ["onSale", true],
-  ["maxPrice", 500],
-]);
-```
+For a second variant `{ category: "Books", onSale: false, maxPrice: 200 }`:
 
-### Pre-Loaded Elements
+- Steps 1-3 (binding + matching + locator resolution) produce the **same** targets
+  — the elements are the same, only the test data changes.
+- Step 5 (action generation) produces different `input` values.
+- The `ExecutionIRPlan` is structurally identical except for `input` fields and
+  the `testCaseVersionId`/`title`.
 
-```typescript
-const elements = new Map([
-  ["elem-uuid-001", { id: "elem-uuid-001", logicalName: "Category",
-    locatorStrategies: [{ type: "testId", value: "cat-select", priority: 1 },
-                         { type: "role", value: "combobox[name=\"Category\"]", priority: 2 }] }],
-  ["elem-uuid-002", { id: "elem-uuid-002", logicalName: "On Sale",
-    locatorStrategies: [{ type: "role", value: "checkbox[name=\"On Sale\"]", priority: 1 }] }],
-  ["elem-uuid-003", { id: "elem-uuid-003", logicalName: "Maximum Price",
-    locatorStrategies: [{ type: "testId", value: "price-slider", priority: 1 },
-                         { type: "css", value: "#filters input[type=range]", priority: 2 }] }],
-  ["elem-uuid-004", { id: "elem-uuid-004", logicalName: "Apply Filters",
-    locatorStrategies: [{ type: "role", value: "button[name=\"Apply Filters\"]", priority: 1 }] }],
-]);
-```
-
-### Generated ExecutionIRPlan
-
-```
-Step 1: NAVIGATE
-  target: UrlTarget { url: "https://shop.example.com/products" }
-  input: null
-
-Step 2: WAIT_FOR_ELEMENT
-  target: ElementTarget { elementName: "Category",
-    resolvedLocators: [testId:"cat-select", role:"combobox Category"] }
-
-Step 3: SELECT
-  target: ElementTarget { elementName: "Category",
-    resolvedLocators: [testId:"cat-select", role:"combobox Category"] }
-  input: "Electronics"
-  description: "Select 'Electronics' from Category dropdown"
-
-Step 4: WAIT_FOR_ELEMENT → TOGGLE
-  target: ElementTarget { elementName: "On Sale",
-    resolvedLocators: [role:"checkbox On Sale"] }
-  input: true
-  description: "Toggle On Sale to true"
-
-Step 5: WAIT_FOR_ELEMENT → FILL
-  target: ElementTarget { elementName: "Maximum Price",
-    resolvedLocators: [testId:"price-slider", css:"#filters input[type=range]"] }
-  input: 500
-  description: "Set Maximum Price to 500"
-
-Step 6: WAIT_FOR_ELEMENT → CLICK
-  target: ElementTarget { elementName: "Apply Filters",
-    resolvedLocators: [role:"button Apply Filters"] }
-  input: null
-  assertions: [
-    { type: VISIBILITY, comparison: IS_TRUE, severity: HARD,
-      target: ElementTarget { resolvedLocators: [css:".results-grid"] },
-      property: "visible" }
-  ]
-  description: "Click Apply Filters"
-```
-
-### What This Proves
-
-- **Category** → `kind: select` + `inputMethod: dropdown` → `SELECT` action with value "Electronics" ✅
-- **On Sale** → `kind: boolean` + `inputMethod: toggle` → `TOGGLE` action with value `true` ✅
-- **Maximum Price** → `kind: number` + `inputMethod: slider` → `FILL` action with value `500` ✅
-- **Apply/Success** → entry point click + `SuccessCriterion(elementVisible)` → `VISIBILITY/IS_TRUE/HARD` assertion ✅
-- **P1's semantic abstractions are sufficient** — no locators, DOM details, or raw interactions leaked into the capability contract ✅
-- **Target resolution** uses Element Repository UUIDs → current healed locators, not stale snapshots ✅
+For P3 (future): P3 generates many data variants, calls P2 for each, gets back
+many `ExecutionIRPlan` instances — each testing the same capability with
+different data.
 
 ---
 
-## §7. Reuse vs New Infrastructure
+## 3. Target Resolution: R4 Outcomes
 
-### §7.1 Reused Directly (No Duplication)
+### 3.1 MATCHED → Generate Target-Bearing IR
 
-| Component | Source | How P2 Uses It |
-|---|---|---|
-| `ExecutionIRPlan`, `IRStep`, `IRAction`, `ResolvedTarget`, `ElementTarget`, `IRAssertion` | `src/domain/execution-ir/types.ts` | P2 output type — same as recording-time IR |
-| `resolveElementTarget(element)` | `src/domain/execution-ir/generator.ts:375` | Snapshot Element → ElementTarget with ResolvedLocators |
-| `resolveLocatorsForIR(identity)` | `src/generation/ir-bridge.ts:399` | Session fallback path — same ranking pipeline |
-| `extractCandidatesFromIdentity()` + `rankLocatorCandidates()` | `src/domain/locator-ranking.ts` | Shared locator ranking (via resolveLocatorsForIR) |
-| `DEFAULT_EXECUTION_PARAMETERS` | `src/domain/execution-ir/types.ts` | Same execution defaults as recording-time IR |
-| `Element` entity + Element Repository | `src/domain/entities/element.ts`, Dexie repo | Load elements by UUID for target resolution |
-| `ValidationType`, `ValidationComparison`, `ValidationSeverity` | `src/domain/enums.ts` | Same assertion vocabulary |
-| Playwright code generators | `src/adapters/playwright/` | Same codegen for IR steps + assertions |
-| `IRExecutorImpl` | `src/execution/ir-executor-impl.ts` | Same execution engine — P2 IR is format-compatible |
-| `checkStaleness()` | `src/domain/execution-ir/staleness.ts` | Same staleness detection |
-| `ElementMatchingService` | `src/repository/services/element-matching-service.ts` | Used at approval time to populate elementBindings |
+When `matchElements` returns a MATCHED pair for a field's session element:
 
-### §7.2 New (P2-Specific)
+1. Extract the matched `Element` (UUID, locatorStrategies, logicalName).
+2. Call `resolveElementTarget(element)` → `ElementTarget` with resolved locators.
+3. Use this `ElementTarget` as the step's `target`.
 
-| Component | Why It's New |
+The locators are the **current** healed locators from the Element Repository —
+if the DOM changed since recording and healing updated the locators, the IR
+plan automatically picks up the new locators. This is the core advantage of
+dynamic resolution over frozen bindings.
+
+### 3.2 AMBIGUOUS → Do Not Guess; Surface Unresolved Target
+
+When `matchElements` returns AMBIGUOUS:
+
+1. Produce `NoTarget` for this field's step.
+2. Add a `ResolutionWarning` to the plan's metadata:
+
+```typescript
+interface ResolutionWarning {
+  readonly field: string;
+  readonly reason: 'ambiguous' | 'unmatched' | 'no-session-element' | 'no-logical-action';
+  readonly message: string;
+  readonly candidates?: ReadonlyArray<{ elementId: string; matchScore: number }>;
+}
+```
+
+3. The step is structurally present (correct action, correct input) but has no
+   executable target. The plan is marked as `hasUnresolvedTargets: true`.
+4. **P2 does NOT call matchElements itself.** It uses the binding resolver which
+   queries the Element Repository and calls matchElements for the field's
+   session element only.
+
+### 3.3 UNMATCHED → Do Not Execute Against Assumed Element; Surface Unavailable
+
+When `matchElements` returns UNMATCHED (no stored Element above threshold):
+
+1. Produce `NoTarget` for this field's step.
+2. Add a `ResolutionWarning` with reason `'unmatched'`.
+3. The field may be genuinely new (added to the app after recording) or the
+   Element Repository may not have an entry for it (healing didn't run or
+   didn't create this element).
+
+### 3.4 Recovery Strategies (Future, NOT P2)
+
+AMBIGUOUS and UNMATCHED targets surface human-actionable warnings. In future
+phases:
+- Re-recording the capability and re-approving would refresh the session
+  elements and allow healing to create/update Elements.
+- A manual element-binding UI could let users disambiguate.
+- P2 does NOT implement any of these — it only surfaces the problem.
+
+---
+
+## 4. Component Design
+
+### 4.1 New Types
+
+#### TestData
+
+```typescript
+/** Concrete test values keyed by DataRequirement.field. */
+type TestData = ReadonlyMap<string, string | number | boolean>;
+```
+
+#### ResolutionWarning
+
+```typescript
+interface ResolutionWarning {
+  readonly field: string;
+  readonly reason: 'ambiguous' | 'unmatched' | 'no-session-element' | 'no-logical-action';
+  readonly message: string;
+  readonly candidates?: ReadonlyArray<{ elementId: string; matchScore: number }>;
+}
+```
+
+#### CapabilityIRResult
+
+```typescript
+interface CapabilityIRResult {
+  readonly plan: ExecutionIRPlan;
+  readonly warnings: ResolutionWarning[];
+  readonly hasUnresolvedTargets: boolean;
+  readonly resolvedFields: ReadonlyArray<{ field: string; elementId: string; matchScore: number }>;
+}
+```
+
+#### P2GenerationInput
+
+```typescript
+interface P2GenerationInput {
+  readonly contract: P2CapabilityContract;
+  readonly testData: TestData;
+  readonly projectId: string;
+  readonly environment: IREnvironment;
+  readonly variantLabel?: string;
+}
+```
+
+### 4.2 New Modules
+
+#### src/domain/generation/capability-ir-generator.ts
+
+The orchestrator. Single entry point:
+
+```typescript
+async function generateCapabilityIR(
+  input: P2GenerationInput,
+  uowFactory: UnitOfWorkFactory,
+): Promise<CapabilityIRResult>
+```
+
+Flow:
+1. Recover the source RecordingSession via `contract.sourceSessionId`.
+2. Call `ElementBindingResolver` to map each DataRequirement → session element.
+3. Call `ElementMatchingService.matchElements()` for all bound session elements
+   against the project's Element Repository.
+4. For each MATCHED field: call `resolveElementTarget(element)` → ElementTarget.
+5. For each DataRequirement: call `DataResolver` to get the concrete value.
+6. For each DataRequirement: map `inputMethod` → `IRAction`.
+7. For each SuccessCriterion: call `SuccessCriterionResolver` → IRAssertion[].
+8. Assemble `ExecutionIRPlan` + warnings.
+
+#### src/domain/generation/data-resolver.ts
+
+Pure function module — no I/O, no repository access.
+
+```typescript
+function resolveTestData(
+  requirements: readonly DataRequirement[],
+  testData: TestData,
+): { resolved: ReadonlyMap<string, string | number | boolean>; warnings: DataWarning[] }
+```
+
+Validates each test value against constraints:
+- `kind: select` → value must be in `constraints.options`
+- `kind: number` → value must be in `[min, max]` range, aligned to `step`
+- `kind: text` → value must satisfy `constraints.pattern`, `minLength`/`maxLength`
+- `kind: boolean` → value must be `true` or `false`
+- `kind: date` → value must be a valid date string
+
+Missing required fields → warning + skip.
+Invalid values → warning + skip.
+Optional missing → use `defaultValue` or skip.
+
+#### src/domain/generation/element-binding-resolver.ts
+
+Resolves DataRequirement.field → UiElementSummary from the source session.
+
+```typescript
+function resolveFieldBindings(
+  requirements: readonly DataRequirement[],
+  session: RecordingSession,
+): { bindings: Map<string, UiElementSummary>; warnings: BindingWarning[] }
+```
+
+Resolution pipeline (per requirement):
+1. **Primary:** Find a LogicalAction in `session.fragment.logicalActions` where
+   `businessField === requirement.field`. Get its componentId → component's
+   `rootElementId` → find UiElementSummary by `elementId`.
+2. **Fallback:** Find a UiElementSummary where `accessibleName === requirement.label`.
+3. **No match:** Warning with reason `'no-logical-action'` or `'no-session-element'`.
+
+Note: The UiElementSummary has limited identity (tag, role, accessibleName,
+sourceUrl). To use R4's `matchElements`, we need to build a `UiElement`-like
+identity. See §4.3.
+
+#### src/domain/generation/success-criterion-resolver.ts
+
+Resolves SuccessCriterion → IRAssertion, including target resolution.
+
+```typescript
+async function resolveSuccessCriteria(
+  criteria: readonly SuccessCriterion[],
+  session: RecordingSession,
+  storedElements: readonly Element[],
+  environment: IREnvironment,
+): Promise<{ assertions: IRAssertion[]; warnings: ResolutionWarning[] }>
+```
+
+Mapping:
+
+| SuccessType | ValidationType | Comparison | Target |
+|---|---|---|---|
+| navigation | URL_MATCH | MATCHES | UrlTarget(pattern) |
+| elementVisible | VISIBILITY | IS_TRUE | ElementTarget (via session binding → matchElements) |
+| elementAbsent | VISIBILITY | IS_FALSE | ElementTarget (via session binding → matchElements) |
+| valueEquals | ATTRIBUTE_MATCH | EQUALS | ElementTarget (via session binding → matchElements) |
+| textPresent | TEXT_MATCH | CONTAINS | UrlTarget(page URL) |
+| custom | CUSTOM | EQUALS | NoTarget |
+
+Element-based criteria use the same binding + matching pipeline as field targets.
+
+### 4.3 Session Element → UiElement Identity Adapter
+
+R4's `matchElements` takes `UiElement[]`. Session elements are `UiElementSummary`,
+which has only 8 fields (no full ElementIdentity). We need an adapter:
+
+```typescript
+function buildMatchableElement(summary: UiElementSummary): UiElement {
+  return createUiElement({
+    elementId: summary.elementId,
+    identity: {
+      accessibleName: summary.accessibleName,
+      ariaRole: summary.role,
+      tag: summary.tag,
+      // Other fields are null — we match on what's available
+      ariaLabel: null,
+      ariaLabelledBy: null,
+      placeholder: null,
+      className: null,
+      name: null,
+      stableId: null,
+      testId: null,
+      dataCy: null,
+      dataQa: null,
+      cssSelector: '',
+      xPath: '',
+      inIframe: false,
+      shadowDom: false,
+      elementId: summary.elementId,
+    },
+    sourceUrl: summary.sourceUrl,
+    domTreePath: '',
+  });
+}
+```
+
+This is a **deliberate data loss** — UiElementSummary doesn't carry testId,
+dataCy, dataQa, name, or ariaLabel. Matching will rely primarily on
+accessibleName + role + tag + sourceUrl.
+
+**Impact on scoring:** With the R4 calibrated scoring policy:
+- accessibleName match (20%): 1.0
+- ariaRole match (10%): 1.0 if role matches
+- tag match (5%): 1.0 if tag matches
+- sourceUrl match (5%): 1.0 if same page
+- businessIds (25%): 0.5 neutral (both sides missing in session elements)
+- name (15%): 0.5 neutral
+- ariaLabel (10%): 0.5 neutral
+- ancestorRoles (10%): 0.5 neutral
+
+**Best-case score: 0.40** (accessibleName 0.20 + role 0.10 + tag 0.05 + url 0.05)
+**With neutrals: + 0.30** (25+15+10+10 weighted at 0.5)
+**Total best case: 0.70** — exactly at MATCH_THRESHOLD.
+
+This is **insufficient for reliable matching**. See §5.
+
+---
+
+## 5. Critical Gap: Identity Information Loss in Session Persistence
+
+### 5.1 The Problem
+
+The binding pipeline depends on `matchElements(freshUiElements, storedElements)`.
+But session elements are stored as `UiElementSummary` (8 fields), not full
+`UiElement` (with 18-field `ElementIdentity`). The summary drops:
+
+- `testId`, `dataCy`, `dataQa` (business IDs — 25% weight)
+- `name` (form name — 15% weight)
+- `ariaLabel` (10% weight)
+- `ancestorRoles` (10% weight)
+- `className`, `placeholder`, `stableId`, `cssSelector`, `xPath`
+
+With only accessibleName + role + tag + sourceUrl available from the summary,
+the best achievable score is **0.70** — exactly at MATCH_THRESHOLD. Any
+slight difference (different role, different page) pushes it below.
+
+### 5.2 Existing Architecture Provides the Solution
+
+The UiElementSummary identity gap is **not a new problem** — it's the same gap
+identified during R4 analysis. The Element Repository's Element entities have
+full `ElementIdentityRecord` (9 fields, R4). The issue is that session
+elements are stored in a reduced form.
+
+However, the **existing architecture already provides a more direct path**:
+
+The `ElementMatchingService` was designed to match `UiElement` against stored
+`Element`. But for P2, we don't actually need to match a session element
+against stored elements using the full scoring pipeline. We need something
+simpler: **given a session element (UiElementSummary), find the stored Element
+that represents the same logical UI control.**
+
+The existing `healing-service.ts` already solves this during recording. When
+a recording session is processed, `healFromRecording()` matches session
+elements against stored Elements and creates/heals as needed. After healing,
+the **Element Repository contains the correct Elements with healed locators**.
+
+The key insight: P2 doesn't need to re-match. It needs to **find the Elements
+that were already matched/created during healing of the source session**.
+
+### 5.3 The ElementRepository Lookup Path
+
+Instead of building fresh UiElements and calling matchElements, P2 can use a
+**direct lookup** approach:
+
+1. **Via logical actions:** The session's fragment has logical actions with
+   `businessField` values matching DataRequirement.field. Each logical action
+   has a `componentId`. The component has a `rootElementId` — a session-scoped
+   element ID (e.g., `elem-0007`).
+
+2. **Via session elements:** The UiElementSummary carries `elementId` — the
+   same session-scoped ID. It also carries `sourceUrl` (page scope).
+
+3. **Via Element identity:** Each stored Element has:
+   - `identity.accessibleName` — should match UiElementSummary.accessibleName
+   - `identity.ariaRole` — should match UiElementSummary.role
+   - `identity.tag` — should match UiElementSummary.tag
+   - `pageOrComponent` — should match UiElementSummary.sourceUrl
+
+4. **Direct matching:** For each session element, filter stored Elements by
+   `projectId` + `pageOrComponent === sourceUrl`, then match by:
+   - `identity.accessibleName === summary.accessibleName` (primary)
+   - `identity.ariaRole === summary.role` (secondary)
+   - `identity.tag === summary.tag` (tertiary)
+
+   If exactly one match → use it.
+   If multiple matches → AMBIGUOUS (same as R4).
+   If zero matches → UNMATCHED.
+
+This is a **simpler, more reliable** path than the full scoring pipeline
+because:
+- We know the page scope (sourceUrl → pageOrComponent)
+- We know the semantic identity (accessibleName, role, tag)
+- We're looking up existing Elements, not scoring similarity
+
+### 5.4 P2's ElementBindingResolver Design
+
+```typescript
+interface FieldBinding {
+  readonly field: string;
+  readonly sessionElement: UiElementSummary | null;
+  readonly resolutionMethod: 'logical-action' | 'accessible-name' | 'none';
+}
+
+interface ResolvedTarget {
+  readonly field: string;
+  readonly target: ElementTarget | NoTarget;
+  readonly warning: ResolutionWarning | null;
+  readonly matchScore: number | null;
+}
+```
+
+The resolver:
+1. Map DataRequirement → UiElementSummary via logical actions / accessible name.
+2. For each UiElementSummary, query `repos.elements.getByPageComponent(projectId, sourceUrl)`.
+3. Filter candidates by `identity.accessibleName === summary.accessibleName`.
+4. If exactly 1 → ElementTarget via `resolveElementTarget(element)`.
+5. If >1 → check role/tag to disambiguate. If still >1 → AMBIGUOUS.
+6. If 0 → UNMATCHED.
+
+This approach:
+- **Reuses** the existing `ElementRepository.getByPageComponent()` query
+- **Reuses** the existing `resolveElementTarget(element)` function
+- **Respects** R4's three-category semantics (MATCHED/AMBIGUOUS/UNMATCHED)
+- **Does not** call matchElements (which requires UiElement construction)
+- **Does not** create or heal Elements
+- **Does not** depend on UiElementSummary having full identity
+
+---
+
+## 6. Concrete Trace: Filter Products End-to-End
+
+### 6.1 Input
+
+```
+contract = { sourceSessionId: "sess-abc123", ... }
+testData = { category: "Electronics", onSale: true, maxPrice: 500 }
+projectId = "proj-001"
+environment = { baseUrl: "https://app.example.com", browser: "chrome", ... }
+```
+
+### 6.2 Session Recovery
+
+```typescript
+const session = await repos.recordingSessions.getById("sess-abc123");
+// → RecordingSession with understandingResult.fragment
+```
+
+Fragment contains:
+- `elements`: UiElementSummary[] — includes elem-0007 (Category), elem-0012 (On Sale), elem-0018 (Maximum Price)
+- `logicalActions`: LogicalAction[] — includes actions with businessField "category", "onSale", "maxPrice"
+- `components`: ComponentSummary[] — includes comp-001 (dropdown), comp-002 (checkbox), comp-003 (slider)
+
+### 6.3 Binding + Resolution
+
+```
+DataRequirement "category" (field="category")
+  → LogicalAction { businessField: "category", componentId: "comp-001" }
+  → ComponentSummary { rootElementId: "elem-0007" }
+  → UiElementSummary { elementId: "elem-0007", accessibleName: "Category", tag: "select", role: "combobox", sourceUrl: "/products" }
+  → ElementRepository.getByPageComponent("proj-001", "/products")
+  → Filter by identity.accessibleName === "Category"
+  → Found: Element { id: "uuid-a1b2", locatorStrategies: [testId, role], identity: { accessibleName: "Category", ... } }
+  → resolveElementTarget(element) → ElementTarget { resolvedLocators: [...] }
+  → MATCHED, score: 1.0 (exact accessibleName + page match)
+```
+
+### 6.4 IR Step Generation
+
+```
+Step 0: NAVIGATE → { kind: 'url', url: 'https://app.example.com/products' }, input: null
+Step 1: SELECT → ElementTarget(uuid-a1b2), input: "Electronics"
+Step 2: TOGGLE → ElementTarget(uuid-c3d4), input: true
+Step 3: FILL → ElementTarget(uuid-e5f6), input: 500
+Step 4: VERIFY → NoTarget, assertions: [VISIBILITY(productList), TEXT_MATCH("Electronics")]
+```
+
+### 6.5 Second Variant (No Re-recording)
+
+```
+testData = { category: "Books", onSale: false, maxPrice: 200 }
+```
+
+Binding + resolution produces **identical** ElementTargets (same elements,
+same locators). Only input values change:
+
+```
+Step 1: SELECT → ElementTarget(uuid-a1b2), input: "Books"
+Step 2: TOGGLE → ElementTarget(uuid-c3d4), input: false
+Step 3: FILL → ElementTarget(uuid-e5f6), input: 200
+```
+
+---
+
+## 7. Provenance and Reproducibility
+
+### 7.1 Provenance
+
+Each generated `ExecutionIRPlan` carries:
+- `testCaseId: p2-{capabilityId}` — links to the capability
+- `testCaseVersionId: p2-{versionId}-data-{variantId}` — unique per data variant
+- Tags: `['capability-derived', 'p2']`
+
+### 7.2 Reproducibility
+
+The same `(contract, testData, projectId, environment)` tuple always produces
+the same IR plan (INV-P2-7), because:
+- Contract is immutable (version snapshot)
+- TestData is an input parameter
+- Element Repository is read-only from P2's perspective
+- `resolveElementTarget` is a pure function of Element
+
+The only non-determinism: if the Element Repository's locators have been healed
+between two P2 invocations, the resolved locators will differ. This is **correct
+behavior** — the IR plan should use the latest healed locators.
+
+### 7.3 Traceability
+
+```
+ExecutionIRPlan.testCaseId → Capability.id
+ExecutionIRPlan.testCaseVersionId → CapabilityVersion.versionId
+P2CapabilityContract.sourceSessionId → RecordingSession.id (original recording)
+CapabilityIRResult.resolvedFields[].elementId → Element.id (repository UUID)
+```
+
+---
+
+## 8. IR Compatibility
+
+P2 produces plans that use:
+- `ExecutionIRPlan` — identical to existing
+- `IRStep` — identical to existing
+- `IRAction` — subset of existing enum (NAVIGATE, SELECT, TOGGLE, FILL, SELECT_DATE, VERIFY)
+- `ElementTarget`, `UrlTarget`, `NoTarget` — identical to existing
+- `ResolvedLocator` — identical to existing
+- `IRAssertion` — identical to existing
+
+**No new IR types.** P2's output is directly consumable by the existing execution
+infrastructure (P4/P5) and IR renderers (Playwright adapter, etc.).
+
+P2 does **not** use recording-specific IR fields (`sourceEventId`, `aiEnrichment`,
+`plainEnglish`, `intent`, `evidenceTrail`) — these are absent in P2-generated steps.
+
+---
+
+## 9. Failure Semantics
+
+| Scenario | Behavior |
 |---|---|
-| `CapabilityIRGenerator` | Different input model (contract vs ATC vs recording). Cannot reuse `DefaultIRGenerator` — it expects `ApprovedTestCase` + `TestCaseVersion` with authored `Step[]`. P2 has `DataRequirement[]`, not `Step[]`. |
-| `DataResolver` | No existing equivalent. The recording path gets values from `SessionEvent` (what the user typed). The ATC path gets values from authored `Step.input`. P2 gets values from `DataRequirement` + caller-supplied testData. |
-| `ElementBindingResolver` | No existing equivalent. The recording path resolves from `ElementIdentity` (inline). The ATC path resolves from `Step.elementId` (pre-authored). P2 resolves from `DataRequirement.field` → `elementBindings[field]` → `Element`. |
-| `SuccessCriterionResolver` | No existing equivalent. The recording path derives assertions from observed state changes (`deriveStateAssertions`). The ATC path reads authored `Validation[]`. P2 reads `SuccessCriterion[]` from the contract. |
+| Source session not found | Throw error — cannot generate plan without provenance |
+| No logical action matches a data requirement field | Warning `no-logical-action`, try accessible-name fallback |
+| No session element matches by accessible name | Warning `no-session-element`, NoTarget |
+| No stored Element matches | Warning `unmatched`, NoTarget |
+| Multiple stored Elements match | Warning `ambiguous`, NoTarget, list candidates |
+| Test data value missing for required field | Warning `missing-required`, skip step |
+| Test data value fails constraint validation | Warning `invalid-value`, skip step |
+| Success criterion target unresolvable | Warning, assertion omitted from plan |
+| Element Repository empty (no Elements for project) | All fields UNMATCHED, plan has NoTarget everywhere |
 
-### §7.3 Boundary: Why Not Reuse DefaultIRGenerator
-
-The `DefaultIRGenerator` expects:
-- `ApprovedTestCase` (with title, tags)
-- `TestCaseVersion` (with authored `Step[]` where each step has `action: StepAction`, `elementId`, `input`)
-- `Map<elementId, Element>` (pre-resolved element lookup)
-
-P2's input is fundamentally different:
-- `P2CapabilityContract` (with `DataRequirement[]`, not `Step[]`)
-- No authored steps — P2 **derives** steps from data requirements
-- No `elementId` on steps — P2 resolves via `elementBindings`
-- Different action mapping source (`InputMethod` → `IRAction`, not `StepAction` → `IRAction`)
-
-Forcing P2 through the ATC generator would require synthesizing fake `ApprovedTestCase` and `TestCaseVersion` objects — a worse abstraction than a clean parallel generator that shares the output types.
+Plans with `hasUnresolvedTargets: true` are structurally valid but marked for
+human attention. They should NOT be auto-executed without review.
 
 ---
 
-## §8. Edge Cases and Safety
+## 10. Implementation Steps
 
-### §8.1 DOM Has Changed Since Recording
+### Step 1: New Types
 
-Element Repository has healed locators (via `healElement()` during cross-session matching or runtime healing). P2 reads current `Element.locatorStrategies[]` — always uses the latest healed locators. If the Element is `BROKEN`, P2 still generates the plan; runtime healing in the executor compensates.
+Create `src/domain/generation/p2-types.ts`:
+- `TestData`, `ResolutionWarning`, `CapabilityIRResult`, `P2GenerationInput`
+- `DataWarning`, `BindingWarning`
 
-### §8.2 Element Repository Has Healed Its Locators
+### Step 2: DataResolver
 
-Same as §8.1. The Element UUID is stable; its locatorStrategies are current. P2 snapshots the current locators into `ResolvedLocator[]` at generation time (same as `DefaultIRGenerator.resolveElementTarget()`). If locators heal again after generation, staleness detection triggers regeneration.
+Create `src/domain/generation/data-resolver.ts`:
+- `resolveTestData(requirements, testData)` → validated values + warnings
+- Pure function, fully unit-testable
 
-### §8.3 Multiple Immutable Capability Versions
+### Step 3: ElementBindingResolver
 
-Each `CapabilityVersion` has its own `elementBindings` snapshot (frozen at approval time). P2 references a specific `versionId` from the contract. Different versions may reference different Element UUIDs (if the UI changed between recordings). Plans generated from version 1 and version 2 are independent — neither affects the other.
+Create `src/domain/generation/element-binding-resolver.ts`:
+- `resolveFieldBindings(requirements, session)` → field → UiElementSummary bindings
+- Uses LogicalAction.businessField, ComponentSummary.rootElementId, UiElementSummary matching
 
-### §8.4 Two Fields with Similar Names
+### Step 4: ElementTargetResolver
 
-Element UUIDs are globally unique. `elementBindings` maps by `DataRequirement.field` (which is unique within a contract). Two fields named "Email" on different forms are different Elements with different UUIDs. No collision.
+Create `src/domain/generation/element-target-resolver.ts`:
+- `resolveTargets(bindings, storedElements)` → field → ElementTarget | NoTarget
+- Uses pageOrComponent query + accessibleName/role/tag matching
+- Returns MATCHED/AMBIGUOUS/UNMATCHED per R4 semantics
 
-### §8.5 Same Semantic Field Appears Multiple Times on a Page
+### Step 5: SuccessCriterionResolver
 
-Each instance is a separate Element. The binding at approval time links to the specific instance that was recorded. If the user needs to test against a different instance, they create a new capability version with a different binding.
+Create `src/domain/generation/success-criterion-resolver.ts`:
+- `resolveSuccessCriteria(criteria, session, storedElements, environment)` → IRAssertion[]
 
-### §8.6 Capability Executed Long After Recording
+### Step 6: IR Action Mapper
 
-Element Repository persists independently. Sessions may be pruned (archival tier). As long as Elements exist, P2 resolves targets. If Elements are also gone (project cleanup), P2 falls back to session recovery if available, or flags as unresolved.
+Create `src/domain/generation/ir-action-mapper.ts`:
+- `inputMethodToIRAction(inputMethod)` → IRAction
+- `INPUTMETHOD_TO_IRACTION` constant map
 
-### §8.7 Target Cannot Be Resolved Confidently
+### Step 7: CapabilityIRGenerator
 
-`ElementBindingResult.source = 'unresolved'` → IRStep gets `target: { kind: 'none' }` and `resolutionWarning: "Element binding not found for field 'X'"`. Playwright codegen emits `// TODO: resolve target for step N`. Executor skips with status "unresolved-target".
+Create `src/domain/generation/capability-ir-generator.ts`:
+- Orchestrates Steps 2-6 via UnitOfWork
+- Single async entry point
 
-### §8.8 Success Criteria Require Target Resolution
+### Step 8: Tests
 
-Navigation criteria → `UrlTarget` (no element needed). Element-based criteria → resolved from `SuccessTarget.elementLocator` (CSS string from recording) or elementBindings. If neither available → assertion emitted with `NoTarget` (may still work for URL-based evaluations).
+Create tests:
+- `tests/p2-gates.test.ts` — P2 exit criteria tests
+- Unit tests for DataResolver, ElementBindingResolver, ElementTargetResolver
+- Integration tests for CapabilityIRGenerator with mock sessions/elements
 
-### §8.9 P3 Generates Many Test-Data Variants
+### Step 9: Spec Update
 
-P3 calls `CapabilityIRGenerator.generate()` repeatedly with different `testData` maps. Element resolution happens once per call (O(1) UUID lookup). No re-matching per variant. The same Element bindings serve all variants — only the input values change.
+Update `.drytis/CANONICAL_ROADMAP.md` to mark P2 as in progress.
 
 ---
 
-## §9. P2 Responsibilities and Non-Responsibilities
+## 11. Regression Gates
 
-### §9.1 P2 Is Responsible For
-
-1. Transforming `P2CapabilityContract` + test data → `ExecutionIRPlan`
-2. Mapping `InputMethod` → `IRAction`
-3. Resolving concrete test values from `DataRequirement` + caller-supplied data
-4. Resolving element targets from `elementBindings` → Element Repository
-5. Resolving `SuccessCriterion[]` → `IRAssertion[]`
-6. Producing format-compatible IR (works with existing execution engine + Playwright codegen)
-7. Handling unresolved targets safely (no silent failures)
-8. Injecting WAIT_FOR_ELEMENT steps (same as ATC generator)
-
-### §9.2 P2 Is NOT Responsible For
-
-| Item | Owner | Why |
+| Gate | Test | Expected |
 |---|---|---|
-| AI-powered test data generation | P3 | DataResolver only produces minimal values |
-| Executing the plan | P4/P5 | P2 produces IR, doesn't run it |
-| Recorder modifications | Frozen R1-R3 | P2 doesn't touch the pipeline |
-| Capability management / review | P1 (frozen) | P2 reads contracts, doesn't create them |
-| Element healing | Healing service (frozen) | P2 reads current locators, doesn't heal |
-| Cross-platform IR | P7-P9 | P2 generates web IR only |
-| Failure analysis | P6 | P2 generates plans, doesn't diagnose |
-| Populating elementBindings | P1 processDecision | P2 consumes bindings, doesn't create them |
+| G1 | `tsc --noEmit` src/ | 0 errors |
+| G2 | Golden master suite | 143/143 |
+| G3 | Element matching (R4) | 18/18 |
+| G4 | Healing service (R4) | 11/11 |
+| G5 | R4 identity gates | 26/26 |
+| G6 | Full suite | All green (1 pre-existing flaky) |
+| G7 | R2 slider gates | 16/16 |
+| G8 | R3 behavioral gates | 26/26 |
+| G9 | P1 gates | 39/39 |
+| G10 | P2 gates (new) | All green |
 
 ---
 
-## §10. Changes to Existing Code
+## 12. Exit Criteria
 
-### §10.1 P2CapabilityContract (additive)
-
-Add `elementBindings: ReadonlyMap<string, string>` field. This is the only change to a P1 entity. It is additive — existing code that constructs contracts without elementBindings gets an empty map (backward-compatible).
-
-**Implementation note:** Dexie cannot directly store `ReadonlyMap` (it's not structured-cloneable). The persistence layer serializes it as `Record<string, string>` and deserializes on read. The `CapabilityVersion.snapshot` stores it as a plain object.
-
-### §10.2 P1 processDecision() Enhancement (additive)
-
-At review approval time, `processDecision()` gains an element binding population step. This uses the session's candidate inputs (which carry `elementId`) and the Element Repository to resolve UUIDs. This is a P1 completion enhancement, not a P2 step — but it's documented here because P2 depends on it.
-
-**If this enhancement is not done before P2**, P2 still works — all bindings are empty, and P2 falls back to session recovery for every field. The experience is degraded but functional.
-
-### §10.3 No Other Changes
-
-P2 does NOT modify:
-- The recorder pipeline (R1-R3 frozen)
-- The IR Bridge (recording-time path)
-- The IR types (shared, stable)
-- The execution engine
-- The Playwright code generators
-- The Element Repository or healing service
-- The assertion providers
+| EC | Description | Verification |
+|---|---|---|
+| EC1 | P2 generates ExecutionIRPlan from P2CapabilityContract | CapabilityIRGenerator test |
+| EC2 | All 6 InputMethod values map to correct IRAction | ir-action-mapper unit test |
+| EC3 | DataResolver validates all DataKind constraints | data-resolver unit test |
+| EC4 | ElementBindingResolver maps fields via logical actions | binding-resolver unit test |
+| EC5 | MATCHED target → ElementTarget with resolved locators | target-resolver unit test |
+| EC6 | AMBIGUOUS target → NoTarget + warning, never guesses | target-resolver unit test |
+| EC7 | UNMATCHED target → NoTarget + warning, never assumes | target-resolver unit test |
+| EC8 | P2 never calls createElement/healElement/updateElement | Code audit + test |
+| EC9 | Filter Products trace produces correct IR plan | Integration test with mock session |
+| EC10 | Second data variant produces same targets, different inputs | Integration test |
+| EC11 | Success criteria → IRAssertion mapping | success-criterion-resolver unit test |
+| EC12 | Plan is compatible with existing ExecutionIRPlan type | tsc compilation |
+| EC13 | All regression gates green (G1-G10) | CI run |
+| EC14 | hasUnresolvedTargets flag set when any target is NoTarget | Integration test |
 
 ---
 
-## §11. Implementation Plan
+## 13. Boundary Invariants
 
-### Step 1: Element Bindings Infrastructure
-
-**Files to create:**
-- `src/generation/capability-ir/element-binding-resolver.ts` — ElementBindingResolver + ElementBindingResult types
-
-**Files to modify:**
-- `src/domain/entities/p2-capability-contract.ts` — add `elementBindings` field
-- `src/domain/mappings/capability-mappers.ts` — populate elementBindings in `capabilityToContract()`
-- `src/domain/services/capability-review-service.ts` — add element binding population step in `processDecision()`
-
-**Gate G1:** `tsc --noEmit` — 0 src errors. Unit test: elementBindings populated correctly from candidate inputs + Element Repository.
-
-### Step 2: Data Resolver
-
-**Files to create:**
-- `src/generation/capability-ir/data-resolver.ts` — DataResolver + constraint-derived fallback logic
-
-**Gate G2:** Unit tests verify resolution priority (caller > default > constraint-derived) for all 6 DataKind values.
-
-### Step 3: Success Criterion Resolver
-
-**Files to create:**
-- `src/generation/capability-ir/success-criterion-resolver.ts` — SuccessCriterionResolver + mapping table
-
-**Gate G3:** Unit tests verify all 6 SuccessType → IRAssertion mappings. Verify target resolution for navigation vs element-based criteria.
-
-### Step 4: Capability IR Generator
-
-**Files to create:**
-- `src/generation/capability-ir/capability-ir-generator.ts` — orchestrator, InputMethod → IRAction mapping, step building, WAIT_FOR_ELEMENT injection
-
-**Gate G4:** Unit tests: generate plan from Filter Products contract, verify step count, actions, targets, assertions. Verify WAIT_FOR_ELEMENT injection. Verify entry point click step.
-
-### Step 5: Service Layer Integration
-
-**Files to modify:**
-- `src/background/service-worker.ts` — add `GENERATE_CAPABILITY_IR` message handler that loads contract + elements, calls generator, stores result
-
-**Gate G5:** Integration test: contract → generator → ExecutionIRArtifact → staleness check → Playwright codegen. Verify generated code is syntactically valid.
-
-### Step 6: Golden Master Fixtures
-
-**Files to create:**
-- `tests/golden-master/capability-ir/` — fixture contracts + expected IR plans for 5 scenarios
-
-**Gate G6:** Golden master tests pass for all 5 scenarios (Login, Filter Products, Checkout, Search, Form Submission).
-
-### Step 7: Regression Suite
-
-**Gate G7:** Full test suite passes (≤ 2 flaky exceptions). R1-R3 gates unchanged. P1 gates unchanged.
+| INV | Description |
+|---|---|
+| INV-P2-1 | P2 never calls createElement, healElement, updateElement |
+| INV-P2-2 | P2 never guesses AMBIGUOUS targets |
+| INV-P2-3 | P2 never guesses UNMATCHED targets |
+| INV-P2-4 | P2 does not modify P1 or R4 types |
+| INV-P2-5 | P2 does not depend on the recorder pipeline |
+| INV-P2-6 | P2 produces ExecutionIRPlan compatible with existing types |
+| INV-P2-7 | P2 is deterministic for same (contract, testData, environment) |
+| INV-P2-8 | P2 does not add elementBindings or any execution binding to P2CapabilityContract |
+| INV-P2-9 | P2 does not modify the source RecordingSession |
+| INV-P2-10 | P2 does not produce DRAG_DROP or PRESS_KEY actions (not authorable from DataRequirement) |
 
 ---
 
-## §12. Exit Criteria
+## 14. P2/P3 Boundary
 
-| EC | Criterion | Verification |
-|----|-----------|-------------|
-| EC1 | `CapabilityIRGenerator` produces valid `ExecutionIRPlan` from `P2CapabilityContract` | Unit test — plan structure correct |
-| EC2 | `InputMethod → IRAction` mapping is correct for all 6 input methods | Unit test — exhaustive mapping table |
-| EC3 | `DataResolver` resolves values in correct priority order | Unit test — caller > default > constraint-derived |
-| EC4 | `ElementBindingResolver` resolves targets via Element Repository | Unit test — UUID lookup → ElementTarget |
-| EC5 | `ElementBindingResolver` falls back to session recovery | Unit test — session path produces locators |
-| EC6 | `ElementBindingResolver` handles unresolved targets safely | Unit test — NoTarget + resolutionWarning |
-| EC7 | `SuccessCriterionResolver` maps all 6 SuccessType values | Unit test — exhaustive mapping |
-| EC8 | Filter Products trace produces correct 6-step plan | Golden master test |
-| EC9 | Generated IR is compatible with Playwright codegen | Integration test — codegen produces valid TypeScript |
-| EC10 | Generated IR is compatible with execution engine | Integration test — executor accepts plan |
-| EC11 | `elementBindings` populated at review approval | Unit test — processDecision produces bindings |
-| EC12 | P2 never reads CapabilityCandidate or raw interactions (except fallback) | Code inspection — import audit |
-| EC13 | All existing tests pass (≤ 2 flaky) | Full suite run |
-| EC14 | R1-R3 + P1 regression gates pass | Gate suite run |
+| Concern | P2 | P3 |
+|---|---|---|
+| Test data | Accepts `TestData` input | Generates `TestData` variants |
+| IR plan | Produces `ExecutionIRPlan` from given data | Calls P2 for each variant |
+| Decision | Never decides what data to test | Decides boundary values, edge cases, etc. |
+| LLM | Does not use LLM | Uses LLM to generate semantically meaningful test data |
+
+P3 will import `generateCapabilityIR()` and call it multiple times with different
+`TestData` maps, producing multiple `ExecutionIRPlan` instances.
 
 ---
 
-## §13. Boundary Invariants
+## 15. What P2 Does NOT Address (Explicitly Out of Scope)
 
-| Invariant | Description |
-|-----------|-------------|
-| INV-P2-B1 | P2 never imports from `src/recorder/` or `src/classifier/`. The recorder is not a P2 dependency. |
-| INV-P2-B2 | P2 never calls `ir-bridge.build()`. The recording-time IR Bridge is a separate path. |
-| INV-P2-B3 | P2 never modifies `Element` entities. It reads current locators; healing is the healing service's job. |
-| INV-P2-B4 | P2 never generates test data intelligently. `DataResolver` produces minimal values only. P3 overrides testData. |
-| INV-P2-B5 | P2 never executes plans. It produces `ExecutionIRPlan`; execution is P4/P5. |
-| INV-P2-B6 | The `elementBindings` field on `P2CapabilityContract` stores Element UUIDs, never locators. UUIDs are stable references, not execution details. |
-| INV-P2-B7 | P2-generated IR uses the same types as recording-time IR (`ExecutionIRPlan`, `IRStep`, etc.). No parallel type system. |
-
----
-
-## §14. Validation Scenarios
-
-### Scenario 1: Login Capability
-- Contract: 2 data requirements (username: text, password: text), 1 success criterion (navigation)
-- Test data: { username: "testuser", password: "pass123" }
-- Expected: NAVIGATE → FILL username → FILL password → CLICK submit + navigation assertion
-
-### Scenario 2: Filter Products (primary trace)
-- Contract: 3 data requirements (category, onSale, maxPrice), 1 success criterion (elementVisible)
-- Test data: { category: "Electronics", onSale: true, maxPrice: 500 }
-- Expected: NAVIGATE → SELECT → TOGGLE → FILL → CLICK + visibility assertion
-
-### Scenario 3: Checkout
-- Contract: 4 data requirements (shippingAddress, paymentMethod, couponCode, agreeTerms)
-- Test data: minimal values
-- Expected: NAVIGATE → FILL → SELECT → FILL → TOGGLE → CLICK
-
-### Scenario 4: Unresolved Target
-- Contract: 2 data requirements, one with no elementBinding
-- Expected: First step resolves normally, second step has NoTarget + resolutionWarning
-
-### Scenario 5: Empty Test Data
-- Contract: 3 data requirements, testData map is empty
-- Expected: DataResolver uses constraint-derived fallbacks for all fields
+1. **Test data generation** — P3's job. P2 takes data as input.
+2. **Execution** — P4/P5's job. P2 produces IR plans.
+3. **Element creation/healing** — Healing Service's job. P2 reads Elements only.
+4. **Locator re-ranking** — Element.locatorStrategies are already ranked. P2 uses `resolveElementTarget()` as-is.
+5. **Recording** — Recorder's job. P2 reads persisted sessions only.
+6. **Ambiguity resolution** — P2 surfaces; humans or future UI resolve.
+7. **Cross-environment** — Each environment has its own Element Repository. P2 resolves against the current project's repository.
+8. **entryPoint.elementName** — P2 generates a NAVIGATE step to `entryPoint.url`. If `elementName` is specified (e.g., clicking a menu item to reach the page), P2 does NOT generate a click step for it in V1 — this is a future enhancement.
 
 ---
 
-## §15. Design Principles
+## 16. elementBindings Rejection
 
-1. **P2 binds, it doesn't discover.** Target resolution uses pre-resolved bindings from the contract. P2 does not search the DOM, match elements, or infer structure. That work happened at recording time (R1-R3) and approval time (P1).
+The earlier P2 design proposal (Approach B) suggested adding `elementBindings:
+ReadonlyMap<string, string>` to `P2CapabilityContract` — a frozen map of
+field→Element UUID populated at P1 review approval.
 
-2. **The contract is the sole input boundary.** Everything P2 needs is on `P2CapabilityContract` + caller-supplied test data + Element Repository. No backdoor access to recorder artifacts.
+**Rejected** for three reasons established during the R4 design analysis:
 
-3. **IR is disposable.** P2-generated plans can be regenerated at any time from the same contract + data. If locators heal, regenerate. If test data changes, regenerate. The contract is the durable truth; the plan is ephemeral.
+1. **Element replacement:** If an app redesign replaces the control, the old
+   Element UUID becomes stale. An immutable binding would point at a dead UUID
+   and require capability re-review for a purely execution-level change.
 
-4. **Same output format, different input path.** P2 produces the same `ExecutionIRPlan` type as the recording-time IR Bridge. The execution engine, codegen, and staleness detection don't know or care which path produced the plan.
+2. **Environment specificity:** Element UUIDs are project-scoped. Different
+   environments (dev/staging/prod) have different Element Repositories with
+   different UUIDs. A single frozen map cannot represent all environments.
 
-5. **Element bindings are references, not locators.** The `elementBindings` map stores UUIDs — stable identifiers that survive DOM changes, healing, and capability versioning. No CSS selectors or XPath leak into the capability contract.
+3. **Coupling:** Putting execution-layer bindings into P1's immutable
+   capability contract creates false coupling between capability lifecycle
+   and Element Repository state.
 
-6. **Fail visibly, never silently.** Unresolved targets produce explicit warnings in the generated plan. No best-guess element matching at generation time. If P2 can't resolve a target, it says so.
+**Instead, P2 uses dynamic resolution:** At generation time, P2 recovers the
+source session, binds each field to a session element, and matches against the
+current Element Repository. This approach:
+- Automatically picks up healed locators
+- Works across environments (each resolves against its own repository)
+- Doesn't require capability re-review for DOM changes
+- Respects R4's three-category semantics
+
+P2CapabilityContract remains pure: no element bindings, no execution-layer
+details. (INV-P2-8)
+
+---
+
+## 17. Risk Assessment
+
+| Risk | Likelihood | Mitigation |
+|---|---|---|
+| UiElementSummary lacks identity for reliable matching | Medium | Direct lookup by accessibleName + page scope (§5.4) instead of full scoring |
+| Source session pruned/deleted | Low | Sessions are Tier 1 permanent (INV-RS1). If missing, throw. |
+| Element Repository empty for project | Medium | All targets UNMATCHED → plan with all NoTarget + warnings. Correct but not executable. |
+| Multiple data requirements map to same session element | Low | Each requirement maps to its own field → its own logical action → its own element |
+| inputMethod is null (reviewer didn't set it) | Medium | Fallback to IRAction.FILL with text input |
+| Success criterion elementLocator is vague | Medium | Best-effort matching by accessibleName; if not found, warning + omit assertion |
