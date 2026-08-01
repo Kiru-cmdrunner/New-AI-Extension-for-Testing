@@ -18,14 +18,14 @@
  * Usage:
  *   import { PatternRegistry } from './pattern-registry';
  *
- *   const registry = PatternRegistry.create();
- *   registry.isInteractiveClass('btn fare-option'); // true
- *   registry.isDropdownTriggerClass('select oxd-select-text'); // true
+ *   PatternRegistry.isInteractiveClass('btn fare-option'); // true
+ *   PatternRegistry.isDropdownTriggerClass('select oxd-select-text'); // true
  *
  * To add patterns for a new application or framework:
- *   PatternRegistry.registerPlugin('myApp', {
+ *   PatternRegistry.registerPlugin({
+ *     name: 'myApp',
  *     interactiveClasses: ['my-interactive'],
- *     dropdownTriggers: ['my-select'],
+ *     dropdownTriggerClasses: ['my-select'],
  *     ...
  *   });
  */
@@ -74,7 +74,6 @@ export interface FrameworkPatterns {
 
   /** CSS class patterns for display-value elements (SPA selected value). */
   displayValueClasses?: string[];
-
 }
 
 // ── Generic Defaults ──────────────────────────────────────────────────
