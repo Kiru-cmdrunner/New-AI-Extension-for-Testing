@@ -4,6 +4,10 @@
 >
 > **Baseline:** Commit `d98fec3` (post-R3 + documentation update). R1, R2, R3 complete.
 >
+> **Revision History:**
+> - Initial design: 9-step plan, 5 examples, capability review + versioning + P2 contract.
+> - **Revision 1:** Added `inputMethod` to `DataRequirement` (preserves recorder's semantic operational knowledge at the abstraction boundary). Added `sourceSessionId` to `CapabilityVersion` (explicit provenance). Added `sourceInteractionType` to `LogicalAction` (minimal enrichment pipeline change to carry interaction type through to capability derivation).
+>
 > **Roadmap Reference:** `CANONICAL_ROADMAP.md` §5 Phase P1.
 >
 > **Architectural Objective:** Transform the extension from a recorder that produces test code into a test management platform where recorded sessions become managed, reviewable, versioned capabilities with formal data requirements and success criteria — the substrate for AI test generation (P3) and capability-derived execution (P2).
@@ -93,7 +97,8 @@ Nothing in the existing capability infrastructure is removed. The auto-merge log
 export interface DataRequirement {
   readonly field: string;           // "email", "password", "searchQuery", "maxPrice"
   readonly label: string;           // human-readable: "Email Address"
-  readonly kind: DataKind;          // 'text' | 'number' | 'boolean' | 'date' | 'select' | 'email'
+  readonly kind: DataKind;          // what kind of DATA: 'text' | 'number' | 'boolean' | 'date' | 'select' | 'email'
+  readonly inputMethod: InputMethod | null;  // how the field is OPERATED: 'dropdown' | 'toggle' | 'slider' | ...
   readonly required: boolean;
   readonly defaultValue: string | null;   // suggested value for test generation
   readonly constraints: DataConstraint;   // inferred from InteractionContract, editable
@@ -101,6 +106,27 @@ export interface DataRequirement {
 }
 
 export type DataKind = 'text' | 'number' | 'boolean' | 'date' | 'select' | 'email';
+
+/**
+ * How the user operates this field. Derived from the originating
+ * InteractionType at the enrichment boundary. This is a platform-level
+ * categorization — it tells P2 what interaction strategy to use without
+ * coupling capability management to recorder-specific types.
+ *
+ * The taxonomy is intentionally coarser than InteractionType: it abstracts
+ * away implementation details (native vs custom, ARIA vs CSS) while
+ * preserving operational semantics (dropdown vs toggle vs slider).
+ *
+ * Orthogonal to `kind`: `kind` answers "what data?", `inputMethod` answers
+ * "how is it operated?".
+ */
+export type InputMethod =
+  | 'dropdown'    // select from a list: Dropdown, NativeDropdown, CustomDropdown, Autocomplete, RadioButton
+  | 'toggle'      // flip a boolean state: Checkbox
+  | 'slider'      // drag a handle to set a value: Slider, NativeSlider, AriaSlider, CustomSlider, RangeSlider
+  | 'text'        // type into a field: TextEntry, RichTextEditor
+  | 'datePicker'  // select a date from a calendar: DatePicker, DateRangePicker
+  | 'fileUpload'; // provide a file: FileUpload
 
 export interface DataConstraint {
   readonly minLength: number | null;
@@ -128,7 +154,31 @@ A `CapabilityInput` from the candidate (derived from `LogicalAction.businessFiel
 | `format` | `constraints.pattern` + `constraints.formatDescription` |
 | `validOptions` | `constraints.options` |
 
-The reviewer sees inferred data requirements pre-populated and can edit them.
+The `inputMethod` field is derived from the `LogicalAction.sourceInteractionType` (carried through from the originating ComponentInteraction). The mapping is many-to-one:
+
+| InteractionType(s) | `inputMethod` |
+|---|---|
+| Dropdown, NativeDropdown, CustomDropdown, Autocomplete, SearchableDropdown, RadioButton | `'dropdown'` |
+| Checkbox | `'toggle'` |
+| Slider, NativeSlider, AriaSlider, RangeSlider, CustomSlider | `'slider'` |
+| TextEntry, RichTextEditor | `'text'` |
+| DatePicker, DateRangePicker | `'datePicker'` |
+| FileUpload | `'fileUpload'` |
+
+Non-data-input types (Click, Navigation, Tab, Hover, Scroll, etc.) do not produce DataRequirements and thus have no `inputMethod`.
+
+**The `kind` and `inputMethod` dimensions are orthogonal:**
+
+| Field | `kind` | `inputMethod` | What it tells P2 |
+|-------|------|-------------|-----------------|
+| Email | email | text | Type into a text field |
+| Password | text | text | Type into a text field |
+| Category | select | dropdown | Click trigger, click option |
+| On Sale | boolean | toggle | Click element to flip state |
+| Max Price | number | slider | Drag handle or use arrows |
+| Quantity | number | text | Type a number into a field |
+
+The reviewer sees inferred data requirements pre-populated with both `kind` and `inputMethod` and can edit either.
 
 #### SuccessCriterion
 
@@ -184,6 +234,7 @@ export interface CapabilityVersion {
   readonly createdBy: string;            // reviewer identity (user email or 'system')
   readonly reviewDecision: ReviewDecision;
   readonly reviewNote: string | null;
+  readonly sourceSessionId: string;      // provenance — links to the recording that justified this version
 
   // ── The actual capability data at this version ──
   readonly snapshot: CapabilitySnapshot;
@@ -366,16 +417,16 @@ This traces exactly what flows from each pipeline stage into the final approved 
 | Pipeline Stage | Produces | Flows into Capability? | How |
 |---------------|----------|----------------------|-----|
 | **EventTap capture** | ObservedEvent (40+ fields) | ❌ No | Too low-level. Aggregated into interactions. |
-| **ComponentInteraction** | type, subtype, trigger, metadata | ⚠️ Indirectly | Interactions are aggregated into LogicalActions by the enrichment pipeline. The capability knows "this had an email input field" — not "the user typed j@x.com into an INPUT element at coordinates (340, 220)." |
+| **ComponentInteraction** | type, subtype, trigger, metadata | ⚠️ Indirectly | Interactions are aggregated into LogicalActions by the enrichment pipeline. The capability knows "this had an email input field" — not "the user typed j@x.com into an INPUT element at coordinates (340, 220)." **The interaction type survives via `LogicalAction.sourceInteractionType` → `DataRequirement.inputMethod`.** |
 | **Evidence Engine** | intent, confidence, evidenceTrail | ❌ No | The evidence engine's job is to produce the correct InteractionType. Once classification is done, the trail is not part of capability knowledge. (The confidence IS surfaced in the review UI for the reviewer's benefit, but is not stored in the capability.) |
 | **enrichInteraction()** | componentType, componentFramework, businessMeaning | ⚠️ Indirectly | `businessMeaning` influences the derived capability name and purpose. `componentType`/`componentFramework` are not stored in the capability but inform the reviewer's understanding. |
 | **enrichConfigurationSession()** | ConfigurationSession (pattern, fields, commitAction) | ⚠️ Indirectly | The `businessField` names from ConfigurationSession become `CapabilityInput` labels, which become `DataRequirement` fields. The pattern (filterApply, multiFieldConfig) is not stored. |
-| **ApplicationKnowledgeFragment** | Full knowledge structure | ✅ **Yes — this is the source** | `logicalActions` → inputs, `interactionContracts` → validation rules, `behavioralContracts.successIndicators` → success criteria, `recordedWorkflow.surfaceTransitions` → outcome URL |
+| **ApplicationKnowledgeFragment** | Full knowledge structure | ✅ **Yes — this is the source** | `logicalActions` → inputs (including `sourceInteractionType` → `inputMethod`), `interactionContracts` → validation rules, `behavioralContracts.successIndicators` → success criteria, `recordedWorkflow.surfaceTransitions` → outcome URL |
 | **IR Bridge** | ExecutionIRPlan | ❌ No | The IR plan is execution-specific. P2 will generate NEW plans FROM the capability, not reuse the recording's plan. |
 | **Interaction Enrichment** | assertions, locators | ❌ No | Locators are execution-specific, not capability-level. P2 resolves its own locators. |
 | **CapabilityCandidate** | name, purpose, inputs, validationRules, observedOutcome | ✅ **Yes — this IS the capability draft** | Directly becomes the reviewed capability after approval. |
 
-**Key insight:** The capability is a **high-level abstraction** that summarizes what the user did and what the application requires — not a replay of individual interactions. A "Login" capability knows it needs an email and password, that success means reaching `/dashboard`, and that both fields are required. It does not know that the user typed "john@example.com" or that the email field was an `<input type="email">` with class `form-control`.
+**Key insight:** The capability is a **high-level abstraction** that summarizes what the user did and what the application requires — not a replay of individual interactions. A "Login" capability knows it needs an email and password, that success means reaching `/dashboard`, and that both fields are required. It does not know that the user typed "john@example.com" or that the email field was an `<input type="email">` with class `form-control`. **But it does know that the email field is operated as text input and the password field is operated as text input** — because the recorder determined this and the `inputMethod` field preserves it.
 
 ### 4.3 What the Reviewer Sees vs What Is Stored
 
@@ -384,7 +435,8 @@ The review UI surfaces MORE information than is stored in the capability, to hel
 | Information | Shown in Review UI | Stored in Capability |
 |------------|-------------------|---------------------|
 | Derived name + purpose | ✅ | ✅ |
-| Inferred inputs + validation rules | ✅ | ✅ (as dataRequirements) |
+| Inferred inputs + validation rules | ✅ | ✅ (as dataRequirements with kind + inputMethod) |
+| Interaction operational type (dropdown, toggle, slider, etc.) | ✅ (shown as inputMethod) | ✅ (as DataRequirement.inputMethod) |
 | Inferred success criteria | ✅ | ✅ |
 | Match score + suggested decision | ✅ | ❌ (stored in CapabilityReview, not Capability) |
 | Interaction list (from recording) | ✅ (collapsible) | ❌ |
@@ -393,6 +445,7 @@ The review UI surfaces MORE information than is stored in the capability, to hel
 | Entry element (tag, role, name) | ✅ | ✅ (as entryPoint.elementName in contract) |
 | Terminal URL | ✅ | ✅ (as entryPoint.url + successCriterion) |
 | Component framework/type (e.g., MUI, DataGrid) | ✅ | ❌ (informative only) |
+| Source recording session (provenance) | ✅ (link to session) | ✅ (as CapabilityVersion.sourceSessionId) |
 
 ---
 
@@ -457,10 +510,10 @@ name: "Login"
 reviewState: "approved"
 currentVersion: 1
 dataRequirements: [
-  { field: "email", label: "Email Address", kind: "email", required: true,
+  { field: "email", label: "Email Address", kind: "email", inputMethod: "text", required: true,
     constraints: { pattern: "^[^@]+@[^@]+$", formatDescription: "Valid email address" },
     defaultValue: null, source: "inferred" },
-  { field: "password", label: "Password", kind: "text", required: true,
+  { field: "password", label: "Password", kind: "text", inputMethod: "text", required: true,
     constraints: { minLength: 8 },
     defaultValue: null, source: "inferred" }
 ]
@@ -474,8 +527,13 @@ successCriteria: [
 ```
 capabilityId: "cap-session-abc123"
 versionNumber: 1
+versionId: "cap-session-abc123-v1"
+sourceSessionId: "session-xyz789"          // provenance back to recording
 name: "Login"
-dataRequirements: [email, password]
+dataRequirements: [
+  { field: "email",    kind: "email", inputMethod: "text",  required: true, constraints: { ... } },
+  { field: "password", kind: "text",  inputMethod: "text",  required: true, constraints: { minLength: 8 } }
+]
 successCriteria: [navigation to /dashboard]
 entryPoint: { url: "/login", elementName: "Sign In" }
 ```
@@ -494,24 +552,74 @@ entryPoint: { url: "/login", elementName: "Sign In" }
 | 5 | Click | — | trigger | 0.3 | "Apply Filters" button |
 | 6 | Navigation | — | navigate | 1.0 | URL with query params |
 
+**ApplicationKnowledgeFragment (with sourceInteractionType on LogicalActions):**
+```
+logicalActions: [
+  { businessField: "category", resultingChange: { field: "value", to: "electronics" }, sourceInteractionType: "Dropdown" },
+  { businessField: "onSale",   resultingChange: { field: "checked", to: true },        sourceInteractionType: "Checkbox" },
+  { businessField: "maxPrice", resultingChange: { field: "value", to: 75 },            sourceInteractionType: "Slider" }
+]
+```
+
 **CapabilityCandidate:**
 ```
 name: "Apply Filters"         (from submit button keyword "apply")
 inputs: [
-  { label: "category", required: false, validOptions: ["electronics", ...] },
-  { label: "onSale", required: false },        // from toggle
-  { label: "maxPrice", required: false, valueRange: { min: 0, max: 100, step: 1 } }
+  { label: "category", required: false, validOptions: ["electronics", ...], sourceInteractionType: "Dropdown" },
+  { label: "onSale", required: false, sourceInteractionType: "Checkbox" },
+  { label: "maxPrice", required: false, valueRange: { min: 0, max: 100, step: 1 }, sourceInteractionType: "Slider" }
 ]
 observedOutcome: { terminalUrl: "/shop?cat=electronics&sale=true&max=75", completed: true }
 ```
 
-**Inferred Data Requirements:**
-- `category`: select, options: ["electronics", ...]
-- `onSale`: boolean
-- `maxPrice`: number, range 0-100
+**Inferred Data Requirements (after candidateToDataRequirements mapping):**
+```
+[
+  { field: "category", label: "Category", kind: "select", inputMethod: "dropdown", required: false,
+    constraints: { options: ["electronics", ...] }, source: "inferred" },
+
+  { field: "onSale", label: "On Sale", kind: "boolean", inputMethod: "toggle", required: false,
+    constraints: {}, source: "inferred" },
+    // ↑ kind=boolean derived from inputMethod='toggle' (no constraints needed — the toggle
+    //   interaction type IS the signal that this is a boolean field)
+
+  { field: "maxPrice", label: "Max Price", kind: "number", inputMethod: "slider", required: false,
+    constraints: { min: 0, max: 100, step: 1 }, source: "inferred" }
+]
+```
 
 **Inferred Success Criteria:**
 - URL contains query parameters after Apply
+
+**What is NOT in the capability but IS recoverable:**
+- Interaction subtype `CustomDropdown` → recoverable via `CapabilityVersion.sourceSessionId` → RecordingSession → interactions
+- Interaction subtype `CustomSlider` + geometry extraction → same provenance chain
+- R3 behavioral evidence trail (class `active` transition, confidence 0.5 for On Sale) → same provenance chain
+- DOM structure, locators, framework patterns → same provenance chain
+- ConfigurationSession pattern (`filterApply`) → same provenance chain
+
+**P2CapabilityContract (what P2/P3 receive):**
+```
+capabilityId: "cap-filter-products"
+versionNumber: 1
+versionId: "cap-filter-products-v1"
+sourceSessionId: "session-def456"
+name: "Filter Products"
+dataRequirements: [
+  { field: "category", kind: "select", inputMethod: "dropdown", required: false, constraints: { options: [...] } },
+  { field: "onSale",   kind: "boolean", inputMethod: "toggle",  required: false, constraints: {} },
+  { field: "maxPrice", kind: "number",  inputMethod: "slider",  required: false, constraints: { min: 0, max: 100 } }
+]
+successCriteria: [URL contains query parameters]
+entryPoint: { url: "/shop", elementName: "Apply Filters" }
+```
+
+P2 uses `inputMethod` to determine the correct interaction strategy for each field:
+- `dropdown` → click trigger, wait for options, click option
+- `toggle` → click element, verify state changed
+- `slider` → locate handle, drag to position or use arrow keys
+
+Without `inputMethod`, P2 would see `kind: 'number'` for maxPrice and not know whether to type or drag. Without `inputMethod`, the On Sale field would have `kind: ???` with no way to determine it's boolean.
 
 ### Example 3: Checkout (Multi-Step)
 
@@ -529,18 +637,18 @@ observedOutcome: { terminalUrl: "/shop?cat=electronics&sale=true&max=75", comple
 ```
 name: "Place Order"           (from submit button keyword)
 inputs: [
-  { label: "fullName", required: true },
-  { label: "address", required: true },
-  { label: "city", required: true },
-  { label: "zipCode", required: true, format: { regex: "^\\d{5}$" } },
-  { label: "cardNumber", required: true, format: { regex: "^\\d{16}$" } },
-  { label: "expiry", required: true, format: { regex: "^\\d{2}/\\d{2}$" } },
-  { label: "cvc", required: true, format: { regex: "^\\d{3}$" }, lengthRange: { minLength: 3, maxLength: 3 } }
+  { label: "fullName", required: true, sourceInteractionType: "TextEntry" },
+  { label: "address", required: true, sourceInteractionType: "TextEntry" },
+  { label: "city", required: true, sourceInteractionType: "TextEntry" },
+  { label: "zipCode", required: true, format: { regex: "^\\d{5}$" }, sourceInteractionType: "TextEntry" },
+  { label: "cardNumber", required: true, format: { regex: "^\\d{16}$" }, sourceInteractionType: "TextEntry" },
+  { label: "expiry", required: true, format: { regex: "^\\d{2}/\\d{2}$" }, sourceInteractionType: "TextEntry" },
+  { label: "cvc", required: true, format: { regex: "^\\d{3}$" }, lengthRange: { minLength: 3, maxLength: 3 }, sourceInteractionType: "TextEntry" }
 ]
 observedOutcome: { terminalUrl: "/order-confirmation/*", completed: true }
 ```
 
-This capability has 7 data requirements. The reviewer would likely add default test values (e.g., `cardNumber` defaultValue: "4111111111111111") and mark the success criterion as URL pattern `/order-confirmation/*`.
+This capability has 7 data requirements, all `inputMethod: "text"`. The reviewer would likely add default test values (e.g., `cardNumber` defaultValue: "4111111111111111") and mark the success criterion as URL pattern `/order-confirmation/*`.
 
 ### Example 4: Search
 
@@ -563,15 +671,15 @@ Simple capability — one data requirement, one success criterion.
 ```
 name: "Save"                  (from submit button keyword)
 inputs: [
-  { label: "name", required: true },
-  { label: "email", required: true, format: email },
-  { label: "department", required: true, validOptions: ["Engineering", "Sales", ...] },
-  { label: "role", required: true, validOptions: ["Admin", "Manager", "Member"] }
+  { label: "name", required: true, sourceInteractionType: "TextEntry" },
+  { label: "email", required: true, format: email, sourceInteractionType: "TextEntry" },
+  { label: "department", required: true, validOptions: ["Engineering", "Sales", ...], sourceInteractionType: "Dropdown" },
+  { label: "role", required: true, validOptions: ["Admin", "Manager", "Member"], sourceInteractionType: "Dropdown" }
 ]
 observedOutcome: { terminalUrl: "/employees", successSignals: ["visibility: Employee created toast"], completed: true }
 ```
 
-Reviewer would rename to "Add Employee" and add a success criterion for the toast message.
+After mapping to DataRequirements, `department` and `role` get `inputMethod: "dropdown"`, and `name` and `email` get `inputMethod: "text"`. Reviewer would rename to "Add Employee" and add a success criterion for the toast message.
 
 ---
 
@@ -665,6 +773,22 @@ A capability's version history is the list of all `CapabilityVersion` entries fo
 
 P2 and P3 always reference a specific `versionId`. This ensures that test plans generated from a capability are reproducible — even if the capability is later edited, the test plan was generated from a specific version and can be re-executed against that version's data requirements and success criteria.
 
+### 7.5 Version Provenance
+
+Each `CapabilityVersion` carries a `sourceSessionId` linking it to the recording that justified its approval. This enables:
+- **Version diffing**: load both versions' source sessions, compare interactions
+- **Audit trail**: any approved version traces to its recording
+- **Re-derivation**: if capability types evolve, re-derive from source session data
+- **Trust verification**: "this field was inferred from a 0.5-confidence behavioral classification" — recoverable via the session
+
+The provenance chain is:
+```
+CapabilityVersion.sourceSessionId → RecordingSession (Dexie)
+    → ComponentInteraction[] (full semantic detail: type, subtype, intent, confidence, evidenceTrail)
+    → ApplicationKnowledgeFragment (full knowledge structure)
+    → ExecutionIRArtifact (original recording's IR plan)
+```
+
 ---
 
 ## §8. Persistence and Storage
@@ -681,7 +805,7 @@ P2 and P3 always reference a specific `versionId`. This ensures that test plans 
 | Table | Schema | Purpose |
 |-------|--------|---------|
 | `capabilityReviews` | `reviewId, capabilityCandidateId, sessionId, state, reviewedAt` | Review state persistence |
-| `capabilityVersions` | `versionId, capabilityId, versionNumber, createdAt` | Version snapshots |
+| `capabilityVersions` | `versionId, capabilityId, versionNumber, sourceSessionId, createdAt` | Version snapshots with provenance |
 
 The existing `capabilities` table (from `dexie-capability-repository.ts`) is extended with the new fields. No migration needed — Dexie handles additive schema changes.
 
@@ -815,8 +939,9 @@ P2CapabilityContract {
 
 P2 generates parameterized execution plans from this. For example, given the Login capability:
 - P2 generates an execution plan that fills the email and password fields
-- The plan uses data requirements to know which fields to fill and what constraints they have
-- The plan uses success criteria to generate assertion steps
+- The plan uses `dataRequirements.kind` to know what data each field needs
+- The plan uses `dataRequirements.inputMethod` to determine the correct interaction strategy (type into text fields, click-toggle for toggles, drag for sliders, click-option for dropdowns)
+- The plan uses `successCriteria` to generate assertion steps
 
 **P1 does NOT generate execution plans.** P1 only produces the capability contract. P2 reads it.
 
@@ -843,16 +968,17 @@ P3 (AI Test Generation) consumes the same `P2CapabilityContract` plus the origin
 | INV-P1-B2 | P1 never calls `annotateWithEvidence()` or any evidence engine function. Classification is the recorder's job. |
 | INV-P1-B3 | P1 never modifies `ComponentInteraction` objects. They are read-only input. |
 | INV-P1-B4 | P2/P3 never read `CapabilityCandidate` directly. They read `P2CapabilityContract` (the approved version). |
-| INV-P1-B5 | The `SessionPersistenceService` change (defer to review) is the only modification to existing pipeline code. |
+| INV-P1-B5 | The `SessionPersistenceService` change (defer to review) and the `LogicalAction.sourceInteractionType` addition (carry interaction type through enrichment) are the **only** modifications to existing pipeline code. Both are additive — no existing field removed, no existing signature changed. |
+| INV-P1-B6 | The `InputMethod` taxonomy is platform-level, not recorder-level. Future recorder changes (new InteractionTypes) extend the mapping function; existing capability contracts are unaffected. |
 
 ---
 
 ## §11. Implementation Plan
 
-### Step 1: New Types
+### Step 1: New Types + Enrichment Pipeline Bridge
 
 **Files to create:**
-- `src/domain/entities/data-requirement.ts` — `DataRequirement`, `DataKind`, `DataConstraint`
+- `src/domain/entities/data-requirement.ts` — `DataRequirement`, `DataKind`, `DataConstraint`, `InputMethod`
 - `src/domain/entities/success-criterion.ts` — `SuccessCriterion`, `SuccessType`, `SuccessTarget`
 - `src/domain/entities/capability-version.ts` — `CapabilityVersion`, `CapabilitySnapshot`
 - `src/domain/entities/capability-review.ts` — `CapabilityReview`, `CapabilityReviewState`, `CapabilityReviewEdits`, `MatchSuggestionSummary`
@@ -860,6 +986,8 @@ P3 (AI Test Generation) consumes the same `P2CapabilityContract` plus the origin
 
 **Files to modify:**
 - `src/domain/entities/capability.ts` — add `reviewState`, `currentVersion`, `dataRequirements`, `successCriteria` fields; update `createCapability()` and `enrichCapability()` signatures
+- `src/domain/entities/application-knowledge.ts` — add `sourceInteractionType?: InteractionType` to `LogicalAction` (optional field, additive)
+- `src/recorder/enrichment/enrichment-orchestrator.ts` — carry `interaction.type` into `LogicalAction.sourceInteractionType` during Semantic Aggregation step (one-line addition in the aggregation logic)
 
 **Gate G1:** `tsc --noEmit` — 0 src errors. Unit tests for new type factories.
 
@@ -867,12 +995,15 @@ P3 (AI Test Generation) consumes the same `P2CapabilityContract` plus the origin
 
 **Files to create:**
 - `src/domain/mappings/capability-mappers.ts` — functions to map between types:
-  - `candidateToDataRequirements(inputs: CapabilityInput[]): DataRequirement[]`
+  - `candidateToDataRequirements(inputs: CapabilityInput[]): DataRequirement[]` — maps `sourceInteractionType → inputMethod` via `INTERACTION_TYPE_TO_INPUT_METHOD`, derives `kind` from constraints + inputMethod (toggle → boolean when no other signal exists)
+  - `interactionTypeToInputMethod(type: InteractionType): InputMethod | null` — the many-to-one mapping function
   - `successIndicatorsToCriteria(indicators: SuccessIndicator[]): SuccessCriterion[]`
   - `capabilityToContract(capability: Capability): P2CapabilityContract`
-  - `capabilityToVersion(capability: Capability, review: CapabilityReview): CapabilityVersion`
+  - `capabilityToVersion(capability: Capability, review: CapabilityReview, sourceSessionId: string): CapabilityVersion`
 
-**Gate G2:** Unit tests verify mapping correctness against the 5 example scenarios.
+**Gate G2:** Unit tests verify mapping correctness against the 5 example scenarios. Special attention to:
+- Filter Products: category → dropdown, onSale → toggle + boolean, maxPrice → slider + number
+- On Sale derivation gap: `inputMethod: 'toggle'` produces `kind: 'boolean'` even with no constraints
 
 ### Step 3: CapabilityReviewService
 
@@ -988,18 +1119,20 @@ When a capability is approved, the `P2CapabilityContract` is computed and stored
 
 | # | Criterion | Measurement |
 |---|-----------|-------------|
-| EC1 | `DataRequirement` type exists and maps from `CapabilityInput` | Code inspection + unit tests |
+| EC1 | `DataRequirement` type exists with `kind` + `inputMethod` and maps from `CapabilityInput` | Code inspection + unit tests |
 | EC2 | `SuccessCriterion` type exists and maps from `SuccessIndicator` | Code inspection + unit tests |
-| EC3 | `CapabilityVersion` type exists and is immutable | Unit tests — version snapshot never mutates |
+| EC3 | `CapabilityVersion` type exists, is immutable, and has `sourceSessionId` | Unit tests — version snapshot never mutates, provenance field present |
 | EC4 | `CapabilityReview` workflow supports approve/reject/edit/override | Unit tests for all 4 paths |
 | EC5 | `SessionPersistenceService` defers to review instead of auto-creating | Integration test — no capability created until review approved |
 | EC6 | Side panel shows capability review card after recording | Manual / browser test |
 | EC7 | Side panel shows capability inventory | Manual / browser test |
-| EC8 | `P2CapabilityContract` produced on approval | Unit test — contract fields correct |
+| EC8 | `P2CapabilityContract` produced on approval with `inputMethod` on each data requirement | Unit test — contract fields correct, inputMethod present |
 | EC9 | All existing tests pass (≤ 2 flaky exceptions) | Test run |
 | EC10 | All R1-R3 regression gates pass | Test run |
-| EC11 | Version history preserved across capability edits | Integration test |
+| EC11 | Version history preserved across capability edits, each version has sourceSessionId | Integration test |
 | EC12 | Pending reviews persist across side panel close/reopen | Integration test |
+| EC13 | Filter Products trace: category→dropdown, onSale→toggle+boolean, maxPrice→slider+number | Unit test in capability-mappers tests |
+| EC14 | `LogicalAction.sourceInteractionType` carried from enrichment pipeline | Unit test — enrichment step populates the field |
 
 ---
 
@@ -1019,15 +1152,15 @@ When a capability is approved, the `P2CapabilityContract` is computed and stored
 ### Recorder Interface Stability
 
 P1 depends on these recorder outputs remaining stable (they are frozen contracts post-R3):
-- `ComponentInteraction` type and its fields
-- `ApplicationKnowledgeFragment` and all sub-types
-- `CapabilityCandidate` type
+- `ComponentInteraction` type and its fields (especially `type` — P1 reads this for `inputMethod` derivation)
+- `ApplicationKnowledgeFragment` and all sub-types (P1 adds `sourceInteractionType?` to `LogicalAction` — additive, non-breaking)
+- `CapabilityCandidate` type (P1 adds `sourceInteractionType?` to `CapabilityInput` — additive, non-breaking)
 - `CapabilityMatchResult` type
 - `deriveCapability()` function signature
 - `matchCapability()` function signature
 - `enrichSession()` pipeline output
 
-If any of these change, P1's mapping functions must be updated. But P1 itself never modifies the recorder pipeline.
+If any of these change, P1's mapping functions must be updated. But P1 itself never modifies the recorder pipeline beyond the additive `sourceInteractionType` carry-through in the enrichment step.
 
 ---
 
