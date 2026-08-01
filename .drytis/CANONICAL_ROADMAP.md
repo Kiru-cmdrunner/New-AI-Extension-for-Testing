@@ -1,8 +1,8 @@
 # Canonical Roadmap — Final Revision
 
-> **Status:** Authoritative as of 2026-08-01. Supersedes all prior roadmaps.
+> **Status:** Authoritative as of 2026-08-01. Supersedes all prior roadmaps. R1, R2, R3 complete.
 >
-> **Purpose:** Single source of truth for all future work. Built from the complete architectural understanding accumulated through Phase 1-Tier 2 implementation, conformance review, gap classification, behavioral pipeline audit, and first-principles architectural analysis.
+> **Purpose:** Single source of truth for all future work. Built from the complete architectural understanding accumulated through Phase 1-Tier 2 implementation, conformance review, gap classification, behavioral pipeline audit, first-principles architectural analysis, and R1-R3 implementation.
 
 ---
 
@@ -34,10 +34,10 @@ EventTap → IdentityExtractor → ComponentRuntime → Evidence Annotation →
 
 | Component | Role | Status |
 |-----------|------|--------|
-| **EventTap** | Content-script capture: 17 event types, valueBefore/valueAfter tracking, deferred value poll for async frameworks | ✅ Active |
+| **EventTap** | Content-script capture: 18 event types (incl. `attribute-change`), valueBefore/valueAfter tracking, deferred value poll for async frameworks, post-click attribute re-snapshot via `setTimeout(0)` | ✅ Active |
 | **IdentityExtractor** | 7-strategy value cascade, 5-strategy checked-state cascade, implicit ARIA role computation | ✅ Active |
 | **ComponentRuntime** | 23 lifecycle definitions, priority-sorted, state machine per definition, pure pass-through of full ObservedEvent | ✅ Active |
-| **Evidence Engine** | 6 generators, weighted fusion, intent classification — **active for Click interactions only** | ⚠️ Partial (see §3.1) |
+| **Evidence Engine** | 10 generators (6 structural + 4 behavioral), weighted fusion, intent classification — **active for Click interactions via annotation deferral** | ✅ Active (R3 complete) |
 | **Domain Adapter V2** | ComponentInteraction → domain entities (elements, transitions) | ✅ Active |
 | **Enrichment** | Session-level knowledge extraction: component summaries, option sets, validation rules | ✅ Active |
 | **Interaction Enrichment Pass** | Post-classification locator resolution + assertion backfill | ✅ Active |
@@ -59,7 +59,7 @@ Session persistence (Dexie v3), IR executor (Chrome extension), deterministic el
 
 ### 1.5 Quality Assurance
 
-3059 passing tests (2 flaky JSDOM timing), golden master (63 fixtures × 131 tests), validation harness (247 tests × 22 capabilities × 8 quality dimensions), expanded validation (4 areas × 53 observations), E2E pipeline verification (17 tests). 0 TypeScript errors in `src/`.
+3059 passing tests (1 flaky JSDOM timing), golden master (68 fixtures × 142 tests), validation harness (247 tests × 22 capabilities × 8 quality dimensions), expanded validation (4 areas × 53 observations), E2E pipeline verification (15 tests), R3 behavioral gates (26 tests), R2 slider gates (16 tests), EC22 lifecycle flush tests (3 tests). 0 TypeScript errors in `src/`.
 
 ### 1.6 Frozen Contracts
 
@@ -78,8 +78,10 @@ These interfaces are stable and must not change without a formal architecture de
 | `FrameworkPatterns` interface (cleaned) | Tier 2 |
 | `EvidenceGenerator` interface | Phase 2 Thrust 1 |
 | `fuseEvidence()` signature | Phase 2 Thrust 1 |
-| `FeatureViewInput` interface | Phase 2 Thrust 1 (to be extended in R3) |
-| Golden master corpus (63 fixtures) | Phase 3 |
+| `FeatureViewInput` interface | R3 (extended with behavioral fields) |
+| `AttributeChange` interface + `attribute-change` BrowserEventType | R3 |
+| Annotation deferral pattern (`pendingAnnotations` in sw-integration.ts) | R3 |
+| Golden master corpus (68 fixtures) | R3 |
 
 ---
 
@@ -97,11 +99,11 @@ These appeared in earlier design documents but were superseded by architectural 
 
 ---
 
-## §3. Required Architectural Work
+## §3. Required Architectural Work — ✅ ALL COMPLETE
 
-These items are **mandatory** before the platform phases. They complete the architectural vision.
+R1, R2, and R3 are all complete. The architectural vision is achieved. These sections are retained for design history.
 
-### Phase R1: Foundation Cleanup
+### Phase R1: Foundation Cleanup — ✅ COMPLETE (commit `5e9d75f`)
 
 **Architectural objective:** Eliminate all dead code and dormant subsystems so the codebase has a single, clear execution path.
 
@@ -131,7 +133,7 @@ These items are **mandatory** before the platform phases. They complete the arch
 
 ---
 
-### Phase R2: Slider Detection Expansion
+### Phase R2: Slider Detection Expansion — ✅ COMPLETE (commit `5a6f5d5`)
 
 **Architectural objective:** Detect and extract values from custom div-based sliders that lack ARIA attributes.
 
@@ -153,7 +155,7 @@ These items are **mandatory** before the platform phases. They complete the arch
 
 ---
 
-### Phase R3: Behavioral Semantic Reasoning (The Critical Phase)
+### Phase R3: Behavioral Semantic Reasoning (The Critical Phase) — ✅ COMPLETE (commit `1b2fa89`)
 
 **Architectural objective:** Complete the evidence engine so it can classify any interaction based on observable behavioral effects, not just structural attributes. This is the phase that **completes the vision**.
 
@@ -192,8 +194,11 @@ This means: when a lifecycle definition misses a novel implementation (no matchi
 - `FeatureViewInput` interface: extended (more fields), shape unchanged
 - `deriveType()` switch: two cases implemented (were already stubbed)
 - Component Runtime: unchanged
+- Click definition: **unchanged** (annotation deferral at SW integration layer instead of lifecycle change)
 - IR Bridge: unchanged
-- No new types, no new architectural layers, no contract breaks
+- No new types (beyond the small `AttributeChange` data struct), no new architectural layers, no contract breaks
+
+**Implementation note (annotation deferral):** The design specified Click lifecycle deferral (making Click a brief-lifecycle component). During implementation, this broke 23 test files. The actual implementation uses **annotation deferral** in `src/runtime/sw-integration.ts`: Click emits immediately as before, but `annotateWithEvidence()` is deferred until the matching `attribute-change` event arrives from EventTap's `setTimeout(0)` re-snapshot. Both approaches achieve the same outcome — the evidence engine sees post-handler behavioral data before classification finalizes. **The annotation deferral pattern is the canonical architecture going forward.** See `.drytis/specs/r3-behavioral-semantic-reasoning.md` for full details.
 
 **Architectural risk:** The behavioral generators must be calibrated to avoid over-classification. A button that happens to change a CSS class on click shouldn't be classified as a toggle unless the class change represents a semantic state (e.g., `active`, `selected`, `checked`). The weight calibration model (standards 0.7-0.9, behavioral 0.5-0.7, structural 0.1-0.25) provides the framework, but the boundary between "decorative class change" and "semantic state change" requires empirical validation.
 
@@ -305,15 +310,15 @@ These extend the recorder into a full test automation platform. All depend on R1
 
 ## §6. Recommended Sequence
 
-### Immediate — Complete the Vision (R1 → R2 → R3)
+### Immediate — Complete the Vision ✅ DONE
 
-1. **R1 (Foundation Cleanup)** — resolve dormant v2 recorder, remove dead code, fix dblclick
-2. **R2 (Slider Detection)** — parallel with R1, no dependencies
-3. **R3 (Behavioral Semantic Reasoning)** — the critical phase that completes the vision
+1. ~~**R1 (Foundation Cleanup)**~~ — ✅ complete (`5e9d75f`)
+2. ~~**R2 (Slider Detection)**~~ — ✅ complete (`5a6f5d5`)
+3. ~~**R3 (Behavioral Semantic Reasoning)**~~ — ✅ complete (`1b2fa89`)
 
-**After R3:** The recorder is a general-purpose semantic recorder that understands capabilities and intent regardless of implementation. The original vision is achieved.
+**The recorder is a general-purpose semantic recorder that understands capabilities and intent regardless of implementation. The original vision is achieved.**
 
-### Near-Term — Platform Value (P1 + P4 parallel)
+### Near-Term — Platform Value (P1 + P4 parallel) ← NEXT
 
 4. **P1 (Capability Lifecycle)** — test management
 5. **P4 (Enhanced Execution)** — CI/CD reliability
@@ -334,7 +339,7 @@ These extend the recorder into a full test automation platform. All depend on R1
 | If we stop after... | What we have |
 |---------------------|-------------|
 | **R1 + R2** | A clean, robust web recorder with comprehensive component detection. No dormant code. Custom slider support. |
-| **R3** ⭐ | **The vision is complete.** A general-purpose semantic recorder that classifies interactions based on behavioral evidence, not just structural patterns. Novel implementations are handled through behavioral reasoning rather than matching against known patterns. Unrecognized interactions are surfaced rather than silently degraded. |
+| **R3** ⭐ ✅ | **The vision is complete.** A general-purpose semantic recorder that classifies interactions based on behavioral evidence, not just structural patterns. Novel implementations are handled through behavioral reasoning rather than matching against known patterns. Unrecognized interactions are surfaced rather than silently degraded. **Current state.** |
 | **P1 + P4** | A test management platform with capability lifecycle and CI/CD-ready execution. |
 | **P3** | AI-powered test generation from recorded capabilities. |
 | **P6** | Complete AI QA platform for web: record → understand → generate → execute → analyze → heal. |
@@ -367,7 +372,7 @@ These extend the recorder into a full test automation platform. All depend on R1
 
 **Does this roadmap achieve the original vision?**
 
-**After R3: YES.** The recorder will be able to:
+**After R3: YES. ✅ ACHIEVED.** The recorder can now:
 
 1. **Understand what capability the user is interacting with** — lifecycle definitions handle known patterns; the evidence engine handles novel patterns via behavioral signals (value changes, state transitions, structural mutations).
 
@@ -379,9 +384,11 @@ These extend the recorder into a full test automation platform. All depend on R1
 
 5. **Support new frameworks and patterns through extension, not redesign** — the extension model (new definition file + registration; new generator + array push; new assertion provider + registration) has been proven across Phase 2, Tier 1, Tier 2A, and Tier 2. R3 uses the same extension points.
 
-**Before R3: NO.** The evidence engine classifies only Click interactions using only structural signals. Novel implementations that lifecycle definitions miss degrade to generic Click. The "regardless of implementation" requirement is not met.
+**Before R3: NO.** ~~The evidence engine classifies only Click interactions using only structural signals. Novel implementations that lifecycle definitions miss degrade to generic Click. The "regardless of implementation" requirement is not met.~~
 
-**R3 is the phase that closes the gap between "robust pattern-based recorder" and "general-purpose semantic recorder."**
+**After R3: YES. ✅** The evidence engine classifies interactions using behavioral signals produced by the application's own handlers. Novel implementations are handled through behavioral reasoning. The "regardless of implementation" requirement is met.
+
+**R3 is the phase that closed the gap between "robust pattern-based recorder" and "general-purpose semantic recorder." — COMPLETE.**
 
 ---
 

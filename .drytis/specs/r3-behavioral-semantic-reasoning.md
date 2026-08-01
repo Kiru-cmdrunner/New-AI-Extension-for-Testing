@@ -1,6 +1,6 @@
 # R3: Behavioral Semantic Reasoning — Design Document (Revised)
 
-> **Status:** Design (awaiting approval). Do NOT implement until approved.
+> **Status:** ✅ IMPLEMENTED. Post-R3 baseline: commit `1b2fa89`.
 >
 > **Baseline:** Commit `5a6f5d5` (R2 complete, frozen).
 >
@@ -10,7 +10,32 @@
 >
 > **Revision History:**
 > - Initial design: R3.4 proposed a post-click attribute poll (50/150/400ms) to capture class/aria transitions. Design review discovered this **cannot work**: the Click definition completes synchronously in the capture phase, before the page's handler runs. The evidence engine has already finalized classification before any post-handler data arrives.
-> - **This revision** replaces the polling approach with Click lifecycle deferral: the Click definition enters a brief active state, a content-script re-snapshot captures post-handler behavioral data, and classification runs after both pre-handler and post-handler data are available.
+> - **Revised design** replaced the polling approach with Click lifecycle deferral: the Click definition enters a brief active state, a content-script re-snapshot captures post-handler behavioral data, and classification runs after both pre-handler and post-handler data are available.
+>
+> ---
+>
+> ## ⚠️ Implementation Deviation — Annotation Deferral (ACTUAL ARCHITECTURE)
+>
+> **The approved design specified Click lifecycle deferral** (Click definition changes from immediate completion to a brief active window via `isInScope`/`handleEvent`/`shouldCompleteOnOutside` modifications in `click.ts`).
+>
+> **The actual implementation uses annotation deferral instead.** During implementation, the Click lifecycle approach broke 23 test files that simulate the runtime directly and expect Click to emit immediately from a single `process()` call.
+>
+> **What was implemented:**
+> - Click definition remains synchronous (unchanged from pre-R3)
+> - The Click emits normally via `onEmit` in `sw-integration.ts`
+> - Instead of calling `annotateWithEvidence()` immediately, the SW integration layer holds the Click in a `pendingAnnotations` list keyed by `stableId`
+> - When the `attribute-change` event arrives from EventTap's `setTimeout(0)` re-snapshot, the pending Click is annotated with full post-handler behavioral data (`attributeChanges` in metadata)
+> - If no `attribute-change` event arrives (next event or `stopRecording`), the Click is annotated with pre-handler data only (same as pre-R3 behavior)
+>
+> **Architectural equivalence:** Both approaches achieve the same outcome — the evidence engine sees post-handler behavioral data before classification finalizes. The mechanism differs:
+> - Lifecycle deferral: Click stays active on the runtime stack, classification deferred at the component definition level
+> - Annotation deferral: Click emits immediately, annotation deferred at the SW integration layer
+>
+> **This is the canonical architecture going forward.** Future work must not assume the Click definition has a lifecycle window. The annotation deferral pattern in `src/runtime/sw-integration.ts` is the mechanism for ensuring post-handler data reaches the evidence engine.
+>
+> **Design note:** `.drytis/notes/r3-step6-annotation-deferral-decision.md` documents the decision process.
+>
+> ---
 
 ---
 
@@ -89,7 +114,9 @@ Service Worker receives ObservedEvent
   ↓ But Click is already emitted/classified/persisted — no re-annotation path
 ```
 
-### 3.2 The Revised Approach: Click Lifecycle Deferral
+### 3.2 The Revised Approach: Click Lifecycle Deferral (DESIGN — SUPERSEDED BY IMPLEMENTATION)
+
+> **⚠️ SUPERSEDED:** The design specified Click lifecycle deferral as described below. The actual implementation uses **annotation deferral** at the SW integration layer instead. See the implementation deviation note at the top of this document. The description below is retained for design history but does **not** reflect the implemented architecture. Future work must reference the annotation deferral pattern in `src/runtime/sw-integration.ts`, not the lifecycle changes described here.
 
 The Click definition changes from **immediate completion** to a **brief active lifecycle** — the same pattern already used by Hover and Scroll. The lifecycle window is long enough to absorb a post-handler behavioral snapshot from the content script, then completes with both pre-handler and post-handler data available.
 
@@ -341,9 +368,18 @@ Some frameworks (React 16 async mode, concurrent features) batch updates across 
 - The existing `schedulePostClickValueCheck` pattern with 50/150/400ms is retained for the VALUE check (which targets focused inputs, not the clicked element) — this catches delayed value updates
 - For attribute transitions specifically, the `setTimeout(0)` approach covers the dominant case (synchronous handler). If empirical testing reveals frequent misses, the re-snapshot can be upgraded to a 2-poll pattern (0ms + 50ms). But start simple.
 
-#### 5.4.2 Click Definition: Brief Lifecycle
+#### 5.4.2 Click Definition: Brief Lifecycle (DESIGN — SUPERSEDED)
 
-**What:** The Click definition changes from immediate completion to a brief active window.
+> **⚠️ SUPERSEDED BY IMPLEMENTATION:** The section below describes the lifecycle change to `click.ts` that was designed but **not implemented**. The actual implementation uses annotation deferral in `src/runtime/sw-integration.ts` instead. The Click definition remains synchronous. See the implementation deviation note at the top of this document.
+>
+> **What was actually implemented (R3.4 Part 2):**
+> - `sw-integration.ts` maintains a `pendingAnnotations: PendingAnnotation[]` list
+> - When a Click is emitted without a subtype, it enters `pendingAnnotations` instead of being immediately annotated
+> - When an `attribute-change` event arrives, `processObservedEvent()` finds the matching pending Click by `stableId`, attaches the attribute changes to `interaction.metadata`, and calls `finalizeAnnotation()` which runs `enrichInteraction()` + `annotateWithEvidence()` + pushes to `liveInteractions`
+> - Fallback: `finalizeAllPendingAnnotations()` runs on the next `processObservedEvent()` call or on `stopRecording()` — annotates with pre-handler data only
+> - No changes to `click.ts`, `component-runtime.ts`, or any lifecycle definition
+
+**What (designed, not implemented):** The Click definition changes from immediate completion to a brief active window.
 
 **Where:** `src/definitions/click.ts`, `src/runtime/component-runtime.ts`
 
@@ -513,9 +549,10 @@ Actually — cleaner approach: Don't add a new event type. Use the existing `cha
 | `deriveType()` | ✅ Extended | `select`/`input` implemented |
 | `EVIDENCE_GENERATORS` array | ✅ Extended | 4 new generators |
 | EventTap | ✅ Extended | `schedulePostClickAttributeSnapshot()` |
-| Click definition | ✅ Extended | Brief lifecycle (`isInScope`, `handleEvent`, `shouldCompleteOnOutside`) |
+| Click definition | ❌ Unchanged | **Annotation deferral implemented at SW integration layer instead of lifecycle change. See implementation deviation note.** |
 | DomContext | ✅ Extended | `attributeChanges` field |
 | annotation-layer.ts | ✅ Extended | Unrecognized threshold, pass full interaction |
+| sw-integration.ts | ✅ Extended | **Annotation deferral**: `pendingAnnotations` list, `finalizeAnnotation()`, `finalizeAllPendingAnnotations()`. Click annotations deferred until `attribute-change` event arrives |
 
 ---
 
