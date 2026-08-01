@@ -63,11 +63,6 @@ describe('PatternRegistry', () => {
       expect(PatternRegistry.isDatePickerCellClass('oxd-date-day')).toBe(true);
       expect(PatternRegistry.isCalendarSurfaceClass('oxd-calendar')).toBe(true);
     });
-
-    it('infers ARIA roles from OXD classes', () => {
-      expect(PatternRegistry.inferRoleFromClassName('oxd-select-text')).toBe('combobox');
-      expect(PatternRegistry.inferRoleFromClassName('oxd-button')).toBe('button');
-    });
   });
 
   describe('Domain plugins (AdaniOne)', () => {

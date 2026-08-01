@@ -99,9 +99,17 @@ const DROPDOWN_TRIGGER_ROLES = new Set([
 
 /**
  * ARIA roles for dropdown options (the element the user clicks to select).
+ *
+ * Menu roles (menuitem, menuitemcheckbox, menuitemradio) are included
+ * because frameworks like Radix UI and Headless UI render dropdown menus
+ * using the ARIA menu pattern rather than the listbox pattern. Without
+ * these roles, menu item clicks inside an open dropdown are classified
+ * as separate Click interactions instead of selectOption subActions.
+ * (Expanded validation finding GROUP-B, FW-RDX-01.)
  */
 const DROPDOWN_OPTION_ROLES = new Set([
   'option',
+  'menuitem', 'menuitemcheckbox', 'menuitemradio',
 ]);
 
 

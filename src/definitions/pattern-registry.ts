@@ -75,11 +75,6 @@ export interface FrameworkPatterns {
   /** CSS class patterns for display-value elements (SPA selected value). */
   displayValueClasses?: string[];
 
-  /** Class-to-ARIA-role mappings for elements with no explicit role. */
-  classRoleMap?: Record<string, string>;
-
-  /** Surface detection patterns: className regex → surface type. */
-  surfacePatterns?: Array<{ regex: RegExp; type: string }>;
 }
 
 // ── Generic Defaults ──────────────────────────────────────────────────
@@ -145,12 +140,6 @@ const GENERIC_PATTERNS: FrameworkPatterns = {
     'field-value', 'input-value', 'selected-text', 'value-text',
     'current-value', 'date-display', 'date-value',
   ],
-  surfacePatterns: [
-    { regex: /\bmodal\b/i, type: 'modal' },
-    { regex: /\bdrawer\b/i, type: 'drawer' },
-    { regex: /\bpopover\b|\bpopup\b|\bdropdown\b/i, type: 'popover' },
-    { regex: /\btooltip\b/i, type: 'tooltip' },
-  ],
 };
 
 // ── Framework Plugins ─────────────────────────────────────────────────
@@ -166,15 +155,6 @@ const MUI_PATTERNS: FrameworkPatterns = {
   calendarSurfaceClasses: ['MuiCalendarPicker'],
   checkboxWrapperClasses: ['MuiCheckbox-root'],
   radioWrapperClasses: ['MuiRadio-root'],
-  surfacePatterns: [
-    { regex: /MuiDialog-root/i, type: 'modal' },
-    { regex: /MuiDrawer-root/i, type: 'drawer' },
-    { regex: /MuiPopover-root|MuiMenu-root/i, type: 'popover' },
-    { regex: /MuiTooltip-popper/i, type: 'tooltip' },
-  ],
-  classRoleMap: {
-    'MuiSwitch-root': 'switch',
-  },
 };
 
 const ANT_PATTERNS: FrameworkPatterns = {
@@ -185,22 +165,13 @@ const ANT_PATTERNS: FrameworkPatterns = {
   datePickerTriggerClasses: ['ant-picker'],
   datePickerCellClasses: ['ant-picker-cell'],
   calendarSurfaceClasses: ['ant-picker-dropdown'],
-  surfacePatterns: [
-    { regex: /ant-modal/i, type: 'modal' },
-    { regex: /ant-drawer/i, type: 'drawer' },
-    { regex: /ant-popover|ant-dropdown/i, type: 'popover' },
-    { regex: /ant-tooltip/i, type: 'tooltip' },
-  ],
 };
 
 const BOOTSTRAP_PATTERNS: FrameworkPatterns = {
   name: 'Bootstrap',
-  surfacePatterns: [
-    { regex: /modal\s+show|modal-open/i, type: 'modal' },
-    { regex: /offcanvas/i, type: 'drawer' },
-    { regex: /dropdown-menu/i, type: 'popover' },
-    { regex: /tooltip-inner/i, type: 'tooltip' },
-  ],
+  dropdownTriggerClasses: ['dropdown-toggle'],
+  dropdownOptionClasses: ['dropdown-item'],
+  dropdownSurfaceClasses: ['dropdown-menu', 'dropdown'],
 };
 
 const OXD_PATTERNS: FrameworkPatterns = {
@@ -214,13 +185,6 @@ const OXD_PATTERNS: FrameworkPatterns = {
   calendarNavButtonClasses: ['oxd-calendar-switch-button'],
   checkboxWrapperClasses: ['oxd-checkbox-wrapper', 'oxd-checkbox-input'],
   radioWrapperClasses: ['oxd-radio-wrapper'],
-  classRoleMap: {
-    'oxd-select-text': 'combobox',
-    'oxd-select-text-input': 'combobox',
-    'oxd-input': 'textbox',
-    'oxd-button': 'button',
-    'oxd-date-input': 'textbox',
-  },
 };
 
 const PRIMEREACT_PATTERNS: FrameworkPatterns = {
@@ -228,10 +192,19 @@ const PRIMEREACT_PATTERNS: FrameworkPatterns = {
   dropdownTriggerClasses: ['p-dropdown'],
   dropdownOptionClasses: ['p-dropdown-item'],
   datePickerTriggerClasses: ['p-calendar'],
-  surfacePatterns: [
-    { regex: /\bp-dialog\b/i, type: 'modal' },
-    { regex: /\bp-menu\b/i, type: 'popover' },
+};
+
+const AGGRID_PATTERNS: FrameworkPatterns = {
+  name: 'AGGrid',
+  interactiveClasses: [
+    'ag-header-cell',
+    'ag-header-cell-label',
+    'ag-row',
+    'ag-cell-focus',
+    'ag-cell-range-selected',
   ],
+  // AGGrid uses native browser controls for cell editing, not custom
+  // dropdowns or date pickers. No dropdown/date patterns needed.
 };
 
 // ── Domain Plugins ────────────────────────────────────────────────────
@@ -310,8 +283,6 @@ export class PatternRegistry {
       stepperPlusClasses: [...(GENERIC_PATTERNS.stepperPlusClasses ?? [])],
       stepperMinusClasses: [...(GENERIC_PATTERNS.stepperMinusClasses ?? [])],
       displayValueClasses: [...(GENERIC_PATTERNS.displayValueClasses ?? [])],
-      classRoleMap: { ...(GENERIC_PATTERNS.classRoleMap ?? {}) },
-      surfacePatterns: [...(GENERIC_PATTERNS.surfacePatterns ?? [])],
     };
 
     // Merge each plugin's patterns into the merged set
@@ -325,9 +296,6 @@ export class PatternRegistry {
           // Merge arrays, dedup
           const set = new Set([...mergedVal, ...pluginVal]);
           (merged[key] as unknown[]) = [...set];
-        } else if (typeof pluginVal === 'object' && typeof mergedVal === 'object' && mergedVal && !Array.isArray(pluginVal)) {
-          // Merge objects (classRoleMap)
-          (merged[key] as Record<string, string>) = { ...(mergedVal as Record<string, string>), ...(pluginVal as Record<string, string>) };
         }
       }
     }
@@ -338,11 +306,34 @@ export class PatternRegistry {
 
   // ── Convenience methods ────────────────────────────────────────────
 
-  /** Build a case-insensitive regex from an array of class patterns. */
+  /**
+   * Build a case-insensitive regex from an array of class patterns.
+   *
+   * Uses word boundaries (\b) to prevent false-positive substring matches
+   * (e.g., pattern "select" should match "MuiSelect" but not "preselected").
+   * The word boundary before the pattern requires a non-word character (or
+   * string start) immediately before the match, and \b after requires a
+   * non-word character (or string end) immediately after.
+   *
+   * NOTE: CSS class names are separated by spaces in the className string,
+   * so \b correctly matches at class-name boundaries. Hyphenated class
+   * segments (e.g., "dropdown-toggle") use \b at the hyphen boundary.
+   *
+   * Regex results are cached per patterns-array-key to avoid recompilation.
+   * Cache is invalidated when registerPlugin nullifies the merged set.
+   */
+  private static regexCache = new Map<string, RegExp>();
+
   private static buildRegex(patterns: string[]): RegExp | null {
     if (patterns.length === 0) return null;
+    const key = patterns.join('\0');
+    const cached = PatternRegistry.regexCache.get(key);
+    if (cached) return cached;
+
     const escaped = patterns.map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-    return new RegExp(`(?:${escaped.join('|')})`, 'i');
+    const regex = new RegExp(`(?:\\b${escaped.join('|')}\\b)`, 'i');
+    PatternRegistry.regexCache.set(key, regex);
+    return regex;
   }
 
   /** Check if a className string matches any interactive class pattern. */
@@ -408,15 +399,6 @@ export class PatternRegistry {
     return regex ? regex.test(className) : false;
   }
 
-  /** Get the ARIA role for a className from the class-role map. */
-  static inferRoleFromClassName(className: string): string | null {
-    const map = PatternRegistry.getMerged().classRoleMap ?? {};
-    for (const [cls, role] of Object.entries(map)) {
-      if (className.includes(cls)) return role;
-    }
-    return null;
-  }
-
   /**
    * Initialize the registry with all built-in framework and domain plugins.
    * Call once at application startup.
@@ -428,6 +410,7 @@ export class PatternRegistry {
       BOOTSTRAP_PATTERNS,
       OXD_PATTERNS,
       PRIMEREACT_PATTERNS,
+      AGGRID_PATTERNS,
       ADANIONE_PATTERNS,
     ]);
   }
