@@ -215,6 +215,8 @@ export function extractDomContext(el: Element): DomContext {
     acceptedFileTypes: getAttributeString(el, 'accept'),
     formId: getFormId(el),
     formName: getFormName(el),
+    // R2: Slider geometry for custom slider value extraction
+    ...extractSliderGeometry(el),
   };
 }
 
@@ -316,6 +318,66 @@ function getAncestorClasses(el: Element): string[] {
   }
 
   return classes;
+}
+
+/**
+ * CSS class patterns for slider tracks. When an ancestor matches,
+ * its geometry is captured for value extraction.
+ */
+const TRACK_GEOMETRY_RE = /\b(?:ui-slider|noUi-slider|irs|slider-track|range-track|slider-rail)\b/;
+
+/**
+ * Extract slider geometry fields for R2 custom slider value extraction.
+ *
+ * If the target element has a track-class ancestor, captures:
+ * - targetOffsetLeft/Top: the target's own offsetLeft/offsetTop
+ * - trackOffsetLeft/Width: the nearest track ancestor's offsetLeft/offsetWidth
+ *
+ * Returns nulls if no track ancestor is found (the fields are optional).
+ */
+function extractSliderGeometry(el: Element): {
+  targetOffsetLeft: number | null;
+  targetOffsetTop: number | null;
+  trackOffsetLeft: number | null;
+  trackOffsetWidth: number | null;
+} {
+  // Walk ancestors to find a track element
+  let current: Element | null = el.parentElement;
+  let depth = 0;
+  let trackEl: HTMLElement | null = null;
+
+  while (current && depth < MAX_ANCESTOR_DEPTH) {
+    if (current instanceof HTMLElement) {
+      const cls = current.className || '';
+      if (TRACK_GEOMETRY_RE.test(cls)) {
+        trackEl = current;
+        break;
+      }
+    }
+    current = current.parentElement;
+    depth++;
+  }
+
+  // Always capture target geometry
+  const targetEl = el instanceof HTMLElement ? el : null;
+  const targetOffsetLeft = targetEl?.offsetLeft ?? null;
+  const targetOffsetTop = targetEl?.offsetTop ?? null;
+
+  if (trackEl) {
+    return {
+      targetOffsetLeft,
+      targetOffsetTop,
+      trackOffsetLeft: trackEl.offsetLeft,
+      trackOffsetWidth: trackEl.offsetWidth,
+    };
+  }
+
+  return {
+    targetOffsetLeft,
+    targetOffsetTop,
+    trackOffsetLeft: null,
+    trackOffsetWidth: null,
+  };
 }
 
 // ── Navigation Signal Detection (Phase 2) ──────────────────────────────

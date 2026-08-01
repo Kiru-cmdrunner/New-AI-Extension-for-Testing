@@ -1,6 +1,6 @@
 {
-  "testCaseId": "tc-1785563215501",
-  "testCaseVersionId": "tcv-1785563215501",
+  "testCaseId": "tc-1785567700374",
+  "testCaseVersionId": "tcv-1785567700374",
   "testCaseVersionNumber": 1,
   "title": "Golden Master Test",
   "tags": [],
@@ -16,107 +16,23 @@
     {
       "id": "step-0001",
       "order": 0,
-      "action": "fill",
-      "description": "Set Adults to 2 in Test Button",
+      "action": "selectDate",
+      "description": "Select 2024-03-15 in the Test Button",
       "target": {
         "kind": "element",
-        "elementId": "elem-0001::Adults",
-        "elementName": "Adults",
+        "elementId": "elem-0001",
+        "elementName": "Test Button",
         "pageOrComponent": "main",
         "resolvedLocators": [
           {
             "type": "role",
-            "value": "button[name=\"Adults\"]",
-            "priority": 1,
-            "confidence": 0.8
-          },
-          {
-            "type": "accessibleName",
-            "value": "Adults",
-            "priority": 2,
-            "confidence": 0.8
-          },
-          {
-            "type": "css",
-            "value": "body > button",
-            "priority": 3,
-            "confidence": 0.35
-          }
-        ]
-      },
-      "input": "2",
-      "assertions": [],
-      "executionParameters": {
-        "timeoutMs": 30000,
-        "retryCount": 0,
-        "retryDelayMs": 1000,
-        "waitStrategy": "visible"
-      },
-      "aiEnrichment": null,
-      "plainEnglish": "Set Adults to 2"
-    },
-    {
-      "id": "step-0002",
-      "order": 1,
-      "action": "click",
-      "description": "Select \"Premium\" in Test Button",
-      "target": {
-        "kind": "element",
-        "elementId": "elem-0001::Class",
-        "elementName": "Premium",
-        "pageOrComponent": "main",
-        "resolvedLocators": [
-          {
-            "type": "role",
-            "value": "button[name=\"Premium\"]",
-            "priority": 1,
-            "confidence": 0.8
-          },
-          {
-            "type": "accessibleName",
-            "value": "Premium",
-            "priority": 2,
-            "confidence": 0.8
-          },
-          {
-            "type": "css",
-            "value": "body > button",
-            "priority": 3,
-            "confidence": 0.35
-          }
-        ]
-      },
-      "input": "Premium",
-      "assertions": [],
-      "executionParameters": {
-        "timeoutMs": 30000,
-        "retryCount": 0,
-        "retryDelayMs": 1000,
-        "waitStrategy": "visible"
-      },
-      "aiEnrichment": null,
-      "plainEnglish": "Select Premium"
-    },
-    {
-      "id": "step-0003",
-      "order": 2,
-      "action": "click",
-      "description": "Click Done",
-      "target": {
-        "kind": "element",
-        "elementId": "elem-0001::Done",
-        "elementName": "Done",
-        "pageOrComponent": "main",
-        "resolvedLocators": [
-          {
-            "type": "role",
-            "value": "button[name=\"Done\"]",
+            "value": "button[name=\"Test Button\"]",
             "priority": 1,
             "confidence": 0.62
           },
           {
             "type": "accessibleName",
-            "value": "Done",
+            "value": "Test Button",
             "priority": 2,
             "confidence": 0.62
           },
@@ -128,8 +44,42 @@
           }
         ]
       },
-      "input": null,
-      "assertions": [],
+      "input": "2024-03-15",
+      "assertions": [
+        {
+          "type": "equality",
+          "comparison": "equals",
+          "expectedValue": "2024-03-15",
+          "severity": "hard",
+          "target": {
+            "kind": "element",
+            "elementId": "elem-0001",
+            "elementName": "Test Button",
+            "pageOrComponent": "",
+            "resolvedLocators": [
+              {
+                "type": "role",
+                "value": "button[name=\"Test Button\"]",
+                "priority": 1,
+                "confidence": 0.62
+              },
+              {
+                "type": "accessibleName",
+                "value": "Test Button",
+                "priority": 2,
+                "confidence": 0.62
+              },
+              {
+                "type": "css",
+                "value": "body > button",
+                "priority": 3,
+                "confidence": 0.35
+              }
+            ]
+          },
+          "property": "value"
+        }
+      ],
       "executionParameters": {
         "timeoutMs": 30000,
         "retryCount": 0,
@@ -137,7 +87,7 @@
         "waitStrategy": "visible"
       },
       "aiEnrichment": null,
-      "plainEnglish": "Confirm Economy"
+      "plainEnglish": "Select 2024-03-15 in the Test Button"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
-  "testCaseId": "tc-1785567700368",
-  "testCaseVersionId": "tcv-1785567700368",
+  "testCaseId": "tc-1785567700394",
+  "testCaseVersionId": "tcv-1785567700394",
   "testCaseVersionNumber": 1,
   "title": "Golden Master Test",
   "tags": [],
@@ -17,7 +17,7 @@
       "id": "step-0001",
       "order": 0,
       "action": "click",
-      "description": "Click the Test Button",
+      "description": "Decrease Children by 1",
       "target": {
         "kind": "element",
         "elementId": "elem-0001",
@@ -53,7 +53,7 @@
         "waitStrategy": "visible"
       },
       "aiEnrichment": null,
-      "plainEnglish": "Click the Test Button"
+      "plainEnglish": "Decrease Children by 1"
     }
   ]
 }

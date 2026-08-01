@@ -1,6 +1,6 @@
 {
-  "testCaseId": "tc-1785563215503",
-  "testCaseVersionId": "tcv-1785563215503",
+  "testCaseId": "tc-1785567700390",
+  "testCaseVersionId": "tcv-1785567700390",
   "testCaseVersionNumber": 1,
   "title": "Golden Master Test",
   "tags": [],
@@ -16,36 +16,29 @@
     {
       "id": "step-0001",
       "order": 0,
-      "action": "click",
-      "description": "Click the Test Button",
+      "action": "navigate",
+      "description": "Navigate to https://example.com/login",
       "target": {
-        "kind": "element",
-        "elementId": "elem-0001",
-        "elementName": "Test Button",
-        "pageOrComponent": "main",
-        "resolvedLocators": [
-          {
-            "type": "role",
-            "value": "button[name=\"Close dialog\"]",
-            "priority": 1,
-            "confidence": 0.8
-          },
-          {
-            "type": "accessibleName",
-            "value": "Close dialog",
-            "priority": 2,
-            "confidence": 0.8
-          },
-          {
-            "type": "role",
-            "value": "button[name=\"Test Button\"]",
-            "priority": 3,
-            "confidence": 0.62
-          }
-        ]
+        "kind": "url",
+        "url": "https://example.com/login"
       },
-      "input": null,
-      "assertions": [],
+      "input": "https://example.com/login",
+      "assertions": [
+        {
+          "type": "urlMatch",
+          "comparison": "equals",
+          "expectedValue": "https://example.com/login",
+          "severity": "hard",
+          "target": {
+            "kind": "element",
+            "elementId": "",
+            "elementName": "",
+            "pageOrComponent": "",
+            "resolvedLocators": []
+          },
+          "property": "url"
+        }
+      ],
       "executionParameters": {
         "timeoutMs": 30000,
         "retryCount": 0,
@@ -53,7 +46,7 @@
         "waitStrategy": "visible"
       },
       "aiEnrichment": null,
-      "plainEnglish": "Click the Test Button"
+      "plainEnglish": "Navigate to https://example.com/login"
     }
   ]
 }

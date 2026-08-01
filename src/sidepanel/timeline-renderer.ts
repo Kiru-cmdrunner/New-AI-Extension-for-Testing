@@ -482,12 +482,12 @@ export function actionDescription(interaction: ComponentInteraction): string {
     case 'Slider': {
       if (m.sliderValue !== undefined) {
         const range: string[] = [];
-        if (m.sliderMin && m.sliderMax) {
-          range.push(`range: ${m.sliderMin} – ${m.sliderMax}`);
-        } else if (m.sliderMin) {
-          range.push(`min: ${m.sliderMin}`);
-        } else if (m.sliderMax) {
-          range.push(`max: ${m.sliderMax}`);
+        if (m.min && m.max) {
+          range.push(`range: ${m.min} – ${m.max}`);
+        } else if (m.min) {
+          range.push(`min: ${m.min}`);
+        } else if (m.max) {
+          range.push(`max: ${m.max}`);
         }
         const rangeStr = range.length ? ` (${range.join(', ')})` : '';
         description = targetName

@@ -280,8 +280,11 @@ function renderCount(assertion: IRAssertion, pageVar: string, resolveTarget: Tar
 }
 
 /**
- * EQUALITY (IS_TRUE / IS_FALSE):
- *   Property-specific mapping for well-known properties:
+ * EQUALITY (EQUALS / IS_TRUE / IS_FALSE):
+ *   EQUALS comparison with specific properties:
+ *     value         → toHaveValue(expected)   (native inputs, sliders)
+ *     aria-valuenow → toHaveAttribute('aria-valuenow', expected)  (ARIA/custom sliders)
+ *   IS_TRUE / IS_FALSE comparison with specific properties:
  *     checked  → toBeChecked() / not.toBeChecked()
  *     enabled  → toBeEnabled() / toBeDisabled()
  *     editable → toBeEditable() / not.toBeEditable()
@@ -290,8 +293,31 @@ function renderCount(assertion: IRAssertion, pageVar: string, resolveTarget: Tar
  */
 function renderEquality(assertion: IRAssertion, pageVar: string, resolveTarget: TargetResolver): RenderedAssertion {
   const target = resolveTarget(assertion, pageVar);
-  const isTrue = assertion.comparison === ValidationComparison.IS_TRUE;
+  const comparison = assertion.comparison;
   const property = assertion.property?.toLowerCase() ?? '';
+
+  // EQUALS comparison: assert a specific value
+  if (comparison === ValidationComparison.EQUALS) {
+    const expected = escapeString(String(assertion.expectedValue ?? ''));
+    if (property === 'value') {
+      return { lines: [
+        `await ${expectCall(target, assertion)}.toHaveValue('${expected}')`,
+      ] };
+    }
+    if (property === 'aria-valuenow') {
+      return { lines: [
+        `await ${expectCall(target, assertion)}.toHaveAttribute('aria-valuenow', '${expected}')`,
+      ] };
+    }
+    // Generic EQUALS fallback: attribute match
+    const attr = assertion.property ?? 'value';
+    return { lines: [
+      `await ${expectCall(target, assertion)}.toHaveAttribute('${escapeString(attr)}', '${expected}')`,
+    ] };
+  }
+
+  // IS_TRUE / IS_FALSE comparison: boolean state check
+  const isTrue = comparison === ValidationComparison.IS_TRUE;
 
   switch (property) {
     case 'checked':

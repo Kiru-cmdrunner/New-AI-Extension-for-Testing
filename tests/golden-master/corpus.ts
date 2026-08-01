@@ -368,6 +368,24 @@ export function buildLayer2Fixtures(): ComponentInteraction[] {
     metadata: { sliderValue: '30', startValue: '20', endValue: '80', min: '0', max: '100', dragTracked: true, targetName: 'Price Range' },
   }));
 
+  // R2: Custom slider (CSS-detected, geometry-based value)
+  fixtures.push(makeComponentInteraction('Slider', {
+    interactionSubtype: 'CustomSlider',
+    metadata: { sliderValue: '75', min: '0', max: '100', targetName: 'jQuery UI Slider' },
+  }));
+
+  // R2: Custom slider without min/max (percentage-only)
+  fixtures.push(makeComponentInteraction('Slider', {
+    interactionSubtype: 'CustomSlider',
+    metadata: { sliderValue: '42', targetName: 'noUiSlider' },
+  }));
+
+  // R2: Custom slider with ARIA value (not geometry-based, but custom subtype)
+  fixtures.push(makeComponentInteraction('Slider', {
+    interactionSubtype: 'CustomSlider',
+    metadata: { sliderValue: '60', min: '0', max: '200', startValue: '50', endValue: '60', dragTracked: true, targetName: 'Price Filter' },
+  }));
+
   // Checkbox unchecked
   fixtures.push(makeComponentInteraction('Checkbox', {
     metadata: { checked: false, targetName: 'Newsletter' },

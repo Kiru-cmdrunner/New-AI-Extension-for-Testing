@@ -1,6 +1,6 @@
 {
-  "testCaseId": "tc-1785563215503",
-  "testCaseVersionId": "tcv-1785563215503",
+  "testCaseId": "tc-1785567700389",
+  "testCaseVersionId": "tcv-1785567700389",
   "testCaseVersionNumber": 1,
   "title": "Golden Master Test",
   "tags": [],
@@ -16,36 +16,70 @@
     {
       "id": "step-0001",
       "order": 0,
-      "action": "click",
-      "description": "Click the Submit",
+      "action": "fill",
+      "description": "Fill \"partial\" in the Test Button",
       "target": {
         "kind": "element",
         "elementId": "elem-0001",
-        "elementName": "Submit",
+        "elementName": "Test Button",
         "pageOrComponent": "main",
         "resolvedLocators": [
           {
-            "type": "testId",
-            "value": "submit-btn",
-            "priority": 1,
-            "confidence": 0.9
-          },
-          {
             "type": "role",
-            "value": "button[name=\"Submit\"]",
-            "priority": 2,
+            "value": "button[name=\"Test Button\"]",
+            "priority": 1,
             "confidence": 0.62
           },
           {
             "type": "accessibleName",
-            "value": "Submit",
-            "priority": 3,
+            "value": "Test Button",
+            "priority": 2,
             "confidence": 0.62
+          },
+          {
+            "type": "css",
+            "value": "body > button",
+            "priority": 3,
+            "confidence": 0.35
           }
         ]
       },
-      "input": null,
-      "assertions": [],
+      "input": "partial",
+      "assertions": [
+        {
+          "type": "equality",
+          "comparison": "equals",
+          "expectedValue": "partial",
+          "severity": "hard",
+          "target": {
+            "kind": "element",
+            "elementId": "elem-0001",
+            "elementName": "Test Button",
+            "pageOrComponent": "",
+            "resolvedLocators": [
+              {
+                "type": "role",
+                "value": "button[name=\"Test Button\"]",
+                "priority": 1,
+                "confidence": 0.62
+              },
+              {
+                "type": "accessibleName",
+                "value": "Test Button",
+                "priority": 2,
+                "confidence": 0.62
+              },
+              {
+                "type": "css",
+                "value": "body > button",
+                "priority": 3,
+                "confidence": 0.35
+              }
+            ]
+          },
+          "property": "value"
+        }
+      ],
       "executionParameters": {
         "timeoutMs": 30000,
         "retryCount": 0,
@@ -53,7 +87,7 @@
         "waitStrategy": "visible"
       },
       "aiEnrichment": null,
-      "plainEnglish": "Click the Submit"
+      "plainEnglish": "Fill \"partial\" in the Test Button"
     }
   ]
 }

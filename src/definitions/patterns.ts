@@ -476,12 +476,51 @@ export function isFileInput(tag: string, inputType: string | null): boolean {
 // ── Slider Patterns ────────────────────────────────────────────────────
 
 /**
- * Is this element a slider/range input?
+ * CSS class patterns for slider handles from common libraries.
+ * Word-boundary delimited to prevent false positives.
  */
-export function isSlider(tag: string, inputType: string | null, ariaRole: string | null): boolean {
+const SLIDER_CLASS_RE = /\b(?:ui-slider-handle|noUi-handle|irs-handle|irs-from|irs-to|slider-handle|slider-thumb|range-handle|range-thumb)\b/;
+
+/**
+ * CSS class patterns for slider tracks from common libraries.
+ * Checked against ancestor classes.
+ */
+const TRACK_CLASS_RE = /\b(?:ui-slider|noUi-slider|irs|slider-track|range-track|slider-rail)\b/;
+
+/**
+ * Is this element a slider/range input?
+ *
+ * Detection priority:
+ * 1. Native <input type="range">
+ * 2. ARIA role="slider"
+ * 3. CSS class pattern on the element (handle classes)
+ * 4. CSS class pattern on any ancestor (track classes)
+ */
+export function isSlider(
+  tag: string,
+  inputType: string | null,
+  ariaRole: string | null,
+  className?: string | null,
+  ancestorClasses?: string[] | null,
+): boolean {
   if (tag === 'INPUT' && inputType === 'range') return true;
   if (ariaRole === 'slider') return true;
+  if (className && SLIDER_CLASS_RE.test(className)) return true;
+  if (ancestorClasses) {
+    for (const ac of ancestorClasses) {
+      if (TRACK_CLASS_RE.test(ac)) return true;
+    }
+  }
   return false;
+}
+
+/**
+ * Does this element's class match a slider handle pattern?
+ * Used by DragDrop exclusion to prevent slider handle interception.
+ */
+export function isSliderHandleClass(className: string | null | undefined): boolean {
+  if (!className) return false;
+  return SLIDER_CLASS_RE.test(className);
 }
 
 // ── Tab Patterns ───────────────────────────────────────────────────────

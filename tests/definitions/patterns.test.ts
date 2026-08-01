@@ -328,6 +328,27 @@ describe('Other patterns', () => {
     expect(isSlider('DIV', null, 'slider')).toBe(true);
   });
 
+  it('detects slider via CSS class patterns', () => {
+    expect(isSlider('DIV', null, null, 'ui-slider-handle')).toBe(true);
+    expect(isSlider('DIV', null, null, 'noUi-handle')).toBe(true);
+    expect(isSlider('DIV', null, null, 'slider-thumb')).toBe(true);
+    expect(isSlider('DIV', null, null, 'range-handle')).toBe(true);
+    expect(isSlider('DIV', null, null, 'irs-handle')).toBe(true);
+  });
+
+  it('detects slider via ancestor track classes', () => {
+    expect(isSlider('DIV', null, null, null, ['ui-slider'])).toBe(true);
+    expect(isSlider('DIV', null, null, null, ['slider-track', 'some-other'])).toBe(true);
+    expect(isSlider('DIV', null, null, null, ['noUi-slider'])).toBe(true);
+  });
+
+  it('does not false-positive on non-slider classes', () => {
+    expect(isSlider('DIV', null, null, 'slider-handler')).toBe(false);
+    expect(isSlider('DIV', null, null, 'my-slider-wrapper')).toBe(false);
+    expect(isSlider('DIV', null, null, 'button')).toBe(false);
+    expect(isSlider('DIV', null, null, null, [])).toBe(false);
+  });
+
   it('detects tab', () => {
     expect(isTab('tab')).toBe(true);
     expect(isTab(null)).toBe(false);

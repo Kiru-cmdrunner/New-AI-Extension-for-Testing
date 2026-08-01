@@ -1,6 +1,6 @@
 {
-  "testCaseId": "tc-1785563215502",
-  "testCaseVersionId": "tcv-1785563215502",
+  "testCaseId": "tc-1785567700383",
+  "testCaseVersionId": "tcv-1785567700384",
   "testCaseVersionNumber": 1,
   "title": "Golden Master Test",
   "tags": [],
@@ -16,8 +16,8 @@
     {
       "id": "step-0001",
       "order": 0,
-      "action": "fill",
-      "description": "Fill \"partial\" in the Test Button",
+      "action": "select",
+      "description": "Select \"Economy\" from the Test Button",
       "target": {
         "kind": "element",
         "elementId": "elem-0001",
@@ -44,12 +44,12 @@
           }
         ]
       },
-      "input": "partial",
+      "input": "Economy",
       "assertions": [
         {
           "type": "equality",
           "comparison": "equals",
-          "expectedValue": "partial",
+          "expectedValue": "Economy",
           "severity": "hard",
           "target": {
             "kind": "element",
@@ -87,7 +87,7 @@
         "waitStrategy": "visible"
       },
       "aiEnrichment": null,
-      "plainEnglish": "Fill \"partial\" in the Test Button"
+      "plainEnglish": "Select \"Economy\" from the Test Button"
     }
   ]
 }

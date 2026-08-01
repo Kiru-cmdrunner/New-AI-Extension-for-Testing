@@ -1,6 +1,6 @@
 {
-  "testCaseId": "tc-1785563215503",
-  "testCaseVersionId": "tcv-1785563215503",
+  "testCaseId": "tc-1785567700393",
+  "testCaseVersionId": "tcv-1785567700393",
   "testCaseVersionNumber": 1,
   "title": "Golden Master Test",
   "tags": [],
@@ -16,8 +16,8 @@
     {
       "id": "step-0001",
       "order": 0,
-      "action": "toggle",
-      "description": "Uncheck the Test Button",
+      "action": "click",
+      "description": "Click the Test Button",
       "target": {
         "kind": "element",
         "elementId": "elem-0001",
@@ -44,42 +44,8 @@
           }
         ]
       },
-      "input": false,
-      "assertions": [
-        {
-          "type": "presence",
-          "comparison": "isFalse",
-          "expectedValue": false,
-          "severity": "hard",
-          "target": {
-            "kind": "element",
-            "elementId": "elem-0001",
-            "elementName": "Test Button",
-            "pageOrComponent": "",
-            "resolvedLocators": [
-              {
-                "type": "role",
-                "value": "button[name=\"Test Button\"]",
-                "priority": 1,
-                "confidence": 0.62
-              },
-              {
-                "type": "accessibleName",
-                "value": "Test Button",
-                "priority": 2,
-                "confidence": 0.62
-              },
-              {
-                "type": "css",
-                "value": "body > button",
-                "priority": 3,
-                "confidence": 0.35
-              }
-            ]
-          },
-          "property": "checked"
-        }
-      ],
+      "input": null,
+      "assertions": [],
       "executionParameters": {
         "timeoutMs": 30000,
         "retryCount": 0,
@@ -87,7 +53,13 @@
         "waitStrategy": "visible"
       },
       "aiEnrichment": null,
-      "plainEnglish": "Uncheck the Test Button"
+      "plainEnglish": "Click the Test Button",
+      "frame": {
+        "selector": "iframe#embed",
+        "strategy": "css",
+        "frameSrc": "https://example.com/embed",
+        "depth": 1
+      }
     }
   ]
 }

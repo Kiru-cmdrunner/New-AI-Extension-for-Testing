@@ -1,6 +1,6 @@
 {
-  "testCaseId": "tc-1785563215503",
-  "testCaseVersionId": "tcv-1785563215503",
+  "testCaseId": "tc-1785567700393",
+  "testCaseVersionId": "tcv-1785567700393",
   "testCaseVersionNumber": 1,
   "title": "Golden Master Test",
   "tags": [],
@@ -17,30 +17,30 @@
       "id": "step-0001",
       "order": 0,
       "action": "click",
-      "description": "Decrease Children by 1",
+      "description": "Click the Submit",
       "target": {
         "kind": "element",
         "elementId": "elem-0001",
-        "elementName": "Test Button",
+        "elementName": "Submit",
         "pageOrComponent": "main",
         "resolvedLocators": [
           {
-            "type": "role",
-            "value": "button[name=\"Test Button\"]",
+            "type": "testId",
+            "value": "submit-btn",
             "priority": 1,
-            "confidence": 0.62
+            "confidence": 0.9
           },
           {
-            "type": "accessibleName",
-            "value": "Test Button",
+            "type": "role",
+            "value": "button[name=\"Submit\"]",
             "priority": 2,
             "confidence": 0.62
           },
           {
-            "type": "css",
-            "value": "body > button",
+            "type": "accessibleName",
+            "value": "Submit",
             "priority": 3,
-            "confidence": 0.35
+            "confidence": 0.62
           }
         ]
       },
@@ -53,7 +53,7 @@
         "waitStrategy": "visible"
       },
       "aiEnrichment": null,
-      "plainEnglish": "Decrease Children by 1"
+      "plainEnglish": "Click the Submit"
     }
   ]
 }

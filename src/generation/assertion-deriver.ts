@@ -154,15 +154,18 @@ export function deriveStateAssertions(
   }
 
   // ── Slider: value assertion ──
-  if (type === 'Slider') {
+  if (type === 'Slider' || type === 'NativeSlider' || type === 'AriaSlider' || type === 'RangeSlider' || type === 'CustomSlider') {
     const value = meta.sliderValue;
     if (value !== undefined && value !== null) {
+      // Native sliders (including generic Slider without subtype) expose .value;
+      // ARIA/custom sliders expose aria-valuenow.
+      const property = (type === 'Slider' || type === 'NativeSlider') ? 'value' : 'aria-valuenow';
       assertions.push(
         makeAssertion(
           ValidationType.EQUALITY,
           ValidationComparison.EQUALS,
           value,
-          'value',
+          property,
         ),
       );
     }

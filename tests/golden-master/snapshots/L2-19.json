@@ -1,6 +1,6 @@
 {
-  "testCaseId": "tc-1785567700358",
-  "testCaseVersionId": "tcv-1785567700358",
+  "testCaseId": "tc-1785567700393",
+  "testCaseVersionId": "tcv-1785567700393",
   "testCaseVersionNumber": 1,
   "title": "Golden Master Test",
   "tags": [],
@@ -16,8 +16,8 @@
     {
       "id": "step-0001",
       "order": 0,
-      "action": "select",
-      "description": "Select \"India\" from the Test Button",
+      "action": "toggle",
+      "description": "Uncheck the Test Button",
       "target": {
         "kind": "element",
         "elementId": "elem-0001",
@@ -44,12 +44,12 @@
           }
         ]
       },
-      "input": "India",
+      "input": false,
       "assertions": [
         {
-          "type": "equality",
-          "comparison": "equals",
-          "expectedValue": "India",
+          "type": "presence",
+          "comparison": "isFalse",
+          "expectedValue": false,
           "severity": "hard",
           "target": {
             "kind": "element",
@@ -77,7 +77,7 @@
               }
             ]
           },
-          "property": "value"
+          "property": "checked"
         }
       ],
       "executionParameters": {
@@ -87,7 +87,7 @@
         "waitStrategy": "visible"
       },
       "aiEnrichment": null,
-      "plainEnglish": "Select \"India\" from the Test Button"
+      "plainEnglish": "Uncheck the Test Button"
     }
   ]
 }

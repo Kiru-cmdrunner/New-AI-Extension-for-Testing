@@ -88,6 +88,10 @@ type BridgeInteractionType =
   | 'RadioButton'
   | 'ToggleSwitch'
   | 'Slider'
+  | 'NativeSlider'
+  | 'AriaSlider'
+  | 'RangeSlider'
+  | 'CustomSlider'
   | 'DatePicker'
   | 'TimePicker'
   | 'DateTimePicker'
@@ -342,6 +346,10 @@ const INTERACTION_TO_IR_ACTION: Record<BridgeInteractionType, IRAction> = {
   RadioButton: IRAction.CLICK,
   ToggleSwitch: IRAction.TOGGLE,
   Slider: IRAction.FILL,
+  NativeSlider: IRAction.FILL,
+  AriaSlider: IRAction.FILL,
+  RangeSlider: IRAction.FILL,
+  CustomSlider: IRAction.FILL,
   // Date & Time
   DatePicker: IRAction.SELECT_DATE,
   TimePicker: IRAction.SELECT_DATE,
@@ -675,7 +683,11 @@ function generateDescription(
         ? `Drag the ${businessField} to ${dropTarget}`
         : `Drag the ${name} to ${dropTarget}`;
     }
-    case 'Slider': {
+    case 'Slider':
+    case 'NativeSlider':
+    case 'AriaSlider':
+    case 'RangeSlider':
+    case 'CustomSlider': {
       const value = interaction.metadata.sliderValue ?? '';
       return businessField
         ? `Set the ${businessField} to ${value}`
@@ -796,6 +808,10 @@ function extractInputValue(
       return event?.type === 'dateSelect' ? event.isoValue : ((m.dateValue as string) ?? null);
 
     case 'Slider':
+    case 'NativeSlider':
+    case 'AriaSlider':
+    case 'RangeSlider':
+    case 'CustomSlider':
       return (m.sliderValue as string) ?? null;
 
     case 'TagInput':

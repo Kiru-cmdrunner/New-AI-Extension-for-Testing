@@ -62,10 +62,10 @@ export const sliderDefinition: ComponentDefinition = {
   // ── Trigger ────────────────────────────────────────────────────────
 
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
-    const { tag, ariaRole } = event.target;
-    const { inputType } = event.domContext;
+    const { tag, ariaRole, className } = event.target;
+    const { inputType, ancestorClasses } = event.domContext;
 
-    if (isSlider(tag, inputType, ariaRole)) {
+    if (isSlider(tag, inputType, ariaRole, className, ancestorClasses)) {
       return { type: 'Slider' };
     }
 
@@ -235,6 +235,34 @@ export const sliderDefinition: ComponentDefinition = {
         ctx.triggerEvent.valueAfter ??
         ctx.triggerEvent.valueBefore ??
         null;
+      startValue = sliderValue;
+      endValue = sliderValue;
+    }
+
+    // ── R2: Geometry-based value fallback for custom sliders ──
+    // When no ARIA or native value is available (custom div-based sliders),
+    // compute a percentage from the handle's position relative to the track.
+    if (sliderValue === null && domCtx.trackOffsetWidth && domCtx.trackOffsetWidth > 0) {
+      const handleLeft = domCtx.targetOffsetLeft ?? 0;
+      const trackLeft = domCtx.trackOffsetLeft ?? 0;
+      const trackWidth = domCtx.trackOffsetWidth;
+      const percent = Math.round(((handleLeft - trackLeft) / trackWidth) * 100);
+
+      // Map to range if min/max available, otherwise use percentage directly
+      if (min !== null && max !== null) {
+        const minNum = Number(min);
+        const maxNum = Number(max);
+        if (!isNaN(minNum) && !isNaN(maxNum)) {
+          sliderValue = String(minNum + (percent / 100) * (maxNum - minNum));
+        } else {
+          sliderValue = String(percent);
+        }
+      } else {
+        sliderValue = String(percent);
+      }
+
+      // Mark as custom slider subtype
+      ctx.data.interactionSubtype = 'CustomSlider';
       startValue = sliderValue;
       endValue = sliderValue;
     }

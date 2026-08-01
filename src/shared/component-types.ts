@@ -134,6 +134,17 @@ export interface DomContext {
    *  Null if the surface was not caused by a recorded event (e.g., page-load modal).
    *  Architecture: docs/architecture/OBSERVATION_MODEL_DESIGN.md §9.2 */
   surfaceOpenedBy?: string | null;
+
+  // ── Slider Geometry (R2: Custom slider value extraction) ──
+
+  /** Target element's offsetLeft relative to its offsetParent. Used for geometry-based slider value extraction. */
+  targetOffsetLeft?: number | null;
+  /** Target element's offsetTop relative to its offsetParent. */
+  targetOffsetTop?: number | null;
+  /** Nearest track ancestor's offsetLeft. 0 if no track ancestor found. */
+  trackOffsetLeft?: number | null;
+  /** Nearest track ancestor's offsetWidth. 0 if no track ancestor found. */
+  trackOffsetWidth?: number | null;
 }
 
 // ── Observed Event ─────────────────────────────────────────────────────

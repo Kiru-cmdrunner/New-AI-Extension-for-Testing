@@ -37,7 +37,7 @@ import type {
   ObservedEvent,
 } from '../shared/component-types';
 import type { ElementIdentity } from '../shared/types';
-import { bestName, isInteractiveElement, isDropdownTrigger, isTextEntry } from './patterns';
+import { bestName, isInteractiveElement, isDropdownTrigger, isTextEntry, isSliderHandleClass } from './patterns';
 
 // ── Excluded elements ──────────────────────────────────────────────────
 
@@ -91,11 +91,14 @@ function isExcluded(
   tag: string,
   ariaRole: string | null,
   ariaHasPopup: string | null,
+  className?: string | null,
 ): boolean {
   if (EXCLUDED_TAGS.has(tag)) return true;
   if (ariaRole && EXCLUDED_ROLES.has(ariaRole)) return true;
   // Dropdown trigger (aria-haspopup=listbox) — let Dropdown handle it
   if (ariaHasPopup === 'listbox' || ariaHasPopup === 'dialog' || ariaHasPopup === 'true') return true;
+  // Slider handle CSS classes — let Slider definition handle it (priority 25 > DragDrop 15)
+  if (className && isSliderHandleClass(className)) return true;
   return false;
 }
 
@@ -158,7 +161,7 @@ export const dragAndDropDefinition: ComponentDefinition = {
       const allClasses = `${className ?? ''} ${ancestorClasses}`;
       const isDragHandle = DRAG_HANDLE_CLASS_RE.test(allClasses);
 
-      if (!isDragHandle && isExcluded(tag, ariaRole, ariaHasPopup)) {
+      if (!isDragHandle && isExcluded(tag, ariaRole, ariaHasPopup, className)) {
         return null;
       }
       // Interactive elements (CSS class patterns like btn, dropdown, option,
