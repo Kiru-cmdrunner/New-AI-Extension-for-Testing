@@ -32,7 +32,6 @@ import {
   toBridgeInteraction,
   resolveLocatorsForIR,
   deriveAssertions,
-  type BridgeInteraction,
 } from './ir-bridge';
 import { deriveStateAssertions } from './assertion-deriver';
 import { deriveStructuralAssertions } from './assertion-providers';
