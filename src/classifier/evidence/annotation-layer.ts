@@ -135,6 +135,16 @@ function annotateClick(interaction: ComponentInteraction): ComponentInteraction 
     interaction.confidence = classification.confidence;
     interaction.evidenceTrail = classification.evidence;
 
+    // Merge derived metadata (checked, accessibleName, etc.) into the
+    // interaction so downstream layers (domain adapter, pattern recognition)
+    // have the data they need.
+    if (classification.metadata.checked !== undefined) {
+      interaction.metadata.checked = classification.metadata.checked;
+    }
+    if (classification.metadata.accessibleName && !interaction.metadata.targetName) {
+      interaction.metadata.targetName = classification.metadata.accessibleName;
+    }
+
     // Reclassify if evidence is strong enough and the type changed
     if (
       classification.confidence >= RECLASSIFY_THRESHOLD &&

@@ -393,8 +393,14 @@ export function isRadio(
 
 /**
  * Is this element a link?
+ *
+ * Respects ARIA role overrides: an `<a role="button">` is NOT a link.
+ * Action-anchor disambiguation (href="#", javascript:, etc.) is handled
+ * separately in `link.ts` detectTrigger using the full ObservedEvent.
  */
 export function isLink(tag: string, ariaRole: string | null): boolean {
+  // Explicit ARIA role overrides take precedence.
+  if (ariaRole !== null && ariaRole !== 'link') return false;
   if (tag === 'A') return true;
   if (ariaRole === 'link') return true;
   return false;

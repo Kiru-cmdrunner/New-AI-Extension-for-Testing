@@ -121,6 +121,13 @@ export function deriveMetadata(
       meta.checked = f.checkedAfter;
     } else if (f.checkedBefore !== null) {
       meta.checked = f.checkedBefore;
+    } else {
+      // No native checked state (e.g. <a> tag toggle with class/aria-checked
+      // transitions). Default to true — a toggle click means the element was
+      // activated. This metadata feeds the domain adapter's STATE_CHANGE
+      // evidence, which the pattern recognizer needs to create a CHECKBOX
+      // component grouping.
+      meta.checked = true;
     }
   }
 

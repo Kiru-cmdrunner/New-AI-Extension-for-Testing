@@ -1,12 +1,13 @@
 /**
- * FROZEN-BASELINE CODE-LEVEL VALIDATION
+ * PRE-PATCH BASELINE CODE-LEVEL VALIDATION
  *
- * Validates the current frozen product behavior (R4/P2 baseline 57128cb)
- * against architectural claims and the QA-user risk analysis.
+ * Originally captured the frozen product behavior (R4/P2 baseline 57128cb)
+ * that exposed the lifecycle-preemption semantic issue.
  *
- * This test file DOES NOT modify production code. It exercises the real
- * production pipeline (runtime + annotation + enrichment) to prove or
- * disprove findings.
+ * After the isLink() corrective patch (see tests/patch-link-preemption.test.ts),
+ * the 7 tests that documented the bug behavior (VAL-2a, 2b, 2c, 2e×2, VAL-5,
+ * VAL-6) have been updated to verify the CORRECTED behavior rather than the
+ * original buggy behavior. The remaining 29 tests document unchanged behavior.
  *
  * Design docs verified against:
  *   - R3 design (.drytis/specs/r3-behavioral-semantic-reasoning.md)
@@ -225,7 +226,8 @@ describe('VAL-2: Lifecycle Preemption Validation', () => {
   describe('2a: <a> tag used for navigation (correct case)', () => {
     it('produces Link with navigate intent, confidence 1.0', () => {
       const events = [
-        makeEvent('click', { tag: 'A', accessibleName: 'Product Details', ariaRole: 'link', stableId: 'product-link' }, {}),
+        makeEvent('click', { tag: 'A', accessibleName: 'Product Details', ariaRole: 'link', stableId: 'product-link' },
+          { openedUrl: 'https://shop.example.com/products/123' }),
       ];
       const result = runPipelineProduction(events);
       expect(result).toHaveLength(1);
@@ -238,52 +240,45 @@ describe('VAL-2: Lifecycle Preemption Validation', () => {
   });
 
   describe('2b: <a> tag used as toggle WITHOUT navigation', () => {
-    it('STILL produces Link with navigate intent — behavioral evidence NEVER runs', () => {
-      // An <a> tag that the app uses as a toggle/filter.
-      // Even though it has role="button" and toggles class, the Link
-      // definition claims it at priority 70 because isLink(tag) returns true for tag==='A'.
+    it('PATCHED: action anchor (href=#) falls to Click, NOT Link', () => {
+      // After the isLink() corrective patch, <a href="#"> no longer
+      // triggers Link. It falls through to Click where R3 evidence runs.
       const events = [
         makeEvent('click',
-          { tag: 'A', accessibleName: 'On Sale', ariaRole: 'button', className: 'toggle-btn' },
-          { ariaExpanded: null, ariaHasPopup: null }
+          { tag: 'A', accessibleName: 'On Sale', ariaRole: 'button', className: 'toggle-btn', stableId: 'a-onsale' },
+          { ariaExpanded: null, ariaHasPopup: null, openedUrl: 'https://shop.example.com/products#' }
         ),
       ];
       const result = runPipelineProduction(events);
       expect(result).toHaveLength(1);
 
-      // PROVE: classified as Link, NOT Checkbox
-      expect(result[0].type).toBe('Link');
-      expect(result[0].intent).toBe('navigate');
+      // PATCHED: classified as Click (not Link), R3 evidence runs
+      expect(result[0].type).not.toBe('Link');
+      expect(result[0].type).toBe('Click');
 
-      // PROVE: confidence is 1.0 (static lifecycle), NOT behavioral
-      expect(result[0].confidence).toBe(1.0);
+      // Confidence is NOT 1.0 — it's from evidence fusion
+      expect(result[0].confidence).toBeLessThan(1.0);
 
-      // PROVE: evidence engine did NOT run
-      const sources = result[0].evidenceTrail?.map(e => e.source) ?? [];
-      expect(sources).not.toContain('behavioral-evidence');
-      expect(sources).not.toContain('selection-state-evidence');
-      expect(sources).toContain('lifecycle-definition');
-
-      // PROVE: no behavioral signals evaluated
-      expect(result[0].metadata.unrecognized).toBeUndefined();
+      // Evidence engine DID run (not lifecycle)
+      const hasLifecycle = result[0].evidenceTrail?.some(e => e.source === 'lifecycle-definition');
+      expect(hasLifecycle).toBe(false);
     });
   });
 
   describe('2c: <a role="button"> that changes state', () => {
-    it('role="button" does NOT prevent Link from matching — isLink checks tag first', () => {
+    it('PATCHED: role="button" prevents Link — falls to Click', () => {
       const events = [
         makeEvent('click',
-          { tag: 'A', accessibleName: 'Toggle Panel', ariaRole: 'button', className: 'panel-toggle' },
-          { ariaExpanded: true }
+          { tag: 'A', accessibleName: 'Toggle Panel', ariaRole: 'button', className: 'panel-toggle', stableId: 'a-panel' },
+          { ariaExpanded: true, openedUrl: 'https://shop.example.com/products#' }
         ),
       ];
       const result = runPipelineProduction(events);
       expect(result).toHaveLength(1);
 
-      // Even with role="button" and ariaExpanded, Link wins because:
-      // isLink(tag, ariaRole) → tag === 'A' → true (ignores ariaRole)
-      expect(result[0].type).toBe('Link');
-      expect(result[0].confidence).toBe(1.0);
+      // PATCHED: role override respected — NOT Link
+      expect(result[0].type).not.toBe('Link');
+      expect(result[0].confidence).toBeLessThan(1.0);
     });
   });
 
@@ -311,8 +306,10 @@ describe('VAL-2: Lifecycle Preemption Validation', () => {
     const cases = [
       { name: 'native checkbox', tag: 'INPUT', role: 'checkbox', inputType: 'checkbox', expectedType: 'Checkbox', evidenceRuns: false },
       { name: 'div toggle', tag: 'DIV', role: null, inputType: null, expectedType: 'Click', evidenceRuns: true },
-      { name: '<a> navigation', tag: 'A', role: 'link', inputType: null, expectedType: 'Link', evidenceRuns: false },
-      { name: '<a> toggle (role=button)', tag: 'A', role: 'button', inputType: null, expectedType: 'Link', evidenceRuns: false },
+      // PATCHED: <a role="link"> with real href → Link, lifecycle
+      { name: '<a> navigation (role=link)', tag: 'A', role: 'link', inputType: null, expectedType: 'Link', evidenceRuns: false, url: 'https://shop.example.com/home' },
+      // PATCHED: <a role="button"> href=# → Click fallback, R3 evidence runs
+      { name: '<a> toggle (role=button)', tag: 'A', role: 'button', inputType: null, expectedType: 'Click', evidenceRuns: true, url: 'https://shop.example.com/products#' },
       { name: '<button>', tag: 'BUTTON', role: 'button', inputType: null, expectedType: 'Click', evidenceRuns: true },
     ];
 
@@ -321,7 +318,7 @@ describe('VAL-2: Lifecycle Preemption Validation', () => {
         const events = [
           makeEvent('click',
             { tag: tc.tag, accessibleName: 'Test Element', ariaRole: tc.role, className: 'toggle-btn' },
-            { inputType: tc.inputType ?? null }
+            { inputType: tc.inputType ?? null, openedUrl: (tc as { url?: string }).url ?? 'https://shop.example.com/products#' }
           ),
         ];
         const result = runPipelineProduction(events);
@@ -462,37 +459,28 @@ describe('VAL-4: Side Panel Data Availability', () => {
 
 describe('VAL-5: Preemption Impact on Capability Pipeline', () => {
 
-  it('<a> toggle produces Link → no data requirement in capability', () => {
-    // Simulate: the <a> toggle is classified as Link.
-    // In the capability pipeline:
-    //   Link interactions are NOT "confirmed components" with patterns.
-    //   They become standalone transitions with businessField=null.
-    //   deriveInputs() skips logical actions where businessField is null.
-    //   Therefore: NO data requirement for the toggle.
+  it('PATCHED: <a> toggle no longer produces Link — falls to Click', () => {
+    // After the isLink() corrective patch, an <a href="#"> toggle is
+    // classified as Click (not Link), and R3 behavioral evidence runs.
+    // If toggle evidence is detected (class change, aria-checked transition),
+    // the Click gets interactionSubtype='Checkbox', which feeds the domain
+    // adapter as TransitionOperation.TOGGLE and creates a CHECKBOX component.
 
-    // Step 1: Verify the classification
     const events = [
       makeEvent('click',
-        { tag: 'A', accessibleName: 'On Sale', ariaRole: 'button', className: 'toggle-btn' },
-        {}
+        { tag: 'A', accessibleName: 'On Sale', ariaRole: null, className: 'toggle-btn', stableId: 'a-onsale' },
+        { openedUrl: 'https://shop.example.com/products#' }
       ),
     ];
     const result = runPipelineProduction(events);
-    expect(result[0].type).toBe('Link');
+    expect(result[0].type).not.toBe('Link');
+    expect(result[0].type).toBe('Click');
 
-    // Step 2: Verify that Link is NOT in PATTERN_TO_INTERACTION_TYPE
-    // (which drives whether a logical action gets sourceInteractionType)
-    // Link interactions don't create confirmed components → standalone transitions
-    // → businessField=null → skipped by deriveInputs()
-
-    // We can verify this by checking that Link is NOT one of the 6
-    // pattern types that produce data requirements:
+    // Link is NOT in PATTERN_TO_INTERACTION_TYPE — but Click CAN be
+    // reclassified to Checkbox subtype, which IS data-producing.
     const dataProducingTypes = ['Dropdown', 'Checkbox', 'RadioButton', 'DatePicker', 'Slider'];
     expect(dataProducingTypes).not.toContain('Link');
-
-    // CONCLUSION: An <a> toggle produces NO data requirement.
-    // The toggle field is missing from the capability.
-    // P2 cannot generate a TOGGLE step because there is no DataRequirement.
+    expect(dataProducingTypes).toContain('Checkbox');
   });
 
   it('div toggle produces Click → MAY produce data requirement (if component detected)', () => {
@@ -551,11 +539,11 @@ describe('VAL-6: Recognition Priority Order', () => {
     expect(result[0].type).toBe('Checkbox');
   });
 
-  it('Link (priority 70) claims <a> click before Click (priority 180)', () => {
+  it('PATCHED: Genuine link (role=link + real href) still claims Link at priority 70', () => {
     const events = [
       makeEvent('click',
         { tag: 'A', accessibleName: 'Home', ariaRole: 'link' },
-        {}
+        { openedUrl: 'https://shop.example.com/home' }
       ),
     ];
     const result = runPipelineProduction(events);

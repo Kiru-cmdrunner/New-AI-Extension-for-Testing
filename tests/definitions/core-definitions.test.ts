@@ -100,10 +100,11 @@ describe('Click Definition', () => {
     expect(emitted[0].metadata.targetName).toBe('Login');
   });
 
-  it('captures link clicks as Click when Link def is present', () => {
+  it('captures link clicks as Link when Link def is present', () => {
     const { runtime, emitted } = setupRuntime();
     runtime.process(
-      makeEvent('e1', 'click', { tag: 'A', ariaRole: 'link', accessibleName: 'Dashboard', stableId: 'dash-link' }),
+      makeEvent('e1', 'click', { tag: 'A', ariaRole: 'link', accessibleName: 'Dashboard', stableId: 'dash-link' },
+        { openedUrl: 'https://example.com/dashboard' }),
     );
     // Link has higher priority (70) than Click (180), so it should be Link
     expect(emitted.length).toBe(1);
@@ -377,7 +378,8 @@ describe('Link Definition', () => {
   it('captures link click', () => {
     const { runtime, emitted } = setupRuntime();
     runtime.process(
-      makeEvent('e1', 'click', { tag: 'A', ariaRole: 'link', accessibleName: 'My Info', stableId: 'my-info-link' }),
+      makeEvent('e1', 'click', { tag: 'A', ariaRole: 'link', accessibleName: 'My Info', stableId: 'my-info-link' },
+        { openedUrl: 'https://example.com/my-info' }),
     );
     expect(emitted.length).toBe(1);
     expect(emitted[0].type).toBe('Link');

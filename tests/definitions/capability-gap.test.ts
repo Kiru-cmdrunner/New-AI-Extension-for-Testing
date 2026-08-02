@@ -130,7 +130,7 @@ describe('NewTab definition', () => {
   it('does not trigger on regular links without opensNewTab', () => {
     const event = makeClickEvent(
       { tag: 'A', ariaRole: 'link', className: 'internal-link' },
-      { opensNewTab: null },
+      { opensNewTab: null, openedUrl: 'https://example.com/other-page' },
     );
 
     const interactions = processEvent(null as never, event);

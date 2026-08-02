@@ -26,6 +26,10 @@ import type { EvidenceGenerator, IntentVote, FeatureViewInput } from './types';
 /**
  * ARIA attributes are the strongest semantic signal. When present, they're
  * authoritative — the developer explicitly declared the element's semantics.
+ *
+ * R3.4 calibration: also detects aria-checked attribute transitions from the
+ * post-handler re-snapshot. This catches elements that set aria-checked=true
+ * after a click (common in custom SPA toggles without explicit checkbox role).
  */
 export const ariaEvidence: EvidenceGenerator = {
   id: 'aria',
@@ -51,6 +55,23 @@ export const ariaEvidence: EvidenceGenerator = {
         source: 'aria-pressed',
         reason: 'Button element has pressed/checked state',
       });
+    }
+
+    // R3.4 calibration: aria-checked attribute transition from post-handler
+    // re-snapshot. Catches custom toggles that set aria-checked dynamically
+    // (e.g. <a href="#" onclick="this.setAttribute('aria-checked','true')">)
+    if (f.hasAttributeTransition) {
+      const checkedTransition = f.attributeChanges.some(
+        c => c.attribute === 'aria-checked' || c.attribute === 'aria-pressed',
+      );
+      if (checkedTransition) {
+        evidence.push({
+          intent: 'toggle',
+          weight: 0.7,
+          source: 'aria-checked-transition',
+          reason: 'aria-checked/aria-pressed attribute changed after click (behavioral)',
+        });
+      }
     }
 
     return evidence;
@@ -324,8 +345,10 @@ export const panelEmergenceEvidence: EvidenceGenerator = {
 };
 
 // Regex patterns for semantic class tokens in selection/toggle state changes
-const SELECTION_CLASS_RE = /(?:^|\s)(?:select|active|chosen|current|picked|highlight)(?:ed|ed-item)?(?:\s|$)/i;
-const TOGGLE_CLASS_RE = /(?:^|\s)(?:check|toggle|on|enabled|open)(?:ed)?(?:\s|$)/i;
+// "active" is classified as toggle because it's the most common SPA filter
+// toggle state class (e.g., jQuery .active, CSS .toggle.active).
+const SELECTION_CLASS_RE = /(?:^|\s)(?:select|chosen|current|picked|highlight)(?:ed|ed-item)?(?:\s|$)/i;
+const TOGGLE_CLASS_RE = /(?:^|\s)(?:check|toggle|on|enabled|open|active)(?:ed)?(?:\s|$)/i;
 
 /**
  * R3.3 Selection State Evidence: detects class attribute transitions that
@@ -359,20 +382,11 @@ export const selectionStateEvidence: EvidenceGenerator = {
       const beforeSet = new Set(beforeClasses.split(/\s+/).filter(Boolean));
       const afterSet = new Set(afterClasses.split(/\s+/).filter(Boolean));
 
-      // Check for added tokens that match selection patterns
+      // Check for added tokens that match toggle patterns first
+      // (toggle tokens like "on", "checked", "active" are stronger signals
+      // than selection tokens because they imply boolean state)
       for (const token of afterSet) {
         if (beforeSet.has(token)) continue; // token was already present
-
-        // Selection-related token gained → select intent
-        if (SELECTION_CLASS_RE.test(token) || SELECTION_CLASS_RE.test(` ${token} `)) {
-          evidence.push({
-            intent: 'select',
-            weight: 0.5,
-            source: 'class-selection-transition',
-            reason: `Class gained selection token "${token}" (behavioral)`,
-          });
-          break; // one match is sufficient
-        }
 
         // Toggle-related token gained → toggle intent
         if (TOGGLE_CLASS_RE.test(token) || TOGGLE_CLASS_RE.test(` ${token} `)) {
@@ -383,6 +397,17 @@ export const selectionStateEvidence: EvidenceGenerator = {
             reason: `Class gained toggle token "${token}" (behavioral)`,
           });
           break;
+        }
+
+        // Selection-related token gained → select intent
+        if (SELECTION_CLASS_RE.test(token) || SELECTION_CLASS_RE.test(` ${token} `)) {
+          evidence.push({
+            intent: 'select',
+            weight: 0.5,
+            source: 'class-selection-transition',
+            reason: `Class gained selection token "${token}" (behavioral)`,
+          });
+          break; // one match is sufficient
         }
       }
 

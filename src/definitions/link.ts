@@ -17,6 +17,36 @@ import type {
 } from '../shared/component-types';
 import { isLink, bestName } from './patterns';
 
+/**
+ * Determine whether an `<a>` tag's href indicates an action anchor (SPA
+ * toggle/button) rather than genuine navigation.
+ *
+ * Action anchors: href="#", href="", no href attribute, javascript: URLs.
+ * These return to the Click fallback so R3 behavioral evidence can classify
+ * the actual intent (toggle, trigger, navigate).
+ *
+ * Genuine navigation: any real URL path that differs from the bare current
+ * page URL. E.g. "/home", "/products?category=electronics".
+ *
+ * @param openedUrl - The absolute href from domContext.openedUrl (may be null)
+ * @param pageUrl   - The page URL where the event occurred
+ */
+function isActionAnchor(openedUrl: string | null, pageUrl: string): boolean {
+  if (openedUrl === null) return true; // no href attribute
+
+  // javascript: protocol — SPA action anchor
+  if (openedUrl.toLowerCase().startsWith('javascript:')) return true;
+
+  // Bare fragment: href="#" resolves to <pageUrl>#
+  if (openedUrl.endsWith('#')) return true;
+
+  // Same as current page URL (href="" or href with same path and no fragment)
+  // This catches href="" which resolves to the page URL itself.
+  if (openedUrl === pageUrl) return true;
+
+  return false;
+}
+
 export const linkDefinition: ComponentDefinition = {
   type: 'Link',
   priority: 70,
@@ -24,10 +54,17 @@ export const linkDefinition: ComponentDefinition = {
 
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
     const { tag, ariaRole } = event.target;
-    if (isLink(tag, ariaRole)) {
-      return { type: 'Link' };
-    }
-    return null;
+    if (!isLink(tag, ariaRole)) return null;
+
+    // Action-anchor disambiguation: an `<a>` with href="#", href="",
+    // javascript:, or no href at all is a common SPA button/toggle idiom.
+    // These should NOT be classified as navigation links — they fall through
+    // to the Click definition so R3 behavioral evidence can determine intent.
+    const openedUrl = event.domContext.openedUrl ?? null;
+    const pageUrl = event.pageUrl;
+    if (isActionAnchor(openedUrl, pageUrl)) return null;
+
+    return { type: 'Link' };
   },
 
   isInScope(_event: ObservedEvent, _ctx: ComponentContext): boolean {
