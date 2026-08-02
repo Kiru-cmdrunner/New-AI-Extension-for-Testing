@@ -242,6 +242,7 @@ function deriveInputs(fragment: ApplicationKnowledgeFragment): CapabilityInput[]
 
     inputs.push({
       label: action.businessField,
+      displayLabel: action.displayLabel ?? action.businessField,
       elementId,
       required: constraints?.required ?? false,
       inputType: constraints?.inputType ?? null,

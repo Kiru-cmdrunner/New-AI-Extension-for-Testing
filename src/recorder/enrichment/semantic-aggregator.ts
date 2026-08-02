@@ -52,6 +52,7 @@ import type { ObservedTransition } from '../../domain/entities/observed-transiti
 import type { LogicalAction, ResultingChange } from '../../domain/entities/application-knowledge';
 import type { PatternDefinition } from '../recognition/pattern-catalogue';
 import type { InteractionType } from '../../shared/component-types';
+import type { UiElement } from '../../domain/entities/ui-element';
 import { TransitionOperation, RelevanceLevel } from '../../domain/enums';
 import { PatternType } from '../../domain/enums';
 
@@ -109,6 +110,8 @@ export interface AggregationInput {
   readonly transitions: ObservedTransition[];
   /** Pattern definitions keyed by pattern type. */
   readonly patterns: ReadonlyMap<string, PatternDefinition>;
+  /** C2/D1: Elements map for resolving businessField on standalone actions. */
+  readonly elements?: readonly UiElement[];
   /** Optional configuration (Rule C temporal gap, etc.). */
   readonly options?: AggregationOptions;
 }
@@ -137,8 +140,16 @@ interface LifecycleOccurrence {
  * @returns Ordered LogicalAction[] (by timestamp).
  */
 export function aggregateActions(input: AggregationInput): LogicalAction[] {
-  const { components, transitions, patterns, options } = input;
+  const { components, transitions, patterns, elements, options } = input;
   const temporalGapMs = options?.temporalGapMs ?? 0;
+
+  // C2/D1: Build element lookup map for standalone businessField resolution
+  const elementMap = new Map<string, UiElement>();
+  if (elements) {
+    for (const el of elements) {
+      elementMap.set(el.elementId, el);
+    }
+  }
 
   // Sort transitions chronologically for consistent processing
   const sorted = [...transitions].sort((a, b) => a.timestamp - b.timestamp);
@@ -183,7 +194,7 @@ export function aggregateActions(input: AggregationInput): LogicalAction[] {
 
   // Step 3: Standalone transitions each become their own action
   for (const t of standalone) {
-    actions.push(buildStandaloneAction(t));
+    actions.push(buildStandaloneAction(t, elementMap));
   }
 
   // Step 4: Sort all actions by their first transition timestamp
@@ -302,6 +313,7 @@ function buildComponentAction(
     actionId: `action-${++actionCounter}`,
     componentId: component.groupingId,
     businessField: component.businessField,
+    displayLabel: component.businessField,
     transitionIds: occurrence.transitions.map((t) => t.transitionId),
     lifecycleComplete: occurrence.lifecycleComplete,
     resultingChange: deriveResultingChange(occurrence.transitions),
@@ -312,17 +324,35 @@ function buildComponentAction(
 
 /**
  * Build a LogicalAction for a standalone transition (no component).
+ *
+ * C1: sourceInteractionType carried from the ObservedTransition (populated
+ *     from ComponentInteraction.type in the domain adapter).
+ * C2: businessField resolved from the element's accessibleName via the
+ *     elements map. Null if element not found or accessibleName is empty.
+ *     displayLabel preserves the real accessibleName independently for
+ *     forward-compatible fieldKey evolution.
  */
-function buildStandaloneAction(t: ObservedTransition): LogicalAction {
+function buildStandaloneAction(
+  t: ObservedTransition,
+  elementMap: Map<string, UiElement>,
+): LogicalAction {
+  // C2: Resolve businessField from element's accessibleName
+  const element = elementMap.get(t.elementId);
+  const accessibleName = element?.identity.accessibleName ?? '';
+  const businessField = accessibleName || null;
+  const displayLabel = accessibleName || null;
+
   return {
     actionId: `action-${++actionCounter}`,
     componentId: null,
-    businessField: null,
+    businessField,
+    displayLabel,
     transitionIds: [t.transitionId],
     lifecycleComplete: true,
     resultingChange: deriveResultingChange([t]),
     timestamp: t.timestamp,
-    sourceInteractionType: null,
+    // C1: Pass through from ObservedTransition (populated in adapter)
+    sourceInteractionType: t.sourceInteractionType ?? null,
   };
 }
 

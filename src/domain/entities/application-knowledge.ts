@@ -148,8 +148,22 @@ export interface LogicalAction {
   /**
    * Business-field label for the affected field, from enrichment.
    * Null if the component was not enriched or has no discernible label.
+   *
+   * Tier 1: resolved from accessibleName for standalone interactions.
+   * Future: may carry a normalized fieldKey (e.g., 'maxPrice') when a
+   * derivation layer is added; displayLabel preserves the real label.
    */
   readonly businessField: string | null;
+  /**
+   * C2: Human-readable display label preserved independently from businessField.
+   * When businessField and displayLabel are the same value (Tier 1), this
+   * carries no additional information but ensures the real accessibleName
+   * survives future fieldKey normalization without type changes.
+   *
+   * Optional for backward compatibility — consumers should fall back to
+   * businessField when displayLabel is absent.
+   */
+  readonly displayLabel?: string | null;
   /** The transition IDs that compose this action (traceability to foundations). */
   readonly transitionIds: readonly string[];
   /** Whether the observed operations fully satisfied the expected lifecycle. */
@@ -166,8 +180,10 @@ export interface LogicalAction {
    *
    * Null for standalone transitions or when the component's pattern type
    * does not map to a known InteractionType.
+   *
+   * Optional for backward compatibility — consumers treat undefined as null.
    */
-  readonly sourceInteractionType: InteractionType | null;
+  readonly sourceInteractionType?: InteractionType | null;
 }
 
 /**

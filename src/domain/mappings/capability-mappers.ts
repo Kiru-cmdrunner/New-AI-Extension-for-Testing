@@ -145,7 +145,9 @@ export function capabilityInputToDataRequirement(input: CapabilityInput): DataRe
 
   return {
     field: input.label,
-    label: humanizeLabel(input.label),
+    // C2: Use displayLabel if available (preserves real accessibleName);
+    // fall back to humanizeLabel for backward compatibility.
+    label: input.displayLabel ?? humanizeLabel(input.label),
     kind,
     inputMethod,
     required: input.required,

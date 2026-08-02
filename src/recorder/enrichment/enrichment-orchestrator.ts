@@ -136,6 +136,8 @@ export function enrichSession(input: EnrichmentInput): ApplicationKnowledgeFragm
     components: confirmedComponents,
     transitions,
     patterns: patternMap,
+    // C2/D1: Pass elements for standalone businessField resolution
+    elements,
   });
 
   // ── Step 5: Workflow derivation ──

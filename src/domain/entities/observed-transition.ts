@@ -17,6 +17,7 @@ import {
   TransitionEvidenceType,
   CascadeEffectType,
 } from '../enums';
+import type { InteractionType } from '../../shared/component-types';
 import { MissingFieldError, ValueObjectError } from '../errors/invariant-errors';
 
 // ── Value objects ────────────────────────────────────────
@@ -144,6 +145,14 @@ export interface ObservedTransition {
   readonly cascadeEffects: CascadeEffect[];
   /** Validation behavior observed during this transition, if any. */
   readonly validationResult: ValidationResult | null;
+  /**
+   * C1: The InteractionType that the recorder classified for the originating
+   * ComponentInteraction. Carried through from ComponentInteraction.type via
+   * the domain adapter. Used by P1 to derive inputMethod on DataRequirement.
+   *
+   * Null when the source interaction type is unavailable (e.g., navigation events).
+   */
+  readonly sourceInteractionType: InteractionType | null;
 }
 
 /** Input for creating an ObservedTransition. */
@@ -159,6 +168,8 @@ export interface CreateObservedTransitionInput {
   evidence?: CreateTransitionEvidenceInput[];
   cascadeEffects?: CreateCascadeEffectInput[];
   validationResult?: ValidationResult | null;
+  /** C1: Source InteractionType from ComponentInteraction.type. */
+  sourceInteractionType?: InteractionType | null;
 }
 
 /**
@@ -212,6 +223,7 @@ export function createObservedTransition(input: CreateObservedTransitionInput): 
     evidence: (input.evidence ?? []).map(createTransitionEvidence),
     cascadeEffects: (input.cascadeEffects ?? []).map(createCascadeEffect),
     validationResult: input.validationResult ?? null,
+    sourceInteractionType: input.sourceInteractionType ?? null,
   };
 }
 

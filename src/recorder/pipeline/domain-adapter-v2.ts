@@ -15,7 +15,7 @@
  * (recognition orchestrator, enrichment, healing) work unchanged.
  */
 
-import type { ComponentInteraction } from '../../shared/component-types';
+import type { ComponentInteraction, InteractionType } from '../../shared/component-types';
 import type { ElementIdentity } from '../../shared/types';
 import type { RecordedEvent } from '../recorded-event';
 import { UiElement, createUiElement } from '../../domain/entities/ui-element';
@@ -390,14 +390,50 @@ export function adaptToDomainEntitiesV2(
     // Create UiElement if not already seen
     if (!elementMap.has(elementId)) {
       const firstEvent = eventsById.get(eventIds[0]);
-      const domAttributes = firstEvent && firstEvent.eventType !== 'navigation'
-        ? (firstEvent as { domContext?: { domAttributes?: Record<string, string> } }).domContext?.domAttributes ?? {}
-        : {};
 
-      // R4: Extract ancestorRoles from first event's DomContext
-      const ancestorRoles = firstEvent && firstEvent.eventType !== 'navigation'
+      // C3: Build domAttributes Record from typed DomContext fields.
+      // The domAttributes Record was never populated at capture time (the
+      // extractor populates typed fields instead), so we project them here
+      // to restore the designed constraint derivation pipeline.
+      // We also merge any existing domAttributes Record for backward compat.
+      const domAttributes: Record<string, string> = {};
+      const ancestorRoles: string[] | undefined = firstEvent && firstEvent.eventType !== 'navigation'
         ? (firstEvent as { domContext?: { ancestorRoles?: string[] } }).domContext?.ancestorRoles
         : undefined;
+
+      if (firstEvent && firstEvent.eventType !== 'navigation') {
+        const dc = (firstEvent as { domContext?: Record<string, unknown> }).domContext as
+          | Record<string, unknown>
+          | undefined;
+
+        if (dc) {
+          // Merge existing domAttributes Record (backward compat with test fixtures)
+          const existingAttrs = dc.domAttributes as Record<string, string> | undefined;
+          if (existingAttrs && typeof existingAttrs === 'object') {
+            for (const [k, v] of Object.entries(existingAttrs)) {
+              if (typeof v === 'string') domAttributes[k] = v;
+            }
+          }
+
+          // Project typed DomContext fields into domAttributes Record
+          // using standard HTML attribute names for InteractionContractDeriver compatibility.
+          // Only set if not already present from existing domAttributes.
+          if (dc.required === true && !('required' in domAttributes)) domAttributes['required'] = '';
+          if (dc.inputType && !('type' in domAttributes)) domAttributes['type'] = String(dc.inputType);
+          if (dc.pattern && !('pattern' in domAttributes)) domAttributes['pattern'] = String(dc.pattern);
+          if (dc.minLength != null && !('minlength' in domAttributes)) domAttributes['minlength'] = String(dc.minLength);
+          if (dc.maxLength != null && !('maxlength' in domAttributes)) domAttributes['maxlength'] = String(dc.maxLength);
+          if (dc.min && !('min' in domAttributes)) domAttributes['min'] = String(dc.min);
+          if (dc.max && !('max' in domAttributes)) domAttributes['max'] = String(dc.max);
+          if (dc.step && !('step' in domAttributes)) domAttributes['step'] = String(dc.step);
+          if (dc.acceptedFileTypes && !('accept' in domAttributes)) domAttributes['accept'] = String(dc.acceptedFileTypes);
+          // ARIA value constraints for custom sliders
+          if (dc.ariaValueMin) domAttributes['aria-valuemin'] = String(dc.ariaValueMin);
+          if (dc.ariaValueMax) domAttributes['aria-valuemax'] = String(dc.ariaValueMax);
+          if (dc.ariaValueNow) domAttributes['aria-valuenow'] = String(dc.ariaValueNow);
+          if (dc.ariaValueText) domAttributes['aria-valuetext'] = String(dc.ariaValueText);
+        }
+      }
 
       const uiElement = createUiElement({
         elementId,
@@ -425,6 +461,8 @@ export function adaptToDomainEntitiesV2(
       stateBefore,
       stateAfter,
       evidence,
+      // C1: Carry the resolved InteractionType through for P1 inputMethod derivation.
+      sourceInteractionType: resolvedType as InteractionType,
     });
     transitions.push(transition);
   }

@@ -34,6 +34,16 @@ import type { InteractionType } from '../../shared/component-types';
 export interface CapabilityInput {
   /** Human-readable field label (from LogicalAction.businessField). */
   readonly label: string;
+  /**
+   * C2: Display label preserved independently for forward-compatible fieldKey evolution.
+   * Same value as label in Tier 1 (both from accessibleName). When fieldKey
+   * derivation is added later, label may carry the normalized key while
+   * displayLabel preserves the real accessibleName.
+   *
+   * Optional for backward compatibility — consumers should fall back to
+   * label when displayLabel is absent.
+   */
+  readonly displayLabel?: string | null;
   /** Element ID in the fragment (for locator resolution). */
   readonly elementId: string;
   /** Whether the field is required. */
@@ -54,8 +64,10 @@ export interface CapabilityInput {
    * Used by P1 to derive inputMethod on DataRequirement.
    *
    * Null for standalone transitions or when no pattern type maps.
+   *
+   * Optional for backward compatibility — consumers treat undefined as null.
    */
-  readonly sourceInteractionType: InteractionType | null;
+  readonly sourceInteractionType?: InteractionType | null;
 }
 
 // ── Validation Rule (what makes input valid) ─────────────
