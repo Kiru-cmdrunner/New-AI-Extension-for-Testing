@@ -1,11 +1,21 @@
 # MASTER HANDOVER — CmdRecorder AI Extension
 
+> **START HERE. This is the single document a new AI should read first.**
+>
+> **Reading order:**
+> 1. This document (full read) — understand vision, architecture, current state, what's broken
+> 2. `.drytis/ARCHITECTURE-EVOLUTION.md` — full pre-Amazon → Amazon → R1/R2/R3 history with evidence
+> 3. `.drytis/CANONICAL_ROADMAP.md` — frozen architectural decisions and phase history
+> 4. `.drytis/specs/FROZEN-ROADMAP.md` — frozen phase ordering and decisions
+> 5. The code itself — `src/recorder/` for Gen 1 pipeline, `src/recorder/p2/` for P2, `src/domain/` for entities
+>
 > **Purpose:** Single comprehensive document for any new AI or developer to understand the entire project: vision, architecture, current state, broken connections, intentional boundaries, and deferred work. Every statement is traceable to authoritative design specs, frozen roadmap, code, or test evidence.
 >
 > **Date:** 2026-08-03  
-> **Canonical Roadmap:** `.drytis/CANONICAL_ROADMAP.md` (frozen)  
-> **Frozen Roadmap:** `.drytis/specs/FROZEN-ROADMAP.md`  
-> **Test count:** 3,309 passing / 1 known-flaky JSDOM timing test
+> **Last commit:** `f43fcc4` — `docs: add ARCHITECTURE-EVOLUTION.md`  
+> **Branch:** `main` (local HEAD = origin/main, all work pushed)  
+> **Test count:** 3,309 passing / 1 known-flaky JSDOM timing test  
+> **Test command:** `npx vitest run`
 
 ---
 
@@ -212,6 +222,61 @@ The Chrome Extension uses Manifest V3. All processing runs in the service worker
 5. **Golden Master** — 68 fixtures validating type equivalence and IR plan deep equality across the unified path
 
 *Source: CANONICAL_ROADMAP.md §1, tests/golden-master/*
+
+---
+
+## 4a. Current Code State & How to Work
+
+### Git State
+
+- **Branch:** `main` — all work is on this branch
+- **HEAD:** `f43fcc4` (synced to origin/main)
+- **Other branches:** `master` (origin/master at `5e9d75f`, R1 commit — 18 commits behind main, historical)
+- **Working tree:** 69 golden-master snapshot files with timestamp/ID-only changes (harmless test-run artifacts from `capture-golden-outputs.test.ts`)
+- **No uncommitted source code changes**
+
+### Tier 1 Implementation (Already Done)
+
+The following corrections were implemented on 2026-08-02 (commit `0211980`, extension v10.9.0) and are in the current codebase:
+
+| Fix | What Changed |
+|-----|-------------|
+| C1 | `sourceInteractionType` added to `ObservedTransition`, populated from `ComponentInteraction.type` in domain adapter |
+| C2 | `businessField` derived from `accessibleName`, `displayLabel` added as independent field |
+| C3 | `domAttributes` Record built from typed `DomContext` fields in domain adapter |
+| D1 | `buildStandaloneAction` wired to use elements map for enrichment |
+
+These changes are in 8 source files (+127/-14 lines). Tests: 13/13 unit + 4/4 integration + 3/3 E2E pass. Full regression: 3,309 pass.
+
+**Extension built:** v10.9.0, downloadable at `{preview_url}/download/cmdrunner-extension.zip`
+
+### How to Run Tests
+
+```bash
+npx vitest run                    # full suite (~70s, 3,310 tests)
+npx vitest run tests/gen1-e2e-verification.test.ts   # Gen 1 E2E (48 tests, 5 domains)
+npx vitest run tests/golden-master/                   # Golden master consistency (68 fixtures)
+npx vitest run tests/r3-behavioral-gates.test.ts      # R3 behavioral validation (G9-G19)
+```
+
+### Key Source Directories
+
+| Directory | Content |
+|-----------|---------|
+| `src/recorder/content/` | Content script — EventTap, DOM capture, identity extraction |
+| `src/definitions/` | 23 Component Runtime lifecycle definitions + DomContext extractor |
+| `src/recorder/component-runtime.ts` | Component Runtime — classification engine |
+| `src/recorder/pipeline/pipeline-runner.ts` | Pipeline orchestrator — adapter → recognition → enrichment → capability |
+| `src/recorder/pipeline/domain-adapter-v2.ts` | Domain adapter — ComponentInteraction → ObservedTransition |
+| `src/recorder/recognition/` | Structural + behavioral recognizers + orchestrator |
+| `src/recorder/enrichment/` | Enrichment orchestrator + semantic aggregator + option-set extractor |
+| `src/recorder/capability/` | Capability deriver + mappers + candidate |
+| `src/recorder/p2/` | P2 IR generation — binding resolver, target resolver, data resolver, IR action mapper |
+| `src/recorder/adapters/ir-bridge.ts` | IR Bridge — ComponentInteraction[] → ExecutionIRPlan (1,717 lines) |
+| `src/recorder/adapters/playwright/` | Playwright code generator from ExecutionIRPlan |
+| `src/domain/entities/` | Domain entities — P2CapabilityContract, Capability, CapabilityVersion, DataRequirement |
+| `src/shared/` | Shared types — ElementIdentity (18 fields), DomContext (30+ fields), ComponentInteraction |
+| `tests/` | 3,310 tests across 155 test files |
 
 ---
 
@@ -453,6 +518,7 @@ This is an **architectural constraint**, not a bug. The fix should follow the Am
 |---|---|---|
 | Golden master validates consistency, not correctness | If OLD path was wrong, both consistently wrong. No golden test runs full recording → P2. | tests/golden-master/ |
 | Tests use FixtureDomInspector mocks | Masks production defects (NoOp DomInspector) | Test infrastructure |
+| Known-flaky test: `milestone4-performance-scaling.test.ts` | JSDOM timing assertion (`< 500ms`) occasionally fails (507ms). Pre-existing, unrelated to any changes. | `tests/milestone4-performance-scaling.test.ts:859` |
 | UiElementSummary (8 fields) insufficient for matching | Full identity always recovered from rawInteractions | P2 spec §18 |
 | rawEvents fallback lacks ancestorRoles | ANCESTOR_ROLES dimension scores neutral in R4 | P2 spec §18 |
 | Success criterion locator is string label | Matched as accessibleName only | P2 spec §18 |
