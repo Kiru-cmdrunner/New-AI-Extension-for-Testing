@@ -414,3 +414,44 @@ Every future phase must respect this separation. No phase pollutes the observati
 ---
 
 *End of Canonical Roadmap. This document is the single source of truth for all future work.*
+
+---
+
+## §11. Current Known State (Added 2026-08-03)
+
+> This section documents what subsequent investigation and E2E testing revealed about the implementation state. It does NOT change any architectural decisions above — it documents what works, what's broken, and what's deferred.
+
+### What Works (Production-Verified)
+
+- **Event capture** (19 event types, 18-field ElementIdentity, 30+ DomContext fields, SPA deferred blur, R3.4 attribute re-snapshot)
+- **Component Runtime classification** (23 lifecycle definitions, R2 slider geometry, R3 behavioral evidence, annotation deferral)
+- **IR Bridge** (consumes ComponentInteraction[] directly → Playwright code for all standalone interactions: FILL, CLICK, SELECT, TOGGLE, HOVER, SCROLL, NAVIGATE)
+- **Side Panel** (live recording timeline, stopped view, replay JSON, IR steps, Playwright files, capability review cards)
+- **P1 Review Flow** (createReview → processDecision → Capability + CapabilityVersion + P2CapabilityContract)
+- **P2 IR Generation** (8-step pipeline: session recovery → binding → identity recovery → R4 matching → data validation → IR action mapping → assertion → assembly; validated with 7 e2e scenarios but NOT production-wired — `generateCapabilityIR()` has zero production callers)
+- **R4 Element Identity Matching** (8-dimension scoring, MATCH_THRESHOLD=0.70, three-category result)
+
+### What's Broken (Gen 1 Semantic Path — Recognition/Enrichment)
+
+Seven broken connections traced to four root causes:
+
+1. **pipeline-runner.ts:109** discards captured ancestor roles (passes `[roleInfo]` instead of full 10-level chain)
+2. **Domain adapter** collapses multi-step interactions to single transitions (ignores `metadata.subActions[]`), and does not read R3's `evidenceTrail` (blinds 5/9 behavioral signals)
+3. **componentId** never assigned (`assignTransitionToComponent()` has zero call sites — function written but never called)
+4. **NoOp DomInspector** (MV3 architectural constraint — service worker has no DOM access)
+
+See `.drytis/audits/07-gen1-root-cause-analysis.md` for the full root cause analysis and `.drytis/audits/08-amazon-evolution-reassessment.md` for why these are broken connections, not intentional decisions.
+
+### What's Deferred (Not Started)
+
+- P3-P6 (AI test generation, execution engine, Playwright execution, AI failure analysis)
+- Gen 1 semantic path fixes (Fixes 1-7 from root cause analysis)
+- Missing pattern definitions (Slider, DatePicker, FileUpload, DragDrop, Autocomplete)
+- P2 production wiring (`generateCapabilityIR()` not called from production code)
+
+### What Tier 1 Fixed (2026-08-02)
+
+- C1: `sourceInteractionType` on ObservedTransition (populated from `ci.type` in adapter)
+- C2: `businessField` from `accessibleName`, `displayLabel` as independent field
+- C3: `domAttributes` Record built from typed DomContext fields
+- D1: `buildStandaloneAction` uses elements map for enrichment

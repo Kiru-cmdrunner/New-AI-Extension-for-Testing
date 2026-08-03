@@ -1,8 +1,8 @@
 # CmdRecorder — Platform Architecture: Execution & Semantic Foundation
 
-**Purpose:** Evaluate whether the proposed recorder architecture serves the execution platform, not just the recorder.  
-**Key Finding:** The proposed architecture's SemanticInteraction model is the right shared semantic foundation — but only if it's positioned as a PERSISTENT layer, not just a transient pipeline output.  
-**Date:** July 2026
+> **STATUS:** The execution platform vision (P3-P6) is valid and not yet implemented. References to `SemanticInteraction` should be read as `ComponentInteraction` (the type was renamed/superseded). R4 element identity matching and the P2CapabilityContract frozen boundary design have since been specified and implemented (see R4, P1, P2 specs).
+>
+> **For the complete current state including what's implemented vs deferred, read MASTER-HANDOVER.md at project root.**
 
 ---
 

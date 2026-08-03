@@ -1,4 +1,8 @@
-# SemanticInteraction — Boundary Contract
+> **STATUS:** The boundary contract *principle* (immutable observation vs consumer projections) is architecturally sound and still applies to `ComponentInteraction`. However, the `SemanticInteraction` type itself was superseded by `ComponentInteraction` in Phase 3/R1. Read this for the principle, not for type-specific details.
+>
+> **For current architecture, read MASTER-HANDOVER.md at project root.**
+
+# SemanticInteraction — Boundary Contract (Historical — Principle Still Valid)
 
 **Purpose:** Define what belongs inside SemanticInteraction and what does not, preventing it from becoming a god object.  
 **Principle:** SemanticInteraction is an **immutable observation** — it records what the user did. Every consumer concern (assertions, execution hints, AI interpretations, healing strategies) lives in a **projection** that references it, never as a field on it.

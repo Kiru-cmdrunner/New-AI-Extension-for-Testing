@@ -1,8 +1,8 @@
 # Capability Model — The Domain Center of CmdRunner
 
-**Purpose:** Define the Capability Model as the first-class domain model that sits between observation and execution.  
-**Core Thesis:** Capability is the true domain model. SemanticInteraction feeds it, IR serves it, execution implements it. Everything else exists to support capabilities.  
-**Date:** July 2026
+> **STATUS:** The four-layer architecture (Observation → Capability → Execution → Implementation) and the core thesis (Capability as first-class domain model, versioned not disposable) are authoritative and current. Some implementation details reference the older SemanticInteraction type (superseded by ComponentInteraction). The P1/P2 frozen boundary design (P2CapabilityContract) is documented in the P1 and P2 specs and is authoritative.
+>
+> **For the complete current state including known defects and broken connections, read MASTER-HANDOVER.md at project root.**
 
 ---
 
