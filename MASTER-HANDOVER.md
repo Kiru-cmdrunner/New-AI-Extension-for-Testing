@@ -11,10 +11,10 @@
 >
 > **Purpose:** Single comprehensive document for any new AI or developer to understand the entire project: vision, architecture, current state, broken connections, intentional boundaries, and deferred work. Every statement is traceable to authoritative design specs, frozen roadmap, code, or test evidence.
 >
-> **Date:** 2026-08-03  
-> **Last commit:** `f43fcc4` — `docs: add ARCHITECTURE-EVOLUTION.md`  
-> **Branch:** `main` (local HEAD = origin/main, all work pushed)  
-> **Test count:** 3,309 passing / 1 known-flaky JSDOM timing test  
+> **Date:** 2026-08-03 (final handover)
+> **Last commit:** see `git log --oneline -1` — this is the final state
+> **Branch:** `main` (local HEAD = origin/main, all work pushed)
+> **Test count:** 3,309 passing / 1 known-flaky JSDOM timing test
 > **Test command:** `npx vitest run`
 
 ---
@@ -230,7 +230,7 @@ The Chrome Extension uses Manifest V3. All processing runs in the service worker
 ### Git State
 
 - **Branch:** `main` — all work is on this branch
-- **HEAD:** `f43fcc4` (synced to origin/main)
+- **HEAD:** See `git log --oneline -1` (synced to origin/main)
 - **Other branches:** `master` (origin/master at `5e9d75f`, R1 commit — 18 commits behind main, historical)
 - **Working tree:** 69 golden-master snapshot files with timestamp/ID-only changes (harmless test-run artifacts from `capture-golden-outputs.test.ts`)
 - **No uncommitted source code changes**
@@ -611,6 +611,97 @@ All documents in `docs/archive/` describe pre-R1/R2/R3 architecture. They are pr
 | `docs/archive/pre-r3-architecture-specs/` | 18 architecture validation docs |
 | `docs/archive/pre-r3-domain-planning/` | 9 initial domain planning docs |
 | `docs/archive/pre-r3-architecture/` | 6 transitional design docs |
+
+---
+
+---
+
+## 13. Historical Evidence Archive
+
+The repository preserves extensive historical evidence explaining *why* the current architecture exists. This section indexes where to find it. **All items below are historical evidence, not authoritative current architecture** — read them to understand reasoning, not to determine current behavior.
+
+### Architecture Evolution Narrative (Authoritative History)
+
+| Document | Location | Lines | Content |
+|---|---|---|---|
+| **ARCHITECTURE-EVOLUTION.md** | `.drytis/` | 499 | Complete pre-Amazon → Amazon → R1/R2/R3 narrative: old V1/V2 dual-engine design, AdaniOne failures, Amazon `<a>` checkbox misclassification, timing flaw discovery, 3 rejected approaches (lifecycle deferral, polling, deferred annotation), R1 deletion (72 files/20,529 lines), R2 slider geometry, R3 behavioral evidence with weight calibration, golden master fixtures (evt-r3-001/002/003), rejected approaches inventory, full commit timeline |
+
+### Conversation-Derived Analysis (`.drytis/audits/` — 10 files)
+
+These are the direct products of multi-round architectural assessment conversations. Each contains code-level validation, not just opinion.
+
+| Audit | Lines | Historical Value |
+|---|---|---|
+| `01-architecture-understanding.md` | ~800 | Module-by-module pipeline tracing, ComponentInteraction → Domain Adapter → Recognition → Enrichment → Capability |
+| `02-semantic-preservation-audit.md` | ~500 | Boundary-by-boundary information loss analysis (what each layer preserves or destroys) |
+| `03-confirmed-defects-and-unresolved-questions.md` | ~480 | 7 confirmed defects with code evidence, 26-item TODO |
+| `04-git-audit-report.md` | ~140 | Git history and branch state at assessment time |
+| `05-gen1-end-to-end-map.md` | ~800 | 9-layer Gen 1 production code trace, 16 interaction categories traced end-to-end |
+| `06-gen1-e2e-verification.md` | ~370 | 48-test E2E validation across 5 domains (E-Commerce, Travel, Banking, Healthcare, SaaS) |
+| `07-gen1-root-cause-analysis.md` | ~270 | 4 root causes behind 11 disconnects, 7 proposed fixes with dependency graph |
+| `08-amazon-evolution-reassessment.md` | ~220 | Amazon failure → R1/R2/R3 reasoning, distinguishes broken connections from intentional design decisions |
+| `09-old-ai-known-state-inventory.md` | ~280 | Everything the old AI found broken/incomplete/deferred — 16 defects, 20 limitations, 15 intentional decisions, 30 deferred items |
+
+### Implementation Notes (`.drytis/notes/` — 88 files, 6,471 lines)
+
+Postmortems, root-cause analyses, and decision records from development. **Highest historical value** (explain real-world debugging that shaped architecture):
+
+| Note | What It Explains |
+|---|---|
+| `adani-date-picker-dedup-real-root-cause.md` | Why DatePicker duplicated interactions on AdaniOne (React SPA) |
+| `c5.2-custom-dropdown-defect-postmortem.md` | Why dropdown recording completely lost interactions on real apps |
+| `content-script-not-injected-root-cause.md` | The "silent capture killer" — extension loaded but captured nothing |
+| `regression-analysis-evidence-classifier.md` | 4,811 tests compared before/after evidence classifier integration |
+| `r3-design-review-timing-flaw.md` | The critical timing flaw: DOM capture fires before page's click handler |
+| `r3-step6-annotation-deferral-decision.md` | Why lifecycle deferral was rejected (broke 23 tests), annotation deferral chosen |
+| `v2-mutation-observer-pattern-for-r3.md` | Pattern salvaged from deleted R1 code for R3.4 |
+| `businessfield-historical-evolution.md` | businessField contract from initial commit through P1 — never designed as machine-readable |
+| `done-button-escape-adani-one.md` | Real-world recording debugging on AdaniOne |
+| `resolveTarget-drop-bug-root-cause.md` | IR generation target resolution bug |
+| `counter-plus3-merge-bug-root-cause.md` | Stepper capture bug from merge of two architectures |
+| `hover-css-megamenu-fix.md` | CSS hover detection on complex mega-menus |
+| `iframe-hardening-audit.md` | 6 production audit bug fixes for iframe architecture |
+
+**Medium value** (implementation details, may mislead if read for current architecture):
+- `c3.3-*` series (7 files) — pre-R1 baseline strategy, clone analysis
+- `v2-baseline-strategy.md`, `pipeline-v2-*` — pre-R1 V2 subsystem planning (deleted by R1)
+- `phase4-behavioural-*` — pre-R3 behavioral comparison
+
+### Golden Master Evidence (`tests/golden-master/snapshots/` — 69 committed files)
+
+68 JSON fixtures (35 Layer-1, 23 Layer-2, 10 Layer-3) + manifest.json. Executable evidence proving the pipeline produces consistent outputs across code changes. Updated at key commits: R1 (`5e9d75f`), R2 (`5a6f5d5`), R3 (`1b2fa89`), P2 (`57128cb`).
+
+Key historical fixtures:
+- `L2-05` through `L2-07` — Custom slider scenarios (R2 validation)
+- `L2-21` through `L2-23` — Click → Checkbox/Dropdown reclassification (R3 behavioral evidence)
+- `L3-01` through `L3-10` — Multi-interaction sequences (end-to-end pipeline)
+
+### Git Commit Messages (149 commits on main)
+
+Commit messages are unusually rich — they contain root causes, fix descriptions, design decisions, and rejected approaches. Key historical commits:
+
+| Commit | Historical Evidence |
+|---|---|
+| `7bfd949` | AdaniOne root causes: dropdown options as plain divs, React SPA rendering issues |
+| `e9063df` | 3 AdaniOne production bugs with detailed root cause for each |
+| `7782cd7` | R3 timing flaw discovery + rejected lifecycle deferral approach |
+| `5e9d75f` | R1 deletion of dormant V2 — detailed step list of what was removed and why |
+| `35fd884` | Merge conflict resolution between two parallel architectures |
+| `cb75d94` | P2 design including rejected `elementBindings` approach |
+| `1b2fa89` | R3 complete implementation with all 4 behavioral generators |
+
+Run `git log --oneline main` or `git log -1 --format="%B" <sha>` for any commit to read its full message.
+
+### Archived Pre-R1/R3 Documentation (`docs/archive/` — 270 files)
+
+Superseded design docs, specs, and handover materials from pre-R1 and pre-R3 eras. They describe deleted subsystems (V1/V2 dual-engine, Merge Layer, Evidence Channels, 38 interaction types). The archive README warns they are historical, not authoritative.
+
+### What Cannot Be Recovered
+
+1. **Raw conversation transcripts** — The multi-turn assessment reasoning survives only as structured output in audits/notes, not as conversational text
+2. **Ad-hoc test scripts** — Several analysis scripts (falsification_trace.ts, domain-e2e-trace.test.ts) were cleaned up after producing results; findings survive in audit documents
+3. **Real-world recording sessions** — Actual browser interactions with Amazon/AdaniOne are not captured as fixtures; postmortems describe what went wrong
+4. **Intermediate working artifacts** — Raw TODO lists, dependency graphs, scoring tables were consolidated into spec/audit documents; originals not preserved separately
 
 ---
 
