@@ -47,34 +47,44 @@ The recorder is not a test recorder — it is a **semantic understanding engine*
 
 ## 2. Architectural Evolution
 
-### The Amazon Failure (The Pivotal Event)
+> **Complete narrative:** `.drytis/ARCHITECTURE-EVOLUTION.md` (499 lines) covers the full evolution from original dual-engine design through real-world failures to current architecture, with all evidence, commits, and rejected approaches.
 
-On Amazon.in, filter checkboxes (`<a class="s-navigation-item">` with inner `<i class="a-icon-checkbox">`) were classified as **Link** instead of **Checkbox**. The structural classifier saw `<a>` tag → Link. The behavioral effect (class transitioning `opt` → `opt selected`) was invisible because DOM capture fires *before* the page's own click handler runs.
+### The Original Architecture
 
-**What it proved:** Structural/DOM attributes alone are insufficient for **classification** — determining *what type of interaction this is*. The system needed behavioral evidence (what happened *after* the click) to classify correctly.
+The system started as a **dual-engine classifier**: V1 (structural, 807-line priority chain) + V2 (evidence-based, 5 weighted providers) + Merge Layer. It had 38 interaction types, 3 conflicting lifecycle layers, and an 8-stage pipeline. It was functional (3,800+ tests) but over-engineered — the architecture review identified 7 fundamental weaknesses ("Two of Everything").
 
-*Source: .drytis/specs/checkbox-link-detection.md, docs/archive/pre-r3-architecture-specs/CMDRUNNER_ARCHITECTURAL_EVOLUTION.md*
+### Real-World Failures
+
+| Site | Failure | Lesson |
+|------|---------|--------|
+| **AdaniOne** | Passenger/Class composite widgets, +/- steppers, date picker duplication | Surface evidence not propagated to reasoner; 8 issues fixed |
+| **Amazon.in** | Filter checkboxes (`<a class="s-navigation-item">`) classified as Link not Checkbox | Structural/DOM attributes alone are insufficient for classification |
+| **Google Flights** | Combobox autocomplete, calendar cells | Evidence engine needs framework-specific fixes |
+| **Avis Ford** | Cross-origin iframe forms | Native HTML near-100% accuracy on both V1 and V2 |
+
+The Amazon failure was the pivotal event: the `<a>` tag was captured *before* the page's click handler ran, so the class transition (`opt` → `opt selected`) was invisible. This proved that **behavioral evidence (what the app did *after* the click) is essential for classification.**
 
 ### R1/R2/R3: The Behavioral Revolution
 
-| Phase | What It Did | Commit |
-|-------|------------|--------|
-| **R1** (Foundation Cleanup) | Deleted ~3,837 lines of dormant V2 subsystem (dual-engine classification, Evidence Channels, Merge Layer, control-recorder). Unified to single capture path. | `5e9d75f` |
-| **R2** (Slider Detection) | Added R2 slider geometry detection (CSS class regex, aria-value* capture). Noted as "last structural detection expansion." | `5a6f5d5` |
-| **R3** (Behavioral Semantic Reasoning) | 4 behavioral evidence generators (value-change +0.6, panel-emergence +0.6/+0.5/+0.3, selection-state +0.5, slider-value +0.5). Annotation deferral: Click emits immediately but annotation deferred until attribute-change event arrives. Weight hierarchy: behavioral (+0.5-0.7) > structural (+0.1-0.4). | `1b2fa89` |
+| Phase | What It Did | Commit | Key Detail |
+|-------|------------|--------|------------|
+| **R1** | Deleted dormant V2 subsystem (72 files, 20,529 lines). Unified to single capture path. | `5e9d75f` | Salvaged MutationObserver pattern for R3.4 |
+| **R2** | CSS class regex for custom sliders + geometry-based value extraction | `5a6f5d5` | *"Last structural detection expansion"* — R3 handles sliders with zero structural signals |
+| **R3** | 4 behavioral generators, annotation deferral, weight calibration | `1b2fa89` | Behavioral (+0.5-0.7) deliberately > structural (+0.1-0.4) to override misleading structural signals like `<a>` tag |
 
-**Key insight:** R3 made classification behavioral-primary. The Amazon `<a>` filter toggle now classifies correctly: behavioral toggle signal (+0.5) overrides structural link signal (+0.4).
+**The timing flaw discovery:** R3 revealed that DOM capture fires *before* the page's click handler. Post-handler signals (class changes, aria-expanded transitions) were invisible. Three approaches considered: (1) Click lifecycle deferral — rejected because it broke 23 test files; (2) Deferred annotation — race conditions; (3) pendingAnnotation signal — chosen as the hybrid solution. *"Annotation deferral is the canonical architecture going forward."*
 
-*Source: .drytis/specs/r1-foundation-cleanup.md, r2-slider-detection.md, r3-behavioral-semantic-reasoning.md*
+**Key insight:** R3 made classification behavioral-primary. The Amazon `<a>` filter toggle now classifies correctly: behavioral toggle signal (+0.5) overrides structural link signal (+0.4). Golden master fixture evt-r3-003 captures this exact scenario.
 
-### What Was Deleted
+### What Was Deleted (and Why)
 
-The old structural classification pipeline (deleted by R1):
-- `src/pipeline/recognition/` — 12+ files that tried to classify from structural patterns alone
-- `src/pipeline/channels/` — 5 evidence channels feeding structural data to classification
+The old structural classification pipeline was deleted by R1 because it tried to classify interactions from structure alone — the exact approach the Amazon failure proved insufficient:
+- `src/pipeline/recognition/` — 12+ files
+- `src/pipeline/channels/` — 5 evidence channels
 - `src/classifier/evidence/providers/` — DOM, ARIA, CSS classname, event sequence, mutation providers
+- `src/recorder/deterministic-recorder.ts` — 3,120 lines (the V1 god-module)
 
-These were all **classification systems** — they answered "what type of interaction is this?" using structure alone. R3's behavioral evidence voting replaced them.
+The NEW recognition orchestrator (Phase 4/5) serves a **different purpose** (grouping, not classification).
 
 ### Critical Distinction: Classification vs Grouping
 
@@ -84,6 +94,8 @@ These were all **classification systems** — they answered "what type of intera
 | **Grouping** | "Are these interactions part of one dropdown?" | Recognition orchestrator | Structural + behavioral patterns on domain entities | ❌ Starved of data |
 
 The Amazon failure was a **classification** problem. R1/R2/R3 solved it. The recognition orchestrator addresses a **completely different problem**: grouping already-classified interactions into composite components. It never overrides classification.
+
+*Full narrative with evidence, rejected approaches, golden master artifacts, and validation results: `.drytis/ARCHITECTURE-EVOLUTION.md`*
 
 ---
 
@@ -488,6 +500,7 @@ Cross-tab recording (MV3 limits), visual regression (different scope), parallel 
 | Document | Location | Content |
 |----------|----------|---------|
 | **THIS DOCUMENT** | `MASTER-HANDOVER.md` | Complete project overview, current state, known issues |
+| **ARCHITECTURE-EVOLUTION.md** | `.drytis/ARCHITECTURE-EVOLUTION.md` | Full evolution narrative: old architecture → failures → Amazon → R1/R2/R3 → current, with evidence |
 | **CANONICAL_ROADMAP.md** | `.drytis/CANONICAL_ROADMAP.md` | Frozen architectural decisions, phase history, design principles |
 | **FROZEN-ROADMAP.md** | `.drytis/specs/FROZEN-ROADMAP.md` | Frozen phase ordering and architectural decisions |
 | **r1/r2/r3 specs** | `.drytis/specs/r1-*.md` etc. | Implemented phases (classification architecture) |
