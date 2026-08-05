@@ -32,6 +32,7 @@ function makeTarget(overrides: Partial<ElementIdentity> = {}): ElementIdentity {
     placeholder: null, tag: 'DIV', className: null, name: null, stableId: null,
     testId: null, dataCy: null, dataQa: null, cssSelector: 'div',
     xPath: '/html/body/div', inIframe: false, shadowDom: false, elementId: '',
+    href: null,
     ...overrides,
   };
 }
@@ -41,6 +42,7 @@ function makeDomContext(overrides: Partial<DomContext> = {}): DomContext {
     inputType: null, ariaExpanded: null, ariaHasPopup: null,
     isContentEditable: false, disabled: false, readOnly: false, required: false,
     ancestorRoles: [], ancestorClasses: [],
+    tabIndex: null,
     ...overrides,
   };
 }

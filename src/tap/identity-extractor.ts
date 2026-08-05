@@ -361,6 +361,7 @@ export function extractIdentity(el: Element): ElementIdentity {
     xPath: generateXPath(el),
     inIframe,
     shadowDom: isInShadowDom(el),
+    href: el.getAttribute('href') ?? null,
     elementId: '',
     ...(iframeContext ? { iframeContext } : {}),
   };

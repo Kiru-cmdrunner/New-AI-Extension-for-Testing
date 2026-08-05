@@ -680,6 +680,7 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
       xPath: '/html',
       inIframe: false,
       shadowDom: false,
+      href: null,
       elementId: '',
     },
     domContext: {
@@ -692,6 +693,7 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
       required: false,
       ancestorRoles: [],
       ancestorClasses: [],
+      tabIndex: null,
     },
     valueBefore: null,
     valueAfter: null,

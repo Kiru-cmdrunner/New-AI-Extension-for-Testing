@@ -60,6 +60,7 @@ function makeIdentity(el: Element, overrides: Partial<ElementIdentity> = {}): El
     xPath: id ? `//${el.tagName.toLowerCase()}[@id='${id}']` : `//${el.tagName.toLowerCase()}`,
     inIframe: false,
     shadowDom: false,
+    href: null,
     elementId: '',
     ...overrides,
   };

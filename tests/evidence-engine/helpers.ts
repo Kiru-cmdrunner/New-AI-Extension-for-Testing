@@ -32,6 +32,7 @@ export function makeTarget(overrides: Partial<ElementIdentity> = {}): ElementIde
     xPath: '',
     inIframe: false,
     shadowDom: false,
+    href: null,
     elementId: `el-${eventCounter}`,
     ...overrides,
   };

@@ -56,6 +56,7 @@ function makeEvent(overrides: Partial<ObservedEvent> = {}): ObservedEvent {
       required: false,
       ancestorRoles: [],
       ancestorClasses: [],
+      tabIndex: null,
     },
     valueBefore: null,
     valueAfter: null,
@@ -149,6 +150,7 @@ describe('Hover: CSS overlay evidence signal', () => {
         required: false,
         ancestorRoles: [],
         ancestorClasses: ['primary-nav', 'main-header'],
+        tabIndex: null,
       },
     });
 
@@ -259,6 +261,7 @@ describe('Dropdown: isInScope does not swallow clicks on interactive elements', 
         required: false,
         ancestorRoles: [],
         ancestorClasses: ['dropdown-menu', 'popover'],
+        tabIndex: null,
       },
     });
 
@@ -298,6 +301,7 @@ describe('Dropdown: isInScope does not swallow clicks on interactive elements', 
         required: false,
         ancestorRoles: [],
         ancestorClasses: ['dropdown-menu', 'popover'],
+        tabIndex: null,
       },
     });
 
@@ -336,6 +340,7 @@ describe('Dropdown: isInScope does not swallow clicks on interactive elements', 
         required: false,
         ancestorRoles: [],
         ancestorClasses: ['dropdown-menu', 'popover'],
+        tabIndex: null,
       },
     });
 

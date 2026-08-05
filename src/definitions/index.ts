@@ -18,6 +18,7 @@ import type { ComponentDefinition } from '../shared/component-types';
 import { datePickerDefinition } from './date-picker';
 import { dropdownDefinition } from './dropdown';
 import { sliderDefinition } from './slider';
+import { colorInputDefinition } from './color-input';
 import { checkboxDefinition } from './checkbox';
 import { fileUploadDefinition } from './file-upload';
 import { radioButtonDefinition } from './radio-button';
@@ -37,6 +38,7 @@ import { clickDefinition } from './click';
  *   10 = most specific (DatePicker)
  *   20 = Dropdown
  *   25 = Slider
+ *   15 = ColorInput
  *   30 = Checkbox
  *   35 = FileUpload
  *   40 = RadioButton
@@ -52,6 +54,7 @@ export const ALL_DEFINITIONS: ComponentDefinition[] = [
   datePickerDefinition,    // priority 10
   dropdownDefinition,      // priority 20
   sliderDefinition,        // priority 25
+  colorInputDefinition,    // priority 15
   checkboxDefinition,      // priority 30
   fileUploadDefinition,    // priority 35
   radioButtonDefinition,   // priority 40
@@ -71,6 +74,7 @@ export {
   datePickerDefinition,
   dropdownDefinition,
   sliderDefinition,
+  colorInputDefinition,
   checkboxDefinition,
   fileUploadDefinition,
   radioButtonDefinition,

@@ -131,7 +131,7 @@ export const hoverDefinition: ComponentDefinition = {
     if (event.eventType !== 'mouseenter') return null;
 
     const { tag, ariaRole, className } = event.target;
-    if (!isInteractiveElement(tag, ariaRole, className, null)) {
+    if (!isInteractiveElement(tag, ariaRole, className, event.domContext.tabIndex ?? null)) {
       return null;
     }
 

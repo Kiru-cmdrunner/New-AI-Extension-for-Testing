@@ -37,6 +37,7 @@ function identity(tag: string, name: string, extras: Partial<ElementIdentity> = 
     xPath: `//${tag.toLowerCase()}`,
     inIframe: false,
     shadowDom: false,
+    href: null,
     elementId: '',
     ...extras,
   };

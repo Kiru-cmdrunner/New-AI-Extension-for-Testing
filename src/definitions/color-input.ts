@@ -1,18 +1,21 @@
 /**
- * Slider Definition — Range Input Lifecycle (Priority 25)
+ * ColorInput Definition — Native Color Picker (Priority 15)
  *
- * Triggers on focus of a range input or ARIA slider.
- * Completes on blur IF the user actually adjusted the value (userAdjusted=true).
+ * Triggers on focus of an <input type="color">.
+ * Completes on blur IF the user actually changed the color (userAdjusted=true).
  * Otherwise, no-op (filtered by presentation layer via isProductionInteraction).
  *
- * Lifecycle mirrors TextEntry:
+ * Lifecycle mirrors Slider (M0.5 G7):
  *   focus (trigger) → input/change (accumulate value) → blur (complete)
  *
- * This captures the final committed slider value regardless of adjustment
- * method (mouse drag, click-to-set, or keyboard arrows).
+ * Value comparison: userAdjusted is only set when finalValue !== triggerValueBefore.
+ * This prevents:
+ *   - Focus-only traversal (user tabbed through without selecting)
+ *   - Same-color re-selection (user opened picker but chose same color)
+ *   - Cancel (user opened picker and clicked cancel — no change event fires)
  *
  * Architecture: `.drytis/specs/m0a-architecture-validation.md` §2.3
- * M0.5 Fix: G7 — stale value on mouse drag, keyboard adjustment, click-to-set.
+ * Pre-Capability Completeness: G8 — color input value capture
  */
 
 import type {
@@ -23,67 +26,61 @@ import type {
   ComponentCompletion,
   ObservedEvent,
 } from '../shared/component-types';
-import { isSlider, bestName } from './patterns';
+import { bestName } from './patterns';
 
-export const sliderDefinition: ComponentDefinition = {
-  type: 'Slider',
-  priority: 25,
+const COLOR_LIFECYCLE_EVENTS = new Set<BrowserEventType>([
+  'input', 'change', 'blur',
+]);
+
+export const colorInputDefinition: ComponentDefinition = {
+  type: 'ColorInput',
+  priority: 15,
   triggerEventTypes: new Set<BrowserEventType>(['focus']),
 
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
     if (event.eventType !== 'focus') return null;
 
-    const { tag, ariaRole } = event.target;
-    const { inputType } = event.domContext;
-
-    if (isSlider(tag, inputType, ariaRole)) {
-      return { type: 'Slider' };
+    if (event.target.tag === 'INPUT' && event.domContext.inputType === 'color') {
+      return { type: 'ColorInput' };
     }
 
     return null;
   },
 
   isInScope(event: ObservedEvent, ctx: ComponentContext): boolean {
-    // Any event on the same element is in scope — this consumes clicks on the
-    // slider track so Click definition doesn't claim them during the lifecycle.
-    // (Same pattern as TextEntry.)
+    if (!COLOR_LIFECYCLE_EVENTS.has(event.eventType)) return false;
+
     return event.target.stableId === ctx.trigger.stableId
       || event.target.cssSelector === ctx.trigger.cssSelector;
   },
 
   handleEvent(event: ObservedEvent, ctx: ComponentContext): ComponentCompletion | null {
+    const originalValue = ctx.triggerEvent.valueBefore;
+
     if (event.eventType === 'input' || event.eventType === 'change') {
-      // User adjusted the slider — track the latest value
-      ctx.data.userAdjusted = true;
-      ctx.data.finalValue = event.valueAfter ?? null;
-      return null; // still active, wait for blur
+      // Only mark as adjusted if value actually differs from original
+      if (event.valueAfter != null && event.valueAfter !== originalValue) {
+        ctx.data.userAdjusted = true;
+        ctx.data.finalValue = event.valueAfter;
+      }
+      return null;
     }
 
     if (event.eventType === 'blur') {
-      // Fallback: if we missed input/change events, check whether the blur
-      // value differs from the original. Only infer adjustment when we can
-      // confirm a value change (prevents focus-only traversal from being
-      // mistaken for an adjustment).
+      // Fallback: if input/change events were missed, check at blur time
       if (event.valueAfter != null) {
         ctx.data.finalValue = event.valueAfter;
-        if (ctx.data.userAdjusted !== true) {
-          const originalValue = ctx.triggerEvent.valueBefore;
-          if (originalValue != null && event.valueAfter !== originalValue) {
-            ctx.data.userAdjusted = true;
-          }
+        if (ctx.data.userAdjusted !== true && originalValue != null && event.valueAfter !== originalValue) {
+          ctx.data.userAdjusted = true;
         }
       }
       return { endState: 'completed' };
     }
 
-    // Other events on same element (click, etc.) are consumed but ignored
     return null;
   },
 
   shouldCancelOnOutside(event: ObservedEvent, ctx: ComponentContext): boolean {
-    // A click on a DIFFERENT element means the user moved on.
-    // A click on the same element (click-to-set on slider track) is part of
-    // the adjustment and should NOT cancel.
     if (event.eventType === 'click') {
       const sameElement =
         event.target.stableId === ctx.trigger.stableId ||

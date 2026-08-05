@@ -57,6 +57,7 @@ function makeEvent(overrides: Partial<ObservedEvent> = {}): ObservedEvent {
       required: false,
       ancestorRoles: [],
       ancestorClasses: [],
+      tabIndex: null,
     },
     valueBefore: null,
     valueAfter: null,
@@ -132,6 +133,7 @@ describe('Layer 2: Component Detection (detectComponent)', () => {
         required: false,
         ancestorRoles: [],
         ancestorClasses: ['ag-header-cell', 'ag-theme-alpine'],
+        tabIndex: null,
       },
     });
     const result = detectComponent(event);
@@ -213,6 +215,7 @@ describe('Layer 2: Component Detection (detectComponent)', () => {
         required: false,
         ancestorRoles: [],
         ancestorClasses: ['oxd-table-row', 'oxd-table-card'],
+        tabIndex: null,
       },
     });
     const result = detectComponent(event);

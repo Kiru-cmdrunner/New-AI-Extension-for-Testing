@@ -69,6 +69,20 @@ export function isProductionInteraction(
       if (metadata.hasDelta !== true) return false;
       return true;
 
+    case 'Slider':
+      // M0.5 Fix G7: filter out focus-only traversal (userAdjusted=false).
+      // Slider triggers on focus but should only appear in output if the
+      // user actually adjusted the value (mouse drag, click-to-set, keyboard).
+      if (metadata.userAdjusted !== true) return false;
+      return true;
+
+    case 'ColorInput':
+      // G8: filter out focus-only traversal and same-color re-selection.
+      // ColorInput triggers on focus but should only appear if user
+      // actually changed the color (userAdjusted=true).
+      if (metadata.userAdjusted !== true) return false;
+      return true;
+
     case 'Click':
     case 'Link':
     case 'Checkbox':
@@ -239,6 +253,28 @@ export function toIRAction(interaction: ComponentInteraction): IRAction | null {
         metadata: {
           scrollDeltaY: metadata.scrollDeltaY,
           scrollDeltaX: metadata.scrollDeltaX,
+        },
+        ...enrichment,
+      };
+
+    case 'Slider':
+      return {
+        type: 'FILL',
+        target,
+        value: String(metadata.value ?? ''),
+        metadata: {
+          userAdjusted: metadata.userAdjusted,
+        },
+        ...enrichment,
+      };
+
+    case 'ColorInput':
+      return {
+        type: 'FILL',
+        target,
+        value: String(metadata.value ?? ''),
+        metadata: {
+          userAdjusted: metadata.userAdjusted,
         },
         ...enrichment,
       };

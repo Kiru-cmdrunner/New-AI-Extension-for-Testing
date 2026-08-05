@@ -143,6 +143,8 @@ export interface RawElementIdentity {
   inIframe: boolean;
   /** True if the element is inside a Shadow DOM. */
   shadowDom: boolean;
+  /** Raw href attribute value for anchor elements, null for non-links. */
+  href: string | null;
   /** Detailed iframe context when inIframe is true. Undefined for top-level frame. */
   iframeContext?: IframeContext;
 }

@@ -41,6 +41,7 @@ function makeInteraction(
       dataQa: null,
       inIframe: false,
       shadowDom: false,
+    href: null,
       elementId: '',
     } as any,
   });

@@ -33,6 +33,7 @@ export function extractDomContext(el: Element): DomContext {
     required: hasAttribute(el, 'required') || getAttributeBoolean(el, 'aria-required') === true,
     ancestorRoles: getAncestorRoles(el),
     ancestorClasses: getAncestorClasses(el),
+    tabIndex: el instanceof HTMLElement ? el.tabIndex : null,
   };
 }
 

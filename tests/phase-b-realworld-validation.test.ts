@@ -54,6 +54,7 @@ function identity(tag: string, name: string, extras: Partial<ElementIdentity> = 
     xPath: `//${tag.toLowerCase()}`,
     inIframe: false,
     shadowDom: false,
+    href: null,
     elementId: `el-${tag.toLowerCase()}-${name.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 20)}`,
     ...extras,
   };

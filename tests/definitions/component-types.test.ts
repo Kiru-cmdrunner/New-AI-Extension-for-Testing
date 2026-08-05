@@ -47,6 +47,7 @@ function makeIdentity(overrides: Partial<ElementIdentity> = {}): ElementIdentity
     xPath: '//input[@id=\'test-el\']',
     inIframe: false,
     shadowDom: false,
+    href: null,
     elementId: 'elem-0001',
     ...overrides,
   };
@@ -63,6 +64,7 @@ function makeDomContext(overrides: Partial<DomContext> = {}): DomContext {
     required: false,
     ancestorRoles: [],
     ancestorClasses: [],
+    tabIndex: null,
     ...overrides,
   };
 }

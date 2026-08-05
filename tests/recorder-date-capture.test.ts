@@ -60,6 +60,7 @@ function makeDateSelectMessage(
       xPath: '//input[@name="dateOfBirth"]',
       inIframe: false,
       shadowDom: false,
+    href: null,
       elementId: 'dateOfBirth-001',
     },
     valueBefore: null,

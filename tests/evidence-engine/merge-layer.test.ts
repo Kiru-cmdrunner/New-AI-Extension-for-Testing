@@ -18,6 +18,7 @@ const defaultTarget: ElementIdentity = {
   placeholder: '', tag: 'DIV', className: '', name: '', stableId: null,
   testId: null, dataCy: null, dataQa: null, cssSelector: '', xPath: '',
   inIframe: false, shadowDom: false, elementId: 'el-0',
+    href: null,
 };
 
 function makeInteraction(

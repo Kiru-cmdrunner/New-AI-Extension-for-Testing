@@ -28,7 +28,7 @@ export const clickDefinition: ComponentDefinition = {
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
     // Only trigger on interactive elements
     const { tag, ariaRole, className } = event.target;
-    const tabIndex = null; // tabIndex not in ElementIdentity (captured in content script)
+    const tabIndex = event.domContext.tabIndex ?? null;
 
     if (!isInteractiveElement(tag, ariaRole, className, tabIndex)) {
       return null;

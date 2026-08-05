@@ -265,6 +265,27 @@ export function checkExpandCollapse(
     ));
   }
 
+  // ── Native <details> open attribute (G6) ────────────────────────────
+  // <details open> is a boolean HTML attribute. Absent = collapsed,
+  // present = expanded. Maps to expand-collapse just like aria-expanded.
+  const detailsOpenMutations = result.mutations.filter(
+    (m) =>
+      m.type === 'attributes' &&
+      m.attributeName === 'open' &&
+      m.targetTag === 'DETAILS' &&
+      m.oldValue !== m.newValue,
+  );
+
+  for (const m of detailsOpenMutations) {
+    const fmt = (v: string | null) => (v === null ? 'collapsed' : 'expanded');
+    effects.push(makeEffect(
+      'expand-collapse',
+      `details: ${fmt(m.oldValue)} → ${fmt(m.newValue)}`,
+      { role: null, label: null, cssPath: m.targetPath },
+      'high', 'direct-property', evidence,
+    ));
+  }
+
   return effects;
 }
 

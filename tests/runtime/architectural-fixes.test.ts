@@ -35,6 +35,7 @@ const DEFAULT_DOM = {
   required: false,
   ancestorRoles: [],
   ancestorClasses: [],
+    tabIndex: null,
 };
 
 /** Create a scroll event at a given timestamp and scroll position. */

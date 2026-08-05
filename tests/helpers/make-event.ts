@@ -17,6 +17,7 @@ const DEFAULT_DOM_CONTEXT: DomContext = {
   required: false,
   ancestorRoles: [],
   ancestorClasses: [],
+  tabIndex: null,
 };
 
 const DEFAULT_TARGET: ElementIdentity = {
@@ -34,9 +35,10 @@ const DEFAULT_TARGET: ElementIdentity = {
   dataQa: null,
   cssSelector: 'div',
   xPath: '/html/body/div',
-  inIframe: false,
-  shadowDom: false,
-  elementId: '',
+    inIframe: false,
+    shadowDom: false,
+    href: null,
+    elementId: '',
 };
 
 export function makeObservedEvent(

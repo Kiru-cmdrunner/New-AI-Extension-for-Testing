@@ -41,6 +41,7 @@ function makeTarget(
     xPath: '/html/body/div',
     inIframe: false,
     shadowDom: false,
+    href: null,
     elementId: '',
     ...overrides,
   };
@@ -59,6 +60,7 @@ function makeContext(
     required: false,
     ancestorRoles: [],
     ancestorClasses: [],
+    tabIndex: null,
     ...overrides,
   };
 }

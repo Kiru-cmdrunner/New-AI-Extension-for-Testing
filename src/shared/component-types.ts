@@ -65,6 +65,8 @@ export interface DomContext {
   ancestorRoles: string[];
   /** Ancestor chain classes (up to 10 levels), index 0 = parent. */
   ancestorClasses: string[];
+  /** TabIndex of the element (HTMLElement.tabIndex). -1 for elements without tabindex attr, null for non-HTMLElement (SVG, etc.). */
+  tabIndex: number | null;
 }
 
 // ── Observed Event ─────────────────────────────────────────────────────
@@ -159,6 +161,7 @@ export type InteractionType =
   | 'Link'
   | 'FileUpload'
   | 'Slider'
+  | 'ColorInput'
   | 'Tab'
   | 'Scroll'
   | 'Navigation';

@@ -278,7 +278,7 @@ export function isCheckbox(
   ariaRole: string | null,
 ): boolean {
   if (tag === 'INPUT' && inputType === 'checkbox') return true;
-  if (ariaRole === 'checkbox' || ariaRole === 'switch') return true;
+  if (ariaRole === 'checkbox' || ariaRole === 'switch' || ariaRole === 'menuitemcheckbox') return true;
   return false;
 }
 
@@ -291,7 +291,7 @@ export function isRadio(
   ariaRole: string | null,
 ): boolean {
   if (tag === 'INPUT' && inputType === 'radio') return true;
-  if (ariaRole === 'radio') return true;
+  if (ariaRole === 'radio' || ariaRole === 'menuitemradio') return true;
   return false;
 }
 
@@ -387,6 +387,7 @@ export function isFileInput(tag: string, inputType: string | null): boolean {
 export function isSlider(tag: string, inputType: string | null, ariaRole: string | null): boolean {
   if (tag === 'INPUT' && inputType === 'range') return true;
   if (ariaRole === 'slider') return true;
+  if (ariaRole === 'spinbutton') return true; // G5: custom ARIA spinbutton
   return false;
 }
 

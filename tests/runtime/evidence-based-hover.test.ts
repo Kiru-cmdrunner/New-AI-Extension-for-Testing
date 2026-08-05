@@ -42,6 +42,7 @@ function makeTarget(overrides: Partial<ElementIdentity> = {}): ElementIdentity {
     xPath: '/html/body/div',
     inIframe: false,
     shadowDom: false,
+    href: null,
     elementId: '',
     ...overrides,
   };
@@ -58,6 +59,7 @@ function makeContext(overrides: Partial<DomContext> = {}): DomContext {
     required: false,
     ancestorRoles: [],
     ancestorClasses: [],
+    tabIndex: null,
     ...overrides,
   };
 }

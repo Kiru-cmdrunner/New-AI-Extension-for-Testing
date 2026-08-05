@@ -30,6 +30,7 @@ function makeIdentity(tag: string, name: string): ElementIdentity {
     xPath: `//${tag.toLowerCase()}`,
     inIframe: false,
     shadowDom: false,
+    href: null,
     elementId: '',
   };
 }

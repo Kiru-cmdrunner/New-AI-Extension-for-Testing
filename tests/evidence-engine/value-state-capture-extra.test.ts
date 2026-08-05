@@ -38,6 +38,7 @@ function makeEvent(overrides: Partial<ElementRecordedEvent>): ElementRecordedEve
       xPath: '/html/body/div',
       inIframe: false,
       shadowDom: false,
+    href: null,
       ...overrides.target,
     },
     valueBefore: null,

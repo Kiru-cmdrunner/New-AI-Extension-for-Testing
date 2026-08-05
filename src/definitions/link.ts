@@ -50,7 +50,7 @@ export const linkDefinition: ComponentDefinition = {
           ctx.trigger.ariaLabel,
           ctx.trigger.placeholder,
         ),
-        href: null, // href not available in ElementIdentity; could be added
+        href: ctx.trigger.href ?? null,
       },
     };
   },

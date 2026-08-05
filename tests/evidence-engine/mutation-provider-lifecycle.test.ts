@@ -38,6 +38,7 @@ function makeEvent(
       xPath: '/html/body/div',
       inIframe: false,
       shadowDom: false,
+    href: null,
       ...overrides.target,
     },
     valueBefore: null,

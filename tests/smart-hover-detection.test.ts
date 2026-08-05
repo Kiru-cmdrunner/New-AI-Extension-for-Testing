@@ -36,6 +36,7 @@ function makeIdentity(el: Element): ElementIdentity {
     xPath: el.id ? `//${el.tagName.toLowerCase()}[@id='${el.id}']` : `//${el.tagName.toLowerCase()}`,
     inIframe: false,
     shadowDom: false,
+    href: null,
     elementId: '',
   };
 }

@@ -33,6 +33,7 @@ function makeIdentity(overrides: Partial<ElementIdentity> = {}): ElementIdentity
     xPath: '//button',
     inIframe: false,
     shadowDom: false,
+    href: null,
     ...overrides,
   } as ElementIdentity;
 }

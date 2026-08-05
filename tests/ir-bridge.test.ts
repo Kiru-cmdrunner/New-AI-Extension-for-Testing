@@ -48,6 +48,7 @@ function makeElementIdentity(overrides: Partial<ElementIdentity> = {}): ElementI
     xPath: '//button[@id="submit-btn"]',
     inIframe: false,
     shadowDom: false,
+    href: null,
     ...overrides,
   };
 }
