@@ -39,6 +39,10 @@ import {
 } from '../runtime/sw-integration';
 import { interpretBehavioralObservations } from '../semantics/sw-bridge';
 import {
+  runCapabilityInference,
+  serializeCapabilityRecords,
+} from '../capabilities/capability-bridge';
+import {
   filterProductionInteractions,
   toIRActions,
 } from '../presentation/output-adapter';
@@ -238,14 +242,33 @@ async function handleStopRecording(): Promise<void> {
   // Flush runtime and get all interactions
   const allInteractions = stopRecording();
 
-  // Filter to production interactions
+  // Filter to production interactions — removes incidental Hovers, Scrolls,
+  // abandoned/discarded interactions, and no-op selections. This must happen
+  // BEFORE capability inference so the engine only classifies deliberate
+  // user actions, not transit mouse movements or focus events.
   const productionInteractions = filterProductionInteractions(allInteractions);
 
-  // Store interactions for UI display
-  await StorageService.setRaw(LIVE_INTERACTIONS_KEY, allInteractions);
+  // ── Capability Model: Phase 6 Engine Integration ──
+  // Run capability inference on production interactions only.
+  // All behavioral observations are attached and effects are interpreted
+  // by this point. The resulting CapabilityRecord[] maps each deliberate
+  // interaction to its semantic classification and is persisted for
+  // side-panel display.
+  let capabilityRecords: ReturnType<typeof serializeCapabilityRecords> = [];
+  try {
+    const records = runCapabilityInference(productionInteractions);
+    capabilityRecords = serializeCapabilityRecords(records);
+    await StorageService.setRaw(StorageKeys.CAPABILITY_RECORDS, capabilityRecords);
+    console.log(`[Capability Engine] Inferred ${records.length} capability records (from ${productionInteractions.length} production interactions, ${allInteractions.length} raw)`);
+  } catch (e) {
+    console.warn('[Capability Engine] error during inference:', e);
+  }
+
+  // Store production interactions for UI display
+  await StorageService.setRaw(LIVE_INTERACTIONS_KEY, productionInteractions);
 
   // Map to IR actions for the generation pipeline
-  const irActions = toIRActions(allInteractions);
+  const irActions = toIRActions(productionInteractions);
 
   // Build a synthetic events array from interactions (for IR Bridge compatibility)
   // The IR Bridge currently expects Phase 1 DetectedInteraction[] — we adapt.

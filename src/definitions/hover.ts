@@ -95,14 +95,19 @@ const HOVER_POPUP_TYPES = new Set([
 
 /**
  * CSS class patterns that indicate an element reveals an overlay on hover.
- * Covers nav menus, mega-menus, dropdowns, tooltips, and expandable sections
- * from modern frameworks (React, Vue, Angular) that may lack ARIA markup.
+ * Covers nav menus, mega-menus, dropdowns, tooltips, and hover-revealed
+ * sections from modern frameworks (React, Vue, Angular) that may lack ARIA.
  *
- * Examples: "nav-item", "has-submenu", "dropdown-trigger", "menu-link",
- * "mega-menu", "popover-trigger", "expandable", "accordion-header"
+ * Examples: "has-submenu", "dropdown-trigger", "menu-link", "mega-menu",
+ * "popover-trigger", "drawer-toggle", "with-dropdown"
+ *
+ * NOTE: Removed "expandable", "collapsible", "accordion-header" — these are
+ * click-triggered components, not hover-triggered overlays. Including them
+ * caused incidental hovers over accordions (Amazon filter sections) to be
+ * promoted as meaningful when the user was just transiting the mouse.
  */
 const OVERLAY_CSS_RE =
-  /\b(?:has-submenu|has-children|submenu|mega-menu|nav-item|menu-link|menu-trigger|dropdown-trigger|popover-trigger|expandable|collapsible|accordion-header|drawer-toggle|nav-link|with-dropdown)\b/i;
+  /\b(?:has-submenu|has-children|submenu|mega-menu|nav-item|menu-link|menu-trigger|dropdown-trigger|popover-trigger|drawer-toggle|nav-link|with-dropdown)\b/i;
 
 /**
  * Ancestor CSS class patterns that suggest the hovered element is inside

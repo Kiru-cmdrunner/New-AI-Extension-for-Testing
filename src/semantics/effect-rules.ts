@@ -71,6 +71,7 @@ function makeEffect(
   confidence: Confidence,
   confidenceBasis: ConfidenceBasis,
   evidence: { windowId: string; sourceEventId: string },
+  netNodeDelta?: number | null,
 ): SemanticEffect {
   return {
     category,
@@ -79,6 +80,7 @@ function makeEffect(
     confidence,
     confidenceBasis,
     evidenceRef: evidence,
+    ...(netNodeDelta != null ? { netNodeDelta } : {}),
   };
 }
 
@@ -376,6 +378,7 @@ export function checkContentChange(
         'content-change',
         `child elements: ${before.childCount} → ${after.childCount}`,
         triggerTarget(ctx), confidence, basis, evidence,
+        after.childCount - before.childCount,
       ));
     }
 
@@ -389,6 +392,7 @@ export function checkContentChange(
         'content-change',
         'text changed',
         triggerTarget(ctx), confidence, basis, evidence,
+        0,
       ));
     }
   }
@@ -411,11 +415,16 @@ export function checkContentChange(
 
   if (byPath.size > MAX_DISTINCT_PATHS) {
     // ── Aggregated effect (framework rerender) ─────────────────────
+    const childListMuts = structuralMutations.filter((m) => m.type === 'childList');
+    const totalAdded = childListMuts.reduce((s, m) => s + m.addedNodesCount, 0);
+    const totalRemoved = childListMuts.reduce((s, m) => s + m.removedNodesCount, 0);
+    const netDelta = totalAdded - totalRemoved;
     effects.push(makeEffect(
       'content-change',
       `broad structural change: ${structuralMutations.length} mutations across ${byPath.size} paths`,
       { role: null, label: null, cssPath: '(multiple)' },
       'low', 'structural-inference', evidence,
+      netDelta,
     ));
   } else {
     // ── One effect per distinct path ───────────────────────────────
@@ -425,14 +434,14 @@ export function checkContentChange(
       const childListMuts = muts.filter((m) => m.type === 'childList');
       const charDataMuts = muts.filter((m) => m.type === 'characterData');
 
+      const added = childListMuts.reduce((s, m) => s + m.addedNodesCount, 0);
+      const removed = childListMuts.reduce((s, m) => s + m.removedNodesCount, 0);
+      const netDelta = added - removed;
+
       let desc: string;
       if (childListMuts.length > 0 && charDataMuts.length > 0) {
-        const added = childListMuts.reduce((s, m) => s + m.addedNodesCount, 0);
-        const removed = childListMuts.reduce((s, m) => s + m.removedNodesCount, 0);
         desc = `content changed: ${added} added, ${removed} removed, ${charDataMuts.length} text changes`;
       } else if (childListMuts.length > 0) {
-        const added = childListMuts.reduce((s, m) => s + m.addedNodesCount, 0);
-        const removed = childListMuts.reduce((s, m) => s + m.removedNodesCount, 0);
         desc = `child elements: ${added} added, ${removed} removed`;
       } else {
         desc = 'text content changed';
@@ -443,6 +452,7 @@ export function checkContentChange(
         desc,
         { role: null, label: null, cssPath: path },
         confidence, basis, evidence,
+        netDelta,
       ));
     }
   }

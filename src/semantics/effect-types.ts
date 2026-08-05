@@ -73,4 +73,15 @@ export interface SemanticEffect {
     windowId: string;
     sourceEventId: string;
   };
+  /**
+   * Net node delta: (addedNodes - removedNodes) for childList mutations
+   * summarized by this effect. Only populated for content-change effects.
+   * null for non-structural categories.
+   *
+   * Enrichment for Capability Model (Phase 0): SortSelection uses delta≈0
+   * as a supporting signal (items reordered, not added/removed);
+   * FilterSelection uses strongly negative delta as a supporting signal
+   * (items removed, not replaced). Neither is a required condition.
+   */
+  netNodeDelta?: number | null;
 }

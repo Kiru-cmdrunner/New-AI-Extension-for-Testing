@@ -274,22 +274,6 @@ export function createInteractionElement(interaction: ComponentInteraction): HTM
     }
   }
 
-  // ── Semantic Effects (Sub-phase 3) ──
-  // "What happened" section displayed ABOVE raw behavioral evidence.
-  // Collects all semanticEffects from all observations and renders them.
-  // If no observations have semanticEffects, section is absent (invisible).
-  if (
-    interaction.behavioralObservations &&
-    interaction.behavioralObservations.length > 0
-  ) {
-    const allEffects = interaction.behavioralObservations
-      .flatMap((obs: ObservationResult) => obs.semanticEffects ?? []);
-    const effectsEl = renderSemanticEffects(allEffects);
-    if (effectsEl) {
-      el.appendChild(effectsEl);
-    }
-  }
-
   // ── Behavioral Evidence (M1 Phase E) ──
   // Collapsible section showing before/after snapshots and mutation evidence.
   // Only renders if observations were captured (additive — absent = invisible).

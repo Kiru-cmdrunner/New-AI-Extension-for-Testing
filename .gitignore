@@ -16,3 +16,8 @@ sidepanel.png
 # Temporary/debug artifacts
 tmp/
 *.py
+
+# Git archaeology snapshots — not source code
+baseline-7bfd949/
+baseline-a43df53/
+baseline-build/

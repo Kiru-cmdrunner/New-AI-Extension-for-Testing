@@ -73,6 +73,8 @@ export enum StorageKeys {
   ELEMENT_HEAL_RESULT = 'element_heal_result',
   // ── Phase 12: Execution Engine ──
   EXECUTION_RESULT = 'execution_result',
+  // ── Capability Model: Phase 6 Engine Integration ──
+  CAPABILITY_RECORDS = 'capability_records',
 }
 
 /**
