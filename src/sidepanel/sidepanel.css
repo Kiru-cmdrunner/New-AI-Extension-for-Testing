@@ -1542,3 +1542,269 @@ body {
   background: #f3f4f6;
   color: #6b7280;
 }
+
+/* ── Behavioral Evidence (M1 Phase E) ─────────────────────────────── */
+
+.behavioral-evidence {
+  flex: 1 1 100%;
+  margin-top: 6px;
+  border-top: 1px solid var(--color-border, #e2e8f0);
+  padding-top: 4px;
+}
+
+.behavioral-evidence__toggle {
+  width: 100%;
+  text-align: left;
+}
+
+.behavioral-evidence__content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* Ensure the 'hidden' attribute wins over 'display: flex' above */
+.behavioral-evidence__content[hidden] {
+  display: none;
+}
+
+/* ── Observation Result Card ── */
+
+.behavioral-result-card {
+  background: var(--color-bg-secondary, #f8fafc);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-family: var(--font-mono, 'Courier New', monospace);
+}
+
+.behavioral-result-card__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+}
+
+.behavioral-result-card__event-type {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 10px;
+  color: #6366f1;
+  background: #eef2ff;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.behavioral-result-card__window-id {
+  font-size: 10px;
+  color: var(--color-text-secondary, #64748b);
+}
+
+/* ── Section Label ── */
+
+.behavioral-section-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: var(--color-text-secondary, #64748b);
+  margin-bottom: 3px;
+}
+
+/* ── State Diff ── */
+
+.behavioral-state-diff {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-bottom: 8px;
+}
+
+.behavioral-state-diff__note {
+  font-style: italic;
+  color: var(--color-text-secondary, #64748b);
+  padding: 2px 0;
+}
+
+.behavioral-state-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.behavioral-state-row__label {
+  font-weight: 600;
+  color: var(--color-text-secondary, #64748b);
+  min-width: 80px;
+}
+
+.behavioral-state-row__before {
+  color: var(--color-text, #1e293b);
+}
+
+.behavioral-state-row__after {
+  color: var(--color-text, #1e293b);
+}
+
+.behavioral-state-row__changed {
+  font-weight: 700;
+}
+
+.behavioral-state-row__unchanged {
+  color: var(--color-text-secondary, #94a3b8);
+}
+
+.behavioral-state-row__arrow {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+/* ── Mutations ── */
+
+.behavioral-mutations {
+  margin-bottom: 6px;
+}
+
+.behavioral-mutations__header {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: var(--color-text-secondary, #64748b);
+  margin-bottom: 3px;
+}
+
+.behavioral-mutations__note {
+  font-style: italic;
+  color: var(--color-text-secondary, #64748b);
+}
+
+.behavioral-mutation-group {
+  margin-bottom: 4px;
+}
+
+.behavioral-mutation-group__path {
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 600;
+  word-break: break-all;
+  margin-bottom: 2px;
+}
+
+.behavioral-mutation-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 1px 0 1px 8px;
+  border-left: 2px solid var(--color-border, #e2e8f0);
+}
+
+.behavioral-mutation-row__path {
+  display: none; /* shown via group header instead */
+}
+
+.behavioral-mutation-row__detail {
+  flex: 1 1 auto;
+  font-size: 11px;
+  color: var(--color-text, #1e293b);
+  word-break: break-all;
+}
+
+.behavioral-mutation-row__time {
+  flex: 0 0 auto;
+  font-size: 9px;
+  color: var(--color-text-secondary, #94a3b8);
+}
+
+/* ── Window Metadata ── */
+
+.behavioral-window-meta {
+  font-size: 10px;
+  color: var(--color-text-secondary, #64748b);
+  margin-top: 6px;
+  padding-top: 4px;
+  border-top: 1px solid var(--color-border, #e2e8f0);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.behavioral-perf-badge {
+  font-size: 9px;
+  font-weight: 600;
+  color: #92400e;
+  background: #fef3c7;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+/* ── Semantic Effects (Sub-phase 3) ── */
+
+.semantic-effects {
+  flex: 1 1 100%;
+  margin-top: 6px;
+  border-top: 1px solid var(--color-border, #e2e8f0);
+  padding-top: 4px;
+}
+
+.semantic-effects__label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: var(--color-text-secondary, #64748b);
+  margin-bottom: 3px;
+}
+
+.semantic-effect {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 12px;
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+.semantic-effect__icon {
+  flex: 0 0 auto;
+  width: 16px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.semantic-effect__description {
+  flex: 1 1 auto;
+  color: var(--color-text, #1e293b);
+}
+
+.semantic-effect__confidence {
+  flex: 0 0 auto;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
+}
+
+.semantic-effect__confidence--high {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.semantic-effect__confidence--medium {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.semantic-effect__confidence--low {
+  color: #6b7280;
+  background: #f3f4f6;
+  font-style: italic;
+}

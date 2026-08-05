@@ -48,6 +48,17 @@ export interface EventTapHandle {
 export interface EventTapConfig {
   /** Called for every captured event. */
   onEvent: (event: ObservedEvent) => void;
+  /**
+   * Optional: called AFTER onEvent with the resolved target element and
+   * event metadata. Used by the Observation Coordinator (Phase D) to open
+   * observation windows. Does NOT fire if not provided.
+   */
+  onAfterEvent?: (
+    targetEl: Element,
+    eventId: string,
+    eventType: string,
+    cssSelector: string,
+  ) => void;
 }
 
 /**
@@ -180,6 +191,16 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
     const observed = assembleObservedEvent(rawEvent, eventType, identity, domContext);
 
     config.onEvent(observed);
+
+    // Phase D: Fire onAfterEvent if configured (synchronous, same call stack)
+    if (config.onAfterEvent) {
+      config.onAfterEvent(
+        targetEl,
+        observed.eventId,
+        eventType,
+        identity.cssSelector,
+      );
+    }
   }
 
   // ── Event assembly ──────────────────────────────────────────────────

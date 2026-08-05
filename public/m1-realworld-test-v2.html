@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>M1 Real-World Test v2 — Capture-Phase Correct</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 1200px; margin: 40px auto; padding: 0 20px; color: #1e293b; display: flex; gap: 30px; }
+    .test-area { flex: 1; }
+    .results-panel { position: sticky; top: 20px; width: 500px; max-height: 90vh; overflow-y: auto; background: #f8fafc; border: 2px solid #3b82f6; border-radius: 8px; padding: 12px; font-size: 11px; }
+    .results-panel h3 { margin: 0 0 8px; }
+    .result-entry { border-bottom: 1px solid #e2e8f0; padding: 8px 0; }
+    .result-entry strong { color: #3b82f6; }
+    .result-entry .meta { color: #64748b; }
+    .result-entry .effect-line { margin-left: 12px; color: #475569; }
+    .result-entry .snapshot-line { margin-top: 4px; color: #94a3b8; font-style: italic; }
+    .result-entry .pass { color: #22c55e; font-weight: 600; }
+    .result-entry .fail { color: #ef4444; font-weight: 600; }
+    .result-entry .expected { color: #f59e0b; font-size: 0.9em; }
+
+    .section { margin: 20px 0; padding: 16px; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .section h2 { margin-top: 0; font-size: 1em; color: #475569; }
+
+    /* Dropdown */
+    .dropdown { position: relative; display: inline-block; }
+    .dropdown-menu { display: none; position: absolute; background: white; border: 1px solid #cbd5e1; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 4px 0; min-width: 180px; z-index: 100; }
+    .dropdown.open .dropdown-menu { display: block; }
+    .dropdown-item { padding: 8px 16px; cursor: pointer; }
+    .dropdown-item:hover { background: #f1f5f9; }
+
+    /* Accordion */
+    .accordion-item { border: 1px solid #e2e8f0; border-radius: 4px; margin: 4px 0; }
+    .accordion-header { padding: 12px 16px; cursor: pointer; background: #f8fafc; }
+    .accordion-body { display: none; padding: 12px 16px; }
+    .accordion-item.active .accordion-body { display: block; }
+
+    /* Amazon checkbox */
+    .checkbox-toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-decoration: none; color: inherit; }
+    .checkbox-toggle .a-icon-checkbox { width: 16px; height: 16px; border: 2px solid #cbd5e1; border-radius: 3px; display: inline-block; }
+    .checkbox-toggle.checked .a-icon-checkbox { background: #3b82f6; border-color: #3b82f6; }
+
+    /* React toggle */
+    .react-toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+    .react-indicator { width: 44px; height: 24px; border-radius: 12px; background: #cbd5e1; position: relative; transition: background 0.2s; }
+    .react-indicator::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: white; transition: transform 0.2s; }
+    .react-toggle.on .react-indicator { background: #3b82f6; }
+    .react-toggle.on .react-indicator::after { transform: translateX(20px); }
+
+    .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; background: #3b82f6; color: white; }
+    .modal-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+    .modal-backdrop.open { display: flex; align-items: center; justify-content: center; }
+    .modal { background: white; border-radius: 8px; padding: 24px; max-width: 400px; }
+    .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; }
+    .toast { background: #1e293b; color: white; padding: 12px 20px; border-radius: 8px; margin: 4px 0; }
+    .dynamic-list { list-style: none; padding: 0; }
+    .dynamic-list li { padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 4px; margin: 4px 0; display: flex; justify-content: space-between; }
+    .tabs { display: flex; border-bottom: 2px solid #e2e8f0; }
+    .tab { padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .tab.active { border-bottom-color: #3b82f6; color: #3b82f6; font-weight: 600; }
+    .tab-content { display: none; padding: 16px; }
+    .tab-content.active { display: block; }
+    .loading-spinner { display: none; }
+    .loading-spinner.active { display: inline-block; width: 16px; height: 16px; border: 2px solid #cbd5e1; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    select, input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; }
+    .input-group.error input { border-color: #ef4444; }
+    .validation-error { display: none; color: #ef4444; font-size: 0.8em; }
+    .input-group.error .validation-error { display: block; }
+  </style>
+</head>
+<body>
+  <div class="test-area">
+    <h1>M1 Behavioral Observer — Real-World Test (Capture-Phase Correct)</h1>
+    <p style="background:#fef3c7; padding:8px 12px; border-radius:4px; font-size:0.85em;">
+      ⚠️ This test simulates the real extension: the observer attaches in <strong>capture phase</strong>
+      (before page handlers fire). This is critical — the real EventTap uses capture-phase listeners.
+    </p>
+
+    <div class="section"><h2>1. Bootstrap Dropdown — class toggle on ANCESTOR</h2>
+      <div class="dropdown" id="dd1">
+        <button class="btn" id="dd-toggle">Options ▾</button>
+        <div class="dropdown-menu" id="dd-menu">
+          <div class="dropdown-item" data-val="1">Option 1</div>
+          <div class="dropdown-item" data-val="2">Option 2</div>
+        </div>
+      </div>
+      <p style="font-size:0.8em;color:#94a3b8">Mutation on .dropdown ancestor (class: '' → 'open'). Button subtree sees text change.</p>
+    </div>
+
+    <div class="section"><h2>2. Accordion — class on item + aria-expanded</h2>
+      <div class="accordion-item" id="acc1">
+        <div class="accordion-header" id="acc-h1">Section 1 ▸</div>
+        <div class="accordion-body">Content here</div>
+      </div>
+    </div>
+
+    <div class="section"><h2>3. Amazon Checkbox — class on target + aria on child</h2>
+      <a href="#" class="checkbox-toggle" id="amz-cb">
+        <i class="a-icon-checkbox"></i><span>Filter option</span>
+      </a>
+    </div>
+
+    <div class="section"><h2>4. React Async Toggle (300ms delay)</h2>
+      <div class="react-toggle" id="rct"><span class="react-indicator"></span><span class="react-label">Off</span></div>
+    </div>
+
+    <div class="section"><h2>5. Modal — class on SIBLING backdrop</h2>
+      <button class="btn" id="modal-btn">Open Modal</button>
+    </div>
+    <div class="modal-backdrop" id="modal-bd"><div class="modal" id="modal-c"><h3>Modal</h3><button class="btn" id="modal-x">Close</button></div></div>
+
+    <div class="section"><h2>6. Tab Switch — class shuffle on children</h2>
+      <div class="tabs" id="tabs">
+        <div class="tab active" data-tab="t1">Tab 1</div>
+        <div class="tab" data-tab="t2">Tab 2</div>
+      </div>
+      <div class="tab-content active" id="t1">Content 1</div>
+      <div class="tab-content" id="t2">Content 2</div>
+    </div>
+
+    <div class="section"><h2>7. Dynamic List — childList add to target</h2>
+      <input type="text" id="todo-in" placeholder="Add item"><button class="btn" id="todo-add">Add</button>
+      <ul class="dynamic-list" id="todo-list">
+        <li>Item 1 <button class="btn" style="padding:2px 8px" onclick="this.parentElement.remove()">✕</button></li>
+      </ul>
+    </div>
+
+    <div class="section"><h2>8. Loading + 800ms delayed update</h2>
+      <button class="btn" id="load-btn"><span class="btn-text">Load Data</span><span class="loading-spinner"></span></button>
+      <div id="load-result" style="margin-top:8px"></div>
+    </div>
+
+    <div class="section"><h2>9. Toast — child added to sibling container</h2>
+      <button class="btn" id="toast-btn">Show Toast</button>
+    </div>
+    <div class="toast-container" id="toast-area"></div>
+
+    <div class="section"><h2>10. Native Select — change event</h2>
+      <select id="sel"><option value="">Choose...</option><option value="red">Red</option><option value="blue">Blue</option></select>
+      <div id="sel-result" style="margin-top:8px">No selection</div>
+    </div>
+
+    <div class="section"><h2>11. Form validation — blur → error class</h2>
+      <div class="input-group" id="email-grp">
+        <input type="text" id="email-in" placeholder="enter email">
+        <div class="validation-error">Invalid email</div>
+      </div>
+    </div>
+
+    <div class="section"><h2>12. Tooltip — CSS-only hover (no mutation expected)</h2>
+      <div id="tip-host" style="position:relative;display:inline-block;cursor:pointer">
+        Hover for tooltip
+        <div style="display:none;position:absolute;bottom:100%;background:#1e293b;color:white;padding:4px 12px;border-radius:4px" id="tip">Info</div>
+      </div>
+    </div>
+
+    <div class="section"><h2>13. Element removed after click</h2>
+      <div id="remove-container"><button class="btn" id="remove-btn">Click to remove me</button></div>
+    </div>
+  </div>
+
+  <div class="results-panel">
+    <h3>🔬 Observer Results</h3>
+    <div id="results"></div>
+  </div>
+
+  <script>
+    // ============================================================
+    // BEHAVIORAL OBSERVER (exact logic from behavioral-observer.ts)
+    // ============================================================
+    const MAX_TEXT_LENGTH = 200;
+    const MAX_CHILD_SUMMARY_LENGTH = 50;
+
+    function takeSnapshot(el) {
+      return {
+        className: el.getAttribute('class'),
+        ariaExpanded: el.getAttribute('aria-expanded'),
+        ariaChecked: el.getAttribute('aria-checked'),
+        ariaSelected: el.getAttribute('aria-selected'),
+        ariaPressed: el.getAttribute('aria-pressed'),
+        value: 'value' in el ? String(el.value ?? '') : null,
+        checked: 'checked' in el ? Boolean(el.checked) : null,
+        textContent: el.textContent?.slice(0, MAX_TEXT_LENGTH) ?? null,
+        childCount: el.childElementCount,
+        isConnected: el.isConnected,
+      };
+    }
+
+    function summarizeNode(node) {
+      const name = node.nodeName.toLowerCase();
+      if (node.textContent && node.textContent.trim())
+        return name + ': "' + node.textContent.trim().slice(0, MAX_CHILD_SUMMARY_LENGTH) + '"';
+      return name;
+    }
+
+    function observeBehavior(targetEl, sourceEventId, eventTimestamp, config) {
+      const stabilityMs = config.stabilityMs || 200;
+      const maxTimeoutMs = config.maxTimeoutMs || 3000;
+      const preSnapshot = takeSnapshot(targetEl);
+      const effects = [];
+      let finalized = false;
+      let stabilityTimer = null;
+      let maxTimer = null;
+
+      function finalize(endReason) {
+        if (finalized) return;
+        finalized = true;
+        subtreeObserver.disconnect();
+        if (parentObserver) parentObserver.disconnect();
+        if (stabilityTimer) clearTimeout(stabilityTimer);
+        if (maxTimer) clearTimeout(maxTimer);
+        const finalSnapshot = targetEl.isConnected ? takeSnapshot(targetEl) : null;
+        const actualReason = (!targetEl.isConnected && endReason === 'stabilized') ? 'element-removed' : endReason;
+        config.onComplete({
+          sourceEventId, observationStartOffset: 0,
+          observationEndOffset: Date.now() - eventTimestamp,
+          endReason: actualReason, effects, preSnapshot, finalSnapshot,
+        });
+      }
+
+      const subtreeObserver = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          const offsetMs = Date.now() - eventTimestamp;
+          if (mutation.type === 'attributes') {
+            effects.push({ type: 'attribute-change', attributeName: mutation.attributeName,
+              oldValue: mutation.oldValue, newValue: mutation.target.getAttribute(mutation.attributeName), offsetMs });
+          } else if (mutation.type === 'childList') {
+            for (const node of Array.from(mutation.addedNodes))
+              effects.push({ type: 'child-added', attributeName: null, oldValue: null, newValue: summarizeNode(node), offsetMs });
+            for (const node of Array.from(mutation.removedNodes))
+              effects.push({ type: 'child-removed', attributeName: null, oldValue: summarizeNode(node), newValue: null, offsetMs });
+          } else if (mutation.type === 'characterData') {
+            effects.push({ type: 'character-data', attributeName: null,
+              oldValue: mutation.oldValue, newValue: mutation.target.textContent?.slice(0, MAX_TEXT_LENGTH), offsetMs });
+          }
+        }
+        if (stabilityTimer) clearTimeout(stabilityTimer);
+        stabilityTimer = setTimeout(() => finalize('stabilized'), stabilityMs);
+      });
+
+      subtreeObserver.observe(targetEl, {
+        attributes: true, attributeOldValue: true, characterData: true,
+        characterDataOldValue: true, childList: true, subtree: true,
+      });
+
+      let parentObserver = null;
+      const parent = targetEl.parentElement;
+      if (parent) {
+        parentObserver = new MutationObserver((mutations) => {
+          for (const mutation of mutations)
+            if (mutation.type === 'childList')
+              for (const node of Array.from(mutation.removedNodes))
+                if (node === targetEl) { finalize('element-removed'); return; }
+        });
+        parentObserver.observe(parent, { childList: true });
+      }
+
+      function resetStability() {
+        if (stabilityTimer) clearTimeout(stabilityTimer);
+        stabilityTimer = setTimeout(() => finalize('stabilized'), stabilityMs);
+      }
+      maxTimer = setTimeout(() => finalize('timeout'), maxTimeoutMs);
+      resetStability();
+    }
+
+    // ============================================================
+    // RESULT DISPLAY
+    // ============================================================
+    function displayResult(label, observation, expectation) {
+      const container = document.getElementById('results');
+      const div = document.createElement('div');
+      div.className = 'result-entry';
+      const hasEffects = observation.effects.length > 0;
+      const hasSnapshotDiff = observation.finalSnapshot && (() => {
+        const p = observation.preSnapshot, f = observation.finalSnapshot;
+        return p.checked !== f.checked || p.value !== f.value ||
+               p.className !== f.className || p.childCount !== f.childCount ||
+               p.ariaExpanded !== f.ariaExpanded || p.ariaChecked !== f.ariaChecked;
+      })();
+      const captured = hasEffects || hasSnapshotDiff;
+      const verdict = captured ? '✅ CAPTURED' : '⚪ EMPTY';
+
+      div.innerHTML = `<strong>${label}</strong> <span class="${captured ? 'pass' : 'fail'}">${verdict}</span>`;
+      div.innerHTML += `<div class="meta">endReason: ${observation.endReason} · ${observation.observationEndOffset}ms · ${observation.effects.length} effects</div>`;
+      if (expectation) div.innerHTML += `<div class="expected">Expected: ${expectation}</div>`;
+      for (const e of observation.effects) {
+        let txt = '';
+        if (e.type === 'attribute-change') txt = `⚡ ${e.attributeName}: "${e.oldValue}" → "${e.newValue}" (+${e.offsetMs}ms)`;
+        else if (e.type === 'child-added') txt = `➕ added: ${e.newValue} (+${e.offsetMs}ms)`;
+        else if (e.type === 'child-removed') txt = `➖ removed: ${e.oldValue} (+${e.offsetMs}ms)`;
+        else if (e.type === 'character-data') txt = `📝 text: "${e.oldValue}" → "${e.newValue}" (+${e.offsetMs}ms)`;
+        div.innerHTML += `<div class="effect-line">${txt}</div>`;
+      }
+      if (observation.finalSnapshot) {
+        const changes = [];
+        const p = observation.preSnapshot, f = observation.finalSnapshot;
+        if (p.checked !== f.checked) changes.push(`checked: ${p.checked}→${f.checked}`);
+        if (p.value !== f.value) changes.push(`value: "${p.value}"→"${f.value}"`);
+        if (p.className !== f.className) changes.push(`class: "${p.className}"→"${f.className}"`);
+        if (p.childCount !== f.childCount) changes.push(`children: ${p.childCount}→${f.childCount}`);
+        if (p.ariaExpanded !== f.ariaExpanded) changes.push(`aria-expanded: ${p.ariaExpanded}→${f.ariaExpanded}`);
+        if (p.ariaChecked !== f.ariaChecked) changes.push(`aria-checked: ${p.ariaChecked}→${f.ariaChecked}`);
+        if (changes.length) div.innerHTML += `<div class="snapshot-line">Snapshot: ${changes.join(', ')}</div>`;
+      }
+      if (!hasEffects && !hasSnapshotDiff) div.innerHTML += `<div class="effect-line" style="color:#94a3b8">No DOM mutations or property changes detected</div>`;
+      container.appendChild(div);
+    }
+
+    // ============================================================
+    // CAPTURE-PHASE WIRING (simulates real EventTap)
+    // ============================================================
+    // In the real extension, EventTap uses capture-phase listeners.
+    // onAfterEvent fires AFTER onEvent but in the SAME capture-phase callback,
+    // BEFORE any page bubble-phase handlers fire.
+    // We simulate this by attaching our observer in capture phase.
+
+    function attachCaptureObserver(label, targetId, eventType, expectation) {
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      target.addEventListener(eventType, function(e) {
+        const timestamp = Date.now();
+        const eventId = 'evt-' + Math.random().toString(36).slice(2, 8);
+        observeBehavior(target, eventId, timestamp, {
+          onComplete: (obs) => displayResult(label, obs, expectation),
+          stabilityMs: 200, maxTimeoutMs: 3000,
+        });
+      }, true); // ← CAPTURE PHASE — fires BEFORE page handlers
+    }
+
+    // ============================================================
+    // PAGE HANDLERS (bubble phase — fire AFTER observer is attached)
+    // ============================================================
+
+    // 1. Dropdown
+    attachCaptureObserver('1. Dropdown', 'dd-toggle', 'click', 'Button text change in subtree; ancestor .open NOT visible');
+    document.getElementById('dd-toggle').addEventListener('click', function() {
+      const dd = document.getElementById('dd1');
+      dd.classList.toggle('open');
+      this.textContent = dd.classList.contains('open') ? 'Options ▴' : 'Options ▾';
+    });
+
+    // 2. Accordion
+    attachCaptureObserver('2. Accordion', 'acc-h1', 'click', 'aria-expanded + text change; ancestor .active NOT visible');
+    document.getElementById('acc-h1').addEventListener('click', function() {
+      const item = document.getElementById('acc1');
+      item.classList.toggle('active');
+      this.setAttribute('aria-expanded', item.classList.contains('active'));
+      this.textContent = item.classList.contains('active') ? 'Section 1 ▾' : 'Section 1 ▸';
+    });
+
+    // 3. Amazon checkbox
+    attachCaptureObserver('3. Amazon Checkbox', 'amz-cb', 'click', 'class toggle on target (self), aria on child');
+    document.getElementById('amz-cb').addEventListener('click', function(e) {
+      e.preventDefault();
+      this.classList.toggle('checked');
+      const icon = this.querySelector('.a-icon-checkbox');
+      if (icon) icon.setAttribute('aria-checked', this.classList.contains('checked'));
+    });
+
+    // 4. React async toggle
+    attachCaptureObserver('4. React Async Toggle (300ms)', 'rct', 'click', 'Mutation at 300ms — MISSED if stability < 300ms');
+    document.getElementById('rct').addEventListener('click', function() {
+      const self = this;
+      setTimeout(() => {
+        self.classList.toggle('on');
+        const label = self.querySelector('.react-label');
+        if (label) label.textContent = self.classList.contains('on') ? 'On' : 'Off';
+      }, 300);
+    });
+
+    // 5. Modal
+    attachCaptureObserver('5. Modal (sibling backdrop)', 'modal-btn', 'click', 'Class change on SIBLING — NOT in target subtree');
+    document.getElementById('modal-btn').addEventListener('click', function() {
+      document.getElementById('modal-bd').classList.add('open');
+    });
+    document.getElementById('modal-x').addEventListener('click', function() {
+      document.getElementById('modal-bd').classList.remove('open');
+    });
+
+    // 6. Tabs
+    attachCaptureObserver('6. Tab Switch', 'tabs', 'click', 'Class shuffle on children — IN target subtree');
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', function(e) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById(this.dataset.tab).classList.add('active');
+      });
+    });
+
+    // 7. Dynamic list — observe the LIST, trigger from button
+    // Real extension would observe the button (click target). But the mutation is on the list.
+    // We attach to the list's container for a more realistic "observe what changes" test.
+    attachCaptureObserver('7. Dynamic List (observe list)', 'todo-list', 'click',
+      'Item added to list — but click is on button, not list. Observer on list sees nothing from button click.');
+    document.getElementById('todo-add').addEventListener('click', function() {
+      const input = document.getElementById('todo-in');
+      const text = input.value.trim() || 'Item ' + Date.now();
+      const li = document.createElement('li');
+      li.innerHTML = text + ' <button class="btn" style="padding:2px 8px" onclick="this.parentElement.remove()">✕</button>';
+      document.getElementById('todo-list').appendChild(li);
+      input.value = '';
+    });
+    // Also observe the button itself
+    attachCaptureObserver('7b. Dynamic List (observe button)', 'todo-add', 'click',
+      'Button subtree has no mutations — list mutation is on sibling. Expected: empty.');
+
+    // 8. Loading + delayed
+    attachCaptureObserver('8. Loading (immediate + 800ms delayed)', 'load-btn', 'click',
+      'Immediate class/text change captured; 800ms delayed change MISSED (stability at 200ms)');
+    document.getElementById('load-btn').addEventListener('click', function() {
+      this.querySelector('.loading-spinner').classList.add('active');
+      this.querySelector('.btn-text').textContent = 'Loading...';
+      setTimeout(() => {
+        this.querySelector('.loading-spinner').classList.remove('active');
+        this.querySelector('.btn-text').textContent = 'Load Data';
+        document.getElementById('load-result').textContent = '✅ Data loaded at ' + new Date().toLocaleTimeString();
+      }, 800);
+    });
+
+    // 9. Toast
+    attachCaptureObserver('9. Toast (sibling container)', 'toast-btn', 'click',
+      'Toast added to SIBLING container — NOT in target subtree. Expected: empty.');
+    document.getElementById('toast-btn').addEventListener('click', function() {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = 'Notification ' + new Date().toLocaleTimeString();
+      document.getElementById('toast-area').appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    });
+
+    // 10. Native select
+    attachCaptureObserver('10. Native Select', 'sel', 'change',
+      'value property changes (IDL, not mutation). Snapshot diff should show value change.');
+    document.getElementById('sel').addEventListener('change', function() {
+      document.getElementById('sel-result').textContent = 'Selected: ' + (this.value || 'none');
+    });
+
+    // 11. Form validation
+    document.getElementById('email-in').addEventListener('blur', function() {
+      const grp = document.getElementById('email-grp');
+      if (this.value.trim() && !this.value.includes('@')) grp.classList.add('error');
+      else grp.classList.remove('error');
+    });
+    // For change observation
+    const emailInput = document.getElementById('email-in');
+    emailInput.addEventListener('change', function() {
+      const grp = document.getElementById('email-grp');
+      if (this.value.trim() && !this.value.includes('@')) grp.classList.add('error');
+      else grp.classList.remove('error');
+    });
+    attachCaptureObserver('11. Form Validation', 'email-grp', 'change',
+      'Error class on ancestor of input. Observer on .input-group sees class on SELF (target = group).');
+
+    // 12. Tooltip (CSS-only)
+    attachCaptureObserver('12. Tooltip (CSS-only)', 'tip-host', 'click',
+      'CSS-only display, no DOM mutation. Expected: empty (honest null).');
+
+    // 13. Element removed after click
+    attachCaptureObserver('13. Element Removal', 'remove-btn', 'click',
+      'Target removes ITSELF from DOM. endReason should be element-removed.');
+    document.getElementById('remove-btn').addEventListener('click', function() {
+      this.remove();
+    });
+
+    // ============================================================
+    // AUTO-RUN ALL TESTS
+    // ============================================================
+    window.__runAll = function() {
+      const tests = [
+        { id: 'dd-toggle', evt: 'click', val: null },
+        { id: 'acc-h1', evt: 'click', val: null },
+        { id: 'amz-cb', evt: 'click', val: null, delay: 0 },
+        { id: 'rct', evt: 'click', val: null },
+        { id: 'modal-btn', evt: 'click', val: null },
+      ];
+      // Tabs: click tab 2
+      setTimeout(() => { document.querySelectorAll('.tab')[1].click(); }, 0);
+      // List: type and add
+      setTimeout(() => { document.getElementById('todo-in').value = 'Auto Item'; document.getElementById('todo-add').click(); }, 500);
+      // Loading
+      setTimeout(() => { document.getElementById('load-btn').click(); }, 1000);
+      // Toast
+      setTimeout(() => { document.getElementById('toast-btn').click(); }, 1500);
+      // Select
+      setTimeout(() => { const s = document.getElementById('sel'); s.value = 'blue'; s.dispatchEvent(new Event('change', { bubbles: true })); }, 2000);
+      // Form validation
+      setTimeout(() => { const e = document.getElementById('email-in'); e.value = 'bad'; e.dispatchEvent(new Event('change', { bubbles: true })); }, 2500);
+      // Tooltip
+      setTimeout(() => { document.getElementById('tip-host').click(); }, 3000);
+      // Removal
+      setTimeout(() => { document.getElementById('remove-btn').click(); }, 3500);
+
+      // Fire the click-based ones
+      tests.forEach((t, i) => {
+        setTimeout(() => {
+          const el = document.getElementById(t.id);
+          if (el) el.click();
+        }, i * 100);
+      });
+    };
+
+    console.log('[M1 Test v2] Ready. Run window.__runAll()');
+  </script>
+</body>
+</html>

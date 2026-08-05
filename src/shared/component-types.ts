@@ -14,6 +14,7 @@
  */
 
 import type { ElementIdentity } from './types';
+import type { ObservationResult } from './observation-types';
 
 // ── Browser Events ─────────────────────────────────────────────────────
 
@@ -380,6 +381,15 @@ export interface ComponentInteraction {
   componentFramework?: string;
   /** Layer 3: Human-readable business meaning (e.g. 'Sort by Name', 'Close dialog'). */
   businessMeaning?: string;
+
+  // ── M1: Behavioral Observations ──────────────────────────────────────
+  //
+  // Populated by the observation pipeline (Phase D). Optional because not
+  // all code paths go through the observation system (existing tests,
+  // events captured before coordinator was configured).
+
+  /** M1: Behavioral observations from the observation coordinator. */
+  behavioralObservations?: ObservationResult[];
 }
 
 // ── Runtime Configuration ──────────────────────────────────────────────

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html><head><style>
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+  @keyframes slide { from { transform: translateX(0); } to { transform: translateX(100px); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .spinner { animation: spin 1s linear infinite; display: inline-block; }
+  .pulse { animation: pulse 2s ease-in-out infinite; }
+  .fade-in { animation: fadeIn 0.5s ease-in; }
+  .card { transition: transform 0.3s ease, box-shadow 0.3s ease; border: 1px solid #ccc; margin: 4px; padding: 8px; }
+  .card.active { border-color: #1976d2; }
+  .loading-bar { position: relative; overflow: hidden; height: 4px; background: #e0e0e0; }
+  .loading-bar::after {
+    content: ''; position: absolute; top: 0; left: 0; height: 100%; width: 40%;
+    background: #1976d2; animation: slide 1.5s ease-in-out infinite;
+  }
+  #notifications { position: fixed; top: 10px; right: 10px; width: 300px; }
+  .toast { background: #333; color: white; padding: 8px; margin: 4px; border-radius: 4px; }
+</style></head><body>
+<div id="app">
+  <h1>Mutation Stress Test</h1>
+  <div id="content"></div>
+</div>
+<script>
+  const content = document.getElementById('content');
+  // Create 100 elements
+  for (let i = 0; i < 100; i++) {
+    const div = document.createElement('div');
+    div.className = 'card pulse';
+    div.innerHTML = '<span class="spinner">X</span> <span class="label">Item ' + i + '</span>';
+    content.appendChild(div);
+  }
+  // Loading bar
+  const bar = document.createElement('div');
+  bar.className = 'loading-bar';
+  content.appendChild(bar);
+
+  // Style/class mutations every 100ms
+  setInterval(() => {
+    const cards = content.querySelectorAll('.card');
+    cards.forEach((card) => {
+      if (Math.random() > 0.7) {
+        card.classList.toggle('active');
+        card.style.opacity = Math.random().toFixed(2);
+      }
+    });
+  }, 100);
+
+  // characterData mutations every 200ms
+  setInterval(() => {
+    const labels = content.querySelectorAll('.card .label');
+    labels.forEach((label) => {
+      if (Math.random() > 0.5) {
+        label.textContent = 'Updated ' + Math.floor(Math.random() * 1000);
+      }
+    });
+  }, 200);
+
+  // childList mutations every 500ms
+  let notifContainer = document.createElement('div');
+  notifContainer.id = 'notifications';
+  document.body.appendChild(notifContainer);
+  setInterval(() => {
+    if (notifContainer.children.length > 5) {
+      notifContainer.removeChild(notifContainer.firstChild);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'toast fade-in';
+    toast.textContent = 'Notification ' + Date.now();
+    notifContainer.appendChild(toast);
+  }, 500);
+</script>
+</body></html>
