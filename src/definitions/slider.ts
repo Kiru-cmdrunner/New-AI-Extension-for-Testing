@@ -23,7 +23,7 @@ import type {
   ComponentCompletion,
   ObservedEvent,
 } from '../shared/component-types';
-import { isSlider, bestName } from './patterns';
+import { isSlider, bestName, elementKey } from './patterns';
 
 export const sliderDefinition: ComponentDefinition = {
   type: 'Slider',
@@ -44,11 +44,8 @@ export const sliderDefinition: ComponentDefinition = {
   },
 
   isInScope(event: ObservedEvent, ctx: ComponentContext): boolean {
-    // Any event on the same element is in scope — this consumes clicks on the
-    // slider track so Click definition doesn't claim them during the lifecycle.
-    // (Same pattern as TextEntry.)
-    return event.target.stableId === ctx.trigger.stableId
-      || event.target.cssSelector === ctx.trigger.cssSelector;
+    // Use elementKey() to avoid null === null false positives.
+    return elementKey(event.target) === elementKey(ctx.trigger);
   },
 
   handleEvent(event: ObservedEvent, ctx: ComponentContext): ComponentCompletion | null {
@@ -82,13 +79,9 @@ export const sliderDefinition: ComponentDefinition = {
 
   shouldCancelOnOutside(event: ObservedEvent, ctx: ComponentContext): boolean {
     // A click on a DIFFERENT element means the user moved on.
-    // A click on the same element (click-to-set on slider track) is part of
-    // the adjustment and should NOT cancel.
+    // Use elementKey() to correctly detect different elements when IDs are absent.
     if (event.eventType === 'click') {
-      const sameElement =
-        event.target.stableId === ctx.trigger.stableId ||
-        event.target.cssSelector === ctx.trigger.cssSelector;
-      return !sameElement;
+      return elementKey(event.target) !== elementKey(ctx.trigger);
     }
     return false;
   },

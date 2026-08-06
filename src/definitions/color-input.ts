@@ -26,7 +26,7 @@ import type {
   ComponentCompletion,
   ObservedEvent,
 } from '../shared/component-types';
-import { bestName } from './patterns';
+import { bestName, elementKey } from './patterns';
 
 const COLOR_LIFECYCLE_EVENTS = new Set<BrowserEventType>([
   'input', 'change', 'blur',
@@ -50,8 +50,7 @@ export const colorInputDefinition: ComponentDefinition = {
   isInScope(event: ObservedEvent, ctx: ComponentContext): boolean {
     if (!COLOR_LIFECYCLE_EVENTS.has(event.eventType)) return false;
 
-    return event.target.stableId === ctx.trigger.stableId
-      || event.target.cssSelector === ctx.trigger.cssSelector;
+    return elementKey(event.target) === elementKey(ctx.trigger);
   },
 
   handleEvent(event: ObservedEvent, ctx: ComponentContext): ComponentCompletion | null {
@@ -82,10 +81,7 @@ export const colorInputDefinition: ComponentDefinition = {
 
   shouldCancelOnOutside(event: ObservedEvent, ctx: ComponentContext): boolean {
     if (event.eventType === 'click') {
-      const sameElement =
-        event.target.stableId === ctx.trigger.stableId ||
-        event.target.cssSelector === ctx.trigger.cssSelector;
-      return !sameElement;
+      return elementKey(event.target) !== elementKey(ctx.trigger);
     }
     return false;
   },

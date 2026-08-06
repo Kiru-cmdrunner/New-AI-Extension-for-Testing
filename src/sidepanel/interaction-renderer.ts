@@ -43,6 +43,7 @@ const TYPE_DISPLAY: Record<string, TypeDisplay> = {
   Tab:          { icon: '📂', label: 'Tab',           color: '#8b5cf6' },
   Scroll:       { icon: '📜', label: 'Scroll',        color: '#6b7280' },
   Navigation:   { icon: '🧭', label: 'Navigation',    color: '#0ea5e9' },
+  Unclassified: { icon: '❓', label: 'Unclassified',  color: '#f59e0b' },
 };
 
 const DEFAULT_DISPLAY: TypeDisplay = { icon: '❓', label: 'Unknown', color: '#9ca3af' };
@@ -138,6 +139,14 @@ function fallbackActionDescription(interaction: ComponentInteraction): string {
     case 'Link':
       return `Click "${targetName}" link`;
 
+    case 'Unclassified': {
+      const physical = String(metadata.physicalEventType ?? 'click');
+      if (physical === 'contextmenu') {
+        return `Right-click "${targetName}"`;
+      }
+      return `Click "${targetName}" (unclassified ${physical})`;
+    }
+
     case 'Scroll':
       return `Scroll page`;
 
@@ -174,6 +183,12 @@ function formatMetadata(interaction: ComponentInteraction): string | null {
 
     case 'Scroll':
       if (metadata.hasDelta === false) parts.push('⚠️ 0px scroll');
+      break;
+
+    case 'Unclassified':
+      // Capture-guarantee v2: show the physical event type so the user
+      // understands this is a real, preserved action — not noise.
+      parts.push(`physical: ${String(metadata.physicalEventType ?? 'click')}`);
       break;
   }
 
@@ -336,6 +351,9 @@ export function renderProductionInteractions(
       case 'Hover':
         // Evidence-based hover: only meaningful hovers are shown
         return i.metadata.meaningful === true;
+      case 'Unclassified':
+        // Capture-guarantee v2: always preserve deliberate physical actions
+        return true;
       default:
         return true;
     }

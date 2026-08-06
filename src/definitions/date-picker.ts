@@ -88,6 +88,13 @@ export const datePickerDefinition: ComponentDefinition = {
   },
 
   handleEvent(event: ObservedEvent, ctx: ComponentContext): ComponentCompletion | null {
+    // Capture surfaceRole from the trigger's aria-haspopup.
+    // Used by runtime's lifecycleOwnsTarget() for positive ownership testing.
+    if (!ctx.data.surfaceRole) {
+      ctx.data.surfaceRole =
+        ctx.triggerEvent.domContext.ariaHasPopup === 'grid' ? 'grid' : null;
+    }
+
     // Track typed values from input events (OXD date fields are text inputs
     // that users type into directly — no native date picker, no calendar click)
     if (event.eventType === 'input' || event.eventType === 'change') {
@@ -180,4 +187,9 @@ export const datePickerDefinition: ComponentDefinition = {
       },
     };
   },
+
+  // W3C-standard semantic children for ownership testing.
+  // Only role="gridcell" and native <td> are recognized as date cells.
+  semanticChildRoles: ['gridcell'],
+  semanticChildTags: ['TD'],
 };

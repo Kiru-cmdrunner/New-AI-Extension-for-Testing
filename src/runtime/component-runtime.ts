@@ -66,7 +66,61 @@ const SEEN_EVENTS_CAP = 500;
  */
 const MAX_LIFECYCLE_DURATION_MS = 15_000;
 
+/**
+ * Browser event types that represent deliberate user actions.
+ * Each of these MUST produce exactly one ComponentInteraction — either from
+ * a specialized definition, or from the Unclassified fallback.
+ *
+ * Accumulating events (scroll, input, change, mousemove) do NOT get the
+ * guarantee — they are part of lifecycles, not standalone actions.
+ */
+const DISCRETE_ACTION_TYPES = new Set<string>([
+  'click', 'contextmenu', 'mousedown', 'keydown',
+]);
+
 // ── Factory ───────────────────────────────────────────────────────────
+
+/**
+ * Generic ownership test — can an active lifecycle positively prove that a
+ * different-target discrete event is one of its own semantic children?
+ *
+ * Two-part test using ONLY W3C-standard signals:
+ *   Part 1: target has a declared semantic child role/tag
+ *   Part 2: target's ancestorRoles (DOM-traversed) includes the lifecycle's surfaceRole
+ *
+ * No framework heuristics. No isInteractiveElement(). No CSS selectors.
+ * If either test fails → false → event falls through to discovery/Unclassified.
+ */
+function lifecycleOwnsTarget(
+  event: ObservedEvent,
+  ctx: ComponentContext,
+  def: ComponentDefinition,
+): boolean {
+  // ── Part 1: Semantic child identity ─────────────────────
+  const { tag, ariaRole } = event.target;
+
+  const hasChildRole =
+    def.semanticChildRoles != null &&
+    def.semanticChildRoles.includes(ariaRole);
+
+  const hasChildTag =
+    def.semanticChildTags != null &&
+    def.semanticChildTags.includes(tag);
+
+  if (!hasChildRole && !hasChildTag) return false;
+
+  // ── Part 2: Surface containment via DOM-traversed ancestry ──
+  const surfaceRole = ctx.data.surfaceRole as string | undefined;
+  if (!surfaceRole) return false;
+
+  // ancestorRoles was populated by walking el.parentElement in the content
+  // script — this is actual DOM ancestry, not selector matching.
+  if (!event.domContext.ancestorRoles.includes(surfaceRole)) {
+    return false;
+  }
+
+  return true;
+}
 
 /**
  * Create a ComponentRuntime instance.
@@ -178,7 +232,6 @@ class ComponentRuntimeImpl implements ComponentRuntime {
       }
 
       if (inScope) {
-        handled = true;
         // Add event to member events
         ctx.memberEvents.push(event);
 
@@ -190,12 +243,44 @@ class ComponentRuntimeImpl implements ComponentRuntime {
         }
 
         if (completion) {
+          handled = true;
           ctx.state = completion.endState;
           ctx.endTime = event.timestamp;
           const interaction = this.completeComponent(ctx, def, completion);
           if (interaction) emitted.push(interaction);
           // Remove from stack
           this.activeStack.splice(i, 1);
+        } else {
+          // handleEvent returned null — event is either:
+          // (a) a legitimate accumulating event (input, change, scroll, mousemove)
+          // (b) a discrete event consumed silently by the lifecycle
+          //
+          // For discrete events on a DIFFERENT element than the trigger,
+          // we must verify positive ownership before allowing silent absorption.
+          // If ownership cannot be proven, the event falls through to discovery.
+
+          const isDiscrete = DISCRETE_ACTION_TYPES.has(event.eventType);
+          // Use elementKey() instead of raw stableId comparison to avoid
+          // null === null false positives when both elements lack IDs.
+          const sameElement =
+            elementKey(event.target) === elementKey(ctx.trigger);
+
+          if (isDiscrete && !sameElement) {
+            // Different-target discrete event inside lifecycle scope.
+            // Check positive ownership — W3C semantic child + surface containment.
+            if (lifecycleOwnsTarget(event, ctx, def)) {
+              // Legitimate absorption (e.g., dropdown option click with role=option).
+              handled = true;
+            } else {
+              // Cannot positively prove ownership. Release the event so it falls
+              // through to discovery → definition match or Unclassified fallback.
+              // The active lifecycle is NOT removed — it may still complete later.
+              ctx.memberEvents.pop(); // undo the push — this event isn't part of us
+            }
+          } else {
+            // Same-element click or accumulating event — legitimate absorption.
+            handled = true;
+          }
         }
       } else {
         // Not in scope — check outside cancellation
@@ -245,6 +330,7 @@ class ComponentRuntimeImpl implements ComponentRuntime {
         this.activeStack.push(newCtx);
         // Check if the definition completes immediately (e.g., Click, Checkbox)
         const def = this.findDefForType(newCtx.type);
+        let completedImmediately = false;
         if (def) {
           let completion: ComponentCompletion | null = null;
           try {
@@ -253,12 +339,50 @@ class ComponentRuntimeImpl implements ComponentRuntime {
             this.logError(def.type, 'handleEvent', err);
           }
           if (completion) {
+            completedImmediately = true;
             newCtx.state = completion.endState;
             newCtx.endTime = event.timestamp;
             const interaction = this.completeComponent(newCtx, def, completion);
             if (interaction) emitted.push(interaction);
             this.activeStack.pop();
           }
+        }
+        // CAPTURE GUARANTEE: Discovery matched and created a lifecycle, but
+        // the lifecycle did not complete on this event (handleEvent returned
+        // null). For discrete actions (click, mousedown, contextmenu, keydown),
+        // this means the definition CLAIMED the event as a trigger but did not
+        // produce an interaction. Without this fallback, the click is silently
+        // consumed — it became a lifecycle trigger, not an interaction.
+        //
+        // Example: Dropdown.detectTrigger matches because className contains
+        // "select", but the click was on the trigger itself (not an option),
+        // so handleEvent returns null. The click must still be preserved.
+        if (!completedImmediately && DISCRETE_ACTION_TYPES.has(event.eventType)) {
+          // Don't emit Unclassified if the lifecycle that was just created
+          // is still on the stack AND will naturally complete from subsequent
+          // events — only emit if this discrete action would otherwise be
+          // invisible. We check: did the lifecycle get popped? If still on
+          // stack, the trigger event itself needs preservation.
+          const interaction = this.createUnclassifiedInteraction(event);
+          try {
+            this.config.onEmit(interaction);
+          } catch (err) {
+            this.logError('Unclassified' as InteractionType, 'onEmit', err);
+          }
+          emitted.push(interaction);
+        }
+      } else {
+        // 5. CAPTURE GUARANTEE — No definition recognized this event.
+        // If it's a discrete action (click, contextmenu, mousedown, keydown),
+        // emit an Unclassified interaction so it's never silently lost.
+        if (DISCRETE_ACTION_TYPES.has(event.eventType)) {
+          const interaction = this.createUnclassifiedInteraction(event);
+          try {
+            this.config.onEmit(interaction);
+          } catch (err) {
+            this.logError('Unclassified' as InteractionType, 'onEmit', err);
+          }
+          emitted.push(interaction);
         }
       }
     }
@@ -399,6 +523,33 @@ class ComponentRuntimeImpl implements ComponentRuntime {
       startTime: event.timestamp,
       endTime: 0,
       data: {},
+    };
+  }
+
+  /**
+   * Create an Unclassified interaction for a discrete event that no definition
+   * recognized. Preserves the original physical event type so the interaction
+   * honestly represents what happened without inventing a classification.
+   */
+  private createUnclassifiedInteraction(event: ObservedEvent): ComponentInteraction {
+    this.interactionCounter++;
+    return {
+      interactionId: `int-${this.interactionCounter}`,
+      type: 'Unclassified' as InteractionType,
+      trigger: event.target,
+      triggerEvent: event,
+      memberEvents: [],
+      startTime: event.timestamp,
+      endTime: event.timestamp,
+      endState: 'completed',
+      metadata: {
+        physicalEventType: event.eventType,
+        recognized: false,
+        reason: 'no-definition-matched',
+        targetName: event.target.accessibleName || event.target.ariaLabel || event.target.tag.toLowerCase(),
+        targetTag: event.target.tag,
+        targetRole: event.target.ariaRole,
+      },
     };
   }
 

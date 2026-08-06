@@ -211,8 +211,10 @@ describe('Component Runtime', () => {
         target: { accessibleName: 'Login', tag: 'BUTTON', stableId: 'login' } as any,
       }),
     );
-    // TextEntry was abandoned (click elsewhere)
-    expect(emitted.length).toBe(1);
+    // TextEntry was abandoned (click elsewhere).
+    // Capture guarantee v2: the click also falls through to the Unclassified
+    // fallback since no Click definition is registered in this test.
+    expect(emitted.length).toBe(2);
     expect(emitted[0].endState).toBe('abandoned');
     expect(runtime.activeCount).toBe(0);
   });
@@ -368,7 +370,10 @@ describe('Component Runtime', () => {
 
     // Should NOT throw
     const result = runtime.process(event);
-    expect(result.length).toBe(0); // no match because detectTrigger threw
+    // Capture guarantee v2: even when detectTrigger throws, a discrete
+    // click is preserved as Unclassified instead of silently dropped.
+    expect(result.length).toBe(1);
+    expect(result[0].type).toBe('Unclassified');
     expect(runtime.errors.length).toBeGreaterThan(0);
     expect(runtime.errors[0]).toContain('detectTrigger');
   });

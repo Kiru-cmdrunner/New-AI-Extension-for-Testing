@@ -138,7 +138,7 @@ describe('G2: tabIndex Wiring', () => {
       expect(emitted[0].type).toBe('Click');
     });
 
-    it('still rejects bare div with tabIndex=null', () => {
+    it('preserves bare div with tabIndex=null as Unclassified', () => {
       const { runtime, emitted } = setupRuntime();
       runtime.process(
         makeEvent('e1', 'click',
@@ -146,10 +146,12 @@ describe('G2: tabIndex Wiring', () => {
           { tabIndex: null },
         ),
       );
-      expect(emitted.length).toBe(0);
+      // Capture guarantee: no definition matched, click preserved
+      expect(emitted.length).toBe(1);
+      expect(emitted[0].type).toBe('Unclassified');
     });
 
-    it('rejects div[tabindex=-1] (not tab-reachable)', () => {
+    it('preserves div[tabindex=-1] as Unclassified (not tab-reachable)', () => {
       const { runtime, emitted } = setupRuntime();
       runtime.process(
         makeEvent('e1', 'click',
@@ -157,7 +159,9 @@ describe('G2: tabIndex Wiring', () => {
           { tabIndex: -1 },
         ),
       );
-      expect(emitted.length).toBe(0);
+      // Capture guarantee: no definition matched, click preserved
+      expect(emitted.length).toBe(1);
+      expect(emitted[0].type).toBe('Unclassified');
     });
 
     it('higher-priority definition still wins (Checkbox on div[tabindex=0] with role=checkbox)', () => {

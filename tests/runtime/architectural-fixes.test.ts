@@ -469,7 +469,10 @@ describe('Fix 4: Timeout-based lifecycle abandonment', () => {
     // Trigger the component on dd1
     runtime.process(clickEvent('c1', 'dd1', 'Select', baseTime));
     expect(runtime.activeCount).toBe(1);
-    expect(emitted.length).toBe(0);
+    // Capture guarantee: click triggered lifecycle but didn't complete —
+    // Unclassified emitted so the click is preserved.
+    expect(emitted.length).toBe(1);
+    expect(emitted[0].type).toBe('Unclassified');
 
     // A later event on a different element (within timeout) — component still active
     runtime.process(clickEvent('c2', 'btn1', 'Other', baseTime + 1000));

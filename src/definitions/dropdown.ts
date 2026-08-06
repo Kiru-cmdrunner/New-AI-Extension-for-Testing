@@ -65,6 +65,11 @@ export const dropdownDefinition: ComponentDefinition = {
     return null;
   },
 
+  // Capture surface role from aria-haspopup for ownership testing.
+  // detectTrigger returns ComponentTrigger (not ctx), so surfaceRole is
+  // captured in handleEvent when the first in-scope event arrives.
+  // The runtime's lifecycleOwnsTarget() reads ctx.data.surfaceRole.
+
   isInScope(event: ObservedEvent, ctx: ComponentContext): boolean {
     // In scope if:
     // 1. Event is on the trigger element itself
@@ -107,6 +112,13 @@ export const dropdownDefinition: ComponentDefinition = {
   },
 
   handleEvent(event: ObservedEvent, ctx: ComponentContext): ComponentCompletion | null {
+    // Capture surfaceRole from the trigger's aria-haspopup.
+    // Used by runtime's lifecycleOwnsTarget() for positive ownership testing.
+    if (!ctx.data.surfaceRole) {
+      ctx.data.surfaceRole =
+        ctx.triggerEvent.domContext.ariaHasPopup === 'listbox' ? 'listbox' : null;
+    }
+
     // Option click/mousedown → complete
     if (
       (event.eventType === 'click' || event.eventType === 'mousedown') &&
@@ -165,4 +177,9 @@ export const dropdownDefinition: ComponentDefinition = {
       },
     };
   },
+
+  // W3C-standard semantic children for ownership testing.
+  // Only role="option" and native <option> are recognized as dropdown items.
+  semanticChildRoles: ['option'],
+  semanticChildTags: ['OPTION'],
 };

@@ -164,7 +164,8 @@ export type InteractionType =
   | 'ColorInput'
   | 'Tab'
   | 'Scroll'
-  | 'Navigation';
+  | 'Navigation'
+  | 'Unclassified';
 
 // ── Component Lifecycle ────────────────────────────────────────────────
 
@@ -337,6 +338,21 @@ export interface ComponentDefinition {
     ctx: ComponentContext,
     completion: ComponentCompletion,
   ): { metadata: Record<string, unknown> };
+
+  /**
+   * W3C-standard ARIA roles that identify selectable items belonging to this
+   * lifecycle's surface (e.g., 'option' for Dropdown, 'gridcell' for DatePicker).
+   * Used by the generic ownership test in ComponentRuntime.
+   *
+   * Leave undefined if this lifecycle has no surface children.
+   */
+  semanticChildRoles?: readonly string[];
+
+  /**
+   * Native HTML tags that identify selectable items belonging to this
+   * lifecycle's surface (e.g., 'OPTION', 'TD').
+   */
+  semanticChildTags?: readonly string[];
 }
 
 // ── Component Interaction (Output) ─────────────────────────────────────

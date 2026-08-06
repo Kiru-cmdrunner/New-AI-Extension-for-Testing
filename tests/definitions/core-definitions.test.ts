@@ -112,12 +112,14 @@ describe('Click Definition', () => {
     expect(emitted[0].type).toBe('Link');
   });
 
-  it('rejects non-interactive elements (bare div)', () => {
+  it('preserves non-interactive element clicks as Unclassified (bare div)', () => {
     const { runtime, emitted } = setupRuntime();
     runtime.process(
       makeEvent('e1', 'click', { tag: 'DIV', accessibleName: '' }),
     );
-    expect(emitted.length).toBe(0);
+    // Capture guarantee: no definition matched, but the click is preserved
+    expect(emitted.length).toBe(1);
+    expect(emitted[0].type).toBe('Unclassified');
   });
 
   it('captures interactive div via class pattern', () => {
@@ -337,10 +339,14 @@ describe('Priority Ordering', () => {
     const { runtime, emitted } = setupRuntime();
     const target = { tag: 'SELECT', ariaRole: 'listbox', stableId: 'sel-prio', accessibleName: 'Status' };
     runtime.process(makeEvent('c1', 'click', target));
+    // Capture guarantee: click triggered Dropdown lifecycle but it didn't
+    // complete immediately — click preserved as Unclassified.
+    expect(emitted.length).toBe(1);
+    expect(emitted[0].type).toBe('Unclassified');
     // Complete with a change event
     runtime.process(makeEvent('ch1', 'change', target, {}, { valueAfter: 'Active' }));
-    expect(emitted.length).toBe(1);
-    expect(emitted[0].type).toBe('Dropdown');
+    expect(emitted.length).toBe(2);
+    expect(emitted[1].type).toBe('Dropdown');
   });
 
   it('Checkbox wins over Click for checkbox input', () => {

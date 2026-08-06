@@ -95,6 +95,13 @@ export function isProductionInteraction(
       if (metadata.meaningful !== true) return false;
       return true;
 
+    case 'Unclassified':
+      // Capture-guarantee v2: every deliberate physical action preserved.
+      // Unclassified interactions represent a real user action that no
+      // definition recognized — they must always appear in output so no
+      // deliberate click is silently lost.
+      return true;
+
     default:
       return true;
   }
@@ -118,6 +125,7 @@ export function filterProductionInteractions(
 export interface IRAction {
   type:
     | 'CLICK'
+    | 'RIGHT_CLICK'
     | 'FILL'
     | 'SELECT'
     | 'TOGGLE'
@@ -278,6 +286,42 @@ export function toIRAction(interaction: ComponentInteraction): IRAction | null {
         },
         ...enrichment,
       };
+
+    case 'Unclassified':
+      // Capture-guarantee v2: map Unclassified by its original physical event type.
+      // A physical 'click' → CLICK (preserves the deliberate action).
+      // A physical 'contextmenu' → RIGHT_CLICK.
+      // Keydowns, dragstarts, and other non-CLICK events that we cannot
+      // meaningfully replay → null (explicitly unsupported, NOT silently dropped —
+      // the physical interaction IS preserved in the interactions list, just not
+      // mappable to a replayable IR action).
+      {
+        const physicalType = String(metadata.physicalEventType ?? 'click');
+        if (physicalType === 'contextmenu') {
+          return {
+            type: 'RIGHT_CLICK',
+            target,
+            metadata: {
+              unclassified: true,
+              physicalEventType: physicalType,
+            },
+            ...enrichment,
+          };
+        }
+        if (physicalType === 'click' || physicalType === 'mousedown') {
+          return {
+            type: 'CLICK',
+            target,
+            metadata: {
+              unclassified: true,
+              physicalEventType: physicalType,
+            },
+            ...enrichment,
+          };
+        }
+        // keydown, dragstart, etc. — preserved in interactions, not replayable
+        return null;
+      }
 
     default:
       return null;

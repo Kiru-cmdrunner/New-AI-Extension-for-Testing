@@ -19,7 +19,7 @@ import type {
   ComponentCompletion,
   ObservedEvent,
 } from '../shared/component-types';
-import { isTextEntry, bestName } from './patterns';
+import { isTextEntry, bestName, elementKey } from './patterns';
 
 export const textEntryDefinition: ComponentDefinition = {
   type: 'TextEntry',
@@ -40,9 +40,9 @@ export const textEntryDefinition: ComponentDefinition = {
   },
 
   isInScope(event: ObservedEvent, ctx: ComponentContext): boolean {
-    // Events on the same element are in scope
-    return event.target.stableId === ctx.trigger.stableId
-      || event.target.cssSelector === ctx.trigger.cssSelector;
+    // Use elementKey() to avoid null === null false positives when both
+    // elements lack ID attributes.
+    return elementKey(event.target) === elementKey(ctx.trigger);
   },
 
   handleEvent(event: ObservedEvent, ctx: ComponentContext): ComponentCompletion | null {
@@ -75,10 +75,7 @@ export const textEntryDefinition: ComponentDefinition = {
     // browser event order (mousedown → blur → click), which would abandon
     // the TextEntry before it can complete.
     if (event.eventType === 'click') {
-      const sameElement =
-        event.target.stableId === ctx.trigger.stableId ||
-        event.target.cssSelector === ctx.trigger.cssSelector;
-      return !sameElement;
+      return elementKey(event.target) !== elementKey(ctx.trigger);
     }
     return false;
   },

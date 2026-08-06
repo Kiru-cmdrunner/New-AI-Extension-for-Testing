@@ -42,6 +42,7 @@ import type {
 import {
   isInteractiveElement,
   bestName,
+  elementKey,
 } from './patterns';
 
 // ── Confidence Weights ────────────────────────────────────────────────
@@ -162,8 +163,7 @@ export const hoverDefinition: ComponentDefinition = {
 
     // ── mouseleave: decide emit vs discard ──
     if (event.eventType === 'mouseleave') {
-      const sameElement = event.target.stableId === ctx.trigger.stableId
-        || event.target.cssSelector === ctx.trigger.cssSelector;
+      const sameElement = elementKey(event.target) === elementKey(ctx.trigger);
 
       if (sameElement) {
         const dwell = event.timestamp - ctx.startTime;
