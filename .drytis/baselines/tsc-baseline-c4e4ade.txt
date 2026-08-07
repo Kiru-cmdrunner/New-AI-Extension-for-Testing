@@ -1,0 +1,626 @@
+src/background/service-worker.ts(27,30): error TS6196: 'ComponentInteraction' is declared but never used.
+src/background/service-worker.ts(311,31): error TS2345: Argument of type '"cmdrunner_live_interactions"' is not assignable to parameter of type 'StorageKeys'.
+src/background/service-worker.ts(326,36): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/background/service-worker.ts(37,3): error TS6133: 'attachPendingBehavioralObservations' is declared but its value is never read.
+src/background/service-worker.ts(377,9): error TS2322: Type '{ sessionId: string; generatedAt: string; schemaVersion: number; fragment: null; capability: null; }' is not assignable to type 'UnderstandingResult'.
+src/background/service-worker.ts(559,28): error TS2339: Property 'elements' does not exist on type 'UnitOfWork'.
+src/background/service-worker.ts(583,15): error TS2339: Property 'rollback' does not exist on type 'UnitOfWork'.
+src/background/service-worker.ts(595,9): error TS6133: 'healedElementIds' is declared but its value is never read.
+src/background/service-worker.ts(646,15): error TS2339: Property 'executionRuns' does not exist on type 'UnitOfWork'.
+src/background/service-worker.ts(647,15): error TS2339: Property 'commit' does not exist on type 'UnitOfWork'.
+src/background/service-worker.ts(845,10): error TS2678: Type '"OBSERVED_EVENT"' is not comparable to type '"RECORDED_EVENT" | "START_RECORDING" | "STOP_RECORDING" | "OPEN_SETTINGS" | "OPEN_REPOSITORY" | "PING" | "CONTENT_SCRIPT_STATUS" | "STATE_UPDATE" | "RUN_TEST" | "EXECUTION_RESULT"'.
+src/background/service-worker.ts(852,10): error TS2678: Type '"BEHAVIORAL_EFFECTS"' is not comparable to type '"RECORDED_EVENT" | "START_RECORDING" | "STOP_RECORDING" | "OPEN_SETTINGS" | "OPEN_REPOSITORY" | "PING" | "CONTENT_SCRIPT_STATUS" | "STATE_UPDATE" | "RUN_TEST" | "EXECUTION_RESULT"'.
+src/capabilities/capability-bridge.ts(180,3): error TS2322: Type '{ capabilityId: string; interactionId: string; capability: CapabilityType; confidence: CapabilityConfidence; parameters: CapabilityParameters; evidence: { ...; }; alternatives: { ...; }[]; unclassifiedReason: string | undefined; }[]' is not assignable to type 'SerializableCapabilityRecord[]'.
+src/capabilities/capability-engine.ts(23,3): error TS6196: 'CapabilityParameters' is declared but never used.
+src/capabilities/conflict-resolver.ts(22,3): error TS6196: 'CapabilityType' is declared but never used.
+src/classifier/evidence/providers/aria-provider.ts(212,9): error TS2339: Property 'domContext' does not exist on type 'RecordedEvent'.
+src/classifier/evidence/providers/aria-provider.ts(224,17): error TS2339: Property 'valueAfter' does not exist on type 'RecordedEvent'.
+src/classifier/evidence/providers/aria-provider.ts(224,50): error TS2339: Property 'valueAfter' does not exist on type 'RecordedEvent'.
+src/classifier/evidence/providers/aria-provider.ts(225,17): error TS2339: Property 'valueAfter' does not exist on type 'RecordedEvent'.
+src/classifier/evidence/providers/aria-provider.ts(225,44): error TS2339: Property 'valueBefore' does not exist on type 'RecordedEvent'.
+src/classifier/evidence/providers/aria-provider.ts(275,26): error TS2339: Property 'target' does not exist on type 'RecordedEvent'.
+src/classifier/evidence/providers/aria-provider.ts(66,61): error TS2367: This comparison appears to be unintentional because the types '"focus" | "scroll" | "dblclick" | "contextmenu" | "blur" | "change" | "input" | "mouseenter" | "dragstart" | "drop" | "dateSelect"' and '"auxclick"' have no overlap.
+src/classifier/evidence/providers/aria-provider.ts(93,15): error TS2339: Property 'domContext' does not exist on type 'RecordedEvent'.
+src/classifier/evidence/providers/css-classname-provider.ts(232,9): error TS2367: This comparison appears to be unintentional because the types '"focus" | "scroll" | "dblclick" | "contextmenu" | "blur" | "change" | "input" | "mouseenter" | "dragstart" | "drop" | "dateSelect"' and '"auxclick"' have no overlap.
+src/classifier/evidence/providers/dom-provider.ts(174,61): error TS2367: This comparison appears to be unintentional because the types '"focus" | "scroll" | "dblclick" | "contextmenu" | "blur" | "change" | "input" | "mouseenter" | "dragstart" | "drop" | "dateSelect"' and '"auxclick"' have no overlap.
+src/classifier/evidence/providers/dom-provider.ts(197,43): error TS2367: This comparison appears to be unintentional because the types '"focus" | "scroll" | "dblclick" | "contextmenu" | "blur" | "change" | "input" | "mouseenter" | "dragstart" | "drop" | "dateSelect"' and '"auxclick"' have no overlap.
+src/classifier/evidence/providers/dom-provider.ts(216,44): error TS2367: This comparison appears to be unintentional because the types '"focus" | "scroll" | "dblclick" | "contextmenu" | "blur" | "change" | "input" | "mouseenter" | "dragstart" | "drop" | "dateSelect"' and '"auxclick"' have no overlap.
+src/classifier/evidence/providers/dom-provider.ts(236,43): error TS2367: This comparison appears to be unintentional because the types '"focus" | "scroll" | "dblclick" | "contextmenu" | "blur" | "change" | "input" | "mouseenter" | "dragstart" | "drop" | "dateSelect"' and '"auxclick"' have no overlap.
+src/classifier/evidence/providers/dom-provider.ts(251,53): error TS2367: This comparison appears to be unintentional because the types '"focus" | "scroll" | "dblclick" | "contextmenu" | "blur" | "change" | "input" | "mouseenter" | "dragstart" | "drop" | "dateSelect"' and '"auxclick"' have no overlap.
+src/classifier/evidence/providers/dom-provider.ts(272,43): error TS2367: This comparison appears to be unintentional because the types '"focus" | "scroll" | "dblclick" | "contextmenu" | "blur" | "change" | "input" | "mouseenter" | "dragstart" | "drop" | "dateSelect"' and '"auxclick"' have no overlap.
+src/classifier/evidence/providers/dom-provider.ts(753,21): error TS2339: Property 'valueAfter' does not exist on type 'RecordedEvent'.
+src/classifier/evidence/providers/dom-provider.ts(753,41): error TS2339: Property 'valueBefore' does not exist on type 'RecordedEvent'.
+src/classifier/evidence/providers/event-sequence-provider.ts(231,11): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+src/classifier/evidence/providers/event-sequence-provider.ts(232,11): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+src/classifier/evidence/providers/mutation-provider.ts(39,26): error TS2339: Property 'domContext' does not exist on type 'RecordedEvent'.
+src/classifier/interaction-detector.ts(366,98): error TS2339: Property 'valueAfter' does not exist on type 'RecordedEvent'.
+src/classifier/interaction-detector.ts(527,9): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+src/classifier/interaction-detector.ts(528,9): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+src/definitions/dropdown.ts(43,39): error TS6133: 'ariaLabel' is declared but its value is never read.
+src/definitions/dropdown.ts(43,50): error TS6133: 'placeholder' is declared but its value is never read.
+src/definitions/scroll.ts(121,18): error TS2339: Property 'elementKey' does not exist on type 'ElementIdentity'.
+src/definitions/scroll.ts(121,51): error TS2339: Property 'elementKey' does not exist on type 'ElementIdentity'.
+src/definitions/text-entry.ts(32,28): error TS6133: 'placeholder' is declared but its value is never read.
+src/domain/entities/capability.ts(286,27): error TS2339: Property 'push' does not exist on type 'readonly { readonly field: string; readonly existing: unknown; readonly candidate: unknown; readonly resolution: string; }[]'.
+src/domain/entities/capability.ts(294,28): error TS2339: Property 'push' does not exist on type 'readonly { readonly field: string; readonly from: unknown; readonly to: unknown; }[]'.
+src/domain/entities/capability.ts(34,29): error TS6133: 'ValueObjectError' is declared but its value is never read.
+src/enrichment/component-detector.ts(16,30): error TS2459: Module '"../shared/component-types"' declares 'ElementIdentity' locally, but it is not exported.
+src/enrichment/component-detector.ts(173,26): error TS6133: 'identity' is declared but its value is never read.
+src/execution/ir-executor-impl.ts(261,9): error TS6133: 'resolvedElement' is declared but its value is never read.
+src/execution/ir-executor-impl.ts(262,9): error TS6133: 'resolvedIdentity' is declared but its value is never read.
+src/execution/ir-executor-impl.ts(35,3): error TS6196: 'ResolvedTarget' is declared but never used.
+src/execution/ir-executor-impl.ts(437,9): error TS2345: Argument of type 'Record<string, string | null>' is not assignable to parameter of type 'ElementIdentity'.
+src/execution/ir-executor-impl.ts(44,1): error TS6133: 'RankedLocator' is declared but its value is never read.
+src/execution/ir-executor-impl.ts(45,1): error TS6133: 'LocatorStrategyType' is declared but its value is never read.
+src/execution/ir-executor-impl.ts(461,13): error TS2353: Object literal may only specify known properties, and 'healedAt' does not exist in type 'HealContext'.
+src/execution/ir-executor-impl.ts(464,13): error TS2339: Property 'elements' does not exist on type 'UnitOfWork'.
+src/execution/ir-executor-impl.ts(467,17): error TS2339: Property 'commit' does not exist on type 'UnitOfWork'.
+src/presentation/output-adapter.ts(19,43): error TS2307: Cannot find module './component-types' or its corresponding type declarations.
+src/presentation/output-adapter.ts(20,38): error TS2307: Cannot find module './component-types' or its corresponding type declarations.
+src/recorder/deterministic-recorder.ts(1002,34): error TS2339: Property 'ariaValueNow' does not exist on type 'DomContext'.
+src/recorder/deterministic-recorder.ts(1003,35): error TS2339: Property 'ariaValueText' does not exist on type 'DomContext'.
+src/recorder/deterministic-recorder.ts(1004,34): error TS2339: Property 'ariaValueMin' does not exist on type 'DomContext'.
+src/recorder/deterministic-recorder.ts(1005,34): error TS2339: Property 'ariaValueMax' does not exist on type 'DomContext'.
+src/recorder/deterministic-recorder.ts(1006,31): error TS2339: Property 'nativeMin' does not exist on type 'DomContext'.
+src/recorder/deterministic-recorder.ts(1007,31): error TS2339: Property 'nativeMax' does not exist on type 'DomContext'.
+src/recorder/deterministic-recorder.ts(155,16): error TS6133: 'checkRecording' is declared but its value is never read.
+src/recorder/enrichment/capability-deriver.ts(31,3): error TS6196: 'EnrichmentEvent' is declared but never used.
+src/recorder/enrichment/enrichment-orchestrator.ts(158,5): error TS2322: Type '(InteractionContract | { constraints: { validOptions: OptionEntry[]; required: boolean | null; inputType: string | null; valueRange: { min: number; max: number; step: number; } | null; lengthRange: { ...; } | null; format: { ...; } | null; dateFormat: { ...; } | null; }; appliesTo: { ...; }; affordances: string[]; }...' is not assignable to type 'InteractionContract[]'.
+src/recorder/interaction-types.ts(348,20): error TS2339: Property 'addAction' does not exist on type 'RecordingSession'.
+src/recorder/interaction-types.ts(426,33): error TS2339: Property 'addAction' does not exist on type 'RecordingSession'.
+src/recorder/interaction-types.ts(495,20): error TS2339: Property 'addAction' does not exist on type 'RecordingSession'.
+src/recorder/interaction-types.ts(561,33): error TS2339: Property 'addAction' does not exist on type 'RecordingSession'.
+src/recorder/interaction-types.ts(627,20): error TS2339: Property 'addAction' does not exist on type 'RecordingSession'.
+src/recorder/interaction-types.ts(693,33): error TS2339: Property 'addAction' does not exist on type 'RecordingSession'.
+src/recorder/interaction-types.ts(795,33): error TS2339: Property 'addAction' does not exist on type 'RecordingSession'.
+src/recorder/phase5/recorder-entry.ts(230,7): error TS6133: 'modified' is declared but its value is never read.
+src/recorder/phase5/recorder-entry.ts(232,57): error TS2339: Property 'value' does not exist on type 'PromiseSettledResult<boolean>'.
+src/recorder/phase5/recorder-entry.ts(300,57): error TS2339: Property 'value' does not exist on type 'PromiseSettledResult<boolean>'.
+src/recorder/pipeline/domain-adapter.ts(219,25): error TS6133: 'event' is declared but its value is never read.
+src/recorder/pipeline/pipeline-runner.ts(132,11): error TS6133: 'ancestorRoles' is declared but its value is never read.
+src/recorder/pipeline/pipeline-runner.ts(28,36): error TS2307: Cannot find module '../recorder/recorded-event' or its corresponding type declarations.
+src/recorder/pipeline/pipeline-runner.ts(30,1): error TS6133: 'ElementIdentity' is declared but its value is never read.
+src/recorder/recognition/behavioral-recognizer.ts(115,3): error TS6133: 'relatedElementIds' is declared but its value is never read.
+src/recorder/recognition/behavioral-recognizer.ts(27,3): error TS6133: 'PatternType' is declared but its value is never read.
+src/recorder/recognition/behavioral-recognizer.ts(308,3): error TS6133: 'rootElementId' is declared but its value is never read.
+src/recorder/recognition/behavioral-recognizer.ts(368,3): error TS6133: 'relatedElementIds' is declared but its value is never read.
+src/recorder/recognition/behavioral-recognizer.ts(371,3): error TS6133: 'def' is declared but its value is never read.
+src/recorder/recognition/component-registry.ts(30,3): error TS6133: 'setBusinessField' is declared but its value is never read.
+src/recorder/recognition/component-registry.ts(347,7): error TS2353: Object literal may only specify known properties, and 'lifecycleState' does not exist in type 'CreateComponentGroupingInput'.
+src/recorder/recognition/orchestrator.ts(207,5): error TS4104: The type 'readonly ElementRoleInfo[]' is 'readonly' and cannot be assigned to the mutable type 'ElementRoleInfo[]'.
+src/recorder/recognition/orchestrator.ts(208,5): error TS2322: Type 'readonly ElementRoleInfo[] | undefined' is not assignable to type 'ElementRoleInfo[] | undefined'.
+src/recorder/recognition/orchestrator.ts(23,3): error TS6133: 'TransitionOperation' is declared but its value is never read.
+src/recorder/recognition/orchestrator.ts(24,3): error TS6133: 'PatternType' is declared but its value is never read.
+src/recorder/recognition/orchestrator.ts(41,8): error TS6133: 'EvidenceDisposition' is declared but its value is never read.
+src/recorder/recognition/orchestrator.ts(43,27): error TS6133: 'PatternDefinition' is declared but its value is never read.
+src/recorder/surface-detector.ts(15,34): error TS2307: Cannot find module '../recorded-event.ts' or its corresponding type declarations.
+src/repository/repository-page.ts(149,15): error TS6133: 'projectId' is declared but its value is never read.
+src/repository/repository-page.ts(408,37): error TS1354: 'readonly' type modifier is only permitted on array and tuple literal types.
+src/repository/repository-page.ts(439,36): error TS1354: 'readonly' type modifier is only permitted on array and tuple literal types.
+src/repository/repository-page.ts(935,25): error TS6133: 'LocatorStrategyType' is declared but its value is never read.
+src/repository/repository-page.ts(958,15): error TS6133: 'projectId' is declared but its value is never read.
+src/repository/services/healing-service.ts(255,11): error TS1354: 'readonly' type modifier is only permitted on array and tuple literal types.
+src/repository/services/session-persistence-service.ts(24,34): error TS6196: 'UnitOfWork' is declared but never used.
+src/repository/services/session-persistence-service.ts(29,1): error TS6133: 'CapabilityCandidate' is declared but its value is never read.
+src/repository/v2/dexie/dexie-database.ts(25,7): error TS6133: 'DB_VERSION' is declared but its value is never read.
+src/repository/v2/dexie/dexie-recording-session-repository.ts(31,27): error TS6133: 'capabilityId' is declared but its value is never read.
+src/repository/v2/interfaces/capability-repository.ts(9,27): error TS6196: 'EnrichCapabilityInput' is declared but never used.
+src/runtime/component-runtime.ts(106,37): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+src/runtime/component-runtime.ts(252,11): error TS2322: Type 'ComponentEndState' is not assignable to type 'ComponentState'.
+src/runtime/component-runtime.ts(26,3): error TS2459: Module '"../shared/component-types"' declares 'ElementIdentity' locally, but it is not exported.
+src/runtime/component-runtime.ts(26,3): error TS6196: 'ElementIdentity' is declared but never used.
+src/runtime/component-runtime.ts(350,13): error TS6133: 'completedImmediately' is declared but its value is never read.
+src/runtime/component-runtime.ts(360,13): error TS2322: Type 'ComponentEndState' is not assignable to type 'ComponentState'.
+src/runtime/evidence-ledger.ts(164,5): error TS4104: The type 'readonly LedgerEntry[]' is 'readonly' and cannot be assigned to the mutable type 'LedgerEntry[]'.
+src/runtime/sw-integration.ts(207,26): error TS18047: 'evidenceLedger' is possibly 'null'.
+src/runtime/sw-integration.ts(207,59): error TS18047: 'evidenceLedger' is possibly 'null'.
+src/semantics/effect-rules.ts(21,3): error TS6196: 'ElementStateSnapshot' is declared but never used.
+src/semantics/sw-bridge.ts(15,1): error TS6133: 'ObservationResult' is declared but its value is never read.
+src/sidepanel/sidepanel.ts(1156,31): error TS2345: Argument of type '"cmdrunner_live_interactions"' is not assignable to parameter of type 'StorageKeys'.
+src/sidepanel/sidepanel.ts(1174,31): error TS2345: Argument of type '"cmdrunner_live_interactions"' is not assignable to parameter of type 'StorageKeys'.
+src/sidepanel/sidepanel.ts(1242,13): error TS6133: 'interaction' is declared but its value is never read.
+src/sidepanel/sidepanel.ts(25,32): error TS6196: 'IRStep' is declared but never used.
+src/sidepanel/sidepanel.ts(313,10): error TS6133: 'renderTimeline' is declared but its value is never read.
+src/sidepanel/sidepanel.ts(317,10): error TS6133: 'renderRecordingTimeline' is declared but its value is never read.
+src/sidepanel/sidepanel.ts(89,7): error TS6133: 'csIndicator' is declared but its value is never read.
+src/storage/storage-service.ts(5,225): error TS6133: 'PlaywrightGeneratorOutput' is declared but its value is never read.
+src/tap/document-observer.ts(345,13): error TS7022: 'parent' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+src/tap/document-observer.ts(349,16): error TS18046: 's' is of type 'unknown'.
+src/tap/observation-coordinator.ts(136,43): error TS2304: Cannot find name 'WeakRef'.
+src/tap/observation-coordinator.ts(290,13): error TS7022: 'parent' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+src/tap/observation-coordinator.ts(294,16): error TS18046: 's' is of type 'unknown'.
+src/tap/observation-coordinator.ts(81,39): error TS2304: Cannot find name 'WeakRef'.
+tests/action-executor.test.ts(209,21): error TS2339: Property 'success' does not exist on type 'ActionExecutionResult | Promise<ActionExecutionResult>'.
+tests/action-executor.test.ts(210,21): error TS2339: Property 'error' does not exist on type 'ActionExecutionResult | Promise<ActionExecutionResult>'.
+tests/action-executor.test.ts(215,21): error TS2339: Property 'success' does not exist on type 'ActionExecutionResult | Promise<ActionExecutionResult>'.
+tests/action-executor.test.ts(216,21): error TS2339: Property 'error' does not exist on type 'ActionExecutionResult | Promise<ActionExecutionResult>'.
+tests/action-executor.test.ts(221,21): error TS2339: Property 'success' does not exist on type 'ActionExecutionResult | Promise<ActionExecutionResult>'.
+tests/action-executor.test.ts(226,21): error TS2339: Property 'success' does not exist on type 'ActionExecutionResult | Promise<ActionExecutionResult>'.
+tests/action-executor.test.ts(231,21): error TS2339: Property 'success' does not exist on type 'ActionExecutionResult | Promise<ActionExecutionResult>'.
+tests/action-executor.test.ts(235,36): error TS2345: Argument of type '"unknownAction"' is not assignable to parameter of type 'ActionType'.
+tests/action-executor.test.ts(236,21): error TS2339: Property 'success' does not exist on type 'ActionExecutionResult | Promise<ActionExecutionResult>'.
+tests/action-executor.test.ts(237,21): error TS2339: Property 'error' does not exist on type 'ActionExecutionResult | Promise<ActionExecutionResult>'.
+tests/action-executor.test.ts(246,21): error TS2339: Property 'success' does not exist on type 'ActionExecutionResult | Promise<ActionExecutionResult>'.
+tests/action-executor.test.ts(256,21): error TS2339: Property 'success' does not exist on type 'ActionExecutionResult | Promise<ActionExecutionResult>'.
+tests/action-executor.test.ts(25,8): error TS6133: 'ActionExecutionResult' is declared but its value is never read.
+tests/adapters/playwright/page-object-renderer.test.ts(325,11): error TS2353: Object literal may only specify known properties, and 'stepId' does not exist in type 'IRStep'.
+tests/adapters/playwright/page-object-renderer.test.ts(337,11): error TS2353: Object literal may only specify known properties, and 'stepId' does not exist in type 'IRStep'.
+tests/adapters/playwright/page-object-renderer.test.ts(349,11): error TS2353: Object literal may only specify known properties, and 'stepId' does not exist in type 'IRStep'.
+tests/adapters/playwright/page-object-renderer.test.ts(362,9): error TS2322: Type '"chromium"' is not assignable to type '"chrome" | "firefox" | "safari" | "edge"'.
+tests/adapters/playwright/page-object-renderer.test.ts(391,13): error TS2820: Type '"VISIBILITY"' is not assignable to type 'ValidationType'. Did you mean 'ValidationType.VISIBILITY'?
+tests/adapters/playwright/page-object-renderer.test.ts(392,13): error TS2820: Type '"IS_TRUE"' is not assignable to type 'ValidationComparison'. Did you mean 'ValidationComparison.IS_TRUE'?
+tests/adapters/playwright/page-object-renderer.test.ts(394,13): error TS2820: Type '"HARD"' is not assignable to type 'ValidationSeverity'. Did you mean 'ValidationSeverity.HARD'?
+tests/adapters/playwright/page-object-renderer.test.ts(407,9): error TS2322: Type '"chromium"' is not assignable to type '"chrome" | "firefox" | "safari" | "edge"'.
+tests/assertion-evaluator.test.ts(22,8): error TS6133: 'AssertionResult' is declared but its value is never read.
+tests/calendar-popover-suppression.test.ts(348,11): error TS2353: Object literal may only specify known properties, and 'ariaHasPopup' does not exist in type 'Partial<ElementIdentity>'.
+tests/capabilities/phase1-core-infrastructure.test.ts(67,5): error TS2741: Property 'captureSeq' is missing in type '{ eventId: string; eventType: "click"; timestamp: number; isTrusted: true; target: { elementId: string; accessibleName: string; ariaRole: string; ariaLabel: null; ariaLabelledBy: null; placeholder: null; ... 11 more ...; href: null; }; ... 16 more ...; pageTitle: string; }' but required in type 'ObservedEvent'.
+tests/capabilities/phase2-physical-rules.test.ts(137,5): error TS2741: Property 'captureSeq' is missing in type '{ eventId: string; eventType: "click"; timestamp: number; isTrusted: true; target: { elementId: string; accessibleName: string; ariaRole: null; ariaLabel: null; ariaLabelledBy: null; placeholder: null; ... 11 more ...; href: null; }; ... 16 more ...; pageTitle: string; }' but required in type 'ObservedEvent'.
+tests/capabilities/phase2-physical-rules.test.ts(219,12): error TS2532: Object is possibly 'undefined'.
+tests/capabilities/phase2-physical-rules.test.ts(53,5): error TS2741: Property 'userAdjusted' is missing in type '{ interactionType: InteractionType; tag: string; ariaRole: string | null; accessibleName: string; href: string | null; isCheckboxLike: boolean; isSliderLike: boolean; isSubmitType: boolean; isFileInput: boolean; ancestorRoles: string[]; ancestorClasses: string[]; }' but required in type 'PhysicalEvidence'.
+tests/capabilities/phase2-physical-rules.test.ts(77,5): error TS2740: Type '{ previousInteractionType: InteractionType | null; precededBySamePage: true; precededByTextEntryOnSameForm: boolean; urlChangedAfter: boolean; pageUrl: string; pageTitle: string; urlChanged: boolean; }' is missing the following properties from type 'SequenceContext': nextUrl, hasNextItemSpecificUrl, precededByListContext, urlPathChangedAfter, and 2 more.
+tests/capabilities/phase3-navigation-rules.test.ts(135,5): error TS2741: Property 'captureSeq' is missing in type '{ eventId: string; eventType: "click"; timestamp: number; isTrusted: true; target: { elementId: string; accessibleName: string; ariaRole: null; ariaLabel: null; ariaLabelledBy: null; placeholder: null; ... 11 more ...; href: null; }; ... 16 more ...; pageTitle: string; }' but required in type 'ObservedEvent'.
+tests/capabilities/phase3-navigation-rules.test.ts(51,5): error TS2741: Property 'userAdjusted' is missing in type '{ interactionType: InteractionType; tag: string; ariaRole: string | null; accessibleName: string; href: null; isCheckboxLike: boolean; isSliderLike: false; isSubmitType: false; isFileInput: boolean; ancestorRoles: string[]; ancestorClasses: never[]; }' but required in type 'PhysicalEvidence'.
+tests/capabilities/phase4-content-change-rules.test.ts(18,1): error TS6133: 'SemanticEffect' is declared but its value is never read.
+tests/capabilities/phase4-content-change-rules.test.ts(46,5): error TS2741: Property 'userAdjusted' is missing in type '{ interactionType: InteractionType; tag: string; ariaRole: string | null; accessibleName: string; href: null; isCheckboxLike: boolean; isSliderLike: false; isSubmitType: false; isFileInput: false; ancestorRoles: string[]; ancestorClasses: string[]; }' but required in type 'PhysicalEvidence'.
+tests/capabilities/phase4-content-change-rules.test.ts(553,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase4-content-change-rules.test.ts(559,9): error TS2740: Type '{ ancestorClasses: string[]; }' is missing the following properties from type 'DomContext': inputType, ariaExpanded, ariaHasPopup, isContentEditable, and 5 more.
+tests/capabilities/phase4-content-change-rules.test.ts(585,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase4-content-change-rules.test.ts(591,9): error TS2740: Type '{ inputType: string; }' is missing the following properties from type 'DomContext': ariaExpanded, ariaHasPopup, isContentEditable, disabled, and 5 more.
+tests/capabilities/phase4-content-change-rules.test.ts(633,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase4-content-change-rules.test.ts(664,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase4-content-change-rules.test.ts(695,7): error TS2740: Type '{ accessibleName: string; tag: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 12 more.
+tests/capabilities/phase4-helpers.ts(32,5): error TS2741: Property 'captureSeq' is missing in type '{ eventId: string; eventType: "click"; timestamp: number; isTrusted: true; target: { elementId: string; accessibleName: string; ariaRole: null; ariaLabel: null; ariaLabelledBy: null; placeholder: null; ... 11 more ...; href: null; }; ... 16 more ...; pageTitle: string; }' but required in type 'ObservedEvent'.
+tests/capabilities/phase5-form-value-rules.test.ts(16,1): error TS6133: 'ToggleControlRule' is declared but its value is never read.
+tests/capabilities/phase5-form-value-rules.test.ts(290,12): error TS2532: Object is possibly 'undefined'.
+tests/capabilities/phase5-form-value-rules.test.ts(470,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase5-form-value-rules.test.ts(500,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase5-form-value-rules.test.ts(522,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase5-form-value-rules.test.ts(557,7): error TS2740: Type '{ accessibleName: string; tag: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 12 more.
+tests/capabilities/phase5-form-value-rules.test.ts(576,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase5-form-value-rules.test.ts(608,7): error TS2740: Type '{ accessibleName: string; tag: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 12 more.
+tests/capabilities/phase5-form-value-rules.test.ts(617,7): error TS2740: Type '{ accessibleName: string; tag: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 12 more.
+tests/capabilities/phase6-engine-integration.test.ts(159,7): error TS2740: Type '{ accessibleName: string; tag: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 12 more.
+tests/capabilities/phase6-engine-integration.test.ts(172,9): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase6-engine-integration.test.ts(178,11): error TS2740: Type '{ inputType: string; }' is missing the following properties from type 'DomContext': ariaExpanded, ariaHasPopup, isContentEditable, disabled, and 5 more.
+tests/capabilities/phase6-engine-integration.test.ts(206,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase6-engine-integration.test.ts(211,7): error TS2740: Type '{ pageUrl: string; valueAfter: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 17 more.
+tests/capabilities/phase6-engine-integration.test.ts(220,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; href: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 10 more.
+tests/capabilities/phase6-engine-integration.test.ts(226,7): error TS2740: Type '{ pageUrl: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 18 more.
+tests/capabilities/phase6-engine-integration.test.ts(234,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase6-engine-integration.test.ts(239,7): error TS2740: Type '{ pageUrl: string; valueAfter: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 17 more.
+tests/capabilities/phase6-engine-integration.test.ts(302,7): error TS2740: Type '{ accessibleName: string; tag: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 12 more.
+tests/capabilities/phase6-engine-integration.test.ts(303,7): error TS2740: Type '{ pageUrl: string; valueAfter: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 17 more.
+tests/capabilities/phase6-engine-integration.test.ts(312,7): error TS2740: Type '{ accessibleName: string; tag: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 12 more.
+tests/capabilities/phase6-engine-integration.test.ts(313,7): error TS2740: Type '{ pageUrl: string; valueAfter: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 17 more.
+tests/capabilities/phase6-engine-integration.test.ts(322,7): error TS2740: Type '{ accessibleName: string; tag: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 12 more.
+tests/capabilities/phase6-engine-integration.test.ts(323,7): error TS2740: Type '{ pageUrl: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 18 more.
+tests/capabilities/phase6-engine-integration.test.ts(342,7): error TS2740: Type '{ accessibleName: string; tag: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 12 more.
+tests/capabilities/phase6-engine-integration.test.ts(348,7): error TS2740: Type '{ accessibleName: string; tag: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 12 more.
+tests/capabilities/phase6-engine-integration.test.ts(354,7): error TS2740: Type '{ accessibleName: string; tag: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 12 more.
+tests/capabilities/phase6-engine-integration.test.ts(417,9): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase6-engine-integration.test.ts(423,11): error TS2740: Type '{ inputType: string; }' is missing the following properties from type 'DomContext': ariaExpanded, ariaHasPopup, isContentEditable, disabled, and 5 more.
+tests/capabilities/phase6-engine-integration.test.ts(487,9): error TS2740: Type '{ accessibleName: string; tag: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 12 more.
+tests/capabilities/phase6-engine-integration.test.ts(49,10): error TS2352: Conversion of type '{ windowId: string; sourceEventId: string; sourceEventType: string; startTime: number; endTime: number; endReason: "timeout"; snapshot: { childCount: number; textContent: string; }; mutations: never[]; semanticEffects: SemanticEffect[]; }' to type 'ObservationResult' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+tests/capabilities/phase6-engine-integration.test.ts(507,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: null; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase6-engine-integration.test.ts(513,9): error TS2740: Type '{ inputType: string; }' is missing the following properties from type 'DomContext': ariaExpanded, ariaHasPopup, isContentEditable, disabled, and 5 more.
+tests/capabilities/phase6-engine-integration.test.ts(524,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase6-engine-integration.test.ts(538,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase6-engine-integration.test.ts(552,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase7-realworld-validation.test.ts(104,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase7-realworld-validation.test.ts(105,7): error TS2740: Type '{ pageUrl: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 18 more.
+tests/capabilities/phase7-realworld-validation.test.ts(112,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase7-realworld-validation.test.ts(113,7): error TS2740: Type '{ pageUrl: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 18 more.
+tests/capabilities/phase7-realworld-validation.test.ts(119,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; href: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 10 more.
+tests/capabilities/phase7-realworld-validation.test.ts(120,7): error TS2740: Type '{ pageUrl: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 18 more.
+tests/capabilities/phase7-realworld-validation.test.ts(277,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase7-realworld-validation.test.ts(278,7): error TS2740: Type '{ pageUrl: string; valueAfter: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 17 more.
+tests/capabilities/phase7-realworld-validation.test.ts(284,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase7-realworld-validation.test.ts(285,7): error TS2740: Type '{ pageUrl: string; valueAfter: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 17 more.
+tests/capabilities/phase7-realworld-validation.test.ts(291,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase7-realworld-validation.test.ts(292,7): error TS2740: Type '{ pageUrl: string; valueAfter: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 17 more.
+tests/capabilities/phase7-realworld-validation.test.ts(298,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase7-realworld-validation.test.ts(299,7): error TS2740: Type '{ pageUrl: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 18 more.
+tests/capabilities/phase7-realworld-validation.test.ts(311,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; href: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 10 more.
+tests/capabilities/phase7-realworld-validation.test.ts(312,7): error TS2740: Type '{ pageUrl: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 18 more.
+tests/capabilities/phase7-realworld-validation.test.ts(36,10): error TS2352: Conversion of type '{ windowId: string; sourceEventId: string; sourceEventType: string; startTime: number; endTime: number; endReason: "timeout"; snapshot: { childCount: number; textContent: string; }; mutations: never[]; semanticEffects: SemanticEffect[]; }' to type 'ObservationResult' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+tests/capabilities/phase7-realworld-validation.test.ts(376,7): error TS2740: Type '{ accessibleName: string; tag: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 12 more.
+tests/capabilities/phase7-realworld-validation.test.ts(377,7): error TS2740: Type '{ pageUrl: string; valueAfter: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 17 more.
+tests/capabilities/phase7-realworld-validation.test.ts(383,7): error TS2740: Type '{ accessibleName: string; tag: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 12 more.
+tests/capabilities/phase7-realworld-validation.test.ts(384,7): error TS2740: Type '{ pageUrl: string; valueAfter: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 17 more.
+tests/capabilities/phase7-realworld-validation.test.ts(390,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase7-realworld-validation.test.ts(391,7): error TS2740: Type '{ pageUrl: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 18 more.
+tests/capabilities/phase7-realworld-validation.test.ts(397,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase7-realworld-validation.test.ts(398,43): error TS2740: Type '{ inputType: string; }' is missing the following properties from type 'DomContext': ariaExpanded, ariaHasPopup, isContentEditable, disabled, and 5 more.
+tests/capabilities/phase7-realworld-validation.test.ts(404,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase7-realworld-validation.test.ts(405,7): error TS2740: Type '{ pageUrl: string; valueAfter: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 17 more.
+tests/capabilities/phase7-realworld-validation.test.ts(411,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase7-realworld-validation.test.ts(412,7): error TS2740: Type '{ pageUrl: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 18 more.
+tests/capabilities/phase7-realworld-validation.test.ts(418,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; href: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 10 more.
+tests/capabilities/phase7-realworld-validation.test.ts(419,7): error TS2740: Type '{ pageUrl: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 18 more.
+tests/capabilities/phase7-realworld-validation.test.ts(511,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; href: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 10 more.
+tests/capabilities/phase7-realworld-validation.test.ts(512,7): error TS2740: Type '{ pageUrl: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 18 more.
+tests/capabilities/phase7-realworld-validation.test.ts(537,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; href: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 10 more.
+tests/capabilities/phase7-realworld-validation.test.ts(538,7): error TS2740: Type '{ pageUrl: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 18 more.
+tests/capabilities/phase7-realworld-validation.test.ts(560,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; href: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 10 more.
+tests/capabilities/phase7-realworld-validation.test.ts(561,7): error TS2740: Type '{ pageUrl: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 18 more.
+tests/capabilities/phase7-realworld-validation.test.ts(588,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase7-realworld-validation.test.ts(589,7): error TS2740: Type '{ pageUrl: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 18 more.
+tests/capabilities/phase7-realworld-validation.test.ts(608,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase7-realworld-validation.test.ts(609,7): error TS2740: Type '{ pageUrl: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 18 more.
+tests/capabilities/phase7-realworld-validation.test.ts(628,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase7-realworld-validation.test.ts(629,7): error TS2740: Type '{ pageUrl: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 18 more.
+tests/capabilities/phase7-realworld-validation.test.ts(65,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase7-realworld-validation.test.ts(66,7): error TS2740: Type '{ pageUrl: string; valueAfter: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 17 more.
+tests/capabilities/phase7-realworld-validation.test.ts(72,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; href: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 10 more.
+tests/capabilities/phase7-realworld-validation.test.ts(73,7): error TS2740: Type '{ pageUrl: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 18 more.
+tests/capabilities/phase7-realworld-validation.test.ts(79,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase7-realworld-validation.test.ts(80,7): error TS2740: Type '{ pageUrl: string; valueAfter: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 17 more.
+tests/capabilities/phase7-realworld-validation.test.ts(86,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: string; href: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 10 more.
+tests/capabilities/phase7-realworld-validation.test.ts(87,7): error TS2740: Type '{ pageUrl: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 18 more.
+tests/capabilities/phase7-realworld-validation.test.ts(97,7): error TS2740: Type '{ accessibleName: string; tag: string; ariaRole: null; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 11 more.
+tests/capabilities/phase7-realworld-validation.test.ts(98,7): error TS2740: Type '{ pageUrl: string; pageTitle: string; }' is missing the following properties from type 'ObservedEvent': eventId, eventType, timestamp, captureSeq, and 17 more.
+tests/capability-deriver.test.ts(11,1): error TS6133: 'CapabilityCandidate' is declared but its value is never read.
+tests/capability-deriver.test.ts(283,11): error TS2353: Object literal may only specify known properties, and 'optionSet' does not exist in type 'ComponentSummary'.
+tests/capability-deriver.test.ts(37,10): error TS6133: 'makeElementFragment' is declared but its value is never read.
+tests/capability-deriver.test.ts(823,11): error TS2353: Object literal may only specify known properties, and 'optionSet' does not exist in type 'ComponentSummary'.
+tests/capability-matching-service.test.ts(17,8): error TS6133: 'CapabilityMatchScore' is declared but its value is never read.
+tests/comprehensive-interaction-types.test.ts(114,5): error TS2322: Type 'string' is not assignable to type '"click" | "focus" | "scroll" | "navigation" | "dblclick" | "contextmenu" | "blur" | "change" | "input" | "mouseenter" | "dragstart" | "drop" | "dateSelect"'.
+tests/comprehensive-interaction-types.test.ts(130,5): error TS2353: Object literal may only specify known properties, and 'target' does not exist in type 'NavigationRecordedEvent'.
+tests/comprehensive-interaction-types.test.ts(134,27): error TS2339: Property 'transitionType' does not exist on type 'RecordedEvent'.
+tests/comprehensive-interaction-types.test.ts(19,30): error TS2459: Module '"../src/recorder/recorded-event.js"' declares 'ElementIdentity' locally, but it is not exported.
+tests/css-hover-detection.test.ts(190,37): error TS2345: Argument of type '({ selector: string; properties: { display: string; position?: undefined; }; } | { selector: string; properties: { display: string; position: string; }; })[]' is not assignable to parameter of type '{ selector: string; properties: Record<string, string>; }[]'.
+tests/css-hover-detection.test.ts(439,36): error TS2345: Argument of type '({ selector: string; properties: { display: string; opacity?: undefined; }; } | { selector: string; properties: { opacity: string; display?: undefined; }; })[]' is not assignable to parameter of type '{ selector: string; properties: Record<string, string>; }[]'.
+tests/date-picker-e2e.test.ts(23,1): error TS6133: 'UnderstandingResult' is declared but its value is never read.
+tests/date-picker-e2e.test.ts(81,10): error TS6133: 'makeSessionEvent' is declared but its value is never read.
+tests/date-picker-e2e.test.ts(83,3): error TS6133: 'type' is declared but its value is never read.
+tests/definitions/complex-definitions.test.ts(104,22): error TS6133: 'emitted' is declared but its value is never read.
+tests/definitions/complex-definitions.test.ts(18,3): error TS2459: Module '"../../src/shared/component-types"' declares 'ElementIdentity' locally, but it is not exported.
+tests/definitions/component-types.test.ts(188,11): error TS2741: Property 'lifecycleId' is missing in type '{ type: "Click"; state: "triggering"; trigger: ElementIdentity; triggerEvent: ObservedEvent; memberEvents: ObservedEvent[]; scopeKeys: Set<...>; startTime: number; endTime: number; data: {}; }' but required in type 'ComponentContext'.
+tests/definitions/component-types.test.ts(206,11): error TS2741: Property 'lifecycleId' is missing in type '{ type: "Dropdown"; state: "active"; trigger: ElementIdentity; triggerEvent: ObservedEvent; memberEvents: never[]; scopeKeys: Set<string>; startTime: number; endTime: number; data: { ...; }; }' but required in type 'ComponentContext'.
+tests/definitions/component-types.test.ts(73,3): error TS2322: Type '{ eventId: string; eventType: BrowserEventType; timestamp: number; captureSeq?: number | undefined; isTrusted: boolean; target: ElementIdentity; domContext: DomContext; valueBefore: string | null; ... 14 more ...; pageTitle: string; }' is not assignable to type 'ObservedEvent'.
+tests/definitions/core-definitions.test.ts(10,32): error TS6133: 'beforeEach' is declared but its value is never read.
+tests/definitions/core-definitions.test.ts(17,3): error TS6196: 'ComponentDefinition' is declared but never used.
+tests/definitions/core-definitions.test.ts(21,3): error TS2459: Module '"../../src/shared/component-types"' declares 'ElementIdentity' locally, but it is not exported.
+tests/definitions/g2-tabindex-wiring.test.ts(23,3): error TS2459: Module '"../../src/shared/component-types"' declares 'ElementIdentity' locally, but it is not exported.
+tests/definitions/g5-spinbutton.test.ts(115,7): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type 'ElementIdentity'.
+tests/definitions/g5-spinbutton.test.ts(186,9): error TS2353: Object literal may only specify known properties, and 'textContent' does not exist in type 'ElementIdentity'.
+tests/definitions/g5-spinbutton.test.ts(36,7): error TS2353: Object literal may only specify known properties, and 'inputType' does not exist in type 'ElementIdentity'.
+tests/definitions/g7-slider-lifecycle.test.ts(340,7): error TS2353: Object literal may only specify known properties, and 'events' does not exist in type 'ComponentInteraction'.
+tests/definitions/g7-slider-lifecycle.test.ts(34,3): error TS2459: Module '"../../src/shared/component-types"' declares 'ElementIdentity' locally, but it is not exported.
+tests/definitions/g8-color-input.test.ts(112,7): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type 'ElementIdentity'.
+tests/definitions/g8-color-input.test.ts(34,7): error TS2353: Object literal may only specify known properties, and 'inputType' does not exist in type 'ElementIdentity'.
+tests/domain/capability.test.ts(20,8): error TS6133: 'Capability' is declared but its value is never read.
+tests/domain/execution-ir/generator.test.ts(28,3): error TS6133: 'createStep' is declared but its value is never read.
+tests/domain/execution-ir/generator.test.ts(29,3): error TS6133: 'createValidation' is declared but its value is never read.
+tests/domain/execution-ir/generator.test.ts(31,1): error TS6133: 'createElement' is declared but its value is never read.
+tests/domain/execution-ir/generator.test.ts(33,1): error TS6192: All imports in import declaration are unused.
+tests/domain/execution-ir/staleness.test.ts(283,7): error TS2322: Type '"navigate"' is not assignable to type 'IRAction'.
+tests/domain/execution-ir/staleness.test.ts(69,5): error TS2322: Type '"click"' is not assignable to type 'IRAction'.
+tests/domain/recording-session.test.ts(124,60): error TS2353: Object literal may only specify known properties, and 'id' does not exist in type 'Partial<SessionEvent>'.
+tests/domain/recording-session.test.ts(129,36): error TS2353: Object literal may only specify known properties, and 'id' does not exist in type 'Partial<SessionEvent>'.
+tests/domain/recording-session.test.ts(15,8): error TS6133: 'RecordingSession' is declared but its value is never read.
+tests/domain/recording-session.test.ts(53,5): error TS2352: Conversion of type '{ actionId?: string | undefined; type: "click" | "navigation"; url: string; title?: string | undefined; timestamp: string; id: string; } | { actionId?: string | undefined; type: "click"; ... 5 more ...; url: string; } | ... 5 more ... | { ...; }' to type 'SessionEvent' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+tests/element-matching-service.test.ts(13,3): error TS6133: 'extractStoredSignature' is declared but its value is never read.
+tests/element-matching-service.test.ts(15,8): error TS6133: 'ElementMatchResult' is declared but its value is never read.
+tests/element-matching-service.test.ts(19,10): error TS6133: 'ElementStatus' is declared but its value is never read.
+tests/enrichment-fragment-assembler.test.ts(224,10): error TS2540: Cannot assign to 'identity' because it is a read-only property.
+tests/enrichment-fragment-assembler.test.ts(263,12): error TS2540: Cannot assign to 'constituents' because it is a read-only property.
+tests/enrichment-fragment-assembler.test.ts(268,12): error TS2540: Cannot assign to 'optionSet' because it is a read-only property.
+tests/enrichment-fragment-assembler.test.ts(288,12): error TS2540: Cannot assign to 'optionSet' because it is a read-only property.
+tests/enrichment-option-set-extractor.test.ts(34,38): error TS6133: 'selector' is declared but its value is never read.
+tests/enrichment-orchestrator.test.ts(18,1): error TS6133: 'UiElement' is declared but its value is never read.
+tests/enrichment-orchestrator.test.ts(20,1): error TS6133: 'ComponentGrouping' is declared but its value is never read.
+tests/enrichment-orchestrator.test.ts(27,3): error TS6133: 'ComponentLifecycleState' is declared but its value is never read.
+tests/enrichment-orchestrator.test.ts(282,59): error TS2551: Property 'value' does not exist on type 'string'. Did you mean 'valueOf'?
+tests/enrichment-orchestrator.test.ts(31,3): error TS6133: 'IntrinsicCapability' is declared but its value is never read.
+tests/enrichment.test.ts(113,9): error TS2353: Object literal may only specify known properties, and 'elementKey' does not exist in type 'Partial<ElementIdentity>'.
+tests/enrichment.test.ts(149,9): error TS2353: Object literal may only specify known properties, and 'elementKey' does not exist in type 'Partial<ElementIdentity>'.
+tests/enrichment.test.ts(165,9): error TS2353: Object literal may only specify known properties, and 'elementKey' does not exist in type 'Partial<ElementIdentity>'.
+tests/enrichment.test.ts(180,9): error TS2353: Object literal may only specify known properties, and 'elementKey' does not exist in type 'Partial<ElementIdentity>'.
+tests/enrichment.test.ts(196,9): error TS2353: Object literal may only specify known properties, and 'elementKey' does not exist in type 'Partial<ElementIdentity>'.
+tests/enrichment.test.ts(22,5): error TS2353: Object literal may only specify known properties, and 'cssPath' does not exist in type 'ElementIdentity'.
+tests/enrichment.test.ts(230,9): error TS2353: Object literal may only specify known properties, and 'elementKey' does not exist in type 'Partial<ElementIdentity>'.
+tests/enrichment.test.ts(243,9): error TS2353: Object literal may only specify known properties, and 'elementKey' does not exist in type 'Partial<ElementIdentity>'.
+tests/enrichment.test.ts(257,9): error TS2353: Object literal may only specify known properties, and 'elementKey' does not exist in type 'Partial<ElementIdentity>'.
+tests/enrichment.test.ts(269,67): error TS2353: Object literal may only specify known properties, and 'textContent' does not exist in type 'Partial<ElementIdentity>'.
+tests/enrichment.test.ts(281,9): error TS2353: Object literal may only specify known properties, and 'elementKey' does not exist in type 'Partial<ElementIdentity>'.
+tests/enrichment.test.ts(296,9): error TS2353: Object literal may only specify known properties, and 'elementKey' does not exist in type 'Partial<ElementIdentity>'.
+tests/enrichment.test.ts(429,9): error TS2353: Object literal may only specify known properties, and 'elementKey' does not exist in type 'Partial<ElementIdentity>'.
+tests/enrichment.test.ts(44,3): error TS2322: Type '{ target: ElementIdentity; eventId: string; eventType: BrowserEventType; timestamp: number; captureSeq?: number | undefined; ... 17 more ...; pageTitle: string; }' is not assignable to type 'ObservedEvent'.
+tests/enrichment.test.ts(446,9): error TS2353: Object literal may only specify known properties, and 'elementKey' does not exist in type 'Partial<ElementIdentity>'.
+tests/enrichment.test.ts(479,9): error TS2353: Object literal may only specify known properties, and 'elementKey' does not exist in type 'Partial<ElementIdentity>'.
+tests/enrichment.test.ts(499,9): error TS2353: Object literal may only specify known properties, and 'elementKey' does not exist in type 'Partial<ElementIdentity>'.
+tests/enrichment.test.ts(512,67): error TS2353: Object literal may only specify known properties, and 'textContent' does not exist in type 'Partial<ElementIdentity>'.
+tests/enrichment.test.ts(79,5): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/evidence-engine/autocomplete-comprehensive-validation.test.ts(118,7): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/autocomplete-comprehensive-validation.test.ts(187,7): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/autocomplete-comprehensive-validation.test.ts(212,7): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/autocomplete-comprehensive-validation.test.ts(352,7): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/autocomplete-comprehensive-validation.test.ts(377,7): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/autocomplete-comprehensive-validation.test.ts(711,7): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/autocomplete-comprehensive-validation.test.ts(95,7): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/autocomplete-detection.test.ts(19,3): error TS6133: 'makeTarget' is declared but its value is never read.
+tests/evidence-engine/autocomplete-detection.test.ts(23,3): error TS6133: 'changeEvent' is declared but its value is never read.
+tests/evidence-engine/autocomplete-detection.test.ts(29,1): error TS6133: 'DomContext' is declared but its value is never read.
+tests/evidence-engine/autocomplete-detection.test.ts(48,9): error TS2353: Object literal may only specify known properties, and 'valueAfter' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/autocomplete-detection.test.ts(62,9): error TS2353: Object literal may only specify known properties, and 'valueAfter' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/bugfix-forward-button.test.ts(100,48): error TS2345: Argument of type '{ events: never[]; startTime: number; endTime: number; }' is not assignable to parameter of type 'InteractionBuffer'.
+tests/evidence-engine/bugfix-forward-button.test.ts(104,14): error TS2532: Object is possibly 'undefined'.
+tests/evidence-engine/bugfix-forward-button.test.ts(119,48): error TS2345: Argument of type '{ events: never[]; startTime: number; endTime: number; }' is not assignable to parameter of type 'InteractionBuffer'.
+tests/evidence-engine/bugfix-forward-button.test.ts(122,14): error TS2532: Object is possibly 'undefined'.
+tests/evidence-engine/bugfix-forward-button.test.ts(131,48): error TS2345: Argument of type '{ events: never[]; startTime: number; endTime: number; }' is not assignable to parameter of type 'InteractionBuffer'.
+tests/evidence-engine/bugfix-forward-button.test.ts(145,48): error TS2345: Argument of type '{ events: never[]; startTime: number; endTime: number; }' is not assignable to parameter of type 'InteractionBuffer'.
+tests/evidence-engine/bugfix-forward-button.test.ts(15,3): error TS6133: 'makeTarget' is declared but its value is never read.
+tests/evidence-engine/bugfix-forward-button.test.ts(84,48): error TS2345: Argument of type '{ events: never[]; startTime: number; endTime: number; }' is not assignable to parameter of type 'InteractionBuffer'.
+tests/evidence-engine/css-classname-provider-custom.test.ts(486,11): error TS6133: 'evidence' is declared but its value is never read.
+tests/evidence-engine/css-classname-provider.test.ts(15,3): error TS6133: 'makeTarget' is declared but its value is never read.
+tests/evidence-engine/css-classname-provider.test.ts(251,37): error TS2345: Argument of type '{ events: never[]; startTime: number; endTime: number; }' is not assignable to parameter of type 'InteractionBuffer'.
+tests/evidence-engine/css-classname-provider.test.ts(270,44): error TS2345: Argument of type '{ events: never[]; startTime: number; endTime: number; }' is not assignable to parameter of type 'InteractionBuffer'.
+tests/evidence-engine/css-classname-provider.test.ts(40,27): error TS2345: Argument of type '{ events: never[]; startTime: number; endTime: number; }' is not assignable to parameter of type 'InteractionBuffer'.
+tests/evidence-engine/graceful-failure.test.ts(32,3): error TS6133: 'domContext' is declared but its value is never read.
+tests/evidence-engine/integration.test.ts(337,24): error TS2339: Property 'confidence' does not exist on type '{ _evidenceTrail?: { evidence: unknown[]; scores: unknown[]; } | undefined; }'.
+tests/evidence-engine/integration-wave1.test.ts(22,3): error TS6133: 'changeEvent' is declared but its value is never read.
+tests/evidence-engine/integration-wave1.test.ts(23,3): error TS6133: 'inputEvent' is declared but its value is never read.
+tests/evidence-engine/merge-validation.test.ts(122,7): error TS6133: 'SELECT_CTX' is declared but its value is never read.
+tests/evidence-engine/merge-validation.test.ts(125,7): error TS6133: 'DATE_CTX' is declared but its value is never read.
+tests/evidence-engine/merge-validation.test.ts(26,30): error TS6196: 'ElementRecordedEvent' is declared but never used.
+tests/evidence-engine/merge-validation.test.ts(27,1): error TS6133: 'ElementIdentity' is declared but its value is never read.
+tests/evidence-engine/merge-validation.test.ts(352,9): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/merge-validation.test.ts(35,3): error TS6133: 'inputEvent' is declared but its value is never read.
+tests/evidence-engine/merge-validation.test.ts(377,43): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/merge-validation.test.ts(38,3): error TS6133: 'dblclickEvent' is declared but its value is never read.
+tests/evidence-engine/merge-validation.test.ts(39,3): error TS6133: 'contextmenuEvent' is declared but its value is never read.
+tests/evidence-engine/merge-validation.test.ts(464,9): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/merge-validation.test.ts(472,43): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/merge-validation.test.ts(526,9): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/merge-validation.test.ts(575,9): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/merge-validation.test.ts(616,9): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/mutation-provider-lifecycle.test.ts(501,11): error TS6133: 'lifecycleEv' is declared but its value is never read.
+tests/evidence-engine/mutation-surfaces.test.ts(61,12): error TS2532: Object is possibly 'undefined'.
+tests/evidence-engine/mutation-surfaces.test.ts(62,12): error TS2532: Object is possibly 'undefined'.
+tests/evidence-engine/mutation-surfaces.test.ts(67,46): error TS2345: Argument of type 'null' is not assignable to parameter of type 'string | undefined'.
+tests/evidence-engine/mutation-surfaces.test.ts(72,12): error TS2532: Object is possibly 'undefined'.
+tests/evidence-engine/realworld-autocomplete-validation.test.ts(151,9): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/realworld-autocomplete-validation.test.ts(239,9): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/realworld-autocomplete-validation.test.ts(25,3): error TS6133: 'changeEvent' is declared but its value is never read.
+tests/evidence-engine/realworld-autocomplete-validation.test.ts(327,9): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/realworld-autocomplete-validation.test.ts(44,9): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/realworld-autocomplete-validation.test.ts(87,9): error TS2353: Object literal may only specify known properties, and 'ariaExpanded' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/realworld-avisford.test.ts(31,1): error TS6133: 'DetectedInteraction' is declared but its value is never read.
+tests/evidence-engine/realworld-avisford.test.ts(77,7): error TS6133: 'continueBtn' is declared but its value is never read.
+tests/evidence-engine/realworld-fixes.test.ts(16,3): error TS6133: 'focusEvent' is declared but its value is never read.
+tests/evidence-engine/realworld-fixes.test.ts(17,3): error TS6133: 'blurEvent' is declared but its value is never read.
+tests/evidence-engine/realworld-fixes.test.ts(18,3): error TS6133: 'changeEvent' is declared but its value is never read.
+tests/evidence-engine/realworld-googleflights.test.ts(21,27): error TS6133: 'blurEvent' is declared but its value is never read.
+tests/evidence-engine/realworld-googleflights.test.ts(21,38): error TS6133: 'changeEvent' is declared but its value is never read.
+tests/evidence-engine/realworld-googleflights.test.ts(234,11): error TS6133: 'v1' is declared but its value is never read.
+tests/evidence-engine/realworld-surface-validation.test.ts(102,57): error TS2353: Object literal may only specify known properties, and 'ariaHasPopup' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/realworld-surface-validation.test.ts(120,14): error TS2532: Object is possibly 'undefined'.
+tests/evidence-engine/realworld-surface-validation.test.ts(144,19): error TS2345: Argument of type 'null' is not assignable to parameter of type 'string | undefined'.
+tests/evidence-engine/realworld-surface-validation.test.ts(181,53): error TS2353: Object literal may only specify known properties, and 'ariaHasPopup' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/realworld-surface-validation.test.ts(254,19): error TS2345: Argument of type 'null' is not assignable to parameter of type 'string | undefined'.
+tests/evidence-engine/realworld-surface-validation.test.ts(315,18): error TS2345: Argument of type 'null' is not assignable to parameter of type 'string | undefined'.
+tests/evidence-engine/realworld-surface-validation.test.ts(441,57): error TS2353: Object literal may only specify known properties, and 'inputType' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/realworld-surface-validation.test.ts(451,54): error TS2353: Object literal may only specify known properties, and 'ariaHasPopup' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/realworld-surface-validation.test.ts(483,17): error TS2345: Argument of type 'null' is not assignable to parameter of type 'string | undefined'.
+tests/evidence-engine/realworld-surface-validation.test.ts(493,56): error TS2353: Object literal may only specify known properties, and 'ariaHasPopup' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/realworld-surface-validation.test.ts(598,17): error TS2345: Argument of type 'null' is not assignable to parameter of type 'string | undefined'.
+tests/evidence-engine/realworld-surface-validation.test.ts(613,54): error TS2353: Object literal may only specify known properties, and 'inputType' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/realworld-surface-validation.test.ts(649,47): error TS2353: Object literal may only specify known properties, and 'ariaHasPopup' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/selection-controls-completion.test.ts(16,15): error TS2459: Module '"../../src/recorder/recorded-event.js"' declares 'ElementIdentity' locally, but it is not exported.
+tests/evidence-engine/selection-controls-completion.test.ts(27,3): error TS6133: 'radioDomContext' is declared but its value is never read.
+tests/evidence-engine/selection-controls-completion.test.ts(279,13): error TS6133: 'hover' is declared but its value is never read.
+tests/evidence-engine/shadow-dom-fixes.test.ts(127,22): error TS2339: Property 'target' does not exist on type 'RecordedEvent'.
+tests/evidence-engine/shadow-dom-fixes.test.ts(128,22): error TS2339: Property 'target' does not exist on type 'RecordedEvent'.
+tests/evidence-engine/shadow-dom-fixes.test.ts(18,1): error TS6133: 'ElementIdentity' is declared but its value is never read.
+tests/evidence-engine/shadow-dom-fixes.test.ts(440,35): error TS2353: Object literal may only specify known properties, and 'inputType' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/shadow-dom-fixes.test.ts(472,34): error TS2353: Object literal may only specify known properties, and 'inputType' does not exist in type 'Partial<ElementIdentity>'.
+tests/evidence-engine/value-state-capture-extra.test.ts(12,15): error TS6196: 'RecordedEvent' is declared but never used.
+tests/evidence-engine/value-state-capture.test.ts(15,15): error TS6196: 'RecordedEvent' is declared but never used.
+tests/evidence-engine/wave2-textentry-dropdown.test.ts(26,15): error TS2459: Module '"../../src/recorder/recorded-event.ts"' declares 'ElementIdentity' locally, but it is not exported.
+tests/evidence-engine/wave2-textentry-dropdown.test.ts(26,32): error TS6196: 'ElementRecordedEvent' is declared but never used.
+tests/evidence-engine/wave2-textentry-dropdown.test.ts(27,1): error TS6133: 'DetectedInteraction' is declared but its value is never read.
+tests/evidence-engine/wave3-customdropdown-datepicker.test.ts(27,3): error TS6133: 'inputEvent' is declared but its value is never read.
+tests/foundation-validation.test.ts(1014,5): error TS2739: Type '{ frameSrc: string; frameName: string; frameDepth: number; }' is missing the following properties from type 'IframeContext': frameId, frameSelector, frameXPath, frameIndex
+tests/foundation-validation.test.ts(108,5): error TS2322: Type 'RecordedEvent[]' is not assignable to type 'SessionEvent[]'.
+tests/foundation-validation.test.ts(25,44): error TS6133: 'vi' is declared but its value is never read.
+tests/foundation-validation.test.ts(35,30): error TS6196: 'ElementRecordedEvent' is declared but never used.
+tests/foundation-validation.test.ts(37,42): error TS2307: Cannot find module '../src/domain/knowledge/understanding-result' or its corresponding type declarations.
+tests/foundation-validation.test.ts(780,20): error TS2352: Conversion of type 'IRStep' to type '{ [key: string]: unknown; action: string; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+tests/foundation-validation.test.ts(829,8): error TS2339: Property 'ancestorRoles' does not exist on type 'ElementIdentity'.
+tests/foundation-validation.test.ts(937,35): error TS6133: 'metrics' is declared but its value is never read.
+tests/heal-element.test.ts(12,3): error TS6133: 'updateElement' is declared but its value is never read.
+tests/healing-service.test.ts(16,34): error TS6133: 'HealingResult' is declared but its value is never read.
+tests/healing-service.test.ts(188,100): error TS2353: Object literal may only specify known properties, and 'lastValidatedAt' does not exist in type 'LocatorStrategy'.
+tests/healing-service.test.ts(189,104): error TS2353: Object literal may only specify known properties, and 'lastValidatedAt' does not exist in type 'LocatorStrategy'.
+tests/healing-service.test.ts(225,100): error TS2353: Object literal may only specify known properties, and 'lastValidatedAt' does not exist in type 'LocatorStrategy'.
+tests/healing-service.test.ts(226,104): error TS2353: Object literal may only specify known properties, and 'lastValidatedAt' does not exist in type 'LocatorStrategy'.
+tests/healing-service.test.ts(336,11): error TS2353: Object literal may only specify known properties, and 'role' does not exist in type 'Partial<ElementIdentity>'.
+tests/healing-service.test.ts(343,11): error TS2353: Object literal may only specify known properties, and 'role' does not exist in type 'Partial<ElementIdentity>'.
+tests/healing-service.test.ts(34,5): error TS2322: Type 'undefined' is not assignable to type 'string | null'.
+tests/healing-service.test.ts(35,5): error TS2322: Type 'undefined' is not assignable to type 'string | null'.
+tests/healing-service.test.ts(36,5): error TS2322: Type 'undefined' is not assignable to type 'string | null'.
+tests/healing-service.test.ts(366,100): error TS2353: Object literal may only specify known properties, and 'lastValidatedAt' does not exist in type 'LocatorStrategy'.
+tests/healing-service.test.ts(367,104): error TS2353: Object literal may only specify known properties, and 'lastValidatedAt' does not exist in type 'LocatorStrategy'.
+tests/healing-service.test.ts(38,5): error TS2322: Type 'undefined' is not assignable to type 'string | null'.
+tests/healing-service.test.ts(39,5): error TS2322: Type 'undefined' is not assignable to type 'string | null'.
+tests/healing-service.test.ts(40,5): error TS2322: Type 'undefined' is not assignable to type 'string | null'.
+tests/healing-service.test.ts(41,5): error TS2322: Type 'undefined' is not assignable to type 'string | null'.
+tests/healing-service.test.ts(42,5): error TS2322: Type 'undefined' is not assignable to type 'string | null'.
+tests/healing-service.test.ts(43,5): error TS2322: Type 'undefined' is not assignable to type 'string | null'.
+tests/healing-service.test.ts(44,5): error TS2322: Type 'undefined' is not assignable to type 'string'.
+tests/healing-service.test.ts(45,5): error TS2322: Type 'undefined' is not assignable to type 'string'.
+tests/healing-service.test.ts(59,5): error TS2353: Object literal may only specify known properties, and 'detectedAt' does not exist in type 'UiElement'.
+tests/healing-service.test.ts(88,9): error TS2353: Object literal may only specify known properties, and 'lastValidatedAt' does not exist in type 'LocatorStrategy'.
+tests/helpers/make-event.ts(8,48): error TS2459: Module '"../../src/shared/component-types"' declares 'ElementIdentity' locally, but it is not exported.
+tests/hover-css-overlay.test.ts(106,3): error TS2739: Type '{ type: "Dropdown"; trigger: ElementIdentity; triggerEvent: ObservedEvent; memberEvents: ObservedEvent[]; startTime: number; endTime: number; state: "active"; data: {}; }' is missing the following properties from type 'ComponentContext': lifecycleId, scopeKeys
+tests/hover-css-overlay.test.ts(14,30): error TS2459: Module '"../src/shared/component-types"' declares 'ElementIdentity' locally, but it is not exported.
+tests/hover-css-overlay.test.ts(43,3): error TS2322: Type '{ target: any; eventId: string; eventType: BrowserEventType; timestamp: number; captureSeq?: number | undefined; isTrusted: boolean; domContext: DomContext; ... 15 more ...; pageTitle: string; }' is not assignable to type 'ObservedEvent'.
+tests/hover-css-overlay.test.ts(78,5): error TS1117: An object literal cannot have multiple properties with the same name.
+tests/hover-css-overlay.test.ts(83,3): error TS2739: Type '{ type: "Hover"; trigger: ElementIdentity; triggerEvent: ObservedEvent; memberEvents: ObservedEvent[]; startTime: number; endTime: number; state: "active"; data: {}; }' is missing the following properties from type 'ComponentContext': lifecycleId, scopeKeys
+tests/ir-bridge.test.ts(289,69): error TS2353: Object literal may only specify known properties, and 'eventIds' does not exist in type 'Partial<ElementIdentity>'.
+tests/ir-executor-impl.test.ts(197,33): error TS6133: 'tabId' is declared but its value is never read.
+tests/ir-executor-impl.test.ts(228,33): error TS6133: 'tabId' is declared but its value is never read.
+tests/ir-executor-impl.test.ts(265,33): error TS6133: 'tabId' is declared but its value is never read.
+tests/ir-executor-impl.test.ts(301,33): error TS6133: 'tabId' is declared but its value is never read.
+tests/ir-executor-impl.test.ts(335,33): error TS6133: 'tabId' is declared but its value is never read.
+tests/ir-executor-impl.test.ts(365,33): error TS6133: 'tabId' is declared but its value is never read.
+tests/ir-executor-impl.test.ts(389,33): error TS6133: 'tabId' is declared but its value is never read.
+tests/ir-executor-impl.test.ts(422,33): error TS6133: 'tabId' is declared but its value is never read.
+tests/ir-executor-impl.test.ts(478,33): error TS6133: 'tabId' is declared but its value is never read.
+tests/ir-executor-impl.test.ts(535,33): error TS6133: 'tabId' is declared but its value is never read.
+tests/ir-executor-impl.test.ts(587,33): error TS6133: 'tabId' is declared but its value is never read.
+tests/ir-executor-impl.test.ts(649,33): error TS6133: 'tabId' is declared but its value is never read.
+tests/ir-executor-impl.test.ts(678,33): error TS6133: 'tabId' is declared but its value is never read.
+tests/ir-executor-impl.test.ts(718,33): error TS6133: 'tabId' is declared but its value is never read.
+tests/ir-executor-impl.test.ts(778,33): error TS6133: 'tabId' is declared but its value is never read.
+tests/milestone-6-1-dom-context-extensions.test.ts(11,23): error TS7016: Could not find a declaration file for module 'jsdom'. '/workspace/node_modules/jsdom/lib/api.js' implicitly has an 'any' type.
+tests/modern-widgets.test.ts(114,5): error TS2322: Type 'string' is not assignable to type '"click" | "focus" | "scroll" | "navigation" | "dblclick" | "contextmenu" | "blur" | "change" | "input" | "mouseenter" | "dragstart" | "drop" | "dateSelect"'.
+tests/modern-widgets.test.ts(130,5): error TS2353: Object literal may only specify known properties, and 'target' does not exist in type 'NavigationRecordedEvent'.
+tests/modern-widgets.test.ts(134,27): error TS2339: Property 'transitionType' does not exist on type 'RecordedEvent'.
+tests/modern-widgets.test.ts(18,30): error TS2459: Module '"../src/recorder/recorded-event.js"' declares 'ElementIdentity' locally, but it is not exported.
+tests/phase-b-realworld-validation.test.ts(104,5): error TS2322: Type 'RecordedEvent[]' is not assignable to type 'SessionEvent[]'.
+tests/phase-b-realworld-validation.test.ts(31,30): error TS6196: 'ElementRecordedEvent' is declared but never used.
+tests/phase-b-realworld-validation.test.ts(33,42): error TS2307: Cannot find module '../src/domain/knowledge/understanding-result' or its corresponding type declarations.
+tests/phase-b-realworld-validation.test.ts(391,5): error TS2739: Type '{ frameSrc: string; frameName: string; frameDepth: number; }' is missing the following properties from type 'IframeContext': frameId, frameSelector, frameXPath, frameIndex
+tests/phase-c-framework-validation.test.ts(102,5): error TS2322: Type 'RecordedEvent[]' is not assignable to type 'SessionEvent[]'.
+tests/phase-c-framework-validation.test.ts(29,30): error TS6196: 'ElementRecordedEvent' is declared but never used.
+tests/phase-c-framework-validation.test.ts(31,42): error TS2307: Cannot find module '../src/domain/knowledge/understanding-result' or its corresponding type declarations.
+tests/phase-c-framework-validation.test.ts(725,16): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ react: { rootMarker: string; newTodoType: string; toggleAllId: string; destroyAriaLabel: string; filterClasses: string; clearCompletedType: string; formStateClasses: string; componentTagsInDom: string; }; vue: { ...; }; angular: { ...; }; }'.
+tests/pipeline-runner.test.ts(10,32): error TS6133: 'beforeEach' is declared but its value is never read.
+tests/pipeline-runner.test.ts(15,1): error TS6133: 'ComponentLifecycleState' is declared but its value is never read.
+tests/pipeline-runner.test.ts(221,16): error TS2339: Property 'interactionContract' does not exist on type 'UiElementSummary'.
+tests/pipeline-runner.test.ts(222,21): error TS2339: Property 'interactionContract' does not exist on type 'UiElementSummary'.
+tests/presentation/workflow-normalizer.test.ts(12,37): error TS2459: Module '"../../src/shared/component-types"' declares 'ElementIdentity' locally, but it is not exported.
+tests/presentation/workflow-normalizer.test.ts(78,17): error TS2695: Left side of comma operator is unused and has no side effects.
+tests/recognition/component-registry.test.ts(17,8): error TS6133: 'EvidenceDisposition' is declared but its value is never read.
+tests/recognition/component-registry.test.ts(27,3): error TS6133: 'addConstituent' is declared but its value is never read.
+tests/recognition/orchestrator.test.ts(19,3): error TS6133: 'ComponentRole' is declared but its value is never read.
+tests/recognition/orchestrator.test.ts(21,3): error TS6133: 'ComponentLifecycleState' is declared but its value is never read.
+tests/recorder-date-capture.test.ts(20,44): error TS6133: 'vi' is declared but its value is never read.
+tests/recorder-date-capture.test.ts(329,13): error TS6133: 'intermediate1' is declared but its value is never read.
+tests/recorder-date-capture.test.ts(336,13): error TS6133: 'intermediate2' is declared but its value is never read.
+tests/recording-session-phase1.test.ts(143,20): error TS2339: Property 'valueBefore' does not exist on type 'never'.
+tests/recording-session-phase1.test.ts(144,20): error TS2339: Property 'valueAfter' does not exist on type 'never'.
+tests/recording-session-phase1.test.ts(155,20): error TS2339: Property 'checkedBefore' does not exist on type 'never'.
+tests/recording-session-phase1.test.ts(156,20): error TS2339: Property 'checkedAfter' does not exist on type 'never'.
+tests/recording-session-phase1.test.ts(172,20): error TS2339: Property 'target' does not exist on type 'never'.
+tests/recording-session-phase1.test.ts(173,20): error TS2339: Property 'target' does not exist on type 'never'.
+tests/recording-session-phase1.test.ts(174,20): error TS2339: Property 'target' does not exist on type 'never'.
+tests/recording-session-phase1.test.ts(175,20): error TS2339: Property 'target' does not exist on type 'never'.
+tests/recording-session-phase1.test.ts(176,20): error TS2339: Property 'target' does not exist on type 'never'.
+tests/repository-service.test.ts(22,5): error TS2353: Object literal may only specify known properties, and 'href' does not exist in type 'ExecutionJson'.
+tests/repository-ui/repository-ui.test.ts(13,32): error TS6133: 'beforeEach' is declared but its value is never read.
+tests/repository-v2/e2e-workflow-validation.test.ts(34,50): error TS6196: 'Step' is declared but never used.
+tests/repository-v2/element-repository.test.ts(164,25): error TS2322: Type '"click"' is not assignable to type 'StepAction'.
+tests/repository-v2/element-repository.test.ts(190,15): error TS2322: Type '"verify"' is not assignable to type 'StepAction'.
+tests/repository-v2/element-repository.test.ts(195,19): error TS2322: Type '"visibility"' is not assignable to type 'ValidationType'.
+tests/repository-v2/element-repository.test.ts(196,19): error TS2322: Type '"isTrue"' is not assignable to type 'ValidationComparison'.
+tests/repository-v2/element-repository.test.ts(197,19): error TS2322: Type '"hard"' is not assignable to type 'ValidationSeverity'.
+tests/repository-v2/element-repository.test.ts(236,25): error TS2322: Type '"click"' is not assignable to type 'StepAction'.
+tests/repository-v2/test-case-repository.test.ts(423,13): error TS6133: 'result' is declared but its value is never read.
+tests/repository-v2/test-case-repository.test.ts(431,19): error TS2322: Type '"visibility"' is not assignable to type 'ValidationType'.
+tests/repository-v2/test-case-repository.test.ts(431,39): error TS2322: Type '"isTrue"' is not assignable to type 'ValidationComparison'.
+tests/repository-v2/test-case-repository.test.ts(431,61): error TS2322: Type '"hard"' is not assignable to type 'ValidationSeverity'.
+tests/runtime/architectural-fixes.test.ts(14,32): error TS6133: 'beforeEach' is declared but its value is never read.
+tests/runtime/architectural-fixes.test.ts(15,30): error TS6133: 'ComponentRuntime' is declared but its value is never read.
+tests/runtime/architectural-fixes.test.ts(297,22): error TS6133: 'emitted' is declared but its value is never read.
+tests/runtime/capture-bugfix.test.ts(24,3): error TS2459: Module '"../../src/shared/component-types"' declares 'ElementIdentity' locally, but it is not exported.
+tests/runtime/capture-bugfix.test.ts(98,3): error TS2741: Property 'lifecycleId' is missing in type '{ type: any; state: "active"; trigger: ElementIdentity; triggerEvent: ObservedEvent; memberEvents: ObservedEvent[]; scopeKeys: Set<string>; startTime: number; endTime: number; data: {}; }' but required in type 'ComponentContext'.
+tests/runtime/capture-guarantee-v2.test.ts(426,13): error TS6133: 'openResult' is declared but its value is never read.
+tests/runtime/capture-guarantee-v2.test.ts(847,21): error TS6133: 'ctx' is declared but its value is never read.
+tests/runtime/component-runtime.test.ts(13,3): error TS6196: 'ObservedEvent' is declared but never used.
+tests/runtime/component-runtime.test.ts(33,5): error TS2322: Type 'Set<string>' is not assignable to type 'Set<BrowserEventType>'.
+tests/runtime/confidence-hover.test.ts(13,32): error TS6133: 'beforeEach' is declared but its value is never read.
+tests/runtime/confidence-hover.test.ts(14,30): error TS6133: 'ComponentRuntime' is declared but its value is never read.
+tests/runtime/confidence-hover.test.ts(22,3): error TS2459: Module '"../../src/shared/component-types"' declares 'ElementIdentity' locally, but it is not exported.
+tests/runtime/confidence-hover.test.ts(74,3): error TS2741: Property 'lifecycleId' is missing in type '{ type: "Hover"; state: "active"; trigger: ElementIdentity; triggerEvent: ObservedEvent; memberEvents: ObservedEvent[]; scopeKeys: Set<string>; startTime: number; endTime: number; data: {}; }' but required in type 'ComponentContext'.
+tests/runtime/disposition-tracking.test.ts(116,24): error TS6133: 'ctx' is declared but its value is never read.
+tests/runtime/disposition-tracking.test.ts(160,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/disposition-tracking.test.ts(179,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/disposition-tracking.test.ts(197,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 9 more.
+tests/runtime/disposition-tracking.test.ts(211,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 9 more.
+tests/runtime/disposition-tracking.test.ts(231,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 9 more.
+tests/runtime/disposition-tracking.test.ts(23,3): error TS6196: 'ObservedEvent' is declared but never used.
+tests/runtime/disposition-tracking.test.ts(244,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/disposition-tracking.test.ts(262,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/disposition-tracking.test.ts(281,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/disposition-tracking.test.ts(294,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/disposition-tracking.test.ts(306,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/disposition-tracking.test.ts(333,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 9 more.
+tests/runtime/disposition-tracking.test.ts(357,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/disposition-tracking.test.ts(370,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/disposition-tracking.test.ts(387,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/disposition-tracking.test.ts(403,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/disposition-tracking.test.ts(421,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/disposition-tracking.test.ts(434,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/disposition-tracking.test.ts(456,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/disposition-tracking.test.ts(474,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/disposition-tracking.test.ts(483,7): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/evidence-based-hover.test.ts(10,32): error TS6133: 'beforeEach' is declared but its value is never read.
+tests/runtime/evidence-based-hover.test.ts(11,30): error TS6133: 'ComponentRuntime' is declared but its value is never read.
+tests/runtime/evidence-based-hover.test.ts(19,3): error TS2459: Module '"../../src/shared/component-types"' declares 'ElementIdentity' locally, but it is not exported.
+tests/runtime/evidence-based-hover.test.ts(22,3): error TS6196: 'ComponentCompletion' is declared but never used.
+tests/runtime/evidence-based-hover.test.ts(94,3): error TS2741: Property 'lifecycleId' is missing in type '{ type: any; state: "active"; trigger: ElementIdentity; triggerEvent: ObservedEvent; memberEvents: ObservedEvent[]; scopeKeys: Set<string>; startTime: number; endTime: number; data: {}; }' but required in type 'ComponentContext'.
+tests/runtime/evidence-ledger.test.ts(16,8): error TS6133: 'LedgerEntry' is declared but its value is never read.
+tests/runtime-healing-integration.test.ts(14,32): error TS6133: 'vi' is declared but its value is never read.
+tests/runtime-healing-integration.test.ts(14,36): error TS6133: 'beforeEach' is declared but its value is never read.
+tests/runtime-healing-integration.test.ts(17,8): error TS6133: 'ExecutionRun' is declared but its value is never read.
+tests/runtime/null-identity-regression.test.ts(18,3): error TS6196: 'ComponentDefinition' is declared but never used.
+tests/runtime/null-identity-regression.test.ts(19,3): error TS6196: 'ObservedEvent' is declared but never used.
+tests/runtime/null-identity-regression.test.ts(23,3): error TS2459: Module '"../../src/shared/component-types"' declares 'ElementIdentity' locally, but it is not exported.
+tests/runtime/verification-regression.test.ts(14,26): error TS6133: 'DISCRETE_ACTION_TYPES' is declared but its value is never read.
+tests/runtime/verification-regression.test.ts(168,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/verification-regression.test.ts(181,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/verification-regression.test.ts(194,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/verification-regression.test.ts(207,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/verification-regression.test.ts(211,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/verification-regression.test.ts(224,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/verification-regression.test.ts(228,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/verification-regression.test.ts(232,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/verification-regression.test.ts(245,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 9 more.
+tests/runtime/verification-regression.test.ts(250,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 9 more.
+tests/runtime/verification-regression.test.ts(263,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/verification-regression.test.ts(267,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/verification-regression.test.ts(271,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/verification-regression.test.ts(284,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/verification-regression.test.ts(297,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/verification-regression.test.ts(311,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/verification-regression.test.ts(316,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/verification-regression.test.ts(321,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/verification-regression.test.ts(325,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/runtime/verification-regression.test.ts(330,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 9 more.
+tests/runtime/verification-regression.test.ts(335,9): error TS2740: Type '{ tag: string; accessibleName: string; stableId: string; cssSelector: string; ariaRole: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaLabel, ariaLabelledBy, placeholder, and 9 more.
+tests/semantics/g6-details-expand-collapse.test.ts(64,3): error TS2741: Property 'interactionType' is missing in type '{ triggerRole: string; triggerLabel: string; triggerCssPath: string; }' but required in type 'InterpretationContext'.
+tests/semantics/sw-bridge.test.ts(109,29): error TS2322: Type 'string' is not assignable to type 'boolean | null'.
+tests/semantics/sw-bridge.test.ts(114,29): error TS2322: Type 'string' is not assignable to type 'boolean | null'.
+tests/semantics/sw-bridge.test.ts(271,29): error TS2322: Type 'string' is not assignable to type 'boolean | null'.
+tests/semantics/sw-bridge.test.ts(276,29): error TS2322: Type 'string' is not assignable to type 'boolean | null'.
+tests/semantics/sw-bridge.test.ts(61,7): error TS2561: Object literal may only specify known properties, but 'inShadowDom' does not exist in type 'ElementIdentity'. Did you mean to write 'shadowDom'?
+tests/semantics/sw-bridge.test.ts(69,7): error TS2740: Type '{ tag: string; cssSelector: string; xPath: string; accessibleName: string; }' is missing the following properties from type 'ElementIdentity': elementId, ariaRole, ariaLabel, ariaLabelledBy, and 10 more.
+tests/semantics/sw-bridge.test.ts(75,7): error TS2740: Type '{ ancestorRoles: string[]; }' is missing the following properties from type 'DomContext': inputType, ariaExpanded, ariaHasPopup, isContentEditable, and 5 more.
+tests/session-persistence-service.test.ts(109,10): error TS2352: Conversion of type '{ id: string; type: "click"; timestamp: string; url: string; }' to type 'SessionEvent' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+tests/session-persistence-service.test.ts(21,1): error TS6133: 'DetectedInteraction' is declared but its value is never read.
+tests/session-persistence-service.test.ts(496,13): error TS6133: 'result2' is declared but its value is never read.
+tests/session-persistence-service.test.ts(91,10): error TS2352: Conversion of type '{ id: string; testCaseName: string; environment: { baseUrl: string; viewport: { width: number; height: number; }; }; steps: never[]; metadata: { generatedAt: string; generatorVersion: string; sessionEventCount: number; interactionCount: number; }; }' to type 'ExecutionIRPlan' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+tests/sidepanel/behavioral-renderer.test.ts(17,31): error TS6196: 'EffectCategory' is declared but never used.
+tests/sidepanel/behavioral-renderer.test.ts(17,47): error TS6196: 'Confidence' is declared but never used.
+tests/sidepanel/behavioral-renderer.test.ts(78,5): error TS2322: Type '"Direct aria-checked property delta observed"' is not assignable to type 'ConfidenceBasis'.
+tests/sidepanel/behavioral-renderer.test.ts(790,42): error TS2322: Type 'string' is not assignable to type 'boolean | null | undefined'.
+tests/sidepanel/behavioral-renderer.test.ts(791,41): error TS2322: Type 'string' is not assignable to type 'boolean | null | undefined'.
+tests/sidepanel/behavioral-renderer.test.ts(79,5): error TS2322: Type 'null' is not assignable to type 'AffectedTarget'.
+tests/sidepanel/behavioral-renderer.test.ts(80,5): error TS2322: Type 'string' is not assignable to type '{ windowId: string; sourceEventId: string; }'.
+tests/smart-hover-detection.test.ts(15,30): error TS2459: Module '"../src/recorder/recorded-event.js"' declares 'ElementIdentity' locally, but it is not exported.
+tests/spa-bare-div-capture.test.ts(18,30): error TS2459: Module '"../src/recorder/recorded-event.js"' declares 'ElementIdentity' locally, but it is not exported.
+tests/spa-bare-div-capture.test.ts(78,5): error TS2322: Type 'string' is not assignable to type '"click" | "focus" | "scroll" | "navigation" | "dblclick" | "contextmenu" | "blur" | "change" | "input" | "mouseenter" | "dragstart" | "drop" | "dateSelect"'.
+tests/spa-navigation.test.ts(11,55): error TS6133: 'vi' is declared but its value is never read.
+tests/spa-navigation.test.ts(39,11): error TS6133: 'beforeCount' is declared but its value is never read.
+tests/spa-navigation.test.ts(55,11): error TS6133: 'base' is declared but its value is never read.
+tests/spa-navigation.test.ts(77,11): error TS6133: 'base' is declared but its value is never read.
+tests/surface-detector.test.ts(9,32): error TS6133: 'beforeEach' is declared but its value is never read.
+tests/tap/capture-seq.test.ts(60,11): error TS6133: 'b' is declared but its value is never read.
+tests/validation/subphase4-realworld-validation.test.ts(19,32): error TS6133: 'beforeEach' is declared but its value is never read.
+tests/validation/subphase4-realworld-validation.test.ts(19,44): error TS6133: 'afterEach' is declared but its value is never read.
+tests/validation/subphase4-realworld-validation.test.ts(20,23): error TS7016: Could not find a declaration file for module 'jsdom'. '/workspace/node_modules/jsdom/lib/api.js' implicitly has an 'any' type.
+tests/validation/subphase4-realworld-validation.test.ts(252,39): error TS6133: 'e' is declared but its value is never read.
+tests/validation/subphase4-realworld-validation.test.ts(65,3): error TS18047: 'mutationObs' is possibly 'null'.

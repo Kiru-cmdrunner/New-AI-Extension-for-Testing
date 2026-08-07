@@ -1,0 +1,8 @@
+dist/assets/recorder-entry.ts-CVjKpTCy.js             22.38 kB │ gzip:  6.98 kB
+dist/assets/index.html-Dn0N6-Sw.js                    39.28 kB │ gzip: 10.43 kB
+dist/assets/service-worker.ts-DmtSl4bX.js             80.23 kB │ gzip: 22.59 kB
+dist/assets/dexie-unit-of-work-factory-dpEFNe5u.js   111.84 kB │ gzip: 36.18 kB
+✓ built in 2.01s
+Packed extension v10.9.0 (47 files, 296075.1 KB)
+  -> cmdrunner-extension.zip
+  -> download/cmdrunner-extension.zip
