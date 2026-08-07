@@ -685,6 +685,7 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
     eventId: `nav-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     eventType: 'navigation' as any,
     timestamp: Date.now(),
+    captureSeq: performance.now(),
     isTrusted: true,
     target: {
       accessibleName: '',

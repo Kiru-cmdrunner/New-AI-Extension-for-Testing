@@ -106,6 +106,7 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
       eventId: nextEventId(),
       eventType: 'navigation',
       timestamp: Date.now(),
+      captureSeq: performance.now(),
       isTrusted: true, // user-initiated navigation (even if programmatic in the SPA)
       target: extractIdentity(document.body || document.documentElement),
       domContext: extractDomContext(document.body || document.documentElement),
@@ -269,6 +270,7 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
       eventId: nextEventId(),
       eventType,
       timestamp: Date.now(),
+      captureSeq: rawEvent.timeStamp,
       isTrusted: rawEvent.isTrusted,
       target: identity,
       domContext,

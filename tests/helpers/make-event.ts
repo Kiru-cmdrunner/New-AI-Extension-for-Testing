@@ -50,6 +50,7 @@ export function makeObservedEvent(
 
   return {
     timestamp: Date.now(),
+    captureSeq: 0,
     isTrusted: true,
     target,
     domContext: DEFAULT_DOM_CONTEXT,

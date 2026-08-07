@@ -85,6 +85,14 @@ export interface ObservedEvent {
   eventType: BrowserEventType;
   /** Timestamp (Date.now()). */
   timestamp: number;
+  /**
+   * Browser-assigned monotonic sequence number (rawEvent.timeStamp).
+   * Provides deterministic within-document event ordering independent of
+   * async SW message processing. Two events from the same document are
+   * in browser-observed order iff `a.captureSeq <= b.captureSeq`.
+   * Navigation synthetic events use `performance.now()` (no rawEvent).
+   */
+  captureSeq: number;
   /** Whether the event is trusted (user-initiated). Synthetic events are rejected. */
   isTrusted: boolean;
 
