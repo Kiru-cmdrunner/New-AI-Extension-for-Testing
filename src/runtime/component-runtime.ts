@@ -27,6 +27,7 @@ import type {
 } from '../shared/component-types';
 import { DEDUP_WINDOW_MS } from '../shared/component-types';
 import { elementKey } from '../definitions/patterns';
+import type { EvidenceLedger } from './evidence-ledger';
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -163,10 +164,12 @@ class ComponentRuntimeImpl implements ComponentRuntime {
   private readonly clickDefinition: ComponentDefinition | null;
   private readonly nonClickDefinitions: ComponentDefinition[];
   private readonly config: RuntimeConfig;
+  private readonly ledger: EvidenceLedger | null;
 
   private activeStack: ComponentContext[] = [];
   private seenEventIds: Set<string> = new Set();
   private interactionCounter: number;
+  private lifecycleCounter: number = 0;
   /** Per-type dedup: tracks the last interaction of each type independently. */
   private dedupByType: Map<InteractionType, DedupRecord> = new Map();
   private errorLog: string[] = [];
@@ -176,6 +179,7 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     // Click (180) is the universal fallback — always checked last.
     this.definitions = [...definitions].sort((a, b) => a.priority - b.priority);
     this.config = config;
+    this.ledger = config.evidenceLedger ?? null;
     this.interactionCounter = config.initialInteractionId ?? 0;
 
     // Separate Click (fallback) from other definitions
@@ -247,6 +251,10 @@ class ComponentRuntimeImpl implements ComponentRuntime {
           handled = true;
           ctx.state = completion.endState;
           ctx.endTime = event.timestamp;
+          // Disposition: completion absorbs the event (completeComponent will set claimed/unclaimed)
+          if (DISCRETE_ACTION_TYPES.has(event.eventType)) {
+            this.ledger?.setDisposition(event.eventId, 'absorbed', ctx.lifecycleId, ctx.type);
+          }
           const interaction = this.completeComponent(ctx, def, completion);
           if (interaction) emitted.push(interaction);
           // Remove from stack
@@ -272,6 +280,7 @@ class ComponentRuntimeImpl implements ComponentRuntime {
             if (lifecycleOwnsTarget(event, ctx, def)) {
               // Legitimate absorption (e.g., dropdown option click with role=option).
               handled = true;
+              this.ledger?.setDisposition(event.eventId, 'absorbed', ctx.lifecycleId, ctx.type);
             } else {
               // Cannot positively prove ownership. Release the event so it falls
               // through to discovery → definition match or Unclassified fallback.
@@ -281,6 +290,9 @@ class ComponentRuntimeImpl implements ComponentRuntime {
           } else {
             // Same-element click or accumulating event — legitimate absorption.
             handled = true;
+            if (isDiscrete) {
+              this.ledger?.setDisposition(event.eventId, 'absorbed', ctx.lifecycleId, ctx.type);
+            }
           }
         }
       } else {
@@ -329,6 +341,10 @@ class ComponentRuntimeImpl implements ComponentRuntime {
       const newCtx = this.tryDiscovery(event);
       if (newCtx) {
         this.activeStack.push(newCtx);
+        // Disposition: trigger event absorbed by new lifecycle
+        if (DISCRETE_ACTION_TYPES.has(event.eventType)) {
+          this.ledger?.setDisposition(event.eventId, 'absorbed', newCtx.lifecycleId, newCtx.type);
+        }
         // Check if the definition completes immediately (e.g., Click, Checkbox)
         const def = this.findDefForType(newCtx.type);
         let completedImmediately = false;
@@ -343,6 +359,9 @@ class ComponentRuntimeImpl implements ComponentRuntime {
             completedImmediately = true;
             newCtx.state = completion.endState;
             newCtx.endTime = event.timestamp;
+            // Disposition: completeComponent will set 'claimed' on success,
+            // or releaseClaims on dedup failure. The trigger was already set
+            // to 'absorbed' when the lifecycle was pushed to activeStack.
             const interaction = this.completeComponent(newCtx, def, completion);
             if (interaction) emitted.push(interaction);
             this.activeStack.pop();
@@ -516,6 +535,7 @@ class ComponentRuntimeImpl implements ComponentRuntime {
   ): ComponentContext {
     return {
       type: def.type,
+      lifecycleId: `lc-${++this.lifecycleCounter}`,
       state: 'active',
       trigger: event.target,
       triggerEvent: event,
@@ -575,6 +595,9 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     // Dedup check
     const key = elementKey(ctx.trigger);
     if (this.isDuplicate(ctx, metadata, key)) {
+      // Suppressed by dedup — release all absorbed events for this lifecycle.
+      // The events were absorbed but no completed interaction backs them.
+      this.ledger?.releaseClaims(ctx.lifecycleId);
       return null;
     }
 
@@ -599,6 +622,21 @@ class ComponentRuntimeImpl implements ComponentRuntime {
       endTime: ctx.endTime,
       metadata: { ...metadata },
     });
+
+    // Evidence Ledger disposition: claim or release all discrete member events
+    if (this.ledger) {
+      if (completion.endState === 'completed') {
+        // Claim all discrete member events
+        for (const ev of ctx.memberEvents) {
+          if (DISCRETE_ACTION_TYPES.has(ev.eventType)) {
+            this.ledger.setDisposition(ev.eventId, 'claimed', interaction.interactionId, ctx.type);
+          }
+        }
+      } else {
+        // Abandoned/interrupted — release all absorbed events for this lifecycle
+        this.ledger.releaseClaims(ctx.lifecycleId);
+      }
+    }
 
     // Emit
     try {

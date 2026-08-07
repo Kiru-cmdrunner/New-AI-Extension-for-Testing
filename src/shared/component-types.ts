@@ -233,6 +233,12 @@ export interface ComponentContext {
   /** Lifecycle state. */
   state: ComponentState;
 
+  /**
+   * Unique lifecycle ID for Evidence Ledger disposition tracking.
+   * Assigned at createContext time. Format: `lc-{counter}`.
+   */
+  lifecycleId: string;
+
   /** Identity of the trigger element. */
   trigger: ElementIdentity;
 
@@ -436,6 +442,15 @@ export interface RuntimeConfig {
    * where the previous runtime left off).
    */
   initialInteractionId?: number;
+
+  /**
+   * Optional Evidence Ledger for disposition tracking.
+   * When provided, the runtime records a disposition for every discrete
+   * event: absorbed when a lifecycle claims it, claimed when the lifecycle
+   * completes, unclaimed when the lifecycle is abandoned/interrupted.
+   * When not provided, the runtime works standalone (backward compat).
+   */
+  evidenceLedger?: import('../runtime/evidence-ledger').EvidenceLedger;
 }
 
 /**
