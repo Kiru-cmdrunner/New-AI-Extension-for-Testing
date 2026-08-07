@@ -1,21 +1,26 @@
 /**
- * IR Bridge — the single integration point where recording outputs converge
- * into a unified ExecutionIRPlan.
+ * Generation Layer — IR Compiler
  *
- * Phase 8 — Milestone 8.2
+ * Compiles ComponentInteraction[] (recording output) into ExecutionIRPlan
+ * (execution representation). This is a permanent architectural layer.
  *
- * Architecture (see docs/handover/14-target-generation-architecture.md):
- *   SessionEvent[] + DetectedInteraction[] + ApplicationKnowledgeFragment
- *     → IR Bridge → ExecutionIRPlan
+ * Architecture:
+ *   ComponentInteraction[] + RecordingContext + GenerationEnrichment
+ *     → compileToIR() → ExecutionIRPlan
  *
- * The bridge is a pure function: same inputs → same plan, every time.
+ * The compiler is a pure function: same inputs → same plan, every time.
  * No side effects, no storage reads/writes. The caller (service worker)
  * handles persistence.
  *
- * Each input provides unique, non-overlapping data:
- *   SessionEvent[] — locators, input values, DOM context, AI enrichment
- *   DetectedInteraction[] — type classification (40 types), metadata, confidence
- *   KnowledgeFragment — assertions, business field labels, workflow structure
+ * Contract invariants (see .drytis/ENGINEERING-HANDOVER.md):
+ *   INV-GEN-1: Determinism — same input → same output
+ *   INV-GEN-4: Order preservation — step order matches interaction order
+ *   INV-GEN-7: Graceful degradation — enrichment absent → valid plan
+ *   INV-GEN-8: No Understanding Layer imports
+ *   INV-GEN-9: Service worker is sole adapter site
+ *
+ * Phase 1.3: Removed DetectedInteraction dependency, 40-type vocabulary,
+ * SessionEvent correlation, and Understanding Layer integration.
  */
 
 import {
@@ -30,78 +35,51 @@ import {
   type IREnvironment,
   type IRInput,
 } from '../domain/execution-ir/types';
-import {
-  ValidationType,
-  ValidationComparison,
-  ValidationSeverity,
-} from '../domain/enums';
-import type { SessionEvent, ElementIdentity, AIUnderstanding } from '../shared/types';
-import type { DetectedInteraction, InteractionType } from '../shared/bridge-types';
-import type {
-  ApplicationKnowledgeFragment,
-  InteractionContract,
-  LogicalAction,
-} from '../domain/entities/application-knowledge';
+import type { ElementIdentity } from '../shared/types';
+import type { ComponentInteraction, InteractionType } from '../shared/component-types';
 import {
   extractCandidatesFromIdentity,
   rankLocatorCandidates,
 } from '../domain/locator-ranking';
-import type { IRBridgeInput } from './ir-bridge-input';
+import type { GenerationInput, GenerationEnrichment } from './generation-types';
 
-// ── Interaction Type → IRAction Mapping ────────────────────
+// ── Interaction Type → IRAction Mapping (14 types) ────────
 
+/**
+ * Maps ComponentInteraction types to IRAction.
+ *
+ * This is the single source of truth for "what kind of IR step does this
+ * interaction produce?" Every adapter (Playwright, Cypress, etc.) reads
+ * the IRAction, never the InteractionType.
+ */
 const INTERACTION_TO_IR_ACTION: Record<InteractionType, IRAction> = {
-  // Navigation
-  PageNavigation: IRAction.NAVIGATE,
-  Back: IRAction.NAVIGATE,
-  Forward: IRAction.NAVIGATE,
-  Refresh: IRAction.NAVIGATE,
-  // Mouse
   Click: IRAction.CLICK,
-  DoubleClick: IRAction.CLICK,
-  RightClick: IRAction.CLICK,
-  Hover: IRAction.HOVER,
-  DragDrop: IRAction.CLICK,
-  // Text Entry
   TextEntry: IRAction.FILL,
-  // Selection Controls
-  NativeDropdown: IRAction.SELECT,
-  CustomDropdown: IRAction.SELECT,
-  Autocomplete: IRAction.SELECT,
-  MultiSelect: IRAction.SELECT,
+  Dropdown: IRAction.SELECT,
   Checkbox: IRAction.TOGGLE,
   RadioButton: IRAction.SELECT,
-  ToggleSwitch: IRAction.TOGGLE,
-  Slider: IRAction.FILL,
-  // Date & Time
   DatePicker: IRAction.SELECT_DATE,
-  TimePicker: IRAction.SELECT_DATE,
-  DateTimePicker: IRAction.SELECT_DATE,
-  // File Upload
-  FileUpload: IRAction.FILL,
-  DragDropUpload: IRAction.FILL,
-  // Navigation UI
+  Hover: IRAction.HOVER,
   Link: IRAction.CLICK,
+  FileUpload: IRAction.FILL,
+  Slider: IRAction.FILL,
+  ColorInput: IRAction.FILL,
   Tab: IRAction.CLICK,
-  Menu: IRAction.CLICK,
-  Breadcrumb: IRAction.CLICK,
-  // Scrolling — noise, filtered out
-  PageScroll: IRAction.CLICK,
-  ContainerScroll: IRAction.CLICK,
-  InfiniteScroll: IRAction.CLICK,
-  // Dialogs
-  BrowserAlert: IRAction.CLICK,
-  Modal: IRAction.CLICK,
-  Drawer: IRAction.CLICK,
-  Popover: IRAction.CLICK,
-  Tooltip: IRAction.HOVER,
-  // Window & Frame
-  NewTab: IRAction.CLICK,
-  NewWindow: IRAction.CLICK,
-  Iframe: IRAction.CLICK,
-  // Unknown
-  Unknown: IRAction.CLICK,
+  Scroll: IRAction.CLICK,      // filtered as noise below
+  Navigation: IRAction.NAVIGATE,
+  Unclassified: IRAction.CLICK, // fallback
 };
+
+// ── Noise Filtering ────────────────────────────────────────
+
+/**
+ * Interaction types that produce no meaningful test step.
+ * Filtered out during IR plan construction.
+ */
+const NOISE_TYPES: Set<InteractionType> = new Set([
+  'Scroll',
+  'Unclassified',
+]);
 
 // ── Locator Resolution (ElementIdentity → ResolvedLocator[]) ──
 
@@ -117,7 +95,6 @@ const INTERACTION_TO_IR_ACTION: Record<InteractionType, IRAction> = {
 function resolveLocatorsForIR(identity: ElementIdentity): ResolvedLocator[] {
   const candidates = extractCandidatesFromIdentity(identity);
   const ranked = rankLocatorCandidates(candidates);
-  // RankedLocator is structurally compatible with ResolvedLocator
   return ranked as ResolvedLocator[];
 }
 
@@ -140,369 +117,160 @@ function resolveUrlTarget(url: string): ResolvedTarget {
 
 // ── Description Generation ─────────────────────────────────
 
+/**
+ * Generate a human-readable description for an IR step.
+ *
+ * Uses metadata produced by ComponentDefinition.buildResult().
+ * When enrichment provides a business label, it replaces the
+ * generic element name.
+ */
 function generateDescription(
-  interaction: DetectedInteraction,
-  event: SessionEvent | undefined,
-  logicalAction: LogicalAction | undefined,
+  interaction: ComponentInteraction,
+  businessLabel?: string,
 ): string {
-  const name = getElementDisplayName(interaction, event);
-  const businessField = logicalAction?.businessField;
+  const name = businessLabel ?? getElementDisplayName(interaction);
+  const md = interaction.metadata;
 
   switch (interaction.type) {
     case 'TextEntry': {
-      const value = event?.type === 'text' ? event.value : interaction.metadata.textValue ?? '';
-      return businessField
-        ? `Fill "${value}" in the ${businessField} field`
-        : `Fill "${value}" in the ${name}`;
+      const value = (md['textValue'] as string) ?? '';
+      return `Fill "${value}" in the ${name}`;
     }
-    case 'Checkbox':
-    case 'ToggleSwitch': {
-      const checked = event?.type === 'checkbox' ? event.checked : interaction.metadata.checked ?? false;
-      return businessField
-        ? `${checked ? 'Check' : 'Uncheck'} the ${businessField}`
-        : `${checked ? 'Check' : 'Uncheck'} the ${name}`;
+    case 'Checkbox': {
+      const checked = (md['checked'] as boolean) ?? false;
+      return `${checked ? 'Check' : 'Uncheck'} the ${name}`;
     }
-    case 'NativeDropdown':
-    case 'CustomDropdown':
-    case 'Autocomplete':
-    case 'MultiSelect':
+    case 'Dropdown':
     case 'RadioButton': {
-      const value = event?.type === 'select' ? event.value : interaction.metadata.selectedValue ?? '';
-      return businessField
-        ? `Select "${value}" from the ${businessField}`
-        : `Select "${value}" from the ${name}`;
+      const value = (md['selectedValue'] as string) ?? '';
+      return `Select "${value}" from the ${name}`;
     }
-    case 'DatePicker':
-    case 'TimePicker':
-    case 'DateTimePicker': {
-      const value = event?.type === 'dateSelect' ? event.displayValue : interaction.metadata.dateValue ?? '';
-      return businessField
-        ? `Select ${value} in the ${businessField}`
-        : `Select ${value} in the ${name}`;
+    case 'DatePicker': {
+      const value = (md['dateValue'] as string) ?? (md['selectedDate'] as string) ?? '';
+      return `Select ${value} in the ${name}`;
     }
-    case 'PageNavigation':
-    case 'Back':
-    case 'Forward':
-    case 'Refresh': {
-      const url = event?.type === 'navigation' ? event.url : interaction.metadata.url ?? '';
+    case 'Navigation': {
+      const url = (md['pageUrl'] as string) ?? '';
       return `Navigate to ${url}`;
     }
     case 'Hover':
       return `Hover over the ${name}`;
     case 'Slider': {
-      const value = interaction.metadata.sliderValue ?? '';
-      return businessField
-        ? `Set the ${businessField} to ${value}`
-        : `Set the slider to ${value}`;
+      const value = (md['value'] as string) ?? '';
+      return `Set the slider to ${value}`;
     }
-    case 'FileUpload':
-    case 'DragDropUpload': {
-      const count = interaction.metadata.fileCount ?? 1;
-      return businessField
-        ? `Upload ${count} file(s) to the ${businessField}`
-        : `Upload ${count} file(s)`;
+    case 'ColorInput': {
+      const value = (md['value'] as string) ?? '';
+      return `Set the color to ${value}`;
     }
-    case 'PageScroll':
-    case 'ContainerScroll':
-    case 'InfiniteScroll':
-      return `Scroll the page`;
+    case 'FileUpload': {
+      const file = (md['fileName'] as string) ?? '';
+      return `Upload ${file || 'a file'}`;
+    }
     case 'Tab': {
-      const tab = interaction.metadata.selectedTab ?? name;
-      return `Click the "${tab}" tab`;
+      return `Click the "${name}" tab`;
     }
     case 'Link':
       return `Click the "${name}" link`;
-    case 'Modal':
-    case 'Drawer':
-    case 'Popover':
-      return `Interact with the ${interaction.metadata.surfaceLabel ?? name}`;
-    case 'BrowserAlert': {
-      const result = interaction.metadata.dialogResult ?? '';
-      return `${result} the ${interaction.metadata.dialogType ?? 'dialog'}`;
-    }
     default:
-      return businessField
-        ? `Click the ${businessField}`
-        : `Click the ${name}`;
+      return `Click the ${name}`;
   }
 }
 
+/**
+ * Generate plain-English description (capitalized first letter).
+ */
 function generatePlainEnglish(
-  interaction: DetectedInteraction,
-  event: SessionEvent | undefined,
-  logicalAction: LogicalAction | undefined,
+  interaction: ComponentInteraction,
+  businessLabel?: string,
 ): string {
-  // plainEnglish is a simpler, more human-friendly version
-  const description = generateDescription(interaction, event, logicalAction);
-  // Capitalize first letter
+  const description = generateDescription(interaction, businessLabel);
   return description.charAt(0).toUpperCase() + description.slice(1);
 }
 
-function getElementDisplayName(
-  interaction: DetectedInteraction,
-  event: SessionEvent | undefined,
-): string {
-  if (interaction.target?.accessibleName) {
-    return interaction.target.accessibleName;
-  }
-  if (interaction.target?.ariaLabel) {
-    return interaction.target.ariaLabel;
-  }
-  if (event && 'elementIdentity' in event) {
-    return event.elementIdentity.accessibleName || event.elementIdentity.ariaLabel || event.elementIdentity.tag;
-  }
-  return interaction.metadata.accessibleName ?? 'element';
+/**
+ * Get a human-readable name for the interaction's target element.
+ */
+function getElementDisplayName(interaction: ComponentInteraction): string {
+  const trigger = interaction.trigger;
+  return trigger.accessibleName
+    || trigger.ariaLabel
+    || trigger.tag;
 }
 
 // ── Input Value Extraction ─────────────────────────────────
 
-function extractInputValue(
-  interaction: DetectedInteraction,
-  event: SessionEvent | undefined,
-): IRInput {
+/**
+ * Extract the input value for an IR step from interaction metadata.
+ *
+ * In the old architecture, this tried SessionEvent first then metadata.
+ * Now metadata is the sole source — buildResult already resolved
+ * values at classification time.
+ */
+function extractInputValue(interaction: ComponentInteraction): IRInput {
+  const md = interaction.metadata;
+
   switch (interaction.type) {
     case 'TextEntry':
-      return event?.type === 'text' ? event.value : (interaction.metadata.textValue ?? null);
+      return (md['textValue'] as string) ?? null;
 
     case 'Checkbox':
-    case 'ToggleSwitch':
-      return event?.type === 'checkbox' ? event.checked : (interaction.metadata.checked ?? null);
+      return (md['checked'] as boolean) ?? null;
 
-    case 'NativeDropdown':
-    case 'CustomDropdown':
-    case 'Autocomplete':
-    case 'MultiSelect':
+    case 'Dropdown':
     case 'RadioButton':
-      return event?.type === 'select' ? event.value : (interaction.metadata.selectedValue ?? null);
+      return (md['selectedValue'] as string) ?? null;
 
     case 'DatePicker':
-    case 'TimePicker':
-    case 'DateTimePicker':
-      return event?.type === 'dateSelect' ? event.isoValue : (interaction.metadata.dateValue ?? null);
+      return (md['dateValue'] as string) ?? (md['selectedDate'] as string) ?? null;
 
     case 'Slider':
-      return interaction.metadata.sliderValue ?? null;
+      return (md['value'] as string) ?? null;
 
-    case 'PageNavigation':
-    case 'Back':
-    case 'Forward':
-    case 'Refresh':
-      return event?.type === 'navigation' ? event.url : (interaction.metadata.url ?? null);
+    case 'ColorInput':
+      return (md['value'] as string) ?? null;
+
+    case 'Navigation':
+      return (md['pageUrl'] as string) ?? null;
+
+    case 'FileUpload':
+      return (md['fileName'] as string) ?? null;
 
     default:
       return null;
   }
 }
 
-// ── AI Enrichment Extraction ───────────────────────────────
-
-function extractAIEnrichment(event: SessionEvent | undefined): AIUnderstanding | null {
-  if (!event) return null;
-  if (!('aiUnderstanding' in event)) return null;
-  return event.aiUnderstanding ?? null;
-}
-
-// ── Assertion Derivation (from Knowledge Fragment) ─────────
+// ── Assertion Derivation (from Enrichment) ─────────────────
 
 /**
- * Derive IRAssertion[] from InteractionContract.constraints.
+ * Derive IRAssertion[] from enrichment.elementAssertions.
  *
- * Maps DOM constraints captured by the enrichment pipeline into
- * executable validation assertions.
+ * Replaces the old fragment-based deriveAssertions/constraintsToAssertions
+ * pipeline. When enrichment is absent, returns empty array (INV-GEN-7).
  */
 function deriveAssertions(
   elementId: string,
-  fragment: ApplicationKnowledgeFragment | null,
+  enrichment?: GenerationEnrichment,
 ): IRAssertion[] {
-  if (!fragment) return [];
-
-  // Find the interaction contract that applies to this element
-  const contract = fragment.interactionContracts.find(
-    (c) => c.appliesTo.type === 'element' && c.appliesTo.id === elementId,
-  );
-
-  if (!contract) return [];
-
-  return constraintsToAssertions(contract, elementId);
+  // Track 3: When enrichment.elementAssertions is populated, map
+  // GenerationAssertion[] → IRAssertion[] via an adapter at the
+  // service-worker call site. For now, enrichment is always absent
+  // (INV-GEN-7: graceful degradation).
+  void elementId;
+  void enrichment;
+  return [];
 }
-
-function constraintsToAssertions(
-  contract: InteractionContract,
-  elementId: string,
-): IRAssertion[] {
-  const assertions: IRAssertion[] = [];
-  const c = contract.constraints;
-  const target: ResolvedTarget = {
-    kind: 'element',
-    elementId,
-    elementName: '',
-    pageOrComponent: '',
-    resolvedLocators: [],
-  };
-
-  // required → presence assertion
-  if (c.required === true) {
-    assertions.push({
-      type: ValidationType.PRESENCE,
-      comparison: ValidationComparison.IS_TRUE,
-      expectedValue: true,
-      severity: ValidationSeverity.HARD,
-      target,
-      property: 'required',
-    });
-  }
-
-  // valueRange (min/max) → comparison assertions
-  if (c.valueRange) {
-    if (c.valueRange.min !== null && c.valueRange.min !== undefined) {
-      assertions.push({
-        type: ValidationType.ATTRIBUTE_MATCH,
-        comparison: ValidationComparison.GREATER_THAN,
-        expectedValue: c.valueRange.min,
-        severity: ValidationSeverity.SOFT,
-        target,
-        property: 'min',
-      });
-    }
-    if (c.valueRange.max !== null && c.valueRange.max !== undefined) {
-      assertions.push({
-        type: ValidationType.ATTRIBUTE_MATCH,
-        comparison: ValidationComparison.LESS_THAN,
-        expectedValue: c.valueRange.max,
-        severity: ValidationSeverity.SOFT,
-        target,
-        property: 'max',
-      });
-    }
-  }
-
-  // lengthRange (minLength/maxLength)
-  if (c.lengthRange) {
-    if (c.lengthRange.minLength !== null && c.lengthRange.minLength !== undefined) {
-      assertions.push({
-        type: ValidationType.ATTRIBUTE_MATCH,
-        comparison: ValidationComparison.GREATER_THAN,
-        expectedValue: c.lengthRange.minLength,
-        severity: ValidationSeverity.SOFT,
-        target,
-        property: 'minlength',
-      });
-    }
-    if (c.lengthRange.maxLength !== null && c.lengthRange.maxLength !== undefined) {
-      assertions.push({
-        type: ValidationType.ATTRIBUTE_MATCH,
-        comparison: ValidationComparison.LESS_THAN,
-        expectedValue: c.lengthRange.maxLength,
-        severity: ValidationSeverity.SOFT,
-        target,
-        property: 'maxlength',
-      });
-    }
-  }
-
-  // format (regex pattern)
-  if (c.format?.regex) {
-    assertions.push({
-      type: ValidationType.TEXT_MATCH,
-      comparison: ValidationComparison.MATCHES,
-      expectedValue: c.format.regex,
-      severity: ValidationSeverity.SOFT,
-      target,
-      property: 'pattern',
-    });
-  }
-
-  // validOptions → equality assertion (value must be one of)
-  if (c.validOptions && c.validOptions.length > 0) {
-    assertions.push({
-      type: ValidationType.EQUALITY,
-      comparison: ValidationComparison.EQUALS,
-      expectedValue: c.validOptions,
-      severity: ValidationSeverity.SOFT,
-      target,
-      property: 'value',
-    });
-  }
-
-  return assertions;
-}
-
-// ── Event ↔ Interaction Correlation ────────────────────────
-
-/**
- * Build a lookup from actionId → SessionEvent for fast correlation.
- */
-function buildEventIndex(events: SessionEvent[]): Map<string, SessionEvent> {
-  const index = new Map<string, SessionEvent>();
-  for (const event of events) {
-    index.set(event.actionId, event);
-  }
-  return index;
-}
-
-/**
- * Find the SessionEvent that corresponds to a DetectedInteraction.
- * DetectedInteraction.eventIds links back to the raw events.
- */
-function findCorrespondingEvent(
-  interaction: DetectedInteraction,
-  eventIndex: Map<string, SessionEvent>,
-): SessionEvent | undefined {
-  for (const eventId of interaction.eventIds) {
-    const event = eventIndex.get(eventId);
-    if (event) return event;
-  }
-  return undefined;
-}
-
-/**
- * Find the LogicalAction that corresponds to a transition/interaction.
- * Uses timestamp proximity — the LogicalAction whose timestamp is closest.
- */
-function findLogicalAction(
-  interaction: DetectedInteraction,
-  fragment: ApplicationKnowledgeFragment | null,
-): LogicalAction | undefined {
-  if (!fragment) return undefined;
-
-  // Try to match by transition IDs in the logical action
-  // LogicalAction.transitionIds contains transition IDs from the enrichment pipeline
-  // These correspond to ObservedTransition.transitionId, which were mapped from
-  // DetectedInteraction.interactionId in the domain adapter.
-  const match = fragment.logicalActions.find(
-    (la) => la.transitionIds.includes(interaction.interactionId),
-  );
-  if (match) return match;
-
-  // Fallback: no match found
-  return undefined;
-}
-
-// ── Noise Filtering ────────────────────────────────────────
-
-/**
- * Interaction types that produce no meaningful test step.
- * Filtered out during IR plan construction.
- */
-const NOISE_TYPES: Set<InteractionType> = new Set([
-  'PageScroll',
-  'ContainerScroll',
-  'InfiniteScroll',
-  'Unknown',
-]);
 
 // ── Readability Rules ──────────────────────────────────────
 
 /**
  * Apply readability rules to IRStep[].
  *
- * OR-1: Merge consecutive focus+click on the same element into a single CLICK step.
- * (In the recording pipeline, focus and click are often captured as separate events,
- * but they represent a single user action.)
- *
- * Note: In the current pipeline, DetectedInteractions are already classified at the
- * interaction level (not the raw event level), so duplicate focus+click patterns
- * are rare. This rule handles the edge case where they slip through.
+ * OR-1: Merge consecutive CLICK on the same element into a single step.
+ * (In the recording pipeline, a click + click on the same element within
+ * a short window are captured as separate interactions but represent a
+ * single user action.)
  */
 function applyReadabilityRules(steps: IRStep[]): IRStep[] {
   if (steps.length <= 1) return steps;
@@ -536,27 +304,57 @@ function applyReadabilityRules(steps: IRStep[]): IRStep[] {
   return result.map((step, idx) => ({ ...step, order: idx }));
 }
 
-// ── Main Build Function ────────────────────────────────────
+// ── Tag Derivation ─────────────────────────────────────────
 
 /**
- * Build an ExecutionIRPlan from recording outputs.
+ * Derive tags from recording context and enrichment.
  *
- * This is the single integration point where:
- *   - SessionEvent[] provides locators, input values, DOM context, AI enrichment
- *   - DetectedInteraction[] provides classification (40 types), metadata, confidence
- *   - ApplicationKnowledgeFragment provides assertions, business fields, workflow structure
+ * Uses the start URL's first path segment plus any surface tags
+ * from enrichment. Max 5 tags.
+ */
+function deriveTags(
+  recordingContext: GenerationInput['recordingContext'],
+  enrichment?: GenerationEnrichment,
+): string[] {
+  const tags: string[] = [];
+
+  // Add the start URL path segment as a tag
+  try {
+    const url = new URL(recordingContext.startUrl);
+    const pathSegment = url.pathname.split('/').filter(Boolean)[0];
+    if (pathSegment) tags.push(pathSegment);
+  } catch {
+    // Ignore invalid URLs
+  }
+
+  // Add surface tags from enrichment
+  if (enrichment?.surfaceTags) {
+    for (const tag of enrichment.surfaceTags) {
+      if (tag && !tags.includes(tag)) {
+        tags.push(tag);
+      }
+    }
+  }
+
+  return tags.slice(0, 5);
+}
+
+// ── Main Compile Function ──────────────────────────────────
+
+/**
+ * Compile ComponentInteraction[] into an ExecutionIRPlan.
  *
- * The plan produced is the single source of truth for all downstream phases
- * (code generation, test execution, staleness detection).
+ * This is the Generation Layer's entry point. It takes the recording
+ * pipeline's output (ComponentInteraction[]) plus optional enrichment
+ * and produces the framework-neutral execution representation consumed
+ * by all downstream adapters (Playwright, Cypress, etc.).
  *
- * @param input Encapsulated bridge inputs (see IRBridgeInput)
+ * @param input Encapsulated generation inputs (see GenerationInput)
  * @returns ExecutionIRPlan — the unified execution representation
  */
-export function build(input: IRBridgeInput): ExecutionIRPlan {
-  const { events, interactions, recordingContext, testCaseName } = input;
-  const fragment = input.understanding?.fragment ?? null;
+export function build(input: GenerationInput): ExecutionIRPlan {
+  const { interactions, recordingContext, testCaseName, enrichment } = input;
 
-  const eventIndex = buildEventIndex(events);
   const steps: IRStep[] = [];
   let stepCounter = 0;
 
@@ -564,8 +362,8 @@ export function build(input: IRBridgeInput): ExecutionIRPlan {
     // Filter noise interactions
     if (NOISE_TYPES.has(interaction.type)) continue;
 
-    const event = findCorrespondingEvent(interaction, eventIndex);
-    const logicalAction = findLogicalAction(interaction, fragment);
+    // Look up business label for this interaction (if enriched)
+    const businessLabel = enrichment?.businessLabels?.get(interaction.interactionId);
 
     // Determine action
     const action = INTERACTION_TO_IR_ACTION[interaction.type] ?? IRAction.CLICK;
@@ -573,38 +371,25 @@ export function build(input: IRBridgeInput): ExecutionIRPlan {
     // Resolve target
     let target: ResolvedTarget;
     if (action === IRAction.NAVIGATE) {
-      const url = event?.type === 'navigation' ? event.url : (interaction.metadata.url ?? recordingContext.startUrl);
+      const url = (interaction.metadata['pageUrl'] as string) ?? recordingContext.startUrl;
       target = resolveUrlTarget(url);
-    } else if (interaction.target) {
-      target = resolveElementTarget(interaction.target);
-    } else if (event && 'elementIdentity' in event) {
-      target = resolveElementTarget(event.elementIdentity);
     } else {
-      target = { kind: 'none' };
+      target = resolveElementTarget(interaction.trigger);
     }
 
     // Extract input value
-    const inputValue = extractInputValue(interaction, event);
+    const inputValue = extractInputValue(interaction);
 
     // Generate description
-    const description = generateDescription(interaction, event, logicalAction);
-    const plainEnglish = generatePlainEnglish(interaction, event, logicalAction);
-
-    // Extract AI enrichment
-    const aiEnrichment = extractAIEnrichment(event);
+    const description = generateDescription(interaction, businessLabel);
+    const plainEnglish = generatePlainEnglish(interaction, businessLabel);
 
     // Source event ID
-    const sourceEventId = interaction.eventIds[0] ?? event?.actionId;
+    const sourceEventId = interaction.triggerEvent.eventId;
 
-    // Derive assertions from knowledge fragment
+    // Derive assertions from enrichment
     const elementId = target.kind === 'element' ? target.elementId : '';
-    const assertions = deriveAssertions(elementId, fragment);
-
-    // Execution parameters — default, with wait strategy based on confidence
-    const executionParameters = {
-      ...DEFAULT_EXECUTION_PARAMETERS,
-      waitStrategy: interaction.confidence < 0.7 ? ('visible' as const) : DEFAULT_EXECUTION_PARAMETERS.waitStrategy,
-    };
+    const assertions = deriveAssertions(elementId, enrichment);
 
     steps.push({
       id: `step-${String(stepCounter + 1).padStart(4, '0')}`,
@@ -614,8 +399,7 @@ export function build(input: IRBridgeInput): ExecutionIRPlan {
       target,
       input: inputValue,
       assertions,
-      executionParameters,
-      aiEnrichment,
+      executionParameters: DEFAULT_EXECUTION_PARAMETERS,
       sourceEventId,
       plainEnglish,
     });
@@ -626,8 +410,8 @@ export function build(input: IRBridgeInput): ExecutionIRPlan {
   // Apply readability rules (merge duplicates, re-number)
   const finalSteps = applyReadabilityRules(steps);
 
-  // Derive tags from workflow surfaces
-  const tags = deriveTags(fragment, recordingContext);
+  // Derive tags
+  const tags = deriveTags(recordingContext, enrichment);
 
   // Build environment
   const environment: IREnvironment = {
@@ -645,41 +429,4 @@ export function build(input: IRBridgeInput): ExecutionIRPlan {
     environment,
     steps: finalSteps,
   };
-}
-
-/**
- * Derive tags from the knowledge fragment's recorded workflow.
- * Uses surface transition URLs as tags (e.g., "login", "dashboard").
- */
-function deriveTags(
-  fragment: ApplicationKnowledgeFragment | null,
-  recordingContext: IRBridgeInput['recordingContext'],
-): string[] {
-  const tags: string[] = [];
-
-  // Add the start URL path segment as a tag
-  try {
-    const url = new URL(recordingContext.startUrl);
-    const pathSegment = url.pathname.split('/').filter(Boolean)[0];
-    if (pathSegment) tags.push(pathSegment);
-  } catch {
-    // Ignore invalid URLs
-  }
-
-  // Add surface transitions from the fragment
-  if (fragment?.recordedWorkflow.surfaceTransitions) {
-    for (const transition of fragment.recordedWorkflow.surfaceTransitions) {
-      try {
-        const url = new URL(transition.toUrl);
-        const segment = url.pathname.split('/').filter(Boolean)[0];
-        if (segment && !tags.includes(segment)) {
-          tags.push(segment);
-        }
-      } catch {
-        // Ignore invalid URLs
-      }
-    }
-  }
-
-  return tags.slice(0, 5); // Max 5 tags
 }

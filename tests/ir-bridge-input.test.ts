@@ -3,18 +3,17 @@
  *
  * Validates that:
  * - IRStep's new optional fields (aiEnrichment, sourceEventId, plainEnglish) are optional
- * - IRBridgeInput encapsulates all required inputs
  * - Existing IRStep usage (without the new fields) still works
  * - The types are compatible with the AIUnderstanding import
+ *
+ * NOTE: The IRBridgeInput model tests were removed in Phase 1.3.2 when the
+ * ir-bridge-input.ts file was deleted. The GenerationInput interface in
+ * generation-types.ts replaces it. See phase-1.3-implementation-plan.md.
  */
 
 import { describe, it, expect } from 'vitest';
 import { IRAction, DEFAULT_EXECUTION_PARAMETERS, type IRStep, type ExecutionIRPlan } from '../src/domain/execution-ir/types';
-import type { IRBridgeInput, IRBridgeRecordingContext } from '../src/generation/ir-bridge-input';
-import type { SessionEvent, AIUnderstanding } from '../src/shared/types';
-import type { DetectedInteraction } from '../src/shared/bridge-types';
-import type { ApplicationKnowledgeFragment } from '../src/domain/entities/application-knowledge';
-import type { UnderstandingResult } from '../src/domain/entities/understanding-result';
+import type { AIUnderstanding } from '../src/shared/types';
 
 describe('IRStep Extensions (Milestone 8.1)', () => {
   describe('optional recording-provenance fields', () => {
@@ -146,109 +145,6 @@ describe('IRStep Extensions (Milestone 8.1)', () => {
       expect(plan.steps).toHaveLength(2);
       expect(plan.steps[0].plainEnglish).toContain('Email field');
       expect(plan.steps[1].aiEnrichment?.businessName).toBe('Submit Button');
-    });
-  });
-});
-
-describe('IRBridgeInput Model (Milestone 8.1)', () => {
-  describe('IRBridgeRecordingContext', () => {
-    it('accepts a context with startUrl and title', () => {
-      const ctx: IRBridgeRecordingContext = {
-        startUrl: 'https://example.com/login',
-        title: 'Login Page',
-      };
-
-      expect(ctx.startUrl).toBe('https://example.com/login');
-      expect(ctx.title).toBe('Login Page');
-    });
-
-    it('accepts a context with null title', () => {
-      const ctx: IRBridgeRecordingContext = {
-        startUrl: 'https://example.com',
-        title: null,
-      };
-
-      expect(ctx.title).toBeNull();
-    });
-  });
-
-  describe('IRBridgeInput', () => {
-    it('encapsulates all required inputs', () => {
-      const events: SessionEvent[] = [];
-      const interactions: DetectedInteraction[] = [];
-
-      const input: IRBridgeInput = {
-        events,
-        interactions,
-        understanding: null,
-        recordingContext: { startUrl: 'https://example.com', title: 'Test' },
-        testCaseName: 'Login Test',
-      };
-
-      expect(input.events).toBe(events);
-      expect(input.interactions).toBe(interactions);
-      expect(input.understanding).toBeNull();
-      expect(input.recordingContext.startUrl).toBe('https://example.com');
-      expect(input.testCaseName).toBe('Login Test');
-    });
-
-    it('accepts a non-null understanding with fragment', () => {
-      const fragment: ApplicationKnowledgeFragment = {
-        sessionId: 'session-1',
-        generatedAt: '2026-07-21T00:00:00Z',
-        schemaVersion: 1,
-        elements: [],
-        transitions: [],
-        components: [],
-        interactionContracts: [],
-        behavioralContracts: [],
-        logicalActions: [],
-        recordedWorkflow: {
-          surfaceTransitions: [],
-          logicalActions: [],
-          branchPoints: [],
-          optionalSteps: [],
-        },
-        applicationSurfaces: [],
-      };
-
-      const understanding: UnderstandingResult = {
-        sessionId: 'session-1',
-        generatedAt: '2026-07-21T00:00:00Z',
-        schemaVersion: 1,
-        fragment,
-        capability: null,
-      };
-
-      const input: IRBridgeInput = {
-        events: [],
-        interactions: [],
-        understanding,
-        recordingContext: { startUrl: 'https://example.com', title: null },
-        testCaseName: 'Test',
-      };
-
-      expect(input.understanding).not.toBeNull();
-      expect(input.understanding?.fragment.sessionId).toBe('session-1');
-      expect(input.understanding?.capability).toBeNull();
-    });
-
-    it('is a stable interface — all 5 fields are present', () => {
-      const input: IRBridgeInput = {
-        events: [],
-        interactions: [],
-        understanding: null,
-        recordingContext: { startUrl: '', title: null },
-        testCaseName: '',
-      };
-
-      const keys = Object.keys(input);
-      expect(keys).toHaveLength(5);
-      expect(keys).toContain('events');
-      expect(keys).toContain('interactions');
-      expect(keys).toContain('understanding');
-      expect(keys).toContain('recordingContext');
-      expect(keys).toContain('testCaseName');
     });
   });
 });

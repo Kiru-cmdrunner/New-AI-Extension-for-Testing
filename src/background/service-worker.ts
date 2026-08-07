@@ -17,7 +17,6 @@
  */
 
 import { StorageService } from '../storage/storage-service';
-import type { UnderstandingResult } from '../domain/entities/understanding-result';
 import {
   RecordingState,
   StorageKeys,
@@ -44,7 +43,6 @@ import {
 } from '../capabilities/capability-bridge';
 import {
   filterProductionInteractions,
-  toIRActions,
 } from '../presentation/output-adapter';
 import { normalizeWorkflow } from '../presentation/workflow-normalizer';
 
@@ -310,27 +308,7 @@ async function handleStopRecording(): Promise<void> {
   // Store production interactions for UI display
   await StorageService.setRaw(LIVE_INTERACTIONS_KEY, productionInteractions);
 
-  // Map to IR actions for the generation pipeline
-  const irActions = toIRActions(productionInteractions);
-
-  // Build a synthetic events array from interactions (for IR Bridge compatibility)
-  // The IR Bridge currently expects Phase 1 DetectedInteraction[] — we adapt.
-  const events: any[] = [];
-  const interactionsForIR: any[] = productionInteractions.map((ci, i) => ({
-    id: ci.interactionId,
-    type: irActions[i]?.type ?? 'click',
-    target: ci.trigger,
-    value: irActions[i]?.value,
-    metadata: ci.metadata,
-    timestamp: new Date(ci.startTime).toISOString(),
-    eventIds: ci.memberEvents.map((e) => e.eventId),
-  }));
-
-  await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS, interactionsForIR);
-  await StorageService.setRaw(StorageKeys.DETECTED_INTERACTIONS_MERGED, interactionsForIR);
-
-  // ── IR Bridge: Unified Generation Pipeline ──
-  let understandingResult: UnderstandingResult | null = null;
+  // ── Generation Layer: compile interactions → ExecutionIRPlan ──
   try {
     const { build: buildIRPlan } = await import('../generation/ir-bridge');
     const { PlaywrightCodeGenerator } = await import('../adapters/playwright/project-generator');
@@ -338,9 +316,7 @@ async function handleStopRecording(): Promise<void> {
     const tab = await getActiveTab();
 
     const irPlan = buildIRPlan({
-      events,
-      interactions: interactionsForIR,
-      understanding: null,
+      interactions: productionInteractions,
       recordingContext: {
         startUrl: recordingStartUrl || tab?.url || 'about:blank',
         title: recordingStartTitle || tab?.title || null,
@@ -374,15 +350,15 @@ async function handleStopRecording(): Promise<void> {
     if (irPlan) {
       const uowFactory = new DexieUnitOfWorkFactory();
       const persistenceResult = await persistSession(uowFactory, {
-        understanding: understandingResult ?? {
+        understanding: {
           sessionId: `session-${Date.now()}`,
           generatedAt: new Date().toISOString(),
           schemaVersion: 1,
           fragment: null,
           capability: null,
         },
-        events,
-        interactions: interactionsForIR,
+        events: [],
+        interactions: productionInteractions,
         url: (await getActiveTab())?.url ?? '',
         irPlan,
         projectId: draft?.projectId ?? null,

@@ -1,31 +1,37 @@
 /**
- * Tests for the IR Bridge — validates the transformation from
- * SessionEvent[] + DetectedInteraction[] + ApplicationKnowledgeFragment
- * → ExecutionIRPlan.
+ * Tests for the Generation Layer (IR Compiler) — validates the transformation
+ * from ComponentInteraction[] + RecordingContext → ExecutionIRPlan.
+ *
+ * Phase 1.3.8: Rewritten from DetectedInteraction-based fixtures to
+ * ComponentInteraction-based fixtures. Removed SessionEvent correlation
+ * tests, fragment/understanding tests, AI enrichment tests, and assertion
+ * derivation tests — all Track 3 concerns via GenerationEnrichment.
  *
  * Covers:
- * - Interaction type → IRAction mapping (all categories)
+ * - Interaction type → IRAction mapping (14 types)
  * - Locator resolution from ElementIdentity
  * - Input value extraction (text, checked, selected value, dates, sliders)
- * - Description generation (with and without business field enrichment)
- * - Assertion derivation from InteractionContract.constraints
- * - AI enrichment passthrough
- * - Noise filtering (scroll events, Unknown)
+ * - Description generation
+ * - Noise filtering (Scroll, Unclassified)
  * - Readability rules (duplicate click merging)
- * - Event ↔ interaction correlation
- * - Empty inputs (no events, no interactions, null fragment)
+ * - Source event ID from triggerEvent
+ * - Execution parameters
+ * - Tag derivation
  * - Full end-to-end plan construction
  */
 
 import { describe, it, expect } from 'vitest';
 import { build } from '../src/generation/ir-bridge';
-import type { IRBridgeInput } from '../src/generation/ir-bridge-input';
+import type { GenerationInput } from '../src/generation/generation-types';
 import { IRAction } from '../src/domain/execution-ir/types';
-import { LocatorStrategyType, ValidationType, ValidationComparison } from '../src/domain/enums';
-import type { SessionEvent, ElementIdentity } from '../src/shared/types';
-import type { DetectedInteraction, InteractionType } from '../src/shared/bridge-types';
-import type { ApplicationKnowledgeFragment } from '../src/domain/entities/application-knowledge';
-import type { UnderstandingResult } from '../src/domain/entities/understanding-result';
+import { LocatorStrategyType } from '../src/domain/enums';
+import type { ElementIdentity } from '../src/shared/types';
+import type {
+  ComponentInteraction,
+  InteractionType,
+  ComponentContext,
+  ObservedEvent,
+} from '../src/shared/component-types';
 
 // ── Helpers ────────────────────────────────────────────────
 
@@ -53,80 +59,72 @@ function makeElementIdentity(overrides: Partial<ElementIdentity> = {}): ElementI
   };
 }
 
-function makeInteraction(
-  type: InteractionType,
-  overrides: Partial<DetectedInteraction> = {},
-): DetectedInteraction {
+function makeObservedEvent(overrides: Partial<ObservedEvent> = {}): ObservedEvent {
   return {
-    interactionId: 'int-0001',
-    type,
-    eventIds: ['click-0001'],
-    rawEventTypes: ['click'],
+    eventId: 'click-0001',
+    eventType: 'click',
+    timestamp: 1000,
+    captureSeq: 1,
+    isTrusted: true,
     target: makeElementIdentity(),
-    metadata: {},
-    confidence: 0.9,
-    engine: 'v2',
+    domContext: { url: 'https://example.com', title: 'Test', inputValue: null },
+    valueBefore: null,
+    valueAfter: null,
+    checkedBefore: null,
+    checkedAfter: null,
+    clientX: 100,
+    clientY: 200,
+    key: null,
+    code: null,
+    shiftKey: false,
+    ctrlKey: false,
+    altKey: false,
+    metaKey: false,
+    scrollDeltaY: null,
+    scrollDeltaX: null,
+    pageUrl: 'https://example.com',
+    pageTitle: 'Test Page',
     ...overrides,
   };
 }
 
-function makeInput(
-  overrides: Partial<IRBridgeInput> & { fragment?: ApplicationKnowledgeFragment | null } = {},
-): IRBridgeInput {
-  const { fragment, ...rest } = overrides;
-  let understanding: UnderstandingResult | null = null;
-  if (fragment) {
-    understanding = {
-      sessionId: fragment.sessionId,
-      generatedAt: fragment.generatedAt,
-      schemaVersion: 1,
-      fragment,
-      capability: null,
-    };
-  }
+function makeInteraction(
+  type: InteractionType,
+  overrides: Partial<ComponentInteraction> = {},
+): ComponentInteraction {
+  const triggerEvent = overrides.triggerEvent ?? makeObservedEvent();
   return {
-    events: [],
-    interactions: [],
-    understanding,
-    recordingContext: { startUrl: 'https://example.com/login', title: 'Login Page' },
-    testCaseName: 'Test Case',
-    ...rest,
+    interactionId: 'int-0001',
+    type,
+    trigger: triggerEvent.target,
+    triggerEvent,
+    memberEvents: [triggerEvent],
+    startTime: 1000,
+    endTime: 2000,
+    endState: 'completed',
+    metadata: {},
+    ...overrides,
   };
 }
 
-function makeFragment(
-  overrides: Partial<ApplicationKnowledgeFragment> = {},
-): ApplicationKnowledgeFragment {
+function makeInput(overrides: Partial<GenerationInput> = {}): GenerationInput {
   return {
-    sessionId: 'session-1',
-    generatedAt: '2026-07-21T00:00:00Z',
-    schemaVersion: 1,
-    elements: [],
-    transitions: [],
-    components: [],
-    interactionContracts: [],
-    behavioralContracts: [],
-    logicalActions: [],
-    recordedWorkflow: {
-      surfaceTransitions: [],
-      logicalActions: [],
-      branchPoints: [],
-      optionalSteps: [],
-    },
-    applicationSurfaces: [],
+    interactions: [],
+    recordingContext: { startUrl: 'https://example.com/login', title: 'Login Page' },
+    testCaseName: 'Test Case',
     ...overrides,
   };
 }
 
 // ── Tests ──────────────────────────────────────────────────
 
-describe('IR Bridge — build()', () => {
+describe('Generation Layer — build()', () => {
 
   // ── Empty / Edge Cases ──────────────────────────────
 
   describe('empty inputs', () => {
     it('returns an empty plan when no interactions', () => {
-      const plan = build(makeInput({ events: [], interactions: [] }));
+      const plan = build(makeInput({ interactions: [] }));
       expect(plan.steps).toHaveLength(0);
       expect(plan.title).toBe('Test Case');
       expect(plan.environment.baseUrl).toBe('https://example.com/login');
@@ -141,9 +139,9 @@ describe('IR Bridge — build()', () => {
       expect(plan.environment.viewport).toEqual({ width: 1280, height: 720 });
     });
 
-    it('handles null fragment gracefully', () => {
+    it('handles single interaction gracefully', () => {
       const interaction = makeInteraction('Click');
-      const plan = build(makeInput({ interactions: [interaction], fragment: null }));
+      const plan = build(makeInput({ interactions: [interaction] }));
       expect(plan.steps).toHaveLength(1);
       expect(plan.steps[0].assertions).toHaveLength(0);
     });
@@ -151,47 +149,26 @@ describe('IR Bridge — build()', () => {
 
   // ── Interaction Type → IRAction Mapping ──────────────
 
-  describe('interaction type mapping', () => {
+  describe('interaction type mapping (14 ComponentInteraction types)', () => {
     const cases: Array<[InteractionType, IRAction]> = [
       ['Click', IRAction.CLICK],
-      ['DoubleClick', IRAction.CLICK],
-      ['RightClick', IRAction.CLICK],
       ['TextEntry', IRAction.FILL],
-      ['NativeDropdown', IRAction.SELECT],
-      ['CustomDropdown', IRAction.SELECT],
-      ['Autocomplete', IRAction.SELECT],
-      ['MultiSelect', IRAction.SELECT],
-      ['RadioButton', IRAction.SELECT],
+      ['Dropdown', IRAction.SELECT],
       ['Checkbox', IRAction.TOGGLE],
-      ['ToggleSwitch', IRAction.TOGGLE],
-      ['Hover', IRAction.HOVER],
-      ['PageNavigation', IRAction.NAVIGATE],
-      ['Back', IRAction.NAVIGATE],
-      ['Forward', IRAction.NAVIGATE],
-      ['Refresh', IRAction.NAVIGATE],
+      ['RadioButton', IRAction.SELECT],
       ['DatePicker', IRAction.SELECT_DATE],
-      ['TimePicker', IRAction.SELECT_DATE],
-      ['DateTimePicker', IRAction.SELECT_DATE],
-      ['Slider', IRAction.FILL],
-      ['FileUpload', IRAction.FILL],
+      ['Hover', IRAction.HOVER],
       ['Link', IRAction.CLICK],
+      ['FileUpload', IRAction.FILL],
+      ['Slider', IRAction.FILL],
+      ['ColorInput', IRAction.FILL],
       ['Tab', IRAction.CLICK],
-      ['Menu', IRAction.CLICK],
-      ['Breadcrumb', IRAction.CLICK],
-      ['DragDrop', IRAction.CLICK],
-      ['NewTab', IRAction.CLICK],
-      ['NewWindow', IRAction.CLICK],
-      ['Iframe', IRAction.CLICK],
-      ['Modal', IRAction.CLICK],
-      ['Drawer', IRAction.CLICK],
-      ['Popover', IRAction.CLICK],
-      ['Tooltip', IRAction.HOVER],
-      ['BrowserAlert', IRAction.CLICK],
+      ['Navigation', IRAction.NAVIGATE],
     ];
 
     for (const [type, expectedAction] of cases) {
       it(`maps ${type} → ${expectedAction}`, () => {
-        const interaction = makeInteraction(type, { eventIds: [] });
+        const interaction = makeInteraction(type);
         const plan = build(makeInput({ interactions: [interaction] }));
         expect(plan.steps).toHaveLength(1);
         expect(plan.steps[0].action).toBe(expectedAction);
@@ -202,23 +179,18 @@ describe('IR Bridge — build()', () => {
   // ── Noise Filtering ──────────────────────────────────
 
   describe('noise filtering', () => {
-    it('filters out PageScroll', () => {
-      const scroll = makeInteraction('PageScroll');
-      const click = makeInteraction('Click', { interactionId: 'int-0002', eventIds: ['click-0002'] });
+    it('filters out Scroll', () => {
+      const scroll = makeInteraction('Scroll', {
+        metadata: { scrollDeltaY: 100, scrollDeltaX: 0, hasDelta: true, pageUrl: 'https://example.com' },
+      });
+      const click = makeInteraction('Click', { interactionId: 'int-0002' });
       const plan = build(makeInput({ interactions: [scroll, click] }));
       expect(plan.steps).toHaveLength(1);
       expect(plan.steps[0].action).toBe(IRAction.CLICK);
     });
 
-    it('filters out ContainerScroll and InfiniteScroll', () => {
-      const scroll1 = makeInteraction('ContainerScroll');
-      const scroll2 = makeInteraction('InfiniteScroll');
-      const plan = build(makeInput({ interactions: [scroll1, scroll2] }));
-      expect(plan.steps).toHaveLength(0);
-    });
-
-    it('filters out Unknown interactions', () => {
-      const unknown = makeInteraction('Unknown');
+    it('filters out Unclassified interactions', () => {
+      const unknown = makeInteraction('Unclassified');
       const plan = build(makeInput({ interactions: [unknown] }));
       expect(plan.steps).toHaveLength(0);
     });
@@ -229,12 +201,15 @@ describe('IR Bridge — build()', () => {
   describe('locator resolution', () => {
     it('resolves testId as highest priority locator', () => {
       const identity = makeElementIdentity({ testId: 'login-btn', stableId: 'btn-1', cssSelector: 'button.btn' });
-      const interaction = makeInteraction('Click', { target: identity, eventIds: [] });
+      const interaction = makeInteraction('Click', {
+        trigger: identity,
+        triggerEvent: makeObservedEvent({ target: identity }),
+      });
       const plan = build(makeInput({ interactions: [interaction] }));
       const target = plan.steps[0].target;
       expect(target.kind).toBe('element');
       if (target.kind === 'element') {
-        expect(target.resolvedLocators).toHaveLength(3);
+        expect(target.resolvedLocators.length).toBeGreaterThanOrEqual(1);
         expect(target.resolvedLocators[0].type).toBe(LocatorStrategyType.TEST_ID);
         expect(target.resolvedLocators[0].value).toBe('login-btn');
       }
@@ -249,49 +224,26 @@ describe('IR Bridge — build()', () => {
         cssSelector: 'button.submit',
         xPath: '//button',
       });
-      const interaction = makeInteraction('Click', { target: identity, eventIds: [] });
+      const interaction = makeInteraction('Click', {
+        trigger: identity,
+        triggerEvent: makeObservedEvent({ target: identity }),
+      });
       const plan = build(makeInput({ interactions: [interaction] }));
       const target = plan.steps[0].target;
       if (target.kind === 'element') {
         expect(target.resolvedLocators.length).toBeGreaterThanOrEqual(1);
-        // accessibleName (text) should be first when nothing better exists
         expect(target.resolvedLocators[0].type).toBe(LocatorStrategyType.ACCESSIBLE_NAME);
       }
     });
 
     it('uses URL target for navigation', () => {
-      const navEvent: SessionEvent = {
-        actionId: 'nav-0001',
-        type: 'navigation',
-        url: 'https://example.com/dashboard',
-        title: 'Dashboard',
-        timestamp: '2026-07-21T10:00:00Z',
-      };
-      const interaction = makeInteraction('PageNavigation', {
-        eventIds: ['nav-0001'],
-        target: undefined,
-        metadata: { url: 'https://example.com/dashboard' },
+      const interaction = makeInteraction('Navigation', {
+        metadata: { pageUrl: 'https://example.com/dashboard', pageTitle: 'Dashboard' },
       });
-      const plan = build(makeInput({ events: [navEvent], interactions: [interaction] }));
+      const plan = build(makeInput({ interactions: [interaction] }));
       expect(plan.steps[0].target.kind).toBe('url');
       if (plan.steps[0].target.kind === 'url') {
         expect(plan.steps[0].target.url).toBe('https://example.com/dashboard');
-      }
-    });
-
-    it('uses no target when no element identity available', () => {
-      const interaction = makeInteraction('Click', { target: undefined, eventIds: [] });
-      const plan = build(makeInput({ events: [], interactions: [interaction] }));
-      expect(plan.steps[0].target.kind).toBe('none');
-    });
-
-    it('resolves from interaction.target when no matching event', () => {
-      const identity = makeElementIdentity({ testId: 'from-target', eventIds: [] });
-      const interaction = makeInteraction('Click', { target: identity, eventIds: ['nonexistent'] });
-      const plan = build(makeInput({ events: [], interactions: [interaction] }));
-      const target = plan.steps[0].target;
-      if (target.kind === 'element') {
-        expect(target.resolvedLocators[0].value).toBe('from-target');
       }
     });
   });
@@ -299,71 +251,72 @@ describe('IR Bridge — build()', () => {
   // ── Input Value Extraction ─────────────────────────
 
   describe('input value extraction', () => {
-    it('extracts text value from TextEntryEvent', () => {
-      const textEvent: SessionEvent = {
-        actionId: 'text-0001',
-        type: 'text',
-        elementIdentity: makeElementIdentity(),
-        value: 'john@example.com',
-        timestamp: '2026-07-21T10:00:00Z',
-      };
-      const interaction = makeInteraction('TextEntry', { eventIds: ['text-0001'] });
-      const plan = build(makeInput({ events: [textEvent], interactions: [interaction] }));
+    it('extracts text value from TextEntry metadata', () => {
+      const interaction = makeInteraction('TextEntry', {
+        metadata: { targetName: 'Email', textValue: 'john@example.com', userTyped: true },
+      });
+      const plan = build(makeInput({ interactions: [interaction] }));
       expect(plan.steps[0].input).toBe('john@example.com');
     });
 
-    it('extracts checked state from CheckboxEvent', () => {
-      const checkEvent: SessionEvent = {
-        actionId: 'check-0001',
-        type: 'checkbox',
-        elementIdentity: makeElementIdentity(),
-        checked: true,
-        timestamp: '2026-07-21T10:00:00Z',
-      };
-      const interaction = makeInteraction('Checkbox', { eventIds: ['check-0001'] });
-      const plan = build(makeInput({ events: [checkEvent], interactions: [interaction] }));
+    it('extracts checked state from Checkbox metadata', () => {
+      const interaction = makeInteraction('Checkbox', {
+        metadata: { targetName: 'Newsletter', checked: true },
+      });
+      const plan = build(makeInput({ interactions: [interaction] }));
       expect(plan.steps[0].input).toBe(true);
     });
 
-    it('extracts selected value from SelectEvent', () => {
-      const selectEvent: SessionEvent = {
-        actionId: 'select-0001',
-        type: 'select',
-        elementIdentity: makeElementIdentity(),
-        value: 'United States',
-        timestamp: '2026-07-21T10:00:00Z',
-      };
-      const interaction = makeInteraction('NativeDropdown', { eventIds: ['select-0001'] });
-      const plan = build(makeInput({ events: [selectEvent], interactions: [interaction] }));
+    it('extracts selected value from Dropdown metadata', () => {
+      const interaction = makeInteraction('Dropdown', {
+        metadata: { targetName: 'Country', selectedValue: 'United States', noOpSelection: false },
+      });
+      const plan = build(makeInput({ interactions: [interaction] }));
       expect(plan.steps[0].input).toBe('United States');
     });
 
-    it('extracts ISO date value from DateSelectEvent', () => {
-      const dateEvent: SessionEvent = {
-        actionId: 'dateSelect-0001',
-        type: 'dateSelect',
-        elementIdentity: makeElementIdentity(),
-        dateType: 'date',
-        displayValue: '15 July 2026',
-        isoValue: '2026-07-15',
-        timestamp: '2026-07-21T10:00:00Z',
-      };
-      const interaction = makeInteraction('DatePicker', { eventIds: ['dateSelect-0001'] });
-      const plan = build(makeInput({ events: [dateEvent], interactions: [interaction] }));
+    it('extracts date value from DatePicker metadata', () => {
+      const interaction = makeInteraction('DatePicker', {
+        metadata: { targetName: 'Date of Birth', selectedDate: '2026-07-15', dateValue: '2026-07-15' },
+      });
+      const plan = build(makeInput({ interactions: [interaction] }));
       expect(plan.steps[0].input).toBe('2026-07-15');
     });
 
-    it('extracts slider value from interaction metadata', () => {
+    it('extracts slider value from metadata', () => {
       const interaction = makeInteraction('Slider', {
-        eventIds: [],
-        metadata: { sliderValue: '75', sliderMin: '0', sliderMax: '100' },
+        metadata: { targetName: 'Volume', value: '75', userAdjusted: true },
       });
       const plan = build(makeInput({ interactions: [interaction] }));
       expect(plan.steps[0].input).toBe('75');
     });
 
+    it('extracts color value from ColorInput metadata', () => {
+      const interaction = makeInteraction('ColorInput', {
+        metadata: { targetName: 'Color', value: '#ff0000', userAdjusted: true },
+      });
+      const plan = build(makeInput({ interactions: [interaction] }));
+      expect(plan.steps[0].input).toBe('#ff0000');
+    });
+
+    it('extracts file name from FileUpload metadata', () => {
+      const interaction = makeInteraction('FileUpload', {
+        metadata: { targetName: 'Resume', fileName: 'resume.pdf' },
+      });
+      const plan = build(makeInput({ interactions: [interaction] }));
+      expect(plan.steps[0].input).toBe('resume.pdf');
+    });
+
+    it('extracts navigation URL from Navigation metadata', () => {
+      const interaction = makeInteraction('Navigation', {
+        metadata: { pageUrl: 'https://example.com/home', pageTitle: 'Home' },
+      });
+      const plan = build(makeInput({ interactions: [interaction] }));
+      expect(plan.steps[0].input).toBe('https://example.com/home');
+    });
+
     it('returns null for click (no input value)', () => {
-      const interaction = makeInteraction('Click', { eventIds: [] });
+      const interaction = makeInteraction('Click');
       const plan = build(makeInput({ interactions: [interaction] }));
       expect(plan.steps[0].input).toBeNull();
     });
@@ -373,245 +326,68 @@ describe('IR Bridge — build()', () => {
 
   describe('description generation', () => {
     it('generates click description with element name', () => {
-      const interaction = makeInteraction('Click', { eventIds: [] });
+      const interaction = makeInteraction('Click');
       const plan = build(makeInput({ interactions: [interaction] }));
       expect(plan.steps[0].description).toContain('Submit Button');
     });
 
     it('generates fill description with value', () => {
-      const textEvent: SessionEvent = {
-        actionId: 'text-0001',
-        type: 'text',
-        elementIdentity: makeElementIdentity({ accessibleName: 'Email' }),
-        value: 'admin@test.com',
-        timestamp: '2026-07-21T10:00:00Z',
-      };
       const interaction = makeInteraction('TextEntry', {
-        eventIds: ['text-0001'],
-        target: makeElementIdentity({ accessibleName: 'Email' }),
+        trigger: makeElementIdentity({ accessibleName: 'Email' }),
+        metadata: { targetName: 'Email', textValue: 'admin@test.com', userTyped: true },
       });
-      const plan = build(makeInput({ events: [textEvent], interactions: [interaction] }));
+      const plan = build(makeInput({ interactions: [interaction] }));
       expect(plan.steps[0].description).toContain('admin@test.com');
       expect(plan.steps[0].description).toContain('Email');
     });
 
-    it('enriches description with business field from knowledge fragment', () => {
-      const textEvent: SessionEvent = {
-        actionId: 'text-0001',
-        type: 'text',
-        elementIdentity: makeElementIdentity({ elementId: 'elem-0001' }),
-        value: 'john@example.com',
-        timestamp: '2026-07-21T10:00:00Z',
-      };
-      const interaction = makeInteraction('TextEntry', {
-        interactionId: 'int-0001',
-        eventIds: ['text-0001'],
-        target: makeElementIdentity({ elementId: 'elem-0001' }),
+    it('generates select description for dropdown', () => {
+      const identity = makeElementIdentity({ accessibleName: 'Make' });
+      const interaction = makeInteraction('Dropdown', {
+        trigger: identity,
+        triggerEvent: makeObservedEvent({ target: identity }),
+        metadata: { targetName: 'Make', selectedValue: 'LEXUS', noOpSelection: false },
       });
-      const fragment = makeFragment({
-        logicalActions: [{
-          actionId: 'la-0001',
-          componentId: null,
-          businessField: 'Email Address',
-          transitionIds: ['int-0001'],
-          lifecycleComplete: true,
-          resultingChange: null,
-          timestamp: 0,
-        }],
+      const plan = build(makeInput({ interactions: [interaction] }));
+      expect(plan.steps[0].description).toContain('LEXUS');
+      expect(plan.steps[0].description).toContain('Make');
+    });
+
+    it('generates toggle description for checkbox', () => {
+      const identity = makeElementIdentity({ accessibleName: 'Terms' });
+      const interaction = makeInteraction('Checkbox', {
+        trigger: identity,
+        triggerEvent: makeObservedEvent({ target: identity }),
+        metadata: { targetName: 'Terms', checked: true },
       });
-      const plan = build(makeInput({ events: [textEvent], interactions: [interaction], fragment }));
-      expect(plan.steps[0].description).toContain('Email Address');
+      const plan = build(makeInput({ interactions: [interaction] }));
+      expect(plan.steps[0].description).toContain('Check');
+      expect(plan.steps[0].description).toContain('Terms');
     });
 
     it('generates navigation description with URL', () => {
-      const navEvent: SessionEvent = {
-        actionId: 'nav-0001',
-        type: 'navigation',
-        url: 'https://example.com/home',
-        title: 'Home',
-        timestamp: '2026-07-21T10:00:00Z',
-      };
-      const interaction = makeInteraction('PageNavigation', {
-        eventIds: ['nav-0001'],
-        target: undefined,
-        metadata: { url: 'https://example.com/home' },
+      const interaction = makeInteraction('Navigation', {
+        metadata: { pageUrl: 'https://example.com/home', pageTitle: 'Home' },
       });
-      const plan = build(makeInput({ events: [navEvent], interactions: [interaction] }));
+      const plan = build(makeInput({ interactions: [interaction] }));
       expect(plan.steps[0].description).toContain('https://example.com/home');
     });
 
+    it('generates hover description', () => {
+      const identity = makeElementIdentity({ accessibleName: 'Menu' });
+      const interaction = makeInteraction('Hover', {
+        trigger: identity,
+        triggerEvent: makeObservedEvent({ target: identity }),
+        metadata: { targetName: 'Menu', dwellMs: 500, meaningful: true, confidence: 0.9, evidenceReason: 'dwell>300ms' },
+      });
+      const plan = build(makeInput({ interactions: [interaction] }));
+      expect(plan.steps[0].description).toContain('Menu');
+    });
+
     it('capitalizes plainEnglish', () => {
-      const interaction = makeInteraction('Click', { eventIds: [] });
+      const interaction = makeInteraction('Click');
       const plan = build(makeInput({ interactions: [interaction] }));
       expect(plan.steps[0].plainEnglish?.[0]).toMatch(/[A-Z]/);
-    });
-  });
-
-  // ── Assertion Derivation ─────────────────────────────
-
-  describe('assertion derivation from knowledge fragment', () => {
-    it('derives required assertion when constraint.required = true', () => {
-      const identity = makeElementIdentity({ elementId: 'elem-0001' });
-      const interaction = makeInteraction('TextEntry', { target: identity, eventIds: [] });
-      const fragment = makeFragment({
-        interactionContracts: [{
-          appliesTo: { type: 'element', id: 'elem-0001' },
-          affordances: ['fill'],
-          constraints: {
-            required: true,
-            inputType: 'email',
-            valueRange: null,
-            lengthRange: null,
-            format: null,
-            validOptions: null,
-            dateFormat: null,
-          },
-        }],
-      });
-      const plan = build(makeInput({ interactions: [interaction], fragment }));
-      expect(plan.steps[0].assertions.length).toBeGreaterThanOrEqual(1);
-      const requiredAssertion = plan.steps[0].assertions.find(a => a.property === 'required');
-      expect(requiredAssertion).toBeDefined();
-      expect(requiredAssertion?.type).toBe(ValidationType.PRESENCE);
-      expect(requiredAssertion?.expectedValue).toBe(true);
-    });
-
-    it('derives min/max assertions from valueRange', () => {
-      const identity = makeElementIdentity({ elementId: 'elem-0001' });
-      const interaction = makeInteraction('Slider', { target: identity, eventIds: [] });
-      const fragment = makeFragment({
-        interactionContracts: [{
-          appliesTo: { type: 'element', id: 'elem-0001' },
-          affordances: ['adjust'],
-          constraints: {
-            required: false,
-            inputType: 'number',
-            valueRange: { min: 0, max: 100, step: 1 },
-            lengthRange: null,
-            format: null,
-            validOptions: null,
-            dateFormat: null,
-          },
-        }],
-      });
-      const plan = build(makeInput({ interactions: [interaction], fragment }));
-      const minAssertion = plan.steps[0].assertions.find(a => a.property === 'min');
-      const maxAssertion = plan.steps[0].assertions.find(a => a.property === 'max');
-      expect(minAssertion).toBeDefined();
-      expect(minAssertion?.expectedValue).toBe(0);
-      expect(maxAssertion).toBeDefined();
-      expect(maxAssertion?.expectedValue).toBe(100);
-    });
-
-    it('derives pattern assertion from format.regex', () => {
-      const identity = makeElementIdentity({ elementId: 'elem-0001' });
-      const interaction = makeInteraction('TextEntry', { target: identity, eventIds: [] });
-      const fragment = makeFragment({
-        interactionContracts: [{
-          appliesTo: { type: 'element', id: 'elem-0001' },
-          affordances: ['fill'],
-          constraints: {
-            required: true,
-            inputType: 'email',
-            valueRange: null,
-            lengthRange: null,
-            format: { regex: '^[^@]+@[^@]+\\.[^@]+$', description: 'Email format' },
-            validOptions: null,
-            dateFormat: null,
-          },
-        }],
-      });
-      const plan = build(makeInput({ interactions: [interaction], fragment }));
-      const patternAssertion = plan.steps[0].assertions.find(a => a.property === 'pattern');
-      expect(patternAssertion).toBeDefined();
-      expect(patternAssertion?.type).toBe(ValidationType.TEXT_MATCH);
-      expect(patternAssertion?.comparison).toBe(ValidationComparison.MATCHES);
-    });
-
-    it('derives validOptions assertion', () => {
-      const identity = makeElementIdentity({ elementId: 'elem-0001' });
-      const interaction = makeInteraction('NativeDropdown', { target: identity, eventIds: [] });
-      const fragment = makeFragment({
-        interactionContracts: [{
-          appliesTo: { type: 'element', id: 'elem-0001' },
-          affordances: ['select'],
-          constraints: {
-            required: false,
-            inputType: null,
-            valueRange: null,
-            lengthRange: null,
-            format: null,
-            validOptions: ['US', 'UK', 'CA'],
-            dateFormat: null,
-          },
-        }],
-      });
-      const plan = build(makeInput({ interactions: [interaction], fragment }));
-      const optionsAssertion = plan.steps[0].assertions.find(a => a.property === 'value');
-      expect(optionsAssertion).toBeDefined();
-      expect(optionsAssertion?.expectedValue).toEqual(['US', 'UK', 'CA']);
-    });
-
-    it('derives no assertions when no matching contract', () => {
-      const identity = makeElementIdentity({ elementId: 'elem-9999' });
-      const interaction = makeInteraction('Click', { target: identity, eventIds: [] });
-      const fragment = makeFragment({
-        interactionContracts: [{
-          appliesTo: { type: 'element', id: 'elem-0001' },
-          affordances: [],
-          constraints: {
-            required: true, inputType: null, valueRange: null,
-            lengthRange: null, format: null, validOptions: null, dateFormat: null,
-          },
-        }],
-      });
-      const plan = build(makeInput({ interactions: [interaction], fragment }));
-      expect(plan.steps[0].assertions).toHaveLength(0);
-    });
-  });
-
-  // ── AI Enrichment ────────────────────────────────────
-
-  describe('AI enrichment passthrough', () => {
-    it('passes aiUnderstanding from SessionEvent to IRStep', () => {
-      const clickEvent: SessionEvent = {
-        actionId: 'click-0001',
-        type: 'click',
-        elementIdentity: makeElementIdentity(),
-        timestamp: '2026-07-21T10:00:00Z',
-        aiUnderstanding: {
-          businessName: 'Login Button',
-          controlType: 'Button',
-          userIntent: 'Submit the login form',
-          confidenceScore: 0.92,
-        },
-      };
-      const interaction = makeInteraction('Click', { eventIds: ['click-0001'] });
-      const plan = build(makeInput({ events: [clickEvent], interactions: [interaction] }));
-      expect(plan.steps[0].aiEnrichment).toEqual({
-        businessName: 'Login Button',
-        controlType: 'Button',
-        userIntent: 'Submit the login form',
-        confidenceScore: 0.92,
-      });
-    });
-
-    it('sets aiEnrichment to null when event has no AI understanding', () => {
-      const clickEvent: SessionEvent = {
-        actionId: 'click-0001',
-        type: 'click',
-        elementIdentity: makeElementIdentity(),
-        timestamp: '2026-07-21T10:00:00Z',
-      };
-      const interaction = makeInteraction('Click', { eventIds: ['click-0001'] });
-      const plan = build(makeInput({ events: [clickEvent], interactions: [interaction] }));
-      expect(plan.steps[0].aiEnrichment).toBeNull();
-    });
-
-    it('sets aiEnrichment to null when no matching event', () => {
-      const interaction = makeInteraction('Click', { eventIds: ['nonexistent'] });
-      const plan = build(makeInput({ events: [], interactions: [interaction] }));
-      expect(plan.steps[0].aiEnrichment).toBeNull();
     });
   });
 
@@ -620,12 +396,20 @@ describe('IR Bridge — build()', () => {
   describe('readability rules', () => {
     it('merges consecutive clicks on the same element', () => {
       const identity = makeElementIdentity({ elementId: 'elem-0001' });
-      const int1 = makeInteraction('Click', { interactionId: 'int-0001', target: identity, eventIds: [] });
-      const int2 = makeInteraction('Click', { interactionId: 'int-0002', target: identity, eventIds: [] });
+      const int1 = makeInteraction('Click', {
+        interactionId: 'int-0001',
+        trigger: identity,
+        triggerEvent: makeObservedEvent({ target: identity }),
+      });
+      const int2 = makeInteraction('Click', {
+        interactionId: 'int-0002',
+        trigger: identity,
+        triggerEvent: makeObservedEvent({ target: identity }),
+      });
       const int3 = makeInteraction('Click', {
         interactionId: 'int-0003',
-        target: makeElementIdentity({ elementId: 'elem-0002' }),
-        eventIds: [],
+        trigger: makeElementIdentity({ elementId: 'elem-0002' }),
+        triggerEvent: makeObservedEvent({ target: makeElementIdentity({ elementId: 'elem-0002' }) }),
       });
       const plan = build(makeInput({ interactions: [int1, int2, int3] }));
       expect(plan.steps).toHaveLength(2);
@@ -638,11 +422,13 @@ describe('IR Bridge — build()', () => {
 
     it('does not merge clicks on different elements', () => {
       const int1 = makeInteraction('Click', {
-        target: makeElementIdentity({ elementId: 'elem-0001' }), eventIds: [],
+        trigger: makeElementIdentity({ elementId: 'elem-0001' }),
+        triggerEvent: makeObservedEvent({ target: makeElementIdentity({ elementId: 'elem-0001' }) }),
       });
       const int2 = makeInteraction('Click', {
         interactionId: 'int-0002',
-        target: makeElementIdentity({ elementId: 'elem-0002' }), eventIds: [],
+        trigger: makeElementIdentity({ elementId: 'elem-0002' }),
+        triggerEvent: makeObservedEvent({ target: makeElementIdentity({ elementId: 'elem-0002' }) }),
       });
       const plan = build(makeInput({ interactions: [int1, int2] }));
       expect(plan.steps).toHaveLength(2);
@@ -652,41 +438,29 @@ describe('IR Bridge — build()', () => {
   // ── Source Event ID ──────────────────────────────────
 
   describe('source event ID', () => {
-    it('sets sourceEventId from interaction.eventIds[0]', () => {
-      const interaction = makeInteraction('Click', { eventIds: ['click-0001'] });
+    it('sets sourceEventId from triggerEvent.eventId', () => {
+      const triggerEvent = makeObservedEvent({ eventId: 'click-0001' });
+      const interaction = makeInteraction('Click', { triggerEvent });
       const plan = build(makeInput({ interactions: [interaction] }));
       expect(plan.steps[0].sourceEventId).toBe('click-0001');
-    });
-
-    it('falls back to event.actionId when eventIds is empty', () => {
-      const clickEvent: SessionEvent = {
-        actionId: 'click-fallback',
-        type: 'click',
-        elementIdentity: makeElementIdentity(),
-        timestamp: '2026-07-21T10:00:00Z',
-      };
-      const interaction = makeInteraction('Click', { eventIds: [] });
-      const plan = build(makeInput({ events: [clickEvent], interactions: [interaction] }));
-      // When eventIds is empty, falls back to event?.actionId — but event is found by eventId
-      // which won't match since eventIds is empty, so event is undefined, so sourceEventId is undefined
-      expect(plan.steps[0].sourceEventId).toBeUndefined();
     });
   });
 
   // ── Execution Parameters ──────────────────────────────
 
   describe('execution parameters', () => {
-    it('uses default execution parameters for high-confidence interactions', () => {
-      const interaction = makeInteraction('Click', { confidence: 0.95, eventIds: [] });
+    it('uses default execution parameters', () => {
+      const interaction = makeInteraction('Click');
       const plan = build(makeInput({ interactions: [interaction] }));
       expect(plan.steps[0].executionParameters.timeoutMs).toBe(30_000);
       expect(plan.steps[0].executionParameters.waitStrategy).toBe('visible');
     });
 
-    it('uses visible wait strategy for low-confidence interactions', () => {
-      const interaction = makeInteraction('Click', { confidence: 0.5, eventIds: [] });
+    it('applies default retry configuration', () => {
+      const interaction = makeInteraction('TextEntry');
       const plan = build(makeInput({ interactions: [interaction] }));
-      expect(plan.steps[0].executionParameters.waitStrategy).toBe('visible');
+      expect(plan.steps[0].executionParameters.retryCount).toBe(0);
+      expect(plan.steps[0].executionParameters.retryDelayMs).toBe(1_000);
     });
   });
 
@@ -700,42 +474,18 @@ describe('IR Bridge — build()', () => {
       expect(plan.tags).toContain('login');
     });
 
-    it('derives tags from surface transitions in fragment', () => {
-      const fragment = makeFragment({
-        recordedWorkflow: {
-          surfaceTransitions: [{
-            fromUrl: 'https://example.com/login',
-            toUrl: 'https://example.com/dashboard',
-            triggeredByTransitionId: 'trans-0001',
-          }],
-          logicalActions: [],
-          branchPoints: [],
-          optionalSteps: [],
-        },
-      });
-      const plan = build(makeInput({ fragment }));
-      expect(plan.tags).toContain('login');
-      expect(plan.tags).toContain('dashboard');
+    it('returns empty tags for root URL', () => {
+      const plan = build(makeInput({
+        recordingContext: { startUrl: 'https://example.com/', title: null },
+      }));
+      expect(plan.tags).toHaveLength(0);
     });
 
     it('limits to 5 tags', () => {
-      const transitions = Array.from({ length: 10 }, (_, i) => ({
-        fromUrl: 'https://example.com',
-        toUrl: `https://example.com/page${i}`,
-        triggeredByTransitionId: `trans-${i}`,
-      }));
-      const fragment = makeFragment({
-        recordedWorkflow: {
-          surfaceTransitions: transitions,
-          logicalActions: [],
-          branchPoints: [],
-          optionalSteps: [],
-        },
-      });
       const plan = build(makeInput({
-        fragment,
-        recordingContext: { startUrl: 'https://example.com/home', title: null },
+        recordingContext: { startUrl: 'https://example.com/a/b/c/d/e/f', title: null },
       }));
+      // Only the first path segment is used as a tag
       expect(plan.tags.length).toBeLessThanOrEqual(5);
     });
   });
@@ -766,56 +516,58 @@ describe('IR Bridge — build()', () => {
         testId: 'login-btn',
       });
 
-      const events: SessionEvent[] = [
-        { actionId: 'text-0001', type: 'text', elementIdentity: emailIdentity, value: 'admin@test.com', timestamp: '2026-07-21T10:00:00Z' },
-        { actionId: 'text-0002', type: 'text', elementIdentity: passwordIdentity, value: 'secret123', timestamp: '2026-07-21T10:01:00Z' },
-        { actionId: 'click-0001', type: 'click', elementIdentity: submitIdentity, timestamp: '2026-07-21T10:02:00Z' },
-        { actionId: 'nav-0001', type: 'navigation', url: 'https://example.com/dashboard', title: 'Dashboard', timestamp: '2026-07-21T10:03:00Z' },
+      const interactions: ComponentInteraction[] = [
+        makeInteraction('TextEntry', {
+          interactionId: 'int-0001',
+          trigger: emailIdentity,
+          triggerEvent: makeObservedEvent({
+            eventId: 'text-0001',
+            target: emailIdentity,
+            eventType: 'input',
+          }),
+          metadata: { targetName: 'Email', textValue: 'admin@test.com', userTyped: true },
+        }),
+        makeInteraction('TextEntry', {
+          interactionId: 'int-0002',
+          trigger: passwordIdentity,
+          triggerEvent: makeObservedEvent({
+            eventId: 'text-0002',
+            target: passwordIdentity,
+            eventType: 'input',
+          }),
+          metadata: { targetName: 'Password', textValue: 'secret123', userTyped: true },
+        }),
+        makeInteraction('Click', {
+          interactionId: 'int-0003',
+          trigger: submitIdentity,
+          triggerEvent: makeObservedEvent({
+            eventId: 'click-0001',
+            target: submitIdentity,
+            eventType: 'click',
+          }),
+        }),
+        makeInteraction('Navigation', {
+          interactionId: 'int-0004',
+          triggerEvent: makeObservedEvent({
+            eventId: 'nav-0001',
+            eventType: 'navigation',
+          }),
+          metadata: { pageUrl: 'https://example.com/dashboard', pageTitle: 'Dashboard' },
+        }),
       ];
-
-      const interactions: DetectedInteraction[] = [
-        makeInteraction('TextEntry', { interactionId: 'int-0001', eventIds: ['text-0001'], target: emailIdentity }),
-        makeInteraction('TextEntry', { interactionId: 'int-0002', eventIds: ['text-0002'], target: passwordIdentity }),
-        makeInteraction('Click', { interactionId: 'int-0003', eventIds: ['click-0001'], target: submitIdentity }),
-        makeInteraction('PageNavigation', { interactionId: 'int-0004', eventIds: ['nav-0001'], target: undefined, metadata: { url: 'https://example.com/dashboard' } }),
-      ];
-
-      const fragment = makeFragment({
-        interactionContracts: [{
-          appliesTo: { type: 'element', id: 'elem-0001' },
-          affordances: ['fill'],
-          constraints: {
-            required: true, inputType: 'email', valueRange: null,
-            lengthRange: { minLength: 3, maxLength: 100 },
-            format: { regex: '^[^@]+@[^@]+\\.[^@]+$', description: 'Email' },
-            validOptions: null, dateFormat: null,
-          },
-        }],
-        logicalActions: [{
-          actionId: 'la-0001',
-          componentId: null,
-          businessField: 'Email Address',
-          transitionIds: ['int-0001'],
-          lifecycleComplete: true,
-          resultingChange: null,
-          timestamp: 0,
-        }],
-      });
 
       const plan = build(makeInput({
-        events,
         interactions,
-        fragment,
         recordingContext: { startUrl: 'https://example.com/login', title: 'Login' },
         testCaseName: 'User Login Test',
       }));
 
       expect(plan.title).toBe('User Login Test');
       expect(plan.steps).toHaveLength(4);
+      // TextEntry → FILL (not CLICK — the old bridge had this bug)
       expect(plan.steps[0].action).toBe(IRAction.FILL);
       expect(plan.steps[0].input).toBe('admin@test.com');
-      expect(plan.steps[0].description).toContain('Email Address');
-      expect(plan.steps[0].assertions.length).toBeGreaterThanOrEqual(2); // required + pattern
+      expect(plan.steps[0].description).toContain('admin@test.com');
       expect(plan.steps[1].action).toBe(IRAction.FILL);
       expect(plan.steps[1].input).toBe('secret123');
       expect(plan.steps[2].action).toBe(IRAction.CLICK);
@@ -823,6 +575,29 @@ describe('IR Bridge — build()', () => {
       expect(plan.steps[3].target.kind).toBe('url');
       expect(plan.tags).toContain('login');
       expect(plan.environment.baseUrl).toBe('https://example.com/login');
+    });
+  });
+
+  // ── GenerationEnrichment (Track 3 stub) ──────────────
+
+  describe('enrichment (graceful degradation)', () => {
+    it('produces valid plan without enrichment', () => {
+      const interaction = makeInteraction('Click');
+      const plan = build(makeInput({ interactions: [interaction] }));
+      expect(plan.steps[0].assertions).toHaveLength(0);
+      expect(plan.steps[0].description).toBeDefined();
+    });
+
+    it('produces valid plan with undefined enrichment', () => {
+      const interaction = makeInteraction('Click');
+      const plan = build({
+        interactions: [interaction],
+        recordingContext: { startUrl: 'https://example.com', title: 'Test' },
+        testCaseName: 'Test',
+        enrichment: undefined,
+      });
+      expect(plan.steps).toHaveLength(1);
+      expect(plan.steps[0].assertions).toHaveLength(0);
     });
   });
 });

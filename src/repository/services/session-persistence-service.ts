@@ -24,7 +24,7 @@
 import type { UnitOfWorkFactory, UnitOfWork } from '../v2/interfaces/unit-of-work';
 import type { UnderstandingResult } from '../../domain/entities/understanding-result';
 import type { SessionEvent } from '../../shared/types';
-import type { DetectedInteraction } from '../../shared/bridge-types';
+import type { ComponentInteraction } from '../../shared/component-types';
 import type { ExecutionIRPlan } from '../../domain/execution-ir/types';
 import type { CapabilityCandidate } from '../../domain/entities/capability-candidate';
 import {
@@ -46,7 +46,7 @@ export interface SessionPersistenceInput {
   /** Raw session events (archival tier). */
   readonly events: SessionEvent[];
   /** Raw classified interactions (archival tier). */
-  readonly interactions: DetectedInteraction[];
+  readonly interactions: ComponentInteraction[];
   /** The URL where the recording started. */
   readonly url: string;
   /** The ExecutionIRPlan from the Generation Layer. */
