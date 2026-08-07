@@ -155,6 +155,10 @@ export function initRecording(): void {
 
 /**
  * Stop recording: flush runtime, finalize interactions.
+ *
+ * M5: Returns the PROJECTED output — the Projection Engine merges completed
+ * interactions with Unclassified interactions for unclaimed/pending ledger
+ * entries. The runtime no longer emits Unclassified interactions directly.
  */
 export function stopRecording(): ComponentInteraction[] {
   if (runtime) {
@@ -165,11 +169,17 @@ export function stopRecording(): ComponentInteraction[] {
     liveInteractions.push(...flushed);
     persistLiveInteractions();
 
-    // ── M4: Shadow Verification ────────────────────────────────────
-    // Compare runtime output against Projection Engine output.
-    // Runtime output is the source of truth — this is a verification step.
+    // ── M5: Projection Engine is now authoritative ──────────────────
+    // The Projection Engine merges completed interactions (from the runtime)
+    // with Unclassified interactions for unclaimed/pending ledger entries.
+    // This replaces the runtime's createUnclassifiedInteraction fallback.
     if (evidenceLedger) {
       const projection = projectInteractions(evidenceLedger, liveInteractions);
+
+      // M4 verification is now a self-consistency check: the projected
+      // output IS the authoritative output. We keep the comparison to
+      // detect if any interaction in liveInteractions is missing from
+      // the projection (which would indicate a bug).
       const verificationResult = compareOutputs(
         liveInteractions,
         projection.interactions,
@@ -181,23 +191,26 @@ export function stopRecording(): ComponentInteraction[] {
         console.error(formatVerificationReport(verificationResult));
       }
 
-      // Persist verification result for manual testing access
       chrome.storage.local.set({
         cmdrunner_verification_result: verificationResult,
       }).catch(() => {});
+
+      isRecording = false;
+      chrome.storage.local.set({ [RECORDING_ACTIVE_KEY]: false }).catch(() => {});
+
+      // Return the projected output (authoritative)
+      return projection.interactions;
     }
   }
 
   // ── SAFE POINT 3: session-end sweep ──────────────────────────────
-  // All pending observations should now be in persisted interactions.
-  // Clean up any remaining durable observation keys.
   cleanupAllObsKeys();
   // ── End Safe Point 3 ──────────────────────────────────────────────
 
   isRecording = false;
   chrome.storage.local.set({ [RECORDING_ACTIVE_KEY]: false }).catch(() => {});
 
-  // RETURN runtime output (source of truth — NOT projected output)
+  // Fallback: no ledger (shouldn't happen in production)
   return [...liveInteractions];
 }
 

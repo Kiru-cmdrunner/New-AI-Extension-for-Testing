@@ -18,6 +18,8 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createRuntime, type ComponentRuntime } from '../../src/runtime/component-runtime';
+import { EvidenceLedger } from '../../src/runtime/evidence-ledger';
+import { projectInteractions } from '../../src/runtime/projection-engine';
 import type {
   ComponentDefinition,
   ComponentInteraction,
@@ -65,11 +67,24 @@ function makeDropdownLikeDef(): ComponentDefinition {
 describe('Discovery Absorption Regression', () => {
   let emitted: ComponentInteraction[];
   let runtime: ComponentRuntime;
+  let ledger: EvidenceLedger;
 
   function setup(defs: ComponentDefinition[]) {
     emitted = [];
-    const config: RuntimeConfig = { onEmit: (i) => emitted.push(i) };
+    ledger = new EvidenceLedger();
+    const config: RuntimeConfig = { onEmit: (i) => emitted.push(i), evidenceLedger: ledger };
     runtime = createRuntime(defs, config);
+  }
+
+  /**
+   * Process events through the full M5 pipeline (runtime + Projection Engine)
+   * and return the final interaction list.
+   */
+  function processFull(event: ObservedEvent): ComponentInteraction[] {
+    ledger.append(event);
+    runtime.process(event);
+    runtime.flush();
+    return projectInteractions(ledger, emitted).interactions;
   }
 
   beforeEach(() => {
@@ -88,8 +103,8 @@ describe('Discovery Absorption Regression', () => {
     it('preserves a click as Unclassified when discovery matches but lifecycle does not complete', () => {
       // Click on an element whose class contains "select"
       // Dropdown.detectTrigger matches → lifecycle created → handleEvent returns null
-      // Before fix: click silently consumed, emitted.length === 0
-      // After fix: Unclassified emitted alongside the lifecycle
+      // M5: runtime absorbs the event (disposition: absorbed); no fallback emission.
+      // Projection Engine surfaces it as Unclassified since flush() releases it to unclaimed.
       const click = makeObservedEvent({
         eventId: 'e1',
         eventType: 'click',
@@ -103,10 +118,9 @@ describe('Discovery Absorption Regression', () => {
         } as any,
       });
 
-      const result = runtime.process(click);
+      const result = processFull(click);
 
-      // Before fix: 0 (click silently consumed by Dropdown lifecycle)
-      // After fix: 1 (Unclassified preserves the click)
+      // Click preserved as Unclassified by the Projection Engine
       expect(result.length).toBe(1);
       expect(result[0].type).toBe('Unclassified');
       expect(result[0].metadata.physicalEventType).toBe('click');
@@ -126,13 +140,18 @@ describe('Discovery Absorption Regression', () => {
         } as any,
       });
 
+      ledger.append(click);
       runtime.process(click);
 
       // The Dropdown lifecycle was created and is still active
       expect(runtime.activeCount).toBe(1);
-      // But the click was ALSO preserved
-      expect(emitted.length).toBe(1);
-      expect(emitted[0].type).toBe('Unclassified');
+      // M5: runtime does not emit Unclassified directly.
+      // The click is absorbed by the lifecycle and will be surfaced by
+      // the Projection Engine at output time.
+      expect(emitted.length).toBe(0);
+      // Verify the ledger entry exists (capture guarantee)
+      expect(ledger.get('e1')).toBeDefined();
+      expect(ledger.get('e1')!.disposition).toBe('absorbed');
     });
 
     it('lifecycle can still complete from a later event after click preservation', () => {
@@ -149,11 +168,11 @@ describe('Discovery Absorption Regression', () => {
         eventType: 'click',
         target: target as any,
       });
+      ledger.append(click);
       runtime.process(click);
 
-      // Click preserved
-      expect(emitted.length).toBe(1);
-      expect(emitted[0].type).toBe('Unclassified');
+      // M5: runtime absorbs click, no fallback emission
+      expect(emitted.length).toBe(0);
       expect(runtime.activeCount).toBe(1);
 
       // Change event completes the lifecycle
@@ -163,12 +182,13 @@ describe('Discovery Absorption Regression', () => {
         target: target as any,
         valueAfter: '2',
       });
+      ledger.append(change);
       runtime.process(change);
 
-      // Now both the Unclassified (click) and the Dropdown (completed) exist
-      expect(emitted.length).toBe(2);
-      expect(emitted[1].type).toBe('Dropdown');
-      expect(emitted[1].endState).toBe('completed');
+      // The Dropdown completed. Click was the trigger → claimed by Dropdown.
+      expect(emitted.length).toBe(1);
+      expect(emitted[0].type).toBe('Dropdown');
+      expect(emitted[0].endState).toBe('completed');
       expect(runtime.activeCount).toBe(0);
     });
 
@@ -266,10 +286,10 @@ describe('Discovery Absorption Regression', () => {
         } as any,
       });
 
+      // M5: mousedown not matched by any definition → pending in ledger
+      ledger.append(mousedown);
       const mdResult = runtime.process(mousedown);
-      expect(mdResult.length).toBe(1);
-      expect(mdResult[0].type).toBe('Unclassified');
-      expect(mdResult[0].metadata.physicalEventType).toBe('mousedown');
+      expect(mdResult.length).toBe(0); // No runtime emission
 
       const click = makeObservedEvent({
         eventId: 'cl1',
@@ -283,12 +303,16 @@ describe('Discovery Absorption Regression', () => {
         } as any,
       });
 
+      // M5: click triggers Dropdown lifecycle → absorbed
+      ledger.append(click);
       const clickResult = runtime.process(click);
-      // Before fix: 0 (Dropdown discovery absorbed the click)
-      // After fix: 1 (Unclassified preserves the click)
-      expect(clickResult.length).toBe(1);
-      expect(clickResult[0].type).toBe('Unclassified');
-      expect(clickResult[0].metadata.physicalEventType).toBe('click');
+      expect(clickResult.length).toBe(0); // No runtime emission (lifecycle still active)
+
+      // Flush + project: both events surfaced by Projection Engine
+      runtime.flush();
+      const projection = projectInteractions(ledger, emitted);
+      expect(projection.interactions.length).toBe(2);
+      expect(projection.interactions.every((i) => i.type === 'Unclassified')).toBe(true);
     });
 
     it('multiple rapid clicks on select-classed elements all preserved', () => {
@@ -317,13 +341,18 @@ describe('Discovery Absorption Regression', () => {
         timestamp: Date.now() + 3000, // after dedup window
       });
 
-      const r1 = runtime.process(click1);
-      expect(r1.length).toBe(1);
-      expect(r1[0].metadata.physicalEventType).toBe('click');
+      // M5: runtime absorbs both into lifecycles (no fallback emissions)
+      ledger.append(click1);
+      runtime.process(click1);
+      ledger.append(click2);
+      runtime.process(click2);
 
-      const r2 = runtime.process(click2);
-      expect(r2.length).toBe(1);
-      expect(r2[0].metadata.physicalEventType).toBe('click');
+      // Flush + project: both events surfaced
+      runtime.flush();
+      const projection = projectInteractions(ledger, emitted);
+      expect(projection.interactions.length).toBe(2);
+      expect(projection.interactions.every((i) => i.type === 'Unclassified')).toBe(true);
+      expect(projection.interactions.every((i) => i.metadata.physicalEventType === 'click')).toBe(true);
     });
   });
 
@@ -332,10 +361,12 @@ describe('Discovery Absorption Regression', () => {
   // ═══════════════════════════════════════════════════════════════════
 
   describe('onEmit callback', () => {
-    it('calls onEmit for Unclassified when discovery matches but does not complete', () => {
+    it('Projection Engine surfaces Unclassified when discovery matches but does not complete', () => {
       const emittedViaCallback: ComponentInteraction[] = [];
+      const testLedger = new EvidenceLedger();
       const config: RuntimeConfig = {
         onEmit: (i) => emittedViaCallback.push(i),
+        evidenceLedger: testLedger,
       };
       const rt = createRuntime([makeDropdownLikeDef()], config);
 
@@ -351,12 +382,16 @@ describe('Discovery Absorption Regression', () => {
         } as any,
       });
 
+      // M5: runtime absorbs click → no onEmit call
+      testLedger.append(click);
       rt.process(click);
+      expect(emittedViaCallback.length).toBe(0);
 
-      // onEmit must have been called — this was the bug that caused
-      // Unclassified interactions to be invisible in the side panel
-      expect(emittedViaCallback.length).toBe(1);
-      expect(emittedViaCallback[0].type).toBe('Unclassified');
+      // Projection Engine surfaces the Unclassified interaction
+      rt.flush();
+      const projection = projectInteractions(testLedger, emittedViaCallback);
+      expect(projection.interactions.length).toBe(1);
+      expect(projection.interactions[0].type).toBe('Unclassified');
     });
   });
 });

@@ -250,9 +250,9 @@ describe('Runtime Disposition Tracking — Milestone 3', () => {
     expect(ledger.get('evt-p1-1')!.disposition).toBe('unclaimed');
   });
 
-  // ── Mousedown on unrecognized element → pending (no lifecycle claims it) ──
+  // ── Mousedown on unrecognized element → pending (Projection Engine surfaces) ──
 
-  it('mousedown on div: no definition matches → stays pending', () => {
+  it('mousedown on div: no definition matches → pending (Projection Engine surfaces)', () => {
     setup([makeClickDef()]); // Click only triggers on click, not mousedown
 
     const mousedown = makeObservedEvent({
@@ -264,9 +264,8 @@ describe('Runtime Disposition Tracking — Milestone 3', () => {
     ledger.append(mousedown);
     runtime.process(mousedown);
 
-    // Mousedown has no definition, fallback fires → Unclassified
-    // But ledger disposition stays pending (no lifecycle claimed it)
-    // The fallback path doesn't set disposition — that's Projection Engine's job in M4
+    // M5: No fallback emission. Disposition stays 'pending'.
+    // Projection Engine surfaces pending entries as Unclassified at output time.
     expect(ledger.get('evt-p1-1')!.disposition).toBe('pending');
   });
 
@@ -411,7 +410,7 @@ describe('Runtime Disposition Tracking — Milestone 3', () => {
 
   // ── Complete ledger lifecycle for a multi-event interaction ─────────
 
-  it('full lifecycle: mousedown(stays pending) + click(claimed) on same button', () => {
+  it('full lifecycle: mousedown(pending) + click(claimed by Click) on same button', () => {
     setup([makeClickDef()]);
 
     // mousedown first (not handled by Click def — Click triggers on 'click')
@@ -424,8 +423,7 @@ describe('Runtime Disposition Tracking — Milestone 3', () => {
     ledger.append(mousedown);
     runtime.process(mousedown);
 
-    // mousedown: no definition matches → fallback emits Unclassified
-    // ledger disposition stays 'pending' (no lifecycle claimed it)
+    // M5: mousedown has no definition match → stays pending (no fallback emission)
     expect(ledger.get('evt-p1-1')!.disposition).toBe('pending');
 
     // click on same button
@@ -440,14 +438,15 @@ describe('Runtime Disposition Tracking — Milestone 3', () => {
 
     // click: Click def matches → immediate completion → claimed
     expect(ledger.get('evt-p1-2')!.disposition).toBe('claimed');
+    expect(ledger.get('evt-p1-2')!.claimType).toBe('Click');
 
-    // mousedown still pending — will be projected as Unclassified by M4
+    // mousedown still pending (no definition matched it)
     expect(ledger.get('evt-p1-1')!.disposition).toBe('pending');
   });
 
   // ── Keydown events ──────────────────────────────────────────────────
 
-  it('keydown on div: no definition matches → stays pending', () => {
+  it('keydown on div: no definition matches → pending (Projection Engine surfaces)', () => {
     setup([makeClickDef()]);
 
     const keydown = makeObservedEvent({
@@ -459,6 +458,7 @@ describe('Runtime Disposition Tracking — Milestone 3', () => {
     ledger.append(keydown);
     runtime.process(keydown);
 
+    // M5: No fallback emission. Disposition stays 'pending'.
     expect(ledger.get('evt-p1-1')!.disposition).toBe('pending');
   });
 

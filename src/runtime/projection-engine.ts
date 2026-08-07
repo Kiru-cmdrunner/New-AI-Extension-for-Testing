@@ -154,10 +154,31 @@ export function projectInteractions(
   ledger: EvidenceLedger,
   completedInteractions: ComponentInteraction[],
 ): ProjectionResult {
+  // Partition interactions: only COMPLETED interactions represent
+  // successful user actions that should appear in the final output.
+  // Interrupted/abandoned lifecycles started but didn't produce a
+  // meaningful result — their events surface as Unclassified instead.
+  const completedOnly = completedInteractions.filter(
+    (i) => i.endState === 'completed',
+  );
+
+  // Build set of eventIds covered by completed interactions.
+  const coveredEventIds = new Set<string>();
+  for (const interaction of completedOnly) {
+    if (interaction.triggerEvent?.eventId) {
+      coveredEventIds.add(interaction.triggerEvent.eventId);
+    }
+    for (const ev of interaction.memberEvents ?? []) {
+      coveredEventIds.add(ev.eventId);
+    }
+  }
+
   // Find all entries that need to be projected as Unclassified
   const unclaimedEntries = ledger.getByDisposition('unclaimed');
   const pendingEntries = ledger.getByDisposition('pending');
-  const toProject = [...unclaimedEntries, ...pendingEntries];
+  const toProject = [...unclaimedEntries, ...pendingEntries].filter(
+    (e) => !coveredEventIds.has(e.eventId),
+  );
 
   // Deduplicate (an entry could theoretically appear in both lists if
   // getByDisposition has a bug, but it can't — each entry has one disposition)
@@ -170,7 +191,7 @@ export function projectInteractions(
 
   // Determine the interaction counter starting point from completed interactions
   let maxCounter = 0;
-  for (const interaction of completedInteractions) {
+  for (const interaction of completedOnly) {
     const match = interaction.interactionId.match(/^int-(\d+)$/);
     if (match) {
       const num = parseInt(match[1], 10);
@@ -185,10 +206,7 @@ export function projectInteractions(
   );
 
   // Merge: completed interactions + projected Unclassified
-  // Completed interactions stay in their original order.
-  // Projected Unclassified are appended at the end (they'll be sorted
-  // by the caller if needed, or the consumer handles ordering).
-  const interactions = [...completedInteractions, ...projectedUnclassified];
+  const interactions = [...completedOnly, ...projectedUnclassified];
 
   return {
     interactions,

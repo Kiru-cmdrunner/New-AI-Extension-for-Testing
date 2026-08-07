@@ -9,6 +9,8 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createRuntime, type ComponentRuntime } from '../../src/runtime/component-runtime';
+import { EvidenceLedger } from '../../src/runtime/evidence-ledger';
+import { projectInteractions } from '../../src/runtime/projection-engine';
 import { ALL_DEFINITIONS } from '../../src/definitions';
 import { makeObservedEvent } from '../helpers/make-event';
 import type {
@@ -84,9 +86,25 @@ function makeEvent(
 
 function setupRuntime() {
   let emitted: ComponentInteraction[] = [];
-  const config: RuntimeConfig = { onEmit: (i) => emitted.push(i) };
+  const ledger = new EvidenceLedger();
+  const config: RuntimeConfig = { onEmit: (i) => emitted.push(i), evidenceLedger: ledger };
   const runtime = createRuntime(ALL_DEFINITIONS, config);
-  return { runtime, emitted };
+  return { runtime, emitted, ledger };
+}
+
+/**
+ * Process an event through the full M5 pipeline and return projected interactions.
+ */
+function processFull(
+  runtime: ComponentRuntime,
+  ledger: EvidenceLedger,
+  emitted: ComponentInteraction[],
+  event: ObservedEvent,
+): ComponentInteraction[] {
+  ledger.append(event);
+  runtime.process(event);
+  runtime.flush();
+  return projectInteractions(ledger, emitted).interactions;
 }
 
 // ── Tests ────────────────────────────────────────────────────────────
@@ -113,13 +131,12 @@ describe('Click Definition', () => {
   });
 
   it('preserves non-interactive element clicks as Unclassified (bare div)', () => {
-    const { runtime, emitted } = setupRuntime();
-    runtime.process(
-      makeEvent('e1', 'click', { tag: 'DIV', accessibleName: '' }),
-    );
-    // Capture guarantee: no definition matched, but the click is preserved
-    expect(emitted.length).toBe(1);
-    expect(emitted[0].type).toBe('Unclassified');
+    const { runtime, emitted, ledger } = setupRuntime();
+    const event = makeEvent('e1', 'click', { tag: 'DIV', accessibleName: '' });
+    const result = processFull(runtime, ledger, emitted, event);
+    // M5: capture guarantee via Projection Engine
+    expect(result.length).toBe(1);
+    expect(result[0].type).toBe('Unclassified');
   });
 
   it('captures interactive div via class pattern', () => {
@@ -336,17 +353,24 @@ describe('Link Definition', () => {
 
 describe('Priority Ordering', () => {
   it('Dropdown wins over Click for combobox', () => {
-    const { runtime, emitted } = setupRuntime();
+    const { runtime, emitted, ledger } = setupRuntime();
     const target = { tag: 'SELECT', ariaRole: 'listbox', stableId: 'sel-prio', accessibleName: 'Status' };
-    runtime.process(makeEvent('c1', 'click', target));
-    // Capture guarantee: click triggered Dropdown lifecycle but it didn't
-    // complete immediately — click preserved as Unclassified.
-    expect(emitted.length).toBe(1);
-    expect(emitted[0].type).toBe('Unclassified');
+    const clickEvent = makeEvent('c1', 'click', target);
+    ledger.append(clickEvent);
+    runtime.process(clickEvent);
+    // M5: click triggered Dropdown lifecycle, no fallback emission
+    expect(emitted.length).toBe(0);
+
     // Complete with a change event
-    runtime.process(makeEvent('ch1', 'change', target, {}, { valueAfter: 'Active' }));
-    expect(emitted.length).toBe(2);
-    expect(emitted[1].type).toBe('Dropdown');
+    const changeEvent = makeEvent('ch1', 'change', target, {}, { valueAfter: 'Active' });
+    ledger.append(changeEvent);
+    runtime.process(changeEvent);
+    runtime.flush();
+
+    const result = projectInteractions(ledger, emitted).interactions;
+    const dropdown = result.find((i) => i.type === 'Dropdown');
+    expect(dropdown).toBeDefined();
+    expect(dropdown!.endState).toBe('completed');
   });
 
   it('Checkbox wins over Click for checkbox input', () => {

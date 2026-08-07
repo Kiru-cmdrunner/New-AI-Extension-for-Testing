@@ -12,6 +12,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { createRuntime, type ComponentRuntime } from '../../src/runtime/component-runtime';
+import { EvidenceLedger } from '../../src/runtime/evidence-ledger';
+import { projectInteractions } from '../../src/runtime/projection-engine';
 import { ALL_DEFINITIONS } from '../../src/definitions';
 import { makeObservedEvent } from '../helpers/make-event';
 import type {
@@ -80,11 +82,12 @@ function makeEvent(
   });
 }
 
-function setupRuntime(): { runtime: ComponentRuntime; emitted: ComponentInteraction[] } {
+function setupRuntime(): { runtime: ComponentRuntime; emitted: ComponentInteraction[]; ledger: EvidenceLedger } {
   const emitted: ComponentInteraction[] = [];
-  const config: RuntimeConfig = { onEmit: (i) => emitted.push(i) };
+  const ledger = new EvidenceLedger();
+  const config: RuntimeConfig = { onEmit: (i) => emitted.push(i), evidenceLedger: ledger };
   const runtime = createRuntime(ALL_DEFINITIONS, config);
-  return { runtime, emitted };
+  return { runtime, emitted, ledger };
 }
 
 // ── G2 Unit Tests ────────────────────────────────────────────────────
@@ -139,29 +142,33 @@ describe('G2: tabIndex Wiring', () => {
     });
 
     it('preserves bare div with tabIndex=null as Unclassified', () => {
-      const { runtime, emitted } = setupRuntime();
-      runtime.process(
-        makeEvent('e1', 'click',
-          { tag: 'DIV', accessibleName: 'Container' },
-          { tabIndex: null },
-        ),
+      const { runtime, emitted, ledger } = setupRuntime();
+      const event = makeEvent('e1', 'click',
+        { tag: 'DIV', accessibleName: 'Container' },
+        { tabIndex: null },
       );
-      // Capture guarantee: no definition matched, click preserved
-      expect(emitted.length).toBe(1);
-      expect(emitted[0].type).toBe('Unclassified');
+      // M5: capture guarantee via Projection Engine
+      ledger.append(event);
+      runtime.process(event);
+      runtime.flush();
+      const result = projectInteractions(ledger, emitted).interactions;
+      expect(result.length).toBe(1);
+      expect(result[0].type).toBe('Unclassified');
     });
 
     it('preserves div[tabindex=-1] as Unclassified (not tab-reachable)', () => {
-      const { runtime, emitted } = setupRuntime();
-      runtime.process(
-        makeEvent('e1', 'click',
-          { tag: 'DIV', accessibleName: 'Hidden Focus', stableId: 'hidden-focus' },
-          { tabIndex: -1 },
-        ),
+      const { runtime, emitted, ledger } = setupRuntime();
+      const event = makeEvent('e1', 'click',
+        { tag: 'DIV', accessibleName: 'Hidden Focus', stableId: 'hidden-focus' },
+        { tabIndex: -1 },
       );
-      // Capture guarantee: no definition matched, click preserved
-      expect(emitted.length).toBe(1);
-      expect(emitted[0].type).toBe('Unclassified');
+      // M5: capture guarantee via Projection Engine
+      ledger.append(event);
+      runtime.process(event);
+      runtime.flush();
+      const result = projectInteractions(ledger, emitted).interactions;
+      expect(result.length).toBe(1);
+      expect(result[0].type).toBe('Unclassified');
     });
 
     it('higher-priority definition still wins (Checkbox on div[tabindex=0] with role=checkbox)', () => {

@@ -14,6 +14,8 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createRuntime, type ComponentRuntime } from '../../src/runtime/component-runtime';
+import { EvidenceLedger } from '../../src/runtime/evidence-ledger';
+import { projectInteractions } from '../../src/runtime/projection-engine';
 import type {
   ComponentDefinition,
   ObservedEvent,
@@ -117,11 +119,24 @@ function makeDropdownDef(): ComponentDefinition {
 describe('Capture Guarantee v2', () => {
   let emitted: ComponentInteraction[];
   let runtime: ComponentRuntime;
+  let ledger: EvidenceLedger;
 
   function setup(defs: ComponentDefinition[]) {
     emitted = [];
-    const config: RuntimeConfig = { onEmit: (i) => emitted.push(i) };
+    ledger = new EvidenceLedger();
+    const config: RuntimeConfig = { onEmit: (i) => emitted.push(i), evidenceLedger: ledger };
     runtime = createRuntime(defs, config);
+  }
+
+  /**
+   * Process events through the full M5 pipeline (runtime + Projection Engine)
+   * and return the final interaction list.
+   */
+  function processFull(event: ObservedEvent): ComponentInteraction[] {
+    ledger.append(event);
+    runtime.process(event);
+    runtime.flush();
+    return projectInteractions(ledger, emitted).interactions;
   }
 
   beforeEach(() => {
@@ -163,7 +178,7 @@ describe('Capture Guarantee v2', () => {
         } as DomContext,
       });
 
-      const result = runtime.process(event);
+      const result = processFull(event);
       expect(result.length).toBe(1);
       expect(result[0].type).toBe('Unclassified');
       expect(result[0].endState).toBe('completed');
@@ -184,7 +199,7 @@ describe('Capture Guarantee v2', () => {
         } as any,
       });
 
-      const result = runtime.process(event);
+      const result = processFull(event);
       expect(result.length).toBe(1);
       expect(result[0].type).toBe('Unclassified');
       expect(result[0].metadata.physicalEventType).toBe('click');
@@ -203,7 +218,7 @@ describe('Capture Guarantee v2', () => {
         } as any,
       });
 
-      const result = runtime.process(event);
+      const result = processFull(event);
       expect(result.length).toBe(1);
       expect(result[0].type).toBe('Unclassified');
       expect(result[0].metadata.physicalEventType).toBe('contextmenu');
@@ -222,7 +237,7 @@ describe('Capture Guarantee v2', () => {
         } as any,
       });
 
-      const result = runtime.process(event);
+      const result = processFull(event);
       expect(result.length).toBe(1);
       expect(result[0].type).toBe('Unclassified');
       expect(result[0].metadata.physicalEventType).toBe('mousedown');
@@ -242,7 +257,7 @@ describe('Capture Guarantee v2', () => {
         code: 'Enter',
       });
 
-      const result = runtime.process(event);
+      const result = processFull(event);
       expect(result.length).toBe(1);
       expect(result[0].type).toBe('Unclassified');
       expect(result[0].metadata.physicalEventType).toBe('keydown');
@@ -309,7 +324,7 @@ describe('Capture Guarantee v2', () => {
         } as any,
       });
 
-      const result = runtime.process(event);
+      const result = processFull(event);
       expect(result.length).toBe(1);
       expect(result[0].type).toBe('Unclassified');
       expect(result[0].metadata.physicalEventType).toBe('click');

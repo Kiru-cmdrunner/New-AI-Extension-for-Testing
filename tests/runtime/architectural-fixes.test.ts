@@ -13,6 +13,8 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createRuntime, type ComponentRuntime } from '../../src/runtime/component-runtime';
+import { EvidenceLedger } from '../../src/runtime/evidence-ledger';
+import { projectInteractions } from '../../src/runtime/projection-engine';
 import type {
   ComponentDefinition,
   ObservedEvent,
@@ -78,12 +80,15 @@ function clickEvent(
 
 function setup(defs: ComponentDefinition[], initialId?: number) {
   const emitted: ComponentInteraction[] = [];
+  const ledger = new EvidenceLedger();
   const config: RuntimeConfig = {
     onEmit: (i) => emitted.push(i),
+    evidenceLedger: ledger,
     ...(initialId !== undefined ? { initialInteractionId: initialId } : {}),
   };
   return {
     emitted,
+    ledger,
     runtime: createRuntime(defs, config),
   };
 }
@@ -462,30 +467,42 @@ describe('Fix 4: Timeout-based lifecycle abandonment', () => {
       buildResult: (ctx) => ({ metadata: { targetName: ctx.trigger.accessibleName } }),
     };
 
-    const { runtime, emitted } = setup([stuckDef]);
+    const { runtime, emitted, ledger } = setup([stuckDef]);
 
     const baseTime = Date.now();
 
     // Trigger the component on dd1
-    runtime.process(clickEvent('c1', 'dd1', 'Select', baseTime));
+    const e1 = clickEvent('c1', 'dd1', 'Select', baseTime);
+    ledger.append(e1);
+    runtime.process(e1);
     expect(runtime.activeCount).toBe(1);
-    // Capture guarantee: click triggered lifecycle but didn't complete —
-    // Unclassified emitted so the click is preserved.
-    expect(emitted.length).toBe(1);
-    expect(emitted[0].type).toBe('Unclassified');
+    // M5: runtime absorbs the click into the lifecycle (no fallback emission).
+    // Disposition is 'absorbed' in the ledger.
+    expect(emitted.length).toBe(0);
+    expect(ledger.get('c1')!.disposition).toBe('absorbed');
 
     // A later event on a different element (within timeout) — component still active
-    runtime.process(clickEvent('c2', 'btn1', 'Other', baseTime + 1000));
+    const e2 = clickEvent('c2', 'btn1', 'Other', baseTime + 1000);
+    ledger.append(e2);
+    runtime.process(e2);
     expect(runtime.activeCount).toBe(1);
 
     // Event 15s+ later on another element — component should be abandoned by timeout
-    runtime.process(clickEvent('c3', 'btn2', 'Another', baseTime + 16000));
+    const e3 = clickEvent('c3', 'btn2', 'Another', baseTime + 16000);
+    ledger.append(e3);
+    runtime.process(e3);
 
     // The stuck component should be abandoned
     const abandoned = emitted.find((i) => i.endState === 'abandoned');
     expect(abandoned).toBeDefined();
     expect(abandoned!.type).toBe('Dropdown');
     expect(runtime.activeCount).toBe(0);
+
+    // M5: After abandonment, the abandoned component's trigger event is
+    // released to 'unclaimed'. Projection Engine surfaces it as Unclassified.
+    const projection = projectInteractions(ledger, emitted);
+    const unclassified = projection.interactions.filter((i) => i.type === 'Unclassified');
+    expect(unclassified.length).toBeGreaterThanOrEqual(1);
   });
 
   it('timeout abandonment does not fire for recently-triggered components', () => {

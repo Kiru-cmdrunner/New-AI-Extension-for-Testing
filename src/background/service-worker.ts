@@ -46,6 +46,7 @@ import {
   filterProductionInteractions,
   toIRActions,
 } from '../presentation/output-adapter';
+import { normalizeWorkflow } from '../presentation/workflow-normalizer';
 
 // ── Singletons ──────────────────────────────────────────────────────────
 
@@ -66,18 +67,35 @@ ensureSessionRestored();
 // ── Content Script Health Check & Injection ─────────────────────────────
 
 /**
- * Ping a tab's content script to check if it's alive and recording-capable.
- * Returns true if the content script responded with a PONG.
- *
- * This detects orphaned scripts from extension reload/update: an orphaned
- * script's chrome.runtime connection is dead, so sendMessage throws.
+ * Ping result returned by pingTabContentScript.
  */
-async function pingTabContentScript(tabId: number): Promise<boolean> {
+interface PingResult {
+  /** Content script is injected and responding. */
+  alive: boolean;
+  /** Content script's local recording flag. False if not recording or not alive. */
+  recording: boolean;
+}
+
+/**
+ * Ping a tab's content script to check if it's alive AND recording.
+ *
+ * Returns both the alive flag (script injected and responding) and the
+ * recording flag (EventTap installed and listening). A tab can be alive
+ * but not recording — this happens when navigation clears sessionStorage,
+ * preventing auto-resume of recording state.
+ *
+ * The caller (ensureContentScriptInjected) uses the recording flag to
+ * decide whether a START_RECORDING re-sync is needed.
+ */
+async function pingTabContentScript(tabId: number): Promise<PingResult> {
   try {
     const response = await chrome.tabs.sendMessage(tabId, { type: 'PING' });
-    return !!(response && response.type === 'PONG');
+    if (response && response.type === 'PONG') {
+      return { alive: true, recording: !!response.recording };
+    }
+    return { alive: false, recording: false };
   } catch {
-    return false;
+    return { alive: false, recording: false };
   }
 }
 
@@ -108,21 +126,39 @@ async function injectContentScript(tabId: number): Promise<boolean> {
 }
 
 /**
- * Ensure the content script is alive and recording-ready in the active tab.
+ * Ensure the content script is alive AND recording in the active tab.
  *
- * 1. Pings the tab — if no response, the script is missing/orphaned.
- * 2. Injects the script programmatically.
- * 3. Re-syncs recording state (START_RECORDING message).
+ * Three scenarios:
+ * 1. Alive and recording → done.
+ * 2. Alive but NOT recording → re-sync by sending START_RECORDING.
+ *    This is the primary fix for intermittent click loss: navigation to a
+ *    new page can clear sessionStorage, preventing auto-resume. The content
+ *    script is injected and responds to PING, but the EventTap is never
+ *    installed. Without this re-sync, all clicks on that page are silently
+ *    lost.
+ * 3. Not alive → inject programmatically, then re-sync recording state.
  *
  * Returns true if the content script is confirmed alive after this call.
  */
 async function ensureContentScriptInjected(tabId: number): Promise<boolean> {
-  // Quick check — is it already alive?
-  if (await pingTabContentScript(tabId)) {
+  const ping = await pingTabContentScript(tabId);
+
+  // Scenario 1: alive and recording → healthy
+  if (ping.alive && ping.recording) {
     return true;
   }
 
-  // Not alive — inject programmatically
+  // Scenario 2: alive but NOT recording → re-sync without re-injecting
+  if (ping.alive && !ping.recording) {
+    if (await isRecordingActive()) {
+      try {
+        await chrome.tabs.sendMessage(tabId, { type: 'START_RECORDING' });
+      } catch { /* ignore — will retry on next health check */ }
+    }
+    return true;
+  }
+
+  // Scenario 3: not alive — inject programmatically
   const injected = await injectContentScript(tabId);
   if (!injected) {
     return false;
@@ -139,7 +175,8 @@ async function ensureContentScriptInjected(tabId: number): Promise<boolean> {
   }
 
   // Verify it's now alive
-  return pingTabContentScript(tabId);
+  const rePing = await pingTabContentScript(tabId);
+  return rePing.alive;
 }
 
 /** Consecutive health check failures before reporting "not responding". */
@@ -242,11 +279,17 @@ async function handleStopRecording(): Promise<void> {
   // Flush runtime and get all interactions
   const allInteractions = stopRecording();
 
+  // Normalize: remove Unclassified interactions subsumed by recognized
+  // interactions on the same element (e.g., mousedown→click gesture pairs).
+  // This is a view filter — subsumed interactions remain in liveInteractions
+  // and the Evidence Ledger. M4 verification already ran on raw output.
+  const normalizedInteractions = normalizeWorkflow(allInteractions);
+
   // Filter to production interactions — removes incidental Hovers, Scrolls,
   // abandoned/discarded interactions, and no-op selections. This must happen
   // BEFORE capability inference so the engine only classifies deliberate
   // user actions, not transit mouse movements or focus events.
-  const productionInteractions = filterProductionInteractions(allInteractions);
+  const productionInteractions = filterProductionInteractions(normalizedInteractions);
 
   // ── Capability Model: Phase 6 Engine Integration ──
   // Run capability inference on production interactions only.

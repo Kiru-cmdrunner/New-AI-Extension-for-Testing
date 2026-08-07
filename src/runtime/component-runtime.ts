@@ -367,43 +367,18 @@ class ComponentRuntimeImpl implements ComponentRuntime {
             this.activeStack.pop();
           }
         }
-        // CAPTURE GUARANTEE: Discovery matched and created a lifecycle, but
-        // the lifecycle did not complete on this event (handleEvent returned
-        // null). For discrete actions (click, mousedown, contextmenu, keydown),
-        // this means the definition CLAIMED the event as a trigger but did not
-        // produce an interaction. Without this fallback, the click is silently
-        // consumed — it became a lifecycle trigger, not an interaction.
-        //
-        // Example: Dropdown.detectTrigger matches because className contains
-        // "select", but the click was on the trigger itself (not an option),
-        // so handleEvent returns null. The click must still be preserved.
-        if (!completedImmediately && DISCRETE_ACTION_TYPES.has(event.eventType)) {
-          // Don't emit Unclassified if the lifecycle that was just created
-          // is still on the stack AND will naturally complete from subsequent
-          // events — only emit if this discrete action would otherwise be
-          // invisible. We check: did the lifecycle get popped? If still on
-          // stack, the trigger event itself needs preservation.
-          const interaction = this.createUnclassifiedInteraction(event);
-          try {
-            this.config.onEmit(interaction);
-          } catch (err) {
-            this.logError('Unclassified' as InteractionType, 'onEmit', err);
-          }
-          emitted.push(interaction);
-        }
+        // M5: The capture guarantee fallback that previously emitted an
+        // Unclassified interaction here has been removed. The event was
+        // already absorbed by the lifecycle push above (disposition: 'absorbed').
+        // If the lifecycle completes later, the event is claimed; if it is
+        // interrupted or abandoned, releaseClaims sets it to 'unclaimed'.
+        // The Projection Engine surfaces unclaimed/pending entries as
+        // Unclassified interactions at stopRecording time.
       } else {
-        // 5. CAPTURE GUARANTEE — No definition recognized this event.
-        // If it's a discrete action (click, contextmenu, mousedown, keydown),
-        // emit an Unclassified interaction so it's never silently lost.
-        if (DISCRETE_ACTION_TYPES.has(event.eventType)) {
-          const interaction = this.createUnclassifiedInteraction(event);
-          try {
-            this.config.onEmit(interaction);
-          } catch (err) {
-            this.logError('Unclassified' as InteractionType, 'onEmit', err);
-          }
-          emitted.push(interaction);
-        }
+        // M5: No definition recognized this event. If it's a discrete action,
+        // it will be surfaced as an Unclassified interaction by the Projection
+        // Engine at stopRecording time. The ledger entry stays 'pending'.
+        // No runtime emission — the Projection Engine handles this.
       }
     }
 
@@ -547,32 +522,9 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     };
   }
 
-  /**
-   * Create an Unclassified interaction for a discrete event that no definition
-   * recognized. Preserves the original physical event type so the interaction
-   * honestly represents what happened without inventing a classification.
-   */
-  private createUnclassifiedInteraction(event: ObservedEvent): ComponentInteraction {
-    this.interactionCounter++;
-    return {
-      interactionId: `int-${this.interactionCounter}`,
-      type: 'Unclassified' as InteractionType,
-      trigger: event.target,
-      triggerEvent: event,
-      memberEvents: [],
-      startTime: event.timestamp,
-      endTime: event.timestamp,
-      endState: 'completed',
-      metadata: {
-        physicalEventType: event.eventType,
-        recognized: false,
-        reason: 'no-definition-matched',
-        targetName: event.target.accessibleName || event.target.ariaLabel || event.target.tag.toLowerCase(),
-        targetTag: event.target.tag,
-        targetRole: event.target.ariaRole,
-      },
-    };
-  }
+  // M5: createUnclassifiedInteraction removed.
+  // The Projection Engine now surfaces unclaimed/pending ledger entries as
+  // Unclassified interactions at stopRecording time.
 
   /**
    * Complete a component: build result, dedup, emit.

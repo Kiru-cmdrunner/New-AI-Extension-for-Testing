@@ -212,9 +212,9 @@ describe('Component Runtime', () => {
       }),
     );
     // TextEntry was abandoned (click elsewhere).
-    // Capture guarantee v2: the click also falls through to the Unclassified
-    // fallback since no Click definition is registered in this test.
-    expect(emitted.length).toBe(2);
+    // M5: No Click definition registered → no fallback emission.
+    // Only the abandoned TextEntry is emitted.
+    expect(emitted.length).toBe(1);
     expect(emitted[0].endState).toBe('abandoned');
     expect(runtime.activeCount).toBe(0);
   });
@@ -370,10 +370,10 @@ describe('Component Runtime', () => {
 
     // Should NOT throw
     const result = runtime.process(event);
-    // Capture guarantee v2: even when detectTrigger throws, a discrete
-    // click is preserved as Unclassified instead of silently dropped.
-    expect(result.length).toBe(1);
-    expect(result[0].type).toBe('Unclassified');
+    // M5: When detectTrigger throws, the definition errors are logged
+    // but no fallback Unclassified is emitted by the runtime.
+    // The event's ledger entry (if using a ledger) stays 'pending'.
+    expect(result.length).toBe(0);
     expect(runtime.errors.length).toBeGreaterThan(0);
     expect(runtime.errors[0]).toContain('detectTrigger');
   });

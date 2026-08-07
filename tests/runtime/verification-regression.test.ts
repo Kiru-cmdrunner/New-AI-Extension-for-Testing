@@ -1,21 +1,18 @@
 /**
  * Tests: Verification Regression — Full Pipeline Equivalence
  *
- * Milestone 4 of the End-to-End Capture Guarantee.
+ * Milestone 4/5 of the End-to-End Capture Guarantee.
  *
- * Runs real event sequences through the ComponentRuntime with EvidenceLedger
- * attached, then compares the runtime's output against the Projection Engine's
- * output. ALL tests must show match:true before M5 can begin.
- *
- * Key equivalence: runtime fallback code (createUnclassifiedInteraction) and
- * Projection Engine both produce Unclassified for unclaimed events.
+ * M5: The Projection Engine is now authoritative. These tests verify
+ * pipeline self-consistency: every discrete event in the ledger is
+ * represented in the final output (either by a completed interaction
+ * or an Unclassified projection).
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createRuntime, type ComponentRuntime } from '../../src/runtime/component-runtime';
-import { EvidenceLedger } from '../../src/runtime/evidence-ledger';
+import { EvidenceLedger, DISCRETE_ACTION_TYPES } from '../../src/runtime/evidence-ledger';
 import { projectInteractions } from '../../src/runtime/projection-engine';
-import { compareOutputs } from '../../src/runtime/verification-mode';
 import type {
   ComponentDefinition,
   ObservedEvent,
@@ -105,7 +102,13 @@ function setupPipeline(defs: ComponentDefinition[]) {
   return { runtime, emitted, ledger };
 }
 
-function processAndCompare(
+/**
+ * Processes events through the full M5 pipeline and returns a
+ * self-consistency check: every discrete event in the ledger
+ * must be represented in the projected output (either by a
+ * completed interaction or an Unclassified projection).
+ */
+function processAndVerify(
   runtime: ComponentRuntime,
   ledger: EvidenceLedger,
   emitted: ComponentInteraction[],
@@ -118,8 +121,34 @@ function processAndCompare(
   runtime.flush();
 
   const projection = projectInteractions(ledger, emitted);
-  const verification = compareOutputs(emitted, projection.interactions, ledger);
-  return verification;
+
+  // Collect all eventIds represented in the projection
+  const representedIds = new Set<string>();
+  for (const interaction of projection.interactions) {
+    if (interaction.triggerEvent?.eventId) {
+      representedIds.add(interaction.triggerEvent.eventId);
+    }
+    for (const ev of interaction.memberEvents ?? []) {
+      representedIds.add(ev.eventId);
+    }
+    // Unclassified interactions store their backing event ID in metadata
+    if (interaction.type === 'Unclassified' && interaction.metadata.eventId) {
+      representedIds.add(interaction.metadata.eventId as string);
+    }
+  }
+
+  // Collect all discrete event IDs from the ledger
+  const ledgerEntryIds = new Set(ledger.getEntries().map((e) => e.eventId));
+
+  // Every discrete event must be represented
+  const unrepresented = [...ledgerEntryIds].filter((id) => !representedIds.has(id));
+
+  return {
+    match: unrepresented.length === 0,
+    projection,
+    unrepresented,
+    ledgerEntries: ledger.getEntries(),
+  };
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────
@@ -140,7 +169,7 @@ describe('Verification Regression — Full Pipeline Equivalence', () => {
       }),
     ];
 
-    const result = processAndCompare(runtime, ledger, emitted, events);
+    const result = processAndVerify(runtime, ledger, emitted, events);
     expect(result.match).toBe(true);
   });
 
@@ -153,7 +182,7 @@ describe('Verification Regression — Full Pipeline Equivalence', () => {
       }),
     ];
 
-    const result = processAndCompare(runtime, ledger, emitted, events);
+    const result = processAndVerify(runtime, ledger, emitted, events);
     expect(result.match).toBe(true);
   });
 
@@ -166,7 +195,7 @@ describe('Verification Regression — Full Pipeline Equivalence', () => {
       }),
     ];
 
-    const result = processAndCompare(runtime, ledger, emitted, events);
+    const result = processAndVerify(runtime, ledger, emitted, events);
     expect(result.match).toBe(true);
   });
 
@@ -183,7 +212,7 @@ describe('Verification Regression — Full Pipeline Equivalence', () => {
       }),
     ];
 
-    const result = processAndCompare(runtime, ledger, emitted, events);
+    const result = processAndVerify(runtime, ledger, emitted, events);
     expect(result.match).toBe(true);
   });
 
@@ -204,7 +233,7 @@ describe('Verification Regression — Full Pipeline Equivalence', () => {
       }),
     ];
 
-    const result = processAndCompare(runtime, ledger, emitted, events);
+    const result = processAndVerify(runtime, ledger, emitted, events);
     expect(result.match).toBe(true);
   });
 
@@ -222,7 +251,7 @@ describe('Verification Regression — Full Pipeline Equivalence', () => {
       }),
     ];
 
-    const result = processAndCompare(runtime, ledger, emitted, events);
+    const result = processAndVerify(runtime, ledger, emitted, events);
     expect(result.match).toBe(true);
   });
 
@@ -243,7 +272,7 @@ describe('Verification Regression — Full Pipeline Equivalence', () => {
       }),
     ];
 
-    const result = processAndCompare(runtime, ledger, emitted, events);
+    const result = processAndVerify(runtime, ledger, emitted, events);
     expect(result.match).toBe(true);
   });
 
@@ -256,7 +285,7 @@ describe('Verification Regression — Full Pipeline Equivalence', () => {
       }),
     ];
 
-    const result = processAndCompare(runtime, ledger, emitted, events);
+    const result = processAndVerify(runtime, ledger, emitted, events);
     expect(result.match).toBe(true);
   });
 
@@ -269,7 +298,7 @@ describe('Verification Regression — Full Pipeline Equivalence', () => {
       }),
     ];
 
-    const result = processAndCompare(runtime, ledger, emitted, events);
+    const result = processAndVerify(runtime, ledger, emitted, events);
     expect(result.match).toBe(true);
   });
 
@@ -307,7 +336,7 @@ describe('Verification Regression — Full Pipeline Equivalence', () => {
       }),
     ];
 
-    const result = processAndCompare(runtime, ledger, emitted, events);
+    const result = processAndVerify(runtime, ledger, emitted, events);
     expect(result.match).toBe(true);
   });
 });
