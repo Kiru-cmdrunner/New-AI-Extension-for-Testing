@@ -73,10 +73,11 @@ const MAX_LIFECYCLE_DURATION_MS = 15_000;
  *
  * Accumulating events (scroll, input, change, mousemove) do NOT get the
  * guarantee — they are part of lifecycles, not standalone actions.
+ *
+ * Re-exported from evidence-ledger.ts (the canonical source).
  */
-const DISCRETE_ACTION_TYPES = new Set<string>([
-  'click', 'contextmenu', 'mousedown', 'keydown',
-]);
+export { DISCRETE_ACTION_TYPES } from './evidence-ledger';
+import { DISCRETE_ACTION_TYPES } from './evidence-ledger';
 
 // ── Factory ───────────────────────────────────────────────────────────
 
