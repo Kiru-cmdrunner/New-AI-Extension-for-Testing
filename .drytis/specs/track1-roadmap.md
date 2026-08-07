@@ -328,6 +328,42 @@ Phase 1.0 (baseline). Recommended after 1.1 (cleaner codebase, fewer test files 
 ### Rollback
 `git revert <commit>`. Additive change, no downstream breakage.
 
+### INV-LE-8: LedgerEntry Minimum Diagnostic Surface Invariant
+
+**LedgerEntry stores the minimum identity for "what happened." It must not
+become a second ElementIdentity.**
+
+The three diagnostic fields (`targetTag`, `targetName`, `targetRole`) are the
+complete, final field set for element identity on LedgerEntry. They are
+diagnostic — they answer "what element did this event target?" — not semantic
+("what component is this?") or structural ("where is this in the DOM?").
+
+**If a future consumer (Workflow Normalizer, Capability Model, Knowledge
+Repository) needs more identity than these three fields provide, the answer
+is NEVER "add a field to LedgerEntry." The answer is one of:**
+
+1. **The consumer should use `ComponentInteraction.trigger`** (full
+   `ElementIdentity`) instead of reading from LedgerEntry. The ledger is a
+   diagnostic projection; consumers that need canonical identity should use
+   the canonical source.
+
+2. **The consumer needs a new architectural concept** — e.g., a component
+   matching layer for the Knowledge Repository. This gets its own design,
+   its own types, and its own architectural review.
+
+3. **The Projection Engine needs richer data at projection time** — the fix
+   is to preserve a reference to the original `ObservedEvent` (or a
+   deliberately-designed serialized subset), not to trickle more fields
+   into the flat diagnostic interface.
+
+**Any change to LedgerEntry's field set requires:**
+- Explicit identification of which consumer needs the field and why
+- Evaluation of whether that consumer should instead use
+  `ComponentInteraction.trigger`
+- Evidence that the new field is diagnostic (what happened), not semantic
+  (what something is) or structural (where something is)
+- Written justification in the commit message and an update to this invariant
+
 ---
 
 ## Phase 1.3 — Type Bridge Unification
