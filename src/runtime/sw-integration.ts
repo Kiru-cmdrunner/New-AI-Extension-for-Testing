@@ -29,7 +29,6 @@ import {
 } from './evidence-ledger';
 import { projectInteractions } from './projection-engine';
 import {
-  compareOutputs,
   formatVerificationReport,
   type VerificationResult,
 } from './verification-mode';
@@ -176,15 +175,41 @@ export function stopRecording(): ComponentInteraction[] {
     if (evidenceLedger) {
       const projection = projectInteractions(evidenceLedger, liveInteractions);
 
-      // M4 verification is now a self-consistency check: the projected
-      // output IS the authoritative output. We keep the comparison to
-      // detect if any interaction in liveInteractions is missing from
-      // the projection (which would indicate a bug).
-      const verificationResult = compareOutputs(
-        liveInteractions,
-        projection.interactions,
-        evidenceLedger,
-      );
+      // M5 self-consistency check: every discrete event in the ledger
+      // must be represented in the projected output (either by a completed
+      // interaction or an Unclassified projection). This replaces the M4
+      // runtime-vs-projection comparison, which is no longer meaningful
+      // since the projection is authoritative (non-completed interactions
+      // are intentionally excluded from the output).
+      const ledgerEntries = evidenceLedger.getEntries();
+      const representedIds = new Set<string>();
+      for (const interaction of projection.interactions) {
+        if (interaction.triggerEvent?.eventId) {
+          representedIds.add(interaction.triggerEvent.eventId);
+        }
+        for (const ev of interaction.memberEvents ?? []) {
+          representedIds.add(ev.eventId);
+        }
+        if (interaction.type === 'Unclassified' && interaction.metadata.eventId) {
+          representedIds.add(interaction.metadata.eventId as string);
+        }
+      }
+      const unrepresented = ledgerEntries
+        .filter((e) => !representedIds.has(e.eventId))
+        .map((e) => ({ eventId: e.eventId, eventType: e.eventType }));
+
+      const verificationResult = {
+        match: unrepresented.length === 0,
+        differences: unrepresented.map((u) => ({
+          kind: 'missing' as const,
+          eventId: u.eventId,
+          description: `Discrete ${u.eventType} event not represented in projection`,
+          ledgerEntries: evidenceLedger.get(u.eventId) ? [evidenceLedger.get(u.eventId)!] : [],
+        })),
+        runtimeOutput: liveInteractions,
+        projectedOutput: projection.interactions,
+        ledgerSnapshot: evidenceLedger.snapshot(),
+      };
       lastVerificationResult = verificationResult;
 
       if (!verificationResult.match) {
@@ -230,8 +255,10 @@ export function processObservedEvent(
 
   const emitted = runtime.process(event);
 
-  // Persist ledger after disposition changes
-  if (evidenceLedger && emitted.length > 0) {
+  // Persist ledger on every event (INV-5: persisted on every disposition change).
+  // Even if no interaction is emitted (e.g., absorbed by a lifecycle), the
+  // ledger entry's disposition has changed from 'pending' to 'absorbed'.
+  if (evidenceLedger) {
     persistEvidenceLedger();
   }
 
