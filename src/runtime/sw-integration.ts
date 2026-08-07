@@ -23,6 +23,16 @@ import type {
   RuntimeConfig,
 } from '../shared/component-types';
 import type { ObservationResult } from '../shared/observation-types';
+import {
+  EvidenceLedger,
+  EVIDENCE_LEDGER_KEY,
+} from './evidence-ledger';
+import { projectInteractions } from './projection-engine';
+import {
+  compareOutputs,
+  formatVerificationReport,
+  type VerificationResult,
+} from './verification-mode';
 
 // ── Storage Keys ─────────────────────────────────────────────────────
 
@@ -46,6 +56,8 @@ export const OBS_KEY_PREFIX = 'cmdrunner_obs_';
 let runtime: ComponentRuntime | null = null;
 let liveInteractions: ComponentInteraction[] = [];
 let isRecording = false;
+let evidenceLedger: EvidenceLedger | null = null;
+let lastVerificationResult: VerificationResult | null = null;
 
 // ── Pending Behavioral Effects (Phase D) ──────────────────────────────
 //
@@ -114,6 +126,8 @@ export function attachPendingBehavioralObservations(
 export function initRecording(): void {
   liveInteractions = [];
   isRecording = true;
+  evidenceLedger = new EvidenceLedger();
+  lastVerificationResult = null;
 
   const config: RuntimeConfig = {
     onEmit: (interaction: ComponentInteraction) => {
@@ -128,6 +142,7 @@ export function initRecording(): void {
       deleteObsKeys(attachedIds);
       // ── End Safe Point 1 ──────────────────────────────────────────
     },
+    evidenceLedger,
   };
 
   runtime = createRuntime(ALL_DEFINITIONS, config);
@@ -135,6 +150,7 @@ export function initRecording(): void {
   // Persist recording state for MV3 recovery
   chrome.storage.local.set({ [RECORDING_ACTIVE_KEY]: true }).catch(() => {});
   persistLiveInteractions();
+  persistEvidenceLedger();
 }
 
 /**
@@ -148,6 +164,28 @@ export function stopRecording(): ComponentInteraction[] {
     }
     liveInteractions.push(...flushed);
     persistLiveInteractions();
+
+    // ── M4: Shadow Verification ────────────────────────────────────
+    // Compare runtime output against Projection Engine output.
+    // Runtime output is the source of truth — this is a verification step.
+    if (evidenceLedger) {
+      const projection = projectInteractions(evidenceLedger, liveInteractions);
+      const verificationResult = compareOutputs(
+        liveInteractions,
+        projection.interactions,
+        evidenceLedger,
+      );
+      lastVerificationResult = verificationResult;
+
+      if (!verificationResult.match) {
+        console.error(formatVerificationReport(verificationResult));
+      }
+
+      // Persist verification result for manual testing access
+      chrome.storage.local.set({
+        cmdrunner_verification_result: verificationResult,
+      }).catch(() => {});
+    }
   }
 
   // ── SAFE POINT 3: session-end sweep ──────────────────────────────
@@ -159,6 +197,7 @@ export function stopRecording(): ComponentInteraction[] {
   isRecording = false;
   chrome.storage.local.set({ [RECORDING_ACTIVE_KEY]: false }).catch(() => {});
 
+  // RETURN runtime output (source of truth — NOT projected output)
   return [...liveInteractions];
 }
 
@@ -171,7 +210,17 @@ export function processObservedEvent(
 ): ComponentInteraction[] {
   if (!runtime || !isRecording) return [];
 
+  // ── M4: Evidence Ledger — append BEFORE classification ────────
+  // Capture guarantee: every discrete event enters the ledger before
+  // the runtime classifies it. The ledger records the disposition.
+  evidenceLedger?.append(event);
+
   const emitted = runtime.process(event);
+
+  // Persist ledger after disposition changes
+  if (evidenceLedger && emitted.length > 0) {
+    persistEvidenceLedger();
+  }
 
   // Persist runtime snapshot for MV3 recovery
   if (emitted.length > 0) {
@@ -195,11 +244,15 @@ export function resetState(): void {
   liveInteractions = [];
   runtime = null;
   isRecording = false;
+  evidenceLedger = null;
+  lastVerificationResult = null;
   pendingBehavioralEffects = new Map();
   chrome.storage.local.remove([
     LIVE_INTERACTIONS_KEY,
     RUNTIME_SNAPSHOT_KEY,
     RECORDING_ACTIVE_KEY,
+    EVIDENCE_LEDGER_KEY,
+    'cmdrunner_verification_result',
   ]).catch(() => {});
 }
 
@@ -217,6 +270,7 @@ export async function restoreFromStorage(): Promise<boolean> {
       RECORDING_ACTIVE_KEY,
       LIVE_INTERACTIONS_KEY,
       RUNTIME_SNAPSHOT_KEY,
+      EVIDENCE_LEDGER_KEY,
     ]);
 
     const wasRecording = result[RECORDING_ACTIVE_KEY] === true;
@@ -225,7 +279,14 @@ export async function restoreFromStorage(): Promise<boolean> {
     // Restore live interactions
     liveInteractions = result[LIVE_INTERACTIONS_KEY] ?? [];
 
-    // Recreate runtime with restored snapshot
+    // Restore Evidence Ledger (triggers resetAbsorbedToUnclaimed)
+    evidenceLedger = new EvidenceLedger();
+    const ledgerEntries = result[EVIDENCE_LEDGER_KEY];
+    if (ledgerEntries && Array.isArray(ledgerEntries)) {
+      evidenceLedger.restore(ledgerEntries);
+    }
+
+    // Recreate runtime with restored ledger
     const config: RuntimeConfig = {
       onEmit: (interaction: ComponentInteraction) => {
         enrichInteraction(interaction);
@@ -236,6 +297,7 @@ export async function restoreFromStorage(): Promise<boolean> {
         deleteObsKeys(attachedIds);
         // ── End Safe Point 1 ──────────────────────────────────────────
       },
+      evidenceLedger,
     };
     runtime = createRuntime(ALL_DEFINITIONS, config);
 
@@ -387,4 +449,25 @@ function persistRuntimeSnapshot(): void {
   }).catch(() => {
     // Non-fatal
   });
+}
+
+/**
+ * Write Evidence Ledger to chrome.storage.local.
+ * Called after disposition changes to survive MV3 SW restarts.
+ */
+function persistEvidenceLedger(): void {
+  if (!evidenceLedger) return;
+  const entries = evidenceLedger.snapshot();
+  chrome.storage.local.set({
+    [EVIDENCE_LEDGER_KEY]: entries,
+  }).catch(() => {
+    // Non-fatal
+  });
+}
+
+/**
+ * Get the last verification result (for testing / side-panel access).
+ */
+export function getVerificationResult(): VerificationResult | null {
+  return lastVerificationResult;
 }
