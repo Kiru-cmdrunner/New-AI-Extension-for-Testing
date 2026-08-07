@@ -618,3 +618,59 @@ The codebase will be:
 - **Single-typed:** one interaction type (`ComponentInteraction`) flows through the entire pipeline
 
 This is the foundation for Track 2 (new interaction types) and Track 3 (AI understanding).
+
+---
+
+## Technical Debt Register
+
+Items discovered during Track 1 that are **out of scope** for Track 1. They are
+recorded here so they are not forgotten. Each item has a proposed track and
+a clear statement of what is and isn't in scope.
+
+### TD-1: RadioButton Component Definition emits insufficient metadata
+
+**Discovered:** Phase 1.3 end-to-end verification (2026-08-07)
+
+**Problem:** The RadioButton Component Definition's `buildResult()` only sets
+`targetName` and `noOpSelection` in metadata. It does not emit `selectedValue`
+(the value/label of the selected radio option). As a result:
+
+- The Generation Layer maps RadioButton → `IRAction.SELECT` (correct).
+- But `extractInputValue()` returns `null` because `metadata['selectedValue']`
+  is absent.
+- The Playwright adapter generates `.selectOption('')` — an empty string —
+  which is semantically wrong. A radio button should produce either a
+  `.click()` (on the radio element itself) or a `.selectOption('actualValue')`
+  if the form widget is a `<select>`.
+
+**Root cause:** The Component Definition, not the Generation Layer. The
+Generation Layer is a passive consumer of metadata — it reads what the
+definition provides and maps it faithfully. Adding synthetic values in the
+compiler would violate INV-GEN-1 (determinism) and the principle that the
+compiler never interprets component behavior.
+
+**Proposed fix (Track 2 — Component Definition enhancement):**
+- Update `src/definitions/radio-button.ts` `buildResult()` to include
+  `selectedValue` derived from `ctx.triggerEvent.valueAfter` or the
+  trigger element's `value`/`accessibleName`.
+- Consider whether RadioButton should map to `IRAction.CLICK` instead of
+  `IRAction.SELECT` in the INTERACTION_TO_IR_ACTION table, since Playwright
+  handles radio buttons via `.click()` on the `<input type="radio">` element,
+  not `.selectOption()` (which is for `<select>` elements). This is a
+  semantic decision for Track 2, not a compiler fix.
+
+**Why NOT Track 1:** Track 1's Architectural Freeze explicitly freezes
+Interaction Semantics (14 Component Definitions). Changing `buildResult()`
+output is a behavioral change to a frozen system.
+
+**Acceptance criteria for the fix:**
+1. `radio-button.ts` `buildResult()` emits `selectedValue` in metadata.
+2. The Playwright output for a RadioButton interaction produces a semantically
+   correct method (`.click()` on the radio, or `.selectOption('realValue')`).
+3. A new test in `ir-bridge.test.ts` verifies non-null input extraction.
+4. A new test in the Component Definition's test file verifies `selectedValue`
+   is populated from the trigger event.
+
+**Severity:** Medium — generated code is syntactically valid but semantically
+incorrect for radio buttons. Does not affect recording, classification, or
+non-radio test generation.
