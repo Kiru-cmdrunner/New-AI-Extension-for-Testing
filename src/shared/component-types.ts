@@ -68,6 +68,26 @@ export interface DomContext {
   ancestorClasses: string[];
   /** TabIndex of the element (HTMLElement.tabIndex). -1 for elements without tabindex attr, null for non-HTMLElement (SVG, etc.). */
   tabIndex: number | null;
+
+  // ── ARIA value attributes (for custom sliders/spinbuttons) ──
+  // Present only when the DOM attribute exists (conditionally set by captureDomContext).
+
+  /** Value of aria-valuenow. Present only if the attribute exists on the element. */
+  ariaValueNow?: string;
+  /** Value of aria-valuetext. Present only if the attribute exists on the element. */
+  ariaValueText?: string;
+  /** Value of aria-valuemin. Present only if the attribute exists on the element. */
+  ariaValueMin?: string;
+  /** Value of aria-valuemax. Present only if the attribute exists on the element. */
+  ariaValueMax?: string;
+
+  // ── Native input bounds (for <input type="range">) ──
+  // Present only when the element is an <input type="range"> with min/max attributes.
+
+  /** Native el.min for range inputs. Present only for <input type="range">. */
+  nativeMin?: string;
+  /** Native el.max for range inputs. Present only for <input type="range">. */
+  nativeMax?: string;
 }
 
 // ── Observed Event ─────────────────────────────────────────────────────

@@ -86,6 +86,14 @@ interface DomContext {
   dateConfidence?: number;
   /** Events inside calendar popovers — evidence-only, not standalone interactions. */
   ownedByDatePicker?: boolean;
+  // ARIA value attributes (for custom sliders/spinbuttons) — conditionally set by captureDomContext
+  ariaValueNow?: string;
+  ariaValueText?: string;
+  ariaValueMin?: string;
+  ariaValueMax?: string;
+  // Native input bounds (for <input type="range">) — conditionally set by captureDomContext
+  nativeMin?: string;
+  nativeMax?: string;
 }
 
 interface RecordedEventMessage {

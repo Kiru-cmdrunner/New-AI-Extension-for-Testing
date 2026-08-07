@@ -25,9 +25,6 @@ import type { ComponentInteraction } from '../shared/component-types';
 import type { ExecutionIRPlan, IRStep, IRAssertion } from '../domain/execution-ir/types';
 import type { GeneratedFile } from '../domain/execution-ir/adapters/ir-code-generator';
 
-/** Storage key for Component Runtime interactions. */
-const LIVE_INTERACTIONS_KEY = 'cmdrunner_live_interactions';
-
 // ── View Management ────────────────────────────────────────
 
 type ViewName = 'home' | 'new-tc' | 'recording' | 'stopped';
@@ -675,8 +672,8 @@ function extractFiles(stored: unknown): GeneratedFile[] | null {
 async function loadDetectedInteractions(): Promise<ComponentInteraction[] | null> {
   try {
     // Read from Component Runtime storage key
-    const result = await chrome.storage.local.get(LIVE_INTERACTIONS_KEY);
-    const stored = result[LIVE_INTERACTIONS_KEY];
+    const result = await chrome.storage.local.get(StorageKeys.LIVE_INTERACTIONS);
+    const stored = result[StorageKeys.LIVE_INTERACTIONS];
     return Array.isArray(stored) ? stored as ComponentInteraction[] : null;
   } catch {
     return null;
@@ -1153,7 +1150,7 @@ async function handleRecordAnother(): Promise<void> {
 
 function setupLiveListeners(): void {
   // Live interactions update during recording
-  StorageService.onKeyChanged(LIVE_INTERACTIONS_KEY, (newValue) => {
+  StorageService.onKeyChanged(StorageKeys.LIVE_INTERACTIONS, (newValue) => {
     if (Array.isArray(newValue) && !views['recording'].hidden) {
       const interactions = newValue as ComponentInteraction[];
       timelineCount.textContent = String(interactions.length);
@@ -1171,7 +1168,7 @@ function setupLiveListeners(): void {
 
   // Component Runtime interactions — fires when SW emits new interactions
   // during recording (via INTERACTION_CAPTURED messages) and after STOP.
-  StorageService.onKeyChanged(LIVE_INTERACTIONS_KEY, (newValue) => {
+  StorageService.onKeyChanged(StorageKeys.LIVE_INTERACTIONS, (newValue) => {
     if (Array.isArray(newValue)) {
       const interactions = newValue as ComponentInteraction[];
       // Update during recording (live timeline)
@@ -1236,14 +1233,14 @@ function setupLiveListeners(): void {
 
   // Live interaction updates during recording
   // The SW sends INTERACTION_CAPTURED messages as the Component Runtime
-  // emits interactions. We also rely on storage updates from LIVE_INTERACTIONS_KEY.
+  // emits interactions. We also rely on storage updates from StorageKeys.LIVE_INTERACTIONS.
   chrome.runtime.onMessage.addListener((message: any) => {
     if (message?.type === 'INTERACTION_CAPTURED' && message.interaction) {
       const interaction = message.interaction as ComponentInteraction;
       if (!views['recording'].hidden) {
         // Live update: reload all interactions from storage
-        chrome.storage.local.get(LIVE_INTERACTIONS_KEY).then((result) => {
-          const all = result[LIVE_INTERACTIONS_KEY];
+        chrome.storage.local.get(StorageKeys.LIVE_INTERACTIONS).then((result) => {
+          const all = result[StorageKeys.LIVE_INTERACTIONS];
           if (Array.isArray(all)) {
             detectedInteractionsCount.textContent = String(all.length);
             renderProductionInteractions(detectedInteractionsList, all as ComponentInteraction[]);
@@ -1270,8 +1267,8 @@ function setupLiveListeners(): void {
     // write back to storage.
     if (message?.type === 'INTERACTION_EFFECTS_UPDATE' && message.interactionId) {
       if (!views['recording'].hidden) {
-        chrome.storage.local.get(LIVE_INTERACTIONS_KEY).then((result) => {
-          const all = result[LIVE_INTERACTIONS_KEY];
+        chrome.storage.local.get(StorageKeys.LIVE_INTERACTIONS).then((result) => {
+          const all = result[StorageKeys.LIVE_INTERACTIONS];
           if (Array.isArray(all)) {
             const interactions = all as ComponentInteraction[];
             // ── UI-only merge: overlay fresh behavioral data ────────
@@ -1443,8 +1440,8 @@ async function init(): Promise<void> {
     }
     if (ctx) showRecordingContext({ section: recordingContextSection, url: recordingContextUrl }, ctx);
     // Load live interactions from Component Runtime
-    const liveResult = await chrome.storage.local.get(LIVE_INTERACTIONS_KEY);
-    const liveInts = liveResult[LIVE_INTERACTIONS_KEY];
+    const liveResult = await chrome.storage.local.get(StorageKeys.LIVE_INTERACTIONS);
+    const liveInts = liveResult[StorageKeys.LIVE_INTERACTIONS];
     if (Array.isArray(liveInts) && liveInts.length > 0) {
       timelineCount.textContent = String(liveInts.length);
       renderProductionInteractions(timelineEvents, liveInts as ComponentInteraction[]);

@@ -34,7 +34,6 @@ import {
   resetState,
   addPendingBehavioralEffect,
   attachPendingBehavioralObservations,
-  LIVE_INTERACTIONS_KEY,
 } from '../runtime/sw-integration';
 import { interpretBehavioralObservations } from '../semantics/sw-bridge';
 import {
@@ -306,7 +305,7 @@ async function handleStopRecording(): Promise<void> {
   }
 
   // Store production interactions for UI display
-  await StorageService.setRaw(LIVE_INTERACTIONS_KEY, productionInteractions);
+  await StorageService.setRaw(StorageKeys.LIVE_INTERACTIONS, productionInteractions);
 
   // ── Generation Layer: compile interactions → ExecutionIRPlan ──
   try {
