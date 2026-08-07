@@ -172,8 +172,9 @@ export function stopRecording(): ComponentInteraction[] {
     // The Projection Engine merges completed interactions (from the runtime)
     // with Unclassified interactions for unclaimed/pending ledger entries.
     // This replaces the runtime's createUnclassifiedInteraction fallback.
-    if (evidenceLedger) {
-      const projection = projectInteractions(evidenceLedger, liveInteractions);
+      if (evidenceLedger) {
+        const ledger = evidenceLedger;
+        const projection = projectInteractions(ledger, liveInteractions);
 
       // M5 self-consistency check: every discrete event in the ledger
       // must be represented in the projected output (either by a completed
@@ -181,7 +182,7 @@ export function stopRecording(): ComponentInteraction[] {
       // runtime-vs-projection comparison, which is no longer meaningful
       // since the projection is authoritative (non-completed interactions
       // are intentionally excluded from the output).
-      const ledgerEntries = evidenceLedger.getEntries();
+      const ledgerEntries = ledger.getEntries();
       const representedIds = new Set<string>();
       for (const interaction of projection.interactions) {
         if (interaction.triggerEvent?.eventId) {
@@ -204,11 +205,11 @@ export function stopRecording(): ComponentInteraction[] {
           kind: 'missing' as const,
           eventId: u.eventId,
           description: `Discrete ${u.eventType} event not represented in projection`,
-          ledgerEntries: evidenceLedger.get(u.eventId) ? [evidenceLedger.get(u.eventId)!] : [],
+          ledgerEntries: ledger.get(u.eventId) ? [ledger.get(u.eventId)!] : [],
         })),
         runtimeOutput: liveInteractions,
         projectedOutput: projection.interactions,
-        ledgerSnapshot: evidenceLedger.snapshot(),
+        ledgerSnapshot: ledger.snapshot(),
       };
       lastVerificationResult = verificationResult;
 

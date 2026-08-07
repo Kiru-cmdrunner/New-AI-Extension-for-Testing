@@ -238,8 +238,8 @@ export function toIRAction(interaction: ComponentInteraction): IRAction | null {
     case 'Navigation':
       return {
         type: 'NAVIGATE',
-        target: { name: metadata.pageTitle ?? metadata.pageUrl ?? 'page' },
-        value: metadata.pageUrl,
+        target: { name: String(metadata.pageTitle ?? metadata.pageUrl ?? 'page') },
+        value: String(metadata.pageUrl ?? ''),
         ...enrichment,
       };
 

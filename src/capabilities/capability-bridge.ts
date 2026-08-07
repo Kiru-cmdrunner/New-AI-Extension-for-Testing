@@ -142,6 +142,8 @@ export function runCapabilityInference(
   return allRecords.filter((r) => !navigationIds.has(r.interactionId));
 }
 
+import type { CapabilityParameters } from './capability-types';
+
 // ── Serialization helper for storage / side panel ─────────────────────
 
 /**
@@ -153,10 +155,10 @@ export interface SerializableCapabilityRecord {
   interactionId: string;
   capability: string;
   confidence: string;
-  parameters: Record<string, unknown> | undefined;
+  parameters: CapabilityParameters | undefined;
   evidence: {
     physicalType: string;
-    targetLabel: string;
+    targetLabel: string | null;
     semanticEffects: string[];
     matchedKeywords: string[];
     structuralContext: string[];

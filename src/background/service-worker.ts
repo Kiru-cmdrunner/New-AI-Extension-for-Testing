@@ -518,7 +518,7 @@ async function handleRunTest(): Promise<void> {
     const { DexieUnitOfWorkFactory } = await import('../repository/v2/dexie/dexie-unit-of-work-factory');
 
     const uowFactory = new DexieUnitOfWorkFactory();
-    const uow = await uowFactory.create();
+    const uow = uowFactory.create();
 
     // Collect all element IDs referenced by the IR plan
     const elementIds = new Set<string>();
@@ -528,11 +528,18 @@ async function handleRunTest(): Promise<void> {
       }
     }
 
-    // Load referenced elements from the Repository
+    // Load referenced elements from the Repository within a transaction
     const referencedElements: import('../domain/entities/element').Element[] = [];
-    for (const elementId of elementIds) {
-      const el = await uow.elements.getById(elementId);
-      if (el) referencedElements.push(el);
+    if (elementIds.size > 0) {
+      const elements = await uow.execute(async (repos) => {
+        const result: import('../domain/entities/element').Element[] = [];
+        for (const elementId of elementIds) {
+          const el = await repos.elements.getById(elementId);
+          if (el) result.push(el);
+        }
+        return result;
+      });
+      referencedElements.push(...elements);
     }
 
     // Build a minimal artifact-like object for staleness check
@@ -554,8 +561,6 @@ async function handleRunTest(): Promise<void> {
       // For now, proceed with the stale IR — the runtime healing in the executor
       // will compensate by healing locators during execution.
     }
-
-    await uow.rollback?.();
   } catch (stalenessErr) {
     // Non-fatal — staleness check is an optimization, not a requirement
     console.warn('[Execution] Staleness check failed:', stalenessErr);
@@ -617,9 +622,10 @@ async function handleRunTest(): Promise<void> {
     });
 
     const uowFactory = new DexieUnitOfWorkFactory();
-    const uow = await uowFactory.create();
-    await uow.executionRuns.save(run);
-    await uow.commit();
+    const uow = uowFactory.create();
+    await uow.execute(async (repos) => {
+      await repos.executionRuns.save(run);
+    });
     executionRunId = run.id;
 
     console.info('[Execution] ExecutionRun persisted:', executionRunId);

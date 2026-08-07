@@ -229,7 +229,8 @@ async function flushPendingEvents(): Promise<void> {
   // Remove confirmed-delivered events from buffer
   let modified = false;
   for (let i = 0; i < results.length; i++) {
-    if (results[i].status === 'fulfilled' && results[i].value === true) {
+    const result = results[i];
+    if (result.status === 'fulfilled' && result.value === true) {
       removeFromBuffer(buffered[i].eventId);
       modified = true;
     }
@@ -297,7 +298,8 @@ async function flushPendingBehavioralEvents(): Promise<void> {
   );
 
   for (let i = 0; i < results.length; i++) {
-    if (results[i].status === 'fulfilled' && results[i].value === true) {
+    const result = results[i];
+    if (result.status === 'fulfilled' && result.value === true) {
       removeFromBehavioralBuffer(buffered[i].sourceEventId);
     }
   }

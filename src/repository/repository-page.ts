@@ -405,7 +405,7 @@ function renderOutcomes(outcomes: readonly CapabilityOutcome[]): HTMLElement {
   return section;
 }
 
-function renderBusinessRules(rules: readonly Capability['businessRules']): HTMLElement {
+function renderBusinessRules(rules: Capability['businessRules']): HTMLElement {
   const section = createSection('Business Rules');
 
   const list = document.createElement('div');
@@ -436,7 +436,7 @@ function renderBusinessRules(rules: readonly Capability['businessRules']): HTMLE
   return section;
 }
 
-function renderFailureModes(modes: readonly Capability['failureModes']): HTMLElement {
+function renderFailureModes(modes: Capability['failureModes']): HTMLElement {
   const section = createSection('Known Failure Modes');
 
   const list = document.createElement('div');

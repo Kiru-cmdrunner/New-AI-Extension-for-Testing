@@ -26,7 +26,7 @@ import type {
   ComponentCompletion,
   ObservedEvent,
 } from '../shared/component-types';
-import { hasScrollDelta } from './patterns';
+import { hasScrollDelta, elementKey } from './patterns';
 
 /** Maximum gap (ms) between consecutive scroll events before the burst ends. */
 const SCROLL_BURST_GAP_MS = 500;
@@ -117,8 +117,9 @@ export const scrollDefinition: ComponentDefinition = {
 
     // Identify the scroll target — is it the page or a nested container?
     const trigger = ctx.triggerEvent.target;
+    const key = elementKey(trigger);
     const isPageScroll = trigger.tag === 'HTML' || trigger.tag === 'BODY'
-      || trigger.elementKey === 'html' || trigger.elementKey === 'body';
+      || key === 'html' || key === 'body';
 
     return {
       metadata: {

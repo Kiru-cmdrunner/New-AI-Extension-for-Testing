@@ -42,6 +42,7 @@ import type {
   IRAssertionResult,
 } from '../domain/execution-ir/adapters/ir-executor';
 import type { RankedLocator } from '../domain/locator-ranking';
+import type { ElementIdentity } from '../shared/types';
 import { LocatorStrategyType } from '../domain/enums';
 
 // ── Types ───────────────────────────────────────────────────
@@ -419,7 +420,7 @@ export class IRExecutorImpl implements IRExecutor {
 
     try {
       // 1. Extract live DOM context for the missing element
-      const extractResponse = await this.sendTabMessage<{ identity: Record<string, string | null> | null }>(
+      const extractResponse = await this.sendTabMessage<{ identity: Partial<ElementIdentity> | null }>(
         tabId,
         {
           type: 'EXTRACT_DOM_CONTEXT',
@@ -434,7 +435,7 @@ export class IRExecutorImpl implements IRExecutor {
         '../domain/locator-ranking'
       );
       const candidates = extractCandidatesFromIdentity(
-        extractResponse.identity as Record<string, string | null>,
+        extractResponse.identity as ElementIdentity,
       );
       const ranked = rankLocatorCandidates(candidates);
 
@@ -449,22 +450,21 @@ export class IRExecutorImpl implements IRExecutor {
       );
 
       const uowFactory = new DexieUnitOfWorkFactory();
-      const uow = await uowFactory.create();
-      const healed = await healElementAndPersist(
-        {
-          elementId,
-          newStrategies: ranked,
+      const uow = uowFactory.create();
+      const healed = await uow.execute(async (repos) => {
+        return healElementAndPersist(
+          {
+            elementId,
+            newStrategies: ranked,
           context: {
             sourceSessionId: `execution-${Date.now()}`,
             reason: 'Runtime locator resolution failure',
             proposedBy: 'runtime-healer',
-            healedAt: new Date().toISOString(),
           },
-        },
-        uow.elements,
-      );
-
-      await uow.commit();
+          },
+          repos.elements,
+        );
+      });
 
       if (!healed) return false;
 

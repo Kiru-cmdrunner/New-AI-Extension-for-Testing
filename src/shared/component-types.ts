@@ -201,7 +201,7 @@ export type InteractionType =
 /**
  * The lifecycle states a component transitions through.
  *
- *   triggering → active → completed | abandoned | interrupted
+ *   triggering → active → completed | abandoned | interrupted | discarded
  *
  * Architecture: §2.2 Stage 2
  */
@@ -210,7 +210,8 @@ export type ComponentState =
   | 'active'
   | 'completed'
   | 'abandoned'
-  | 'interrupted';
+  | 'interrupted'
+  | 'discarded';
 
 /**
  * The end state of a completed or terminated component.

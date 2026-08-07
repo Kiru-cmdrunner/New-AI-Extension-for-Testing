@@ -103,7 +103,7 @@ function lifecycleOwnsTarget(
 
   const hasChildRole =
     def.semanticChildRoles != null &&
-    def.semanticChildRoles.includes(ariaRole);
+    def.semanticChildRoles.includes(ariaRole ?? '');
 
   const hasChildTag =
     def.semanticChildTags != null &&

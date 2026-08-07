@@ -261,7 +261,13 @@ export function enrichCapability(
   }
 
   const now = new Date().toISOString();
-  const changes: EnrichmentChange = {
+  // Mutable builder — fields are read-only on EnrichmentChange but
+  // need mutation during the enrichment algorithm, then frozen at return.
+  const changes: {
+    added: Record<string, unknown>;
+    modified: { field: string; from: unknown; to: unknown }[];
+    conflicts: { field: string; existing: unknown; candidate: unknown; resolution: string }[];
+  } = {
     added: {},
     modified: [],
     conflicts: [],

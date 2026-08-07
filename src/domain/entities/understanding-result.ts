@@ -56,8 +56,8 @@ export interface UnderstandingResult {
 
   // ── Understanding artifacts (sibling, independent) ──
 
-  /** Structural understanding: what exists, what happened. */
-  readonly fragment: ApplicationKnowledgeFragment;
+  /** Structural understanding: what exists, what happened. Null when the Understanding Layer has not yet produced a fragment. */
+  readonly fragment: ApplicationKnowledgeFragment | null;
   /** Semantic understanding: what the application does. Null if derivation failed. */
   readonly capability: CapabilityCandidate | null;
 

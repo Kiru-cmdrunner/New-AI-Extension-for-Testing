@@ -287,7 +287,7 @@ export class ObservationCoordinator {
       current !== document.documentElement
     ) {
       const tag = current.tagName.toLowerCase();
-      const parent = current.parentElement;
+      const parent: Element | null = current.parentElement;
       if (!parent) break;
 
       const sameTagSiblings = Array.from(parent.children).filter(
