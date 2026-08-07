@@ -12,7 +12,7 @@
  * observer pipeline.
  */
 
-import type { SurfaceType } from '../recorded-event.ts';
+import type { SurfaceType } from './recorded-event';
 
 export interface SurfaceInfo {
   type: SurfaceType;

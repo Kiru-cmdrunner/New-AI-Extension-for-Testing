@@ -14,6 +14,7 @@
  */
 
 import type { ElementIdentity } from './types';
+export type { ElementIdentity } from './types';
 import type { ObservationResult } from './observation-types';
 
 // ── Browser Events ─────────────────────────────────────────────────────

@@ -16,8 +16,7 @@
  * Architecture: `.drytis/specs/m0a-architecture-validation.md` §2.2 Stage 6
  */
 
-import type { ComponentInteraction } from './component-types';
-import type { InteractionType } from './component-types';
+import type { ComponentInteraction, InteractionType } from '../shared/component-types';
 
 // ── Production Interaction Filter ────────────────────────────────────
 
