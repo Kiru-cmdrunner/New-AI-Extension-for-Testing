@@ -20,7 +20,6 @@ import type {
   CapabilityRecord,
   CapabilityClaim,
   CapabilityEvidence,
-  CapabilityParameters,
   CapabilityAlternative,
 } from './capability-types';
 import type { CapabilityRule } from './capability-rule';

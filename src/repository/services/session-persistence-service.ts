@@ -21,12 +21,11 @@
  * Reference: Phase 10 architecture — Recording → Understanding → Generation → Repository
  */
 
-import type { UnitOfWorkFactory, UnitOfWork } from '../v2/interfaces/unit-of-work';
+import type { UnitOfWorkFactory } from '../v2/interfaces/unit-of-work';
 import type { UnderstandingResult } from '../../domain/entities/understanding-result';
 import type { SessionEvent } from '../../shared/types';
 import type { ComponentInteraction } from '../../shared/component-types';
 import type { ExecutionIRPlan } from '../../domain/execution-ir/types';
-import type { CapabilityCandidate } from '../../domain/entities/capability-candidate';
 import {
   createRecordingSession,
 } from '../../domain/entities/recording-session';

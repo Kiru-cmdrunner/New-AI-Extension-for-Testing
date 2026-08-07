@@ -32,7 +32,6 @@ import type {
   ExecutionIRPlan,
   IRStep,
   ResolvedLocator,
-  ResolvedTarget,
 } from '../domain/execution-ir/types';
 import type {
   IRExecutor,
@@ -41,9 +40,7 @@ import type {
   IRStepResult,
   IRAssertionResult,
 } from '../domain/execution-ir/adapters/ir-executor';
-import type { RankedLocator } from '../domain/locator-ranking';
 import type { ElementIdentity } from '../shared/types';
-import { LocatorStrategyType } from '../domain/enums';
 
 // ── Types ───────────────────────────────────────────────────
 
@@ -259,9 +256,6 @@ export class IRExecutorImpl implements IRExecutor {
     const stepStartTime = performance.now();
 
     // Resolve target
-    let resolvedElement: Element | null = null;
-    let resolvedIdentity: Record<string, string | null> | null = null;
-
     if (step.target.kind === 'element') {
       const elementId = step.target.elementId;
       const locators = overrideMap.get(elementId) ?? step.target.resolvedLocators;
@@ -273,9 +267,7 @@ export class IRExecutorImpl implements IRExecutor {
         requireVisible: step.executionParameters.waitStrategy !== 'none',
       });
 
-      if (resolveResponse.found && resolveResponse.identity) {
-        resolvedIdentity = resolveResponse.identity;
-      } else {
+      if (!resolveResponse.found) {
         // Locator resolution failed → trigger runtime healing
         const healed = await this.attemptRuntimeHealing(
           tabId,
@@ -292,9 +284,7 @@ export class IRExecutorImpl implements IRExecutor {
             requireVisible: step.executionParameters.waitStrategy !== 'none',
           });
 
-          if (retryResponse.found && retryResponse.identity) {
-            resolvedIdentity = retryResponse.identity;
-          } else {
+          if (!retryResponse.found) {
             // Still not found after healing — step fails
             return {
               stepId: step.id,

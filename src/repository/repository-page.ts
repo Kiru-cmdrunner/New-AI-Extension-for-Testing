@@ -146,7 +146,7 @@ function renderCapabilities(): void {
   capabilityList.innerHTML = '';
 
   let totalCount = 0;
-  for (const [projectId, group] of displayCapabilities) {
+  for (const [, group] of displayCapabilities) {
     if (group.caps.length === 0) continue;
 
     totalCount += group.caps.length;
@@ -932,7 +932,7 @@ function escapeHtml(text: string): string {
 // ════════ ELEMENTS VIEW (Phase 11.5) ══════════════════════════
 
 import type { Element } from '../domain/entities/element';
-import { ElementStatus, LocatorStrategyType } from '../domain/enums';
+import { ElementStatus } from '../domain/enums';
 
 async function refreshElements(): Promise<void> {
   const query = searchInput.value.trim().toLowerCase();
@@ -955,7 +955,7 @@ async function refreshElements(): Promise<void> {
 
   elementList.innerHTML = '';
   let totalCount = 0;
-  for (const [projectId, group] of result) {
+  for (const [, group] of result) {
     if (group.elements.length === 0) continue;
     totalCount += group.elements.length;
 

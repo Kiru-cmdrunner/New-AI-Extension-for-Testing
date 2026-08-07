@@ -40,7 +40,7 @@ export const dropdownDefinition: ComponentDefinition = {
   ]),
 
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
-    const { tag, ariaRole, className, ariaLabel, placeholder } = event.target;
+    const { tag, ariaRole, className } = event.target;
     const { ariaHasPopup, inputType } = event.domContext;
 
     // Standard dropdown triggers

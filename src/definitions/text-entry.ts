@@ -29,7 +29,7 @@ export const textEntryDefinition: ComponentDefinition = {
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
     if (event.eventType !== 'focus') return null;
 
-    const { tag, ariaRole, placeholder } = event.target;
+    const { tag, ariaRole } = event.target;
     const { inputType, isContentEditable } = event.domContext;
 
     if (!isTextEntry(tag, inputType, ariaRole, isContentEditable)) {

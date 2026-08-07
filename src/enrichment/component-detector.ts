@@ -170,7 +170,7 @@ function isIconButton(identity: ElementIdentity): boolean {
  * Extract semantic icon name from CSS classes or data attributes.
  * Common patterns: fa-close, fa-trash, mdi-delete, icon-close, etc.
  */
-function extractIconName(identity: ElementIdentity, allClasses: string): string | null {
+function extractIconName(allClasses: string): string | null {
   const classes = allClasses.toLowerCase();
 
   // Font Awesome: fa-close, fa-trash, fa-search, etc.
@@ -247,7 +247,7 @@ export function detectComponent(event: ObservedEvent): ComponentDetectionResult 
   // Icon button detection (overrides Generic for button with no text)
   if (componentType === 'Generic' && isIconButton(identity)) {
     componentType = 'IconButton';
-    const iconName = extractIconName(identity, allClasses);
+    const iconName = extractIconName(allClasses);
     if (iconName) {
       componentData.iconName = iconName;
     }

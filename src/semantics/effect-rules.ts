@@ -18,7 +18,6 @@
 
 import type {
   ObservationResult,
-  ElementStateSnapshot,
   MutationRecord2,
 } from '../shared/observation-types';
 import type { InterpretationContext } from './interpretation-context';

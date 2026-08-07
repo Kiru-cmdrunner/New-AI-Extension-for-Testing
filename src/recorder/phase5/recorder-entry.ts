@@ -227,12 +227,10 @@ async function flushPendingEvents(): Promise<void> {
   );
 
   // Remove confirmed-delivered events from buffer
-  let modified = false;
   for (let i = 0; i < results.length; i++) {
     const result = results[i];
     if (result.status === 'fulfilled' && result.value === true) {
       removeFromBuffer(buffered[i].eventId);
-      modified = true;
     }
   }
 }

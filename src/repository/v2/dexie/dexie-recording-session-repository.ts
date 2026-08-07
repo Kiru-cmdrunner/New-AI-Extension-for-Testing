@@ -28,7 +28,7 @@ export class DexieRecordingSessionRepository implements RecordingSessionReposito
     return session;
   }
 
-  async getByCapabilityId(capabilityId: string): Promise<RecordingSession[]> {
+  async getByCapabilityId(_capabilityId: string): Promise<RecordingSession[]> {
     // Sessions don't have a direct capabilityId index. We scan by project
     // and filter in-memory by checking understandingResult.capability.
     // This is acceptable because session counts per project are small

@@ -12,7 +12,6 @@
 import { interpret } from './effect-interpreter';
 import type { InterpretationContext } from './interpretation-context';
 import type { ComponentInteraction } from '../shared/component-types';
-import type { ObservationResult } from '../shared/observation-types';
 
 /**
  * Build an InterpretationContext from a ComponentInteraction's trigger

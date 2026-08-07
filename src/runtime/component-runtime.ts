@@ -23,7 +23,6 @@ import type {
   ComponentTrigger,
   RuntimeConfig,
   InteractionType,
-  ElementIdentity,
 } from '../shared/component-types';
 import { DEDUP_WINDOW_MS } from '../shared/component-types';
 import { elementKey } from '../definitions/patterns';
@@ -347,7 +346,6 @@ class ComponentRuntimeImpl implements ComponentRuntime {
         }
         // Check if the definition completes immediately (e.g., Click, Checkbox)
         const def = this.findDefForType(newCtx.type);
-        let completedImmediately = false;
         if (def) {
           let completion: ComponentCompletion | null = null;
           try {
@@ -356,7 +354,6 @@ class ComponentRuntimeImpl implements ComponentRuntime {
             this.logError(def.type, 'handleEvent', err);
           }
           if (completion) {
-            completedImmediately = true;
             newCtx.state = completion.endState;
             newCtx.endTime = event.timestamp;
             // Disposition: completeComponent will set 'claimed' on success,

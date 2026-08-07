@@ -23,7 +23,7 @@ import {
   type UIState,
   type AppMessage,
 } from '../shared/types';
-import type { ObservedEvent, ComponentInteraction } from '../shared/component-types';
+import type { ObservedEvent } from '../shared/component-types';
 import type { ObservationResult } from '../shared/observation-types';
 import {
   initRecording,
@@ -33,7 +33,6 @@ import {
   restoreFromStorage,
   resetState,
   addPendingBehavioralEffect,
-  attachPendingBehavioralObservations,
 } from '../runtime/sw-integration';
 import { interpretBehavioralObservations } from '../semantics/sw-bridge';
 import {
@@ -572,7 +571,6 @@ async function handleRunTest(): Promise<void> {
 
   // Track healed elements via a counter (the override map is internal to the executor)
   let healedCount = 0;
-  const healedElementIds: string[] = [];
   const result = await executor.execute(irPlan, {
     onStepComplete: (step, stepResult) => {
       // Track healed elements for post-execution invalidation

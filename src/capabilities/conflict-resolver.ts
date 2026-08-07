@@ -19,7 +19,6 @@ import type {
   CapabilityClaim,
   CapabilityAlternative,
   CapabilityConfidence,
-  CapabilityType,
 } from './capability-types';
 
 // ── Resolution Result ─────────────────────────────────────────────────

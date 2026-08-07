@@ -160,17 +160,6 @@ chrome.storage.local.get('ui_state').then((result) => {
   }
 }).catch(() => {});
 
-async function checkRecording(): Promise<boolean> {
-  if (isRecording) return true;
-  try {
-    const result = await chrome.storage.local.get('ui_state');
-    if (result['ui_state']) {
-      isRecording = result['ui_state'].recordingState === 'recording';
-    }
-  } catch {}
-  return isRecording;
-}
-
 // Also listen for explicit messages (covers SPA navigation where storage
 // change events may be delayed)
 // PING is handled synchronously so the service worker can verify the content

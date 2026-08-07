@@ -2,7 +2,7 @@
  * Storage Service — the single entry point for chrome.storage.local.
  * All other modules use this service; direct chrome.storage calls are avoided.
  */
-import { RecordingState, StorageKeys, UIState, DEFAULT_UI_STATE, SessionEvent, RecordingContext, AIConfig, DEFAULT_AI_CONFIG, TestStep, AIProviderId, ProviderSettings, defaultProviderSettings, TestRepository, TestCaseDraft, PlaywrightGeneratorOutput } from '../shared/types';
+import { RecordingState, StorageKeys, UIState, DEFAULT_UI_STATE, SessionEvent, RecordingContext, AIConfig, DEFAULT_AI_CONFIG, TestStep, AIProviderId, ProviderSettings, defaultProviderSettings, TestRepository, TestCaseDraft } from '../shared/types';
 
 export class StorageService {
   // ── UI State ────────────────────────────────────────────

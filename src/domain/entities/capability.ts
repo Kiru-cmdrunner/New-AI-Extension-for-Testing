@@ -31,7 +31,7 @@
  *             identity label — renaming would break the accumulated context.
  */
 
-import { MissingFieldError, ValueObjectError } from '../errors/invariant-errors';
+import { MissingFieldError } from '../errors/invariant-errors';
 
 // ── Sub-types ─────────────────────────────────────────────
 
