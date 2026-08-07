@@ -191,4 +191,82 @@ describe('Projection Engine', () => {
     expect(result.projectedEntries.map(e => e.eventId)).toContain('evt-p1-3');
     expect(result.projectedEntries.map(e => e.eventId)).toContain('evt-p1-4');
   });
+
+  // ── Diagnostic Identity in Projected Unclassified (Phase 1.2) ───────
+
+  it('Unclassified carries real targetTag from ledger entry', () => {
+    ledger.append(makeObservedEvent({
+      eventId: 'evt-p1-1',
+      eventType: 'mousedown',
+      captureSeq: 100,
+      target: { tag: 'BUTTON' },
+    }));
+    ledger.setDisposition('evt-p1-1', 'unclaimed');
+
+    const result = projectInteractions(ledger, []);
+    expect(result.projectedUnclassified[0].trigger.tag).toBe('BUTTON');
+    expect(result.projectedUnclassified[0].metadata.targetTag).toBe('BUTTON');
+  });
+
+  it('Unclassified carries real targetName from ledger entry', () => {
+    ledger.append(makeObservedEvent({
+      eventId: 'evt-p1-1',
+      eventType: 'mousedown',
+      captureSeq: 100,
+      target: { accessibleName: 'With Exchange' },
+    }));
+    ledger.setDisposition('evt-p1-1', 'unclaimed');
+
+    const result = projectInteractions(ledger, []);
+    expect(result.projectedUnclassified[0].trigger.accessibleName).toBe('With Exchange');
+    expect(result.projectedUnclassified[0].metadata.targetName).toBe('With Exchange');
+  });
+
+  it('Unclassified carries real targetRole from ledger entry', () => {
+    ledger.append(makeObservedEvent({
+      eventId: 'evt-p1-1',
+      eventType: 'mousedown',
+      captureSeq: 100,
+      target: { ariaRole: 'combobox' },
+    }));
+    ledger.setDisposition('evt-p1-1', 'unclaimed');
+
+    const result = projectInteractions(ledger, []);
+    expect(result.projectedUnclassified[0].trigger.ariaRole).toBe('combobox');
+    expect(result.projectedUnclassified[0].metadata.targetRole).toBe('combobox');
+  });
+
+  it('Unclassified carries real identity when targetRole is null', () => {
+    ledger.append(makeObservedEvent({
+      eventId: 'evt-p1-1',
+      eventType: 'mousedown',
+      captureSeq: 100,
+      target: { tag: 'DIV', accessibleName: '', ariaRole: null },
+    }));
+    ledger.setDisposition('evt-p1-1', 'unclaimed');
+
+    const result = projectInteractions(ledger, []);
+    expect(result.projectedUnclassified[0].trigger.tag).toBe('DIV');
+    expect(result.projectedUnclassified[0].trigger.accessibleName).toBe('');
+    expect(result.projectedUnclassified[0].trigger.ariaRole).toBeNull();
+    expect(result.projectedUnclassified[0].metadata.targetTag).toBe('DIV');
+    expect(result.projectedUnclassified[0].metadata.targetName).toBe('');
+    expect(result.projectedUnclassified[0].metadata.targetRole).toBeNull();
+  });
+
+  it('Unclassified triggerEvent.target carries real identity', () => {
+    ledger.append(makeObservedEvent({
+      eventId: 'evt-p1-1',
+      eventType: 'mousedown',
+      captureSeq: 100,
+      target: { tag: 'A', accessibleName: 'Product Link', ariaRole: 'link' },
+    }));
+    ledger.setDisposition('evt-p1-1', 'unclaimed');
+
+    const result = projectInteractions(ledger, []);
+    const triggerTarget = result.projectedUnclassified[0].triggerEvent.target;
+    expect(triggerTarget.tag).toBe('A');
+    expect(triggerTarget.accessibleName).toBe('Product Link');
+    expect(triggerTarget.ariaRole).toBe('link');
+  });
 });

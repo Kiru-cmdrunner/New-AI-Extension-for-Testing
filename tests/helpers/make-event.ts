@@ -42,17 +42,21 @@ const DEFAULT_TARGET: ElementIdentity = {
 };
 
 export function makeObservedEvent(
-  overrides: Partial<ObservedEvent> & { eventId: string; eventType: BrowserEventType },
+  overrides: Partial<Omit<ObservedEvent, 'target'>> & {
+    eventId: string;
+    eventType: BrowserEventType;
+    target?: Partial<ElementIdentity>;
+  },
 ): ObservedEvent {
   const target = overrides.target
     ? { ...DEFAULT_TARGET, ...overrides.target }
     : DEFAULT_TARGET;
 
+  const { target: _omit, ...rest } = overrides;
   return {
     timestamp: Date.now(),
     captureSeq: 0,
     isTrusted: true,
-    target,
     domContext: DEFAULT_DOM_CONTEXT,
     valueBefore: null,
     valueAfter: null,
@@ -70,6 +74,7 @@ export function makeObservedEvent(
     scrollDeltaX: null,
     pageUrl: 'https://example.com',
     pageTitle: 'Test Page',
-    ...overrides,
-  };
+    ...rest,
+    target,
+  } as ObservedEvent;
 }

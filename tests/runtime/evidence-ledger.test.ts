@@ -314,4 +314,108 @@ describe('EvidenceLedger — Milestone 2', () => {
     ledger.append(event);
     expect(ledger.get('evt-pABC-3')!.pageId).toBe('pABC');
   });
+
+  // ── Diagnostic Identity Fields (Phase 1.2) ──────────────────────────
+
+  it('append() populates targetTag from ObservedEvent.target.tag', () => {
+    const event = makeObservedEvent({
+      eventId: 'evt-p1-1',
+      eventType: 'click',
+      target: { tag: 'BUTTON' },
+    });
+    ledger.append(event);
+    expect(ledger.get('evt-p1-1')!.targetTag).toBe('BUTTON');
+  });
+
+  it('append() populates targetName from ObservedEvent.target.accessibleName', () => {
+    const event = makeObservedEvent({
+      eventId: 'evt-p1-1',
+      eventType: 'click',
+      target: { accessibleName: 'Submit Form' },
+    });
+    ledger.append(event);
+    expect(ledger.get('evt-p1-1')!.targetName).toBe('Submit Form');
+  });
+
+  it('append() populates targetRole from ObservedEvent.target.ariaRole', () => {
+    const event = makeObservedEvent({
+      eventId: 'evt-p1-1',
+      eventType: 'click',
+      target: { ariaRole: 'combobox' },
+    });
+    ledger.append(event);
+    expect(ledger.get('evt-p1-1')!.targetRole).toBe('combobox');
+  });
+
+  it('append() populates targetRole=null when element has no ARIA role', () => {
+    const event = makeObservedEvent({
+      eventId: 'evt-p1-1',
+      eventType: 'click',
+      target: { ariaRole: null },
+    });
+    ledger.append(event);
+    expect(ledger.get('evt-p1-1')!.targetRole).toBeNull();
+  });
+
+  it('append() uses default identity when target has empty fields', () => {
+    // makeObservedEvent default: tag='DIV', accessibleName='', ariaRole=null
+    const event = makeObservedEvent({ eventId: 'evt-p1-1', eventType: 'click' });
+    ledger.append(event);
+    const entry = ledger.get('evt-p1-1')!;
+    expect(entry.targetTag).toBe('DIV');
+    expect(entry.targetName).toBe('');
+    expect(entry.targetRole).toBeNull();
+  });
+
+  it('identity fields survive snapshot/restore round-trip', () => {
+    const event = makeObservedEvent({
+      eventId: 'evt-p1-1',
+      eventType: 'click',
+      target: { tag: 'A', accessibleName: 'View Details', ariaRole: 'link' },
+    });
+    ledger.append(event);
+
+    const snapshot = ledger.snapshot();
+    const restored = new EvidenceLedger();
+    restored.restore(snapshot);
+
+    const entry = restored.get('evt-p1-1')!;
+    expect(entry.targetTag).toBe('A');
+    expect(entry.targetName).toBe('View Details');
+    expect(entry.targetRole).toBe('link');
+  });
+
+  it('identity fields differ per event (two events, different targets)', () => {
+    ledger.append(makeObservedEvent({
+      eventId: 'evt-p1-1',
+      eventType: 'click',
+      target: { tag: 'BUTTON', accessibleName: 'Save', ariaRole: 'button' },
+    }));
+    ledger.append(makeObservedEvent({
+      eventId: 'evt-p1-2',
+      eventType: 'mousedown',
+      target: { tag: 'INPUT', accessibleName: 'Email', ariaRole: 'textbox' },
+    }));
+
+    const e1 = ledger.get('evt-p1-1')!;
+    const e2 = ledger.get('evt-p1-2')!;
+    expect(e1.targetTag).toBe('BUTTON');
+    expect(e2.targetTag).toBe('INPUT');
+    expect(e1.targetName).toBe('Save');
+    expect(e2.targetName).toBe('Email');
+  });
+
+  it('all 4 discrete types populate identity fields', () => {
+    for (const eventType of ['click', 'contextmenu', 'mousedown', 'keydown']) {
+      ledger.append(makeObservedEvent({
+        eventId: `evt-p1-${eventType}`,
+        eventType: eventType as any,
+        target: { tag: 'SPAN', accessibleName: 'Widget', ariaRole: 'option' },
+      }));
+      const entry = ledger.get(`evt-p1-${eventType}`)!;
+      expect(entry.targetTag).toBe('SPAN');
+      expect(entry.targetName).toBe('Widget');
+      expect(entry.targetRole).toBe('option');
+    }
+  });
 });

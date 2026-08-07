@@ -57,6 +57,24 @@ export interface LedgerEntry {
   claimedBy?: string;
   /** InteractionType of the claiming interaction. */
   claimType?: InteractionType;
+
+  // ── Diagnostic Identity (Phase 1.2) ────────────────────────────────
+  //
+  // These fields are populated at append() time from ObservedEvent.target.
+  // They enable post-mortem debugging ("which element did this event
+  // target?") without requiring the full ElementIdentity. They are NOT
+  // used for classification or disposition decisions — only for
+  // diagnostics and Unclassified interaction enrichment by the
+  // Projection Engine.
+  //
+  // Cost: ~100 bytes per entry. At 100 entries this is ~10KB.
+
+  /** HTML tag name of the target element (e.g. 'BUTTON', 'A', 'INPUT'). */
+  targetTag: string;
+  /** Accessible name of the target element (best-effort, may be ''). */
+  targetName: string;
+  /** ARIA role of the target element, or null if none. */
+  targetRole: string | null;
 }
 
 /** Chrome storage key for the evidence ledger. */
@@ -97,6 +115,9 @@ export class EvidenceLedger {
       eventType: event.eventType,
       timestamp: event.timestamp,
       disposition: 'pending',
+      targetTag: event.target.tag,
+      targetName: event.target.accessibleName,
+      targetRole: event.target.ariaRole,
     });
   }
 
@@ -161,7 +182,7 @@ export class EvidenceLedger {
    * Serialize the ledger for persistence (chrome.storage.local).
    */
   snapshot(): LedgerEntry[] {
-    return this.getEntries();
+    return this.getEntries().map((e) => ({ ...e }));
   }
 
   /**

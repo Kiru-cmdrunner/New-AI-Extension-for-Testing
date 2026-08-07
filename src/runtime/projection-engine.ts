@@ -23,7 +23,9 @@ import type { ComponentInteraction, InteractionType } from '../shared/component-
 
 /**
  * Create an Unclassified interaction from a ledger entry.
- * The entry carries enough metadata to produce a meaningful interaction.
+ * The entry carries diagnostic identity (targetTag, targetName, targetRole)
+ * populated at capture time — the result carries real element identity
+ * instead of placeholder stubs.
  */
 function createUnclassifiedFromLedger(
   entry: LedgerEntry,
@@ -34,12 +36,12 @@ function createUnclassifiedFromLedger(
     interactionId: `int-${interactionCounter.value}`,
     type: 'Unclassified' as InteractionType,
     trigger: {
-      accessibleName: '',
-      ariaRole: null,
+      accessibleName: entry.targetName,
+      ariaRole: entry.targetRole,
       ariaLabel: null,
       ariaLabelledBy: null,
       placeholder: null,
-      tag: 'UNKNOWN',
+      tag: entry.targetTag,
       className: null,
       name: null,
       stableId: null,
@@ -60,12 +62,12 @@ function createUnclassifiedFromLedger(
       captureSeq: entry.captureSeq,
       isTrusted: true,
       target: {
-        accessibleName: '',
-        ariaRole: null,
+        accessibleName: entry.targetName,
+        ariaRole: entry.targetRole,
         ariaLabel: null,
         ariaLabelledBy: null,
         placeholder: null,
-        tag: 'UNKNOWN',
+        tag: entry.targetTag,
         className: null,
         name: null,
         stableId: null,
@@ -116,9 +118,9 @@ function createUnclassifiedFromLedger(
       physicalEventType: entry.eventType,
       recognized: false,
       reason: 'unclaimed-at-projection',
-      targetName: '',
-      targetTag: 'UNKNOWN',
-      targetRole: null,
+      targetName: entry.targetName,
+      targetTag: entry.targetTag,
+      targetRole: entry.targetRole,
     },
   };
 }
