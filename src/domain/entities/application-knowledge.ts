@@ -132,7 +132,7 @@ export interface SuccessIndicator {
  * affected, and what state change resulted. It does NOT carry an actionType enum
  * — consumers derive whatever classification they need from the structural data.
  * This avoids a growing taxonomy (the coupling problem that plagued the legacy
- * recorder's interaction-types.ts).
+ * interaction-types system, deleted in Phase 1.4.4 — see TD-2).
  *
  * Derived — always recomputable from ComponentGrouping.observedTransitionIds +
  * PatternDefinition.expectedLifecycle + enriched component data.

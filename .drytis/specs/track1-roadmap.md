@@ -674,3 +674,38 @@ output is a behavioral change to a frozen system.
 **Severity:** Medium — generated code is syntactically valid but semantically
 incorrect for radio buttons. Does not affect recording, classification, or
 non-radio test generation.
+
+### TD-2: Legacy interaction type registry (deleted Phase 1.4.4)
+
+**Discovered:** Phase 1.4.2 investigation (2026-08-07)
+**Resolved:** Phase 1.4.4 deletion (2026-08-07)
+
+**Problem:** `src/recorder/interaction-types.ts` (810 lines) and its
+dependency `src/recorder/recording-session.ts` (256 lines) were the
+original Phase 1 interaction classification system — a registry-based
+approach where each interaction type was registered via
+`registerInteractionType()` with config objects for display names,
+prompt fragments, and action builders.
+
+**What replaced it:** The Phase 6 **Component Definition system**
+(`src/definitions/*.ts`), a self-contained, additive-extensibility
+architecture where each interaction type is a `ComponentDefinition`
+implementing `detectTrigger`, `handleEvent`, `buildResult`, etc. The
+Component Runtime (`src/runtime/component-runtime.ts`) orchestrates
+definitions through a priority-ordered lifecycle state machine.
+
+The live `RecordingSession` is now a domain entity at
+`src/domain/entities/recording-session.ts` — an immutable provenance
+record with UnderstandingResult, raw events, and test-case associations.
+
+**Why it survived until 1.4.4:** The files were in `src/recorder/`
+(adjacent to live recorder code), not in an obvious legacy location.
+The migration from the registry to Component Definitions happened across
+Phases 2–6, and the old files were never cleaned up.
+
+**Action taken:** Deleted in Phase 1.4.4 (commit after 5f49c80).
+Also deleted `tests/recording-session-phase1.test.ts` (19 tests) and
+`tests/deterministic-recorder-integration.test.ts` (10 tests) — both
+exclusively tested the dead `RecordingSession` class.
+
+**Severity:** Resolved — dead code removed.
