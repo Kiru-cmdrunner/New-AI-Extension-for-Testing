@@ -12,7 +12,7 @@ import { describe, it, expect } from 'vitest';
 import { IRAction, DEFAULT_EXECUTION_PARAMETERS, type IRStep, type ExecutionIRPlan } from '../src/domain/execution-ir/types';
 import type { IRBridgeInput, IRBridgeRecordingContext } from '../src/generation/ir-bridge-input';
 import type { SessionEvent, AIUnderstanding } from '../src/shared/types';
-import type { DetectedInteraction } from '../src/classifier/interaction-types';
+import type { DetectedInteraction } from '../src/shared/bridge-types';
 import type { ApplicationKnowledgeFragment } from '../src/domain/entities/application-knowledge';
 import type { UnderstandingResult } from '../src/domain/entities/understanding-result';
 

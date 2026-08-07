@@ -1,12 +1,21 @@
 /**
- * Interaction Types — Phase 2 Raw Interaction Type Detection
+ * Bridge Types — Temporary Compatibility Bridge
  *
- * Defines every interaction type, its detection tier, and its metadata schema.
- * Each type maps to a detection rule in interaction-detector.ts.
+ * These types were extracted from the deleted src/classifier/interaction-types.ts
+ * during Phase 1.1 (Dead Code Removal). They exist ONLY because the generation
+ * pipeline (ir-bridge.ts) and sidepanel UI (timeline-renderer.ts) have not yet
+ * been unified to use ComponentInteraction directly.
  *
- * Tier 1: Deterministic — detected from element identity + event patterns
- * Tier 2: Defined but detected as Unknown — requires future heuristics
+ * Phase 1.3 (Type Bridge Unification) will eliminate DetectedInteraction,
+ * InteractionType, and InteractionMetadata when the IR Bridge is updated to
+ * accept ComponentInteraction[]. TYPE_DISPLAY will be replaced with a proper
+ * display registry in a future UI track.
+ *
+ * This file has a SCHEDULED DELETION DATE: Phase 1.3.
+ * Do NOT add new consumers. Do NOT extend these types.
  */
+
+import type { ElementIdentity } from './types';
 
 // ── Interaction Type Enum ───────────────────────────────────────────────
 
@@ -130,51 +139,12 @@ export interface DetectedInteraction {
   type: InteractionType;
   eventIds: string[];
   rawEventTypes: string[];
-  target?: import('../shared/types').ElementIdentity;
+  target?: ElementIdentity;
   metadata: InteractionMetadata;
   confidence: number;
   /** Which engine produced this interaction: 'v2' (Evidence Engine) or 'v1-fallback' (V1 detector). */
   engine?: string;
 }
-
-// ── Category → Type Mapping ─────────────────────────────────────────────
-
-export const INTERACTION_CATEGORIES: Record<string, InteractionType[]> = {
-  Navigation: ['PageNavigation', 'Back', 'Forward', 'Refresh'],
-  Mouse: ['Click', 'DoubleClick', 'RightClick', 'Hover', 'DragDrop'],
-  'Text Entry': ['TextEntry'],
-  'Selection Controls': ['NativeDropdown', 'CustomDropdown', 'Autocomplete', 'MultiSelect', 'Checkbox', 'RadioButton', 'ToggleSwitch', 'Slider'],
-  'Date & Time': ['DatePicker', 'TimePicker', 'DateTimePicker'],
-  'File Upload': ['FileUpload', 'DragDropUpload'],
-  'Navigation UI': ['Link', 'Tab', 'Menu', 'Breadcrumb'],
-  Scrolling: ['PageScroll', 'ContainerScroll', 'InfiniteScroll'],
-  Dialogs: ['BrowserAlert', 'Modal', 'Drawer', 'Popover', 'Tooltip'],
-  'Window & Frame': ['NewTab', 'NewWindow', 'Iframe'],
-  Unknown: ['Unknown'],
-};
-
-// ── Tier Classification ─────────────────────────────────────────────────
-
-export const TIER1_TYPES: Set<InteractionType> = new Set([
-  'PageNavigation', 'Back', 'Forward', 'Refresh',
-  'Click', 'DoubleClick', 'RightClick', 'Hover', 'DragDrop',
-  'TextEntry',
-  'NativeDropdown',
-  'Checkbox', 'RadioButton', 'ToggleSwitch', 'Slider',
-  'DatePicker', 'TimePicker', 'DateTimePicker',
-  'FileUpload',
-  'Link', 'Tab', 'Menu', 'Breadcrumb',
-  'PageScroll', 'ContainerScroll',
-  'BrowserAlert',
-  'NewTab', 'NewWindow', 'Iframe',
-]);
-
-export const TIER2_TYPES: Set<InteractionType> = new Set([
-  'CustomDropdown', 'Autocomplete', 'MultiSelect',
-  'InfiniteScroll',
-  'Modal', 'Drawer', 'Popover', 'Tooltip',
-  'DragDropUpload',
-]);
 
 // ── Type → Display Info ─────────────────────────────────────────────────
 

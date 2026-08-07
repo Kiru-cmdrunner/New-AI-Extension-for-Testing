@@ -27,7 +27,7 @@
 import { MissingFieldError } from '../errors/invariant-errors';
 import type { UnderstandingResult } from './understanding-result';
 import type { SessionEvent } from '../../shared/types';
-import type { DetectedInteraction } from '../../classifier/interaction-types';
+import type { DetectedInteraction } from '../../shared/bridge-types';
 
 /** A single recording session and its derived understanding. */
 export interface RecordingSession {

@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { createDetectedInteractionElement } from '../src/sidepanel/timeline-renderer.js';
-import type { DetectedInteraction } from '../src/classifier/interaction-types';
+import type { DetectedInteraction } from '../src/shared/bridge-types';
 import type { ElementIdentity } from '../src/shared/types';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

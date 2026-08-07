@@ -17,8 +17,8 @@ import type {
   NavigationRecordedEvent,
   ElementRecordedEvent,
 } from '../recorder/recorded-event';
-import type { DetectedInteraction } from '../classifier/interaction-types';
-import { TYPE_DISPLAY } from '../classifier/interaction-types';
+import type { DetectedInteraction } from '../shared/bridge-types';
+import { TYPE_DISPLAY } from '../shared/bridge-types';
 
 // ── Identity chips ──────────────────────────────────────────────────────
 

@@ -187,9 +187,9 @@ We **cannot** simply `rm -rf src/classifier/` — it would break compilation. Th
 
 **1.1a — Extract shared types to live code**
 
-Move `DetectedInteraction`, the `InteractionType` union, and `TYPE_DISPLAY` from `src/classifier/interaction-types.ts` into `src/shared/legacy-types.ts`. This is a verbatim copy — no refactoring, no renaming. All live imports are repointed to the new location.
+Move `DetectedInteraction`, the `InteractionType` union, `InteractionMetadata`, and `TYPE_DISPLAY` from `src/classifier/interaction-types.ts` into `src/shared/bridge-types.ts`. This is a verbatim copy — no refactoring, no renaming. All live imports are repointed to the new location.
 
-This is a **temporary extraction**. Phase 1.3 will eliminate `DetectedInteraction` entirely when the IR Bridge is unified to accept `ComponentInteraction[]` directly.
+The filename `bridge-types.ts` signals a temporary compatibility bridge between the old classifier type system and the new ComponentInteraction pipeline. A bridge is inherently temporary — you cross it to get somewhere, you don't live on it. Phase 1.3 (Type Bridge Unification) will demolish this bridge once both sides speak the same type.
 
 **1.1b — Remove dead directories**
 
@@ -234,7 +234,7 @@ Phase 1.0 (baseline snapshot must exist for diff).
 ### Exit Criteria
 - [ ] Dead directories deleted
 - [ ] Dead tests deleted
-- [ ] `DetectedInteraction` and `TYPE_DISPLAY` extracted to `src/shared/legacy-types.ts`
+- [ ] `DetectedInteraction`, `InteractionType`, `InteractionMetadata`, and `TYPE_DISPLAY` extracted to `src/shared/bridge-types.ts`
 - [ ] All remaining tests pass (~3,208, 137 files)
 - [ ] Extension builds
 - [ ] tsc baseline diff: zero new errors in live code
@@ -387,7 +387,7 @@ Replace `DetectedInteraction` with `ComponentInteraction` (or the minimal interf
 
 Delete lines 317–330 (the `interactionsForIR: any[]` mapping). Pass `productionInteractions` directly to `buildIRPlan()`.
 
-**1.3e — Remove `DetectedInteraction` from `src/shared/legacy-types.ts`**
+**1.3e — Remove `DetectedInteraction` from `src/shared/bridge-types.ts`**
 
 Now that nothing uses `DetectedInteraction`, delete it and its temporary extraction file.
 
@@ -423,14 +423,14 @@ Before starting 1.3, generate Playwright code from a fixed set of test interacti
 - [ ] Zero `any[]` casts in `service-worker.ts` for interaction bridging
 - [ ] IR Bridge accepts `ComponentInteraction[]` (or minimal interface)
 - [ ] `DetectedInteraction` type fully removed from live code
-- [ ] `src/shared/legacy-types.ts` deleted (temporary extraction no longer needed)
+- [ ] `src/shared/bridge-types.ts` deleted (temporary bridge no longer needed)
 - [ ] Generated Playwright code is semantically identical (snapshot comparison)
 - [ ] All tests pass
 - [ ] Extension builds
 - [ ] tsc baseline diff: zero new errors in live code (expect significant reduction)
 
 ### Rollback
-`git revert <commit>`. If the IR Bridge change is too invasive, revert to 1.2 state (`DetectedInteraction` in `shared/legacy-types.ts`).
+`git revert <commit>`. If the IR Bridge change is too invasive, revert to 1.2 state (`DetectedInteraction` in `shared/bridge-types.ts`).
 
 ---
 

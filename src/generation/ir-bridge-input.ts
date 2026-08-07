@@ -16,7 +16,7 @@
  */
 
 import type { SessionEvent } from '../shared/types';
-import type { DetectedInteraction } from '../classifier/interaction-types';
+import type { DetectedInteraction } from '../shared/bridge-types';
 import type { UnderstandingResult } from '../domain/entities/understanding-result';
 
 /**

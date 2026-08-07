@@ -23,7 +23,7 @@ import type { IRBridgeInput } from '../src/generation/ir-bridge-input';
 import { IRAction } from '../src/domain/execution-ir/types';
 import { LocatorStrategyType, ValidationType, ValidationComparison } from '../src/domain/enums';
 import type { SessionEvent, ElementIdentity } from '../src/shared/types';
-import type { DetectedInteraction, InteractionType } from '../src/classifier/interaction-types';
+import type { DetectedInteraction, InteractionType } from '../src/shared/bridge-types';
 import type { ApplicationKnowledgeFragment } from '../src/domain/entities/application-knowledge';
 import type { UnderstandingResult } from '../src/domain/entities/understanding-result';
 

@@ -36,7 +36,7 @@ import {
   ValidationSeverity,
 } from '../domain/enums';
 import type { SessionEvent, ElementIdentity, AIUnderstanding } from '../shared/types';
-import type { DetectedInteraction, InteractionType } from '../classifier/interaction-types';
+import type { DetectedInteraction, InteractionType } from '../shared/bridge-types';
 import type {
   ApplicationKnowledgeFragment,
   InteractionContract,

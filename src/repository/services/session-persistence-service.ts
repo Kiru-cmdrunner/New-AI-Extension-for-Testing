@@ -24,7 +24,7 @@
 import type { UnitOfWorkFactory, UnitOfWork } from '../v2/interfaces/unit-of-work';
 import type { UnderstandingResult } from '../../domain/entities/understanding-result';
 import type { SessionEvent } from '../../shared/types';
-import type { DetectedInteraction } from '../../classifier/interaction-types';
+import type { DetectedInteraction } from '../../shared/bridge-types';
 import type { ExecutionIRPlan } from '../../domain/execution-ir/types';
 import type { CapabilityCandidate } from '../../domain/entities/capability-candidate';
 import {
