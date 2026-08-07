@@ -1,8 +1,14 @@
 # Phase 1.4 Implementation Plan — Type Safety Gate
 
 **Date:** 2026-08-07
-**Baseline:** Commit `3e327b1` (after Phase 1.3 + TD-1)
+**Baseline:** Commit `6beb1a8` (after Phase 1.3 + TD-1 + plan approved with refinements)
 **Goal:** Reduce all 400 tsc errors to zero. Establish `tsc --noEmit` as a permanent CI gate. No `@ts-ignore`, no `as any`, no type suppressions.
+
+---
+
+## Governing Invariant
+
+**The objective of Phase 1.4 is not merely to achieve zero TypeScript errors. The objective is for the type system to faithfully represent the runtime architecture. If reaching zero errors requires weakening types or changing runtime behavior, stop and escalate rather than forcing the compiler to pass.**
 
 ---
 
@@ -108,6 +114,34 @@ These are real bugs — code that accesses properties that don't exist or misuse
 
 Test fixtures use incomplete or stale object literals. The runtime code is correct — the tests just don't satisfy TypeScript's structural checks.
 
+#### How shared helpers eliminate errors without weakening tests
+
+**The problem:** Each test file constructs `ElementIdentity`, `ObservedEvent`, and `DomContext` by hand, writing only the 3-4 fields the test cares about. TypeScript requires all 15-20+ fields. Currently the tests "pass" because esbuild strips types — but they would silently produce `undefined` at runtime for any field they omitted, which could mask real regressions.
+
+**The principle:** A test's *intent* lives in what it *asserts*, not in the boilerplate fields of its input fixtures. A test that verifies "Click on a checkbox toggles to checked" cares about `type: 'Checkbox'`, `trigger.accessibleName: 'Accept Terms'`, and `metadata.checked: true`. It does NOT care about `trigger.cssSelector`, `trigger.inIframe`, or `trigger.dataQa` — yet their absence is a type error.
+
+**The approach:** Shared helpers provide *complete, type-correct objects with sensible defaults*. Tests override only the fields relevant to their assertion:
+
+```typescript
+// Before (3 errors: missing 12 fields):
+const identity = { accessibleName: 'Email', tag: 'INPUT', ariaRole: 'textbox' };
+
+// After (0 errors — helper provides defaults, test overrides what matters):
+const identity = makeElementIdentity({ accessibleName: 'Email', tag: 'INPUT', ariaRole: 'textbox' });
+```
+
+**What changes:** Fixture construction. The test's arrange-act-assert structure stays identical. Every assertion stays identical. The helper is a pure data factory — no logic, no behavior, no side effects.
+
+**What does NOT change:**
+- What each test verifies (the `expect()` calls)
+- The input values the test cares about (passed as overrides)
+- The test's name, describe block, or structure
+- The test's pass/fail outcome
+
+**Why defaults are safe:** The helper fills non-assertion fields with inert values (`null`, `false`, `''`, `'elem-default'`). These values do not affect test outcomes because the tests don't assert on them. If a test DID assert on a defaulted field, it would already override that field — and the override takes precedence.
+
+**Stale fixtures (TS2353):** These use field names that no longer exist on the type (`elementKey`, `cssPath`, `stepId`, `events`, `id`). These are genuinely wrong — the test is constructing an object that doesn't match any real type. The fix is to remove the stale field or rename it to the current name. This *strengthens* the test by ensuring its fixtures match reality.
+
 #### 2a. Incomplete ElementIdentity fixtures (95 errors, TS2740)
 
 **Files:** `tests/capabilities/*.test.ts`, `tests/enrichment.test.ts`, etc.
@@ -207,19 +241,34 @@ Pure dead-code cleanup. 36 in source, 89 in tests.
 
 ---
 
-### Category 5 — Deferred Architectural Debt (1 item)
+### Category 5 — Investigation Gate: `recorder/interaction-types.ts` (7 errors)
 
-#### `recorder/interaction-types.ts` — legacy interaction model (7 errors)
+#### Investigation findings (conclusive — pending approval)
 
-This file contains 7 calls to `session.addAction()` which doesn't exist on the current `RecordingSession` entity. Investigation needed:
+**Verdict: DEAD CODE. Should be deleted.**
 
-- **If live:** The file is part of the recorder's event processing. The old `RecordingSession` had `addAction()`; the new entity (from `src/domain/entities/recording-session.ts`) doesn't. This is a genuine API gap that needs either the method added or the call sites updated.
-- **If dead:** The file may be legacy code from before the Phase 6 component-based pipeline replaced the Phase 1-5 interaction-type system. If so, it should be deleted (Track 1.1 missed it because it's in `src/recorder/`, not in the deleted `src/classifier/`).
+**Evidence:**
 
-**Investigation approach:** Check if `interaction-types.ts` is imported by any live code in the 6-layer pipeline. If `event-tap.ts` or `observation-coordinator.ts` import from it, it's live. If only tests import it, it's dead.
+1. **Zero live imports.** No file in `src/` imports from `src/recorder/interaction-types.ts`. The only reference is a comment in `src/domain/entities/application-knowledge.ts:135` that *mentions* the file by name in a docstring — not an import.
 
-**If live:** Add `addAction` method to the session type used here, or update the calls to use the current API.
-**If dead:** Delete the file and its tests. Record as TD-2.
+2. **Zero test imports.** No test file imports from `interaction-types.ts` or references any of its exported symbols (`registerInteractionType`, `getInteractionType`, `getRegisteredTypes`, `InteractionTypeConfig`, `ActionElementInfo`, `PlainEnglishContext`, `ActionExtras`, `BaseActionEvent`, `SHARED_JSON_INSTRUCTION`, `buildPromptHeader`, `resolveDisplayName`).
+
+3. **Zero build references.** Not in `vite.config.ts`, not in `manifest.json`, not in any HTML file, not in the service worker's dynamic imports.
+
+4. **Its dependency is also dead.** `interaction-types.ts` imports `RecordingSession` from `src/recorder/recording-session.ts` (the *class*-based Phase 1 session). That file is imported by zero live source files — only by two test files (`deterministic-recorder-integration.test.ts`, `recording-session-phase1.test.ts`). The live pipeline uses `src/domain/entities/recording-session.ts` (the *entity* with `createRecordingSession()`), which is a completely different file with different exports.
+
+5. **Architectural context.** `interaction-types.ts` (810 lines) was the Phase 1-3 interaction type registry — a plugin system where each interaction type registered a config with `toPlainEnglish()`, `buildPromptHeader()`, etc. This was superseded by the Phase 6 Component Definition system (`src/definitions/*.ts`) which replaced the registry pattern with the `ComponentDefinition` interface. The file was missed during Phase 1.1 dead code removal because it lives in `src/recorder/` (not `src/classifier/`).
+
+6. **Its 7 errors are self-contained.** All 7 are `session.addAction()` calls inside the file's own functions. No external code triggers these calls.
+
+**Proposed action (Milestone 1.4.4):**
+- Delete `src/recorder/interaction-types.ts` (810 lines)
+- Investigate whether `src/recorder/recording-session.ts` (256 lines, the Phase 1 class) is also dead — if its only consumers are tests of dead code, delete it and those tests too
+- Record as TD-2 in the Technical Debt Register
+
+**Risk:** Zero. Nothing imports these files.
+
+**Awaiting approval before deletion.**
 
 ---
 
@@ -258,13 +307,19 @@ This file contains 7 calls to `session.addAction()` which doesn't exist on the c
 
 **Validation:** tsc diff + full test suite.
 
-### Milestone 1.4.4 — Investigate `interaction-types.ts` (7 errors resolved)
+### Milestone 1.4.4 — Delete dead code: `interaction-types.ts` + dependents (7+ errors resolved)
 
-**Task:** Determine if `src/recorder/interaction-types.ts` is live or dead.
-- If dead: delete it and its tests.
-- If live: add `addAction` to the appropriate session type or update call sites.
+**Investigation result (approved separately before execution):**
 
-**Validation:** tsc diff + full test suite + grep for import references.
+`src/recorder/interaction-types.ts` (810 lines) is conclusively dead code — Phase 1-3 interaction type registry superseded by the Phase 6 Component Definition system. Zero live imports, zero test imports, zero build references. Its dependency `src/recorder/recording-session.ts` (256 lines, Phase 1 class) is also dead — imported by zero live source files.
+
+**Task:**
+- Delete `src/recorder/interaction-types.ts`
+- Delete `src/recorder/recording-session.ts` (if confirmed dead after checking its test consumers)
+- Delete tests that exclusively test these files (`deterministic-recorder-integration.test.ts`, `recording-session-phase1.test.ts`)
+- Record as TD-2 in the Technical Debt Register
+
+**Validation:** tsc diff + full test suite + confirm zero new import errors elsewhere.
 
 ### Milestone 1.4.5 — Remove all unused source imports (36 errors eliminated)
 
