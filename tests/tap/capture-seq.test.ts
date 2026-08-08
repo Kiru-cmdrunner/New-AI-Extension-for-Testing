@@ -57,7 +57,6 @@ describe('captureSeq — Milestone 1', () => {
   it('two sequential events have monotonically increasing captureSeq', () => {
     document.body.innerHTML = '<div id="a">A</div><div id="b">B</div>';
     const a = document.getElementById('a')!;
-    const b = document.getElementById('b')!;
 
     tapHandle = createEventTap({
       onEvent: (e) => capturedEvents.push(e),

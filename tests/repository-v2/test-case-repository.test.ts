@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import 'fake-indexeddb/auto';
 import { DexieUnitOfWorkFactory } from '../../src/repository/v2/dexie/dexie-unit-of-work-factory';
-import { TestCaseStatus, TestCasePriority, StepAction } from '../../src/domain/enums';
+import { TestCaseStatus, TestCasePriority, StepAction, ValidationType, ValidationComparison, ValidationSeverity } from '../../src/domain/enums';
 import { InvalidStatusTransitionError } from '../../src/domain/errors/invariant-errors';
 
 const SAMPLE_STEPS = [
@@ -420,7 +420,7 @@ describe('TestCaseRepository (Dexie)', () => {
 
     it('finds versions referencing an element via validations', async () => {
       const uow = factory.create();
-      const result = await uow.execute(async (repos) => {
+      await uow.execute(async (repos) => {
         return repos.testCases.create({
           projectId: 'p1', title: 'TC1', createdBy: 'u1',
           steps: [
@@ -428,7 +428,7 @@ describe('TestCaseRepository (Dexie)', () => {
               order: 0, action: StepAction.VERIFY, description: 'Verify',
               elementId: 'elm-target',
               validations: [
-                { type: 'visibility', comparison: 'isTrue', severity: 'hard' },
+                { type: ValidationType.VISIBILITY, comparison: ValidationComparison.IS_TRUE, severity: ValidationSeverity.HARD },
               ],
             },
           ],

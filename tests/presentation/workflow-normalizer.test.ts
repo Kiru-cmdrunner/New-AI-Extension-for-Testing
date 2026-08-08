@@ -75,7 +75,6 @@ function resetCounter() {
 describe('Workflow Normalizer', () => {
 
   describe('basic subsumption', () => {
-    beforeEach: undefined,
 
     it('subsumes Unclassified(mousedown) when Click follows on same element', () => {
       resetCounter();

@@ -8,7 +8,7 @@
  * Architecture: SPA navigation detection in event-tap.ts
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createEventTap } from '../src/tap/event-tap';
 import type { ObservedEvent } from '../src/shared/component-types';
 
@@ -36,7 +36,6 @@ describe('SPA Navigation Detection', () => {
   });
 
   it('emits navigation event on history.pushState', () => {
-    const beforeCount = events.length;
     history.pushState({}, '', '/new-route');
     const navEvents = events.filter((e) => e.eventType === 'navigation');
     expect(navEvents.length).toBeGreaterThanOrEqual(1);
@@ -52,7 +51,6 @@ describe('SPA Navigation Detection', () => {
 
   it('emits navigation event on popstate', () => {
     // Push a state first so there's history to go back to
-    const base = location.href;
     history.pushState({}, '', '/page-a');
     events = [];
 
@@ -74,7 +72,6 @@ describe('SPA Navigation Detection', () => {
   });
 
   it('emits navigation event on hashchange', () => {
-    const base = location.href;
     location.hash = '#section-1';
 
     return new Promise<void>((resolve) => {

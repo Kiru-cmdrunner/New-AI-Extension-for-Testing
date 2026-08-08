@@ -20,7 +20,7 @@ import { createRuntime, type ComponentRuntime } from '../../src/runtime/componen
 import { EvidenceLedger } from '../../src/runtime/evidence-ledger';
 import type {
   ComponentDefinition,
-  ObservedEvent,
+
   ComponentInteraction,
   RuntimeConfig,
 } from '../../src/shared/component-types';
@@ -113,7 +113,7 @@ function makeTextEntryDef(): ComponentDefinition {
     isInScope(event, ctx) {
       return event.target.stableId === ctx.trigger.stableId;
     },
-    handleEvent(event, ctx) {
+    handleEvent(event, _ctx) {
       if (event.eventType === 'blur') {
         return { endState: 'completed' as const };
       }

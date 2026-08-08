@@ -18,61 +18,29 @@ import { colorInputDefinition } from '../../src/definitions/color-input';
 import { isProductionInteraction, toIRAction } from '../../src/presentation/output-adapter';
 import type { ObservedEvent, ComponentInteraction, ComponentContext } from '../../src/shared/component-types';
 import { ALL_DEFINITIONS } from '../../src/definitions';
+import { makeElementIdentity, makeObservedEvent } from '../helpers/fixtures';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
 function makeFocusEvent(
   overrides: Partial<ObservedEvent> = {},
 ): ObservedEvent {
-  return {
+  return makeObservedEvent({
     eventId: 'evt-1',
     eventType: 'focus',
-    timestamp: 1000,
-    isTrusted: true,
-    target: {
+    target: makeElementIdentity({
       tag: 'INPUT',
-      inputType: 'color',
       cssSelector: 'input[type="color"]',
       stableId: 'color-1',
-      ariaRole: null,
       accessibleName: 'Favorite Color',
       ariaLabel: 'Favorite Color',
-      placeholder: null,
-      textContent: null,
       className: '',
-      href: null,
-      shadowDom: false,
-    },
-    domContext: {
-      inputType: 'color',
-      ariaExpanded: null,
-      ariaHasPopup: null,
-      isContentEditable: false,
-      disabled: false,
-      readOnly: false,
-      required: false,
-      ancestorRoles: [],
-      ancestorClasses: [],
-      tabIndex: null,
-    },
+    }),
+    domContext: { inputType: 'color' },
     valueBefore: '#ff0000',
     valueAfter: '#ff0000',
-    checkedBefore: null,
-    checkedAfter: null,
-    clientX: 0,
-    clientY: 0,
-    key: null,
-    code: null,
-    shiftKey: false,
-    ctrlKey: false,
-    altKey: false,
-    metaKey: false,
-    scrollDeltaX: 0,
-    scrollDeltaY: 0,
-    pageUrl: 'https://example.com',
-    pageTitle: 'Test Page',
     ...overrides,
-  };
+  });
 }
 
 function makeInputEvent(
@@ -108,19 +76,15 @@ function makeContext(
   data: Record<string, unknown> = {},
 ): ComponentContext {
   return {
-    trigger: {
-      type: 'ColorInput',
-      stableId: trigger.target.stableId,
-      cssSelector: trigger.target.cssSelector,
-      accessibleName: trigger.target.accessibleName,
-      ariaLabel: trigger.target.ariaLabel,
-      placeholder: trigger.target.placeholder,
-      tag: trigger.target.tag,
-      ariaRole: trigger.target.ariaRole,
-    },
+    type: 'ColorInput',
+    state: 'active',
+    lifecycleId: 'lc-001',
+    trigger: trigger.target,
     triggerEvent: trigger,
     memberEvents: [],
-    allEvents: [trigger],
+    scopeKeys: new Set([trigger.target.elementId]),
+    startTime: trigger.timestamp,
+    endTime: 0,
     data,
   };
 }

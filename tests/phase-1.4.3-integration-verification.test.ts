@@ -19,6 +19,7 @@ import type { Element } from '../src/domain/entities/element';
 import { LocatorStrategyType } from '../src/domain/enums';
 import { checkStaleness } from '../src/domain/execution-ir/staleness';
 import type { ExecutionIRArtifact } from '../src/domain/execution-ir/types';
+import { IRAction, DEFAULT_EXECUTION_PARAMETERS } from '../src/domain/execution-ir/types';
 import { createExecutionRun } from '../src/domain/entities/execution-run';
 import { healElementAndPersist } from '../src/repository/services/healing-service';
 import type { RankedLocator } from '../src/domain/locator-ranking';
@@ -29,26 +30,27 @@ import type { IRExecutionResult } from '../src/domain/execution-ir/adapters/ir-e
 /** Create a minimal ExecutionIRPlan for staleness tests. */
 function makeIRPlan(elementIds: string[]): ExecutionIRArtifact['plan'] {
   return {
-    irVersion: '1.0',
-    irSchemaVersion: 1,
     testCaseId: 'tc-test-1',
     testCaseVersionId: 'tcv-test-1',
+    testCaseVersionNumber: 1,
+    title: 'Test Plan',
+    tags: [],
     environment: {
       baseUrl: 'https://example.com',
-      browser: 'chromium',
+      browser: 'chrome',
       viewport: { width: 1280, height: 720 },
     },
     steps: elementIds.map((id, i) => ({
-      stepId: `step-${i + 1}`,
-      order: i + 1,
+      id: `step-${i + 1}`,
+      order: i,
+      action: IRAction.CLICK,
       description: `Step ${i + 1}`,
-      action: {
-        type: 'CLICK' as const,
-        target: { kind: 'element' as const, elementId: id, elementName: `Element ${i + 1}` },
-      },
+      target: { kind: 'element' as const, elementId: id, elementName: `Element ${i + 1}`, pageOrComponent: 'TestPage', resolvedLocators: [{ type: LocatorStrategyType.CSS, value: `#${id}`, priority: 1, confidence: 0.9 }] },
       assertions: [],
+      executionParameters: { ...DEFAULT_EXECUTION_PARAMETERS },
+      input: null,
     })),
-  } as ExecutionIRArtifact['plan'];
+  };
 }
 
 /** Create a minimal IRExecutionResult for ExecutionRun tests. */
@@ -61,13 +63,12 @@ function makeExecutionResult(status: 'passed' | 'failed' = 'passed'): IRExecutio
     stepResults: [
       {
         stepId: 'step-1',
-        order: 1,
         status: status === 'passed' ? 'passed' : 'failed',
         durationMs: 1000,
         assertionResults: [],
       },
     ],
-  } as IRExecutionResult;
+  };
 }
 
 // ── Shared setup ────────────────────────────────────────────────────
@@ -130,7 +131,7 @@ describe('Phase 1.4.3 — UnitOfWork call-site integration verification', () => 
 
     it('detects staleness when an Element was updated after IR generation', async () => {
       // ── Setup ──
-      const { elementId, elementUpdatedAt } = await factory.create().execute(async (repos) => {
+      const { elementId } = await factory.create().execute(async (repos) => {
         const project = await repos.projects.create({
           name: 'Test Project',
           createdBy: 'test',

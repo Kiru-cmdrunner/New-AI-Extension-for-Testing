@@ -182,7 +182,7 @@ describe('CSS :hover Mega-Menu Detection', () => {
       `;
 
       const link = document.getElementById('services-link')!;
-      const rules = [
+      const rules: Array<{ selector: string; properties: Record<string, string> }> = [
         { selector: '.nav-item:hover .mega-menu', properties: { display: 'block' } },
         { selector: '.mega-menu', properties: { display: 'none', position: 'absolute' } },
       ];
@@ -431,7 +431,7 @@ describe('CSS :hover Mega-Menu Detection', () => {
     it('detects when one of several :hover rules matches', () => {
       container.innerHTML = `<div class="tab" id="tab">Tab 1</div>`;
       const tab = document.getElementById('tab')!;
-      const rules = [
+      const rules: Array<{ selector: string; properties: Record<string, string> }> = [
         { selector: '.other:hover', properties: { display: 'block' } },
         { selector: '.unrelated:hover', properties: { opacity: '1' } },
         { selector: '.tab:hover .tab-content', properties: { display: 'block' } },

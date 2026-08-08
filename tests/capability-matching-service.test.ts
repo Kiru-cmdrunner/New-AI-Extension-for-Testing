@@ -14,7 +14,6 @@ import {
   matchCapability,
   candidateToCreateInput,
   candidateToEnrichInput,
-  type CapabilityMatchScore,
 } from '../src/repository/services/capability-matching-service';
 import type { CapabilityCandidate } from '../src/domain/entities/capability-candidate';
 import type { Capability } from '../src/domain/entities/capability';

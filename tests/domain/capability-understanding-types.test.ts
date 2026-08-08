@@ -267,7 +267,7 @@ describe('UnderstandingResult type', () => {
     };
 
     expect(result.sessionId).toBe('session-001');
-    expect(result.fragment.elements).toEqual([]);
+    expect(result.fragment!.elements).toEqual([]);
     expect(result.capability?.name).toBe('Create Customer');
   });
 

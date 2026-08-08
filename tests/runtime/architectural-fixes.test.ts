@@ -11,8 +11,8 @@
  * Note: Fix 5 is tested in event-tap tests; Fix 1-4 tested here against the runtime.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { createRuntime, type ComponentRuntime } from '../../src/runtime/component-runtime';
+import { describe, it, expect } from 'vitest';
+import { createRuntime } from '../../src/runtime/component-runtime';
 import { EvidenceLedger } from '../../src/runtime/evidence-ledger';
 import { projectInteractions } from '../../src/runtime/projection-engine';
 import type {
@@ -294,7 +294,7 @@ describe('Fix 2: Scroll gesture coalescing', () => {
 
   it('flush completes scroll as completed (not interrupted)', () => {
     
-    const { runtime, emitted } = setup([scrollDefinition]);
+    const { runtime } = setup([scrollDefinition]);
 
     const baseTime = Date.now();
 

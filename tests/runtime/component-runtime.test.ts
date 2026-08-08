@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createRuntime, type ComponentRuntime } from '../../src/runtime/component-runtime';
 import type {
   ComponentDefinition,
-  ObservedEvent,
+  BrowserEventType,
   ComponentInteraction,
   RuntimeConfig,
 } from '../../src/shared/component-types';
@@ -30,7 +30,7 @@ function makeImmediateDef(
   return {
     type,
     priority,
-    triggerEventTypes: new Set(triggerTypes),
+    triggerEventTypes: new Set(triggerTypes) as Set<BrowserEventType>,
     detectTrigger() {
       return { type } as any;
     },

@@ -7,8 +7,8 @@
  * Spec: .drytis/specs/evidence-based-hover.md
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { createRuntime, type ComponentRuntime } from '../../src/runtime/component-runtime';
+import { describe, it, expect } from 'vitest';
+import { createRuntime } from '../../src/runtime/component-runtime';
 import { ALL_DEFINITIONS } from '../../src/definitions';
 import { hoverDefinition } from '../../src/definitions/hover';
 import { makeObservedEvent } from '../helpers/make-event';
@@ -19,7 +19,7 @@ import type {
   ElementIdentity,
   DomContext,
   ComponentContext,
-  ComponentCompletion,
+
 } from '../../src/shared/component-types';
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -94,6 +94,7 @@ function makeComponentContext(
   return {
     type: type as any,
     state: 'active',
+    lifecycleId: 'lc-001',
     trigger: trigger.target,
     triggerEvent: trigger,
     memberEvents: [trigger],

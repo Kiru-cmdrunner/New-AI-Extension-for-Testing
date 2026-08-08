@@ -423,7 +423,7 @@ describe('Capture Guarantee v2', () => {
         } as DomContext,
       });
 
-      const openResult = runtime.process(openEvent);
+      runtime.process(openEvent);
       expect(runtime.activeCount).toBe(1); // dropdown lifecycle active
 
       // 2. Click an option — role=option, ancestorRoles includes 'listbox'
@@ -844,7 +844,7 @@ describe('Capture Guarantee v2', () => {
         shouldCancelOnOutside() {
           return false;
         },
-        buildResult(ctx) {
+        buildResult(_ctx) {
           return { metadata: { targetName: 'scroll', hasDelta: true } };
         },
       };

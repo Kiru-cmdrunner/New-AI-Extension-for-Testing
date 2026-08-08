@@ -32,6 +32,8 @@ import type { CapabilityRule } from '../../src/capabilities/capability-rule';
 import type { ExtractedEvidence } from '../../src/capabilities/evidence-extractor';
 import type { ComponentInteraction, InteractionType } from '../../src/shared/component-types';
 import type { SemanticEffect } from '../../src/semantics/effect-types';
+import type { DeepPartial } from '../helpers/deep-partial';
+import { deepMerge } from '../helpers/deep-partial';
 
 // ── Test Helpers ──────────────────────────────────────────────────────
 
@@ -39,9 +41,9 @@ import type { SemanticEffect } from '../../src/semantics/effect-types';
  * Build a minimal ComponentInteraction for testing.
  */
 function makeInteraction(
-  overrides: Partial<ComponentInteraction> = {},
+  overrides: DeepPartial<ComponentInteraction> = {},
 ): ComponentInteraction {
-  return {
+  return deepMerge({
     interactionId: 'int-test-001',
     type: 'Click',
     trigger: {
@@ -68,6 +70,7 @@ function makeInteraction(
       eventId: 'evt-test-001',
       eventType: 'click',
       timestamp: 1000,
+      captureSeq: 1,
       isTrusted: true,
       target: {
         elementId: 'elem-0001',
@@ -123,8 +126,7 @@ function makeInteraction(
     endTime: 2000,
     endState: 'completed',
     metadata: {},
-    ...overrides,
-  };
+  }, overrides);
 }
 
 /**

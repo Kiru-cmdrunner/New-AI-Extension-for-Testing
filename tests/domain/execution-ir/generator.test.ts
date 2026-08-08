@@ -25,12 +25,10 @@ import {
 } from '../../../src/domain/enums';
 import {
   createTestCase,
-  createStep,
-  createValidation,
+
+
 } from '../../../src/domain/entities/approved-test-case';
-import { createElement } from '../../../src/domain/entities/element';
 import type { Element } from '../../../src/domain/entities/element';
-import type { ExecutionIRPlan, ExecutionIRArtifact } from '../../../src/domain/execution-ir/types';
 import type { IREnvironment } from '../../../src/domain/execution-ir/types';
 
 // ── Test Helpers ──────────────────────────────────────────

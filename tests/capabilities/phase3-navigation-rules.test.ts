@@ -15,6 +15,8 @@ import { CapabilityEngine } from '../../src/capabilities/capability-engine';
 import type { ExtractedEvidence } from '../../src/capabilities/evidence-extractor';
 import type { SemanticEffect } from '../../src/semantics/effect-types';
 import type { ComponentInteraction, InteractionType } from '../../src/shared/component-types';
+import type { DeepPartial } from '../helpers/deep-partial';
+import { deepMerge } from '../helpers/deep-partial';
 import { ToggleControlRule } from '../../src/capabilities/rules/toggle-control';
 import { UploadFileRule } from '../../src/capabilities/rules/upload-file';
 
@@ -56,6 +58,7 @@ function makeEvidence(overrides: {
       href: null,
       isCheckboxLike: overrides.isCheckboxLike ?? false,
       isSliderLike: false,
+      userAdjusted: false,
       isSubmitType: false,
       isFileInput: overrides.isFileInput ?? false,
       ancestorRoles: overrides.ancestorRoles ?? [],
@@ -108,8 +111,8 @@ function makeEffect(category: string, confidenceBasis = 'direct-property'): Sema
   };
 }
 
-function makeInteraction(overrides: Partial<ComponentInteraction> = {}): ComponentInteraction {
-  return {
+function makeInteraction(overrides: DeepPartial<ComponentInteraction> = {}): ComponentInteraction {
+  return deepMerge({
     interactionId: 'int-test-001',
     type: 'Click',
     trigger: {
@@ -136,6 +139,7 @@ function makeInteraction(overrides: Partial<ComponentInteraction> = {}): Compone
       eventId: 'evt-001',
       eventType: 'click',
       timestamp: 1000,
+      captureSeq: 1,
       isTrusted: true,
       target: {
         elementId: 'elem-001',
@@ -191,8 +195,7 @@ function makeInteraction(overrides: Partial<ComponentInteraction> = {}): Compone
     endTime: 2000,
     endState: 'completed',
     metadata: {},
-    ...overrides,
-  };
+  }, overrides);
 }
 
 // ────────────────────────────────────────────────────────────────────────

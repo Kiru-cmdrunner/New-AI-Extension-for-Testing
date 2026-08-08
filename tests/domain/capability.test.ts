@@ -17,7 +17,6 @@ import { describe, it, expect } from 'vitest';
 import {
   createCapability,
   enrichCapability,
-  type Capability,
   type CapabilityInput,
   type CapabilityValidationRule,
   type CapabilityOutcome,

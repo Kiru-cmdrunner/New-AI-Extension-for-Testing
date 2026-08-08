@@ -22,8 +22,8 @@ import {
   executeToggle,
   executeHover,
   executeWait,
-  type ActionExecutionResult,
 } from '../src/execution/action-executor';
+import type { ActionType } from '../src/execution/action-executor';
 
 // ── Tests ───────────────────────────────────────────────────
 
@@ -204,55 +204,55 @@ describe('Action Executor', () => {
   });
 
   describe('executeAction (dispatcher)', () => {
-    it('returns error for missing element on click', () => {
-      const result = executeAction('click', null, null);
+    it('returns error for missing element on click', async () => {
+      const result = await executeAction('click', null, null);
       expect(result.success).toBe(false);
       expect(result.error?.type).toBe('MissingElement');
     });
 
-    it('returns error for missing element on fill', () => {
-      const result = executeAction('fill', null, 'value');
+    it('returns error for missing element on fill', async () => {
+      const result = await executeAction('fill', null, 'value');
       expect(result.success).toBe(false);
       expect(result.error?.type).toBe('MissingElement');
     });
 
-    it('returns success for verify action (no element needed)', () => {
-      const result = executeAction('verify', null, null);
+    it('returns success for verify action (no element needed)', async () => {
+      const result = await executeAction('verify', null, null);
       expect(result.success).toBe(true);
     });
 
-    it('returns success for navigate action (handled elsewhere)', () => {
-      const result = executeAction('navigate', null, 'https://example.com');
+    it('returns success for navigate action (handled elsewhere)', async () => {
+      const result = await executeAction('navigate', null, 'https://example.com');
       expect(result.success).toBe(true);
     });
 
-    it('returns success for waitForElement (handled by resolver)', () => {
-      const result = executeAction('waitForElement', null, null);
+    it('returns success for waitForElement (handled by resolver)', async () => {
+      const result = await executeAction('waitForElement', null, null);
       expect(result.success).toBe(true);
     });
 
-    it('returns error for unknown action', () => {
-      const result = executeAction('unknownAction', null, null);
+    it('returns error for unknown action', async () => {
+      const result = await executeAction('unknownAction' as ActionType, null, null);
       expect(result.success).toBe(false);
       expect(result.error?.type).toBe('UnknownAction');
     });
 
-    it('converts string "true" to boolean for toggle', () => {
+    it('converts string "true" to boolean for toggle', async () => {
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       document.body.appendChild(checkbox);
 
-      const result = executeAction('toggle', checkbox, 'true');
+      const result = await executeAction('toggle', checkbox, 'true');
       expect(result.success).toBe(true);
       expect(checkbox.checked).toBe(true);
     });
 
-    it('fills with string representation of input', () => {
+    it('fills with string representation of input', async () => {
       const input = document.createElement('input');
       input.type = 'text';
       document.body.appendChild(input);
 
-      const result = executeAction('fill', input, 12345);
+      const result = await executeAction('fill', input, 12345);
       expect(result.success).toBe(true);
       expect(input.value).toBe('12345');
     });

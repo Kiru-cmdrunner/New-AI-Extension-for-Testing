@@ -14,7 +14,7 @@ import type {
   ElementStateSnapshot,
   MutationRecord2,
 } from '../../src/shared/observation-types';
-import type { SemanticEffect, EffectCategory, Confidence } from '../../src/semantics/effect-types';
+import type { SemanticEffect } from '../../src/semantics/effect-types';
 
 // ── Fixtures ──────────────────────────────────────────────────────────
 
@@ -75,9 +75,9 @@ function makeSemanticEffect(overrides: Partial<SemanticEffect> = {}): SemanticEf
     category: 'state-toggle',
     description: 'Element checked state changed',
     confidence: 'high',
-    confidenceBasis: 'Direct aria-checked property delta observed',
-    affectedTarget: null,
-    evidenceRef: 'evt-001',
+    confidenceBasis: 'direct-property',
+    affectedTarget: { role: null, label: null, cssPath: '#target' },
+    evidenceRef: { windowId: 'obs-001', sourceEventId: 'evt-001' },
     ...overrides,
   };
 }
@@ -787,8 +787,8 @@ describe('Broadcast Payload Merge — Immediate Update (Sub-phase 3)', () => {
       behavioralObservations: [
         makeResult({
           sourceEventId: 'evt-001',
-          beforeSnapshot: makeSnapshot({ ariaChecked: 'false' }),
-          finalSnapshot: makeSnapshot({ ariaChecked: 'true' }),
+          beforeSnapshot: makeSnapshot({ ariaChecked: false }),
+          finalSnapshot: makeSnapshot({ ariaChecked: true }),
           semanticEffects: [
             makeSemanticEffect({
               category: 'state-toggle',

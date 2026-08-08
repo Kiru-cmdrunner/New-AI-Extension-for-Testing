@@ -15,7 +15,7 @@ import { ToggleControlRule } from '../../src/capabilities/rules/toggle-control';
 import { PaginateRule } from '../../src/capabilities/rules/paginate';
 import { CapabilityEngine } from '../../src/capabilities/capability-engine';
 import type { ExtractedEvidence } from '../../src/capabilities/evidence-extractor';
-import type { SemanticEffect } from '../../src/semantics/effect-types';
+
 import type { InteractionType } from '../../src/shared/component-types';
 import { makeInteraction } from './phase4-helpers';
 
@@ -51,6 +51,7 @@ function makeEvidence(overrides: {
       href: null,
       isCheckboxLike: overrides.isCheckboxLike ?? false,
       isSliderLike: false,
+      userAdjusted: false,
       isSubmitType: false,
       isFileInput: false,
       ancestorRoles: overrides.ancestorRoles ?? [],

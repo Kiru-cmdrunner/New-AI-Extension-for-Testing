@@ -74,6 +74,7 @@ function makeObservedEvent(overrides: Partial<ObservedEvent> = {}): ObservedEven
     eventId: 'evt-page1-0001',
     eventType: 'click',
     timestamp: Date.now(),
+    captureSeq: 1,
     isTrusted: true,
     target: makeIdentity(),
     domContext: makeDomContext(),
@@ -188,6 +189,7 @@ describe('ComponentContext', () => {
     const ctx: ComponentContext = {
       type: 'Click',
       state: 'triggering',
+      lifecycleId: 'lc-001',
       trigger: triggerEvent.target,
       triggerEvent,
       memberEvents: [triggerEvent],
@@ -206,6 +208,7 @@ describe('ComponentContext', () => {
     const ctx: ComponentContext = {
       type: 'Dropdown',
       state: 'active',
+      lifecycleId: 'lc-002',
       trigger: makeIdentity(),
       triggerEvent: makeObservedEvent(),
       memberEvents: [],

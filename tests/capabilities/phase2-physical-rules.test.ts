@@ -14,6 +14,8 @@ import { CapabilityEngine } from '../../src/capabilities/capability-engine';
 import type { ExtractedEvidence } from '../../src/capabilities/evidence-extractor';
 import type { SemanticEffect } from '../../src/semantics/effect-types';
 import type { ComponentInteraction, InteractionType } from '../../src/shared/component-types';
+import type { DeepPartial } from '../helpers/deep-partial';
+import { deepMerge } from '../helpers/deep-partial';
 
 // ── Test Evidence Builder ─────────────────────────────────────────────
 
@@ -31,6 +33,7 @@ function makeEvidence(overrides: {
   netNodeDelta?: number | null;
   isCheckboxLike?: boolean;
   isSliderLike?: boolean;
+  userAdjusted?: boolean;
   isSubmitType?: boolean;
   isFileInput?: boolean;
   interactionType?: InteractionType;
@@ -58,6 +61,7 @@ function makeEvidence(overrides: {
       href: overrides.href ?? null,
       isCheckboxLike: overrides.isCheckboxLike ?? false,
       isSliderLike: overrides.isSliderLike ?? false,
+      userAdjusted: overrides.userAdjusted ?? false,
       isSubmitType: overrides.isSubmitType ?? false,
       isFileInput: overrides.isFileInput ?? false,
       ancestorRoles: overrides.ancestorRoles ?? [],
@@ -82,6 +86,12 @@ function makeEvidence(overrides: {
       pageUrl: 'https://example.com',
       pageTitle: 'Example',
       urlChanged: overrides.urlChanged ?? false,
+      nextUrl: null,
+      hasNextItemSpecificUrl: false,
+      precededByListContext: false,
+      urlPathChangedAfter: false,
+      precededByFormInteraction: false,
+      triggerHasItemSpecificHref: false,
     },
     keywords: {
       matches: (overrides.keywordMatches ?? []).map((m) => ({
@@ -110,8 +120,8 @@ function makeEffect(category: string, confidenceBasis = 'direct-property'): Sema
 /**
  * Build a minimal ComponentInteraction for engine-level tests.
  */
-function makeInteraction(overrides: Partial<ComponentInteraction> = {}): ComponentInteraction {
-  const base: ComponentInteraction = {
+function makeInteraction(overrides: DeepPartial<ComponentInteraction> = {}): ComponentInteraction {
+  const base: ComponentInteraction = deepMerge({
     interactionId: 'int-test-001',
     type: 'Click',
     trigger: {
@@ -138,6 +148,7 @@ function makeInteraction(overrides: Partial<ComponentInteraction> = {}): Compone
       eventId: 'evt-001',
       eventType: 'click',
       timestamp: 1000,
+      captureSeq: 1,
       isTrusted: true,
       target: {
         elementId: 'elem-001',
@@ -193,8 +204,7 @@ function makeInteraction(overrides: Partial<ComponentInteraction> = {}): Compone
     endTime: 2000,
     endState: 'completed',
     metadata: {},
-    ...overrides,
-  };
+  }, overrides);
   return base;
 }
 
@@ -216,7 +226,7 @@ describe('ToggleControlRule', () => {
     expect(claim!.confidence).toBe('high');
     expect(claim!.priority).toBe(20);
     expect(claim!.hasDirectProperty).toBe(true);
-    expect(claim!.parameters.target).toBe('Test Element');
+    expect(claim!.parameters!.target).toBe('Test Element');
   });
 
   it('state-toggle + direct property only (no checkbox type) → MEDIUM', () => {

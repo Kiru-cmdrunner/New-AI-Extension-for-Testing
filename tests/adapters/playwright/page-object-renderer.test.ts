@@ -12,7 +12,7 @@ import {
 } from '../../../src/adapters/playwright/page-object-renderer';
 import { IRAction, DEFAULT_EXECUTION_PARAMETERS } from '../../../src/domain/execution-ir/types';
 import type { IRStep, ExecutionIRPlan, ResolvedLocator } from '../../../src/domain/execution-ir/types';
-import { LocatorStrategyType } from '../../../src/domain/enums';
+import { LocatorStrategyType, ValidationType, ValidationComparison, ValidationSeverity } from '../../../src/domain/enums';
 import { ALL_REFERENCE_PLANS } from '../../../src/adapters/playwright/__fixtures__/reference-ir-plans';
 
 // ── Helpers ───────────────────────────────────────────────
@@ -318,11 +318,14 @@ describe('reference plan coverage', () => {
 describe('edge cases', () => {
   it('deduplicates methods for repeated same-action+element steps', () => {
     const plan: ExecutionIRPlan = {
-      planId: 'p1', version: 'ir-1.0.0', title: 'Duplicate Fill',
-      testCaseVersionId: 'tcv1', testCaseTitle: 'Test', testCaseVersion: 1,
+      testCaseId: 'tc-1',
+      testCaseVersionId: 'tcv1',
+      testCaseVersionNumber: 1,
+      title: 'Duplicate Fill',
+      tags: ['test'],
       steps: [
         {
-          stepId: 's1', action: IRAction.WAIT_FOR_ELEMENT, ordinal: 0,
+          id: 's1', action: IRAction.WAIT_FOR_ELEMENT, order: 0,
           description: 'Wait for email',
           target: {
             kind: 'element', elementId: 'el1', elementName: 'Email Input',
@@ -330,11 +333,11 @@ describe('edge cases', () => {
             resolvedLocators: [{ type: LocatorStrategyType.CSS, value: '#email', priority: 1, confidence: 0.9 }],
           },
           assertions: [],
-          executionParameters: {} as any,
+          executionParameters: { ...DEFAULT_EXECUTION_PARAMETERS },
           input: null,
         },
         {
-          stepId: 's2', action: IRAction.FILL, ordinal: 1,
+          id: 's2', action: IRAction.FILL, order: 1,
           description: 'Fill email',
           target: {
             kind: 'element', elementId: 'el1', elementName: 'Email Input',
@@ -342,11 +345,11 @@ describe('edge cases', () => {
             resolvedLocators: [{ type: LocatorStrategyType.CSS, value: '#email', priority: 1, confidence: 0.9 }],
           },
           assertions: [],
-          executionParameters: {} as any,
+          executionParameters: { ...DEFAULT_EXECUTION_PARAMETERS },
           input: 'user@test.com',
         },
         {
-          stepId: 's3', action: IRAction.FILL, ordinal: 2,
+          id: 's3', action: IRAction.FILL, order: 2,
           description: 'Fill email again',
           target: {
             kind: 'element', elementId: 'el1', elementName: 'Email Input',
@@ -354,18 +357,15 @@ describe('edge cases', () => {
             resolvedLocators: [{ type: LocatorStrategyType.CSS, value: '#email', priority: 1, confidence: 0.9 }],
           },
           assertions: [],
-          executionParameters: {} as any,
+          executionParameters: { ...DEFAULT_EXECUTION_PARAMETERS },
           input: 'other@test.com',
         },
       ],
       environment: {
-        browser: 'chromium',
+        browser: 'chrome',
         viewport: { width: 1280, height: 720 },
-        baseURL: 'https://example.com',
+        baseUrl: 'https://example.com',
       },
-      generatedAt: '2024-01-01T00:00:00Z',
-      generatorVersion: 'ir-gen-1.0.0',
-      staleness: { testCaseVersionModifiedAt: null, elementsModifiedAt: {} },
     };
 
     const poms = buildPageObjects(plan);
@@ -380,18 +380,21 @@ describe('edge cases', () => {
 
   it('registers assertion elements on non-element steps (NAVIGATE/WAIT)', () => {
     const plan: ExecutionIRPlan = {
-      planId: 'p1', version: 'ir-1.0.0', title: 'Navigate with assertion',
-      testCaseVersionId: 'tcv1', testCaseTitle: 'Test', testCaseVersion: 1,
+      testCaseId: 'tc-1',
+      testCaseVersionId: 'tcv1',
+      testCaseVersionNumber: 1,
+      title: 'Navigate with assertion',
+      tags: ['test'],
       steps: [
         {
-          stepId: 's1', action: IRAction.NAVIGATE, ordinal: 0,
+          id: 's1', action: IRAction.NAVIGATE, order: 0,
           description: 'Navigate to home',
           target: { kind: 'url', url: 'https://example.com' },
           assertions: [{
-            type: 'VISIBILITY',
-            comparison: 'IS_TRUE',
+            type: ValidationType.VISIBILITY,
+            comparison: ValidationComparison.IS_TRUE,
             expectedValue: null,
-            severity: 'HARD',
+            severity: ValidationSeverity.HARD,
             target: {
               kind: 'element', elementId: 'el1', elementName: 'Page Heading',
               pageOrComponent: 'HomePage',
@@ -399,18 +402,15 @@ describe('edge cases', () => {
             },
             property: null,
           }],
-          executionParameters: {} as any,
+          executionParameters: { ...DEFAULT_EXECUTION_PARAMETERS },
           input: 'https://example.com',
         },
       ],
       environment: {
-        browser: 'chromium',
+        browser: 'chrome',
         viewport: { width: 1280, height: 720 },
-        baseURL: 'https://example.com',
+        baseUrl: 'https://example.com',
       },
-      generatedAt: '2024-01-01T00:00:00Z',
-      generatorVersion: 'ir-gen-1.0.0',
-      staleness: { testCaseVersionModifiedAt: null, elementsModifiedAt: {} },
     };
 
     const poms = buildPageObjects(plan);

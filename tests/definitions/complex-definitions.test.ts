@@ -101,7 +101,7 @@ describe('DatePicker Definition', () => {
   });
 
   it('triggers on click of OXD date input', () => {
-    const { runtime, emitted } = setupRuntime();
+    const { runtime } = setupRuntime();
     const target = { tag: 'DIV', stableId: 'oxd-date', className: 'oxd-date-input', accessibleName: 'Date of Birth' };
 
     runtime.process(makeEvent('c1', 'click', target, {}, { valueBefore: '1987-09-19' }));

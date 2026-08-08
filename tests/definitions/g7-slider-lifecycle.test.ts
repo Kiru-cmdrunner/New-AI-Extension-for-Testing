@@ -337,10 +337,11 @@ describe('G7: Slider Production Filter', () => {
         eventType: 'focus',
       }),
       trigger: makeTarget(),
-      events: [],
+      memberEvents: [],
+      startTime: 1000,
+      endTime: 2000,
       metadata: { targetName: 'Volume', value: '60', userAdjusted: true },
       endState: 'completed',
-      recordedAt: Date.now(),
       ...overrides,
     };
   }

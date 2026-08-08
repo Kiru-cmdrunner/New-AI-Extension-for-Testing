@@ -10,8 +10,8 @@
  * Spec: .drytis/specs/evidence-based-hover.md
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { createRuntime, type ComponentRuntime } from '../../src/runtime/component-runtime';
+import { describe, it, expect } from 'vitest';
+import { createRuntime } from '../../src/runtime/component-runtime';
 import { ALL_DEFINITIONS } from '../../src/definitions';
 import { hoverDefinition } from '../../src/definitions/hover';
 import { makeObservedEvent } from '../helpers/make-event';
@@ -72,7 +72,7 @@ function setupRuntime() {
 
 function makeCtx(trigger: ObservedEvent): ComponentContext {
   return {
-    type: 'Hover', state: 'active', trigger: trigger.target,
+    type: 'Hover', state: 'active', lifecycleId: 'lc-001', trigger: trigger.target,
     triggerEvent: trigger, memberEvents: [trigger], scopeKeys: new Set(),
     startTime: trigger.timestamp, endTime: 0, data: {},
   };

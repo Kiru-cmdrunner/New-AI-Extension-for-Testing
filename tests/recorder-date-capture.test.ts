@@ -17,7 +17,7 @@
  * and the session's storage of dateSelect events.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { setupChromeMock } from './mock-chrome';
 import { normalizeDateValue } from '../src/shared/date-normalizer';
 import type { DomContext } from '../src/recorder/recorded-event';
@@ -326,14 +326,14 @@ describe('Recorder Date Capture — Milestone 2', () => {
   describe('debounce behavior', () => {
     it('intermediate values are not emitted — only final stabilized value', () => {
       // Simulate a sequence of intermediate values during date entry
-      const intermediate1 = makeDomContext({
+      makeDomContext({
         inputType: 'text',
         isoValue: '1987', // partial
         displayValue: '1987',
         dateType: 'date',
         dateConfidence: 0.8,
       });
-      const intermediate2 = makeDomContext({
+      makeDomContext({
         inputType: 'text',
         isoValue: '1987-09', // still partial
         displayValue: '1987-09',

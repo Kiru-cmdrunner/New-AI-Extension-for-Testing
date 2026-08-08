@@ -16,7 +16,7 @@
  * No production code is modified. Results are recorded for the validation report.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { JSDOM } from 'jsdom';
 import { interpret } from '../../src/semantics/effect-interpreter';
 import type { InterpretationContext } from '../../src/semantics/interpretation-context';
@@ -62,7 +62,7 @@ function startMutationCapture(): void {
       capturedMutations.push(mutationRecordToM2(record));
     }
   });
-  mutationObs.observe(document.body, {
+  mutationObs!.observe(document.body, {
     childList: true,
     attributes: true,
     characterData: true,
@@ -249,7 +249,7 @@ function assertCategory(test: EffectAssertion, expected: string): void {
 }
 
 function assertConfidence(test: EffectAssertion, expected: string): void {
-  const matching = test.effects.find((e) => true);
+  const matching = test.effects.find((_e) => true);
   expect(matching?.confidence, `${test.label} confidence`).toBe(expected);
 }
 

@@ -19,7 +19,6 @@ import {
   extractPropertyValue,
   compareValues,
   type AssertionInput,
-  type AssertionResult,
 } from '../src/execution/assertion-evaluator';
 
 // ── Test Helpers ────────────────────────────────────────────

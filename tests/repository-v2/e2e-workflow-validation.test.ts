@@ -31,7 +31,7 @@ import {
   ValidationComparison,
   ValidationSeverity,
 } from '../../src/domain/enums';
-import type { ApprovedTestCase, TestCaseVersion, Step } from '../../src/domain/entities/approved-test-case';
+import type { ApprovedTestCase, TestCaseVersion } from '../../src/domain/entities/approved-test-case';
 import type { Element } from '../../src/domain/entities/element';
 import type { SourceArtifact } from '../../src/domain/entities/source-artifact';
 import type { Project } from '../../src/domain/entities/project';

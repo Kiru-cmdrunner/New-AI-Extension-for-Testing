@@ -1,12 +1,18 @@
 /**
  * Shared test helpers for Phase 4 cross-rule conflict tests.
  * Builds ComponentInteractions for engine-level testing.
+ *
+ * Uses DeepPartial so tests can override sub-fields (trigger.accessibleName,
+ * triggerEvent.pageUrl, etc.) without providing every required field.
+ * The returned object is always fully typed and complete.
  */
 
 import type { ComponentInteraction } from '../../src/shared/component-types';
+import type { DeepPartial } from '../helpers/deep-partial';
+import { deepMerge } from '../helpers/deep-partial';
 
-export function makeInteraction(overrides: Partial<ComponentInteraction> = {}): ComponentInteraction {
-  return {
+export function makeInteraction(overrides: DeepPartial<ComponentInteraction> = {}): ComponentInteraction {
+  return deepMerge({
     interactionId: 'int-test-001',
     type: 'Click',
     trigger: {
@@ -33,6 +39,7 @@ export function makeInteraction(overrides: Partial<ComponentInteraction> = {}): 
       eventId: 'evt-001',
       eventType: 'click',
       timestamp: 1000,
+      captureSeq: 1,
       isTrusted: true,
       target: {
         elementId: 'elem-001',
@@ -88,6 +95,5 @@ export function makeInteraction(overrides: Partial<ComponentInteraction> = {}): 
     endTime: 2000,
     endState: 'completed',
     metadata: {},
-    ...overrides,
-  };
+  }, overrides);
 }

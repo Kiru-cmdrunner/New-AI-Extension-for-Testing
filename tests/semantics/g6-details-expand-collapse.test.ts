@@ -62,6 +62,7 @@ function makeResult(
 
 function makeCtx(): InterpretationContext {
   return {
+    interactionType: 'Click',
     triggerRole: 'button',
     triggerLabel: 'More Info',
     triggerCssPath: 'summary.section-info',

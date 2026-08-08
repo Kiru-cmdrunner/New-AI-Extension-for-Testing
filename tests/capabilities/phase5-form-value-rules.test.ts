@@ -13,7 +13,6 @@ import { SelectOptionRule } from '../../src/capabilities/rules/select-option';
 import { AdjustValueRule } from '../../src/capabilities/rules/adjust-value';
 import { FilterSelectionRule } from '../../src/capabilities/rules/filter-selection';
 import { SortSelectionRule } from '../../src/capabilities/rules/sort-selection';
-import { ToggleControlRule } from '../../src/capabilities/rules/toggle-control';
 import { CapabilityEngine } from '../../src/capabilities/capability-engine';
 import type { ExtractedEvidence } from '../../src/capabilities/evidence-extractor';
 import type { InteractionType } from '../../src/shared/component-types';
@@ -287,7 +286,7 @@ describe('SelectOptionRule', () => {
     const claim = rule.evaluate(evidence);
     expect(claim).not.toBeNull();
     expect(claim!.confidence).toBe('high');
-    expect(claim!.parameters.target).toBe('Make');
+    expect(claim!.parameters!.target).toBe('Make');
   });
 
   it('Quantity dropdown (no keyword, no remote effect) → MEDIUM', () => {

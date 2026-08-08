@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import 'fake-indexeddb/auto';
 import { DexieUnitOfWorkFactory } from '../../src/repository/v2/dexie/dexie-unit-of-work-factory';
-import { ElementStatus, LocatorStrategyType } from '../../src/domain/enums';
+import { ElementStatus, LocatorStrategyType, StepAction, ValidationType, ValidationComparison, ValidationSeverity } from '../../src/domain/enums';
 import { ElementReferencedError } from '../../src/domain/errors/invariant-errors';
 
 const SAMPLE_ELEMENT_INPUT = {
@@ -161,7 +161,7 @@ describe('ElementRepository (Dexie)', () => {
           title: 'Test',
           createdBy: 'u1',
           steps: [
-            { order: 0, action: 'click' as const, description: 'Click', elementId: element.id },
+            { order: 0, action: StepAction.CLICK, description: 'Click', elementId: element.id },
           ],
         });
         return element.id;
@@ -187,14 +187,14 @@ describe('ElementRepository (Dexie)', () => {
           steps: [
             {
               order: 0,
-              action: 'verify' as const,
+              action: StepAction.VERIFY,
               description: 'Verify',
               elementId: element.id,
               validations: [
                 {
-                  type: 'visibility' as const,
-                  comparison: 'isTrue' as const,
-                  severity: 'hard' as const,
+                  type: ValidationType.VISIBILITY,
+                  comparison: ValidationComparison.IS_TRUE,
+                  severity: ValidationSeverity.HARD,
                 },
               ],
             },
@@ -233,7 +233,7 @@ describe('ElementRepository (Dexie)', () => {
           title: 'Test',
           createdBy: 'u1',
           steps: [
-            { order: 0, action: 'click' as const, description: 'Click', elementId: element.id },
+            { order: 0, action: StepAction.CLICK, description: 'Click', elementId: element.id },
           ],
         });
         return { elementId: element.id, versionId: version.id };

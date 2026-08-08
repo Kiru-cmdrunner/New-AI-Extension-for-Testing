@@ -11,10 +11,9 @@
  * that mocks chrome.storage.local and the dynamic imports.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   createExecutionRun,
-  type ExecutionRun,
   type CreateExecutionRunInput,
 } from '../src/domain/entities/execution-run';
 import type { IRExecutionResult, IRStepResult } from '../src/domain/execution-ir/adapters/ir-executor';

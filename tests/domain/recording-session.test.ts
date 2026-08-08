@@ -12,7 +12,6 @@ import { describe, it, expect } from 'vitest';
 import {
   createRecordingSession,
   addTestCaseAssociation,
-  type RecordingSession,
   type CreateRecordingSessionInput,
 } from '../../src/domain/entities/recording-session';
 import type { UnderstandingResult } from '../../src/domain/entities/understanding-result';
@@ -49,13 +48,14 @@ function makeUnderstandingResult(overrides: Partial<UnderstandingResult> = {}): 
 }
 
 function makeSessionEvent(overrides: Partial<SessionEvent> = {}): SessionEvent {
-  return {
-    id: 'evt-001',
-    type: 'click',
-    timestamp: '2026-07-22T00:00:00Z',
+  const base: SessionEvent = {
+    actionId: 'evt-001',
+    type: 'navigation',
     url: 'https://example.com',
-    ...overrides,
-  } as SessionEvent;
+    title: 'Example',
+    timestamp: '2026-07-22T00:00:00Z',
+  };
+  return { ...base, ...overrides } as SessionEvent;
 }
 
 function makeCreateInput(overrides: Partial<CreateRecordingSessionInput> = {}): CreateRecordingSessionInput {
@@ -121,12 +121,12 @@ describe('createRecordingSession', () => {
   });
 
   it('copies rawEvents and rawInteractions (defensive copy)', () => {
-    const events = [makeSessionEvent(), makeSessionEvent({ id: 'evt-002' })];
+    const events = [makeSessionEvent(), makeSessionEvent({ actionId: 'evt-002' })];
     const session = createRecordingSession(makeCreateInput({ rawEvents: events }));
 
     expect(session.rawEvents).toHaveLength(2);
     // Mutating the original array should not affect the session
-    events.push(makeSessionEvent({ id: 'evt-003' }));
+    events.push(makeSessionEvent({ actionId: 'evt-003' }));
     expect(session.rawEvents).toHaveLength(2);
   });
 

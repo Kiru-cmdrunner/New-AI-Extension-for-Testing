@@ -194,7 +194,7 @@ describe('IRExecutorImpl', () => {
   describe('execute — single step success', () => {
     it('executes a click step successfully', async () => {
       const opts = createMockOptions({
-        sendTabMessage: (async (tabId: number, message: any) => {
+        sendTabMessage: (async (_tabId: number, message: any) => {
           if (message.type === 'RESOLVE_LOCATOR') {
             return {
               found: true,
@@ -225,7 +225,7 @@ describe('IRExecutorImpl', () => {
 
     it('executes a fill step successfully', async () => {
       const opts = createMockOptions({
-        sendTabMessage: (async (tabId: number, message: any) => {
+        sendTabMessage: (async (_tabId: number, message: any) => {
           if (message.type === 'RESOLVE_LOCATOR') {
             return { found: true, identity: { tag: 'INPUT' } };
           }
@@ -262,7 +262,7 @@ describe('IRExecutorImpl', () => {
     it('executes all steps in order', async () => {
       let callCount = 0;
       const opts = createMockOptions({
-        sendTabMessage: (async (tabId: number, message: any) => {
+        sendTabMessage: (async (_tabId: number, message: any) => {
           if (message.type === 'RESOLVE_LOCATOR') {
             callCount++;
             return { found: true, identity: { tag: 'DIV' } };
@@ -298,7 +298,7 @@ describe('IRExecutorImpl', () => {
 
     it('skips remaining steps after an error', async () => {
       const opts = createMockOptions({
-        sendTabMessage: (async (tabId: number, message: any) => {
+        sendTabMessage: (async (_tabId: number, message: any) => {
           if (message.type === 'RESOLVE_LOCATOR') {
             return { found: true, identity: { tag: 'DIV' } };
           }
@@ -332,7 +332,7 @@ describe('IRExecutorImpl', () => {
   describe('execute — action failure', () => {
     it('marks step as failed when action fails', async () => {
       const opts = createMockOptions({
-        sendTabMessage: (async (tabId: number, message: any) => {
+        sendTabMessage: (async (_tabId: number, message: any) => {
           if (message.type === 'RESOLVE_LOCATOR') {
             return { found: true, identity: { tag: 'BUTTON' } };
           }
@@ -362,7 +362,7 @@ describe('IRExecutorImpl', () => {
   describe('execute — locator resolution failure (no healing)', () => {
     it('marks step as failed when element is not found and healing fails', async () => {
       const opts = createMockOptions({
-        sendTabMessage: (async (tabId: number, message: any) => {
+        sendTabMessage: (async (_tabId: number, message: any) => {
           if (message.type === 'RESOLVE_LOCATOR') {
             return { found: false, identity: null };
           }
@@ -386,7 +386,7 @@ describe('IRExecutorImpl', () => {
   describe('execute — URL target (navigate)', () => {
     it('executes a navigate step without resolving an element', async () => {
       const opts = createMockOptions({
-        sendTabMessage: (async (tabId: number, message: any) => {
+        sendTabMessage: (async (_tabId: number, message: any) => {
           if (message.type === 'EXECUTE_STEP') {
             return {
               stepId: message.step.id,
@@ -419,7 +419,7 @@ describe('IRExecutorImpl', () => {
   describe('execute — assertions', () => {
     it('evaluates assertions after successful action', async () => {
       const opts = createMockOptions({
-        sendTabMessage: (async (tabId: number, message: any) => {
+        sendTabMessage: (async (_tabId: number, message: any) => {
           if (message.type === 'RESOLVE_LOCATOR') {
             return { found: true, identity: { tag: 'DIV' } };
           }
@@ -475,7 +475,7 @@ describe('IRExecutorImpl', () => {
 
     it('marks step as failed when a hard assertion fails', async () => {
       const opts = createMockOptions({
-        sendTabMessage: (async (tabId: number, message: any) => {
+        sendTabMessage: (async (_tabId: number, message: any) => {
           if (message.type === 'RESOLVE_LOCATOR') {
             return { found: true, identity: { tag: 'DIV' } };
           }
@@ -532,7 +532,7 @@ describe('IRExecutorImpl', () => {
 
     it('skips assertions when action fails', async () => {
       const opts = createMockOptions({
-        sendTabMessage: (async (tabId: number, message: any) => {
+        sendTabMessage: (async (_tabId: number, message: any) => {
           if (message.type === 'RESOLVE_LOCATOR') {
             return { found: true, identity: { tag: 'BUTTON' } };
           }
@@ -584,7 +584,7 @@ describe('IRExecutorImpl', () => {
       const onStepStart = vi.fn();
       const onStepComplete = vi.fn();
       const opts = createMockOptions({
-        sendTabMessage: (async (tabId: number, message: any) => {
+        sendTabMessage: (async (_tabId: number, message: any) => {
           if (message.type === 'RESOLVE_LOCATOR') {
             return { found: true, identity: { tag: 'DIV' } };
           }
@@ -646,7 +646,7 @@ describe('IRExecutorImpl', () => {
   describe('execute — no target (none)', () => {
     it('executes steps with no target (verify/wait)', async () => {
       const opts = createMockOptions({
-        sendTabMessage: (async (tabId: number, message: any) => {
+        sendTabMessage: (async (_tabId: number, message: any) => {
           if (message.type === 'EXECUTE_STEP') {
             return { stepId: message.step.id, action: 'verify', status: 'passed', durationMs: 1 };
           }
@@ -675,7 +675,7 @@ describe('IRExecutorImpl', () => {
     it('uses healed locators from override map for subsequent steps with same elementId', async () => {
       let resolveCallCount = 0;
       const opts = createMockOptions({
-        sendTabMessage: (async (tabId: number, message: any) => {
+        sendTabMessage: (async (_tabId: number, message: any) => {
           if (message.type === 'RESOLVE_LOCATOR') {
             resolveCallCount++;
             // First call for el-1 fails, subsequent calls succeed
@@ -715,7 +715,7 @@ describe('IRExecutorImpl', () => {
   describe('execute — HARD/SOFT assertion severity', () => {
     it('does not fail step when SOFT assertion fails', async () => {
       const opts = createMockOptions({
-        sendTabMessage: (async (tabId: number, message: any) => {
+        sendTabMessage: (async (_tabId: number, message: any) => {
           if (message.type === 'RESOLVE_LOCATOR') {
             return { found: true, identity: { tag: 'DIV' } };
           }
@@ -775,7 +775,7 @@ describe('IRExecutorImpl', () => {
 
     it('fails step when HARD assertion fails', async () => {
       const opts = createMockOptions({
-        sendTabMessage: (async (tabId: number, message: any) => {
+        sendTabMessage: (async (_tabId: number, message: any) => {
           if (message.type === 'RESOLVE_LOCATOR') {
             return { found: true, identity: { tag: 'DIV' } };
           }

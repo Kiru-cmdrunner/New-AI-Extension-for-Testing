@@ -13,30 +13,12 @@ import { resolveMeaning } from '../src/enrichment/meaning-resolver';
 import { enrichInteraction } from '../src/enrichment/enrich';
 import type { ComponentInteraction, ObservedEvent } from '../src/shared/component-types';
 import type { ElementIdentity } from '../src/shared/types';
+import { makeElementIdentity } from './helpers/fixtures';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
 function makeTarget(overrides: Partial<ElementIdentity> = {}): ElementIdentity {
-  return {
-    tag: 'BUTTON',
-    cssPath: 'body > button',
-    accessibleName: '',
-    ariaLabel: null,
-    textContent: '',
-    href: null,
-    type: null,
-    inputType: null,
-    role: null,
-    ariaRole: null,
-    className: null,
-    id: null,
-    value: null,
-    placeholder: null,
-    checkedBefore: null,
-    checkedAfter: null,
-    elementKey: 'btn-0',
-    ...overrides,
-  };
+  return makeElementIdentity(overrides);
 }
 
 function makeEvent(overrides: Partial<ObservedEvent> = {}): ObservedEvent {
@@ -45,6 +27,7 @@ function makeEvent(overrides: Partial<ObservedEvent> = {}): ObservedEvent {
     eventId: 'evt-1-0',
     eventType: 'click',
     timestamp: 1000,
+    captureSeq: 1,
     isTrusted: true,
     target,
     domContext: {
@@ -76,7 +59,6 @@ function makeEvent(overrides: Partial<ObservedEvent> = {}): ObservedEvent {
     pageUrl: 'https://example.com',
     pageTitle: 'Example',
     ...overrides,
-    target,
   };
 }
 
@@ -110,10 +92,9 @@ describe('Layer 2: Component Detection (detectComponent)', () => {
       target: makeTarget({
         tag: 'DIV',
         className: 'MuiDataGrid-root',
-        elementKey: 'grid-0',
+        elementId: 'grid-0',
         accessibleName: 'Users',
         ariaRole: 'grid',
-        textContent: 'Users',
       }),
     });
     const result = detectComponent(event);
@@ -146,10 +127,9 @@ describe('Layer 2: Component Detection (detectComponent)', () => {
       target: makeTarget({
         tag: 'TD',
         className: 'ant-table-cell',
-        elementKey: 'cell-0',
+        elementId: 'cell-0',
         accessibleName: 'John',
         ariaRole: 'gridcell',
-        textContent: 'John',
       }),
     });
     const result = detectComponent(event);
@@ -162,7 +142,7 @@ describe('Layer 2: Component Detection (detectComponent)', () => {
       target: makeTarget({
         tag: 'BUTTON',
         className: 'MuiIconButton-root',
-        elementKey: 'icon-btn-0',
+        elementId: 'icon-btn-0',
         accessibleName: '',
         ariaRole: null,
       }),
@@ -177,10 +157,9 @@ describe('Layer 2: Component Detection (detectComponent)', () => {
       target: makeTarget({
         tag: 'DIV',
         className: 'ag-header-cell sort-asc',
-        elementKey: 'sort-0',
+        elementId: 'sort-0',
         accessibleName: 'Name',
         ariaRole: 'columnheader',
-        textContent: 'Name',
       }),
     });
     const result = detectComponent(event);
@@ -193,10 +172,9 @@ describe('Layer 2: Component Detection (detectComponent)', () => {
       target: makeTarget({
         tag: 'DIV',
         className: 'some-overlay',
-        elementKey: 'dialog-0',
+        elementId: 'dialog-0',
         accessibleName: 'Settings',
         ariaRole: 'dialog',
-        textContent: 'Settings',
       }),
     });
     const result = detectComponent(event);
@@ -227,7 +205,7 @@ describe('Layer 2: Component Detection (detectComponent)', () => {
       target: makeTarget({
         tag: 'BUTTON',
         className: 'chakra-button css-1a2b3c',
-        elementKey: 'chakra-0',
+        elementId: 'chakra-0',
         accessibleName: 'Action',
       }),
     });
@@ -240,7 +218,7 @@ describe('Layer 2: Component Detection (detectComponent)', () => {
       target: makeTarget({
         tag: 'BUTTON',
         className: 'radix-trigger',
-        elementKey: 'radix-0',
+        elementId: 'radix-0',
         accessibleName: 'Open',
         ariaRole: null,
       }),
@@ -254,10 +232,9 @@ describe('Layer 2: Component Detection (detectComponent)', () => {
       target: makeTarget({
         tag: 'DIV',
         className: 'tree-node',
-        elementKey: 'tree-0',
+        elementId: 'tree-0',
         accessibleName: 'Folder A',
         ariaRole: 'treeitem',
-        textContent: 'Folder A',
       }),
     });
     const result = detectComponent(event);
@@ -266,7 +243,6 @@ describe('Layer 2: Component Detection (detectComponent)', () => {
 
   it('returns Generic for unstyled non-button elements', () => {
     const event = makeEvent({
-      target: makeTarget({ tag: 'DIV', accessibleName: 'Content', textContent: 'Content' }),
     });
     const result = detectComponent(event);
     expect(result.componentType).toBe('Generic');
@@ -278,7 +254,7 @@ describe('Layer 2: Component Detection (detectComponent)', () => {
       target: makeTarget({
         tag: 'BUTTON',
         className: 'fa-search',
-        elementKey: 'icon-0',
+        elementId: 'icon-0',
         accessibleName: '',
         ariaRole: null,
       }),
@@ -293,7 +269,7 @@ describe('Layer 2: Component Detection (detectComponent)', () => {
       target: makeTarget({
         tag: 'BUTTON',
         className: 'fas fa-trash',
-        elementKey: 'icon-1',
+        elementId: 'icon-1',
         accessibleName: '',
         ariaRole: null,
       }),
@@ -426,7 +402,7 @@ describe('Integration: enrichInteraction', () => {
       target: makeTarget({
         tag: 'BUTTON',
         className: 'MuiIconButton-root',
-        elementKey: 'icon-btn-0',
+        elementId: 'icon-btn-0',
         accessibleName: '',
         ariaRole: null,
       }),
@@ -443,10 +419,9 @@ describe('Integration: enrichInteraction', () => {
       target: makeTarget({
         tag: 'DIV',
         className: 'ag-header-cell sort-asc',
-        elementKey: 'sort-0',
+        elementId: 'sort-0',
         accessibleName: 'Name',
         ariaRole: 'columnheader',
-        textContent: 'Name',
       }),
     });
     enrichInteraction(interaction);
@@ -476,7 +451,7 @@ describe('Integration: enrichInteraction', () => {
       target: makeTarget({
         tag: 'BUTTON',
         className: 'chakra-switch',
-        elementKey: 'switch-0',
+        elementId: 'switch-0',
         accessibleName: 'Notifications',
         ariaRole: 'switch',
       }),
@@ -496,10 +471,9 @@ describe('Edge cases', () => {
       target: makeTarget({
         tag: 'DIV',
         className: null,
-        elementKey: 'div-0',
+        elementId: 'div-0',
         accessibleName: 'Content',
         ariaRole: null,
-        textContent: 'Content',
       }),
     });
     expect(() => detectComponent(event)).not.toThrow();
@@ -509,7 +483,6 @@ describe('Edge cases', () => {
 
   it('handles empty ancestorClasses', () => {
     const event = makeEvent({
-      target: makeTarget({ tag: 'DIV', accessibleName: 'Content', textContent: 'Content' }),
     });
     const result = detectComponent(event);
     expect(result.componentType).toBe('Generic');

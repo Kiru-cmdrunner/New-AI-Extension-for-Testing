@@ -13,7 +13,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   EvidenceLedger,
   DISCRETE_ACTION_TYPES,
-  type LedgerEntry,
 } from '../../src/runtime/evidence-ledger';
 import { makeObservedEvent } from '../helpers/make-event';
 

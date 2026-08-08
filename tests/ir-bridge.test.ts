@@ -29,7 +29,7 @@ import type { ElementIdentity } from '../src/shared/types';
 import type {
   ComponentInteraction,
   InteractionType,
-  ComponentContext,
+
   ObservedEvent,
 } from '../src/shared/component-types';
 
@@ -67,7 +67,7 @@ function makeObservedEvent(overrides: Partial<ObservedEvent> = {}): ObservedEven
     captureSeq: 1,
     isTrusted: true,
     target: makeElementIdentity(),
-    domContext: { url: 'https://example.com', title: 'Test', inputValue: null },
+    domContext: { inputType: null, ariaExpanded: null, ariaHasPopup: null, isContentEditable: false, disabled: false, readOnly: false, required: false, ancestorRoles: [], ancestorClasses: [], tabIndex: null },
     valueBefore: null,
     valueAfter: null,
     checkedBefore: null,

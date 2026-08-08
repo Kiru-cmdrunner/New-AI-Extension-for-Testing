@@ -37,13 +37,17 @@ function obs(sourceEventId: string, effects: SemanticEffect[]): ObservationResul
     windowId: 'obs-001',
     sourceEventId,
     sourceEventType: 'click',
-    startTime: 1000,
-    endTime: 2000,
-    endReason: 'timeout',
-    snapshot: { childCount: 10, textContent: 'test' },
+    openedAt: 1000,
+    closedAt: 2000,
+    durationMs: 1000,
+    endReason: 'completed',
+    beforeSnapshot: null,
+    finalSnapshot: { value: null, checked: null, className: '', disabled: false, ariaExpanded: null, ariaChecked: null, ariaPressed: null, textContent: 'test', childCount: 10, capturedAt: 2000 },
     mutations: [],
+    mutationCount: 0,
+    documentWideMutationTotal: 0,
     semanticEffects: effects,
-  } as ObservationResult;
+  };
 }
 
 function withObs(interaction: ComponentInteraction, observations: ObservationResult[]): ComponentInteraction {

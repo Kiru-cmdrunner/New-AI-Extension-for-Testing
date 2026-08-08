@@ -7,14 +7,14 @@
  * Architecture: `.drytis/specs/m0a-architecture-validation.md` §2.3, §4
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { createRuntime, type ComponentRuntime } from '../../src/runtime/component-runtime';
 import { EvidenceLedger } from '../../src/runtime/evidence-ledger';
 import { projectInteractions } from '../../src/runtime/projection-engine';
 import { ALL_DEFINITIONS } from '../../src/definitions';
 import { makeObservedEvent } from '../helpers/make-event';
 import type {
-  ComponentDefinition,
+
   ComponentInteraction,
   RuntimeConfig,
   ObservedEvent,

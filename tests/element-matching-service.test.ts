@@ -10,13 +10,12 @@ import {
   matchElements,
   computeSimilarity,
   extractSignature,
-  extractStoredSignature,
+
   MATCH_THRESHOLD,
-  type ElementMatchResult,
 } from '../src/repository/services/element-matching-service';
 import { createElement, type Element } from '../src/domain/entities/element';
 import { createUiElement, type UiElement } from '../src/domain/entities/ui-element';
-import { ElementStatus, LocatorStrategyType } from '../src/domain/enums';
+import { LocatorStrategyType } from '../src/domain/enums';
 import type { ElementIdentity } from '../src/shared/types';
 
 // ── Helpers ──────────────────────────────────────────────────

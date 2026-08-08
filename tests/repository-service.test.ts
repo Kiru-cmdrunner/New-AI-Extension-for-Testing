@@ -19,7 +19,6 @@ const SAMPLE_STEP: TestStep = {
     ariaRole: 'button',
     inIframe: false,
     shadowDom: false,
-    href: null,
   },
   aiConfidence: 0.95,
   timestamp: '2026-07-11T00:00:00Z',

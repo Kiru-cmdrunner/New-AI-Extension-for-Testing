@@ -15,8 +15,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createRuntime, type ComponentRuntime } from '../../src/runtime/component-runtime';
 import type {
-  ComponentDefinition,
-  ObservedEvent,
+
+
   ComponentInteraction,
   RuntimeConfig,
   DomContext,
@@ -96,7 +96,6 @@ describe('null-identity regression — lifecycle does not absorb different-eleme
         target: makeTarget({
           accessibleName: 'Quantity',
           tag: 'INPUT',
-          inputType: undefined as any,
           stableId: null,        // ← no id
           cssSelector: 'input[name="qty"]',
           ariaRole: 'textbox',

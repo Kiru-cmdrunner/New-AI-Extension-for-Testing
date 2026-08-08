@@ -13,38 +13,30 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import 'fake-indexeddb/auto';
-import { healFromRecording, type HealingResult } from '../src/repository/services/healing-service';
+import { healFromRecording } from '../src/repository/services/healing-service';
 import { DexieUnitOfWorkFactory } from '../src/repository/v2';
 import type { UiElement } from '../src/domain/entities/ui-element';
 import type { ElementIdentity } from '../src/shared/types';
 import { LocatorStrategyType, ElementStatus } from '../src/domain/enums';
+import { makeElementIdentity } from './helpers/fixtures';
 import type { CmdRunnerDatabase } from '../src/repository/v2/dexie/dexie-database';
 
 // ── Test Helpers ────────────────────────────────────────────
 
 /**
  * Create an ElementIdentity with specific locator fields.
- * Only the provided fields are set; everything else is undefined.
+ * Uses the shared fixture builder for complete, type-correct objects.
  */
 function makeIdentity(overrides: Partial<ElementIdentity> = {}): ElementIdentity {
-  return {
-    role: 'button',
+  return makeElementIdentity({
+    ariaRole: 'button',
     accessibleName: 'Submit',
     tag: 'BUTTON',
-    testId: undefined,
-    dataCy: undefined,
-    dataQa: undefined,
-    id: undefined,
-    name: undefined,
-    placeholder: undefined,
-    className: undefined,
-    ariaLabel: undefined,
-    ariaLabelledBy: undefined,
-    stableId: undefined,
-    cssSelector: undefined,
-    xPath: undefined,
+    cssSelector: null,
+    xPath: null,
+    elementId: '',
     ...overrides,
-  };
+  });
 }
 
 function makeUiElement(
@@ -56,7 +48,11 @@ function makeUiElement(
     elementId,
     identity,
     sourceUrl,
-    detectedAt: '2024-01-01T00:00:00Z',
+    domAttributes: {},
+    domTreePath: 'html>body>button',
+    intrinsicCapabilities: [],
+    componentId: null,
+    componentRole: null,
   };
 }
 
@@ -85,8 +81,6 @@ async function seedElement(
         value: locatorValue,
         priority: 1,
         confidence: 0.95,
-        lastValidatedAt: '2024-01-01T00:00:00Z',
-        sourceSessionId: 'seed-session',
       },
     ],
     status: ElementStatus.ACTIVE,
@@ -185,8 +179,8 @@ describe('Healing Service', () => {
         description: '',
         pageOrComponent: 'https://app.example.com/orders',
         locatorStrategies: [
-          { type: LocatorStrategyType.TEST_ID, value: 'submit-btn', priority: 1, confidence: 0.95, lastValidatedAt: '2024-01-01T00:00:00Z', sourceSessionId: 'seed' },
-          { type: LocatorStrategyType.ACCESSIBLE_NAME, value: 'Submit', priority: 2, confidence: 0.65, lastValidatedAt: '2024-01-01T00:00:00Z', sourceSessionId: 'seed' },
+          { type: LocatorStrategyType.TEST_ID, value: 'submit-btn', priority: 1, confidence: 0.95 },
+          { type: LocatorStrategyType.ACCESSIBLE_NAME, value: 'Submit', priority: 2, confidence: 0.65 },
         ],
         status: ElementStatus.ACTIVE,
         healHistory: [],
@@ -222,8 +216,8 @@ describe('Healing Service', () => {
         description: '',
         pageOrComponent: 'https://app.example.com/orders',
         locatorStrategies: [
-          { type: LocatorStrategyType.TEST_ID, value: 'cancel-btn', priority: 1, confidence: 0.95, lastValidatedAt: '2024-01-01T00:00:00Z', sourceSessionId: 'seed' },
-          { type: LocatorStrategyType.ACCESSIBLE_NAME, value: 'Cancel', priority: 2, confidence: 0.65, lastValidatedAt: '2024-01-01T00:00:00Z', sourceSessionId: 'seed' },
+          { type: LocatorStrategyType.TEST_ID, value: 'cancel-btn', priority: 1, confidence: 0.95 },
+          { type: LocatorStrategyType.ACCESSIBLE_NAME, value: 'Cancel', priority: 2, confidence: 0.65 },
         ],
         status: ElementStatus.ACTIVE,
         healHistory: [],
@@ -333,14 +327,14 @@ describe('Healing Service', () => {
       const freshElements: UiElement[] = [
         makeUiElement('el-1', makeIdentity({
           accessibleName: 'Submit',
-          role: 'button',
+          ariaRole: 'button',
           tag: 'BUTTON',
           testId: 'submit-btn',
           cssSelector: '#submit-changed',
         })),
         makeUiElement('el-2', makeIdentity({
           accessibleName: 'Email Field',
-          role: 'textbox',
+          ariaRole: 'textbox',
           tag: 'INPUT',
           testId: 'email-input',
           cssSelector: '#email-changed',
@@ -363,8 +357,8 @@ describe('Healing Service', () => {
         description: '',
         pageOrComponent: 'https://app.example.com/orders',
         locatorStrategies: [
-          { type: LocatorStrategyType.TEST_ID, value: 'submit-btn', priority: 1, confidence: 0.95, lastValidatedAt: '2024-01-01T00:00:00Z', sourceSessionId: 'seed' },
-          { type: LocatorStrategyType.ACCESSIBLE_NAME, value: 'Submit', priority: 2, confidence: 0.65, lastValidatedAt: '2024-01-01T00:00:00Z', sourceSessionId: 'seed' },
+          { type: LocatorStrategyType.TEST_ID, value: 'submit-btn', priority: 1, confidence: 0.95 },
+          { type: LocatorStrategyType.ACCESSIBLE_NAME, value: 'Submit', priority: 2, confidence: 0.65 },
         ],
         status: ElementStatus.ACTIVE,
         healHistory: [],

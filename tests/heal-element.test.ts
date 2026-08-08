@@ -9,7 +9,7 @@ import { describe, it, expect } from 'vitest';
 import {
   createElement,
   healElement,
-  updateElement,
+
   type Element,
   type CreateElementInput,
   type HealContext,

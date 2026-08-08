@@ -9,7 +9,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { checkStaleness, detectLocatorChanges } from '../../../src/domain/execution-ir/staleness';
-import type { ExecutionIRArtifact, ExecutionIRPlan, IRStep } from '../../../src/domain/execution-ir/types';
+import { ExecutionIRArtifact, ExecutionIRPlan, IRStep, IRAction } from '../../../src/domain/execution-ir/types';
 import type { Element } from '../../../src/domain/entities/element';
 import { LocatorStrategyType } from '../../../src/domain/enums';
 import { GENERATOR_VERSION } from '../../../src/domain/execution-ir/generator';
@@ -66,7 +66,7 @@ function makeElementStep(
   return {
     id: `step-${elementId}`,
     order: 0,
-    action: 'click',
+    action: IRAction.CLICK,
     description: `Click ${elementName}`,
     target: {
       kind: 'element',
@@ -280,7 +280,7 @@ describe('Locator Change Detection (INV-IR5)', () => {
     const urlStep: IRStep = {
       id: 'step-nav',
       order: 0,
-      action: 'navigate',
+      action: IRAction.NAVIGATE,
       description: 'Navigate',
       target: { kind: 'url', url: 'https://example.com' },
       input: null,

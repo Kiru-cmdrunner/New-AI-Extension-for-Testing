@@ -12,71 +12,34 @@ import { describe, it, expect } from 'vitest';
 import { hoverDefinition } from '../src/definitions/hover';
 import { dropdownDefinition } from '../src/definitions/dropdown';
 import type { ObservedEvent, ElementIdentity, ComponentContext } from '../src/shared/component-types';
+import { makeElementIdentity, makeObservedEvent, makeDomContext } from './helpers/fixtures';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
 function makeTarget(overrides: Partial<ElementIdentity> = {}): ElementIdentity {
-  return {
+  return makeElementIdentity({
     tag: 'A',
-    cssPath: 'body > nav > a',
+    cssSelector: 'body > nav > a',
     accessibleName: 'Services',
-    ariaLabel: null,
-    textContent: 'Services',
+    ariaLabel: 'Services',
     href: '/services',
-    type: null,
-    inputType: null,
-    role: null,
-    ariaRole: null,
-    className: null,
-    id: null,
-    value: null,
-    placeholder: null,
-    checkedBefore: null,
-    checkedAfter: null,
-    elementKey: 'a-services',
+    elementId: 'a-services',
     ...overrides,
-  };
+  });
 }
 
 function makeEvent(overrides: Partial<ObservedEvent> = {}): ObservedEvent {
-  const target = overrides.target ? makeTarget(overrides.target) : makeTarget();
-  return {
+  return makeObservedEvent({
     eventId: 'evt-1-0',
     eventType: 'mouseenter',
-    timestamp: 1000,
-    isTrusted: true,
-    target,
-    domContext: {
-      inputType: null,
-      ariaExpanded: null,
-      ariaHasPopup: null,
-      isContentEditable: false,
-      disabled: false,
-      readOnly: false,
-      required: false,
-      ancestorRoles: [],
-      ancestorClasses: [],
-      tabIndex: null,
-    },
-    valueBefore: null,
-    valueAfter: null,
-    checkedBefore: null,
-    checkedAfter: null,
+    target: makeTarget(overrides.target),
     clientX: 100,
     clientY: 200,
-    key: null,
-    code: null,
-    shiftKey: false,
-    ctrlKey: false,
-    altKey: false,
-    metaKey: false,
-    scrollDeltaY: null,
-    scrollDeltaX: null,
-    pageUrl: 'https://example.com',
-    pageTitle: 'Example',
     ...overrides,
-    target,
-  };
+    domContext: overrides.domContext
+      ? makeDomContext(overrides.domContext)
+      : makeDomContext(),
+  });
 }
 
 function makeCtx(enter: ObservedEvent): ComponentContext {
@@ -88,6 +51,8 @@ function makeCtx(enter: ObservedEvent): ComponentContext {
     startTime: enter.timestamp,
     endTime: 0,
     state: 'active',
+    lifecycleId: 'lc-001',
+    scopeKeys: new Set([enter.target.elementId]),
     data: {},
   };
 }
@@ -111,6 +76,8 @@ function makeDropdownCtx(enter: ObservedEvent): ComponentContext {
     startTime: enter.timestamp,
     endTime: 0,
     state: 'active',
+    lifecycleId: 'lc-001',
+    scopeKeys: new Set([enter.target.elementId]),
     data: {},
   };
 }
@@ -236,7 +203,7 @@ describe('Dropdown: isInScope does not swallow clicks on interactive elements', 
       target: makeTarget({
         tag: 'DIV',
         className: 'traveler-selector',
-        elementKey: 'dropdown-trigger-0',
+        elementId: 'dropdown-trigger-0',
       }),
     });
 
@@ -249,7 +216,7 @@ describe('Dropdown: isInScope does not swallow clicks on interactive elements', 
         tag: 'BUTTON',
         className: 'stepper-plus',
         accessibleName: 'Add adult',
-        elementKey: 'stepper-plus-0',
+        elementId: 'stepper-plus-0',
       }),
       domContext: {
         inputType: null,
@@ -275,7 +242,7 @@ describe('Dropdown: isInScope does not swallow clicks on interactive elements', 
       target: makeTarget({
         tag: 'DIV',
         className: 'traveler-selector',
-        elementKey: 'dropdown-trigger-0',
+        elementId: 'dropdown-trigger-0',
       }),
     });
 
@@ -289,7 +256,7 @@ describe('Dropdown: isInScope does not swallow clicks on interactive elements', 
         className: 'select-option',
         ariaRole: 'option',
         accessibleName: 'Premium',
-        elementKey: 'option-premium',
+        elementId: 'option-premium',
       }),
       domContext: {
         inputType: null,
@@ -315,7 +282,7 @@ describe('Dropdown: isInScope does not swallow clicks on interactive elements', 
       target: makeTarget({
         tag: 'DIV',
         className: 'traveler-selector',
-        elementKey: 'dropdown-trigger-0',
+        elementId: 'dropdown-trigger-0',
       }),
     });
 
@@ -328,7 +295,7 @@ describe('Dropdown: isInScope does not swallow clicks on interactive elements', 
         tag: 'DIV',
         className: 'passenger-label',
         accessibleName: 'Adults',
-        elementKey: 'label-0',
+        elementId: 'label-0',
       }),
       domContext: {
         inputType: null,

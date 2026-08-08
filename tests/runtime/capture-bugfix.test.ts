@@ -98,6 +98,7 @@ function makeComponentContext(
   return {
     type: type as any,
     state: 'active',
+    lifecycleId: 'lc-001',
     trigger: trigger.target,
     triggerEvent: trigger,
     memberEvents: [trigger],

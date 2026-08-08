@@ -11,7 +11,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createRuntime, type ComponentRuntime } from '../../src/runtime/component-runtime';
-import { EvidenceLedger, DISCRETE_ACTION_TYPES } from '../../src/runtime/evidence-ledger';
+import { EvidenceLedger } from '../../src/runtime/evidence-ledger';
 import { projectInteractions } from '../../src/runtime/projection-engine';
 import type {
   ComponentDefinition,

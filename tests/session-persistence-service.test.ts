@@ -18,7 +18,7 @@ import type { UnderstandingResult } from '../src/domain/entities/understanding-r
 import type { ExecutionIRPlan } from '../src/domain/execution-ir/types';
 import type { CapabilityCandidate } from '../src/domain/entities/capability-candidate';
 import type { SessionEvent } from '../src/shared/types';
-import type { ComponentInteraction } from '../src/shared/component-types';
+
 
 // ── Helpers ────────────────────────────────────────────────
 
@@ -89,29 +89,28 @@ function makeUnderstandingResult(overrides: Partial<UnderstandingResult> = {}): 
 
 function makeIRPlan(): ExecutionIRPlan {
   return {
-    id: 'ir-plan-001',
-    testCaseName: 'Create Customer Test',
+    testCaseId: 'tc-1',
+    testCaseVersionId: 'tcv-1',
+    testCaseVersionNumber: 1,
+    title: 'Create Customer Test',
+    tags: [],
     environment: {
       baseUrl: 'https://example.com',
+      browser: 'chrome',
       viewport: { width: 1280, height: 720 },
     },
     steps: [],
-    metadata: {
-      generatedAt: '2026-07-22T00:00:00Z',
-      generatorVersion: 'ir-bridge-1.0',
-      sessionEventCount: 5,
-      interactionCount: 3,
-    },
-  } as ExecutionIRPlan;
+  };
 }
 
 function makeSessionEvent(): SessionEvent {
   return {
-    id: 'evt-001',
-    type: 'click',
-    timestamp: '2026-07-22T00:00:00Z',
+    actionId: 'evt-001',
+    type: 'navigation',
     url: 'https://example.com/customers/new',
-  } as SessionEvent;
+    title: 'Customers',
+    timestamp: '2026-07-22T00:00:00Z',
+  };
 }
 
 function makePersistInput(overrides: Partial<SessionPersistenceInput> = {}): SessionPersistenceInput {
@@ -493,7 +492,7 @@ describe('Session Persistence Service', () => {
         capability: secondCandidate,
       });
 
-      const result2 = await persistSession(factory, {
+      await persistSession(factory, {
         ...makePersistInput({
           understanding: secondUnderstanding,
           projectId: result1.projectId,

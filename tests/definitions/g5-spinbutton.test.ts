@@ -20,61 +20,29 @@ import { sliderDefinition } from '../../src/definitions/slider';
 import { ALL_DEFINITIONS } from '../../src/definitions';
 import { isProductionInteraction, toIRAction } from '../../src/presentation/output-adapter';
 import type { ObservedEvent, ComponentInteraction, ComponentContext, BrowserEventType } from '../../src/shared/component-types';
+import { makeElementIdentity, makeObservedEvent } from '../helpers/fixtures';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
 function makeSpinbuttonFocusEvent(
   overrides: Partial<ObservedEvent> = {},
 ): ObservedEvent {
-  return {
+  return makeObservedEvent({
     eventId: 'evt-1',
     eventType: 'focus',
-    timestamp: 1000,
-    isTrusted: true,
-    target: {
+    target: makeElementIdentity({
       tag: 'DIV',
-      inputType: null,
       cssSelector: 'div[role="spinbutton"]',
       stableId: 'spin-qty',
       ariaRole: 'spinbutton',
       accessibleName: 'Quantity',
       ariaLabel: 'Quantity',
-      placeholder: null,
-      textContent: null,
       className: 'quantity-value',
-      href: null,
-      shadowDom: false,
-    },
-    domContext: {
-      inputType: null,
-      ariaExpanded: null,
-      ariaHasPopup: null,
-      isContentEditable: false,
-      disabled: false,
-      readOnly: false,
-      required: false,
-      ancestorRoles: [],
-      ancestorClasses: [],
-      tabIndex: 0,
-    },
+    }),
+    domContext: { inputType: null, tabIndex: 0 },
     valueBefore: '5',
-    valueAfter: null,
-    checkedBefore: null,
-    checkedAfter: null,
-    clientX: null,
-    clientY: null,
-    key: null,
-    code: null,
-    shiftKey: false,
-    ctrlKey: false,
-    altKey: false,
-    metaKey: false,
-    scrollDeltaX: null,
-    scrollDeltaY: null,
-    pageUrl: 'https://example.com',
-    pageTitle: 'Shop',
     ...overrides,
-  };
+  });
 }
 
 function makeInputOrChangeEvent(
@@ -111,19 +79,15 @@ function makeContext(
   data: Record<string, unknown> = {},
 ): ComponentContext {
   return {
-    trigger: {
-      type: 'Slider',
-      stableId: trigger.target.stableId,
-      cssSelector: trigger.target.cssSelector,
-      accessibleName: trigger.target.accessibleName,
-      ariaLabel: trigger.target.ariaLabel,
-      placeholder: trigger.target.placeholder,
-      tag: trigger.target.tag,
-      ariaRole: trigger.target.ariaRole,
-    },
+    type: 'Slider',
+    state: 'active',
+    lifecycleId: 'lc-001',
+    trigger: trigger.target,
     triggerEvent: trigger,
     memberEvents: [],
-    allEvents: [trigger],
+    scopeKeys: new Set([trigger.target.elementId]),
+    startTime: trigger.timestamp,
+    endTime: 0,
     data,
   };
 }
@@ -183,7 +147,6 @@ describe('G5 Spinbutton — detectTrigger', () => {
       target: {
         ...makeSpinbuttonFocusEvent().target,
         ariaRole: 'spinbutton',
-        textContent: null,
       },
     });
     expect(sliderDefinition.detectTrigger(event)).not.toBeNull();
