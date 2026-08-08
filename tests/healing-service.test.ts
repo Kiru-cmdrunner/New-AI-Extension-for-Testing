@@ -18,25 +18,38 @@ import { DexieUnitOfWorkFactory } from '../src/repository/v2';
 import type { UiElement } from '../src/domain/entities/ui-element';
 import type { ElementIdentity } from '../src/shared/types';
 import { LocatorStrategyType, ElementStatus } from '../src/domain/enums';
-import { makeElementIdentity } from './helpers/fixtures';
 import type { CmdRunnerDatabase } from '../src/repository/v2/dexie/dexie-database';
 
 // ── Test Helpers ────────────────────────────────────────────
 
 /**
- * Create an ElementIdentity with specific locator fields.
- * Uses the shared fixture builder for complete, type-correct objects.
+ * Create an ElementIdentity for healing tests.
+ * Only specified fields are set — everything else is empty/null so
+ * extractCandidatesFromIdentity() only produces locators from fields the
+ * test explicitly controls.
  */
 function makeIdentity(overrides: Partial<ElementIdentity> = {}): ElementIdentity {
-  return makeElementIdentity({
-    ariaRole: 'button',
-    accessibleName: 'Submit',
+  const base: ElementIdentity = {
+    elementId: 'el-' + Math.random().toString(36).slice(2, 8),
+    accessibleName: '',
+    ariaRole: null,
+    ariaLabel: null,
+    ariaLabelledBy: null,
+    placeholder: null,
     tag: 'BUTTON',
-    cssSelector: null,
-    xPath: null,
-    elementId: '',
-    ...overrides,
-  });
+    className: null,
+    name: null,
+    stableId: null,
+    testId: null,
+    dataCy: null,
+    dataQa: null,
+    cssSelector: '',
+    xPath: '',
+    inIframe: false,
+    shadowDom: false,
+    href: null,
+  };
+  return { ...base, ...overrides };
 }
 
 function makeUiElement(
