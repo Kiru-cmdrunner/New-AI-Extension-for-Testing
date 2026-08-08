@@ -784,3 +784,81 @@ All 7 major subsystems verified architecturally correct:
   compiler-owned `GenerationInput` provide clean integration points.
 - **Application Knowledge Repository:** READY. The Repository v2 layer
   (UnitOfWork pattern, Dexie implementation) is structurally sound.
+
+---
+
+## Appendix: Capability Readiness Review (2026-08-08)
+
+**Status:** Design review only — no implementation.
+**Full report:** `/workspace/.drytis/notes/capability-readiness-review.md`
+
+### Current State
+- **14 component definitions** (Click, Link, Tab, Hover, Scroll, Navigation, TextEntry, Checkbox, RadioButton, Dropdown, Slider, DatePicker, ColorInput, FileUpload)
+- **12 capability rules** (OpenDetail, UploadFile, AdjustValue, ToggleControl, Paginate, SubmitForm, ExpandCollapse, FilterSelection, SortSelection, Navigate, Search, SelectOption)
+- **7 semantic effect categories** (state-toggle, expand-collapse, enable-disable, content-change, visibility-change, no-observable-effect, unclassified)
+- **13 captured event types**, 18-field element identity, 11-field DOM context
+
+### Top 5 Most Impactful Gaps
+
+| # | Gap | Impact | Root Cause |
+|---|-----|--------|------------|
+| 1 | Observation windows only open for `click` + `change` | **Critical** — 70%+ of interactions have ZERO behavioral evidence | `recorder-entry.ts:362-365` only calls `onAfterEvent` for click/change |
+| 2 | No drag/drop, pointer, or touch event capture | **Critical** — entire class of modern web interactions invisible | EventTap registers only 13 event types |
+| 3 | CSS visibility / `aria-hidden` changes not interpreted | **Critical** — most common SPA show/hide mechanism produces "unclassified" mutations | Effect rules don't interpret computed style or `aria-hidden` |
+| 4 | No `aria-selected` tracking | **High** — tab/listbox/tree selection invisible to snapshot + effects | Not in ElementStateSnapshot, not in any effect rule |
+| 5 | No network/focus/selection evidence | **High** — cannot correlate actions with API calls or focus changes | No XHR/fetch interception, no `document.activeElement` tracking |
+
+### Gap Severity Distribution
+
+| Severity | Count | Examples |
+|----------|-------|----------|
+| Critical | 7 | No drag events, no touch events, observation blind to non-click/change, aria-hidden invisible, no drag-drop capability |
+| High | 28 | No pointer events, no clipboard, no selection, no multi-select, no rich text, no focus evidence, no network evidence, no modal capability |
+| Medium | 24 | No dblclick, no wheel, no IME, no CSS style interpretation, no timing evidence, various missing capabilities |
+| Low | 18 | Minor attribute gaps, rare interaction types |
+
+### Proposed Capability Readiness Roadmap (5 Phases)
+
+This roadmap is PROPOSED — not yet approved. It does not replace Track 2
+but may inform its scope and ordering.
+
+**Phase CR-1: Observation Expansion** (highest ROI)
+- Expand observation window triggers from `{click, change}` to ALL 13 event types
+- Add `aria-selected`, `aria-hidden`, `aria-current` to ElementStateSnapshot
+- Add computed `display`/`visibility` to snapshot (or a lightweight proxy)
+- **Impact:** Immediately gives behavioral evidence to TextEntry, Slider, Hover, Scroll, DatePicker, ColorInput
+
+**Phase CR-2: Event Coverage Expansion**
+- Add `mouseup` (drag completion)
+- Add `pointerdown/up/move` (modern drag, stylus, touch-to-pointer)
+- Add `drag/dragstart/dragend/drop` (HTML5 DnD)
+- Add `touchstart/end/move/cancel` (touch interactions)
+- Add `copy/cut/paste` (clipboard)
+- Add `selectionchange` (text selection)
+- Add `submit` (form submission)
+- **Impact:** Unlocks drag-drop, touch, clipboard, and selection interactions
+
+**Phase CR-3: Effect Interpretation Enhancement**
+- Add `visibility-change` rule for `aria-hidden` toggling
+- Add `class-state-change` rule for semantic class toggling (active/selected/open)
+- Add `focus-change` effect (document.activeElement tracking)
+- Add `value-change` effect (JavaScript property mutations)
+- Investigate network request correlation (XHR/fetch interception)
+- **Impact:** Dramatically improves SPA interaction comprehension
+
+**Phase CR-4: New Component Definitions**
+- DragDrop (mousedown→mousemove→mouseup lifecycle)
+- MultiSelect (click + modifier key semantics)
+- Autocomplete (TextEntry + Click cross-element sequence)
+- Carousel (next/prev + slide state)
+- RichTextEditor (contentEditable + toolbar command correlation)
+- Stepper (cumulative +/- clicks with value tracking)
+- **Impact:** Classifies previously-uncapturable interaction patterns
+
+**Phase CR-5: New Capability Rules**
+- DragAndDrop, MultiSelect, OpenModal, CloseModal
+- HoverReveal, ScrollToContent
+- SetColor, SelectDate, SwitchTab
+- RateItem, AddToCart, PlayMedia
+- EditText/FormatText
+- **Impact:** High-precision capability inference for all classified interactions
