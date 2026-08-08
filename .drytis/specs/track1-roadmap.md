@@ -817,48 +817,19 @@ All 7 major subsystems verified architecturally correct:
 | Medium | 24 | No dblclick, no wheel, no IME, no CSS style interpretation, no timing evidence, various missing capabilities |
 | Low | 18 | Minor attribute gaps, rare interaction types |
 
-### Proposed Capability Readiness Roadmap (5 Phases)
+### Capability Readiness — Final Roadmap (Supersedes CR-1 through CR-5)
 
-This roadmap is PROPOSED — not yet approved. It does not replace Track 2
-but may inform its scope and ordering.
+The original CR-1 through CR-5 phases have been superseded by a comprehensive
+layered roadmap at: **`/workspace/.drytis/specs/capability-readiness-final-roadmap.md`**
 
-**Phase CR-1: Observation Expansion** (highest ROI)
-- Expand observation window triggers from `{click, change}` to ALL 13 event types
-- Add `aria-selected`, `aria-hidden`, `aria-current` to ElementStateSnapshot
-- Add computed `display`/`visibility` to snapshot (or a lightweight proxy)
-- **Impact:** Immediately gives behavioral evidence to TextEntry, Slider, Hover, Scroll, DatePicker, ColorInput
+The new roadmap:
+- Reassigns every gap to its correct permanent architectural layer
+- Identifies 10 additional gaps not in the original review
+- Defines 8 phases (DF-1 through DF-8) with strict dependency ordering
+- Removes gaps that belong in Track 3 (AI Understanding) or are browser limitations
+- Defines explicit "Deterministic Foundation Complete" criteria
+- Provides enterprise-grade interaction coverage analysis (60% → 83%)
+- Adds 4 new Technical Debt items (TD-4 through TD-7)
 
-**Phase CR-2: Event Coverage Expansion**
-- Add `mouseup` (drag completion)
-- Add `pointerdown/up/move` (modern drag, stylus, touch-to-pointer)
-- Add `drag/dragstart/dragend/drop` (HTML5 DnD)
-- Add `touchstart/end/move/cancel` (touch interactions)
-- Add `copy/cut/paste` (clipboard)
-- Add `selectionchange` (text selection)
-- Add `submit` (form submission)
-- **Impact:** Unlocks drag-drop, touch, clipboard, and selection interactions
-
-**Phase CR-3: Effect Interpretation Enhancement**
-- Add `visibility-change` rule for `aria-hidden` toggling
-- Add `class-state-change` rule for semantic class toggling (active/selected/open)
-- Add `focus-change` effect (document.activeElement tracking)
-- Add `value-change` effect (JavaScript property mutations)
-- Investigate network request correlation (XHR/fetch interception)
-- **Impact:** Dramatically improves SPA interaction comprehension
-
-**Phase CR-4: New Component Definitions**
-- DragDrop (mousedown→mousemove→mouseup lifecycle)
-- MultiSelect (click + modifier key semantics)
-- Autocomplete (TextEntry + Click cross-element sequence)
-- Carousel (next/prev + slide state)
-- RichTextEditor (contentEditable + toolbar command correlation)
-- Stepper (cumulative +/- clicks with value tracking)
-- **Impact:** Classifies previously-uncapturable interaction patterns
-
-**Phase CR-5: New Capability Rules**
-- DragAndDrop, MultiSelect, OpenModal, CloseModal
-- HoverReveal, ScrollToContent
-- SetColor, SelectDate, SwitchTab
-- RateItem, AddToCart, PlayMedia
-- EditText/FormatText
-- **Impact:** High-precision capability inference for all classified interactions
+**Critical path:** DF-1 (Observation Expansion) → DF-3 (Effect Interpretation) → DF-5 (Capability Expansion)
+**Parallel tracks:** DF-2, DF-6 (Network), DF-7 (Generation Hardening), DF-8 (Shadow DOM)
