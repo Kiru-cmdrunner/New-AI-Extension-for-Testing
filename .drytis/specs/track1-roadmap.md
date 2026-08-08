@@ -709,3 +709,78 @@ Also deleted `tests/recording-session-phase1.test.ts` (19 tests) and
 exclusively tested the dead `RecordingSession` class.
 
 **Severity:** Resolved — dead code removed.
+
+### TD-3: Legacy deterministic-recorder.ts is dead code (~2700 lines)
+
+**Discovered:** Track 1 final architectural audit (2026-08-08)
+
+**Problem:** `src/recorder/deterministic-recorder.ts` (2724 lines) is the
+original Phase 1 recorder. It sends `RECORDED_EVENT` messages that the
+service worker no longer handles (confirmed: zero `RECORDED_EVENT`
+matches in `service-worker.ts`). It is never injected at runtime (not
+in `manifest.json`). It inflates the codebase by ~2700 lines of
+unreachable code.
+
+**What replaced it:** The Phase 5 recorder (`phase5/recorder-entry.ts`)
+uses EventTap + IdentityExtractor to produce `OBSERVED_EVENT` messages
+consumed by the Component Runtime.
+
+**Why NOT deleted in Track 1:** Track 1's scope was type safety and dead
+code from the Phase 1.4 refactoring. The deterministic-recorder was not
+part of the refactoring — it predates it. Deleting it requires verifying
+no test imports remain and is a standalone cleanup task.
+
+**Proposed action (Track 2 or standalone cleanup):**
+- Verify zero live imports (confirmed in audit: not in manifest.json).
+- Delete `deterministic-recorder.ts` and its dedicated test files.
+- Update any comments referencing it.
+
+**Severity:** Low — unreachable code, no runtime impact. Pure clutter.
+
+---
+
+## Track 1 Completion Summary
+
+**Completed:** 2026-08-08
+**Final commit:** `2d17c57`
+
+### Metrics
+| Metric | Before (Track 1 start) | After (Track 1 end) |
+|--------|----------------------|-------------------|
+| TypeScript errors | 400 (88 source + 312 test) | **0** |
+| Test files | 115 | 114 (2 dead test files deleted) |
+| Tests passing | ~2600 | **2578/2578** |
+| Build | v10.9.0 | v10.9.0 |
+| Dead source files | 4 (interaction-types.ts, recording-session.ts, + 2 tests) | 0 (TD-3: deterministic-recorder.ts remains) |
+
+### Phases Completed
+- **Phase 1.1:** Dead code removal (commit 3c00040)
+- **Phase 1.2:** Honest identity — LedgerEntry refactoring
+- **Phase 1.3:** Generation Layer cleanup — 14 ComponentInteraction types verified (commit 3c00040)
+- **Phase 1.4.1:** ElementIdentity re-export fix (commit 10b6504)
+- **Phase 1.4.2:** Type definition gaps — DomContext, AppMessage, StorageKeys (commit 36bcd7e)
+- **Phase 1.4.3:** UnitOfWork call-site fixes — 3 broken features repaired (commit 5f49c80)
+- **Phase 1.4.4:** Dead code deletion — interaction-types.ts + recording-session.ts (commit bd0e7d5)
+- **Phase 1.4.5:** Source-level unused import cleanup — 35 removals (commit cf9d07a)
+- **Phase 1.4.6:** Test-only error elimination — 304→0 via shared fixture builders (commit 32ce53b)
+
+### Architectural Audit (2026-08-08)
+All 7 major subsystems verified architecturally correct:
+1. ✅ Recorder Pipeline (Stage 1) — all 12 event types captured
+2. ✅ Component Runtime (Stage 2) — 14 definitions, lifecycle intact
+3. ✅ Semantic Effect Interpretation (Stage 2b) — 7 categories, idempotent
+4. ✅ Three-Layer Enrichment — Layers 1-3 structurally correct
+5. ✅ Capability Engine — 12 rules, conflict resolution intact
+6. ✅ Generation Layer (Stage 6) — all 10 IRAction types handled
+7. ✅ Repository Layer (Stage 5) — UoW pattern, healing service correct
+
+### Readiness for Next Tracks
+- **Track 2 (Capability Model + New Interaction Types):** READY. TD-1
+  (RadioButton metadata) is the first item. The Component Definition
+  system's additive extensibility (AP7) means new definitions are
+  self-contained — create file, implement interface, register in index.ts.
+- **Track 3 (AI Understanding):** READY. The UnderstandingResult domain
+  entity, IR Bridge's `aiEnrichment` field, and the Generation Layer's
+  compiler-owned `GenerationInput` provide clean integration points.
+- **Application Knowledge Repository:** READY. The Repository v2 layer
+  (UnitOfWork pattern, Dexie implementation) is structurally sound.
