@@ -22,6 +22,8 @@ import type { ObservedEvent } from '../../shared/component-types';
 import { createEventTap, type EventTapHandle } from '../../tap/event-tap';
 import { TargetStateCache } from '../../tap/target-state-cache';
 import { installTargetStateListeners, type TargetStateListenersHandle } from '../../tap/target-state-listeners';
+import { DOMObserver } from '../../tap/dom-observer';
+import { EvidenceCollector } from '../../tap/evidence-collector';
 
 // ── Session Storage Keys ─────────────────────────────────────────────
 
@@ -208,6 +210,16 @@ let isRecording = false;
 export let targetStateCache: TargetStateCache | null = null;
 let stateListenersHandle: TargetStateListenersHandle | null = null;
 
+// ── Evidence Collector (M4) ─────────────────────────────────────────
+//
+// The EvidenceCollector orchestrates the dual-scope evidence model:
+// TargetEvidence (element state) + ApplicationEvidence (DOM mutations).
+// It opens evidence windows on user interactions and delivers
+// BehavioralEvidence to the service worker.
+
+let domObserver: DOMObserver | null = null;
+let evidenceCollector: EvidenceCollector | null = null;
+
 function onEvent(event: ObservedEvent): void {
   // Transient events (mousemove, scroll): fire-and-forget — no buffer, no retry.
   // Their positional data is stale within milliseconds; replaying after an SW
@@ -231,15 +243,30 @@ async function startRecording(): Promise<void> {
   // they stay for the next alive SW.
   await flushPendingEvents();
 
-  // Install the event tap
-  eventTapHandle = createEventTap({
-    onEvent,
-  });
-
   // M2: Create TargetStateCache and install capture-phase listeners.
   // These pre-populate element state snapshots before interactions.
   targetStateCache = new TargetStateCache();
   stateListenersHandle = installTargetStateListeners(targetStateCache);
+
+  // M4: Create DOMObserver and EvidenceCollector.
+  // Wire onAfterEvent so EventTap feeds interactions to the EvidenceCollector.
+  domObserver = new DOMObserver();
+  evidenceCollector = new EvidenceCollector({
+    targetStateCache,
+    domObserver,
+  });
+  evidenceCollector.start();
+
+  // Flush any buffered evidence from a previous SW session
+  evidenceCollector.flushBufferedEvidence();
+
+  // Install the event tap with both onEvent and onAfterEvent
+  eventTapHandle = createEventTap({
+    onEvent,
+    onAfterEvent: (targetEl, eventId, eventType, cssSelector) => {
+      evidenceCollector?.onAfterEvent(targetEl, eventId, eventType, cssSelector);
+    },
+  });
 }
 
 /**
@@ -261,6 +288,12 @@ async function stopRecording(): Promise<void> {
   stateListenersHandle?.stop();
   stateListenersHandle = null;
   targetStateCache = null;
+
+  // M4: Stop evidence collection and release resources.
+  evidenceCollector?.stop();
+  evidenceCollector?.clearEvidenceBuffer();
+  evidenceCollector = null;
+  domObserver = null;
 
   // CRITICAL: Clear the buffer so stale events don't reappear in the
   // next recording session (Bug 1 fix from OrangeHRM learnings)

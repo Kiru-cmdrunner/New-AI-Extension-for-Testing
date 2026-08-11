@@ -320,6 +320,7 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
     'mouseenter', 'mouseleave', 'mousemove',
     'keydown',
     'scroll',
+    'submit', // Behavioral Evidence Model v3.0 §4.1 — form submit evidence
   ];
 
   for (const type of eventTypes) {

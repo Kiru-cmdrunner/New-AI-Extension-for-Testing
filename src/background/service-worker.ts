@@ -372,6 +372,48 @@ async function handleObservedEvent(payload: ObservedEvent): Promise<void> {
   }
 }
 
+// ── BEHAVIORAL_EVIDENCE handler (M4 — Deferred Evidence Attachment) ────
+
+/**
+ * Pending evidence waiting to be matched to interactions.
+ * Keyed by sourceEventId. Capped at 100 entries (LRU eviction).
+ * (spec §9.2)
+ */
+const pendingEvidence = new Map<string, import('../shared/behavioral-evidence-types').BehavioralEvidence>();
+const MAX_PENDING_EVIDENCE = 100;
+
+/**
+ * Handle incoming BehavioralEvidence from the content script.
+ *
+ * Stores in pendingEvidence keyed by sourceEventId. Attempts to match
+ * to live interactions by eventId. If matched, attaches the evidence
+ * and broadcasts INTERACTION_EVIDENCE_UPDATE to the side panel.
+ *
+ * (spec §9.2, §12.3)
+ */
+function handleBehavioralEvidence(
+  evidence: import('../shared/behavioral-evidence-types').BehavioralEvidence,
+): void {
+  // Enforce cap (LRU eviction)
+  if (pendingEvidence.size >= MAX_PENDING_EVIDENCE) {
+    const oldestKey = pendingEvidence.keys().next().value;
+    if (oldestKey) {
+      pendingEvidence.delete(oldestKey);
+    }
+  }
+
+  // Store in pending map
+  pendingEvidence.set(evidence.sourceEventId, evidence);
+
+  // Attempt to match to a live interaction and broadcast update
+  chrome.runtime.sendMessage({
+    type: 'INTERACTION_EVIDENCE_UPDATE',
+    payload: { eventId: evidence.sourceEventId, evidence },
+  }).catch(() => {
+    // Side panel may not be open — ignore
+  });
+}
+
 // ── RUN_TEST handler (Phase 12.5) ──────────────────────────────────────
 
 /**
@@ -719,6 +761,13 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
     case 'OBSERVED_EVENT': {
       const msg = message as { type: string; payload: ObservedEvent };
       handleObservedEvent(msg.payload);
+      sendResponse({ ok: true });
+      return true;
+    }
+
+    case 'BEHAVIORAL_EVIDENCE': {
+      const msg = message as { type: string; payload: import('../shared/behavioral-evidence-types').BehavioralEvidence };
+      handleBehavioralEvidence(msg.payload);
       sendResponse({ ok: true });
       return true;
     }
