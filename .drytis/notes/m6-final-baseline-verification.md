@@ -1,116 +1,146 @@
-# M6 — Final Baseline Verification Report
+# M6 — Final Baseline Verification (Pre-M7 Gate)
 
-**Verification Date:** 2025-01-25
+**Verification Date:** 2026-08-11
 **Implementation Commit:** `11b513e`
-**Report Commit:** `9a1800d`
-**Parent:** `14dec89` (M5 final baseline verification)
+**Report Commits:** `9a1800d` (impl report), `026cd2e` (this verification)
+**Chain:** `026cd2e` → `9a1800d` → `11b513e` → `14dec89` → `d8f67c4` → `74873bb` → `897e611` → `919e711` → `ef62970` → `68f576e` → `20f5be8` → `391e823` → `3bc28f6`
 
 ---
 
-## 1. Commit Chain Verification ✅
+## 1. Commit Chain & Parent Verification ✅
+
+Every commit's parent verified:
+```
+026cd2e → parent: 9a1800d  ✓
+9a1800d → parent: 11b513e  ✓
+11b513e → parent: 14dec89  ✓
+14dec89 → parent: d8f67c4  ✓
+d8f67c4 → parent: 74873bb  ✓
+74873bb → parent: 897e611  ✓
+897e611 → parent: 919e711  ✓
+919e711 → parent: ef62970  ✓
+ef62970 → parent: 68f576e  ✓
+68f576e → parent: 20f5be8  ✓
+20f5be8 → parent: 391e823  ✓
+391e823 → parent: 3bc28f6  ✓
+```
+
+`3bc28f6` confirmed as ancestor of HEAD.
+
+## 2. Report Commit Scope ✅
+
+**`026cd2e`** adds exactly 1 file: `.drytis/notes/m6-final-baseline-verification.md` (+116 lines). No source/test/config/manifest changes.
+
+**`9a1800d`** adds exactly 1 file: `.drytis/notes/m6-implementation-report.md` (+217 lines). No source/test/config/manifest changes.
+
+## 3. MAIN-world + webRequest Capture Bundled and Active ✅
+
+### MAIN-world interceptor (`assets/network-inject.js`)
+All 9 key symbols confirmed in the bundled file (3,977 bytes):
+- `__cmdrunnerNetPatched`, `originalFetch`, `originalXhrOpen`, `originalXhrSend`
+- `cmdrunner-net`, `cmdrunner-net-ready`, `cmdrunner-net-stop`
+- `phase`, `resourceType`
+
+### Service Worker bundle (`assets/service-worker.ts-DbtIxGze.js`)
+String literals confirmed:
+- `NETWORK_REQUEST` — webRequest forwarding active
+- `assets/network-inject.js` — MAIN-world injection path (`world:"MAIN"`)
+- `executeScript` with `{ world:"MAIN", files:["assets/network-inject.js"], injectImmediately:true }`
+
+### Recorder bundle (`assets/recorder-entry.ts-N5RCX5-1.js`)
+String literals confirmed:
+- `cmdrunner-net`, `cmdrunner-net-ready`, `cmdrunner-net-stop` — CustomEvent bridge
+- `collectForRange` — EvidenceCollector reads from NetworkBridge
+- `networkActivity` — populated into ApplicationEvidence
+- `NETWORK_REQUEST` — webRequest message handling
+- `sendStopSignal` — MAIN-world restoration
+- `main-world`, `webrequest`, `dedup` — deduplication logic present
+
+### Manifest
+`webRequest` permission present in permissions array.
+
+## 4. Network Evidence Reaches BehavioralEvidence.ApplicationEvidence ✅
+
+**8-step source-level flow trace:**
+
+1. **SW recording start** (`service-worker.ts:257`): `startNetworkObservation(tab.id)` → registers `chrome.webRequest` listeners + injects MAIN-world
+2. **MAIN-world injection** (`network-observation.ts:241-244`): `chrome.scripting.executeScript({ target:{tabId, allFrames:true}, world:'MAIN', files:['assets/network-inject.js'] })`
+3. **MAIN-world patches** (`network-inject.js`): patches `window.fetch` + `XMLHttpRequest.open/send`, dispatches `CustomEvent('cmdrunner-net', {detail:{url,method,timestamp,phase,status,resourceType}})`
+4. **NetworkBridge receives** (`network-bridge.ts:124`): `window.addEventListener('cmdrunner-net', ...)`
+5. **NetworkBridge receives webRequest** (`network-bridge.ts:147`): `chrome.runtime.onMessage` listener for `type:'NETWORK_REQUEST'`
+6. **EvidenceCollector closeWindow** (`evidence-collector.ts:306-310`): `this.networkBridge.collectForRange(openedAt, closedAt)` → returns `NetworkActivity[]`
+7. **Assembly** (`evidence-collector.ts:341`): `networkActivity` assigned to `applicationEvidence.networkActivity`
+8. **Delivery** (`evidence-collector.ts`): assembled `BehavioralEvidence` sent via `chrome.runtime.sendMessage({type:'BEHAVIORAL_EVIDENCE'})`
+
+## 5. Deduplication Works Correctly ✅
+
+Source code (`network-bridge.ts:360-390`):
+- `deduplicate()` method accepts `TimestampedNetworkActivity[]`
+- Iterates main-world entries first, marks webrequest entries within `DEDUP_WINDOW_MS` (2000ms) as duplicates
+- Deduplication key: same `url` + same `method` + timestamps within 2000ms
+- Preference: main-world kept (richer metadata), webrequest dropped
+- Surviving webrequest-only entries (no main-world match) are retained
+
+Bundled confirmation: `main-world`, `webrequest`, `dedup` all present in recorder bundle.
+
+Unit tests confirm: 3 dedup-specific tests pass (prefer main-world, keep webrequest-only, keep both when URL differs).
+
+## 6. No Causal Classification ✅
+
+**Source-level grep** for `causedBy`, `causalEffect`, `effectType`, `isCausedBy`, `correlation` across all 3 M6 source files:
+
+| File | `causedBy` | `causalEffect` | `effectType` | `isCausedBy` | `correlation` |
+|------|-----------|---------------|-------------|-------------|--------------|
+| `network-bridge.ts` | 0 | 0 | 0 | 0 | 0 |
+| `evidence-collector.ts` | 0 | 0 | 0 | 0 | 0 |
+| `network-observation.ts` | 0 | 0 | 0 | 0 | 0 |
+| `network-inject.js` | 0 | 0 | 0 | 0 | 0* |
+
+\* The only "correlation" in `network-inject.js` is a code comment: *"timing correlation is exact"* — referring to `performance.now()` shared between MAIN and ISOLATED worlds. No causal classification logic.
+
+**Bundled-level grep**: Same check across all 3 JS bundles — zero hits.
+
+## 7. M1–M5 Behavior Unchanged ✅
 
 ```
-9a1800d  M6: implementation + validation report          ← HEAD
-11b513e  M6: Network Evidence — MAIN-world + webRequest  ← M6 SOURCE
-14dec89  M5 final baseline verification report
-d8f67c4  M5 implementation + validation report
-74873bb  M5 Shadow DOM: recursive shadow root observation
-897e611  M4 final baseline verification report + tech debt
-919e711  M4: validation report + browser test page
-ef62970  M4: EvidenceCollector — end-to-end evidence orchestration
-68f576e  M3 ApplicationEvidence: DOMObserver + AdaptiveWindow
-20f5be8  M2 TargetEvidence: TargetStateCache + capture-phase listeners
-391e823  M1 Foundation: behavioral evidence types + EventTap hooks
-3bc28f6  (base: post Capability Model + Behavioral Observation removal)
+Full test suite:
+Test Files  101 passed (101)
+Tests       2178 passed (2178)
+
+M1–M5 specific:
+Test Files  16 passed (16)
+Tests       255 passed (255)
 ```
 
-**Parent verification:** `11b513e` parent = `14dec89` ✅
+No M1 source files modified at 11b513e. No M2/M3/M4/M5 source files modified. Only additive changes to `evidence-collector.ts` (optional `networkBridge` param), `recorder-entry.ts` (new lifecycle calls), `service-worker.ts` (new start/stop calls).
 
-## 2. Report Commit Diff Scope ✅
-
-`9a1800d` adds exactly 1 file:
-- `.drytis/notes/m6-implementation-report.md` (+217 lines)
-
-No source code, tests, config, or manifest changes.
-
-## 3. M6 Source Diff Scope ✅
-
-`11b513e` vs parent `14dec89`: 10 files changed, +1904 insertions, -2 deletions.
-
-**New files (6):**
-- `public/assets/network-inject.js` (144 LOC)
-- `src/tap/network-bridge.ts` (412 LOC)
-- `src/background/network-observation.ts` (280 LOC)
-- `tests/tap/network-bridge.test.ts` (513 LOC)
-- `tests/background/network-observation.test.ts` (277 LOC)
-- `public/m6-network-validation.html` (225 LOC)
-
-**Modified files (4):**
-- `src/tap/evidence-collector.ts` (+18/-2 lines)
-- `src/recorder/phase5/recorder-entry.ts` (+19 lines)
-- `src/background/service-worker.ts` (+16 lines)
-- `src/manifest.json` (+1/-1 line)
-
-## 4. Only M6 Source Changed ✅
-
-No M5 files modified: `src/tap/dom-observer.ts` unchanged.
-No M4 files modified: `src/tap/evidence-collector.ts` only additive (optional networkBridge param).
-No M3 files modified: `src/tap/adaptive-window.ts` unchanged.
-No M2 files modified: `src/tap/target-state-cache.ts`, `src/tap/target-state-listeners.ts` unchanged.
-No M1 files modified: `src/shared/behavioral-evidence-types.ts`, `src/tap/event-tap.ts`, `src/tap/identity-extractor.ts` unchanged.
-
-## 5. No M7/M8 Functionality Leaked In ✅
+## 8. No M7/M8 Functionality Leaked In ✅
 
 | Check | Status |
 |-------|--------|
-| M7: Side panel evidence renderer | Not present (no `evidence-renderer.ts`) |
-| M8: Dexie V4 schema | Not present (still V3) |
-| M8: `interactionEventId` in schema | Not present |
-| M8: `sessionId` FK on evidence table | Not present |
+| M7: Side panel evidence renderer (`evidence-renderer.ts`) | Not present |
+| M8: Dexie V4 schema | Not present (still V1–V3) |
+| M8: `interactionEventId` in Dexie schema | Not found |
+| M8: `behavioralEvidenceId` in Dexie schema | Not found |
 
-## 6. All M1–M5 Behavior Unchanged ✅
-
-```
-tests/tap/ + tests/spa-navigation + tests/identity-inputType
-Test Files: 16 passed (16)
-Tests:       255 passed (255)
-```
-
-Full suite: 101 files / 2178 tests all pass.
-
-## 7. Network Evidence Reaches BehavioralEvidence Pipeline ✅
-
-**Evidence flow trace (8 steps):**
-
-1. `service-worker.handleStartRecording()` → `startNetworkObservation(tabId)` → registers webRequest listeners + injects `network-inject.js` into MAIN world
-2. `network-inject.js` patches `window.fetch` and `XMLHttpRequest.prototype.open/send` → dispatches `CustomEvent('cmdrunner-net')`
-3. `NetworkBridge` (ISOLATED world) listens for `cmdrunner-net` events → buffers entries
-4. `NetworkBridge` also listens for `chrome.runtime.onMessage` type `NETWORK_REQUEST` from SW webRequest → buffers entries
-5. User interacts → `EventTap.onAfterEvent` → `EvidenceCollector.openWindow()` opens an adaptive window
-6. Window stabilizes → `EvidenceCollector.closeWindow()` called
-7. `closeWindow()` calls `this.networkBridge.collectForRange(openedAt, closedAt)` → gets deduplicated `NetworkActivity[]`
-8. `closeWindow()` assembles `BehavioralEvidence` with `applicationEvidence.networkActivity` populated → delivers via `chrome.runtime.sendMessage({type:'BEHAVIORAL_EVIDENCE'})`
-
-## 8. ZIP Built From This Commit — No Stale Bundles ✅
+## 9. ZIP Built From Verified Commit — No Stale Bundles ✅
 
 | Check | Result |
 |-------|--------|
-| ZIP↔dist hash match | 39/39 files match |
+| ZIP↔dist hash match | **39/39 files match** |
 | Nested ZIPs | 0 |
-| Source maps | 0 |
-| TS source files | 0 |
-| network-inject.js present | ✅ `assets/network-inject.js` |
+| Source maps (.map) | 0 |
+| TS source files (.ts) | 0 |
+| network-inject.js in ZIP | ✅ (3,977 bytes) |
 | webRequest in manifest | ✅ |
 | Manifest references | 9/9 present |
-| Stale/old bundles | 0 |
 
 **ZIP SHA256:** `bace9521f148e8b41760aa22e290a2b7edc85e36e753a80cd2c972e594dcbb2c`
 **ZIP Size:** 141,050 bytes (137.7 KB)
-
-## 9. Verdict
-
-**PASS** — All 8 checks passed. M6 Network Evidence is correctly implemented, verified, and integrated.
+**File Count:** 39
 
 ---
+
+## Verdict: **PASS** — All 9 checks passed. M6 is verified and ready for M7.
 
 **Download:** https://semantic-test-intell-wvxv6e.drytis.dev/download/cmdrunner-extension-m6.zip
