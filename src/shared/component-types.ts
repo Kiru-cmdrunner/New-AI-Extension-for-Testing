@@ -15,7 +15,7 @@
 
 import type { ElementIdentity } from './types';
 export type { ElementIdentity } from './types';
-import type { ObservationResult } from './observation-types';
+
 
 // ── Browser Events ─────────────────────────────────────────────────────
 
@@ -444,7 +444,7 @@ export interface ComponentInteraction {
   // events captured before coordinator was configured).
 
   /** M1: Behavioral observations from the observation coordinator. */
-  behavioralObservations?: ObservationResult[];
+
 }
 
 // ── Runtime Configuration ──────────────────────────────────────────────

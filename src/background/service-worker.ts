@@ -24,7 +24,6 @@ import {
   type AppMessage,
 } from '../shared/types';
 import type { ObservedEvent } from '../shared/component-types';
-import type { ObservationResult } from '../shared/observation-types';
 import {
   initRecording,
   stopRecording,
@@ -32,9 +31,7 @@ import {
   getLiveInteractions,
   restoreFromStorage,
   resetState,
-  addPendingBehavioralEffect,
 } from '../runtime/sw-integration';
-import { interpretBehavioralObservations } from '../semantics/sw-bridge';
 import {
   filterProductionInteractions,
 } from '../presentation/output-adapter';
@@ -330,7 +327,6 @@ async function handleStopRecording(): Promise<void> {
           sessionId: `session-${Date.now()}`,
           generatedAt: new Date().toISOString(),
           schemaVersion: 1,
-          fragment: null,
         },
         events: [],
         interactions: productionInteractions,
@@ -374,83 +370,6 @@ async function handleObservedEvent(payload: ObservedEvent): Promise<void> {
       // Side panel may not be open — ignore
     });
   }
-}
-
-// ── BEHAVIORAL_EFFECTS handler (Phase D) ─────────────────────────────────
-
-/**
- * Storage key prefix for durably persisted individual observations.
- * Each completed observation is stored under cmdrunner_obs_<sourceEventId>
- * BEFORE acking the content script, ensuring it survives SW death.
- *
- * Keys are deleted only at safe points after the observation is confirmed
- * in persisted interaction state (see sw-integration.ts).
- */
-const OBS_KEY_PREFIX = 'cmdrunner_obs_';
-
-/**
- * Handle a behavioral observation result from the Observation Coordinator.
- *
- * Correlates by sourceEventId against live interactions' member events.
- * If a matching interaction is found, attaches the observation and
- * interprets semantic effects.
- * If not yet emitted (or SW restarted), stores in pending for later attachment.
- *
- * DURABILITY: The observation is persisted to chrome.storage.local under
- * a per-observation key BEFORE acking. This ensures that once the content
- * script removes its sessionStorage buffer entry, the observation is
- * durably recoverable across SW restart.
- */
-async function handleBehavioralEffects(result: ObservationResult): Promise<void> {
-  const interactions = getLiveInteractions();
-  let attached = false;
-
-  for (const interaction of interactions) {
-    const eventIds = [
-      interaction.triggerEvent.eventId,
-      ...interaction.memberEvents.map((e) => e.eventId),
-    ];
-
-    if (eventIds.includes(result.sourceEventId)) {
-      if (!interaction.behavioralObservations) {
-        interaction.behavioralObservations = [];
-      }
-      interaction.behavioralObservations.push(result);
-      attached = true;
-
-      // ── Semantic Interpretation (Sub-phase 2) ─────────────────────
-      // Interpret now that the observation is attached to its interaction.
-      // Fail-safe: if interpretation throws, the observation is still
-      // persisted (without semanticEffects) below — evidence durability
-      // is never compromised by interpretation failure.
-      interpretBehavioralObservations(interaction);
-      // ── End Semantic Interpretation ───────────────────────────────
-
-      // Broadcast update to side panel for live display
-      chrome.runtime.sendMessage({
-        type: 'INTERACTION_EFFECTS_UPDATE',
-        interactionId: interaction.interactionId,
-        behavioralObservations: interaction.behavioralObservations,
-      }).catch(() => {
-        // Side panel may not be open — ignore
-      });
-      break;
-    }
-  }
-
-  if (!attached) {
-    // Interaction not yet emitted, or SW restarted — store pending
-    addPendingBehavioralEffect(result);
-  }
-
-  // ── DURABILITY: persist this observation before acking ───────────
-  // The stored object includes semanticEffects if interpreted, or raw
-  // evidence if still pending (no interaction context yet). The key
-  // is consumed at safe points once the observation is incorporated
-  // into persisted interaction state.
-  await chrome.storage.local.set({
-    [`${OBS_KEY_PREFIX}${result.sourceEventId}`]: result,
-  });
 }
 
 // ── RUN_TEST handler (Phase 12.5) ──────────────────────────────────────
@@ -800,20 +719,6 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
       const msg = message as { type: string; payload: ObservedEvent };
       handleObservedEvent(msg.payload);
       sendResponse({ ok: true });
-      return true;
-    }
-
-    case 'BEHAVIORAL_EFFECTS': {
-      const msg = message as { type: string; payload: ObservationResult };
-      handleBehavioralEffects(msg.payload).then(() => {
-        sendResponse({ ok: true });
-      }).catch(() => {
-        // If persistence fails, still ACK so the content script doesn't
-        // retry indefinitely — the observation will be re-delivered via
-        // the behavioral buffer flush on the next recording session.
-        // Better to ACK with ok:false so the buffer entry survives.
-        sendResponse({ ok: false });
-      });
       return true;
     }
 

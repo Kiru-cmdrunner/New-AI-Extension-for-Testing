@@ -1041,42 +1041,6 @@ function setupLiveListeners(): void {
         }).catch(() => {});
       }
     }
-
-    // Behavioral evidence attached to a previously-captured interaction.
-    // Observation window closed (3s after click/change) — re-render to show evidence.
-    //
-    // IMPORTANT: The broadcast message carries the behavioralObservations
-    // (including semanticEffects) from the SW's in-memory interaction.
-    // We CANNOT rely on reading them from chrome.storage.local because
-    // persistLiveInteractions() is NOT called on every observation close
-    // (per the Sub-phase 2 durability design — observations are persisted
-    // separately as cmdrunner_obs_* keys, and liveInteractions[] is only
-    // updated at safe points).
-    //
-    // So we: read stale liveInteractions from storage → merge the fresh
-    // behavioralObservations from the broadcast onto the matching
-    // interaction → re-render. This is a UI-only merge — it does NOT
-    // write back to storage.
-    if (message?.type === 'INTERACTION_EFFECTS_UPDATE' && message.interactionId) {
-      if (!views['recording'].hidden) {
-        chrome.storage.local.get(StorageKeys.LIVE_INTERACTIONS).then((result) => {
-          const all = result[StorageKeys.LIVE_INTERACTIONS];
-          if (Array.isArray(all)) {
-            const interactions = all as ComponentInteraction[];
-            // ── UI-only merge: overlay fresh behavioral data ────────
-            // Find the interaction and replace its behavioralObservations
-            // with the broadcast payload. This does NOT persist.
-            const target = interactions.find(
-              (i) => i.interactionId === message.interactionId,
-            );
-            if (target && message.behavioralObservations) {
-              target.behavioralObservations = message.behavioralObservations;
-            }
-            renderProductionInteractions(detectedInteractionsList, interactions);
-          }
-        }).catch(() => {});
-      }
-    }
   });
 }
 

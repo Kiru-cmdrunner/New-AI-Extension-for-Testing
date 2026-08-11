@@ -541,8 +541,7 @@ export type AppMessage =
       domContext?: import('../recorder/recorded-event').DomContext;
     }
   // ── Component Runtime messages (Phase 6) ──
-  | { type: 'OBSERVED_EVENT'; payload: import('./component-types').ObservedEvent }
-  | { type: 'BEHAVIORAL_EFFECTS'; payload: import('./observation-types').ObservationResult };
+  | { type: 'OBSERVED_EVENT'; payload: import('./component-types').ObservedEvent };
 
 /** Type guard: narrows an unknown value to AppMessage. */
 export function isAppMessage(value: unknown): value is AppMessage {
@@ -562,7 +561,6 @@ export function isAppMessage(value: unknown): value is AppMessage {
       'EXECUTION_RESULT',
       'RECORDED_EVENT',
       'OBSERVED_EVENT',
-      'BEHAVIORAL_EFFECTS',
     ].includes(msg['type'])
   );
 }

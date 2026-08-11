@@ -18,8 +18,6 @@
  */
 
 import type { ComponentInteraction } from '../shared/component-types';
-import { renderBehavioralEvidence, renderSemanticEffects } from './behavioral-renderer';
-import type { ObservationResult } from '../shared/observation-types';
 
 // ── Layer 1: Type Display Config ──────────────────────────────────────
 
@@ -271,35 +269,6 @@ export function createInteractionElement(interaction: ComponentInteraction): HTM
     meta.style.fontSize = '0.8em';
     meta.textContent = metaText;
     el.appendChild(meta);
-  }
-
-  // ── Semantic Effects (Sub-phase 3) ──
-  // "What happened" section displayed ABOVE raw behavioral evidence.
-  // Collects all semanticEffects from all observations and renders them.
-  // If no observations have semanticEffects, section is absent (invisible).
-  if (
-    interaction.behavioralObservations &&
-    interaction.behavioralObservations.length > 0
-  ) {
-    const allEffects = interaction.behavioralObservations
-      .flatMap((obs: ObservationResult) => obs.semanticEffects ?? []);
-    const effectsEl = renderSemanticEffects(allEffects);
-    if (effectsEl) {
-      el.appendChild(effectsEl);
-    }
-  }
-
-  // ── Behavioral Evidence (M1 Phase E) ──
-  // Collapsible section showing before/after snapshots and mutation evidence.
-  // Only renders if observations were captured (additive — absent = invisible).
-  if (
-    interaction.behavioralObservations &&
-    interaction.behavioralObservations.length > 0
-  ) {
-    const evidenceSection = renderBehavioralEvidence(
-      interaction.behavioralObservations,
-    );
-    el.appendChild(evidenceSection);
   }
 
   return el;

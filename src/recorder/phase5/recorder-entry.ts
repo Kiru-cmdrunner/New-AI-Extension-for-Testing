@@ -20,11 +20,6 @@
 
 import type { ObservedEvent } from '../../shared/component-types';
 import { createEventTap, type EventTapHandle } from '../../tap/event-tap';
-import { ElementStateCache } from '../../tap/element-state-cache';
-import { DocumentObserver } from '../../tap/document-observer';
-import { ObservationCoordinator } from '../../tap/observation-coordinator';
-import { setupStateCacheListeners } from '../../tap/state-cache-listeners';
-import type { ObservationResult } from '../../shared/observation-types';
 
 // ── Session Storage Keys ─────────────────────────────────────────────
 
@@ -87,46 +82,6 @@ function clearBuffer(): void {
     sessionStorage.removeItem(BUFFER_KEY);
   } catch {
     // silent degrade
-  }
-}
-
-// ── Behavioral Buffer (Phase D) ──────────────────────────────────────
-
-const BEHAVIORAL_BUFFER_KEY = 'cmdrunner_behavioral_buffer';
-const MAX_BEHAVIORAL_BUFFER = 200;
-
-function pushToBehavioralBuffer(result: ObservationResult): void {
-  try {
-    const raw = sessionStorage.getItem(BEHAVIORAL_BUFFER_KEY);
-    const buffer: ObservationResult[] = raw ? JSON.parse(raw) : [];
-    buffer.push(result);
-    if (buffer.length > MAX_BEHAVIORAL_BUFFER) {
-      buffer.shift();
-    }
-    sessionStorage.setItem(BEHAVIORAL_BUFFER_KEY, JSON.stringify(buffer));
-  } catch {
-    // silent degrade
-  }
-}
-
-function removeFromBehavioralBuffer(sourceEventId: string): void {
-  try {
-    const raw = sessionStorage.getItem(BEHAVIORAL_BUFFER_KEY);
-    if (!raw) return;
-    const buffer: ObservationResult[] = JSON.parse(raw);
-    const filtered = buffer.filter((r) => r.sourceEventId !== sourceEventId);
-    sessionStorage.setItem(BEHAVIORAL_BUFFER_KEY, JSON.stringify(filtered));
-  } catch {
-    // silent degrade
-  }
-}
-
-function peekBehavioralBuffer(): ObservationResult[] {
-  try {
-    const raw = sessionStorage.getItem(BEHAVIORAL_BUFFER_KEY);
-    return raw ? (JSON.parse(raw) as ObservationResult[]) : [];
-  } catch {
-    return [];
   }
 }
 
@@ -235,85 +190,10 @@ async function flushPendingEvents(): Promise<void> {
   }
 }
 
-// ── Behavioral Result Delivery (Phase D) ─────────────────────────────
-
-/**
- * Send a behavioral observation result to the service worker.
- * Buffers first (for MV3 resilience), removes on confirmed delivery.
- * Retries on failure with exponential backoff.
- */
-function sendBehavioralResult(result: ObservationResult): void {
-  if (!chrome?.runtime?.sendMessage) return;
-
-  pushToBehavioralBuffer(result);
-
-  const attempt = (retryCount: number) => {
-    chrome.runtime.sendMessage(
-      { type: 'BEHAVIORAL_EFFECTS', payload: result },
-      (response) => {
-        if (chrome.runtime.lastError || !response || response.ok === false) {
-          if (retryCount < 5) {
-            setTimeout(() => attempt(retryCount + 1), 100 * Math.pow(2, retryCount));
-          }
-          return;
-        }
-        removeFromBehavioralBuffer(result.sourceEventId);
-      },
-    );
-  };
-
-  attempt(0);
-}
-
-/**
- * Flush all pending buffered behavioral results to the service worker.
- * Called on startRecording and pagehide for MV3 recovery.
- */
-async function flushPendingBehavioralEvents(): Promise<void> {
-  const buffered = peekBehavioralBuffer();
-  if (buffered.length === 0) return;
-
-  const results = await Promise.allSettled(
-    buffered.map(
-      (result) =>
-        new Promise<boolean>((resolve) => {
-          if (!chrome?.runtime?.sendMessage) {
-            resolve(false);
-            return;
-          }
-          chrome.runtime.sendMessage(
-            { type: 'BEHAVIORAL_EFFECTS', payload: result },
-            (response) => {
-              if (chrome.runtime.lastError || !response || response.ok === false) {
-                resolve(false);
-              } else {
-                resolve(true);
-              }
-            },
-          );
-        }),
-    ),
-  );
-
-  for (let i = 0; i < results.length; i++) {
-    const result = results[i];
-    if (result.status === 'fulfilled' && result.value === true) {
-      removeFromBehavioralBuffer(buffered[i].sourceEventId);
-    }
-  }
-}
-
 // ── Event Tap Lifecycle ──────────────────────────────────────────────
 
 let eventTapHandle: EventTapHandle | null = null;
 let isRecording = false;
-
-// ── Observation Infrastructure (Phase D) ──────────────────────────────
-
-let elementStateCache: ElementStateCache | null = null;
-let documentObserver: DocumentObserver | null = null;
-let observationCoordinator: ObservationCoordinator | null = null;
-let cacheCleanupFn: (() => void) | null = null;
 
 function onEvent(event: ObservedEvent): void {
   // Transient events (mousemove, scroll): fire-and-forget — no buffer, no retry.
@@ -337,33 +217,10 @@ async function startRecording(): Promise<void> {
   // clear them. If the SW is alive, they get delivered. If not,
   // they stay for the next alive SW.
   await flushPendingEvents();
-  await flushPendingBehavioralEvents();
 
-  // ── Observation Infrastructure ───────────────────────────────────
-  elementStateCache = new ElementStateCache();
-  documentObserver = new DocumentObserver();
-  observationCoordinator = new ObservationCoordinator();
-
-  observationCoordinator.configure({
-    cache: elementStateCache,
-    observer: documentObserver,
-    windowDurationMs: 3000,
-    onResult: sendBehavioralResult,
-  });
-
-  // Register Phase A capture-phase listeners (mousedown + focus)
-  cacheCleanupFn = setupStateCacheListeners(elementStateCache);
-  // ── End Observation Infrastructure ───────────────────────────────
-
-  // Install the event tap — now with onAfterEvent for observation windows
+  // Install the event tap
   eventTapHandle = createEventTap({
     onEvent,
-    onAfterEvent: (targetEl, eventId, eventType, _cssSelector) => {
-      // M1 contract: only observe click and change events
-      if (eventType === 'click' || eventType === 'change') {
-        observationCoordinator?.openWindow(eventId, eventType, targetEl);
-      }
-    },
   });
 }
 
@@ -385,28 +242,6 @@ async function stopRecording(): Promise<void> {
   // CRITICAL: Clear the buffer so stale events don't reappear in the
   // next recording session (Bug 1 fix from OrangeHRM learnings)
   clearBuffer();
-
-  // ── Observation Cleanup ──────────────────────────────────────────
-  // Shutdown the coordinator FIRST — finalizes all open windows and
-  // delivers their results via sendBehavioralResult (buffered + async).
-  // Per design: do NOT clear unacknowledged behavioral results during
-  // Stop Recording. They must remain recoverable through the behavioral
-  // flush/retry mechanism. Successfully acknowledged results are removed
-  // normally by sendBehavioralResult's callback.
-  observationCoordinator?.shutdown();
-  observationCoordinator = null;
-
-  // Clean up Phase A listeners
-  cacheCleanupFn?.();
-  cacheCleanupFn = null;
-
-  // Clear observation infrastructure
-  documentObserver?.reset();
-  documentObserver = null;
-
-  elementStateCache?.clear();
-  elementStateCache = null;
-  // ── End Observation Cleanup ──────────────────────────────────────
 }
 
 // ── Message Listener ─────────────────────────────────────────────────
@@ -442,7 +277,6 @@ if (chrome?.runtime?.onMessage) {
  */
 window.addEventListener('pagehide', () => {
   flushPendingEvents();
-  flushPendingBehavioralEvents();
 });
 
 /**

@@ -24,24 +24,6 @@ function makeUnderstandingResult(overrides: Partial<UnderstandingResult> = {}): 
     sessionId: 'session-001',
     generatedAt: '2026-07-22T00:00:00Z',
     schemaVersion: 1,
-    fragment: {
-      sessionId: 'session-001',
-      generatedAt: '2026-07-22T00:00:00Z',
-      schemaVersion: 1,
-      elements: [],
-      transitions: [],
-      components: [],
-      interactionContracts: [],
-      behavioralContracts: [],
-      logicalActions: [],
-      recordedWorkflow: {
-        surfaceTransitions: [],
-        logicalActions: [],
-        branchPoints: [],
-        optionalSteps: [],
-      },
-      applicationSurfaces: [],
-    },
     ...overrides,
   };
 }
