@@ -20,6 +20,8 @@
 
 import type { ObservedEvent } from '../../shared/component-types';
 import { createEventTap, type EventTapHandle } from '../../tap/event-tap';
+import { TargetStateCache } from '../../tap/target-state-cache';
+import { installTargetStateListeners, type TargetStateListenersHandle } from '../../tap/target-state-listeners';
 
 // ── Session Storage Keys ─────────────────────────────────────────────
 
@@ -195,6 +197,17 @@ async function flushPendingEvents(): Promise<void> {
 let eventTapHandle: EventTapHandle | null = null;
 let isRecording = false;
 
+// ── Target State Cache (M2) ─────────────────────────────────────────
+//
+// TargetStateCache stores pre-interaction element state snapshots.
+// Populated by capture-phase mousedown/focus listeners.
+// The EvidenceCollector (M4) will consume this to build TargetEvidence.
+// In M2, the cache is populated but not yet consumed.
+
+/** Shared cache instance — exposed for EvidenceCollector (M4). */
+export let targetStateCache: TargetStateCache | null = null;
+let stateListenersHandle: TargetStateListenersHandle | null = null;
+
 function onEvent(event: ObservedEvent): void {
   // Transient events (mousemove, scroll): fire-and-forget — no buffer, no retry.
   // Their positional data is stale within milliseconds; replaying after an SW
@@ -222,6 +235,11 @@ async function startRecording(): Promise<void> {
   eventTapHandle = createEventTap({
     onEvent,
   });
+
+  // M2: Create TargetStateCache and install capture-phase listeners.
+  // These pre-populate element state snapshots before interactions.
+  targetStateCache = new TargetStateCache();
+  stateListenersHandle = installTargetStateListeners(targetStateCache);
 }
 
 /**
@@ -238,6 +256,11 @@ async function stopRecording(): Promise<void> {
   // Stop listening
   eventTapHandle?.stop();
   eventTapHandle = null;
+
+  // M2: Remove capture-phase state listeners and release cache.
+  stateListenersHandle?.stop();
+  stateListenersHandle = null;
+  targetStateCache = null;
 
   // CRITICAL: Clear the buffer so stale events don't reappear in the
   // next recording session (Bug 1 fix from OrangeHRM learnings)
