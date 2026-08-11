@@ -31,6 +31,8 @@ import {
   getLiveInteractions,
   restoreFromStorage,
   resetState,
+  storePendingEvidence,
+  attachEvidenceToInteraction,
 } from '../runtime/sw-integration';
 import {
   filterProductionInteractions,
@@ -388,46 +390,44 @@ async function handleObservedEvent(payload: ObservedEvent): Promise<void> {
   }
 }
 
-// ── BEHAVIORAL_EVIDENCE handler (M4 — Deferred Evidence Attachment) ────
-
-/**
- * Pending evidence waiting to be matched to interactions.
- * Keyed by sourceEventId. Capped at 100 entries (LRU eviction).
- * (spec §9.2)
- */
-const pendingEvidence = new Map<string, import('../shared/behavioral-evidence-types').BehavioralEvidence>();
-const MAX_PENDING_EVIDENCE = 100;
+// ── BEHAVIORAL_EVIDENCE handler (M7-fix-001 — Correlation Contract) ───
 
 /**
  * Handle incoming BehavioralEvidence from the content script.
  *
- * Stores in pendingEvidence keyed by sourceEventId. Attempts to match
- * to live interactions by eventId. If matched, attaches the evidence
- * and broadcasts INTERACTION_EVIDENCE_UPDATE to the side panel.
+ * Two-tier matching using existing triggerEvent.eventId:
+ *   Tier 1: interaction.triggerEvent.eventId === sourceEventId (preferred)
+ *   Tier 2: interaction.memberEvents[].eventId === sourceEventId (fallback)
  *
- * (spec §9.2, §12.3)
+ * If matched: attaches evidence to interaction.behavioralEvidence,
+ * re-persists liveInteractions, and broadcasts INTERACTION_EVIDENCE_UPDATE
+ * with the real interactionId.
+ *
+ * If unmatched: stores in pendingEvidence for later drain on onEmit.
+ *
+ * Architecture: .drytis/notes/event-interaction-evidence-correlation-contract.md
  */
 function handleBehavioralEvidence(
   evidence: import('../shared/behavioral-evidence-types').BehavioralEvidence,
 ): void {
-  // Enforce cap (LRU eviction)
-  if (pendingEvidence.size >= MAX_PENDING_EVIDENCE) {
-    const oldestKey = pendingEvidence.keys().next().value;
-    if (oldestKey) {
-      pendingEvidence.delete(oldestKey);
-    }
+  // Try to match to a live interaction
+  const interactionId = attachEvidenceToInteraction(
+    evidence.sourceEventId,
+    evidence,
+  );
+
+  if (interactionId) {
+    // Match found — broadcast update with interactionId
+    chrome.runtime.sendMessage({
+      type: 'INTERACTION_EVIDENCE_UPDATE',
+      payload: { interactionId, evidence },
+    }).catch(() => {
+      // Side panel may not be open — ignore
+    });
+  } else {
+    // No match — store for later drain when interaction is emitted
+    storePendingEvidence(evidence);
   }
-
-  // Store in pending map
-  pendingEvidence.set(evidence.sourceEventId, evidence);
-
-  // Attempt to match to a live interaction and broadcast update
-  chrome.runtime.sendMessage({
-    type: 'INTERACTION_EVIDENCE_UPDATE',
-    payload: { eventId: evidence.sourceEventId, evidence },
-  }).catch(() => {
-    // Side panel may not be open — ignore
-  });
 }
 
 // ── RUN_TEST handler (Phase 12.5) ──────────────────────────────────────

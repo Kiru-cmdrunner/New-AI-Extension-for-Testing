@@ -302,9 +302,9 @@ chrome.runtime.onMessage.addListener((message: unknown) => {
     if (msg.type === 'INTERACTION_EVIDENCE_UPDATE') {
       const evMsg = msg as {
         type: 'INTERACTION_EVIDENCE_UPDATE';
-        payload: { eventId: string; evidence: BehavioralEvidence };
+        payload: { interactionId: string; evidence: BehavioralEvidence };
       };
-      handleEvidenceUpdate(evMsg.payload.eventId, evMsg.payload.evidence);
+      handleEvidenceUpdate(evMsg.payload.interactionId, evMsg.payload.evidence);
     }
   }
 });
@@ -963,11 +963,15 @@ async function handleRecordAnother(): Promise<void> {
  * Handle a late-arriving INTERACTION_EVIDENCE_UPDATE message.
  *
  * Searches all visible interaction lists (recording + stopped views) for
- * an interaction card matching the eventId, then overlays the evidence
+ * an interaction card matching the interactionId, then overlays the evidence
  * onto it. The interaction card is identified by its interactionId text
  * in the `.timeline-event__id` badge.
+ *
+ * If no matching card is found, no action is needed — the SW has already
+ * persisted the evidence to chrome.storage.local, so the next storage-
+ * triggered re-render will include behavioralEvidence on the interaction.
  */
-function handleEvidenceUpdate(eventId: string, evidence: BehavioralEvidence): void {
+function handleEvidenceUpdate(interactionId: string, evidence: BehavioralEvidence): void {
   // Search all timeline containers for a matching interaction card
   const containers = [
     timelineEvents,
@@ -977,25 +981,20 @@ function handleEvidenceUpdate(eventId: string, evidence: BehavioralEvidence): vo
   for (const container of containers) {
     if (!container || container.hidden) continue;
 
-    // Look for interaction cards whose ID badge matches the eventId
+    // Look for interaction cards whose ID badge matches the interactionId
     const cards = container.querySelectorAll('.interaction-event');
     for (const card of cards) {
       const idBadge = card.querySelector('.timeline-event__id');
-      if (idBadge && idBadge.textContent === eventId) {
+      if (idBadge && idBadge.textContent === interactionId) {
         // Found the matching card — update evidence
         updateEvidenceOnInteraction(card as HTMLElement, evidence);
         return;
       }
     }
   }
-
-  // Evidence arrived for an interaction not yet displayed — store for
-  // when the interaction renders. We use a Map on the window for
-  // deferred application.
-  const deferred = (window as unknown as { __deferredEvidence?: Map<string, BehavioralEvidence> }).__deferredEvidence;
-  if (deferred) {
-    deferred.set(eventId, evidence);
-  }
+  // No matching card found — evidence is persisted in storage via SW.
+  // When the next LIVE_INTERACTIONS storage update triggers a re-render,
+  // interaction.behavioralEvidence will be present → renderEvidence directly.
 }
 
 // ── Live Updates ───────────────────────────────────────────

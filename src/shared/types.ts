@@ -546,7 +546,7 @@ export type AppMessage =
   | { type: 'OBSERVED_EVENT'; payload: import('./component-types').ObservedEvent }
   // ── Behavioral Evidence Model (v3.0) ──
   | { type: 'BEHAVIORAL_EVIDENCE'; payload: import('./behavioral-evidence-types').BehavioralEvidence }
-  | { type: 'INTERACTION_EVIDENCE_UPDATE'; payload: { eventId: string; evidence: import('./behavioral-evidence-types').BehavioralEvidence } };
+  | { type: 'INTERACTION_EVIDENCE_UPDATE'; payload: { interactionId: string; evidence: import('./behavioral-evidence-types').BehavioralEvidence } };
 
 /** Type guard: narrows an unknown value to AppMessage. */
 export function isAppMessage(value: unknown): value is AppMessage {

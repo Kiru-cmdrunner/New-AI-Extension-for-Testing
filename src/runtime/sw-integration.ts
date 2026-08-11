@@ -21,6 +21,7 @@ import type {
   ComponentInteraction,
   RuntimeConfig,
 } from '../shared/component-types';
+import type { BehavioralEvidence } from '../shared/behavioral-evidence-types';
 import {
   EvidenceLedger,
   EVIDENCE_LEDGER_KEY,
@@ -45,6 +46,97 @@ let isRecording = false;
 let evidenceLedger: EvidenceLedger | null = null;
 let lastVerificationResult: VerificationResult | null = null;
 
+// ── Pending Evidence (M7-fix-001) ────────────────────────────────────
+//
+// Evidence that arrives before its interaction has been emitted.
+// Keyed by sourceEventId. Capped at 100 entries (LRU eviction).
+// When an interaction is emitted, drainPendingEvidence checks this map.
+
+const pendingEvidence = new Map<string, BehavioralEvidence>();
+const MAX_PENDING_EVIDENCE = 100;
+
+/**
+ * Store incoming evidence in the pending map.
+ * Called when evidence arrives but no matching interaction exists yet.
+ */
+export function storePendingEvidence(evidence: BehavioralEvidence): void {
+  if (pendingEvidence.size >= MAX_PENDING_EVIDENCE) {
+    const oldestKey = pendingEvidence.keys().next().value;
+    if (oldestKey) {
+      pendingEvidence.delete(oldestKey);
+    }
+  }
+  pendingEvidence.set(evidence.sourceEventId, evidence);
+}
+
+/**
+ * Attach evidence to a live interaction using two-tier matching.
+ *
+ * Tier 1: interaction.triggerEvent.eventId === sourceEventId (preferred)
+ * Tier 2: interaction.memberEvents[].eventId === sourceEventId (fallback)
+ *
+ * First-write-only: if interaction already has behavioralEvidence, skip.
+ * On successful match, re-persists liveInteractions to storage.
+ *
+ * @returns interactionId if matched, null if no match.
+ */
+export function attachEvidenceToInteraction(
+  sourceEventId: string,
+  evidence: BehavioralEvidence,
+): string | null {
+  // Tier 1: trigger match
+  for (const interaction of liveInteractions) {
+    if (interaction.triggerEvent?.eventId === sourceEventId) {
+      if (!interaction.behavioralEvidence) {
+        interaction.behavioralEvidence = evidence;
+        persistLiveInteractions();
+      }
+      return interaction.interactionId;
+    }
+  }
+
+  // Tier 2: member event match
+  for (const interaction of liveInteractions) {
+    if (interaction.memberEvents?.some((e) => e.eventId === sourceEventId)) {
+      if (!interaction.behavioralEvidence) {
+        interaction.behavioralEvidence = evidence;
+        persistLiveInteractions();
+      }
+      return interaction.interactionId;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Drain pending evidence for a newly emitted interaction.
+ * Called from onEmit after the interaction is pushed to liveInteractions.
+ *
+ * Checks trigger and member events against pendingEvidence.
+ * First-write-only: does not overwrite existing behavioralEvidence.
+ */
+function drainPendingEvidence(interaction: ComponentInteraction): void {
+  if (interaction.behavioralEvidence) return;
+
+  // Check trigger event
+  const triggerId = interaction.triggerEvent?.eventId;
+  if (triggerId && pendingEvidence.has(triggerId)) {
+    interaction.behavioralEvidence = pendingEvidence.get(triggerId)!;
+    pendingEvidence.delete(triggerId);
+    return;
+  }
+
+  // Check member events
+  for (const ev of interaction.memberEvents ?? []) {
+    if (pendingEvidence.has(ev.eventId)) {
+      interaction.behavioralEvidence = pendingEvidence.get(ev.eventId)!;
+      pendingEvidence.delete(ev.eventId);
+      return;
+    }
+  }
+}
+
 // ── Initialization ───────────────────────────────────────────────────
 
 /**
@@ -62,6 +154,7 @@ export function initRecording(): void {
       // Bug 1 fix: debounce timer was killed by MV3 SW termination
       // before the Login button form-submit navigation
       enrichInteraction(interaction);
+      drainPendingEvidence(interaction);
       liveInteractions.push(interaction);
       persistLiveInteractions();
     },
@@ -204,6 +297,7 @@ export function resetState(): void {
   isRecording = false;
   evidenceLedger = null;
   lastVerificationResult = null;
+  pendingEvidence.clear();
   chrome.storage.local.remove([
     LIVE_INTERACTIONS_KEY,
     RUNTIME_SNAPSHOT_KEY,
@@ -247,6 +341,7 @@ export async function restoreFromStorage(): Promise<boolean> {
     const config: RuntimeConfig = {
       onEmit: (interaction: ComponentInteraction) => {
         enrichInteraction(interaction);
+        drainPendingEvidence(interaction);
         liveInteractions.push(interaction);
         persistLiveInteractions();
       },
