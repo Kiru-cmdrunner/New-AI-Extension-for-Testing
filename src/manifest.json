@@ -3,7 +3,7 @@
   "name": "CmdRunner Smart Recorder",
   "version": "10.9.0",
   "description": "Smart recorder with Component Runtime architecture — captures browser interactions through lifecycle-based component definitions for precise test generation.",
-  "permissions": ["sidePanel", "storage", "unlimitedStorage", "activeTab", "webNavigation", "tabs", "scripting", "alarms"],
+  "permissions": ["sidePanel", "storage", "unlimitedStorage", "activeTab", "webNavigation", "tabs", "scripting", "alarms", "webRequest"],
   "host_permissions": [
     "http://*/*",
     "https://*/*"

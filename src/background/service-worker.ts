@@ -36,6 +36,10 @@ import {
   filterProductionInteractions,
 } from '../presentation/output-adapter';
 import { normalizeWorkflow } from '../presentation/workflow-normalizer';
+import {
+  startNetworkObservation,
+  stopNetworkObservation,
+} from '../background/network-observation';
 
 // ── Singletons ──────────────────────────────────────────────────────────
 
@@ -246,6 +250,11 @@ async function handleStartRecording(): Promise<void> {
   // missing from already-open tabs.)
   if (tab?.id) {
     await ensureContentScriptInjected(tab.id);
+
+    // M6: Start network observation (webRequest + MAIN-world injection).
+    // webRequest listeners are registered IMMEDIATELY for race coverage,
+    // then MAIN-world injection follows. Both run in parallel.
+    startNetworkObservation(tab.id);
   }
 
   // Update UI state
@@ -351,6 +360,13 @@ async function handleStopRecording(): Promise<void> {
 
   // Notify all tabs (content scripts listen for STOP_RECORDING to sync state)
   broadcastToTabs({ type: 'STOP_RECORDING' });
+
+  // M6: Stop network observation (webRequest listeners removed).
+  // MAIN-world restoration is handled by the content script's NetworkBridge.
+  const stopTab = await getActiveTab();
+  if (stopTab?.id) {
+    stopNetworkObservation(stopTab.id);
+  }
 }
 
 // ── OBSERVED_EVENT handler (Component Runtime) ──────────────────────────

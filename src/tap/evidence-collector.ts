@@ -42,6 +42,8 @@ import type { ElementIdentity } from '../shared/types';
 import { TargetStateCache } from './target-state-cache';
 import { DOMObserver } from './dom-observer';
 import { AdaptiveWindow } from './adaptive-window';
+import type { NetworkActivity } from '../shared/behavioral-evidence-types';
+import type { NetworkBridge } from './network-bridge';
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -123,12 +125,17 @@ export class EvidenceCollector {
   /** Collected navigation events not yet attributed to a window. */
   private pendingNavEvents: NavigationEvidence[] = [];
 
+  /** Network bridge for collecting network activity (M6). */
+  private networkBridge: NetworkBridge | null = null;
+
   constructor(config: {
     targetStateCache: TargetStateCache;
     domObserver: DOMObserver;
+    networkBridge?: NetworkBridge | null;
   }) {
     this.targetStateCache = config.targetStateCache;
     this.domObserver = config.domObserver;
+    this.networkBridge = config.networkBridge ?? null;
   }
 
   /**
@@ -295,6 +302,15 @@ export class EvidenceCollector {
     const visibilityChanges = this.domObserver.getVisibilityChanges();
     const perfMetrics = this.domObserver.getPerformanceMetrics();
 
+    // Collect network activity from the bridge (M6)
+    let networkActivity: NetworkActivity[] = [];
+    if (this.networkBridge) {
+      networkActivity = this.networkBridge.collectForRange(
+        state.openedAt,
+        performance.now(),
+      );
+    }
+
     // Apply 200-cap
     const coarseMode = allSummaries.length > MAX_DOM_CHANGES;
     const domChanges = allSummaries.slice(0, MAX_DOM_CHANGES);
@@ -322,7 +338,7 @@ export class EvidenceCollector {
       removedSurfaces,
       visibilityChanges: visibilityChanges.slice(0, 50),
       navigation: [...state.navEvents, ...this.pendingNavEvents],
-      networkActivity: [], // M6 scope
+      networkActivity, // M6: populated from NetworkBridge
       performanceCondition: {
         mainThreadBlocked: perfMetrics.longestBatchMs > 15,
         highChurnMode: coarseMode,

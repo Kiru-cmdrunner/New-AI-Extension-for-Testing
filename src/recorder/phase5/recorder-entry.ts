@@ -24,6 +24,7 @@ import { TargetStateCache } from '../../tap/target-state-cache';
 import { installTargetStateListeners, type TargetStateListenersHandle } from '../../tap/target-state-listeners';
 import { DOMObserver } from '../../tap/dom-observer';
 import { EvidenceCollector } from '../../tap/evidence-collector';
+import { NetworkBridge } from '../../tap/network-bridge';
 
 // ── Session Storage Keys ─────────────────────────────────────────────
 
@@ -220,6 +221,15 @@ let stateListenersHandle: TargetStateListenersHandle | null = null;
 let domObserver: DOMObserver | null = null;
 let evidenceCollector: EvidenceCollector | null = null;
 
+// ── Network Bridge (M6) ─────────────────────────────────────────────
+//
+// The NetworkBridge listens for CustomEvents from the MAIN-world
+// network-inject.js (fetch/XHR monkeypatch) and webRequest messages
+// forwarded from the service worker. It buffers NetworkActivity entries
+// and the EvidenceCollector reads from it at window close.
+
+let networkBridge: NetworkBridge | null = null;
+
 function onEvent(event: ObservedEvent): void {
   // Transient events (mousemove, scroll): fire-and-forget — no buffer, no retry.
   // Their positional data is stale within milliseconds; replaying after an SW
@@ -250,12 +260,16 @@ async function startRecording(): Promise<void> {
 
   // M4: Create DOMObserver and EvidenceCollector.
   // Wire onAfterEvent so EventTap feeds interactions to the EvidenceCollector.
+  // M6: Create NetworkBridge, wire to EvidenceCollector.
   domObserver = new DOMObserver();
+  networkBridge = new NetworkBridge();
   evidenceCollector = new EvidenceCollector({
     targetStateCache,
     domObserver,
+    networkBridge,
   });
   evidenceCollector.start();
+  networkBridge.start();
 
   // Flush any buffered evidence from a previous SW session
   evidenceCollector.flushBufferedEvidence();
@@ -290,9 +304,14 @@ async function stopRecording(): Promise<void> {
   targetStateCache = null;
 
   // M4: Stop evidence collection and release resources.
+  // M6: Stop NetworkBridge, send stop signal to MAIN-world.
   evidenceCollector?.stop();
   evidenceCollector?.clearEvidenceBuffer();
   evidenceCollector = null;
+
+  networkBridge?.sendStopSignal();
+  networkBridge?.stop();
+  networkBridge = null;
   domObserver = null;
 
   // CRITICAL: Clear the buffer so stale events don't reappear in the

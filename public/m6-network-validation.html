@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>M6 Network Evidence Validation</title>
+  <style>
+    body { font-family: system-ui; padding: 20px; max-width: 800px; margin: auto; }
+    .scenario { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+    button { padding: 8px 16px; cursor: pointer; margin: 4px; }
+    input, select { padding: 6px; margin: 4px; }
+    .log { font-family: monospace; font-size: 12px; background: #f5f5f5; padding: 8px; margin-top: 8px; max-height: 200px; overflow-y: auto; }
+    #autocomplete-list { border: 1px solid #ccc; display: none; }
+    #autocomplete-list div { padding: 6px; cursor: pointer; }
+    #autocomplete-list div:hover { background: #e0e0ff; }
+  </style>
+</head>
+<body>
+  <h1>M6 Network Evidence Validation</h1>
+
+  <div class="scenario">
+    <h3>1. Click → Fetch Request</h3>
+    <button id="btn-fetch">Fetch Data</button>
+    <div id="fetch-result"></div>
+  </div>
+
+  <div class="scenario">
+    <h3>2. Click → XHR Request</h3>
+    <button id="btn-xhr">XHR Request</button>
+    <div id="xhr-result"></div>
+  </div>
+
+  <div class="scenario">
+    <h3>3. Autocomplete (typing triggers API calls)</h3>
+    <input type="text" id="autocomplete-input" placeholder="Type to search..." />
+    <div id="autocomplete-list"></div>
+  </div>
+
+  <div class="scenario">
+    <h3>4. Multiple requests from one click</h3>
+    <button id="btn-multi">Fire 3 Requests</button>
+    <div id="multi-result"></div>
+  </div>
+
+  <div class="scenario">
+    <h3>5. Async: request starts, DOM mutates, request completes</h3>
+    <button id="btn-async">Start Async Chain</button>
+    <div id="async-result"></div>
+  </div>
+
+  <div class="scenario">
+    <h3>6. Navigation + Network</h3>
+    <button id="btn-navigate">PushState Navigation</button>
+    <div id="nav-result"></div>
+  </div>
+
+  <div class="scenario">
+    <h3>7. Rapid clicks with fetch</h3>
+    <button id="btn-rapid-1">Quick 1</button>
+    <button id="btn-rapid-2">Quick 2</button>
+    <button id="btn-rapid-3">Quick 3</button>
+    <div id="rapid-result"></div>
+  </div>
+
+  <div class="log" id="log"></div>
+
+  <script>
+    // Intercept and log network activity for validation
+    const logEl = document.getElementById('log');
+    function log(msg) {
+      const time = new Date().toISOString().split('T')[1];
+      const entry = document.createElement('div');
+      entry.textContent = `[${time}] ${msg}`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // --- Scenario 1: Fetch on click ---
+    document.getElementById('btn-fetch').addEventListener('click', async () => {
+      log('btn-fetch: clicked');
+      try {
+        const resp = await fetch('https://httpbin.org/get?source=m6-fetch');
+        const data = await resp.json();
+        log('btn-fetch: got response status=' + resp.status);
+        document.getElementById('fetch-result').textContent = 'Status: ' + resp.status;
+      } catch (e) {
+        log('btn-fetch: error ' + e.message);
+        document.getElementById('fetch-result').textContent = 'Error: ' + e.message;
+      }
+    });
+
+    // --- Scenario 2: XHR on click ---
+    document.getElementById('btn-xhr').addEventListener('click', () => {
+      log('btn-xhr: clicked');
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', 'https://httpbin.org/get?source=m6-xhr');
+      xhr.onload = () => {
+        log('btn-xhr: got response status=' + xhr.status);
+        document.getElementById('xhr-result').textContent = 'Status: ' + xhr.status;
+      };
+      xhr.onerror = () => {
+        log('btn-xhr: error');
+        document.getElementById('xhr-result').textContent = 'XHR Error';
+      };
+      xhr.send();
+    });
+
+    // --- Scenario 3: Autocomplete ---
+    let debounceTimer = null;
+    const acInput = document.getElementById('autocomplete-input');
+    const acList = document.getElementById('autocomplete-list');
+
+    acInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      const query = acInput.value;
+      debounceTimer = setTimeout(async () => {
+        if (query.length < 1) {
+          acList.style.display = 'none';
+          return;
+        }
+        log('autocomplete: fetching for "' + query + '"');
+        try {
+          const resp = await fetch('https://httpbin.org/get?search=' + encodeURIComponent(query));
+          log('autocomplete: got response status=' + resp.status);
+          // Simulate autocomplete results
+          acList.innerHTML = '';
+          acList.style.display = 'block';
+          for (let i = 0; i < 3; i++) {
+            const item = document.createElement('div');
+            item.textContent = query + ' result ' + (i + 1);
+            item.addEventListener('click', () => {
+              acInput.value = item.textContent;
+              acList.style.display = 'none';
+              log('autocomplete: selected "' + item.textContent + '"');
+            });
+            acList.appendChild(item);
+          }
+        } catch (e) {
+          log('autocomplete: error ' + e.message);
+        }
+      }, 200);
+    });
+
+    // --- Scenario 4: Multiple requests from one click ---
+    document.getElementById('btn-multi').addEventListener('click', async () => {
+      log('btn-multi: clicked');
+      const urls = [
+        'https://httpbin.org/get?multi=1',
+        'https://httpbin.org/get?multi=2',
+        'https://httpbin.org/get?multi=3',
+      ];
+      const promises = urls.map(url => fetch(url));
+      try {
+        const results = await Promise.all(promises);
+        log('btn-multi: all done, statuses=' + results.map(r => r.status).join(','));
+        document.getElementById('multi-result').textContent =
+          'Statuses: ' + results.map(r => r.status).join(', ');
+      } catch (e) {
+        log('btn-multi: error ' + e.message);
+      }
+    });
+
+    // --- Scenario 5: Async chain (start → DOM mutation → complete) ---
+    document.getElementById('btn-async').addEventListener('click', async () => {
+      log('btn-async: clicked');
+      const asyncResult = document.getElementById('async-result');
+      
+      // Start a slow request
+      const fetchPromise = fetch('https://httpbin.org/delay/1?source=m6-async');
+      log('btn-async: fetch started');
+
+      // Mutate DOM while request is in-flight
+      const loadingEl = document.createElement('div');
+      loadingEl.textContent = 'Loading...';
+      loadingEl.id = 'async-loading';
+      asyncResult.appendChild(loadingEl);
+      log('btn-async: DOM mutated (loading indicator)');
+
+      // Wait for request
+      const resp = await fetchPromise;
+      log('btn-async: fetch completed status=' + resp.status);
+
+      // Update DOM after completion
+      loadingEl.remove();
+      const doneEl = document.createElement('div');
+      doneEl.textContent = 'Done! Status: ' + resp.status;
+      asyncResult.appendChild(doneEl);
+      log('btn-async: DOM mutated (result shown)');
+    });
+
+    // --- Scenario 6: Navigation + Network ---
+    document.getElementById('btn-navigate').addEventListener('click', async () => {
+      log('btn-navigate: clicked');
+      history.pushState({ page: 'm6-nav' }, '', '/m6-nav-test');
+      log('btn-navigate: pushState done');
+      try {
+        const resp = await fetch('https://httpbin.org/get?nav=1');
+        log('btn-navigate: fetch status=' + resp.status);
+        document.getElementById('nav-result').textContent = 'Navigated + fetched (status=' + resp.status + ')';
+      } catch (e) {
+        log('btn-navigate: error ' + e.message);
+      }
+    });
+
+    // --- Scenario 7: Rapid clicks ---
+    function rapidClick(id, num) {
+      return async () => {
+        log(id + ': clicked');
+        try {
+          const resp = await fetch('https://httpbin.org/get?rapid=' + num);
+          log(id + ': status=' + resp.status);
+          document.getElementById('rapid-result').textContent += num + ' ';
+        } catch (e) {
+          log(id + ': error ' + e.message);
+        }
+      };
+    }
+    document.getElementById('btn-rapid-1').addEventListener('click', rapidClick('rapid-1', '1'));
+    document.getElementById('btn-rapid-2').addEventListener('click', rapidClick('rapid-2', '2'));
+    document.getElementById('btn-rapid-3').addEventListener('click', rapidClick('rapid-3', '3'));
+
+    log('M6 validation page loaded');
+  </script>
+</body>
+</html>
