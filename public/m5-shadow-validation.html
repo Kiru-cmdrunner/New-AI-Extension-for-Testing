@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>M5 Shadow DOM Validation</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 1200px; margin: 20px auto; padding: 20px; }
+    fieldset { margin: 16px 0; padding: 16px; border: 2px solid #9b59b6; border-radius: 8px; }
+    legend { font-weight: bold; padding: 0 8px; color: #9b59b6; }
+    button { padding: 6px 12px; font-size: 14px; cursor: pointer; }
+    .status { font-size: 12px; color: #666; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <h1>M5 Shadow DOM Validation</h1>
+  <p>Tests recursive shadow DOM observation: single roots, nested roots, cross-boundary effects.</p>
+
+  <!-- 1. Single Shadow Root -->
+  <fieldset>
+    <legend>1. Single Shadow Root Component</legend>
+    <simple-shadow></simple-shadow>
+  </fieldset>
+
+  <!-- 2. Nested Shadow Roots -->
+  <fieldset>
+    <legend>2. Nested Shadow Roots (outer > inner)</legend>
+    <nested-shadow></nested-shadow>
+  </fieldset>
+
+  <!-- 3. Interaction inside shadow causing internal changes -->
+  <fieldset>
+    <legend>3. Interaction Inside Shadow → Internal Change</legend>
+    <interactive-shadow></interactive-shadow>
+  </fieldset>
+
+  <!-- 4. Interaction inside shadow causing light-DOM changes -->
+  <fieldset>
+    <legend>4. Interaction Inside Shadow → Light DOM Change</legend>
+    <cross-boundary-shadow id="cross-boundary"></cross-boundary-shadow>
+    <div id="light-target" style="margin-top: 8px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+      Waiting for shadow component...
+    </div>
+  </fieldset>
+
+  <!-- 5. Multiple Independent Shadow Roots -->
+  <fieldset>
+    <legend>5. Multiple Independent Shadow Roots</legend>
+    <independent-shadow id="ind-1"></independent-shadow>
+    <independent-shadow id="ind-2"></independent-shadow>
+    <independent-shadow id="ind-3"></independent-shadow>
+  </fieldset>
+
+  <!-- 6. Rapid interactions -->
+  <fieldset>
+    <legend>6. Rapid Interactions (shadow + light)</legend>
+    <rapid-shadow id="rapid"></rapid-shadow>
+    <div style="margin-top: 8px;">
+      <button id="light-rapid-btn">Light DOM Rapid Button</button>
+    </div>
+    <div class="status" id="rapid-status">No rapid interactions yet</div>
+  </fieldset>
+
+  <!-- 7. Dynamically added shadow root -->
+  <fieldset>
+    <legend>7. Dynamically Added Shadow Root</legend>
+    <button id="add-shadow-btn">Add Dynamic Shadow Component</button>
+    <div id="dynamic-host-container"></div>
+  </fieldset>
+
+  <script>
+    // ── 1. Simple Shadow Component ───────────────────────────
+    class SimpleShadow extends HTMLElement {
+      connectedCallback() {
+        const shadow = this.attachShadow({ mode: 'open' });
+        shadow.innerHTML = `
+          <div id="simple-content">Hello from shadow DOM</div>
+          <button id="simple-btn">Click me</button>
+        `;
+        const btn = shadow.querySelector('#simple-btn');
+        btn.addEventListener('click', () => {
+          shadow.querySelector('#simple-content').textContent = 'Clicked at ' + new Date().toLocaleTimeString();
+        });
+      }
+    }
+    customElements.define('simple-shadow', SimpleShadow);
+
+    // ── 2. Nested Shadow Component ───────────────────────────
+    class NestedShadow extends HTMLElement {
+      connectedCallback() {
+        const outerShadow = this.attachShadow({ mode: 'open' });
+        outerShadow.innerHTML = `
+          <div id="outer-content">Outer shadow content</div>
+          <inner-shadow></inner-shadow>
+        `;
+
+        // Attach inner shadow root to the inner-shadow element
+        const innerHost = outerShadow.querySelector('inner-shadow');
+        if (innerHost) {
+          const innerShadow = innerHost.attachShadow({ mode: 'open' });
+          innerShadow.innerHTML = `
+            <div id="inner-content">Inner shadow content</div>
+            <button id="inner-btn">Inner button</button>
+          `;
+          innerShadow.querySelector('#inner-btn').addEventListener('click', () => {
+            innerShadow.querySelector('#inner-content').textContent = 'Inner clicked!';
+          });
+        }
+      }
+    }
+    customElements.define('nested-shadow', NestedShadow);
+
+    // Inner shadow element needs a class too (even though attachShadow is called manually)
+    class InnerShadow extends HTMLElement {}
+    customElements.define('inner-shadow', InnerShadow);
+
+    // ── 3. Interactive Shadow Component ──────────────────────
+    class InteractiveShadow extends HTMLElement {
+      connectedCallback() {
+        const shadow = this.attachShadow({ mode: 'open' });
+        shadow.innerHTML = `
+          <div id="counter-display">Count: 0</div>
+          <button id="inc-btn">Increment</button>
+          <button id="add-item-btn">Add Item</button>
+          <div id="items-container"></div>
+        `;
+
+        let count = 0;
+        shadow.querySelector('#inc-btn').addEventListener('click', () => {
+          count++;
+          shadow.querySelector('#counter-display').textContent = 'Count: ' + count;
+        });
+
+        let itemCount = 0;
+        shadow.querySelector('#add-item-btn').addEventListener('click', () => {
+          itemCount++;
+          const item = document.createElement('div');
+          item.className = 'shadow-item';
+          item.textContent = 'Item ' + itemCount;
+          shadow.querySelector('#items-container').appendChild(item);
+        });
+      }
+    }
+    customElements.define('interactive-shadow', InteractiveShadow);
+
+    // ── 4. Cross-Boundary Shadow Component ───────────────────
+    class CrossBoundaryShadow extends HTMLElement {
+      connectedCallback() {
+        const shadow = this.attachShadow({ mode: 'open' });
+        shadow.innerHTML = `
+          <button id="cross-btn">Update Light DOM</button>
+        `;
+
+        shadow.querySelector('#cross-btn').addEventListener('click', () => {
+          const target = document.getElementById('light-target');
+          if (target) {
+            target.textContent = 'Updated by shadow component at ' + new Date().toLocaleTimeString();
+            target.style.background = '#d4edda';
+          }
+        });
+      }
+    }
+    customElements.define('cross-boundary-shadow', CrossBoundaryShadow);
+
+    // ── 5. Independent Shadow Components ─────────────────────
+    class IndependentShadow extends HTMLElement {
+      connectedCallback() {
+        const shadow = this.attachShadow({ mode: 'open' });
+        shadow.innerHTML = `
+          <div>Independent component</div>
+          <button>Click</button>
+        `;
+        shadow.querySelector('button').addEventListener('click', (e) => {
+          shadow.querySelector('div').textContent = 'Clicked in ' + this.id;
+        });
+      }
+    }
+    customElements.define('independent-shadow', IndependentShadow);
+
+    // ── 6. Rapid Shadow Component ────────────────────────────
+    class RapidShadow extends HTMLElement {
+      connectedCallback() {
+        const shadow = this.attachShadow({ mode: 'open' });
+        shadow.innerHTML = `
+          <button id="rapid-shadow-btn">Shadow Rapid Button</button>
+          <div id="rapid-counter">0</div>
+        `;
+
+        let count = 0;
+        shadow.querySelector('#rapid-shadow-btn').addEventListener('click', () => {
+          count++;
+          shadow.querySelector('#rapid-counter').textContent = count;
+        });
+      }
+    }
+    customElements.define('rapid-shadow', RapidShadow);
+
+    // Light DOM rapid clicks
+    let lightCount = 0;
+    document.getElementById('light-rapid-btn').addEventListener('click', () => {
+      lightCount++;
+      document.getElementById('rapid-status').textContent = 'Shadow + Light: ' + lightCount + ' clicks';
+    });
+
+    // ── 7. Dynamically Added Shadow Root ─────────────────────
+    document.getElementById('add-shadow-btn').addEventListener('click', () => {
+      const container = document.getElementById('dynamic-host-container');
+      const host = document.createElement('div');
+      host.className = 'dynamic-shadow-host';
+      container.appendChild(host);
+      const shadow = host.attachShadow({ mode: 'open' });
+      shadow.innerHTML = `
+        <div>Dynamically created shadow root</div>
+        <button id="dyn-btn">Dynamic Button</button>
+      `;
+      shadow.querySelector('#dyn-btn').addEventListener('click', () => {
+        shadow.querySelector('div').textContent = 'Dynamic shadow clicked!';
+      });
+    });
+  </script>
+</body>
+</html>

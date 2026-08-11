@@ -1,20 +1,27 @@
 /**
  * DOM Observer — Refcounted MutationObserver with Summarization (M3)
+ * Extended in M5: Recursive Shadow DOM observation (spec §5.1)
  *
  * A refcounted singleton MutationObserver on document.body that captures
  * DOM mutations, summarizes them into DomChangeSummary entries, and
  * distributes them to all active observation windows via a shared
  * globalBatchCounter.
  *
+ * Shadow DOM (M5): Recursively discovers open shadow roots and attaches
+ * per-root MutationObservers. Mutations inside shadow roots carry a
+ * non-null shadowContext path. Maximum 20 shadow roots. Closed roots
+ * are an inherent limitation (documented in spec §5.1).
+ *
  * Pipeline (spec §5.2):
  *   Stage 1: Filter — exclude noise (CSS animations, virtual scroll, scripts)
- *   Stage 2: Summarize — group mutations by targetPath, merge attribute deltas
+ *   Stage 2: Summarize — group mutations by targetPath + shadowContext
  *   Stage 3: Cap — at window-close time, keep first 200 entries (NOT M3 concern;
  *           the EvidenceCollector (M4) applies the cap when building the final
  *           ApplicationEvidence. DOMObserver itself just summarizes and stores.)
  *
  * Refcounting: start() increments refcount and begins observing; stop()
- * decrements and disconnects when refcount hits zero.
+ * decrements and disconnects when refcount hits zero. Shadow root observers
+ * share the same refcount lifecycle.
  *
  * Global batch counter: increments once per MutationObserver callback.
  * All active windows receive the same batchIndex for the same callback.
@@ -98,20 +105,76 @@ function isNoise(record: MutationRecord): boolean {
   return false;
 }
 
-// ── Path Utility ─────────────────────────────────────────────────────
+// ── Constants ────────────────────────────────────────────────────────
+
+/** Maximum number of shadow roots to observe concurrently (spec §5.1). */
+const MAX_SHADOW_ROOTS = 20;
+
+// ── Shadow DOM Utilities ─────────────────────────────────────────────
+
+/**
+ * Generate a CSS-like path for an element within the light DOM.
+ * This is used to build shadowContext paths.
+ */
+function buildCssSegment(el: Element): string {
+  let part = el.tagName.toLowerCase();
+  if (el.id) {
+    part += `#${el.id}`;
+  }
+  // Add nth-of-type if needed for disambiguation
+  const parent = el.parentElement;
+  if (parent) {
+    const siblings = Array.from(parent.children).filter(
+      (c) => c.tagName === el.tagName,
+    );
+    if (siblings.length > 1) {
+      const index = siblings.indexOf(el) + 1;
+      part += `:nth-of-type(${index})`;
+    }
+  }
+  return part;
+}
+
+/**
+ * Build a shadow context path for a shadow host element.
+ * Walks up the light DOM to create a hierarchical path.
+ */
+function buildShadowContextPath(host: Element, parentContext: string | null): string {
+  const segment = buildCssSegment(host);
+  return parentContext ? `${parentContext} > ${segment}` : segment;
+}
 
 /**
  * Generate a CSS-like path for an element. Used as the grouping key
  * for summarization. Not a full unique selector — just enough to
  * group mutations on the same element.
+ *
+ * If shadowContext is provided, the path is prefixed with [shadowContext].
  */
-function getElementPath(el: Element): string {
+function getElementPath(el: Element, shadowContext?: string | null): string {
   const parts: string[] = [];
   let current: Element | null = el;
   let depth = 0;
   const maxDepth = 8;
 
-  while (current && current !== document.body && current !== document.documentElement && depth < maxDepth) {
+  // Detect if element is inside a shadow root
+  const rootNode = el.getRootNode();
+  const isInShadowRoot = rootNode instanceof ShadowRoot;
+
+  while (current && depth < maxDepth) {
+    // Stop at document.body for light DOM
+    if (!isInShadowRoot && (current === document.body || current === document.documentElement)) {
+      break;
+    }
+    // For shadow DOM: stop when we reach the top-level element of the shadow root
+    if (isInShadowRoot && current.parentNode === rootNode) {
+      let part = current.tagName.toLowerCase();
+      if (current.id) part += `#${current.id}`;
+      parts.unshift(part);
+      break;
+    }
+    if (current.parentElement === null) break;
+
     let part = current.tagName.toLowerCase();
     if (current.id) {
       part += `#${current.id}`;
@@ -121,8 +184,19 @@ function getElementPath(el: Element): string {
     depth++;
   }
 
-  const prefix = current === document.body ? 'body' : current === document.documentElement ? 'html' : '';
-  return (prefix ? prefix + ' > ' : '') + parts.join(' > ');
+  const path = parts.join(' > ');
+
+  // If in shadow root, prefix with shadowContext
+  if (shadowContext) {
+    return `[${shadowContext}] > ${path}`;
+  }
+
+  const prefix = !isInShadowRoot && current === document.body
+    ? 'body'
+    : !isInShadowRoot && current === document.documentElement
+      ? 'html'
+      : '';
+  return (prefix ? prefix + ' > ' : '') + path;
 }
 
 /**
@@ -181,9 +255,32 @@ export class DOMObserver {
   private longestBatchMs = 0;
   private totalBatches = 0;
 
+  // ── M5: Shadow DOM Observation ────────────────────────────────────
+
+  /**
+   * Map of shadow root observers. Keyed by the shadow root object.
+   * Each entry tracks the MutationObserver for that root and the
+   * shadowContext path for mutations inside it.
+   */
+  private shadowObservers = new Map<
+    ShadowRoot,
+    { observer: MutationObserver; shadowContext: string }
+  >();
+
+  /**
+   * Map from shadow host elements to their shadow roots.
+   * Used for re-scanning and context resolution.
+   */
+  private shadowHosts = new Map<Element, ShadowRoot>();
+
+  /** Whether shadow root scanning exceeded the cap. */
+  private shadowRootOverflow = false;
+
   /**
    * Start observing. Increments refcount. Creates the MutationObserver
    * on first call. Returns the reference time (performance.now() at observation start).
+   *
+   * M5: Also discovers and attaches observers to all existing open shadow roots.
    */
   start(callback?: MutationBatchCallback): number {
     this.refcount++;
@@ -193,7 +290,8 @@ export class DOMObserver {
     if (this.refcount === 1) {
       this.referenceTime = performance.now();
       this.globalBatchCounter = 0;
-      this.observer = new MutationObserver((records) => this.onMutations(records));
+      this.shadowRootOverflow = false;
+      this.observer = new MutationObserver((records) => this.onMutations(records, null));
       this.observer.observe(document.body, {
         childList: true,
         attributes: true,
@@ -202,12 +300,16 @@ export class DOMObserver {
         characterDataOldValue: true,
         subtree: true,
       });
+
+      // M5: Discover and observe existing shadow roots
+      this.discoverShadowRoots(document.body, null);
     }
     return this.referenceTime;
   }
 
   /**
    * Stop observing. Decrements refcount. Disconnects on last call.
+   * M5: Also disconnects all shadow root observers.
    */
   stop(): void {
     if (this.refcount === 0) return;
@@ -215,6 +317,14 @@ export class DOMObserver {
     if (this.refcount === 0) {
       this.observer?.disconnect();
       this.observer = null;
+
+      // M5: Disconnect all shadow root observers
+      for (const { observer } of this.shadowObservers.values()) {
+        observer.disconnect();
+      }
+      this.shadowObservers.clear();
+      this.shadowHosts.clear();
+      this.shadowRootOverflow = false;
     }
   }
 
@@ -271,12 +381,90 @@ export class DOMObserver {
     this.globalBatchCounter = 0;
   }
 
+  // ── M5: Shadow DOM Discovery & Observer Attachment ────────────────
+
+  /**
+   * Recursively discover open shadow roots within a root element and
+   * attach MutationObservers to them.
+   *
+   * Per spec §5.1:
+   *   - Walks querySelectorAll('*') checking for .shadowRoot
+   *   - Recursively enters nested shadow roots
+   *   - Caps at MAX_SHADOW_ROOTS (20)
+   *   - Closed shadow roots (shadowRoot === null) are skipped — inherent limitation
+   *
+   * @param root The root element to scan (document.body or a newly-added subtree)
+   * @param parentContext The shadow context path of the parent (null for light DOM)
+   */
+  private discoverShadowRoots(root: Element | ShadowRoot, parentContext: string | null): void {
+    try {
+      const elements = root.querySelectorAll('*');
+      for (const el of elements) {
+        // Check if this element hosts an open shadow root
+        const shadowRoot = el.shadowRoot;
+        if (!shadowRoot) continue;
+
+        // Skip if already observed
+        if (this.shadowHosts.has(el)) continue;
+
+        // Enforce cap
+        if (this.shadowObservers.size >= MAX_SHADOW_ROOTS) {
+          this.shadowRootOverflow = true;
+          return;
+        }
+
+        // Build shadow context path
+        const shadowContext = buildShadowContextPath(el, parentContext);
+
+        // Attach observer
+        const observer = new MutationObserver((records) =>
+          this.onMutations(records, shadowContext),
+        );
+        observer.observe(shadowRoot, {
+          childList: true,
+          attributes: true,
+          attributeOldValue: true,
+          characterData: true,
+          characterDataOldValue: true,
+          subtree: true,
+        });
+
+        this.shadowObservers.set(shadowRoot, { observer, shadowContext });
+        this.shadowHosts.set(el, shadowRoot);
+
+        // Recursively discover shadow roots within this shadow root
+        this.discoverShadowRoots(shadowRoot, shadowContext);
+      }
+    } catch {
+      // querySelectorAll on a detached node can throw — silent degrade
+    }
+  }
+
+  /**
+   * Get the count of currently observed shadow roots.
+   * Useful for diagnostics and testing.
+   */
+  getShadowRootCount(): number {
+    return this.shadowObservers.size;
+  }
+
+  /**
+   * Get whether the shadow root cap was exceeded.
+   */
+  getShadowRootOverflow(): boolean {
+    return this.shadowRootOverflow;
+  }
+
   // ── Internal: Mutation Processing ──────────────────────────────────
 
   /**
    * Process raw MutationRecords. Called by MutationObserver.
+   *
+   * M5: shadowContext is null for light-DOM mutations and a path string
+   * for mutations inside shadow roots. Each shadow root observer passes
+   * its context through.
    */
-  private onMutations(records: MutationRecord[]): void {
+  private onMutations(records: MutationRecord[], shadowContext: string | null): void {
     const batchIndex = this.globalBatchCounter++;
     const now = performance.now();
     const batchStart = now;
@@ -287,7 +475,18 @@ export class DOMObserver {
     for (const record of records) {
       if (isNoise(record)) continue;
 
-      this.processRecord(record, batchIndex, now);
+      this.processRecord(record, batchIndex, now, shadowContext);
+
+      // M5: Re-scan for new shadow roots on childList additions
+      if (record.type === 'childList' && shadowContext === null) {
+        // Only re-scan from the main observer (not from shadow root observers)
+        // to avoid redundant scans
+        for (const node of record.addedNodes) {
+          if (node instanceof Element) {
+            this.discoverShadowRoots(node, null);
+          }
+        }
+      }
     }
 
     const batchDuration = performance.now() - batchStart;
@@ -305,15 +504,22 @@ export class DOMObserver {
 
   /**
    * Process a single MutationRecord into accumulated summaries.
+   * M5: shadowContext tracks whether this mutation is inside a shadow root.
    */
-  private processRecord(record: MutationRecord, batchIndex: number, now: number): void {
+  private processRecord(
+    record: MutationRecord,
+    batchIndex: number,
+    now: number,
+    shadowContext: string | null,
+  ): void {
     const targetEl = record.target instanceof Element
       ? record.target
       : record.target.parentElement;
     if (!targetEl) return;
 
-    const targetPath = getElementPath(targetEl);
-    const key = targetPath; // Group by path (shadow DOM adds context in M5)
+    const targetPath = getElementPath(targetEl, shadowContext);
+    // Group by targetPath (which includes [shadowContext] prefix if present)
+    const key = targetPath;
     const targetTag = targetEl.tagName.toLowerCase();
 
     let acc = this.accumulated.get(key);
@@ -322,7 +528,7 @@ export class DOMObserver {
         types: new Set(),
         targetPath,
         targetTag,
-        shadowContext: null,
+        shadowContext,
         changedAttributes: new Set(),
         attributeDeltas: {},
         addedNodesCount: 0,
@@ -367,7 +573,7 @@ export class DOMObserver {
         acc.removedNodesCount += record.removedNodes.length;
 
         // Detect surface changes (added/removed significant elements)
-        this.detectSurfaceChanges(record, targetEl, batchIndex, now);
+        this.detectSurfaceChanges(record, targetEl, batchIndex, now, shadowContext);
 
         // Detect visibility changes (display/visibility/opacity/hidden/aria-hidden)
         break;
@@ -386,7 +592,7 @@ export class DOMObserver {
     if (record.type === 'attributes') {
       const attrName = record.attributeName;
       if (attrName === 'hidden' || attrName === 'aria-hidden') {
-        this.detectVisibilityChange(targetEl, attrName, record.oldValue, batchIndex, now);
+        this.detectVisibilityChange(targetEl, attrName, record.oldValue, batchIndex, now, shadowContext);
       }
     }
   }
@@ -401,17 +607,18 @@ export class DOMObserver {
     _parent: Element,
     batchIndex: number,
     now: number,
+    shadowContext: string | null,
   ): void {
     // Check added nodes
     for (const node of record.addedNodes) {
       if (!(node instanceof Element)) continue;
       if (this.isSignificantSurface(node)) {
         this.surfaceChanges.push({
-          path: getElementPath(node),
+          path: getElementPath(node, shadowContext),
           tagName: node.tagName.toLowerCase(),
           ariaRole: node.getAttribute('role'),
           accessibleName: getAccessibleName(node),
-          shadowContext: null,
+          shadowContext,
           descendantCount: node.childElementCount,
           relativeTime: now - this.referenceTime,
           batchIndex,
@@ -424,11 +631,11 @@ export class DOMObserver {
       if (!(node instanceof Element)) continue;
       if (this.isSignificantSurface(node)) {
         this.surfaceChanges.push({
-          path: getElementPath(node),
+          path: getElementPath(node, shadowContext),
           tagName: node.tagName.toLowerCase(),
           ariaRole: node.getAttribute('role'),
           accessibleName: getAccessibleName(node),
-          shadowContext: null,
+          shadowContext,
           descendantCount: 0,
           relativeTime: now - this.referenceTime,
           batchIndex,
@@ -453,6 +660,7 @@ export class DOMObserver {
 
   /**
    * Detect visibility changes from attribute mutations.
+   * M5: shadowContext propagated for shadow root mutations.
    */
   private detectVisibilityChange(
     el: Element,
@@ -460,6 +668,7 @@ export class DOMObserver {
     oldValue: string | null,
     batchIndex: number,
     now: number,
+    shadowContext: string | null,
   ): void {
     const newValue = el.getAttribute(attrName);
 
@@ -467,7 +676,7 @@ export class DOMObserver {
     if (oldValue === newValue) return;
 
     this.visibilityChanges.push({
-      path: getElementPath(el),
+      path: getElementPath(el, shadowContext),
       property: attrName === 'aria-hidden' ? 'aria-hidden' : 'hidden',
       oldValue: oldValue,
       newValue: newValue,
