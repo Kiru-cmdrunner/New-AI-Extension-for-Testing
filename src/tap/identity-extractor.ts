@@ -362,6 +362,11 @@ export function extractIdentity(el: Element): ElementIdentity {
     inIframe,
     shadowDom: isInShadowDom(el),
     href: el.getAttribute('href') ?? null,
+    inputType: (el instanceof HTMLInputElement ||
+                el instanceof HTMLSelectElement ||
+                el instanceof HTMLTextAreaElement)
+      ? (el as HTMLInputElement).type ?? null
+      : null,
     elementId: '',
     ...(iframeContext ? { iframeContext } : {}),
   };

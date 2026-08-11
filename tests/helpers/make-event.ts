@@ -39,6 +39,7 @@ const DEFAULT_TARGET: ElementIdentity = {
     shadowDom: false,
     href: null,
     elementId: '',
+    inputType: null,
 };
 
 export function makeObservedEvent(

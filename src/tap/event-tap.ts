@@ -96,8 +96,11 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
   /**
    * Emit a synthetic navigation event when the URL changes.
    * Called after history.pushState/replaceState or on popstate/hashchange.
+   *
+   * Behavioral Evidence Model v3.0 §7.2: also fires onAfterEvent so the
+   * EvidenceCollector can hook navigation events for evidence windows.
    */
-  function emitSpaNavigation(): void {
+  function emitSpaNavigation(navType?: 'pushState' | 'replaceState' | 'popstate' | 'hashchange'): void {
     const currentUrl = location.href;
     if (currentUrl === lastKnownUrl) return; // suppress duplicates
     lastKnownUrl = currentUrl;
@@ -126,9 +129,24 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
       scrollDeltaX: null,
       pageUrl: currentUrl,
       pageTitle: document.title,
+      navType: navType ?? null,
     };
 
     config.onEvent(navEvent);
+
+    // Behavioral Evidence Model v3.0 §7.2: fire onAfterEvent for navigation.
+    // Uses document.body as the target element (no specific element for nav).
+    if (config.onAfterEvent) {
+      const navTarget = document.body || document.documentElement;
+      if (navTarget) {
+        config.onAfterEvent(
+          navTarget,
+          navEvent.eventId,
+          'navigation',
+          '', // no CSS selector for synthetic nav events
+        );
+      }
+    }
   }
 
   // Monkey-patch History API to detect SPA pushState/replaceState
@@ -137,12 +155,12 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
 
   history.pushState = function patchedPushState(...args: Parameters<typeof history.pushState>): void {
     originalPushState(...args);
-    emitSpaNavigation();
+    emitSpaNavigation('pushState');
   } as typeof history.pushState;
 
   history.replaceState = function patchedReplaceState(...args: Parameters<typeof history.replaceState>): void {
     originalReplaceState(...args);
-    emitSpaNavigation();
+    emitSpaNavigation('replaceState');
   } as typeof history.replaceState;
 
   function register(
@@ -309,8 +327,11 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
   }
 
   // SPA navigation listeners (popstate = back/forward, hashchange = hash routers)
-  window.addEventListener('popstate', emitSpaNavigation);
-  window.addEventListener('hashchange', emitSpaNavigation);
+  // Named wrappers so removeEventListener can match the reference.
+  const onPopState = () => emitSpaNavigation('popstate');
+  const onHashChange = () => emitSpaNavigation('hashchange');
+  window.addEventListener('popstate', onPopState);
+  window.addEventListener('hashchange', onHashChange);
 
   // ── Stop ────────────────────────────────────────────────────────────
 
@@ -326,8 +347,8 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
       history.replaceState = originalReplaceState;
 
       // Remove SPA navigation listeners
-      window.removeEventListener('popstate', emitSpaNavigation);
-      window.removeEventListener('hashchange', emitSpaNavigation);
+      window.removeEventListener('popstate', onPopState);
+      window.removeEventListener('hashchange', onHashChange);
     },
   };
 }

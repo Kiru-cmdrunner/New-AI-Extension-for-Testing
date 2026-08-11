@@ -48,6 +48,7 @@ function defaultElementIdentity(): ElementIdentity {
     inIframe: false,
     shadowDom: false,
     href: null,
+    inputType: null,
   };
 }
 

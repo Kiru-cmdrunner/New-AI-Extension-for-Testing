@@ -45,6 +45,7 @@ function makeTarget(overrides: Partial<ElementIdentity> = {}): ElementIdentity {
     inIframe: false,
     shadowDom: false,
     href: null,
+    inputType: null,
     elementId: '',
     ...overrides,
   };

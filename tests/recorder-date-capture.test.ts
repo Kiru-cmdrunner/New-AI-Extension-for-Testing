@@ -61,6 +61,7 @@ function makeDateSelectMessage(
       inIframe: false,
       shadowDom: false,
     href: null,
+      inputType: null,
       elementId: 'dateOfBirth-001',
     },
     valueBefore: null,

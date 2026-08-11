@@ -53,6 +53,7 @@ function makeIdentity(overrides: Partial<ElementIdentity> = {}): ElementIdentity
     inIframe: false,
     shadowDom: false,
     href: null,
+      inputType: null,
     elementId: 'elem-0001',
     ...overrides,
   };

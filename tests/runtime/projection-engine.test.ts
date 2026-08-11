@@ -23,6 +23,7 @@ function makeInteraction(
       placeholder: null, tag: 'BUTTON', className: null, name: null, stableId: 'btn1',
       testId: null, dataCy: null, dataQa: null, cssSelector: 'button', xPath: '',
       inIframe: false, shadowDom: false, href: null, elementId: '',
+      inputType: null,
     },
     triggerEvent: makeObservedEvent({ eventId, eventType: 'click', timestamp }),
     memberEvents: [],

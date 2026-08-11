@@ -37,6 +37,7 @@ import type {
 
 function makeElementIdentity(overrides: Partial<ElementIdentity> = {}): ElementIdentity {
   return {
+    inputType: null,
     elementId: 'elem-0001',
     accessibleName: 'Submit Button',
     ariaRole: 'button',

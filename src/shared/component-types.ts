@@ -166,6 +166,13 @@ export interface ObservedEvent {
   pageUrl: string;
   /** Title of the page where the event occurred. */
   pageTitle: string;
+
+  /**
+   * Navigation trigger type. Only present when eventType === 'navigation'.
+   * Distinguishes pushState, replaceState, popstate, hashchange.
+   * (Behavioral Evidence Model v3.0 §7.3)
+   */
+  navType?: 'pushState' | 'replaceState' | 'popstate' | 'hashchange' | null;
 }
 
 // ── Interaction Types ──────────────────────────────────────────────────
@@ -437,14 +444,16 @@ export interface ComponentInteraction {
   /** Layer 3: Human-readable business meaning (e.g. 'Sort by Name', 'Close dialog'). */
   businessMeaning?: string;
 
-  // ── M1: Behavioral Observations ──────────────────────────────────────
+  // ── Behavioral Evidence ──────────────────────────────────────────────
   //
-  // Populated by the observation pipeline (Phase D). Optional because not
-  // all code paths go through the observation system (existing tests,
-  // events captured before coordinator was configured).
+  // Populated by the deferred-attachment pipeline (EvidenceCollector → SW).
+  // Optional because evidence arrives asynchronously after the interaction
+  // is emitted, and some interactions may never receive evidence.
+  //
+  // Architecture: .drytis/specs/behavioral-evidence-model.md §9
 
-  /** M1: Behavioral observations from the observation coordinator. */
-
+  /** Dual-scope behavioral evidence (TargetEvidence + ApplicationEvidence). */
+  behavioralEvidence?: import('./behavioral-evidence-types').BehavioralEvidence;
 }
 
 // ── Runtime Configuration ──────────────────────────────────────────────

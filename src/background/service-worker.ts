@@ -621,6 +621,7 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
       inIframe: false,
       shadowDom: false,
       href: null,
+      inputType: null,
       elementId: '',
     },
     domContext: {

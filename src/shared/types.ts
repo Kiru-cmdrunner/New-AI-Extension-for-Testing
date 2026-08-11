@@ -144,6 +144,8 @@ export interface RawElementIdentity {
   shadowDom: boolean;
   /** Raw href attribute value for anchor elements, null for non-links. */
   href: string | null;
+  /** Value of the element's type attribute (inputs/select/textarea). Null for non-form elements. (Behavioral Evidence Model v3.0 §8.2) */
+  inputType: string | null;
   /** Detailed iframe context when inIframe is true. Undefined for top-level frame. */
   iframeContext?: IframeContext;
 }
@@ -541,7 +543,10 @@ export type AppMessage =
       domContext?: import('../recorder/recorded-event').DomContext;
     }
   // ── Component Runtime messages (Phase 6) ──
-  | { type: 'OBSERVED_EVENT'; payload: import('./component-types').ObservedEvent };
+  | { type: 'OBSERVED_EVENT'; payload: import('./component-types').ObservedEvent }
+  // ── Behavioral Evidence Model (v3.0) ──
+  | { type: 'BEHAVIORAL_EVIDENCE'; payload: import('./behavioral-evidence-types').BehavioralEvidence }
+  | { type: 'INTERACTION_EVIDENCE_UPDATE'; payload: { eventId: string; evidence: import('./behavioral-evidence-types').BehavioralEvidence } };
 
 /** Type guard: narrows an unknown value to AppMessage. */
 export function isAppMessage(value: unknown): value is AppMessage {
@@ -561,6 +566,8 @@ export function isAppMessage(value: unknown): value is AppMessage {
       'EXECUTION_RESULT',
       'RECORDED_EVENT',
       'OBSERVED_EVENT',
+      'BEHAVIORAL_EVIDENCE',
+      'INTERACTION_EVIDENCE_UPDATE',
     ].includes(msg['type'])
   );
 }

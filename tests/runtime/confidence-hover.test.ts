@@ -31,6 +31,7 @@ function makeTarget(overrides: Partial<ElementIdentity> = {}): ElementIdentity {
     accessibleName: '', ariaRole: null, ariaLabel: null, ariaLabelledBy: null,
     placeholder: null, tag: 'DIV', className: null, name: null, stableId: null,
     testId: null, dataCy: null, dataQa: null, cssSelector: 'div',
+    inputType: null,
     xPath: '/html/body/div', inIframe: false, shadowDom: false, elementId: '',
     href: null,
     ...overrides,

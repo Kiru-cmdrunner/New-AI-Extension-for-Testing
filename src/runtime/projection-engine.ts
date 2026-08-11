@@ -53,6 +53,7 @@ function createUnclassifiedFromLedger(
       inIframe: false,
       shadowDom: false,
       href: null,
+      inputType: null,
       elementId: '',
     },
     triggerEvent: {
@@ -79,6 +80,7 @@ function createUnclassifiedFromLedger(
         inIframe: false,
         shadowDom: false,
         href: null,
+        inputType: null,
         elementId: '',
       },
       domContext: {
