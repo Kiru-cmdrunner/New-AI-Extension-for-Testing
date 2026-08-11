@@ -14,7 +14,6 @@ import type { Element } from '../../../domain/entities/element';
 import type { ApprovedTestCase, TestCaseVersion } from '../../../domain/entities/approved-test-case';
 import type { SourceArtifact } from '../../../domain/entities/source-artifact';
 import type { ExecutionIRArtifact } from '../../../domain/execution-ir/types';
-import type { Capability } from '../../../domain/entities/capability';
 import type { RecordingSession } from '../../../domain/entities/recording-session';
 import type { ExecutionRun } from '../../../domain/entities/execution-run';
 
@@ -50,9 +49,6 @@ export type SourceArtifactRow = SourceArtifact;
 /** ExecutionIRArtifact row — identical to domain ExecutionIRArtifact. */
 export type ExecutionIRRow = ExecutionIRArtifact;
 
-/** Capability row — identical to domain Capability. */
-export type CapabilityRow = Capability;
-
 /** RecordingSession row — identical to domain RecordingSession. */
 export type RecordingSessionRow = RecordingSession;
 
@@ -76,7 +72,6 @@ export class CmdRunnerDatabase extends Dexie {
   testCaseVersions!: Table<TestCaseVersionRow, string>;
   sourceArtifacts!: Table<SourceArtifactRow, string>;
   executionIRs!: Table<ExecutionIRRow, string>;
-  capabilities!: Table<CapabilityRow, string>;
   recordingSessions!: Table<RecordingSessionRow, string>;
   executionRuns!: Table<ExecutionRunRow, string>;
 
@@ -93,11 +88,8 @@ export class CmdRunnerDatabase extends Dexie {
       executionIRs: 'id, testCaseVersionId',
     });
 
-    // V2: Added Capability + RecordingSession tables
-    // Capabilities: indexed by projectId for getByProject(),
-    // multi-entry on sessionIds for findBySessionId().
+    // V2: Added RecordingSession table.
     // RecordingSessions: indexed by projectId for getByProject().
-    // (understandingResult.capability is queried in-memory, not indexed.)
     this.version(2).stores({
       // V1 tables (unchanged — must repeat in Dexie version upgrade)
       projects: 'id, status',
@@ -106,8 +98,7 @@ export class CmdRunnerDatabase extends Dexie {
       testCaseVersions: 'id, testCaseId, [testCaseId+versionNumber]',
       sourceArtifacts: 'id, projectId, [projectId+type]',
       executionIRs: 'id, testCaseVersionId',
-      // V2 new tables
-      capabilities: 'id, projectId, *sessionIds',
+      // V2 new table
       recordingSessions: 'id, projectId',
     });
 
@@ -121,8 +112,7 @@ export class CmdRunnerDatabase extends Dexie {
       testCaseVersions: 'id, testCaseId, [testCaseId+versionNumber]',
       sourceArtifacts: 'id, projectId, [projectId+type]',
       executionIRs: 'id, testCaseVersionId',
-      // V2 tables
-      capabilities: 'id, projectId, *sessionIds',
+      // V2 table
       recordingSessions: 'id, projectId',
       // V3 new table
       executionRuns: 'id, testCaseVersionId, projectId',

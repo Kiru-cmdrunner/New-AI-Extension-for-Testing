@@ -25,10 +25,4 @@ export interface RecordingSessionRepository {
    * The caller should pass the updated session (with addTestCaseAssociation applied).
    */
   update(session: RecordingSession): Promise<RecordingSession>;
-
-  /**
-   * Get sessions that contributed to a specific capability.
-   * Queries the understandingResult.capability.sessionId field.
-   */
-  getByCapabilityId(capabilityId: string): Promise<RecordingSession[]>;
 }

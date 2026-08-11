@@ -8,8 +8,6 @@
  * the Understanding Layer.
  *
  * Design principles:
- *   - Sibling artifacts: fragment and capability are independent derivations
- *     from the same upstream data. Neither depends on the other.
  *   - Aggregate boundary: downstream systems import UnderstandingResult, not
  *     individual artifact types. This keeps the layer boundary explicit.
  *   - Extensible: future understanding artifacts (Domain Entities, Navigation
@@ -20,8 +18,7 @@
  *
  *   Understanding Layer
  *     ├── Enrichment Pipeline → Fragment
- *     ├── Capability Deriver  → CapabilityCandidate
- *     └── Output: UnderstandingResult { fragment, capability }
+ *     └── Output: UnderstandingResult { fragment }
  *
  *   Generation Layer
  *     └── IR Bridge: (events + interactions + UnderstandingResult) → ExecutionIRPlan
@@ -30,14 +27,12 @@
  */
 
 import type { ApplicationKnowledgeFragment } from './application-knowledge';
-import type { CapabilityCandidate } from './capability-candidate';
 
 /**
  * The complete output of the Understanding Layer for a single recording session.
  *
  * Contains all artifacts produced by understanding the recording:
  *   - Fragment: structural understanding (what exists, what happened)
- *   - Capability: semantic understanding (what the application does)
  *
  * Future artifacts (all optional, additive, non-breaking):
  *   - Domain Entities, Navigation Graph, Business Rules, Requirements
@@ -54,12 +49,10 @@ export interface UnderstandingResult {
   /** Schema version for forward compatibility. */
   readonly schemaVersion: number;
 
-  // ── Understanding artifacts (sibling, independent) ──
+  // ── Understanding artifacts ──
 
   /** Structural understanding: what exists, what happened. Null when the Understanding Layer has not yet produced a fragment. */
   readonly fragment: ApplicationKnowledgeFragment | null;
-  /** Semantic understanding: what the application does. Null if derivation failed. */
-  readonly capability: CapabilityCandidate | null;
 
   // ── Future artifacts (optional, additive) ──
   // domainEntities?: DomainEntity[];

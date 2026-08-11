@@ -107,11 +107,6 @@ const irPlaywrightSection = document.getElementById('ir-playwright-section')!;
 const irFilesList = document.getElementById('ir-files-list')!;
 const irFilesCount = document.getElementById('ir-files-count')!;
 
-// Capability Model section (Phase 6)
-const capabilityRecordsSection = document.getElementById('capability-records-section')!;
-const capabilityRecordsList = document.getElementById('capability-records-list')!;
-const capabilityRecordsCount = document.getElementById('capability-records-count')!;
-
 // Repository status section (Phase 10.4)
 const repoStatusSection = document.getElementById('repo-status-section')!;
 const repoStatusBody = document.getElementById('repo-status-body')!;
@@ -453,9 +448,6 @@ async function handleStopRecording(): Promise<void> {
     tcBadgeStopped.hidden = false;
   }
 
-  // Load and display Capability Records (Phase 6)
-  await loadAndRenderCapabilityRecords();
-
   showView('stopped');
 }
 
@@ -669,172 +661,19 @@ async function loadDetectedInteractions(): Promise<ComponentInteraction[] | null
 
 // ── Repository Status (Phase 10.4) ─────────────────────────
 
-// ── Capability Model Rendering (Phase 6) ───────────────────
-
-interface SerializableCapabilityRecord {
-  capabilityId: string;
-  interactionId: string;
-  capability: string;
-  confidence: string;
-  parameters: Record<string, unknown> | undefined;
-  evidence: {
-    physicalType: string;
-    targetLabel: string;
-    semanticEffects: string[];
-    matchedKeywords: string[];
-    structuralContext: string[];
-    sequenceNotes: string[];
-  };
-  alternatives: Array<{
-    capability: string;
-    confidence: string;
-    reason: string;
-  }>;
-  unclassifiedReason: string | undefined;
-}
-
-const CAPABILITY_CONFIDENCE_CLASS: Record<string, string> = {
-  high: 'capability__confidence--high',
-  medium: 'capability__confidence--medium',
-  low: 'capability__confidence--low',
-};
-
-const CAPABILITY_ICONS: Record<string, string> = {
-  FilterSelection: '🔍',
-  SortSelection: '↕️',
-  Search: '🔎',
-  Navigate: '🧭',
-  OpenDetail: '📄',
-  Paginate: '📋',
-  SubmitForm: '✅',
-  SelectOption: '⚙️',
-  ToggleControl: '🔘',
-  ExpandCollapse: '📂',
-  UploadFile: '📎',
-  AdjustValue: '🎚️',
-  Unclassified: '❓',
-};
-
-async function loadCapabilityRecords(): Promise<SerializableCapabilityRecord[] | null> {
-  try {
-    const result = await chrome.storage.local.get(StorageKeys.CAPABILITY_RECORDS);
-    const stored = result[StorageKeys.CAPABILITY_RECORDS];
-    return Array.isArray(stored) ? stored as SerializableCapabilityRecord[] : null;
-  } catch {
-    return null;
-  }
-}
-
-function renderCapabilityRecords(records: SerializableCapabilityRecord[]): void {
-  capabilityRecordsCount.textContent = String(records.length);
-  capabilityRecordsList.innerHTML = '';
-
-  for (const record of records) {
-    const item = document.createElement('div');
-    item.className = 'capability-record';
-
-    const icon = CAPABILITY_ICONS[record.capability] ?? '❓';
-    const confClass = CAPABILITY_CONFIDENCE_CLASS[record.confidence] ?? '';
-
-    // ── Header line ──
-    const header = document.createElement('div');
-    header.className = 'capability-record__header';
-    header.innerHTML = `<span class="capability-record__icon">${icon}</span>`
-      + `<span class="capability-record__name">${record.capability}</span>`
-      + `<span class="capability-record__confidence ${confClass}">${record.confidence}</span>`;
-    item.appendChild(header);
-
-    // ── Target ──
-    const target = record.parameters?.target || record.evidence.targetLabel || '(unknown)';
-    const targetDiv = document.createElement('div');
-    targetDiv.className = 'capability-record__target';
-    targetDiv.textContent = `Target: ${target}`;
-    item.appendChild(targetDiv);
-
-    // ── Physical type ──
-    const physDiv = document.createElement('div');
-    physDiv.className = 'capability-record__physical';
-    physDiv.textContent = `Physical: ${record.evidence.physicalType}`;
-    item.appendChild(physDiv);
-
-    // ── Semantic effects summary ──
-    if (record.evidence.semanticEffects.length > 0) {
-      const effectsDiv = document.createElement('div');
-      effectsDiv.className = 'capability-record__effects';
-      effectsDiv.textContent = `Effects: ${record.evidence.semanticEffects.join(', ')}`;
-      item.appendChild(effectsDiv);
-    }
-
-    // ── Matched keywords ──
-    if (record.evidence.matchedKeywords.length > 0) {
-      const kwDiv = document.createElement('div');
-      kwDiv.className = 'capability-record__keywords';
-      kwDiv.textContent = `Keywords: ${record.evidence.matchedKeywords.join(', ')}`;
-      item.appendChild(kwDiv);
-    }
-
-    // ── Alternatives ──
-    if (record.alternatives.length > 0) {
-      const altDiv = document.createElement('div');
-      altDiv.className = 'capability-record__alternatives';
-      altDiv.textContent = `Alternatives: ${record.alternatives
-        .map((a) => `${a.capability} (${a.confidence})`).join(', ')}`;
-      item.appendChild(altDiv);
-    }
-
-    // ── Unclassified reason ──
-    if (record.unclassifiedReason) {
-      const reasonDiv = document.createElement('div');
-      reasonDiv.className = 'capability-record__reason';
-      reasonDiv.textContent = record.unclassifiedReason;
-      item.appendChild(reasonDiv);
-    }
-
-    capabilityRecordsList.appendChild(item);
-  }
-
-  capabilityRecordsSection.hidden = false;
-}
-
-async function loadAndRenderCapabilityRecords(): Promise<void> {
-  const records = await loadCapabilityRecords();
-  if (records && records.length > 0) {
-    renderCapabilityRecords(records);
-  } else {
-    // Retry after delay — SW may still be writing
-    setTimeout(async () => {
-      if (views['stopped'].hidden) return;
-      const retry = await loadCapabilityRecords();
-      if (retry && retry.length > 0) {
-        renderCapabilityRecords(retry);
-      } else {
-        capabilityRecordsSection.hidden = true;
-      }
-    }, 800);
-  }
-}
-
-// ── Repository Status (Phase 10.4) ─────────────────────────
-
 interface RepoStatusData {
   sessionId: string | null;
-  capabilityId: string | null;
-  capabilityDecision: string | null;
 }
 
 async function loadRepositoryStatus(): Promise<RepoStatusData | null> {
   try {
     const result = await chrome.storage.local.get([
       StorageKeys.REPOSITORY_SESSION_ID,
-      StorageKeys.REPOSITORY_CAPABILITY_ID,
-      StorageKeys.REPOSITORY_CAPABILITY_DECISION,
     ]);
     const sessionId = result[StorageKeys.REPOSITORY_SESSION_ID] ?? null;
     if (!sessionId) return null;
     return {
       sessionId,
-      capabilityId: result[StorageKeys.REPOSITORY_CAPABILITY_ID] ?? null,
-      capabilityDecision: result[StorageKeys.REPOSITORY_CAPABILITY_DECISION] ?? null,
     };
   } catch {
     return null;
@@ -856,29 +695,6 @@ function renderRepositoryStatus(data: RepoStatusData): void {
   sessionRow.append(sessionLabel, sessionValue);
   repoStatusBody.appendChild(sessionRow);
 
-  // Capability decision row
-  const decisionRow = document.createElement('div');
-  decisionRow.className = 'repo-status__row';
-
-  const decisionLabel = document.createElement('span');
-  decisionLabel.className = 'repo-status__label';
-  decisionLabel.textContent = 'Capability:';
-  decisionRow.appendChild(decisionLabel);
-
-  const badge = document.createElement('span');
-  const decision = data.capabilityDecision ?? 'none';
-  badge.className = `repo-status__badge repo-status__badge--${decision}`;
-  badge.textContent = decision.replace(/-/g, ' ');
-  decisionRow.appendChild(badge);
-
-  if (data.capabilityId) {
-    const capId = document.createElement('span');
-    capId.className = 'repo-status__value';
-    capId.textContent = data.capabilityId.slice(0, 8);
-    decisionRow.appendChild(capId);
-  }
-
-  repoStatusBody.appendChild(decisionRow);
   repoStatusSection.hidden = false;
 }
 
@@ -1118,10 +934,7 @@ async function handleRecordAnother(): Promise<void> {
   try { await chrome.storage.local.remove(StorageKeys.EXECUTION_IR_PLAN); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.GENERATED_FILES); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.UNDERSTANDING_RESULT); } catch {}
-  try { await chrome.storage.local.remove(StorageKeys.CAPABILITY_CANDIDATE); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.REPOSITORY_SESSION_ID); } catch {}
-  try { await chrome.storage.local.remove(StorageKeys.REPOSITORY_CAPABILITY_ID); } catch {}
-  try { await chrome.storage.local.remove(StorageKeys.REPOSITORY_CAPABILITY_DECISION); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.ELEMENT_HEAL_RESULT); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.EXECUTION_RESULT); } catch {}
   irStepsSection.hidden = true;
@@ -1208,13 +1021,6 @@ function setupLiveListeners(): void {
       if (summary) {
         renderHealingSummary(summary);
       }
-    }
-  });
-
-  // Capability Records — fires when the Capability Engine finishes inference
-  StorageService.onKeyChanged(StorageKeys.CAPABILITY_RECORDS, (newValue) => {
-    if (Array.isArray(newValue) && !views['stopped'].hidden) {
-      renderCapabilityRecords(newValue as SerializableCapabilityRecord[]);
     }
   });
 

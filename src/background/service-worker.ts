@@ -36,10 +36,6 @@ import {
 } from '../runtime/sw-integration';
 import { interpretBehavioralObservations } from '../semantics/sw-bridge';
 import {
-  runCapabilityInference,
-  serializeCapabilityRecords,
-} from '../capabilities/capability-bridge';
-import {
   filterProductionInteractions,
 } from '../presentation/output-adapter';
 import { normalizeWorkflow } from '../presentation/workflow-normalizer';
@@ -282,26 +278,8 @@ async function handleStopRecording(): Promise<void> {
   const normalizedInteractions = normalizeWorkflow(allInteractions);
 
   // Filter to production interactions — removes incidental Hovers, Scrolls,
-  // abandoned/discarded interactions, and no-op selections. This must happen
-  // BEFORE capability inference so the engine only classifies deliberate
-  // user actions, not transit mouse movements or focus events.
+  // abandoned/discarded interactions, and no-op selections.
   const productionInteractions = filterProductionInteractions(normalizedInteractions);
-
-  // ── Capability Model: Phase 6 Engine Integration ──
-  // Run capability inference on production interactions only.
-  // All behavioral observations are attached and effects are interpreted
-  // by this point. The resulting CapabilityRecord[] maps each deliberate
-  // interaction to its semantic classification and is persisted for
-  // side-panel display.
-  let capabilityRecords: ReturnType<typeof serializeCapabilityRecords> = [];
-  try {
-    const records = runCapabilityInference(productionInteractions);
-    capabilityRecords = serializeCapabilityRecords(records);
-    await StorageService.setRaw(StorageKeys.CAPABILITY_RECORDS, capabilityRecords);
-    console.log(`[Capability Engine] Inferred ${records.length} capability records (from ${productionInteractions.length} production interactions, ${allInteractions.length} raw)`);
-  } catch (e) {
-    console.warn('[Capability Engine] error during inference:', e);
-  }
 
   // Store production interactions for UI display
   await StorageService.setRaw(StorageKeys.LIVE_INTERACTIONS, productionInteractions);
@@ -353,7 +331,6 @@ async function handleStopRecording(): Promise<void> {
           generatedAt: new Date().toISOString(),
           schemaVersion: 1,
           fragment: null,
-          capability: null,
         },
         events: [],
         interactions: productionInteractions,
@@ -364,8 +341,6 @@ async function handleStopRecording(): Promise<void> {
       });
 
       await StorageService.setRaw(StorageKeys.REPOSITORY_SESSION_ID, persistenceResult.sessionId);
-      await StorageService.setRaw(StorageKeys.REPOSITORY_CAPABILITY_ID, persistenceResult.capabilityId);
-      await StorageService.setRaw(StorageKeys.REPOSITORY_CAPABILITY_DECISION, persistenceResult.capabilityDecision);
     }
   } catch (e) {
     console.warn('[Repository V2] error during session persistence:', e);

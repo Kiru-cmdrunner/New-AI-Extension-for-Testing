@@ -15,7 +15,6 @@ import type { TestCaseRepository } from '../interfaces/test-case-repository';
 import type { ElementRepository } from '../interfaces/element-repository';
 import type { SourceArtifactRepository } from '../interfaces/source-artifact-repository';
 import type { ExecutionIRRepository } from '../interfaces/execution-ir-repository';
-import type { CapabilityRepository } from '../interfaces/capability-repository';
 import type { RecordingSessionRepository } from '../interfaces/recording-session-repository';
 import type { ExecutionRunRepository } from '../interfaces/execution-run-repository';
 import type { CmdRunnerDatabase } from './dexie-database';
@@ -24,7 +23,6 @@ import { DexieTestCaseRepository } from './dexie-test-case-repository';
 import { DexieElementRepository } from './dexie-element-repository';
 import { DexieSourceArtifactRepository } from './dexie-source-artifact-repository';
 import { DexieExecutionIRRepository } from './dexie-execution-ir-repository';
-import { DexieCapabilityRepository } from './dexie-capability-repository';
 import { DexieRecordingSessionRepository } from './dexie-recording-session-repository';
 import { DexieExecutionRunRepository } from './dexie-execution-run-repository';
 
@@ -35,7 +33,6 @@ class TransactionalRepositorySet implements RepositorySet {
   readonly elements: ElementRepository;
   readonly sourceArtifacts: SourceArtifactRepository;
   readonly executionIRs: ExecutionIRRepository;
-  readonly capabilities: CapabilityRepository;
   readonly recordingSessions: RecordingSessionRepository;
   readonly executionRuns: ExecutionRunRepository;
 
@@ -45,7 +42,6 @@ class TransactionalRepositorySet implements RepositorySet {
     this.elements = new DexieElementRepository(db.elements, db.testCaseVersions);
     this.sourceArtifacts = new DexieSourceArtifactRepository(db.sourceArtifacts);
     this.executionIRs = new DexieExecutionIRRepository(db.executionIRs);
-    this.capabilities = new DexieCapabilityRepository(db.capabilities);
     this.recordingSessions = new DexieRecordingSessionRepository(db.recordingSessions);
     this.executionRuns = new DexieExecutionRunRepository(db.executionRuns);
   }
@@ -65,7 +61,6 @@ export class DexieUnitOfWork implements UnitOfWork {
         this.db.elements,
         this.db.sourceArtifacts,
         this.db.executionIRs,
-        this.db.capabilities,
         this.db.recordingSessions,
         this.db.executionRuns,
       ],

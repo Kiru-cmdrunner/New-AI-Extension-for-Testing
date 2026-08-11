@@ -120,7 +120,6 @@ describe('Healing Service', () => {
     await db.elements.clear();
     await db.projects.clear();
     await db.testCases.clear();
-    await db.capabilities.clear();
     await db.recordingSessions.clear();
     db.close();
   });

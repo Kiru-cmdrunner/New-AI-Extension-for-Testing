@@ -42,7 +42,6 @@ function makeUnderstandingResult(overrides: Partial<UnderstandingResult> = {}): 
       },
       applicationSurfaces: [],
     },
-    capability: null,
     ...overrides,
   };
 }

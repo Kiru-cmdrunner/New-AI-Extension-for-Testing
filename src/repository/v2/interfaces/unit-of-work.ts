@@ -15,7 +15,6 @@ import type { TestCaseRepository } from './test-case-repository';
 import type { ElementRepository } from './element-repository';
 import type { SourceArtifactRepository } from './source-artifact-repository';
 import type { ExecutionIRRepository } from './execution-ir-repository';
-import type { CapabilityRepository } from './capability-repository';
 import type { RecordingSessionRepository } from './recording-session-repository';
 import type { ExecutionRunRepository } from './execution-run-repository';
 
@@ -52,7 +51,6 @@ export interface RepositorySet {
   readonly elements: ElementRepository;
   readonly sourceArtifacts: SourceArtifactRepository;
   readonly executionIRs: ExecutionIRRepository;
-  readonly capabilities: CapabilityRepository;
   readonly recordingSessions: RecordingSessionRepository;
   readonly executionRuns: ExecutionRunRepository;
 }

@@ -64,17 +64,12 @@ export enum StorageKeys {
   GENERATED_FILES = 'generated_files',
   // ── Phase 9.5: Understanding Layer ──
   UNDERSTANDING_RESULT = 'understanding_result',
-  CAPABILITY_CANDIDATE = 'capability_candidate',
   // ── Phase 10.3: Repository V2 Persistence ──
   REPOSITORY_SESSION_ID = 'repo_session_id',
-  REPOSITORY_CAPABILITY_ID = 'repo_capability_id',
-  REPOSITORY_CAPABILITY_DECISION = 'repo_capability_decision',
   // ── Phase 11: Self-Healing Locators ──
   ELEMENT_HEAL_RESULT = 'element_heal_result',
   // ── Phase 12: Execution Engine ──
   EXECUTION_RESULT = 'execution_result',
-  // ── Capability Model: Phase 6 Engine Integration ──
-  CAPABILITY_RECORDS = 'capability_records',
   // ── Component Runtime: Live interactions (in-progress recording state) ──
   LIVE_INTERACTIONS = 'cmdrunner_live_interactions',
 }

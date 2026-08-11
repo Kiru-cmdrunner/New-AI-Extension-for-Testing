@@ -27,20 +27,4 @@ export class DexieRecordingSessionRepository implements RecordingSessionReposito
     await this.sessions.put(session);
     return session;
   }
-
-  async getByCapabilityId(_capabilityId: string): Promise<RecordingSession[]> {
-    // Sessions don't have a direct capabilityId index. We scan by project
-    // and filter in-memory by checking understandingResult.capability.
-    // This is acceptable because session counts per project are small
-    // (typically dozens, not thousands).
-    //
-    // Note: the understandingResult.fragment doesn't carry capabilityId.
-    // The capability candidate's sessionId is what we match on.
-    // For now, this is a linear scan across all sessions.
-    const allSessions = await this.sessions.toArray();
-    return allSessions.filter((s) => {
-      const cap = s.understandingResult?.capability;
-      return cap !== null && cap !== undefined;
-    });
-  }
 }
