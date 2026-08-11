@@ -19,8 +19,10 @@ import { StorageService } from '../storage/storage-service';
 import { sendMessage } from '../shared/messaging';
 import { RepositoryService } from '../repository/repository-service';
 import { renderProductionInteractions } from './interaction-renderer';
+import { updateEvidenceOnInteraction } from './evidence-renderer';
 import type { ReplayJson } from '../recorder/recorded-event';
 import type { ComponentInteraction } from '../shared/component-types';
+import type { BehavioralEvidence } from '../shared/behavioral-evidence-types';
 import type { ExecutionIRPlan, IRAssertion } from '../domain/execution-ir/types';
 import type { GeneratedFile } from '../domain/execution-ir/adapters/ir-code-generator';
 
@@ -294,6 +296,15 @@ chrome.runtime.onMessage.addListener((message: unknown) => {
           executionSection.hidden = false;
         }
       });
+    }
+
+    // M7: Handle late-arriving behavioral evidence overlay
+    if (msg.type === 'INTERACTION_EVIDENCE_UPDATE') {
+      const evMsg = msg as {
+        type: 'INTERACTION_EVIDENCE_UPDATE';
+        payload: { eventId: string; evidence: BehavioralEvidence };
+      };
+      handleEvidenceUpdate(evMsg.payload.eventId, evMsg.payload.evidence);
     }
   }
 });
@@ -944,6 +955,47 @@ async function handleRecordAnother(): Promise<void> {
   executionSection.hidden = true;
   executionRunningSection.hidden = true;
   await openNewTestCase();
+}
+
+// ── Behavioral Evidence Overlay (M7) ──────────────────────────
+
+/**
+ * Handle a late-arriving INTERACTION_EVIDENCE_UPDATE message.
+ *
+ * Searches all visible interaction lists (recording + stopped views) for
+ * an interaction card matching the eventId, then overlays the evidence
+ * onto it. The interaction card is identified by its interactionId text
+ * in the `.timeline-event__id` badge.
+ */
+function handleEvidenceUpdate(eventId: string, evidence: BehavioralEvidence): void {
+  // Search all timeline containers for a matching interaction card
+  const containers = [
+    timelineEvents,
+    detectedInteractionsList,
+  ];
+
+  for (const container of containers) {
+    if (!container || container.hidden) continue;
+
+    // Look for interaction cards whose ID badge matches the eventId
+    const cards = container.querySelectorAll('.interaction-event');
+    for (const card of cards) {
+      const idBadge = card.querySelector('.timeline-event__id');
+      if (idBadge && idBadge.textContent === eventId) {
+        // Found the matching card — update evidence
+        updateEvidenceOnInteraction(card as HTMLElement, evidence);
+        return;
+      }
+    }
+  }
+
+  // Evidence arrived for an interaction not yet displayed — store for
+  // when the interaction renders. We use a Map on the window for
+  // deferred application.
+  const deferred = (window as unknown as { __deferredEvidence?: Map<string, BehavioralEvidence> }).__deferredEvidence;
+  if (deferred) {
+    deferred.set(eventId, evidence);
+  }
 }
 
 // ── Live Updates ───────────────────────────────────────────

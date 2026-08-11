@@ -18,6 +18,7 @@
  */
 
 import type { ComponentInteraction } from '../shared/component-types';
+import { renderEvidence, renderEvidencePlaceholder } from './evidence-renderer';
 
 // ── Layer 1: Type Display Config ──────────────────────────────────────
 
@@ -274,6 +275,29 @@ export function createInteractionElement(interaction: ComponentInteraction): HTM
   return el;
 }
 
+// ── Evidence display helpers (M7) ────────────────────────────────────
+
+/**
+ * Attach behavioral evidence (or a placeholder) to an interaction element.
+ *
+ * If the interaction already has behavioralEvidence, render it.
+ * Otherwise, show a placeholder that will be replaced when
+ * INTERACTION_EVIDENCE_UPDATE arrives.
+ */
+function attachEvidenceDisplay(
+  el: HTMLElement,
+  interaction: ComponentInteraction,
+): void {
+  if (interaction.behavioralEvidence) {
+    const container = document.createElement('div');
+    container.className = 'evidence-container';
+    el.appendChild(container);
+    renderEvidence(container, interaction.behavioralEvidence);
+  } else {
+    el.appendChild(renderEvidencePlaceholder());
+  }
+}
+
 /**
  * Render an array of ComponentInteractions into a container.
  */
@@ -292,7 +316,9 @@ export function renderInteractions(
   }
 
   for (const interaction of interactions) {
-    container.appendChild(createInteractionElement(interaction));
+    const el = createInteractionElement(interaction);
+    attachEvidenceDisplay(el, interaction);
+    container.appendChild(el);
   }
 }
 
