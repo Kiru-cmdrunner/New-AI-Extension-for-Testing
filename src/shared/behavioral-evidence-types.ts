@@ -75,6 +75,8 @@ export interface EvidenceWindow {
    * 'navigation'         — SPA or full-page navigation detected.
    * 'typing-complete'    — input quiescence timer expired (typing sessions).
    * 'displaced'          — displaced by max-concurrent-windows limit.
+   * 'evidence-timeout'   — P1-3: 5s timeout, no behavioral evidence arrived.
+   * 'page-reload-synthetic' — P1-3: SW-generated synthetic evidence for full-page reloads.
    */
   endReason:
     | 'stabilized'
@@ -83,7 +85,9 @@ export interface EvidenceWindow {
     | 'recording-stopped'
     | 'navigation'
     | 'typing-complete'
-    | 'displaced';
+    | 'displaced'
+    | 'evidence-timeout'
+    | 'page-reload-synthetic';
 
   /**
    * Stability trace — quiescence period measurements taken during the window.
@@ -120,8 +124,9 @@ export interface StabilitySample {
  *   for properties EventTap doesn't capture.
  */
 export interface TargetEvidence {
-  /** Full element identity — existing 18-field ElementIdentity. */
-  identity: ElementIdentity;
+  /** Full element identity — existing 18-field ElementIdentity.
+   * P1-3: null for synthetic/timeout evidence where no element was captured. */
+  identity: ElementIdentity | null;
 
   /**
    * When identity was captured (relative to window.openedAt).

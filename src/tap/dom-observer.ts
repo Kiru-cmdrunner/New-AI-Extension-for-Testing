@@ -331,6 +331,12 @@ export class DOMObserver {
 
       // M5: Discover and observe existing shadow roots
       this.discoverShadowRoots(document.body, null);
+
+      // P0-2 Fix: Seed the prevComputedStyles cache so the FIRST class
+      // mutation on any element has a baseline to compare against.
+      // Without this, detectClassVisibilityChange() silently drops the
+      // first visibility change because cached === undefined.
+      this.seedComputedStylesCache();
     }
     return this.referenceTime;
   }
@@ -661,6 +667,9 @@ export class DOMObserver {
           batchIndex,
         });
       }
+      // P0-2 Fix: Seed computed styles for newly added elements so
+      // the first class/style change on them has a baseline.
+      this.seedComputedStylesForElement(node);
     }
 
     // Check removed nodes
@@ -758,6 +767,69 @@ export class DOMObserver {
           batchIndex,
         });
       }
+    }
+  }
+
+  /**
+   * Seed the prevComputedStyles WeakMap with current computed styles
+   * for all elements on the page. This ensures detectClassVisibilityChange()
+   * has a baseline to compare against for the FIRST class mutation on
+   * any element — preventing the cold-start bug where the first visibility
+   * change is silently dropped.
+   *
+   * P0-2 Fix: Called from start() when the MutationObserver is first created.
+   * Also re-seeds for newly added significant surfaces (dropdowns, menus, etc.)
+   * as they appear in the DOM during recording.
+   *
+   * Performance: querySelectorAll('*') on document.body is bounded by the
+   * DOM size. getComputedStyle is called once per element for 3 properties.
+   * This is a one-time cost at observation start.
+   */
+  private seedComputedStylesCache(): void {
+    try {
+      const elements = document.body.querySelectorAll('*');
+      for (const el of elements) {
+        // Only seed if not already cached (avoid overwriting live data)
+        if (!this.prevComputedStyles.has(el)) {
+          this.prevComputedStyles.set(el, {
+            display: getComputedStyleSafe(el, 'display'),
+            visibility: getComputedStyleSafe(el, 'visibility'),
+            opacity: getComputedStyleSafe(el, 'opacity'),
+          });
+        }
+      }
+    } catch {
+      // querySelectorAll may fail on detached DOM — silent degrade
+    }
+  }
+
+  /**
+   * Seed computed styles for a single newly-added element and its children.
+   * Called from detectSurfaceChanges when significant surfaces (dropdowns,
+   * menus, etc.) are added to the DOM. This ensures the first class/style
+   * change on these new elements has a baseline.
+   */
+  private seedComputedStylesForElement(el: Element): void {
+    try {
+      if (!this.prevComputedStyles.has(el)) {
+        this.prevComputedStyles.set(el, {
+          display: getComputedStyleSafe(el, 'display'),
+          visibility: getComputedStyleSafe(el, 'visibility'),
+          opacity: getComputedStyleSafe(el, 'opacity'),
+        });
+      }
+      // Also seed direct children
+      for (const child of el.children) {
+        if (!this.prevComputedStyles.has(child)) {
+          this.prevComputedStyles.set(child, {
+            display: getComputedStyleSafe(child, 'display'),
+            visibility: getComputedStyleSafe(child, 'visibility'),
+            opacity: getComputedStyleSafe(child, 'opacity'),
+          });
+        }
+      }
+    } catch {
+      // silent degrade
     }
   }
 

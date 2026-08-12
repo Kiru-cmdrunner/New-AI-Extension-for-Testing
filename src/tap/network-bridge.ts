@@ -39,11 +39,14 @@ interface NetEventDetail {
 
 /**
  * Raw event from webRequest (forwarded by SW via chrome.runtime message).
+ * P1-4 Fix: wallClock field for cross-process timestamp normalization.
+ * Optional: older SW code or tests may not include it.
  */
 interface WebRequestDetail {
   url: string;
   method: string;
   timestamp: number;
+  wallClock?: number; // Date.now() from SW at event time (P1-4)
   phase: 'start' | 'complete';
   status: number | null;
   requestId: string;
@@ -107,7 +110,15 @@ export class NetworkBridge {
   private running = false;
 
   /**
+   * P1-4 Fix: Counters for diagnostics.
+   */
+  private webRequestCount = 0;
+  private mainWorldCount = 0;
+
+  /**
    * Start listening for network activity from both sources.
+   *
+   * P1-4 Fix: Added diagnostic logging to help diagnose capture failures.
    */
   start(): void {
     if (this.running) return;
@@ -115,17 +126,23 @@ export class NetworkBridge {
     this.buffer = [];
     this.inFlight.clear();
     this.mainWorldActive = false;
+    this.webRequestCount = 0;
+    this.mainWorldCount = 0;
 
     // Listen for MAIN-world network events
     this.netListener = (e: Event) => {
       const detail = (e as CustomEvent<NetEventDetail>).detail;
-      if (detail) this.handleNetEvent(detail, 'main-world');
+      if (detail) {
+        this.mainWorldCount++;
+        this.handleNetEvent(detail, 'main-world');
+      }
     };
     window.addEventListener('cmdrunner-net', this.netListener);
 
     // Listen for ready signal
     this.readyListener = () => {
       this.mainWorldActive = true;
+      console.debug('[NetworkBridge] MAIN-world interceptor active');
       if (this.readyTimeout) {
         clearTimeout(this.readyTimeout);
         this.readyTimeout = null;
@@ -136,6 +153,7 @@ export class NetworkBridge {
     // Set timeout for ready signal (500ms per spec §6.2)
     this.readyTimeout = setTimeout(() => {
       // Ready signal not received — fall back to webRequest-only mode
+      console.debug('[NetworkBridge] MAIN-world interceptor NOT active after 500ms — webRequest-only mode');
       this.readyTimeout = null;
     }, 500);
 
@@ -147,7 +165,10 @@ export class NetworkBridge {
         (msg as { type?: string }).type === 'NETWORK_REQUEST'
       ) {
         const detail = (msg as { detail?: WebRequestDetail }).detail;
-        if (detail) this.handleNetEvent(detail, 'webrequest');
+        if (detail) {
+          this.webRequestCount++;
+          this.handleNetEvent(detail, 'webrequest');
+        }
       }
     };
     chrome.runtime.onMessage.addListener(this.messageListener);
@@ -258,6 +279,19 @@ export class NetworkBridge {
   }
 
   /**
+   * P1-4 Fix: Get diagnostic info about network capture status.
+   * Returns counts of events received from each source.
+   */
+  getDiagnostics(): { mainWorldActive: boolean; mainWorldCount: number; webRequestCount: number; bufferSize: number } {
+    return {
+      mainWorldActive: this.mainWorldActive,
+      mainWorldCount: this.mainWorldCount,
+      webRequestCount: this.webRequestCount,
+      bufferSize: this.buffer.length,
+    };
+  }
+
+  /**
    * Get count of in-flight requests (for bounded network re-check).
    * GAP-5: used by EvidenceCollector to decide whether to do a delayed re-collect.
    */
@@ -273,6 +307,12 @@ export class NetworkBridge {
 
   /**
    * Handle a network event from either source.
+   *
+   * P1-4 Fix: For webRequest events, normalize the timestamp from the SW's
+   * performance.now() clock to the content script's performance.now() clock.
+   * SW timestamps are in a different process and don't align with the content
+   * script's clock. We estimate the offset when the first webRequest arrives
+   * by comparing Date.now()-derived timing.
    */
   private handleNetEvent(
     detail: NetEventDetail | WebRequestDetail,
@@ -282,13 +322,31 @@ export class NetworkBridge {
 
     const url = detail.url;
     const method = detail.method;
-    const timestamp = detail.timestamp;
     const phase = detail.phase;
     const status = detail.status;
     const resourceType =
       source === 'main-world'
         ? (detail as NetEventDetail).resourceType
         : 'unknown';
+
+    // P1-4 Fix: Normalize timestamp for webRequest events.
+    // MAIN-world events use the same performance.now() as the content script
+    // (same renderer process) — no conversion needed.
+    // webRequest events arrive from the SW with SW's performance.now() —
+    // a different clock. If wallClock is present, convert to content script
+    // time using Date.now() as a common reference. If wallClock is absent
+    // (e.g., from tests or older SW code), use the original timestamp as-is.
+    let timestamp = detail.timestamp;
+    if (source === 'webrequest') {
+      const wallClock = (detail as WebRequestDetail).wallClock;
+      if (wallClock !== undefined && wallClock > 0) {
+        // Convert: content_performance_now = contentNow - (wallNow - wallClock)
+        const contentNow = performance.now();
+        const wallNow = Date.now();
+        timestamp = contentNow - (wallNow - wallClock);
+      }
+      // else: use detail.timestamp as-is (test context or no wallClock available)
+    }
 
     if (phase === 'start') {
       // Track in-flight

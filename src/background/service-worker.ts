@@ -42,6 +42,7 @@ import {
   startNetworkObservation,
   stopNetworkObservation,
 } from '../background/network-observation';
+import type { NavigationEvidence } from '../shared/behavioral-evidence-types';
 
 // ── Singletons ──────────────────────────────────────────────────────────
 
@@ -637,7 +638,7 @@ function broadcastExecutionResult(
 
 // ── Navigation capture ──────────────────────────────────────────────────
 
-chrome.webNavigation.onCommitted.addListener(async (details) => {
+chrome.webNavigation.onCommitted.addListener(async (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
   // Only capture main frame navigations
   if (details.frameId !== 0) return;
 
@@ -713,7 +714,102 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
   };
 
   processObservedEvent(navEvent);
+
+  // P1-3 Fix: For full-page reloads, the content script is destroyed
+  // before the EvidenceCollector can close its window and deliver evidence.
+  // The SW should create synthetic navigation evidence so the interaction
+  // card shows navigation details instead of "Collecting…" forever.
+  //
+  // transitionType 'reload', 'auto_subframe', 'form_submit' indicate the
+  // page is being replaced — content script destroyed.
+  const fullReloadTypes = ['reload', 'form_submit', 'auto_toplevel', 'auto_subframe', 'link', 'typed'];
+  if (fullReloadTypes.includes(details.transitionType)) {
+    // Short delay to let the runtime emit the navigation interaction
+    setTimeout(() => {
+      attachSyntheticNavEvidence(navEvent.eventId, details);
+    }, 200);
+  }
 });
+
+/**
+ * Create and attach synthetic navigation evidence for full-page-reload
+ * navigations where the content script is destroyed before evidence delivery.
+ *
+ * P1-3 Fix: This ensures navigation interactions always show evidence with
+ * the actual URL and navigation type, rather than staying in "Collecting…"
+ * state forever.
+ */
+function attachSyntheticNavEvidence(navEventId: string, details: chrome.webNavigation.WebNavigationTransitionCallbackDetails): void {
+  // Map webNavigation transitionType to NavigationEvidence.type
+  const navTypeMap: Record<string, NavigationEvidence['type']> = {
+    'link': 'full-reload',
+    'typed': 'full-reload',
+    'reload': 'full-reload',
+    'form_submit': 'full-reload',
+    'auto_toplevel': 'full-reload',
+    'auto_subframe': 'full-reload',
+  };
+  const navType: NavigationEvidence['type'] = navTypeMap[details.transitionType] ?? 'full-reload';
+
+  const navEvidenceEntry: NavigationEvidence = {
+    type: navType,
+    fromUrl: '', // SW doesn't know the previous URL at this point
+    toUrl: details.url,
+    relativeTime: 0,
+    batchIndex: null,
+  };
+
+  const interactionId = attachEvidenceToInteraction(navEventId, {
+    sourceEventId: navEventId,
+    sourceEventType: 'navigation',
+    windowId: `synthetic-nav-${navEventId}`,
+    frameId: 'main',
+    window: {
+      openedAt: 0,
+      closedAt: 0,
+      durationMs: 0,
+      endReason: 'page-reload-synthetic',
+      stabilityTrace: [],
+    },
+    targetEvidence: {
+      identity: null,
+      identityCapturedAt: 0,
+      before: null,
+      after: null,
+      focusMovement: null,
+    },
+    applicationEvidence: {
+      domChanges: [],
+      domChangeOverflow: 0,
+      coarseMode: false,
+      newSurfaces: [],
+      removedSurfaces: [],
+      visibilityChanges: [],
+      navigation: [navEvidenceEntry],
+      networkActivity: [],
+      performanceCondition: {
+        mainThreadBlocked: false,
+        highChurnMode: false,
+        longestBatchMs: 0,
+        totalBatches: 0,
+      },
+    },
+  });
+
+  if (interactionId) {
+    // Successfully attached — broadcast the evidence update
+    const evidence = getLiveInteractions().find(i => i.interactionId === interactionId)?.behavioralEvidence;
+    if (evidence) {
+      chrome.runtime.sendMessage({
+        type: 'INTERACTION_EVIDENCE_UPDATE',
+        payload: { interactionId, evidence },
+      }).catch(() => {});
+    }
+  }
+  // If no match (interaction not yet emitted), the evidence will be stored
+  // in pendingEvidence and drained when the interaction is emitted.
+  // The 5s timeout is still the fallback.
+}
 
 /**
  * Check if recording is currently active.

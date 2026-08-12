@@ -329,11 +329,13 @@ export class EvidenceCollector {
       );
 
       // GAP-5: Check for in-flight requests that started within this window.
-      // If any exist, do a bounded re-check after a short delay.
+      // P1-4 Fix: Increased from 200ms to 1000ms. Real API calls (auth,
+      // data fetch) typically take 200-800ms. The 200ms re-check was too
+      // short to catch most completions.
       const inflightCount = this.networkBridge.getInFlightCount?.() ?? 0;
       if (inflightCount > 0 && !state.isNavigationWindow) {
         // Schedule a bounded re-collect for in-flight requests.
-        // Max 1 re-check at +200ms, only for requests that started in this window's range.
+        // Max 1 re-check at +1000ms, only for requests that started in this window's range.
         setTimeout(() => {
           if (state.isClosed) {
             const lateNetwork = this.networkBridge?.collectForRange(
@@ -358,7 +360,7 @@ export class EvidenceCollector {
               this.deliverEvidence(lateEvidence);
             }
           }
-        }, 200);
+        }, 1000);
       }
     }
 

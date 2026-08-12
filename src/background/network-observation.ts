@@ -131,10 +131,12 @@ function registerWebRequestListeners(): void {
       requestId: details.requestId,
     });
 
+    // P1-4 Fix: Include wallClock (Date.now()) for cross-process timestamp normalization
     forwardToTab(details.tabId, {
       url: details.url,
       method: details.method,
       timestamp: performance.now(),
+      wallClock: Date.now(),
       phase: 'start' as const,
       status: null,
       requestId: details.requestId,
@@ -147,10 +149,12 @@ function registerWebRequestListeners(): void {
     const inFlight = inFlightRequests.get(details.requestId);
     inFlightRequests.delete(details.requestId);
 
+    // P1-4 Fix: Include wallClock
     forwardToTab(details.tabId, {
       url: details.url,
       method: inFlight?.method ?? details.method,
       timestamp: performance.now(),
+      wallClock: Date.now(),
       phase: 'complete' as const,
       status: details.statusCode,
       requestId: details.requestId,
@@ -163,10 +167,12 @@ function registerWebRequestListeners(): void {
     const inFlight = inFlightRequests.get(details.requestId);
     inFlightRequests.delete(details.requestId);
 
+    // P1-4 Fix: Include wallClock
     forwardToTab(details.tabId, {
       url: details.url,
       method: inFlight?.method ?? 'GET',
       timestamp: performance.now(),
+      wallClock: Date.now(),
       phase: 'complete' as const,
       status: 0,
       requestId: details.requestId,
@@ -255,6 +261,9 @@ async function injectNetworkInterceptor(tabId: number): Promise<boolean> {
 
 /**
  * Forward a webRequest event to the content script's NetworkBridge.
+ *
+ * P1-4 Fix: Includes wallClock (Date.now() from SW) for cross-process
+ * timestamp normalization.
  */
 function forwardToTab(
   tabId: number,
@@ -262,6 +271,7 @@ function forwardToTab(
     url: string;
     method: string;
     timestamp: number;
+    wallClock: number; // P1-4: Date.now() from SW
     phase: 'start' | 'complete';
     status: number | null;
     requestId: string;

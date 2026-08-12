@@ -604,6 +604,10 @@ export const EVIDENCE_CONTAINER_ATTR = 'data-evidence-container';
  *
  * If called on a container that already has evidence, replaces the
  * existing content (supports late-arriving evidence updates).
+ *
+ * P1-3 Fix: If the evidence has endReason 'evidence-timeout' or
+ * 'page-reload-synthetic', renders a special timeout/synthetic notice
+ * instead of the normal evidence display.
  */
 export function renderEvidence(
   container: HTMLElement,
@@ -613,18 +617,35 @@ export function renderEvidence(
   container.innerHTML = '';
   container.setAttribute(EVIDENCE_CONTAINER_ATTR, 'true');
 
+  // P1-3: Handle timeout / synthetic evidence
+  const endReason = evidence?.window?.endReason ?? 'unknown';
+  if (endReason === 'evidence-timeout') {
+    const notice = document.createElement('div');
+    notice.className = 'evidence-timeout-notice';
+    notice.textContent = '⏱ No behavioral evidence (5s timeout)';
+    container.appendChild(notice);
+    return;
+  }
+
   // Window metadata line
   const windowMeta = document.createElement('div');
   windowMeta.className = 'evidence-window-meta';
   const win = evidence?.window;
   const durationMs = win?.durationMs ?? 0;
-  const endReason = win?.endReason ?? 'unknown';
   const durationText = `${Math.round(durationMs)}ms`;
   windowMeta.textContent = `Window: ${durationText} · ${endReason}`;
   if (evidence?.frameId && evidence.frameId !== 'main') {
     windowMeta.textContent += ` · frame: ${truncate(evidence.frameId, 30)}`;
   }
   container.appendChild(windowMeta);
+
+  // P1-3: Show synthetic notice for page-reload navigations
+  if (endReason === 'page-reload-synthetic') {
+    const notice = document.createElement('div');
+    notice.className = 'evidence-synthetic-notice';
+    notice.textContent = '📋 Navigation evidence (page reloaded — behavioral details unavailable)';
+    container.appendChild(notice);
+  }
 
   // Target evidence section
   container.appendChild(renderTargetEvidence(evidence?.targetEvidence));

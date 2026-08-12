@@ -55,6 +55,109 @@ let lastVerificationResult: VerificationResult | null = null;
 const pendingEvidence = new Map<string, BehavioralEvidence>();
 const MAX_PENDING_EVIDENCE = 100;
 
+// ── Evidence Timeout Tracking (P1-3 Fix) ─────────────────────────────
+//
+// Bounded timeout: if no behavioral evidence arrives for an interaction
+// within EVIDENCE_TIMEOUT_MS, the interaction is marked as "evidence timeout"
+// and a synthetic minimal evidence is attached so the side panel can display
+// "No evidence (timeout)" instead of "Collecting…" forever.
+//
+// This handles scenarios like full-page reloads (content script destroyed),
+// SPA navigations where the evidence window never closes, and any other
+// case where evidence delivery fails.
+
+const EVIDENCE_TIMEOUT_MS = 5000;
+
+/** Map of interactionId → timeout handle for evidence timeouts. */
+const evidenceTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+
+/**
+ * Start the evidence timeout timer for a newly emitted interaction.
+ * If no evidence arrives within EVIDENCE_TIMEOUT_MS, attaches synthetic
+ * timeout evidence and broadcasts the update.
+ */
+function startEvidenceTimeout(interaction: ComponentInteraction): void {
+  // Skip if interaction already has evidence
+  if (interaction.behavioralEvidence) return;
+
+  const interactionId = interaction.interactionId;
+  const triggerEventId = interaction.triggerEvent?.eventId;
+
+  // Clear any existing timeout for this interaction
+  const existing = evidenceTimeouts.get(interactionId);
+  if (existing) clearTimeout(existing);
+
+  const handle = setTimeout(() => {
+    evidenceTimeouts.delete(interactionId);
+
+    // Check if evidence arrived in the meantime
+    const current = liveInteractions.find((i) => i.interactionId === interactionId);
+    if (!current || current.behavioralEvidence) return;
+
+    // Build synthetic timeout evidence
+    const timeoutEvidence: BehavioralEvidence = {
+      sourceEventId: triggerEventId ?? interactionId,
+      sourceEventType: current.triggerEvent?.eventType ?? 'unknown',
+      windowId: `timeout-${interactionId}`,
+      frameId: 'main',
+      window: {
+        openedAt: 0,
+        closedAt: 0,
+        durationMs: 0,
+        endReason: 'evidence-timeout',
+        stabilityTrace: [],
+      },
+      targetEvidence: {
+        identity: null,
+        identityCapturedAt: 0,
+        before: null,
+        after: null,
+        focusMovement: null,
+      },
+      applicationEvidence: {
+        domChanges: [],
+        domChangeOverflow: 0,
+        coarseMode: false,
+        newSurfaces: [],
+        removedSurfaces: [],
+        visibilityChanges: [],
+        navigation: [],
+        networkActivity: [],
+        performanceCondition: {
+          mainThreadBlocked: false,
+          highChurnMode: false,
+          longestBatchMs: 0,
+          totalBatches: 0,
+        },
+      },
+    };
+
+    current.behavioralEvidence = timeoutEvidence;
+    persistLiveInteractions();
+
+    // Broadcast the timeout evidence
+    chrome.runtime.sendMessage({
+      type: 'INTERACTION_EVIDENCE_UPDATE',
+      payload: { interactionId, evidence: timeoutEvidence },
+    }).catch(() => {
+      // Side panel may not be open — ignore
+    });
+  }, EVIDENCE_TIMEOUT_MS);
+
+  evidenceTimeouts.set(interactionId, handle);
+}
+
+/**
+ * Cancel the evidence timeout for an interaction (evidence arrived).
+ */
+function cancelEvidenceTimeout(interactionId: string): void {
+  const handle = evidenceTimeouts.get(interactionId);
+  if (handle) {
+    clearTimeout(handle);
+    evidenceTimeouts.delete(interactionId);
+  }
+}
+
 /**
  * Store incoming evidence in the pending map.
  * Called when evidence arrives but no matching interaction exists yet.
@@ -90,6 +193,8 @@ export function attachEvidenceToInteraction(
       if (!interaction.behavioralEvidence) {
         interaction.behavioralEvidence = evidence;
         persistLiveInteractions();
+        // P1-3: Cancel the evidence timeout — real evidence arrived
+        cancelEvidenceTimeout(interaction.interactionId);
       }
       return interaction.interactionId;
     }
@@ -101,6 +206,8 @@ export function attachEvidenceToInteraction(
       if (!interaction.behavioralEvidence) {
         interaction.behavioralEvidence = evidence;
         persistLiveInteractions();
+        // P1-3: Cancel the evidence timeout — real evidence arrived
+        cancelEvidenceTimeout(interaction.interactionId);
       }
       return interaction.interactionId;
     }
@@ -157,6 +264,12 @@ export function initRecording(): void {
       drainPendingEvidence(interaction);
       liveInteractions.push(interaction);
       persistLiveInteractions();
+      // P1-3: Start evidence timeout — if no evidence arrives within 5s,
+      // the interaction gets synthetic timeout evidence so the side panel
+      // shows "No evidence (timeout)" instead of "Collecting…" forever.
+      if (!interaction.behavioralEvidence) {
+        startEvidenceTimeout(interaction);
+      }
     },
     evidenceLedger,
   };
@@ -298,6 +411,11 @@ export function resetState(): void {
   evidenceLedger = null;
   lastVerificationResult = null;
   pendingEvidence.clear();
+  // P1-3: Clear all evidence timeouts
+  for (const handle of evidenceTimeouts.values()) {
+    clearTimeout(handle);
+  }
+  evidenceTimeouts.clear();
   chrome.storage.local.remove([
     LIVE_INTERACTIONS_KEY,
     RUNTIME_SNAPSHOT_KEY,
@@ -344,6 +462,9 @@ export async function restoreFromStorage(): Promise<boolean> {
         drainPendingEvidence(interaction);
         liveInteractions.push(interaction);
         persistLiveInteractions();
+        if (!interaction.behavioralEvidence) {
+          startEvidenceTimeout(interaction);
+        }
       },
       evidenceLedger,
     };
