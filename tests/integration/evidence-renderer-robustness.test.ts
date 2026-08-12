@@ -16,13 +16,39 @@
  *   8. Realistic OrangeHRM evidence (form submit, navigation, moderate DOM)
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { renderEvidence, renderEvidencePlaceholder, updateEvidenceOnInteraction } from '../../src/sidepanel/evidence-renderer';
-import { renderInteractions, renderProductionInteractions, createInteractionElement } from '../../src/sidepanel/interaction-renderer';
+import { renderInteractions, renderProductionInteractions } from '../../src/sidepanel/interaction-renderer';
 import type { BehavioralEvidence } from '../../src/shared/behavioral-evidence-types';
-import type { ComponentInteraction } from '../../src/shared/component-types';
+import type { ComponentInteraction, ObservedEvent } from '../../src/shared/component-types';
+import type { ElementIdentity } from '../../src/shared/types';
 
 // ── Test Helpers ──────────────────────────────────────────────────────
+
+function makeValidIdentity(overrides: Partial<ElementIdentity> = {}): ElementIdentity {
+  return {
+    accessibleName: 'Submit',
+    ariaRole: 'button',
+    ariaLabel: null,
+    ariaLabelledBy: null,
+    placeholder: null,
+    tag: 'BUTTON',
+    className: 'btn btn-primary',
+    name: null,
+    stableId: 'submit-btn',
+    testId: null,
+    dataCy: null,
+    dataQa: null,
+    cssSelector: 'button#submit',
+    xPath: '//button[@id="submit"]',
+    inIframe: false,
+    shadowDom: false,
+    href: null,
+    inputType: null,
+    elementId: 'submit',
+    ...overrides,
+  };
+}
 
 function makeValidEvidence(overrides: Partial<BehavioralEvidence> = {}): BehavioralEvidence {
   return {
@@ -35,17 +61,10 @@ function makeValidEvidence(overrides: Partial<BehavioralEvidence> = {}): Behavio
       closedAt: 1200,
       durationMs: 200,
       endReason: 'stabilized',
+      stabilityTrace: [],
     },
     targetEvidence: {
-      identity: {
-        tag: 'BUTTON',
-        stableId: 'submit-btn',
-        ariaRole: 'button',
-        accessibleName: 'Submit',
-        className: 'btn btn-primary',
-        inputType: null,
-        elementId: 'submit',
-      },
+      identity: makeValidIdentity(),
       identityCapturedAt: 990,
       before: {
         value: null,
@@ -109,10 +128,11 @@ function makeValidEvidence(overrides: Partial<BehavioralEvidence> = {}): Behavio
           url: 'https://api.example.com/submit',
           method: 'POST',
           status: 200,
+          startRelativeToEvent: 80,
+          endRelativeToEvent: 130,
           durationMs: 50,
+          resourceType: 'fetch',
           source: 'main-world',
-          relativeTime: 1080,
-          batchIndex: 1,
         },
       ],
       performanceCondition: {
@@ -130,39 +150,10 @@ function makeValidInteraction(overrides: Partial<ComponentInteraction> = {}): Co
   return {
     interactionId: 'int-test-1',
     type: 'Click',
-    lifecycleId: 'lc-test-1',
     componentType: 'IconButton',
     componentFramework: 'React',
-    triggerEvent: {
-      eventId: 'evt-test-1',
-      eventType: 'click',
-      timestamp: 1000,
-      target: {
-        tag: 'BUTTON',
-        stableId: 'submit-btn',
-        ariaRole: 'button',
-        accessibleName: 'Submit',
-        className: 'btn btn-primary',
-        inputType: null,
-        elementId: 'submit',
-      },
-      valueBefore: null,
-      valueAfter: null,
-      checkedBefore: null,
-      checkedAfter: null,
-      clientX: 100,
-      clientY: 200,
-      key: null,
-      code: null,
-      shiftKey: false,
-      ctrlKey: false,
-      altKey: false,
-      metaKey: false,
-      scrollDeltaY: null,
-      scrollDeltaX: null,
-      pageUrl: 'https://example.com',
-      pageTitle: 'Test Page',
-    },
+    triggerEvent: makeValidObservedEvent(),
+    trigger: makeValidIdentity(),
     memberEvents: [],
     startTime: 1000,
     endTime: 1000,
@@ -172,6 +163,46 @@ function makeValidInteraction(overrides: Partial<ComponentInteraction> = {}): Co
       elementKey: 'button#submit',
       userTyped: false,
     },
+    ...overrides,
+  };
+}
+
+function makeValidObservedEvent(overrides: Partial<ObservedEvent> = {}): ObservedEvent {
+  return {
+    eventId: 'evt-test-1',
+    eventType: 'click',
+    timestamp: 1000,
+    captureSeq: 1000,
+    isTrusted: true,
+    target: makeValidIdentity(),
+    domContext: {
+      inputType: null,
+      ariaExpanded: null,
+      ariaHasPopup: null,
+      isContentEditable: false,
+      disabled: false,
+      readOnly: false,
+      required: false,
+      ancestorRoles: [],
+      ancestorClasses: [],
+      tabIndex: 0,
+    },
+    valueBefore: null,
+    valueAfter: null,
+    checkedBefore: null,
+    checkedAfter: null,
+    clientX: 100,
+    clientY: 200,
+    key: null,
+    code: null,
+    shiftKey: false,
+    ctrlKey: false,
+    altKey: false,
+    metaKey: false,
+    scrollDeltaY: null,
+    scrollDeltaX: null,
+    pageUrl: 'https://example.com',
+    pageTitle: 'Test Page',
     ...overrides,
   };
 }
@@ -218,15 +249,15 @@ describe('Evidence Renderer Robustness — M7-fix-002', () => {
       const container = makeContainer();
       const evidence = makeValidEvidence({
         targetEvidence: {
-          identity: {
+          identity: makeValidIdentity({
             tag: 'DIV',
             stableId: '',
             ariaRole: null,
-            accessibleName: null,
+            accessibleName: '',
             className: '',
-            inputType: null,
-            elementId: '',
-          },
+            cssSelector: '',
+            xPath: '',
+          }),
           identityCapturedAt: 0,
           before: null,
           after: null,
@@ -241,7 +272,7 @@ describe('Evidence Renderer Robustness — M7-fix-002', () => {
       const container = makeContainer();
       const evidence = makeValidEvidence({
         targetEvidence: {
-          identity: makeValidEvidence().targetEvidence!.identity!,
+          identity: makeValidIdentity(),
           identityCapturedAt: 0,
           before: null,
           after: null,
@@ -334,9 +365,9 @@ describe('Evidence Renderer Robustness — M7-fix-002', () => {
           domChanges: [
             {
               types: undefined as unknown as [],
-              targetPath: null,
-              targetTag: undefined,
-              shadowContext: undefined,
+              targetPath: null as unknown as string,
+              targetTag: undefined as unknown as string,
+              shadowContext: undefined as unknown as string | null,
               changedAttributes: undefined as unknown as [],
               attributeDeltas: undefined as unknown as Record<string, { old: string | null; new: string | null }>,
               addedNodesCount: 0,
@@ -379,10 +410,11 @@ describe('Evidence Renderer Robustness — M7-fix-002', () => {
               url: undefined as unknown as string,
               method: undefined as unknown as string,
               status: null,
+              startRelativeToEvent: 100,
+              endRelativeToEvent: null,
               durationMs: null,
+              resourceType: 'unknown',
               source: 'main-world',
-              relativeTime: 100,
-              batchIndex: 0,
             },
           ],
           performanceCondition: null,
@@ -562,7 +594,7 @@ describe('Evidence Renderer Robustness — M7-fix-002', () => {
   describe('Scenario 7: Realistic Amazon-scale evidence', () => {
     it('handles heavy DOM mutations (200 capped)', () => {
       const domChanges = Array.from({ length: 200 }, (_, i) => ({
-        types: ['attributes', 'childList'] as const,
+        types: ['attributes', 'childList'] as ('attributes' | 'childList' | 'characterData')[],
         targetPath: `div#root > div.layout > div.main > section:nth-child(${i})`,
         targetTag: 'div',
         shadowContext: null,
@@ -599,10 +631,11 @@ describe('Evidence Renderer Robustness — M7-fix-002', () => {
             url: `https://www.amazon.com/api/data${i}`,
             method: 'GET',
             status: 200,
+            startRelativeToEvent: 50 + i * 10,
+            endRelativeToEvent: 80 + i * 10,
             durationMs: 30 + i * 5,
+            resourceType: 'xhr' as const,
             source: 'main-world' as const,
-            relativeTime: 50 + i * 10,
-            batchIndex: i,
           })),
           performanceCondition: {
             mainThreadBlocked: true,
@@ -627,7 +660,7 @@ describe('Evidence Renderer Robustness — M7-fix-002', () => {
       const container = makeContainer();
       const interactions: ComponentInteraction[] = [];
 
-      const amazonTypes = ['Click', 'TextEntry', 'Click', 'Navigation', 'Click', 'Dropdown', 'Click', 'Scroll'];
+      const amazonTypes: ComponentInteraction['type'][] = ['Click', 'TextEntry', 'Click', 'Navigation', 'Click', 'Dropdown', 'Click', 'Scroll'];
       for (let i = 0; i < 8; i++) {
         interactions.push(makeValidInteraction({
           interactionId: `int-amz-${i + 1}`,
@@ -649,7 +682,7 @@ describe('Evidence Renderer Robustness — M7-fix-002', () => {
             sourceEventId: `evt-amz-${i + 1}`,
             applicationEvidence: {
               domChanges: Array.from({ length: 50 }, (_, j) => ({
-                types: ['attributes'] as const,
+                types: ['attributes'] as ('attributes' | 'childList' | 'characterData')[],
                 targetPath: `div[data-index="${j}"]`,
                 targetTag: 'div',
                 shadowContext: null,
@@ -701,7 +734,7 @@ describe('Evidence Renderer Robustness — M7-fix-002', () => {
         sourceEventId: 'evt-ohrm-login',
         sourceEventType: 'click',
         targetEvidence: {
-          identity: {
+          identity: makeValidIdentity({
             tag: 'BUTTON',
             stableId: 'btnLogin',
             ariaRole: 'button',
@@ -709,7 +742,9 @@ describe('Evidence Renderer Robustness — M7-fix-002', () => {
             className: 'oxd-button oxd-button--medium oxd-button--main orangehrm-login-action',
             inputType: null,
             elementId: 'btnLogin',
-          },
+            cssSelector: 'button.oxd-button--main',
+            xPath: '//button[@type="submit"]',
+          }),
           identityCapturedAt: 1000,
           before: {
             value: null,
@@ -740,7 +775,7 @@ describe('Evidence Renderer Robustness — M7-fix-002', () => {
         applicationEvidence: {
           domChanges: [
             {
-              types: ['attributes', 'childList'] as const,
+              types: ['attributes', 'childList'] as ('attributes' | 'childList' | 'characterData')[],
               targetPath: 'div.oxd-form-loader',
               targetTag: 'div',
               shadowContext: null,
@@ -778,10 +813,11 @@ describe('Evidence Renderer Robustness — M7-fix-002', () => {
               url: 'https://opensource-demo.orangehrmlive.com/web/index.php/auth/validate',
               method: 'POST',
               status: 302,
+              startRelativeToEvent: 50,
+              endRelativeToEvent: 350,
               durationMs: 300,
+              resourceType: 'xhr',
               source: 'main-world' as const,
-              relativeTime: 1050,
-              batchIndex: 0,
             },
           ],
           performanceCondition: {
@@ -818,7 +854,7 @@ describe('Evidence Renderer Robustness — M7-fix-002', () => {
             sourceEventId: 'evt-ohrm-1',
             sourceEventType: 'input',
             targetEvidence: {
-              identity: {
+              identity: makeValidIdentity({
                 tag: 'INPUT',
                 stableId: '',
                 ariaRole: 'textbox',
@@ -826,7 +862,9 @@ describe('Evidence Renderer Robustness — M7-fix-002', () => {
                 className: 'oxd-input',
                 inputType: 'text',
                 elementId: '',
-              },
+                cssSelector: 'input.oxd-input',
+                xPath: '//input[@name="username"]',
+              }),
               identityCapturedAt: 500,
               before: { value: '', checked: null, className: 'oxd-input', disabled: false, ariaExpanded: null, ariaChecked: null, ariaPressed: null, textContent: null, childCount: 0, capturedAt: 500 },
               after: { value: 'Admin', checked: null, className: 'oxd-input', disabled: false, ariaExpanded: null, ariaChecked: null, ariaPressed: null, textContent: null, childCount: 0, capturedAt: 1000 },
@@ -858,7 +896,7 @@ describe('Evidence Renderer Robustness — M7-fix-002', () => {
             sourceEventId: 'evt-ohrm-2',
             sourceEventType: 'input',
             targetEvidence: {
-              identity: {
+              identity: makeValidIdentity({
                 tag: 'INPUT',
                 stableId: '',
                 ariaRole: 'textbox',
@@ -866,7 +904,9 @@ describe('Evidence Renderer Robustness — M7-fix-002', () => {
                 className: 'oxd-input',
                 inputType: 'password',
                 elementId: '',
-              },
+                cssSelector: 'input.oxd-input',
+                xPath: '//input[@name="password"]',
+              }),
               identityCapturedAt: 1500,
               before: { value: '', checked: null, className: 'oxd-input', disabled: false, ariaExpanded: null, ariaChecked: null, ariaPressed: null, textContent: null, childCount: 0, capturedAt: 1500 },
               after: { value: '••••••••', checked: null, className: 'oxd-input', disabled: false, ariaExpanded: null, ariaChecked: null, ariaPressed: null, textContent: null, childCount: 0, capturedAt: 2000 },
@@ -921,7 +961,7 @@ describe('Evidence Renderer Robustness — M7-fix-002', () => {
       const container = makeContainer();
       const evidence = makeValidEvidence({
         targetEvidence: {
-          identity: {
+          identity: makeValidIdentity({
             tag: 'SPAN',
             stableId: null as unknown as string,
             ariaRole: null,
@@ -929,7 +969,9 @@ describe('Evidence Renderer Robustness — M7-fix-002', () => {
             className: null as unknown as string,
             inputType: null,
             elementId: '',
-          },
+            cssSelector: '',
+            xPath: '',
+          }),
           identityCapturedAt: 0,
           before: null,
           after: null,
