@@ -19,6 +19,7 @@
  */
 
 import type { ObservedEvent } from '../../shared/component-types';
+import type { ElementIdentity } from '../../shared/types';
 import { createEventTap, type EventTapHandle } from '../../tap/event-tap';
 import { TargetStateCache } from '../../tap/target-state-cache';
 import { installTargetStateListeners, type TargetStateListenersHandle } from '../../tap/target-state-listeners';
@@ -277,8 +278,15 @@ async function startRecording(): Promise<void> {
   // Install the event tap with both onEvent and onAfterEvent
   eventTapHandle = createEventTap({
     onEvent,
-    onAfterEvent: (targetEl, eventId, eventType, cssSelector) => {
-      evidenceCollector?.onAfterEvent(targetEl, eventId, eventType, cssSelector);
+    onAfterEvent: (
+      targetEl: Element,
+      eventId: string,
+      eventType: string,
+      _cssSelector: string,
+      identity: ElementIdentity | null,
+      observedEvent?: ObservedEvent,
+    ) => {
+      evidenceCollector?.onAfterEvent(targetEl, eventId, eventType, _cssSelector, identity, observedEvent);
     },
   });
 }

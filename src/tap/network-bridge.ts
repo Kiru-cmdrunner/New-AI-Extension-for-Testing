@@ -257,6 +257,18 @@ export class NetworkBridge {
     return this.buffer.length;
   }
 
+  /**
+   * Get count of in-flight requests (for bounded network re-check).
+   * GAP-5: used by EvidenceCollector to decide whether to do a delayed re-collect.
+   */
+  getInFlightCount(): number {
+    let count = 0;
+    for (const list of this.inFlight.values()) {
+      count += list.length;
+    }
+    return count;
+  }
+
   // ── Internal ─────────────────────────────────────────────────────
 
   /**

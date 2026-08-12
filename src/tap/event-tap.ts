@@ -14,6 +14,7 @@
  */
 
 import type { BrowserEventType, ObservedEvent, DomContext } from '../shared/component-types';
+import type { ElementIdentity } from '../shared/types';
 import {
   extractIdentity,
   resolveTarget,
@@ -52,12 +53,21 @@ export interface EventTapConfig {
    * Optional: called AFTER onEvent with the resolved target element and
    * event metadata. Used by the Observation Coordinator (Phase D) to open
    * observation windows. Does NOT fire if not provided.
+   *
+   * GAP-1 fix: now passes the full ElementIdentity (extracted at capture
+   * time) instead of just the cssSelector. This avoids a second extraction
+   * and ensures EvidenceCollector has the same immutable identity.
+   *
+   * GAP-4 fix: for navigation events, passes the full ObservedEvent so
+   * EvidenceCollector has access to navType and pageUrl.
    */
   onAfterEvent?: (
     targetEl: Element,
     eventId: string,
     eventType: string,
     cssSelector: string,
+    identity: ElementIdentity | null,
+    observedEvent?: ObservedEvent,
   ) => void;
 }
 
@@ -136,6 +146,7 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
 
     // Behavioral Evidence Model v3.0 §7.2: fire onAfterEvent for navigation.
     // Uses document.body as the target element (no specific element for nav).
+    // GAP-4 fix: pass the full ObservedEvent so EvidenceCollector has navType + pageUrl.
     if (config.onAfterEvent) {
       const navTarget = document.body || document.documentElement;
       if (navTarget) {
@@ -144,6 +155,8 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
           navEvent.eventId,
           'navigation',
           '', // no CSS selector for synthetic nav events
+          navEvent.target, // identity from the body element
+          navEvent, // full ObservedEvent with navType + pageUrl
         );
       }
     }
@@ -213,11 +226,20 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
 
     // Phase D: Fire onAfterEvent if configured (synchronous, same call stack)
     if (config.onAfterEvent) {
+      // GAP-7 fix: Only fire onAfterEvent for keydown if the key is Enter.
+      // Non-Enter keydown events should NOT open evidence windows — they
+      // are handled by the typing (input) extend-on-input model instead.
+      if (eventType === 'keydown') {
+        const kb = rawEvent as KeyboardEvent;
+        if (kb.key !== 'Enter') return;
+      }
       config.onAfterEvent(
         targetEl,
         observed.eventId,
         eventType,
         identity.cssSelector,
+        identity,
+        observed,
       );
     }
   }

@@ -39,6 +39,7 @@ import type {
   PerformanceCondition as _PerformanceCondition,
 } from '../shared/behavioral-evidence-types';
 import type { ElementIdentity } from '../shared/types';
+import type { ObservedEvent } from '../shared/component-types';
 import { TargetStateCache } from './target-state-cache';
 import { DOMObserver } from './dom-observer';
 import { AdaptiveWindow } from './adaptive-window';
@@ -92,6 +93,10 @@ interface ObservationWindowState {
   adaptiveWindow: AdaptiveWindow;
   navEvents: NavigationEvidence[];
   isClosed: boolean;
+  /** Whether this is a navigation-triggered window. */
+  isNavigationWindow: boolean;
+  /** In-flight network requests at window close time (for bounded re-check). */
+  inflightNetworkUrls: Set<string>;
 }
 
 // ── EvidenceCollector ────────────────────────────────────────────────
@@ -122,8 +127,8 @@ export class EvidenceCollector {
   /** DOMObserver batch callback registration. */
   private domObserverRefcount = 0;
 
-  /** Collected navigation events not yet attributed to a window. */
-  private pendingNavEvents: NavigationEvidence[] = [];
+  /** Last known URL for navigation fromUrl tracking (GAP-4). */
+  private lastKnownUrl: string = '';
 
   /** Network bridge for collecting network activity (M6). */
   private networkBridge: NetworkBridge | null = null;
@@ -148,7 +153,7 @@ export class EvidenceCollector {
     this.activeTypingTarget = null;
     this.activeTypingWindow = null;
     this.lastScrollWindowTime = -Infinity;
-    this.pendingNavEvents = [];
+    this.lastKnownUrl = typeof location !== 'undefined' ? location.href : '';
   }
 
   /**
@@ -183,45 +188,48 @@ export class EvidenceCollector {
    *   - Typing events (input): extend existing typing window or open new
    *   - Throttled events (scroll): max 1 window per 500ms
    *   - Capture-only events: ignored
+   *
+   * GAP-1 fix: now receives the full ElementIdentity extracted by EventTap.
+   * GAP-4 fix: for navigation, receives the full ObservedEvent with navType + pageUrl.
+   * GAP-7 fix: keydown filtering is done in EventTap (only Enter gets through).
    */
   onAfterEvent(
     targetEl: Element,
     eventId: string,
     eventType: string,
     _cssSelector: string,
+    identity?: ElementIdentity | null,
+    observedEvent?: ObservedEvent,
   ): void {
     if (!this.isRunning) return;
 
     // Capture-only events — no evidence window
     if (CAPTURE_ONLY_EVENTS.has(eventType)) return;
 
-    // Navigation events — record and attribute to active windows
+    // Navigation events — GAP-4 fix: open their own evidence window
+    // (was: recordNavigationEvent which only attached to active windows)
     if (eventType === 'navigation') {
-      this.recordNavigationEvent(targetEl);
+      this.handleNavigationEvent(targetEl, eventId, identity ?? null, observedEvent);
       return;
     }
 
     // Typing events — extend-on-input model (§4.6)
     if (TYPING_EVENTS.has(eventType)) {
-      this.handleTypingEvent(targetEl, eventId);
+      this.handleTypingEvent(targetEl, eventId, identity ?? null);
       return;
     }
 
     // Throttled events — scroll (§4.7)
     if (THROTTLED_EVENTS.has(eventType)) {
-      this.handleScrollEvent(targetEl, eventId);
+      this.handleScrollEvent(targetEl, eventId, identity ?? null);
       return;
     }
 
-    // keydown — only open window for Enter key
-    if (eventType === 'keydown') {
-      // EventTap filters to Enter-only before calling onAfterEvent
-      // (handled by the caller; if we get here for keydown, it's Enter)
-    }
-
-    // Standard window-open events (click, mousedown, contextmenu, change, focus, blur, keydown-Enter)
+    // Standard window-open events (click, mousedown, contextmenu, change, focus, blur, keydown-Enter, submit)
+    // GAP-7: EventTap now only calls onAfterEvent for Enter keydown — all keydown
+    // events reaching here are Enter.
     if (WINDOW_OPEN_EVENTS.has(eventType) || eventType === 'submit') {
-      this.openWindow(targetEl, eventId, eventType);
+      this.openWindow(targetEl, eventId, eventType, identity ?? null);
     }
   }
 
@@ -229,8 +237,14 @@ export class EvidenceCollector {
 
   /**
    * Open a new observation window for a user interaction.
+   * GAP-1 fix: now receives and stores the full ElementIdentity.
    */
-  private openWindow(targetEl: Element, eventId: string, eventType: string): void {
+  private openWindow(
+    targetEl: Element,
+    eventId: string,
+    eventType: string,
+    identity: ElementIdentity | null = null,
+  ): void {
     // Enforce max concurrent windows with displacement
     this.enforceMaxConcurrent();
 
@@ -259,12 +273,14 @@ export class EvidenceCollector {
       sourceEventId: eventId,
       sourceEventType: eventType,
       targetEl,
-      identity: null, // Identity comes from the ObservedEvent, not available here
+      identity, // GAP-1 fix: store identity from EventTap (was always null)
       beforeSnapshot,
       openedAt,
       adaptiveWindow,
       navEvents: [],
       isClosed: false,
+      isNavigationWindow: false,
+      inflightNetworkUrls: new Set(),
     };
 
     this.activeWindows.push(state);
@@ -303,12 +319,47 @@ export class EvidenceCollector {
     const perfMetrics = this.domObserver.getPerformanceMetrics();
 
     // Collect network activity from the bridge (M6)
+    // GAP-5 fix: check for in-flight requests and do a bounded re-check
+    // for requests that started within the window but haven't completed yet.
     let networkActivity: NetworkActivity[] = [];
     if (this.networkBridge) {
       networkActivity = this.networkBridge.collectForRange(
         state.openedAt,
         performance.now(),
       );
+
+      // GAP-5: Check for in-flight requests that started within this window.
+      // If any exist, do a bounded re-check after a short delay.
+      const inflightCount = this.networkBridge.getInFlightCount?.() ?? 0;
+      if (inflightCount > 0 && !state.isNavigationWindow) {
+        // Schedule a bounded re-collect for in-flight requests.
+        // Max 1 re-check at +200ms, only for requests that started in this window's range.
+        setTimeout(() => {
+          if (state.isClosed) {
+            const lateNetwork = this.networkBridge?.collectForRange(
+              state.openedAt,
+              performance.now(),
+            ) ?? [];
+            // Only deliver if we got new completion data
+            if (lateNetwork.length > networkActivity.length) {
+              // Build a supplementary evidence with updated network data
+              const lateEvidence: BehavioralEvidence = {
+                sourceEventId: state.sourceEventId,
+                sourceEventType: state.sourceEventType,
+                windowId: state.windowId,
+                frameId: 'main',
+                window: evidenceWindow,
+                targetEvidence,
+                applicationEvidence: {
+                  ...applicationEvidence,
+                  networkActivity: lateNetwork,
+                },
+              };
+              this.deliverEvidence(lateEvidence);
+            }
+          }
+        }, 200);
+      }
     }
 
     // Apply 200-cap
@@ -337,7 +388,7 @@ export class EvidenceCollector {
       newSurfaces: newSurfaces.slice(0, 50),
       removedSurfaces,
       visibilityChanges: visibilityChanges.slice(0, 50),
-      navigation: [...state.navEvents, ...this.pendingNavEvents],
+      navigation: [...state.navEvents], // GAP-4: only nav events attributed to THIS window
       networkActivity, // M6: populated from NetworkBridge
       performanceCondition: {
         mainThreadBlocked: perfMetrics.longestBatchMs > 15,
@@ -378,7 +429,6 @@ export class EvidenceCollector {
 
     // Clear accumulated data for next window
     this.domObserver.clearAccumulated();
-    this.pendingNavEvents = [];
   }
 
   /**
@@ -398,8 +448,9 @@ export class EvidenceCollector {
   /**
    * Handle input events using extend-on-input model.
    * First input → open new window. Subsequent → extend (reset timer).
+   * GAP-1 fix: now receives and stores identity.
    */
-  private handleTypingEvent(targetEl: Element, eventId: string): void {
+  private handleTypingEvent(targetEl: Element, eventId: string, identity: ElementIdentity | null = null): void {
     // If typing on the same element, extend the existing window
     if (this.activeTypingTarget === targetEl && this.activeTypingWindow && !this.activeTypingWindow.isClosed) {
       // Extend: reset stabilization timer
@@ -408,12 +459,9 @@ export class EvidenceCollector {
     }
 
     // Different element or no active typing window → open new window
-    this.openWindow(targetEl, eventId, 'input');
+    this.openWindow(targetEl, eventId, 'input', identity);
     this.activeTypingTarget = targetEl;
     this.activeTypingWindow = this.activeWindows[this.activeWindows.length - 1] ?? null;
-
-    // Set end reason to typing-complete when this window closes
-    // (the AdaptiveWindow will close via stabilization, but we override the reason)
   }
 
   // ── Scroll Strategy (§4.7) ─────────────────────────────────────────
@@ -421,38 +469,85 @@ export class EvidenceCollector {
   /**
    * Handle scroll events with throttling.
    */
-  private handleScrollEvent(targetEl: Element, eventId: string): void {
+  private handleScrollEvent(targetEl: Element, eventId: string, identity: ElementIdentity | null = null): void {
     const now = performance.now();
     if (now - this.lastScrollWindowTime < MIN_SCROLL_INTERVAL_MS) {
       return; // throttled
     }
     this.lastScrollWindowTime = now;
-    this.openWindow(targetEl, eventId, 'scroll');
+    this.openWindow(targetEl, eventId, 'scroll', identity);
   }
 
-  // ── Navigation Evidence ────────────────────────────────────────────
+  // ── Navigation Evidence (GAP-4) ───────────────────────────────────
 
   /**
-   * Record a navigation event and attribute it to active windows.
+   * Handle a navigation event by opening its own evidence window and
+   * recording the nav metadata from the ObservedEvent.
+   *
+   * GAP-4 fix: navigation events now open their own window (to capture
+   * post-navigation DOM mutations), and use the real navType and pageUrl
+   * from EventTap instead of hardcoded values.
    */
-  private recordNavigationEvent(targetEl: Element): void {
+  private handleNavigationEvent(
+    targetEl: Element,
+    eventId: string,
+    identity: ElementIdentity | null,
+    observedEvent?: ObservedEvent,
+  ): void {
+    // Extract real nav type and URLs from the ObservedEvent
+    const navType: NavigationEvidence['type'] = this.extractNavTypeFromEvent(observedEvent);
+    const fromUrl = this.extractFromUrlFromEvent(observedEvent);
+    const toUrl = observedEvent?.pageUrl ?? location.href;
+
+    // Record nav evidence for active windows (preserve old attribution behavior)
     const navEvidence: NavigationEvidence = {
-      type: this.extractNavType(targetEl),
-      fromUrl: this.extractFromUrl(),
-      toUrl: location.href,
+      type: navType,
+      fromUrl,
+      toUrl,
       relativeTime: performance.now(),
       batchIndex: this.domObserver.getBatchCounter(),
     };
 
-    // Attribute to all active windows
+    // Attribute to all active non-closed windows
     for (const win of this.activeWindows) {
       if (!win.isClosed) {
         win.navEvents.push(navEvidence);
       }
     }
 
-    // Also keep in pending for the next window that might open
-    this.pendingNavEvents.push(navEvidence);
+    // GAP-4: Also open a new window for the navigation itself.
+    // This captures post-navigation DOM mutations (page content rendering).
+    this.openWindow(targetEl, eventId, 'navigation', identity);
+
+    // Mark the new window as a navigation window and store the nav evidence
+    const navWin = this.activeWindows[this.activeWindows.length - 1];
+    if (navWin && !navWin.isClosed) {
+      navWin.isNavigationWindow = true;
+      navWin.navEvents.push(navEvidence);
+    }
+  }
+
+  /**
+   * Extract navigation type from the ObservedEvent.
+   * GAP-4 fix: uses the real navType from EventTap instead of hardcoded 'pushState'.
+   */
+  private extractNavTypeFromEvent(observedEvent?: ObservedEvent): NavigationEvidence['type'] {
+    if (observedEvent?.navType) {
+      return observedEvent.navType;
+    }
+    return 'pushState'; // fallback for legacy events without navType
+  }
+
+  /**
+   * Get the previous URL from the ObservedEvent.
+   * GAP-4 fix: uses the real fromUrl tracked by EventTap's lastKnownUrl.
+   */
+  private extractFromUrlFromEvent(observedEvent?: ObservedEvent): string {
+    // EventTap doesn't store fromUrl on the event, but we can infer from
+    // the pageUrl of the PREVIOUS event. For now, use a module-level tracker.
+    const fromUrl = this.lastKnownUrl;
+    this.lastKnownUrl = observedEvent?.pageUrl ?? location.href;
+    return fromUrl;
   }
 
   // ── Helpers ────────────────────────────────────────────────────────
@@ -478,22 +573,6 @@ export class EvidenceCollector {
       after,
       detectedAt: performance.now(),
     };
-  }
-
-  /**
-   * Extract navigation type from a navigation event target.
-   */
-  private extractNavType(_targetEl: Element): NavigationEvidence['type'] {
-    // The navType is set on the ObservedEvent by EventTap (M1).
-    // Here we infer from location change — full reload detection is limited.
-    return 'pushState'; // default; refined by correlation layer
-  }
-
-  /**
-   * Get the previous URL (best effort).
-   */
-  private extractFromUrl(): string {
-    return ''; // Unknown in content script context
   }
 
   /**

@@ -223,6 +223,28 @@ function getAccessibleName(el: Element): string | null {
 // ── DOMObserver ──────────────────────────────────────────────────────
 
 /**
+ * Safe wrapper for getComputedStyle — returns a default if it fails.
+ */
+function getComputedStyleSafe(el: Element, prop: string): string {
+  try {
+    return window.getComputedStyle(el).getPropertyValue(prop) || '';
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Extract a CSS property value from an inline style string.
+ * e.g., extractCssProperty('display:none; color:red', 'display') → 'none'
+ */
+function extractCssProperty(styleStr: string, prop: string): string | null {
+  // Match "prop:value" or "prop: value" in the style string
+  const regex = new RegExp(`(?:^|;)\\s*${prop}\\s*:\\s*([^;]+)`, 'i');
+  const match = styleStr.match(regex);
+  return match ? match[1].trim() : null;
+}
+
+/**
  * Refcounted singleton MutationObserver on document.body.
  *
  * - start() increments refcount. First start() creates the MutationObserver.
@@ -275,6 +297,12 @@ export class DOMObserver {
 
   /** Whether shadow root scanning exceeded the cap. */
   private shadowRootOverflow = false;
+
+  /**
+   * GAP-3: Cache of previous computed styles for class-change visibility detection.
+   * WeakMap so entries are garbage-collected with the element — bounded.
+   */
+  private prevComputedStyles = new WeakMap<Element, { display: string; visibility: string; opacity: string }>();
 
   /**
    * Start observing. Increments refcount. Creates the MutationObserver
@@ -589,10 +617,19 @@ export class DOMObserver {
     }
 
     // Check for visibility attribute changes
+    // GAP-3 fix: detect display/visibility/opacity from style attribute,
+    // plus class attribute changes that may affect visibility.
     if (record.type === 'attributes') {
       const attrName = record.attributeName;
       if (attrName === 'hidden' || attrName === 'aria-hidden') {
         this.detectVisibilityChange(targetEl, attrName, record.oldValue, batchIndex, now, shadowContext);
+      } else if (attrName === 'style') {
+        // GAP-3: Check style attribute for display/visibility/opacity changes
+        this.detectStyleVisibilityChange(targetEl, record.oldValue, batchIndex, now, shadowContext);
+      } else if (attrName === 'class') {
+        // GAP-3: Check class changes that may affect visibility
+        // (CSS classes commonly toggle display/visibility/opacity)
+        this.detectClassVisibilityChange(targetEl, record.oldValue, batchIndex, now, shadowContext);
       }
     }
   }
@@ -682,6 +719,113 @@ export class DOMObserver {
       newValue: newValue,
       relativeTime: now - this.referenceTime,
       batchIndex,
+    });
+  }
+
+  /**
+   * Detect visibility changes from style attribute mutations (GAP-3).
+   *
+   * Parses the old and new style attribute values for display, visibility,
+   * and opacity properties. If any of these changed, records a VisibilityChange.
+   *
+   * This catches cases like:
+   *   style="display:none" → style="display:block"
+   *   style="visibility:hidden" → style="visibility:visible"
+   *   style="opacity:0" → style="opacity:1"
+   */
+  private detectStyleVisibilityChange(
+    el: Element,
+    oldStyleValue: string | null,
+    batchIndex: number,
+    now: number,
+    shadowContext: string | null,
+  ): void {
+    const newStyleValue = el.getAttribute('style') ?? '';
+    const oldStyle = oldStyleValue ?? '';
+
+    // Parse display/visibility/opacity from old and new style strings
+    const props = ['display', 'visibility', 'opacity'] as const;
+    for (const prop of props) {
+      const oldVal = extractCssProperty(oldStyle, prop);
+      const newVal = extractCssProperty(newStyleValue, prop);
+      if (oldVal !== newVal) {
+        this.visibilityChanges.push({
+          path: getElementPath(el, shadowContext),
+          property: prop,
+          oldValue: oldVal ?? '',
+          newValue: newVal ?? '',
+          relativeTime: now - this.referenceTime,
+          batchIndex,
+        });
+      }
+    }
+  }
+
+  /**
+   * Detect visibility changes from class attribute mutations (GAP-3).
+   *
+   * When a class attribute changes, compares the computed display/visibility/opacity
+   * before and after. Uses a WeakMap cache to avoid redundant getComputedStyle calls.
+   *
+   * This catches cases like:
+   *   class="dropdown hidden" → class="dropdown visible"
+   *   class="menu collapsed" → class="menu expanded"
+   *
+   * Uses a WeakMap keyed by element to cache previous computed styles.
+   * This is bounded (WeakMap entries are GC'd with elements).
+   */
+  private detectClassVisibilityChange(
+    el: Element,
+    _oldClassValue: string | null,
+    batchIndex: number,
+    now: number,
+    shadowContext: string | null,
+  ): void {
+    // Get current computed display/visibility/opacity
+    const currentDisplay = getComputedStyleSafe(el, 'display');
+    const currentVisibility = getComputedStyleSafe(el, 'visibility');
+    const currentOpacity = getComputedStyleSafe(el, 'opacity');
+
+    // Get previous values from cache
+    const cached = this.prevComputedStyles.get(el);
+    if (cached) {
+      if (cached.display !== currentDisplay) {
+        this.visibilityChanges.push({
+          path: getElementPath(el, shadowContext),
+          property: 'display',
+          oldValue: cached.display,
+          newValue: currentDisplay,
+          relativeTime: now - this.referenceTime,
+          batchIndex,
+        });
+      }
+      if (cached.visibility !== currentVisibility) {
+        this.visibilityChanges.push({
+          path: getElementPath(el, shadowContext),
+          property: 'visibility',
+          oldValue: cached.visibility,
+          newValue: currentVisibility,
+          relativeTime: now - this.referenceTime,
+          batchIndex,
+        });
+      }
+      if (cached.opacity !== currentOpacity) {
+        this.visibilityChanges.push({
+          path: getElementPath(el, shadowContext),
+          property: 'opacity',
+          oldValue: cached.opacity,
+          newValue: currentOpacity,
+          relativeTime: now - this.referenceTime,
+          batchIndex,
+        });
+      }
+    }
+
+    // Update cache
+    this.prevComputedStyles.set(el, {
+      display: currentDisplay,
+      visibility: currentVisibility,
+      opacity: currentOpacity,
     });
   }
 
