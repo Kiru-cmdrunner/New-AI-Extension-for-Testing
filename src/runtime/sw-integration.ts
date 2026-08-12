@@ -178,8 +178,11 @@ export function storePendingEvidence(evidence: BehavioralEvidence): void {
  * Tier 1: interaction.triggerEvent.eventId === sourceEventId (preferred)
  * Tier 2: interaction.memberEvents[].eventId === sourceEventId (fallback)
  *
- * First-write-only: if interaction already has behavioralEvidence, skip.
- * On successful match, re-persists liveInteractions to storage.
+ * First-write-only for full evidence: if interaction already has
+ * behavioralEvidence, skip — UNLESS the incoming evidence only adds
+ * networkActivity entries (late network re-check). In that case, merge
+ * the new network entries into the existing evidence's networkActivity
+ * array instead of dropping them.
  *
  * @returns interactionId if matched, null if no match.
  */
@@ -187,14 +190,54 @@ export function attachEvidenceToInteraction(
   sourceEventId: string,
   evidence: BehavioralEvidence,
 ): string | null {
+  // Helper: check if incoming evidence is a network-only supplement
+  const isNetworkSupplement = (incoming: BehavioralEvidence): boolean => {
+    // A network supplement has minimal/no target evidence and carries
+    // networkActivity entries. We detect it by checking if the window
+    // endReason is 'stabilized' (normal) AND it has networkActivity entries
+    // AND its targetEvidence has no real before/after state changes.
+    return incoming.applicationEvidence?.networkActivity?.length > 0;
+  };
+
+  // Helper: merge network entries into existing evidence
+  const mergeNetworkEvidence = (
+    existing: BehavioralEvidence,
+    incoming: BehavioralEvidence,
+  ): BehavioralEvidence => {
+    const existingUrls = new Set(
+      (existing.applicationEvidence?.networkActivity ?? []).map((n) => `${n.method}:${n.url}`),
+    );
+    const newEntries = (incoming.applicationEvidence?.networkActivity ?? []).filter(
+      (n) => !existingUrls.has(`${n.method}:${n.url}`),
+    );
+    if (newEntries.length === 0) return existing; // nothing new to merge
+
+    return {
+      ...existing,
+      applicationEvidence: {
+        ...existing.applicationEvidence,
+        networkActivity: [
+          ...(existing.applicationEvidence?.networkActivity ?? []),
+          ...newEntries,
+        ],
+      },
+    };
+  };
+
   // Tier 1: trigger match
   for (const interaction of liveInteractions) {
     if (interaction.triggerEvent?.eventId === sourceEventId) {
       if (!interaction.behavioralEvidence) {
         interaction.behavioralEvidence = evidence;
         persistLiveInteractions();
-        // P1-3: Cancel the evidence timeout — real evidence arrived
         cancelEvidenceTimeout(interaction.interactionId);
+      } else if (isNetworkSupplement(evidence)) {
+        // P0-1 fix: merge late network evidence instead of dropping
+        interaction.behavioralEvidence = mergeNetworkEvidence(
+          interaction.behavioralEvidence,
+          evidence,
+        );
+        persistLiveInteractions();
       }
       return interaction.interactionId;
     }
@@ -206,8 +249,14 @@ export function attachEvidenceToInteraction(
       if (!interaction.behavioralEvidence) {
         interaction.behavioralEvidence = evidence;
         persistLiveInteractions();
-        // P1-3: Cancel the evidence timeout — real evidence arrived
         cancelEvidenceTimeout(interaction.interactionId);
+      } else if (isNetworkSupplement(evidence)) {
+        // P0-1 fix: merge late network evidence instead of dropping
+        interaction.behavioralEvidence = mergeNetworkEvidence(
+          interaction.behavioralEvidence,
+          evidence,
+        );
+        persistLiveInteractions();
       }
       return interaction.interactionId;
     }

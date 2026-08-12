@@ -33,7 +33,7 @@ import type {
   FocusMovement,
   ApplicationEvidence,
   DomChangeSummary as _DomChangeSummary,
-  SurfaceChange,
+  SurfaceChange as _SurfaceChange,
   VisibilityChange as _VisibilityChange,
   NavigationEvidence,
   PerformanceCondition as _PerformanceCondition,
@@ -97,6 +97,12 @@ interface ObservationWindowState {
   isNavigationWindow: boolean;
   /** In-flight network requests at window close time (for bounded re-check). */
   inflightNetworkUrls: Set<string>;
+  /**
+   * P1-3 fix: Store the ObservedEvent for valueBefore/valueAfter fallback.
+   * Null for events where no ObservedEvent was passed (e.g., typing windows
+   * that extend from a prior input event).
+   */
+  observedEvent: ObservedEvent | null;
 }
 
 // ── EvidenceCollector ────────────────────────────────────────────────
@@ -215,13 +221,13 @@ export class EvidenceCollector {
 
     // Typing events — extend-on-input model (§4.6)
     if (TYPING_EVENTS.has(eventType)) {
-      this.handleTypingEvent(targetEl, eventId, identity ?? null);
+      this.handleTypingEvent(targetEl, eventId, identity ?? null, observedEvent ?? null);
       return;
     }
 
     // Throttled events — scroll (§4.7)
     if (THROTTLED_EVENTS.has(eventType)) {
-      this.handleScrollEvent(targetEl, eventId, identity ?? null);
+      this.handleScrollEvent(targetEl, eventId, identity ?? null, observedEvent ?? null);
       return;
     }
 
@@ -229,7 +235,7 @@ export class EvidenceCollector {
     // GAP-7: EventTap now only calls onAfterEvent for Enter keydown — all keydown
     // events reaching here are Enter.
     if (WINDOW_OPEN_EVENTS.has(eventType) || eventType === 'submit') {
-      this.openWindow(targetEl, eventId, eventType, identity ?? null);
+      this.openWindow(targetEl, eventId, eventType, identity ?? null, observedEvent ?? null);
     }
   }
 
@@ -238,12 +244,14 @@ export class EvidenceCollector {
   /**
    * Open a new observation window for a user interaction.
    * GAP-1 fix: now receives and stores the full ElementIdentity.
+   * P1-3 fix: now receives and stores the ObservedEvent for fallback.
    */
   private openWindow(
     targetEl: Element,
     eventId: string,
     eventType: string,
     identity: ElementIdentity | null = null,
+    observedEvent: ObservedEvent | null = null,
   ): void {
     // Enforce max concurrent windows with displacement
     this.enforceMaxConcurrent();
@@ -281,6 +289,7 @@ export class EvidenceCollector {
       isClosed: false,
       isNavigationWindow: false,
       inflightNetworkUrls: new Set(),
+      observedEvent, // P1-3 fix: store ObservedEvent for valueBefore/valueAfter fallback
     };
 
     this.activeWindows.push(state);
@@ -369,9 +378,9 @@ export class EvidenceCollector {
     const domChanges = allSummaries.slice(0, MAX_DOM_CHANGES);
     const domChangeOverflow = Math.max(0, allSummaries.length - MAX_DOM_CHANGES);
 
-    // Split surfaces into new/removed (we track them together in DOMObserver)
-    const newSurfaces = surfaces.filter((_, i) => i % 2 === 0 || true).slice(0, 50); // simplified
-    const removedSurfaces: SurfaceChange[] = []; // DOMObserver tracks all as one list
+    // Split surfaces into new/removed based on 'kind' field
+    const newSurfaces = surfaces.filter((s) => s.kind === 'added').slice(0, 50);
+    const removedSurfaces = surfaces.filter((s) => s.kind === 'removed').slice(0, 50);
 
     // Build TargetEvidence
     const targetEvidence: TargetEvidence = {
@@ -381,6 +390,49 @@ export class EvidenceCollector {
       after: afterSnapshot,
       focusMovement,
     };
+
+    // P1-3 fix: Fall back to ObservedEvent valueBefore/valueAfter when
+    // TargetStateSnapshot before is null or has no value but ObservedEvent has one.
+    // This fills the gap when TargetStateCache wasn't pre-populated for this element.
+    if (state.observedEvent) {
+      const obs = state.observedEvent;
+      // Enrich 'before' value if missing
+      if (
+        (targetEvidence.before?.value === null || targetEvidence.before === null) &&
+        obs.valueBefore !== null
+      ) {
+        const beforeBase = targetEvidence.before ?? {
+          value: null,
+          checked: null,
+          className: '',
+          disabled: false,
+          ariaExpanded: null,
+          ariaChecked: null,
+          ariaPressed: null,
+          textContent: null,
+          childCount: 0,
+          scrollTop: null,
+          scrollLeft: null,
+          selectedValues: null,
+          controlledValue: null,
+          capturedAt: state.openedAt,
+        };
+        targetEvidence.before = {
+          ...beforeBase,
+          value: beforeBase.value ?? obs.valueBefore,
+        };
+      }
+      // Enrich 'after' value if missing
+      if (
+        targetEvidence.after?.value === null &&
+        obs.valueAfter !== null
+      ) {
+        targetEvidence.after = {
+          ...targetEvidence.after,
+          value: obs.valueAfter,
+        };
+      }
+    }
 
     // Build ApplicationEvidence
     const applicationEvidence: ApplicationEvidence = {
@@ -452,7 +504,7 @@ export class EvidenceCollector {
    * First input → open new window. Subsequent → extend (reset timer).
    * GAP-1 fix: now receives and stores identity.
    */
-  private handleTypingEvent(targetEl: Element, eventId: string, identity: ElementIdentity | null = null): void {
+  private handleTypingEvent(targetEl: Element, eventId: string, identity: ElementIdentity | null = null, observedEvent: ObservedEvent | null = null): void {
     // If typing on the same element, extend the existing window
     if (this.activeTypingTarget === targetEl && this.activeTypingWindow && !this.activeTypingWindow.isClosed) {
       // Extend: reset stabilization timer
@@ -461,7 +513,7 @@ export class EvidenceCollector {
     }
 
     // Different element or no active typing window → open new window
-    this.openWindow(targetEl, eventId, 'input', identity);
+    this.openWindow(targetEl, eventId, 'input', identity, observedEvent);
     this.activeTypingTarget = targetEl;
     this.activeTypingWindow = this.activeWindows[this.activeWindows.length - 1] ?? null;
   }
@@ -471,13 +523,13 @@ export class EvidenceCollector {
   /**
    * Handle scroll events with throttling.
    */
-  private handleScrollEvent(targetEl: Element, eventId: string, identity: ElementIdentity | null = null): void {
+  private handleScrollEvent(targetEl: Element, eventId: string, identity: ElementIdentity | null = null, observedEvent: ObservedEvent | null = null): void {
     const now = performance.now();
     if (now - this.lastScrollWindowTime < MIN_SCROLL_INTERVAL_MS) {
       return; // throttled
     }
     this.lastScrollWindowTime = now;
-    this.openWindow(targetEl, eventId, 'scroll', identity);
+    this.openWindow(targetEl, eventId, 'scroll', identity, observedEvent);
   }
 
   // ── Navigation Evidence (GAP-4) ───────────────────────────────────
@@ -519,7 +571,7 @@ export class EvidenceCollector {
 
     // GAP-4: Also open a new window for the navigation itself.
     // This captures post-navigation DOM mutations (page content rendering).
-    this.openWindow(targetEl, eventId, 'navigation', identity);
+    this.openWindow(targetEl, eventId, 'navigation', identity, observedEvent ?? null);
 
     // Mark the new window as a navigation window and store the nav evidence
     const navWin = this.activeWindows[this.activeWindows.length - 1];

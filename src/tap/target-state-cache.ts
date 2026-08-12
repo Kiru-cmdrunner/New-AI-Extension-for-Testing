@@ -135,6 +135,49 @@ function snapshotElement(el: Element): TargetStateSnapshot {
   // childCount
   const childCount = htmlEl.childElementCount;
 
+  // P2-6: scrollTop/scrollLeft — only for scrollable elements
+  let scrollTop: number | null = null;
+  let scrollLeft: number | null = null;
+  if (el instanceof HTMLElement) {
+    if (el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth) {
+      scrollTop = el.scrollTop;
+      scrollLeft = el.scrollLeft;
+    }
+  }
+
+  // P3-7: selectedValues — all selected options for multi-select
+  let selectedValues: string[] | null = null;
+  if (el instanceof HTMLSelectElement) {
+    const selected = el.selectedOptions;
+    if (selected.length > 1) {
+      selectedValues = Array.from(selected).map(
+        (opt) => opt.text?.trim() || opt.textContent?.trim() || opt.value || '',
+      );
+    }
+  } else {
+    // Custom multi-select: multiple [aria-selected="true"] descendants
+    const selectedDescendants = el.querySelectorAll('[aria-selected="true"]');
+    if (selectedDescendants.length > 1) {
+      selectedValues = Array.from(selectedDescendants).map(
+        (d) => (d as HTMLElement).textContent?.trim() || (d as HTMLElement).getAttribute('aria-label') || '',
+      );
+    }
+  }
+
+  // P2-5: controlledValue — value of element referenced by aria-controls
+  let controlledValue: string | null = null;
+  const controlsId = htmlEl.getAttribute('aria-controls');
+  if (controlsId) {
+    const controlled = document.getElementById(controlsId);
+    if (controlled) {
+      if (controlled instanceof HTMLInputElement || controlled instanceof HTMLTextAreaElement) {
+        controlledValue = controlled.value;
+      } else {
+        controlledValue = controlled.textContent?.trim().slice(0, 500) || null;
+      }
+    }
+  }
+
   return {
     value,
     checked,
@@ -145,6 +188,10 @@ function snapshotElement(el: Element): TargetStateSnapshot {
     ariaPressed,
     textContent,
     childCount,
+    scrollTop,
+    scrollLeft,
+    selectedValues,
+    controlledValue,
     capturedAt: performance.now(),
   };
 }

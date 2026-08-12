@@ -62,6 +62,10 @@ function makeSnapshot(overrides: Partial<TargetStateSnapshot> = {}): TargetState
     ariaPressed: null,
     textContent: '',
     childCount: 0,
+    scrollTop: null,
+    scrollLeft: null,
+    selectedValues: null,
+    controlledValue: null,
     capturedAt: 100,
     ...overrides,
   };
@@ -366,6 +370,7 @@ describe('renderEvidence', () => {
           descendantCount: 5,
           relativeTime: 50,
           batchIndex: 2,
+          kind: 'added' as const,
         }],
       }),
     }));

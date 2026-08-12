@@ -171,14 +171,28 @@ function diffSnapshots(
     ['ariaPressed', 'aria-pressed'],
     ['textContent', 'text'],
     ['childCount', 'children'],
+    ['scrollTop', 'scroll-top'],
+    ['scrollLeft', 'scroll-left'],
+    ['selectedValues', 'selected-values'],
+    ['controlledValue', 'controlled-value'],
   ];
 
   for (const [field, label] of fields) {
     const oldVal = before[field];
     const newVal = after[field];
-    if (oldVal !== newVal) {
-      changes.push(`${label}: ${safeText(oldVal)} → ${safeText(newVal)}`);
+    // P1-3: Skip null === null and identical arrays
+    if (oldVal === newVal) continue;
+    // Handle array comparison (selectedValues)
+    if (Array.isArray(oldVal) && Array.isArray(newVal)) {
+      if (JSON.stringify(oldVal) === JSON.stringify(newVal)) continue;
     }
+    if (oldVal === null && newVal === null) continue;
+    // Skip null → null transitions (no change)
+    if (oldVal == null && newVal == null) continue;
+
+    const oldText = Array.isArray(oldVal) ? (oldVal as string[]).join(', ') : safeText(oldVal);
+    const newText = Array.isArray(newVal) ? (newVal as string[]).join(', ') : safeText(newVal);
+    changes.push(`${label}: ${oldText} → ${newText}`);
   }
 
   return changes;

@@ -379,9 +379,19 @@ export function extractIdentity(el: Element): ElementIdentity {
 /**
  * Capture the current value of an element.
  * Used for valueBefore/valueAfter tracking in ObservedEvent.
+ *
+ * P1-4 fix: Added textContent fallback for custom dropdown triggers
+ * (divs with role=combobox, role=listbox, aria-haspopup) where the
+ * selected value is in the element's text, not a .value property.
  */
 export function captureValue(el: Element): string | undefined {
   if (el instanceof HTMLSelectElement) {
+    // P3-7: For multi-select, capture ALL selected options
+    if (el.multiple && el.selectedOptions.length > 1) {
+      return Array.from(el.selectedOptions)
+        .map((opt) => opt.text?.trim() || opt.textContent?.trim() || opt.value || '')
+        .join(', ');
+    }
     const option = el.options[el.selectedIndex];
     if (option) return option.text?.trim() || option.textContent?.trim() || option.value || '';
     return '';
@@ -403,6 +413,17 @@ export function captureValue(el: Element): string | undefined {
     const option = deepGetElementById(descendantId);
     if (option) return option.textContent?.trim() || option.getAttribute('aria-label') || '';
   }
+
+  // P1-4 fix: Custom dropdown trigger fallback.
+  // For elements with combobox/listbox role or aria-haspopup, the
+  // selected value is typically the element's textContent (trimmed).
+  const role = el.getAttribute('role');
+  const hasPopup = el.hasAttribute('aria-haspopup');
+  if (role === 'combobox' || role === 'listbox' || hasPopup) {
+    const text = (el as HTMLElement).textContent?.trim();
+    if (text) return text.slice(0, 200); // bound to prevent huge values
+  }
+
   return undefined;
 }
 

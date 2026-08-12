@@ -665,6 +665,7 @@ export class DOMObserver {
           descendantCount: node.childElementCount,
           relativeTime: now - this.referenceTime,
           batchIndex,
+          kind: 'added',
         });
       }
       // P0-2 Fix: Seed computed styles for newly added elements so
@@ -685,6 +686,7 @@ export class DOMObserver {
           descendantCount: 0,
           relativeTime: now - this.referenceTime,
           batchIndex,
+          kind: 'removed',
         });
       }
     }

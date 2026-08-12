@@ -159,6 +159,31 @@ export interface TargetStateSnapshot {
   ariaPressed: boolean | null;
   textContent: string | null;
   childCount: number;
+
+  /**
+   * P2-6: Scroll position for scrollable elements.
+   * Null when the element is not scrollable (scrollHeight <= clientHeight).
+   */
+  scrollTop: number | null;
+
+  /** P2-6: Horizontal scroll position. Null when not scrollable. */
+  scrollLeft: number | null;
+
+  /**
+   * P3-7: All selected values for multi-select controls.
+   * Populated from <select multiple>.selectedOptions or multiple
+   * [aria-selected="true"] descendants. Null for single-value controls.
+   */
+  selectedValues: string[] | null;
+
+  /**
+   * P2-5: Value of the element referenced by aria-controls.
+   * Captures the input-field value for date pickers, comboboxes, and
+   * other controls where the clicked element differs from the value-holder.
+   * Null when the element has no aria-controls or the target doesn't exist.
+   */
+  controlledValue: string | null;
+
   /** performance.now() when this snapshot was captured. */
   capturedAt: number;
 }
@@ -280,6 +305,12 @@ export interface SurfaceChange {
   relativeTime: number;
   /** Global batch index (shared counter). */
   batchIndex: number;
+  /**
+   * P0-2 fix: Whether this surface was added or removed.
+   * 'added' — element appeared during the observation window.
+   * 'removed' — element disappeared during the observation window.
+   */
+  kind: 'added' | 'removed';
 }
 
 /**

@@ -81,7 +81,7 @@ describe('behavioral-evidence-types', () => {
     }
   });
 
-  it('TargetStateSnapshot has all 9 properties + capturedAt', () => {
+  it('TargetStateSnapshot has all properties + capturedAt', () => {
     const snap: TargetStateSnapshot = {
       value: 'hello',
       checked: true,
@@ -92,6 +92,10 @@ describe('behavioral-evidence-types', () => {
       ariaPressed: false,
       textContent: 'Submit',
       childCount: 3,
+      scrollTop: null,
+      scrollLeft: null,
+      selectedValues: null,
+      controlledValue: null,
       capturedAt: 1234.5,
     };
 
