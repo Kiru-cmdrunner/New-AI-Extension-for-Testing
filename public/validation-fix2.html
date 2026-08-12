@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>M7 Evidence Quality Fix Round 2 — Browser Validation</title>
+<style>
+body { font-family: -apple-system, system-ui, sans-serif; padding: 20px; max-width: 800px; }
+h1 { font-size: 18px; }
+h2 { font-size: 15px; margin-top: 24px; color: #333; }
+.section { border: 1px solid #ddd; padding: 16px; margin: 8px 0; border-radius: 6px; background: #fafafa; }
+label { display: inline-block; margin-right: 12px; cursor: pointer; }
+input[type="text"], input[type="password"] { display: block; margin: 6px 0; padding: 6px; border: 1px solid #ccc; border-radius: 4px; width: 250px; }
+.btn { padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 4px 0; }
+.btn:hover { background: #0056b3; }
+.btn:disabled { background: #ccc; cursor: not-allowed; }
+
+/* Dropdown simulation */
+.dropdown-container { position: relative; display: inline-block; }
+.dropdown-trigger { padding: 6px 30px 6px 12px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background: white; display: inline-block; }
+.dropdown-trigger::after { content: '▼'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 10px; }
+.dropdown-menu { display: none; position: absolute; top: 100%; left: 0; border: 1px solid #ccc; background: white; z-index: 100; min-width: 200px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.dropdown-menu.open { display: block; }
+.dropdown-menu div { padding: 8px 12px; cursor: pointer; }
+.dropdown-menu div:hover { background: #f0f0f0; }
+
+/* Wrapper input (simulates OXD framework) */
+.oxd-input-wrapper { position: relative; display: inline-block; }
+.oxd-input-wrapper input { padding-right: 30px; }
+
+/* Checkbox/radio custom */
+.custom-control { display: inline-flex; align-items: center; margin-right: 12px; }
+.custom-control input { margin-right: 4px; }
+
+.status { padding: 4px 8px; border-radius: 4px; font-size: 13px; display: inline-block; margin: 4px 0; }
+.status.ok { background: #d4edda; color: #155724; }
+.status.fail { background: #f8d7da; color: #721c24; }
+.status.pending { background: #fff3cd; color: #856404; }
+
+#results { white-space: pre-wrap; font-family: monospace; font-size: 12px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<h1>M7 Evidence Quality Fix Round 2 — Browser Validation</h1>
+<p>This page tests all GAP fixes in a real browser environment. Start recording, interact with each section, then check the side panel for evidence.</p>
+
+<div class="status pending" id="recording-status">Not recording</div>
+<button class="btn" id="toggle-recording">Start Recording</button>
+
+<h2>1. Text Input (GAP-2, GAP-6: value before/after)</h2>
+<div class="section">
+  <div class="oxd-input-wrapper">
+    <label>Username: <input type="text" id="username" placeholder="Enter username" /></label>
+  </div>
+  <div class="oxd-input-wrapper">
+    <label>Password: <input type="password" id="password" placeholder="Enter password" /></label>
+  </div>
+  <div class="oxd-input-wrapper">
+    <label>First Name: <input type="text" id="firstname" placeholder="First name" /></label>
+  </div>
+  <div class="oxd-input-wrapper">
+    <label>Last Name: <input type="text" id="lastname" placeholder="Last name" /></label>
+  </div>
+</div>
+
+<h2>2. Checkbox / Radio (GAP-6: checked, aria-checked)</h2>
+<div class="section">
+  <div class="custom-control">
+    <input type="checkbox" id="cb1" /><label for="cb1">Enable notifications</label>
+  </div>
+  <div class="custom-control">
+    <input type="checkbox" id="cb2" /><label for="cb2">Subscribe to newsletter</label>
+  </div>
+  <br>
+  <div class="custom-control">
+    <input type="radio" name="gender" id="r1" value="male" /><label for="r1">Male</label>
+  </div>
+  <div class="custom-control">
+    <input type="radio" name="gender" id="r2" value="female" /><label for="r2">Female</label>
+  </div>
+  <div role="checkbox" id="custom-cb" aria-checked="false" tabindex="0" style="cursor:pointer;display:inline-block;padding:4px 12px;border:1px solid #ccc;border-radius:4px;">Custom Checkbox (aria-checked)</div>
+</div>
+
+<h2>3. Dropdown (GAP-3, GAP-6: visibility, aria-expanded)</h2>
+<div class="section">
+  <label>Nationality:</label>
+  <div class="dropdown-container">
+    <div class="dropdown-trigger" id="nat-trigger" aria-expanded="false" role="combobox" tabindex="0">Select...</div>
+    <div class="dropdown-menu" id="nat-menu" role="listbox">
+      <div role="option" data-value="us">United States</div>
+      <div role="option" data-value="cr">Costa Rican</div>
+      <div role="option" data-value="dz">Algerian</div>
+    </div>
+  </div>
+  <br><br>
+  <label>Marital Status:</label>
+  <div class="dropdown-container">
+    <div class="dropdown-trigger" id="mar-trigger" aria-expanded="false" role="combobox" tabindex="0">Select...</div>
+    <div class="dropdown-menu" id="mar-menu" role="listbox">
+      <div role="option" data-value="single">Single</div>
+      <div role="option" data-value="married">Married</div>
+    </div>
+  </div>
+</div>
+
+<h2>4. Button with aria-expanded (GAP-6: aria-expanded, disabled, textContent)</h2>
+<div class="section">
+  <button id="expand-btn" aria-expanded="false" aria-controls="expand-content">Expand Section</button>
+  <div id="expand-content" style="display:none; margin-top:8px; padding:8px; border:1px solid #eee;">
+    Expanded content goes here.
+  </div>
+  <br><br>
+  <button id="disable-btn">Click to Disable Me</button>
+</div>
+
+<h2>5. Navigation (GAP-4: nav type/URL)</h2>
+<div class="section">
+  <a href="#section1" id="nav-link">Navigate to Section 1</a>
+  <br>
+  <button id="nav-btn" onclick="window.location.hash='section2'">SPA Navigate</button>
+  <div id="section1" style="margin-top:20px;"><h3>Section 1</h3><p>You navigated here.</p></div>
+  <div id="section2" style="margin-top:20px;"><h3>Section 2</h3><p>SPA navigation target.</p></div>
+</div>
+
+<h2>6. Network-backed interaction (GAP-5: network activity)</h2>
+<div class="section">
+  <button id="fetch-btn" class="btn">Fetch Data (XHR)</button>
+  <div id="fetch-result"></div>
+</div>
+
+<h2>7. Rapid consecutive interactions</h2>
+<div class="section">
+  <button class="btn rapid-btn" data-idx="1">Rapid 1</button>
+  <button class="btn rapid-btn" data-idx="2">Rapid 2</button>
+  <button class="btn rapid-btn" data-idx="3">Rapid 3</button>
+</div>
+
+<h2>8. Typing session (GAP-7: single window)</h2>
+<div class="section">
+  <label>Long text: <input type="text" id="longtext" placeholder="Type a long sentence" style="width:400px;" /></label>
+</div>
+
+<h2>Results Log</h2>
+<pre id="results"></pre>
+
+<script>
+// State tracking
+let isRecording = false;
+const results = [];
+function log(msg) {
+  results.push(msg);
+  document.getElementById('results').textContent = results.join('\n');
+}
+
+// Recording toggle
+document.getElementById('toggle-recording').addEventListener('click', () => {
+  isRecording = !isRecording;
+  const statusEl = document.getElementById('recording-status');
+  const btn = document.getElementById('toggle-recording');
+  if (isRecording) {
+    statusEl.textContent = 'Recording...';
+    statusEl.className = 'status ok';
+    btn.textContent = 'Stop Recording';
+    log('▶ Recording started');
+  } else {
+    statusEl.textContent = 'Stopped';
+    statusEl.className = 'status pending';
+    btn.textContent = 'Start Recording';
+    log('⏹ Recording stopped');
+  }
+});
+
+// Dropdown logic
+function setupDropdown(triggerId, menuId) {
+  const trigger = document.getElementById(triggerId);
+  const menu = document.getElementById(menuId);
+  trigger.addEventListener('click', () => {
+    const isOpen = menu.classList.toggle('open');
+    trigger.setAttribute('aria-expanded', String(isOpen));
+    log(`Dropdown ${triggerId}: aria-expanded → ${isOpen}`);
+  });
+  menu.querySelectorAll('[role="option"]').forEach(opt => {
+    opt.addEventListener('click', () => {
+      trigger.textContent = opt.textContent;
+      menu.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+      log(`Dropdown ${triggerId}: selected ${opt.textContent}`);
+    });
+  });
+}
+setupDropdown('nat-trigger', 'nat-menu');
+setupDropdown('mar-trigger', 'mar-menu');
+
+// Expand button
+document.getElementById('expand-btn').addEventListener('click', function() {
+  const expanded = this.getAttribute('aria-expanded') === 'true';
+  this.setAttribute('aria-expanded', String(!expanded));
+  this.textContent = !expanded ? 'Collapse Section' : 'Expand Section';
+  document.getElementById('expand-content').style.display = !expanded ? 'block' : 'none';
+  log(`Expand btn: aria-expanded → ${!expanded}, textContent → ${this.textContent}`);
+});
+
+// Disable button
+document.getElementById('disable-btn').addEventListener('click', function() {
+  this.disabled = true;
+  this.textContent = 'Disabled';
+  log(`Disable btn: disabled → true, textContent → Disabled`);
+});
+
+// Custom checkbox
+document.getElementById('custom-cb').addEventListener('click', function() {
+  const checked = this.getAttribute('aria-checked') === 'true';
+  this.setAttribute('aria-checked', String(!checked));
+  this.style.background = !checked ? '#d4edda' : '';
+  log(`Custom checkbox: aria-checked → ${!checked}`);
+});
+
+// Fetch button
+document.getElementById('fetch-btn').addEventListener('click', () => {
+  log('Fetch btn clicked — making XHR...');
+  fetch('https://jsonplaceholder.typicode.com/posts/1')
+    .then(r => { log(`XHR completed: status ${r.status}`); return r.json(); })
+    .then(data => { document.getElementById('fetch-result').textContent = data.title; })
+    .catch(err => { log(`XHR error: ${err.message}`); });
+});
+
+// Rapid buttons
+document.querySelectorAll('.rapid-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    log(`Rapid ${btn.dataset.idx} clicked`);
+  });
+});
+
+log('Page loaded. Start recording and interact with each section.');
+</script>
+</body>
+</html>
