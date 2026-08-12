@@ -283,16 +283,32 @@ export function createInteractionElement(interaction: ComponentInteraction): HTM
  * If the interaction already has behavioralEvidence, render it.
  * Otherwise, show a placeholder that will be replaced when
  * INTERACTION_EVIDENCE_UPDATE arrives.
+ *
+ * Wrapped in try/catch so a malformed evidence object renders a safe
+ * fallback rather than aborting the entire render loop.
  */
 function attachEvidenceDisplay(
   el: HTMLElement,
   interaction: ComponentInteraction,
 ): void {
   if (interaction.behavioralEvidence) {
-    const container = document.createElement('div');
-    container.className = 'evidence-container';
-    el.appendChild(container);
-    renderEvidence(container, interaction.behavioralEvidence);
+    try {
+      const container = document.createElement('div');
+      container.className = 'evidence-container';
+      el.appendChild(container);
+      renderEvidence(container, interaction.behavioralEvidence);
+    } catch (err) {
+      // Evidence is malformed — render a safe fallback instead of crashing
+      console.warn(
+        '[Evidence] render failed for interaction',
+        interaction.interactionId,
+        err,
+      );
+      const note = document.createElement('div');
+      note.className = 'evidence-placeholder';
+      note.textContent = '⚠️ Evidence data incomplete';
+      el.appendChild(note);
+    }
   } else {
     el.appendChild(renderEvidencePlaceholder());
   }
@@ -316,9 +332,30 @@ export function renderInteractions(
   }
 
   for (const interaction of interactions) {
-    const el = createInteractionElement(interaction);
-    attachEvidenceDisplay(el, interaction);
-    container.appendChild(el);
+    try {
+      const el = createInteractionElement(interaction);
+      attachEvidenceDisplay(el, interaction);
+      container.appendChild(el);
+    } catch (err) {
+      // One card failed — render a minimal fallback so the remaining
+      // cards are still visible to the user.
+      console.warn(
+        '[Interaction] render failed for',
+        interaction?.interactionId,
+        err,
+      );
+      const fallback = document.createElement('div');
+      fallback.className = 'timeline-event interaction-event';
+      const idBadge = document.createElement('span');
+      idBadge.className = 'timeline-event__id';
+      idBadge.textContent = interaction?.interactionId ?? 'unknown';
+      fallback.appendChild(idBadge);
+      const desc = document.createElement('p');
+      desc.className = 'timeline-event__title interaction-action-text';
+      desc.textContent = `${interaction?.type ?? 'Unknown'} (render error)`;
+      fallback.appendChild(desc);
+      container.appendChild(fallback);
+    }
   }
 }
 

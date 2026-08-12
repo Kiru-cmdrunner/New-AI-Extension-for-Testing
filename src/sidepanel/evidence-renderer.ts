@@ -55,7 +55,8 @@ const MAX_VISIBILITY_DISPLAY = 10;
 
 // ── Utility ──────────────────────────────────────────────────────────
 
-function truncate(str: string, max: number): string {
+function truncate(str: string | null | undefined, max: number): string {
+  if (str == null) return '—';
   if (str.length <= max) return str;
   return str.substring(0, max) + '…';
 }
@@ -70,9 +71,17 @@ function safeText(text: unknown): string {
 /**
  * Render the element identity section as a compact summary line.
  */
-function renderIdentity(identity: ElementIdentity): HTMLElement {
+function renderIdentity(identity: ElementIdentity | null | undefined): HTMLElement {
   const container = document.createElement('div');
   container.className = 'evidence-identity';
+
+  if (!identity) {
+    const main = document.createElement('div');
+    main.className = 'evidence-identity__main';
+    main.textContent = 'Unknown element';
+    container.appendChild(main);
+    return container;
+  }
 
   const parts: string[] = [];
   if (identity.tag) parts.push(identity.tag);
@@ -114,7 +123,7 @@ function formatSnapshot(snapshot: TargetStateSnapshot | null): string[] {
 
   const lines: string[] = [];
 
-  if (snapshot.value !== null && snapshot.value !== '') {
+  if (snapshot.value !== null && snapshot.value !== undefined && snapshot.value !== '') {
     lines.push(`value: ${truncate(snapshot.value, 50)}`);
   }
   if (snapshot.checked !== null) {
@@ -178,7 +187,7 @@ function diffSnapshots(
 /**
  * Render the Target Evidence section.
  */
-function renderTargetEvidence(target: TargetEvidence): HTMLElement {
+function renderTargetEvidence(target: TargetEvidence | null | undefined): HTMLElement {
   const section = document.createElement('div');
   section.className = 'evidence-section evidence-section--target';
   section.dataset.evidenceScope = 'target';
@@ -199,6 +208,20 @@ function renderTargetEvidence(target: TargetEvidence): HTMLElement {
   // Body (collapsible)
   const body = document.createElement('div');
   body.className = 'evidence-section__body';
+
+  if (!target) {
+    const empty = document.createElement('div');
+    empty.className = 'evidence-row evidence-row--muted';
+    empty.textContent = 'No target evidence available';
+    body.appendChild(empty);
+    section.appendChild(body);
+    header.style.cursor = 'pointer';
+    header.addEventListener('click', () => {
+      body.hidden = !body.hidden;
+      icon.textContent = body.hidden ? '▶' : '🎯';
+    });
+    return section;
+  }
 
   // Identity
   const identityHeader = document.createElement('div');
@@ -270,7 +293,8 @@ function renderDomChanges(
   overflow: number,
   coarseMode: boolean,
 ): HTMLElement | null {
-  if (changes.length === 0 && overflow === 0) return null;
+  const safeChanges = changes ?? [];
+  if (safeChanges.length === 0 && overflow === 0) return null;
 
   const container = document.createElement('div');
 
@@ -278,23 +302,25 @@ function renderDomChanges(
   header.className = 'evidence-subheader';
   const overflowText = overflow > 0 ? ` (${overflow} more dropped)` : '';
   const coarseText = coarseMode ? ' ⚠️ high-churn' : '';
-  header.textContent = `DOM Changes (${changes.length}${overflowText}${coarseText})`;
+  header.textContent = `DOM Changes (${safeChanges.length}${overflowText}${coarseText})`;
   container.appendChild(header);
 
-  const visible = changes.slice(0, MAX_DOM_CHANGES_DISPLAY);
+  const visible = safeChanges.slice(0, MAX_DOM_CHANGES_DISPLAY);
   for (const change of visible) {
     const row = document.createElement('div');
     row.className = 'evidence-row';
 
     const parts: string[] = [];
-    parts.push(change.types.join('+'));
-    parts.push(`<${change.targetTag}>`);
+    parts.push((change.types ?? []).join('+'));
+    parts.push(`<${change.targetTag ?? 'unknown'}>`);
     if (change.shadowContext) {
       parts.push(`[shadow: ${truncate(change.shadowContext, 30)}]`);
     }
-    if (change.changedAttributes.length > 0) {
-      const attrDiffs = change.changedAttributes.map((attr) => {
-        const delta = change.attributeDeltas[attr];
+    const attrs = change.changedAttributes ?? [];
+    const deltas = change.attributeDeltas ?? {};
+    if (attrs.length > 0) {
+      const attrDiffs = attrs.map((attr) => {
+        const delta = deltas[attr];
         if (delta) {
           return `${attr}: ${truncate(safeText(delta.old), 20)} → ${truncate(safeText(delta.new), 20)}`;
         }
@@ -313,10 +339,10 @@ function renderDomChanges(
   }
 
   // "Show more" indicator
-  if (changes.length > MAX_DOM_CHANGES_DISPLAY) {
+  if (safeChanges.length > MAX_DOM_CHANGES_DISPLAY) {
     const more = document.createElement('div');
     more.className = 'evidence-row evidence-row--muted';
-    more.textContent = `… ${changes.length - MAX_DOM_CHANGES_DISPLAY} more`;
+    more.textContent = `… ${safeChanges.length - MAX_DOM_CHANGES_DISPLAY} more`;
     container.appendChild(more);
   }
 
@@ -330,20 +356,21 @@ function renderSurfaces(
   surfaces: SurfaceChange[],
   label: string,
 ): HTMLElement | null {
-  if (surfaces.length === 0) return null;
+  const safeSurfaces = surfaces ?? [];
+  if (safeSurfaces.length === 0) return null;
 
   const container = document.createElement('div');
 
   const header = document.createElement('div');
   header.className = 'evidence-subheader';
-  header.textContent = `${label} (${surfaces.length})`;
+  header.textContent = `${label} (${safeSurfaces.length})`;
   container.appendChild(header);
 
-  for (const surface of surfaces.slice(0, MAX_SURFACES_DISPLAY)) {
+  for (const surface of safeSurfaces.slice(0, MAX_SURFACES_DISPLAY)) {
     const row = document.createElement('div');
     row.className = 'evidence-row';
     const parts = [
-      `<${surface.tagName}>`,
+      `<${surface.tagName ?? 'unknown'}>`,
       surface.ariaRole ? `[role=${surface.ariaRole}]` : '',
       surface.accessibleName ? `"${truncate(surface.accessibleName, 40)}"` : '',
     ].filter(Boolean);
@@ -351,10 +378,10 @@ function renderSurfaces(
     container.appendChild(row);
   }
 
-  if (surfaces.length > MAX_SURFACES_DISPLAY) {
+  if (safeSurfaces.length > MAX_SURFACES_DISPLAY) {
     const more = document.createElement('div');
     more.className = 'evidence-row evidence-row--muted';
-    more.textContent = `… ${surfaces.length - MAX_SURFACES_DISPLAY} more`;
+    more.textContent = `… ${safeSurfaces.length - MAX_SURFACES_DISPLAY} more`;
     container.appendChild(more);
   }
 
@@ -365,26 +392,27 @@ function renderSurfaces(
  * Render visibility changes.
  */
 function renderVisibilityChanges(changes: VisibilityChange[]): HTMLElement | null {
-  if (changes.length === 0) return null;
+  const safeChanges = changes ?? [];
+  if (safeChanges.length === 0) return null;
 
   const container = document.createElement('div');
 
   const header = document.createElement('div');
   header.className = 'evidence-subheader';
-  header.textContent = `Visibility Changes (${changes.length})`;
+  header.textContent = `Visibility Changes (${safeChanges.length})`;
   container.appendChild(header);
 
-  for (const change of changes.slice(0, MAX_VISIBILITY_DISPLAY)) {
+  for (const change of safeChanges.slice(0, MAX_VISIBILITY_DISPLAY)) {
     const row = document.createElement('div');
     row.className = 'evidence-row';
-    row.textContent = `${change.property}: ${safeText(change.oldValue)} → ${safeText(change.newValue)} (${truncate(change.path, 40)})`;
+    row.textContent = `${change.property ?? 'unknown'}: ${safeText(change.oldValue)} → ${safeText(change.newValue)} (${truncate(change.path, 40)})`;
     container.appendChild(row);
   }
 
-  if (changes.length > MAX_VISIBILITY_DISPLAY) {
+  if (safeChanges.length > MAX_VISIBILITY_DISPLAY) {
     const more = document.createElement('div');
     more.className = 'evidence-row evidence-row--muted';
-    more.textContent = `… ${changes.length - MAX_VISIBILITY_DISPLAY} more`;
+    more.textContent = `… ${safeChanges.length - MAX_VISIBILITY_DISPLAY} more`;
     container.appendChild(more);
   }
 
@@ -395,19 +423,20 @@ function renderVisibilityChanges(changes: VisibilityChange[]): HTMLElement | nul
  * Render navigation evidence.
  */
 function renderNavigation(nav: NavigationEvidence[]): HTMLElement | null {
-  if (nav.length === 0) return null;
+  const safeNav = nav ?? [];
+  if (safeNav.length === 0) return null;
 
   const container = document.createElement('div');
 
   const header = document.createElement('div');
   header.className = 'evidence-subheader';
-  header.textContent = `Navigation (${nav.length})`;
+  header.textContent = `Navigation (${safeNav.length})`;
   container.appendChild(header);
 
-  for (const event of nav) {
+  for (const event of safeNav) {
     const row = document.createElement('div');
     row.className = 'evidence-row';
-    row.textContent = `${event.type}: ${truncate(event.fromUrl, 40)} → ${truncate(event.toUrl, 40)}`;
+    row.textContent = `${event.type ?? 'navigation'}: ${truncate(event.fromUrl, 40)} → ${truncate(event.toUrl, 40)}`;
     container.appendChild(row);
   }
 
@@ -418,31 +447,32 @@ function renderNavigation(nav: NavigationEvidence[]): HTMLElement | null {
  * Render network activity.
  */
 function renderNetworkActivity(network: NetworkActivity[]): HTMLElement | null {
-  if (network.length === 0) return null;
+  const safeNetwork = network ?? [];
+  if (safeNetwork.length === 0) return null;
 
   const container = document.createElement('div');
 
   const header = document.createElement('div');
   header.className = 'evidence-subheader';
-  header.textContent = `Network (${network.length})`;
+  header.textContent = `Network (${safeNetwork.length})`;
   container.appendChild(header);
 
-  for (const entry of network.slice(0, MAX_NETWORK_DISPLAY)) {
+  for (const entry of safeNetwork.slice(0, MAX_NETWORK_DISPLAY)) {
     const row = document.createElement('div');
     row.className = 'evidence-row evidence-row--network';
 
-    const statusText = entry.status !== null ? `${entry.status}` : '…';
-    const durationText = entry.durationMs !== null ? `${Math.round(entry.durationMs)}ms` : '';
+    const statusText = entry.status != null ? `${entry.status}` : '…';
+    const durationText = entry.durationMs != null ? `${Math.round(entry.durationMs)}ms` : '';
     const srcLabel = entry.source === 'main-world' ? '🔵' : '🟣';
 
-    row.textContent = `${srcLabel} ${entry.method} ${statusText} ${truncate(entry.url, 60)} ${durationText}`;
+    row.textContent = `${srcLabel} ${entry.method ?? '?'} ${statusText} ${truncate(entry.url, 60)} ${durationText}`;
     container.appendChild(row);
   }
 
-  if (network.length > MAX_NETWORK_DISPLAY) {
+  if (safeNetwork.length > MAX_NETWORK_DISPLAY) {
     const more = document.createElement('div');
     more.className = 'evidence-row evidence-row--muted';
-    more.textContent = `… ${network.length - MAX_NETWORK_DISPLAY} more`;
+    more.textContent = `… ${safeNetwork.length - MAX_NETWORK_DISPLAY} more`;
     container.appendChild(more);
   }
 
@@ -478,7 +508,7 @@ function renderPerformanceCondition(perf: PerformanceCondition | null): HTMLElem
 /**
  * Render the full Application Evidence section.
  */
-function renderApplicationEvidence(app: ApplicationEvidence): HTMLElement {
+function renderApplicationEvidence(app: ApplicationEvidence | null | undefined): HTMLElement {
   const section = document.createElement('div');
   section.className = 'evidence-section evidence-section--application';
   section.dataset.evidenceScope = 'application';
@@ -499,8 +529,22 @@ function renderApplicationEvidence(app: ApplicationEvidence): HTMLElement {
   const body = document.createElement('div');
   body.className = 'evidence-section__body';
 
+  if (!app) {
+    const empty = document.createElement('div');
+    empty.className = 'evidence-row evidence-row--muted';
+    empty.textContent = 'No application evidence available';
+    body.appendChild(empty);
+    section.appendChild(body);
+    header.style.cursor = 'pointer';
+    header.addEventListener('click', () => {
+      body.hidden = !body.hidden;
+      icon.textContent = body.hidden ? '▶' : '🌐';
+    });
+    return section;
+  }
+
   // DOM changes
-  const domEl = renderDomChanges(app.domChanges, app.domChangeOverflow, app.coarseMode);
+  const domEl = renderDomChanges(app.domChanges, app.domChangeOverflow ?? 0, app.coarseMode ?? false);
   if (domEl) body.appendChild(domEl);
 
   // New surfaces
@@ -572,15 +616,18 @@ export function renderEvidence(
   // Window metadata line
   const windowMeta = document.createElement('div');
   windowMeta.className = 'evidence-window-meta';
-  const durationText = `${Math.round(evidence.window.durationMs)}ms`;
-  windowMeta.textContent = `Window: ${durationText} · ${evidence.window.endReason}`;
-  if (evidence.frameId !== 'main') {
+  const win = evidence?.window;
+  const durationMs = win?.durationMs ?? 0;
+  const endReason = win?.endReason ?? 'unknown';
+  const durationText = `${Math.round(durationMs)}ms`;
+  windowMeta.textContent = `Window: ${durationText} · ${endReason}`;
+  if (evidence?.frameId && evidence.frameId !== 'main') {
     windowMeta.textContent += ` · frame: ${truncate(evidence.frameId, 30)}`;
   }
   container.appendChild(windowMeta);
 
   // Target evidence section
-  container.appendChild(renderTargetEvidence(evidence.targetEvidence));
+  container.appendChild(renderTargetEvidence(evidence?.targetEvidence));
 
   // Separator
   const separator = document.createElement('div');
@@ -588,7 +635,7 @@ export function renderEvidence(
   container.appendChild(separator);
 
   // Application evidence section
-  container.appendChild(renderApplicationEvidence(evidence.applicationEvidence));
+  container.appendChild(renderApplicationEvidence(evidence?.applicationEvidence));
 }
 
 /**

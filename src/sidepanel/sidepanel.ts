@@ -403,53 +403,73 @@ async function handleStopRecording(): Promise<void> {
   // The service worker writes DETECTED_INTERACTIONS_MERGED asynchronously after
   // STOP_RECORDING — it may not be ready yet. We try once here, and if empty,
   // the storage listener (setupLiveListeners) will populate when SW finishes.
-  const interactions = await loadDetectedInteractions();
-  if (interactions && interactions.length > 0) {
-    showDetectedInteractions(interactions);
-  } else {
-    // Not ready yet — retry once after a short delay, then rely on storage listener
-    setTimeout(async () => {
-      if (views['stopped'].hidden) return; // user navigated away
-      const retryInteractions = await loadDetectedInteractions();
-      if (retryInteractions && retryInteractions.length > 0) {
-        showDetectedInteractions(retryInteractions);
-      }
-    }, 500);
+  //
+  // CRITICAL: Each section is wrapped in its own try/catch so that a rendering
+  // error in one section does NOT prevent showView('stopped') from executing.
+  try {
+    const interactions = await loadDetectedInteractions();
+    if (interactions && interactions.length > 0) {
+      showDetectedInteractions(interactions);
+    } else {
+      // Not ready yet — retry once after a short delay, then rely on storage listener
+      setTimeout(async () => {
+        if (views['stopped'].hidden) return; // user navigated away
+        const retryInteractions = await loadDetectedInteractions();
+        if (retryInteractions && retryInteractions.length > 0) {
+          showDetectedInteractions(retryInteractions);
+        }
+      }, 500);
+      detectedInteractionsSection.hidden = true;
+    }
+  } catch (err) {
+    console.warn('[StopRecording] failed to render interactions:', err);
     detectedInteractionsSection.hidden = true;
   }
 
   // Load and display Replay JSON
-  const replayJson = await loadReplayJson();
-  if (replayJson) {
-    replayCode.textContent = JSON.stringify(replayJson, null, 2);
-    replaySection.hidden = false;
-  } else {
+  try {
+    const replayJson = await loadReplayJson();
+    if (replayJson) {
+      replayCode.textContent = JSON.stringify(replayJson, null, 2);
+      replaySection.hidden = false;
+    } else {
+      replaySection.hidden = true;
+    }
+  } catch {
     replaySection.hidden = true;
   }
 
   // Load and display IR Plan steps + Playwright files (Phase 8)
-  const irPlan = await loadIRPlan();
-  if (irPlan) {
-    renderIRSteps(irPlan);
-  } else {
+  try {
+    const irPlan = await loadIRPlan();
+    if (irPlan) {
+      renderIRSteps(irPlan);
+    } else {
+      irStepsSection.hidden = true;
+      setTimeout(async () => {
+        if (views['stopped'].hidden) return;
+        const retryPlan = await loadIRPlan();
+        if (retryPlan) renderIRSteps(retryPlan);
+      }, 1000);
+    }
+  } catch {
     irStepsSection.hidden = true;
-    setTimeout(async () => {
-      if (views['stopped'].hidden) return;
-      const retryPlan = await loadIRPlan();
-      if (retryPlan) renderIRSteps(retryPlan);
-    }, 1000);
   }
 
-  const irFiles = await loadIRFiles();
-  if (irFiles) {
-    renderIRFiles(irFiles);
-  } else {
+  try {
+    const irFiles = await loadIRFiles();
+    if (irFiles) {
+      renderIRFiles(irFiles);
+    } else {
+      irPlaywrightSection.hidden = true;
+      setTimeout(async () => {
+        if (views['stopped'].hidden) return;
+        const retryFiles = await loadIRFiles();
+        if (retryFiles) renderIRFiles(retryFiles);
+      }, 1000);
+    }
+  } catch {
     irPlaywrightSection.hidden = true;
-    setTimeout(async () => {
-      if (views['stopped'].hidden) return;
-      const retryFiles = await loadIRFiles();
-      if (retryFiles) renderIRFiles(retryFiles);
-    }, 1000);
   }
 
   // Show TC badge
