@@ -45,6 +45,29 @@ import { DOMObserver } from './dom-observer';
 import { AdaptiveWindow } from './adaptive-window';
 import type { NetworkActivity } from '../shared/behavioral-evidence-types';
 import type { NetworkBridge } from './network-bridge';
+import { captureValue } from './identity-extractor';
+
+// ── Helpers ───────────────────────────────────────────────────────────
+
+/**
+ * Safely capture a value from an element, returning null instead of undefined.
+ */
+function captureValueSafe(el: Element): string | null {
+  try {
+    const val = captureValue(el);
+    if (val !== undefined && val !== null && val.trim().length > 0) {
+      return val.trim().slice(0, 200);
+    }
+    // Fall back to textContent for non-form elements
+    if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLSelectElement) && !(el instanceof HTMLTextAreaElement)) {
+      const text = (el as HTMLElement).textContent?.trim();
+      if (text && text.length > 0 && text.length <= 200) return text;
+    }
+  } catch {
+    // Element may have been removed from DOM
+  }
+  return null;
+}
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -63,7 +86,7 @@ const MAX_EVIDENCE_BUFFER = 50;
 
 /** Event types that open evidence windows. */
 const WINDOW_OPEN_EVENTS = new Set([
-  'click', 'mousedown', 'contextmenu', 'change', 'keydown', 'focus', 'blur',
+  'click', 'contextmenu', 'change', 'keydown',
 ]);
 
 /** Event types that use extend-on-input typing model. */
@@ -72,9 +95,24 @@ const TYPING_EVENTS = new Set(['input']);
 /** Event types that are throttled. */
 const THROTTLED_EVENTS = new Set(['scroll']);
 
-/** Event types that are capture-only (no evidence window). */
+/**
+ * Event types that are capture-only (no evidence window).
+ *
+ * Fix Round 5: focus, blur, mousedown moved here from WINDOW_OPEN_EVENTS.
+ * These events produce no behavioral state changes on their own — they
+ * only pre-populate the TargetStateCache. Allowing them to open evidence
+ * windows caused empty-diff evidence to be delivered and attached first,
+ * blocking the richer input/change evidence that has the real value diffs.
+ *
+ * - focus/blur: the TextEntry component triggers on focus, so the focus
+ *   eventId becomes triggerEvent.eventId. If focus opens a window, its
+ *   empty evidence gets attached first and blocks the input evidence.
+ * - mousedown: click covers the behavioral moment for buttons/checkboxes.
+ *   mousedown fires before the click and produces no state change.
+ */
 const CAPTURE_ONLY_EVENTS = new Set([
   'mouseenter', 'mouseleave', 'mousemove',
+  'focus', 'blur', 'mousedown',
 ]);
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -264,7 +302,22 @@ export class EvidenceCollector {
     this.domObserver.clearAccumulated();
 
     // Peek TargetStateCache for before snapshot
-    const beforeSnapshot = this.targetStateCache.peek(targetEl) ?? null;
+    // Fix Round 6: For typing (input) windows, the cache might not have a
+    // pre-populated snapshot (e.g., autofill, paste, programmatic input).
+    // Use peek() first (from capture-phase mousedown/keydown listeners),
+    // then fall back to a fresh capture if peek returns undefined.
+    let beforeSnapshot: TargetStateSnapshot | null;
+    const cachedSnapshot = this.targetStateCache.peek(targetEl) ?? null;
+    if (cachedSnapshot !== null) {
+      beforeSnapshot = cachedSnapshot;
+    } else if (eventType === 'input') {
+      // No cache entry — capture fresh. For input events, the value at this
+      // point includes the first typed character. Store it and let the
+      // enrichment logic in closeWindow handle the before value.
+      beforeSnapshot = this.targetStateCache.capture(targetEl);
+    } else {
+      beforeSnapshot = null;
+    }
 
     const windowId = `ev-${eventId}`;
     const openedAt = performance.now();
@@ -457,6 +510,71 @@ export class EvidenceCollector {
       }
     }
 
+    // Fix Round 6: Context-aware enrichment for dropdown and date picker.
+    // When the evidence window targets a cell/option (click event), the
+    // before/after snapshots are of that cell, not the value-holding element.
+    // Enrich the evidence by looking for a related combobox/select/input
+    // whose value actually changed.
+    const sourceType = state.sourceEventType;
+    const targetTag = state.targetEl.tagName;
+    const targetRole = (state.targetEl as HTMLElement).getAttribute?.('role');
+    const isOptionLike = targetRole === 'option' || targetRole === 'gridcell' ||
+      targetTag === 'OPTION' ||
+      (state.targetEl as HTMLElement).className?.match?.(/\b(option|gridcell|cell)\b/i);
+
+    if (isOptionLike && sourceType === 'click') {
+      // Look for a related combobox/select/input whose value changed
+      const relatedValue = this.findRelatedControlValue(state.targetEl);
+      if (relatedValue !== null) {
+        // Enrich after.value with the related control's current value
+        if (targetEvidence.after) {
+          if (targetEvidence.after.value === null || targetEvidence.after.value === '') {
+            targetEvidence.after = {
+              ...targetEvidence.after,
+              value: relatedValue,
+            };
+          }
+        } else {
+          // Create a minimal after snapshot
+          targetEvidence.after = {
+            value: relatedValue,
+            checked: null,
+            className: '',
+            disabled: false,
+            ariaExpanded: null,
+            ariaChecked: null,
+            ariaPressed: null,
+            textContent: null,
+            childCount: 0,
+            scrollTop: null,
+            scrollLeft: null,
+            selectedValues: null,
+            controlledValue: null,
+            capturedAt: performance.now(),
+          };
+        }
+        // Ensure before has a value to diff against
+        if (!targetEvidence.before) {
+          targetEvidence.before = {
+            value: null,
+            checked: null,
+            className: '',
+            disabled: false,
+            ariaExpanded: null,
+            ariaChecked: null,
+            ariaPressed: null,
+            textContent: null,
+            childCount: 0,
+            scrollTop: null,
+            scrollLeft: null,
+            selectedValues: null,
+            controlledValue: null,
+            capturedAt: state.openedAt,
+          };
+        }
+      }
+    }
+
     // Build ApplicationEvidence
     const applicationEvidence: ApplicationEvidence = {
       domChanges,
@@ -506,6 +624,62 @@ export class EvidenceCollector {
 
     // Clear accumulated data for next window
     this.domObserver.clearAccumulated();
+  }
+
+  /**
+   * Fix Round 6: Find the value of a related control (combobox/select/input)
+   * when the evidence window targets an option/cell inside a dropdown or
+   * date picker.
+   *
+   * Strategies:
+   * 1. aria-controls on the option → resolve target element
+   * 2. Walk up to find parent combobox/listbox/select element
+   * 3. Look for a nearby select/input in the same container
+   *
+   * Returns the current value of the related control, or null if not found.
+   */
+  private findRelatedControlValue(optionEl: Element): string | null {
+    // Strategy 1: aria-controls
+    const controlsId = (optionEl as HTMLElement).getAttribute?.('aria-controls');
+    if (controlsId) {
+      const controlled = document.getElementById(controlsId);
+      if (controlled) {
+        const val = captureValueSafe(controlled);
+        if (val !== null) return val;
+      }
+    }
+
+    // Strategy 2: Walk up to find parent combobox/select
+    const parentCombobox = (optionEl as HTMLElement).closest(
+      '[role="combobox"], [role="listbox"], select, .oxd-select-text, [data-select], [class*="select-wrapper"]'
+    );
+    if (parentCombobox) {
+      const val = captureValueSafe(parentCombobox);
+      if (val !== null) return val;
+      // Also check for a child input that holds the value
+      const input = parentCombobox.querySelector('input, [role="textbox"]');
+      if (input) {
+        const inputVal = captureValueSafe(input);
+        if (inputVal !== null) return inputVal;
+      }
+    }
+
+    // Strategy 3: Look for sibling/nearby select or input
+    const container = (optionEl as HTMLElement).closest(
+      '[role="dialog"], [role="listbox"], .oxd-select-wrapper, .dropdown, [class*="select"]'
+    );
+    if (container) {
+      // Look for the display text of the combobox (not the option itself)
+      const displayEl = container.querySelector(
+        '.oxd-select-text-input, .select-text, [class*="display"], [class*="selected-value"]'
+      );
+      if (displayEl && displayEl !== optionEl) {
+        const val = captureValueSafe(displayEl);
+        if (val !== null) return val;
+      }
+    }
+
+    return null;
   }
 
   /**

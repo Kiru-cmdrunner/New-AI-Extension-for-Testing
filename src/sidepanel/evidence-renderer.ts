@@ -174,7 +174,7 @@ function diffSnapshots(
     ['scrollTop', 'scroll-top'],
     ['scrollLeft', 'scroll-left'],
     ['selectedValues', 'selected-values'],
-    ['controlledValue', 'controlled-value'],
+    ['controlledValue', 'date/input value'],
   ];
 
   for (const [field, label] of fields) {

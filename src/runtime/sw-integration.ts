@@ -178,11 +178,10 @@ export function storePendingEvidence(evidence: BehavioralEvidence): void {
  * Tier 1: interaction.triggerEvent.eventId === sourceEventId (preferred)
  * Tier 2: interaction.memberEvents[].eventId === sourceEventId (fallback)
  *
- * First-write-only for full evidence: if interaction already has
- * behavioralEvidence, skip — UNLESS the incoming evidence only adds
- * networkActivity entries (late network re-check). In that case, merge
- * the new network entries into the existing evidence's networkActivity
- * array instead of dropping them.
+ * Fix Round 5: Instead of first-write-only, now uses a richness-based
+ * replacement policy. When the interaction already has evidence, the
+ * incoming evidence REPLACES it if it has a higher richness score.
+ * Network-only supplements still merge into the existing evidence.
  *
  * @returns interactionId if matched, null if no match.
  */
@@ -192,11 +191,8 @@ export function attachEvidenceToInteraction(
 ): string | null {
   // Helper: check if incoming evidence is a network-only supplement
   const isNetworkSupplement = (incoming: BehavioralEvidence): boolean => {
-    // A network supplement has minimal/no target evidence and carries
-    // networkActivity entries. We detect it by checking if the window
-    // endReason is 'stabilized' (normal) AND it has networkActivity entries
-    // AND its targetEvidence has no real before/after state changes.
-    return incoming.applicationEvidence?.networkActivity?.length > 0;
+    return incoming.applicationEvidence?.networkActivity?.length > 0 &&
+      scoreEvidenceRichness(incoming) <= 2; // only network entries, no state changes
   };
 
   // Helper: merge network entries into existing evidence
@@ -224,21 +220,54 @@ export function attachEvidenceToInteraction(
     };
   };
 
+  // Helper: try to attach evidence to a specific interaction
+  const tryAttach = (interaction: ComponentInteraction): boolean => {
+    if (!interaction.behavioralEvidence) {
+      // No existing evidence — attach directly
+      interaction.behavioralEvidence = evidence;
+      persistLiveInteractions();
+      cancelEvidenceTimeout(interaction.interactionId);
+      return true;
+    }
+    // Existing evidence — check if we should replace
+    if (isNetworkSupplement(evidence)) {
+      // Network-only supplement: merge into existing
+      interaction.behavioralEvidence = mergeNetworkEvidence(
+        interaction.behavioralEvidence,
+        evidence,
+      );
+      persistLiveInteractions();
+      return true;
+    }
+    // Fix Round 5: Replace if the new evidence is richer
+    const existingScore = scoreEvidenceRichness(interaction.behavioralEvidence);
+    const newScore = scoreEvidenceRichness(evidence);
+    if (newScore > existingScore) {
+      // But preserve any network activity from the existing evidence
+      const preservedNetwork = interaction.behavioralEvidence.applicationEvidence?.networkActivity ?? [];
+      const newNetwork = evidence.applicationEvidence?.networkActivity ?? [];
+      const allUrls = new Set(preservedNetwork.map((n) => `${n.method}:${n.url}`));
+      const merged = [
+        ...preservedNetwork,
+        ...newNetwork.filter((n) => !allUrls.has(`${n.method}:${n.url}`)),
+      ];
+      interaction.behavioralEvidence = {
+        ...evidence,
+        applicationEvidence: {
+          ...evidence.applicationEvidence,
+          networkActivity: merged,
+        },
+      };
+      persistLiveInteractions();
+      return true;
+    }
+    return false;
+  };
+
   // Tier 1: trigger match
   for (const interaction of liveInteractions) {
     if (interaction.triggerEvent?.eventId === sourceEventId) {
-      if (!interaction.behavioralEvidence) {
-        interaction.behavioralEvidence = evidence;
-        persistLiveInteractions();
-        cancelEvidenceTimeout(interaction.interactionId);
-      } else if (isNetworkSupplement(evidence)) {
-        // P0-1 fix: merge late network evidence instead of dropping
-        interaction.behavioralEvidence = mergeNetworkEvidence(
-          interaction.behavioralEvidence,
-          evidence,
-        );
-        persistLiveInteractions();
-      }
+      tryAttach(interaction);
       return interaction.interactionId;
     }
   }
@@ -246,18 +275,7 @@ export function attachEvidenceToInteraction(
   // Tier 2: member event match
   for (const interaction of liveInteractions) {
     if (interaction.memberEvents?.some((e) => e.eventId === sourceEventId)) {
-      if (!interaction.behavioralEvidence) {
-        interaction.behavioralEvidence = evidence;
-        persistLiveInteractions();
-        cancelEvidenceTimeout(interaction.interactionId);
-      } else if (isNetworkSupplement(evidence)) {
-        // P0-1 fix: merge late network evidence instead of dropping
-        interaction.behavioralEvidence = mergeNetworkEvidence(
-          interaction.behavioralEvidence,
-          evidence,
-        );
-        persistLiveInteractions();
-      }
+      tryAttach(interaction);
       return interaction.interactionId;
     }
   }
@@ -269,28 +287,96 @@ export function attachEvidenceToInteraction(
  * Drain pending evidence for a newly emitted interaction.
  * Called from onEmit after the interaction is pushed to liveInteractions.
  *
- * Checks trigger and member events against pendingEvidence.
- * First-write-only: does not overwrite existing behavioralEvidence.
+ * Fix Round 5: Instead of returning the first match (which was always the
+ * trigger event — typically a focus/click with an empty diff), now scans
+ * ALL pending evidence for this interaction's events and picks the one
+ * with the most behavioral state changes (richest diff).
+ *
+ * Evidence richness is measured by counting TargetEvidence diffs +
+ * ApplicationEvidence entries. This ensures the typing/input evidence
+ * (with real value changes) wins over the focus evidence (empty diff).
  */
 function drainPendingEvidence(interaction: ComponentInteraction): void {
   if (interaction.behavioralEvidence) return;
 
-  // Check trigger event
+  // Collect ALL pending evidence for this interaction's events
+  const candidates: BehavioralEvidence[] = [];
+  const matchedKeys: string[] = [];
+
   const triggerId = interaction.triggerEvent?.eventId;
   if (triggerId && pendingEvidence.has(triggerId)) {
-    interaction.behavioralEvidence = pendingEvidence.get(triggerId)!;
-    pendingEvidence.delete(triggerId);
-    return;
+    candidates.push(pendingEvidence.get(triggerId)!);
+    matchedKeys.push(triggerId);
   }
 
-  // Check member events
   for (const ev of interaction.memberEvents ?? []) {
     if (pendingEvidence.has(ev.eventId)) {
-      interaction.behavioralEvidence = pendingEvidence.get(ev.eventId)!;
-      pendingEvidence.delete(ev.eventId);
-      return;
+      candidates.push(pendingEvidence.get(ev.eventId)!);
+      matchedKeys.push(ev.eventId);
     }
   }
+
+  if (candidates.length === 0) return;
+
+  // Pick the richest evidence (most state changes)
+  let best = candidates[0];
+  let bestScore = scoreEvidenceRichness(best);
+  for (let i = 1; i < candidates.length; i++) {
+    const score = scoreEvidenceRichness(candidates[i]);
+    if (score > bestScore) {
+      best = candidates[i];
+      bestScore = score;
+    }
+  }
+
+  interaction.behavioralEvidence = best;
+
+  // Clean up all matched pending entries
+  for (const key of matchedKeys) {
+    pendingEvidence.delete(key);
+  }
+}
+
+/**
+ * Score how much behavioral state change an evidence object captures.
+ * Higher score = more meaningful evidence.
+ *
+ * Fix Round 5: Ensures evidence with real value/state diffs wins over
+ * empty-diff evidence from focus/click/mousedown events.
+ */
+function scoreEvidenceRichness(evidence: BehavioralEvidence): number {
+  let score = 0;
+  const { targetEvidence: target, applicationEvidence: app } = evidence;
+
+  // Target evidence diffs (most important — 10 pts each)
+  if (target?.before && target?.after) {
+    const b = target.before;
+    const a = target.after;
+    if (b.value !== a.value && (b.value !== null || a.value !== null)) score += 10;
+    if (b.checked !== a.checked) score += 10;
+    if (b.disabled !== a.disabled) score += 5;
+    if (b.ariaExpanded !== a.ariaExpanded) score += 5;
+    if (b.ariaChecked !== a.ariaChecked) score += 5;
+    if (b.ariaPressed !== a.ariaPressed) score += 5;
+    if (b.textContent !== a.textContent && (b.textContent || a.textContent)) score += 8;
+    if (b.childCount !== a.childCount) score += 3;
+    if (b.controlledValue !== a.controlledValue && (b.controlledValue !== null || a.controlledValue !== null)) score += 8;
+    if (b.scrollTop !== a.scrollTop && (b.scrollTop !== null || a.scrollTop !== null)) score += 5;
+    // Array comparisons
+    if (b.selectedValues || a.selectedValues) {
+      if (JSON.stringify(b.selectedValues) !== JSON.stringify(a.selectedValues)) score += 10;
+    }
+  }
+
+  // Application evidence (1 pt each)
+  if (app?.domChanges?.length) score += app.domChanges.length;
+  if (app?.newSurfaces?.length) score += app.newSurfaces.length * 2;
+  if (app?.removedSurfaces?.length) score += app.removedSurfaces.length * 2;
+  if (app?.visibilityChanges?.length) score += app.visibilityChanges.length * 2;
+  if (app?.navigation?.length) score += app.navigation.length * 3;
+  if (app?.networkActivity?.length) score += app.networkActivity.length * 2;
+
+  return score;
 }
 
 // ── Initialization ───────────────────────────────────────────────────

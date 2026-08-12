@@ -93,14 +93,12 @@ describe('EvidenceCollector', () => {
     expect(collector.getActiveWindowCount()).toBe(0);
   });
 
-  it('mousedown opens an evidence window', () => {
+  it('mousedown does NOT open an evidence window (Fix Round 5: capture-only)', () => {
     const el = document.createElement('div');
     document.body.appendChild(el);
 
     collector.onAfterEvent(el, 'evt-2', 'mousedown', '');
-    expect(collector.getActiveWindowCount()).toBe(1);
-
-    advance(350);
+    expect(collector.getActiveWindowCount()).toBe(0);
   });
 
   it('change opens an evidence window', () => {
@@ -113,14 +111,12 @@ describe('EvidenceCollector', () => {
     advance(350);
   });
 
-  it('focus opens an evidence window', () => {
+  it('focus does NOT open an evidence window (Fix Round 5: capture-only)', () => {
     const el = document.createElement('input');
     document.body.appendChild(el);
 
     collector.onAfterEvent(el, 'evt-4', 'focus', '');
-    expect(collector.getActiveWindowCount()).toBe(1);
-
-    advance(350);
+    expect(collector.getActiveWindowCount()).toBe(0);
   });
 
   it('submit opens an evidence window', () => {
@@ -131,6 +127,14 @@ describe('EvidenceCollector', () => {
     expect(collector.getActiveWindowCount()).toBe(1);
 
     advance(350);
+  });
+
+  it('blur does NOT open an evidence window (Fix Round 5: capture-only)', () => {
+    const el = document.createElement('input');
+    document.body.appendChild(el);
+
+    collector.onAfterEvent(el, 'evt-blur', 'blur', '');
+    expect(collector.getActiveWindowCount()).toBe(0);
   });
 
   it('mouseenter does NOT open an evidence window', () => {

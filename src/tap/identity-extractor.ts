@@ -424,6 +424,15 @@ export function captureValue(el: Element): string | undefined {
     if (text) return text.slice(0, 200); // bound to prevent huge values
   }
 
+  // Fix Round 6: Broader fallback for custom select widgets that lack ARIA.
+  // Common in OrangeHRM, SAP, Salesforce: div.select-wrapper > div.select-text.
+  // Check for class-based detection and look for a child text display element.
+  const cls = (el as HTMLElement).className ?? '';
+  if (/\b(select|dropdown|combobox|choice)\b/i.test(cls)) {
+    const text = (el as HTMLElement).textContent?.trim();
+    if (text && text.length <= 200) return text;
+  }
+
   return undefined;
 }
 

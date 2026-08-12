@@ -120,6 +120,20 @@ function snapshotElement(el: Element): TargetStateSnapshot {
         value = captured;
       }
     }
+    // Fix Round 6: Broader fallback for custom select widgets that lack
+    // proper ARIA roles. Many real-world dropdowns (OrangeHRM, SAP, etc.)
+    // are just styled divs with class names like "select", "dropdown".
+    if (value === null) {
+      const cls = htmlEl.className ?? '';
+      const hasSelectClass = /\b(select|dropdown|combobox|choice)\b/i.test(cls);
+      const isInteractive = htmlEl.getAttribute('tabindex') !== null;
+      if (hasSelectClass && isInteractive) {
+        const captured = captureValue(el);
+        if (captured !== undefined && captured.length > 0) {
+          value = captured;
+        }
+      }
+    }
   }
 
   // checked — only meaningful for checkbox/radio
@@ -210,10 +224,27 @@ function snapshotElement(el: Element): TargetStateSnapshot {
       if (controlledValue === null) {
         const parent = htmlEl.closest('form, [role="dialog"], [role="application"], .oxd-form, .modal') || document;
         const dateLikeInput = parent.querySelector(
-          'input[type="date"], input[name*="date"], input[name*="Date"], input[class*="date"], input[aria-label*="date" i]'
+          'input[type="date"], input[name*="date"], input[name*="Date"], input[class*="date"], input[aria-label*="date" i], input[placeholder*="date" i], input[placeholder*="dd-mm" i], input[placeholder*="yyyy" i]'
         );
         if (dateLikeInput instanceof HTMLInputElement && dateLikeInput.value) {
           controlledValue = dateLikeInput.value;
+        }
+      }
+      // Fix Round 6: Strategy 3 — broader fallback for custom date pickers.
+      // Look for any input within the closest form/container that has a value.
+      // This catches OrangeHRM-style date pickers where the input has custom
+      // class names like "oxd-input" and may not contain "date" in attributes.
+      if (controlledValue === null) {
+        const container = htmlEl.closest('[role="dialog"], [role="application"], .oxd-date-picker, .oxd-form-row, .modal-body') || document;
+        const inputs = container.querySelectorAll('input[type="text"], input:not([type])');
+        for (const inp of inputs) {
+          if (inp instanceof HTMLInputElement && inp.value && inp.value.length > 0) {
+            // Heuristic: date values often contain digits and separators
+            if (/^\d{1,4}[-/]\d{1,2}[-/]\d{1,4}$/.test(inp.value) || /\d{4}/.test(inp.value)) {
+              controlledValue = inp.value;
+              break;
+            }
+          }
         }
       }
     }
