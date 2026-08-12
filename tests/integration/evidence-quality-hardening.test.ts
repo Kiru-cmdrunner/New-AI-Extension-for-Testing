@@ -11,11 +11,10 @@
  *   GAP-7: keydown filtered to Enter (no window thrashing)
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { EvidenceCollector } from '../../src/tap/evidence-collector';
 import { TargetStateCache } from '../../src/tap/target-state-cache';
 import { DOMObserver } from '../../src/tap/dom-observer';
-import { AdaptiveWindow } from '../../src/tap/adaptive-window';
 import type { BehavioralEvidence, NetworkActivity } from '../../src/shared/behavioral-evidence-types';
 import type { ElementIdentity } from '../../src/shared/types';
 import type { ObservedEvent } from '../../src/shared/component-types';
@@ -60,7 +59,7 @@ function makeIdentity(overrides: Partial<ElementIdentity> = {}): ElementIdentity
   };
 }
 
-function makeNavEvent(navType: string = 'pushState', fromUrl: string = 'https://old.com', toUrl: string = 'https://new.com'): ObservedEvent {
+function makeNavEvent(navType: string = 'pushState', _fromUrl: string = 'https://old.com', toUrl: string = 'https://new.com'): ObservedEvent {
   return {
     eventId: 'evt-nav-1',
     eventType: 'navigation' as never,
@@ -373,9 +372,10 @@ describe('M7 Evidence Quality Hardening', () => {
           // Now change class to trigger a different computed display
           div.className = 'visible-element';
           setTimeout(() => {
-            const visibilityChanges = observer.getVisibilityChanges();
+            const visChanges = observer.getVisibilityChanges();
             // Should have detected the class change and computed a style difference
             // (jsdom may not compute CSS, but the infrastructure is tested)
+            expect(visChanges).toBeDefined();
             observer.stop();
             document.body.removeChild(div);
             resolve();
