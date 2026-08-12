@@ -394,39 +394,62 @@ export class EvidenceCollector {
     // P1-3 fix: Fall back to ObservedEvent valueBefore/valueAfter when
     // TargetStateSnapshot before is null or has no value but ObservedEvent has one.
     // This fills the gap when TargetStateCache wasn't pre-populated for this element.
+    //
+    // Fix Round 4: For typing windows (input events), valueBefore is always null
+    // because EventTap only sets valueBefore for focus/click/mousedown. We now
+    // also default before.value to '' (empty string) for typing events when the
+    // cache-based before is missing, since a typing session starting on a fresh
+    // field has an empty value. Additionally, use the latest valueAfter from
+    // member events when the after snapshot's value is null.
     if (state.observedEvent) {
       const obs = state.observedEvent;
+
       // Enrich 'before' value if missing
-      if (
-        (targetEvidence.before?.value === null || targetEvidence.before === null) &&
-        obs.valueBefore !== null
-      ) {
-        const beforeBase = targetEvidence.before ?? {
-          value: null,
-          checked: null,
-          className: '',
-          disabled: false,
-          ariaExpanded: null,
-          ariaChecked: null,
-          ariaPressed: null,
-          textContent: null,
-          childCount: 0,
-          scrollTop: null,
-          scrollLeft: null,
-          selectedValues: null,
-          controlledValue: null,
-          capturedAt: state.openedAt,
-        };
-        targetEvidence.before = {
-          ...beforeBase,
-          value: beforeBase.value ?? obs.valueBefore,
-        };
+      const beforeValueMissing =
+        targetEvidence.before === null || targetEvidence.before?.value === null;
+      if (beforeValueMissing) {
+        let beforeValue: string | null = null;
+        // For input events, obs.valueBefore is null, but the typing session
+        // started from an empty field. Default to '' if the field is a text input.
+        if (obs.valueBefore !== null) {
+          beforeValue = obs.valueBefore;
+        } else if (state.sourceEventType === 'input' && state.targetEl instanceof HTMLInputElement) {
+          // Typing window: before value was '' (empty) before first keystroke
+          beforeValue = '';
+        } else if (obs.valueBefore !== null) {
+          beforeValue = obs.valueBefore;
+        }
+
+        if (beforeValue !== null) {
+          const beforeBase = targetEvidence.before ?? {
+            value: null,
+            checked: null,
+            className: '',
+            disabled: false,
+            ariaExpanded: null,
+            ariaChecked: null,
+            ariaPressed: null,
+            textContent: null,
+            childCount: 0,
+            scrollTop: null,
+            scrollLeft: null,
+            selectedValues: null,
+            controlledValue: null,
+            capturedAt: state.openedAt,
+          };
+          targetEvidence.before = {
+            ...beforeBase,
+            value: beforeValue,
+          };
+        }
       }
-      // Enrich 'after' value if missing
-      if (
-        targetEvidence.after?.value === null &&
-        obs.valueAfter !== null
-      ) {
+
+      // Enrich 'after' value if missing.
+      // For typing windows: obs.valueAfter has the value from the FIRST input
+      // event (e.g., 'v' when typing 'vivo'). This is better than null but not
+      // the final value. The DOM-captured after should have the final value.
+      // Only use obs.valueAfter as fallback when the DOM capture returned null.
+      if (targetEvidence.after?.value === null && obs.valueAfter !== null) {
         targetEvidence.after = {
           ...targetEvidence.after,
           value: obs.valueAfter,

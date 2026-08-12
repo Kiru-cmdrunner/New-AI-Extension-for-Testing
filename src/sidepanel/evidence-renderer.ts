@@ -190,9 +190,16 @@ function diffSnapshots(
     // Skip null → null transitions (no change)
     if (oldVal == null && newVal == null) continue;
 
-    const oldText = Array.isArray(oldVal) ? (oldVal as string[]).join(', ') : safeText(oldVal);
-    const newText = Array.isArray(newVal) ? (newVal as string[]).join(', ') : safeText(newVal);
-    changes.push(`${label}: ${oldText} → ${newText}`);
+    const oldText = Array.isArray(oldVal)
+      ? (oldVal as string[]).join(', ')
+      : safeText(oldVal);
+    const newText = Array.isArray(newVal)
+      ? (newVal as string[]).join(', ')
+      : safeText(newVal);
+    // Show empty strings as (empty) for clarity
+    const oldDisplay = oldText === '' ? '(empty)' : oldText;
+    const newDisplay = newText === '' ? '(empty)' : newText;
+    changes.push(`${label}: ${oldDisplay} → ${newDisplay}`);
   }
 
   return changes;

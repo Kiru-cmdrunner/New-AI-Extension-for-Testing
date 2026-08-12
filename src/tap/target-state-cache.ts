@@ -18,6 +18,7 @@
  */
 
 import type { TargetStateSnapshot } from '../shared/behavioral-evidence-types';
+import { captureValue } from './identity-extractor';
 
 /**
  * A WeakMap-based cache for element state snapshots.
@@ -102,10 +103,23 @@ export class TargetStateCache {
 function snapshotElement(el: Element): TargetStateSnapshot {
   const htmlEl = el as HTMLElement;
 
-  // value — only meaningful for form elements
+  // value — for form elements use .value directly.
+  // For custom dropdowns (combobox, listbox, aria-haspopup) use captureValue()
+  // which falls back to textContent.
   let value: string | null = null;
   if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
     value = (el as HTMLInputElement).value;
+  } else {
+    // Fix Round 4: For non-form elements that act as custom dropdowns/comboboxes,
+    // use captureValue() which reads textContent, aria-valuetext, etc.
+    const role = htmlEl.getAttribute('role');
+    const hasPopup = htmlEl.hasAttribute('aria-haspopup');
+    if (role === 'combobox' || role === 'listbox' || hasPopup || role === 'option') {
+      const captured = captureValue(el);
+      if (captured !== undefined) {
+        value = captured;
+      }
+    }
   }
 
   // checked — only meaningful for checkbox/radio
@@ -164,7 +178,9 @@ function snapshotElement(el: Element): TargetStateSnapshot {
     }
   }
 
-  // P2-5: controlledValue — value of element referenced by aria-controls
+  // P2-5: controlledValue — value of element referenced by aria-controls.
+  // Fix Round 4: Also look for nearby date-picker inputs when the target is
+  // a calendar cell (role=gridcell, role=option inside a dialog).
   let controlledValue: string | null = null;
   const controlsId = htmlEl.getAttribute('aria-controls');
   if (controlsId) {
@@ -174,6 +190,31 @@ function snapshotElement(el: Element): TargetStateSnapshot {
         controlledValue = controlled.value;
       } else {
         controlledValue = controlled.textContent?.trim().slice(0, 500) || null;
+      }
+    }
+  }
+
+  // Fix Round 4: For calendar cells and date-picker elements without aria-controls,
+  // look for associated date input fields.
+  if (controlledValue === null) {
+    const role = htmlEl.getAttribute('role');
+    const isCalendarCell = role === 'gridcell' || role === 'option' ||
+      htmlEl.closest('[role="dialog"], [role="application"], .datepicker, .calendar, [data-datepicker]') !== null;
+    if (isCalendarCell) {
+      // Strategy 1: Find input[type="date"] on the page
+      const dateInput = document.querySelector('input[type="date"]');
+      if (dateInput instanceof HTMLInputElement && dateInput.value) {
+        controlledValue = dateInput.value;
+      }
+      // Strategy 2: Find input with date-related class/name within a reasonable scope
+      if (controlledValue === null) {
+        const parent = htmlEl.closest('form, [role="dialog"], [role="application"], .oxd-form, .modal') || document;
+        const dateLikeInput = parent.querySelector(
+          'input[type="date"], input[name*="date"], input[name*="Date"], input[class*="date"], input[aria-label*="date" i]'
+        );
+        if (dateLikeInput instanceof HTMLInputElement && dateLikeInput.value) {
+          controlledValue = dateLikeInput.value;
+        }
       }
     }
   }
