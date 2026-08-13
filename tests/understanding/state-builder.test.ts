@@ -27,6 +27,7 @@ function makeSignalSet(interactionId: string, overrides: Partial<SignalSet> = {}
     counterChanges: [],
     listChanges: [],
     inputChanges: [],
+    pageContent: null,
     ...overrides,
   };
 }

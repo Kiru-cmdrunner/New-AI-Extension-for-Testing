@@ -236,6 +236,8 @@ export interface SignalSet {
   listChanges: ListChangeSignal[];
   /** Input value change signals (0+ per interaction). */
   inputChanges: InputValueChangeSignal[];
+  /** Page content snapshot signal (0 or 1 per interaction). */
+  pageContent: import('./page-content/page-content-types').PageContentSignal | null;
 }
 
 /**

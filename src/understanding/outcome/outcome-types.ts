@@ -37,6 +37,7 @@ export interface OutcomeEvidence {
     | 'counter-change'
     | 'view-change'
     | 'list-change'
+    | 'page-content'
     | 'no-evidence';
   /** The result this evidence suggests. */
   result: 'success' | 'failure' | 'unknown';

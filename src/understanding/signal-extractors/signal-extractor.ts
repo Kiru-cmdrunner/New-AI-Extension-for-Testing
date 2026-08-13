@@ -32,6 +32,7 @@ export class SignalExtractionCoordinator {
       counterChanges: [],
       listChanges: [],
       inputChanges: [],
+      pageContent: null,
     };
 
     if (!interaction.behavioralEvidence) return result;

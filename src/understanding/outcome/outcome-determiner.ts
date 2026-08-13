@@ -38,6 +38,9 @@ const WEIGHTS = {
   counterNegative: 0.2,
   viewConfirmation: 0.25,
   listGrowth: 0.15,
+  pageContentEntity: 0.15,
+  pageContentCounter: 0.2,
+  pageContentNotification: 0.2,
 } as const;
 
 // ── Outcome Determiner ──────────────────────────────────────────────────
@@ -214,6 +217,60 @@ export class OutcomeDeterminer {
             result: 'success',
             weight: WEIGHTS.listGrowth,
             detail: `List ${lc.containerPath}: +${lc.netChange} items`,
+            interactionId: input.interactionId,
+          },
+        });
+      }
+    }
+
+    // Page content observations (M9.4) - low weight, corroborating evidence
+    const pc = input.signals.pageContent;
+    if (pc) {
+      // Entities observed in content -> success signal
+      for (const obs of pc.observedEntities) {
+        votes.push({
+          result: 'success',
+          weight: WEIGHTS.pageContentEntity,
+          evidence: {
+            kind: 'page-content',
+            result: 'success',
+            weight: WEIGHTS.pageContentEntity,
+            detail: `Page content entity: ${obs.entityType}:${obs.entityId ?? obs.text.substring(0, 40)}`,
+            interactionId: input.interactionId,
+          },
+        });
+      }
+
+      // Counters with positive values in content -> success signal
+      for (const obs of pc.observedCounters) {
+        if (obs.numericValue !== null && obs.numericValue > 0) {
+          votes.push({
+            result: 'success',
+            weight: WEIGHTS.pageContentCounter,
+            evidence: {
+              kind: 'page-content',
+              result: 'success',
+              weight: WEIGHTS.pageContentCounter,
+              detail: `Page content counter: ${obs.domPath} = ${obs.numericValue}`,
+              interactionId: input.interactionId,
+            },
+          });
+        }
+      }
+
+      // Notifications in content -> classify by text
+      for (const obs of pc.observedNotifications) {
+        if (!obs.text) continue;
+        const lower = obs.text.toLowerCase();
+        const isError = lower.includes('error') || lower.includes('failed') || lower.includes('invalid');
+        votes.push({
+          result: isError ? 'failure' : 'success',
+          weight: WEIGHTS.pageContentNotification,
+          evidence: {
+            kind: 'page-content',
+            result: isError ? 'failure' : 'success',
+            weight: WEIGHTS.pageContentNotification,
+            detail: `Page content notification: "${obs.text.substring(0, 40)}"`,
             interactionId: input.interactionId,
           },
         });

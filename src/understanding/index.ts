@@ -66,3 +66,28 @@ export type {
   OutcomeDeterminerInput,
 } from './outcome/outcome-types';
 export { confidenceToLevel, CONFIRMATION_VIEWS } from './outcome/outcome-types';
+
+// Page content observer (M9.4)
+export { PageContentObserver } from './page-content/page-content-observer';
+export type {
+  DOMAdapter,
+  ElementLike,
+  ScanResult,
+} from './page-content/page-content-observer';
+export {
+  extractFromSnapshot,
+  mergePageContentSignal,
+} from './page-content/page-content-signals';
+export type {
+  PageContentSnapshot,
+  ObservedItem,
+  SemanticItemKind,
+  PageContentSignal,
+  SemanticSelector,
+  PageContentConfig,
+} from './page-content/page-content-types';
+export {
+  DEFAULT_SEMANTIC_SELECTORS,
+  createDefaultPageContentConfig,
+  registerDomainSelectors,
+} from './page-content/page-content-config';

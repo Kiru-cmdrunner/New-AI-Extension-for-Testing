@@ -13,6 +13,7 @@
  */
 
 import type { SignalSet, ViewChangeSignal, ApiOperationSignal } from '../types';
+import type { PageContentSignal } from '../page-content/page-content-types';
 import { EntityTracker } from './entity-tracker';
 import { CollectionTracker } from './collection-tracker';
 import { CounterTracker } from './counter-tracker';
@@ -49,6 +50,11 @@ export class StateBuilder {
     // ── API operations → entity derivation ──
     for (const op of signals.apiOperations) {
       this.deriveEntitiesFromApiOp(op, changes);
+    }
+
+    // ── Page content snapshot (M9.4) ──
+    if (signals.pageContent) {
+      this.processPageContent(signals.pageContent, changes);
     }
 
     // ── Notifications ──
@@ -186,6 +192,64 @@ export class StateBuilder {
   }
 
   /**
+   * Process a page-content snapshot (M9.4) into the state model:
+   * entities, collections, counters, notifications.
+   */
+  private processPageContent(pc: PageContentSignal, changes: string[]): void {
+    const iid = pc.interactionId;
+
+    // Entities observed in content
+    for (const obs of pc.observedEntities) {
+      if (!obs.entityId) continue;
+      const type = (obs.entityType ?? 'unknown') as import('./types').EntityType;
+      this.entityTracker.upsert({
+        id: `${type}:${obs.entityId}`,
+        type,
+        attributes: {
+          ...obs.attributes,
+          ...(obs.numericValue !== null ? { count: obs.numericValue } : {}),
+          ...(textAsAttr(obs.text) ? { title: obs.text } : {}),
+        },
+        source: 'view-derived',
+        firstSeenAt: iid,
+        lastUpdated: iid,
+      });
+      changes.push(`page-content entity: ${type}:${obs.entityId}`);
+    }
+
+    // Counters observed in content (set absolute value)
+    for (const obs of pc.observedCounters) {
+      if (obs.numericValue === null) continue;
+      this.counterTracker.record(
+        obs.domPath,
+        String(obs.numericValue),
+        iid,
+        obs.attributes['aria-label'] ?? null,
+      );
+      changes.push(`page-content counter: ${obs.domPath} = ${obs.numericValue}`);
+    }
+
+    // Collections observed in content (set absolute count)
+    for (const obs of pc.observedCollections) {
+      if (obs.numericValue === null) continue;
+      this.collectionTracker.setCount(obs.domPath, obs.numericValue, iid);
+      changes.push(`page-content collection: ${obs.domPath} = ${obs.numericValue} items`);
+    }
+
+    // Notifications observed in content
+    for (const obs of pc.observedNotifications) {
+      if (!obs.text) continue;
+      this.notificationTracker.recordAppearance(
+        obs.text,
+        classifySeverity(obs.text),
+        obs.domPath,
+        iid,
+      );
+      changes.push(`page-content notification: "${obs.text.substring(0, 40)}"`);
+    }
+  }
+
+  /**
    * Get the current application state snapshot.
    */
   getCurrentState(): ApplicationState {
@@ -214,4 +278,32 @@ export class StateBuilder {
     this.interactionCount = 0;
     this.lastInteractionId = null;
   }
+}
+
+// -- Helpers --
+
+/**
+ * Decide if a text string is meaningful as an entity title attribute.
+ * Must be non-trivial (longer than 2 chars, not just a number).
+ */
+function textAsAttr(text: string): boolean {
+  return text.length >= 3 && !/^\d+$/.test(text);
+}
+
+/**
+ * Classify notification severity from text content.
+ * Simple heuristic - positive words suggest success, negative suggest error.
+ */
+function classifySeverity(text: string): 'success' | 'error' | 'warning' | 'info' {
+  const lower = text.toLowerCase();
+  if (lower.includes('error') || lower.includes('failed') || lower.includes('invalid')) {
+    return 'error';
+  }
+  if (lower.includes('success') || lower.includes('added') || lower.includes('complete') || lower.includes('confirmed')) {
+    return 'success';
+  }
+  if (lower.includes('warning') || lower.includes('caution') || lower.includes('attention')) {
+    return 'warning';
+  }
+  return 'info';
 }
