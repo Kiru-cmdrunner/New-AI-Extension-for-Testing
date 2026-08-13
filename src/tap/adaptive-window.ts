@@ -31,7 +31,10 @@ export type WindowEndReason =
   | 'max-duration'
   | 'typing-complete'
   | 'recording-stopped'
-  | 'displaced';
+  | 'displaced'
+  | 'lifecycle-complete'
+  | 'lifecycle-abandoned'
+  | 'page-reload';
 
 // ── AdaptiveWindow ───────────────────────────────────────────────────
 
@@ -65,6 +68,14 @@ export class AdaptiveWindow {
 
   /** Whether the window is currently open. */
   private isOpen = false;
+
+  /**
+   * Lifecycle-bound hold-open flag. When true, the stabilization timer
+   * continuously re-arms itself and the window does not close on its own.
+   * The window is closed only by an explicit close() call from the
+   * EvidenceCollector (triggered by FINALIZE_EVIDENCE or pagehide).
+   */
+  private holdOpen = false;
 
   constructor(config: {
     onClose: (window: EvidenceWindow) => void;
@@ -127,7 +138,6 @@ export class AdaptiveWindow {
     if (!this.isOpen) return;
     this.isOpen = false;
     this.closedAt = performance.now();
-
     // Clear timers
     if (this.stabilizationTimer) {
       clearTimeout(this.stabilizationTimer);
@@ -159,6 +169,15 @@ export class AdaptiveWindow {
    */
   getIsOpen(): boolean {
     return this.isOpen;
+  }
+
+  /**
+   * Set lifecycle-bound hold-open mode.
+   * When true, the stabilization timer continuously re-arms itself.
+   * The window stays open until explicitly closed (FINALIZE_EVIDENCE or pagehide).
+   */
+  setHoldOpen(value: boolean): void {
+    this.holdOpen = value;
   }
 
   /**
@@ -200,6 +219,11 @@ export class AdaptiveWindow {
     this.pushStabilitySample(elapsed, false);
 
     if (elapsed >= this.minDuration) {
+      if (this.holdOpen) {
+        // Lifecycle-bound: don't close on stabilization. Re-schedule.
+        this.scheduleStabilization();
+        return;
+      }
       this.close('stabilized');
     } else {
       // Too early — re-schedule for the remaining time

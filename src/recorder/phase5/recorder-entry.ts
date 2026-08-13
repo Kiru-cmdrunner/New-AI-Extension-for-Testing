@@ -348,6 +348,15 @@ if (chrome?.runtime?.onMessage) {
       flushPendingEvents();
       return false;
     }
+    // Lifecycle-Driven Evidence: SW tells CS about lifecycle boundaries
+    if (message?.type === 'LIFECYCLE_BOUND') {
+      evidenceCollector?.handleLifecycleBound(message.payload);
+      return false;
+    }
+    if (message?.type === 'FINALIZE_EVIDENCE') {
+      evidenceCollector?.finalizeForInteraction(message.payload);
+      return false;
+    }
     return false;
   });
 }
@@ -359,6 +368,10 @@ if (chrome?.runtime?.onMessage) {
  * Events survive navigation for the next page's SW to pick up.
  */
 window.addEventListener('pagehide', () => {
+  // Lifecycle-Driven Evidence: finalize all lifecycle-bound windows
+  // before the page disappears. Evidence is buffered to sessionStorage
+  // (via deliverEvidence → bufferEvidence) and flushed by the next page.
+  evidenceCollector?.onPageHide();
   flushPendingEvents();
 });
 

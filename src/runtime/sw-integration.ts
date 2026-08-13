@@ -19,6 +19,7 @@ import { enrichInteraction } from '../enrichment';
 import type {
   ObservedEvent,
   ComponentInteraction,
+  ComponentContext,
   RuntimeConfig,
 } from '../shared/component-types';
 import type { BehavioralEvidence } from '../shared/behavioral-evidence-types';
@@ -55,25 +56,25 @@ let lastVerificationResult: VerificationResult | null = null;
 const pendingEvidence = new Map<string, BehavioralEvidence>();
 const MAX_PENDING_EVIDENCE = 100;
 
-// ── Evidence Timeout Tracking (P1-3 Fix) ─────────────────────────────
+// ── Evidence Timeout Tracking (Lifecycle-Driven Evidence v3.1) ───────
 //
-// Bounded timeout: if no behavioral evidence arrives for an interaction
-// within EVIDENCE_TIMEOUT_MS, the interaction is marked as "evidence timeout"
-// and a synthetic minimal evidence is attached so the side panel can display
-// "No evidence (timeout)" instead of "Collecting…" forever.
+// Emergency safety net: if no behavioral evidence arrives for an interaction
+// within EMERGENCY_TIMEOUT_MS, a synthetic minimal evidence is attached.
+// This fires ONLY for genuinely broken states (content script crash, lost
+// messages). In normal operation, FINALIZE_EVIDENCE drives evidence delivery
+// within ~150ms of lifecycle completion, and this timeout never fires.
 //
-// This handles scenarios like full-page reloads (content script destroyed),
-// SPA navigations where the evidence window never closes, and any other
-// case where evidence delivery fails.
+// It is NOT a user-facing timing limit — the user can take unlimited time
+// to complete an interaction.
 
-const EVIDENCE_TIMEOUT_MS = 5000;
+const EMERGENCY_TIMEOUT_MS = 300_000;
 
 /** Map of interactionId → timeout handle for evidence timeouts. */
 const evidenceTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
 /**
  * Start the evidence timeout timer for a newly emitted interaction.
- * If no evidence arrives within EVIDENCE_TIMEOUT_MS, attaches synthetic
+ * If no evidence arrives within EMERGENCY_TIMEOUT_MS, attaches synthetic
  * timeout evidence and broadcasts the update.
  */
 function startEvidenceTimeout(interaction: ComponentInteraction): void {
@@ -142,7 +143,7 @@ function startEvidenceTimeout(interaction: ComponentInteraction): void {
     }).catch(() => {
       // Side panel may not be open — ignore
     });
-  }, EVIDENCE_TIMEOUT_MS);
+  }, EMERGENCY_TIMEOUT_MS);
 
   evidenceTimeouts.set(interactionId, handle);
 }
@@ -156,6 +157,76 @@ function cancelEvidenceTimeout(interactionId: string): void {
     clearTimeout(handle);
     evidenceTimeouts.delete(interactionId);
   }
+}
+
+// ── Lifecycle-Driven Evidence Messages (SW → CS) ────────────────────
+
+/**
+ * Send a LIFECYCLE_BOUND message to the content script when a new lifecycle
+ * starts. The EvidenceCollector uses this to mark evidence windows as
+ * lifecycle-bound (holdOpen), preventing premature closure.
+ *
+ * Sent via chrome.tabs.sendMessage to target the active tab's content script.
+ */
+function sendLifecycleBound(ctx: ComponentContext): void {
+  chrome.tabs
+    .query({ active: true, currentWindow: true })
+    .then((tabs) => {
+      if (tabs.length === 0 || !tabs[0].id) return;
+      chrome.tabs.sendMessage(tabs[0].id, {
+        type: 'LIFECYCLE_BOUND',
+        payload: {
+          lifecycleId: ctx.lifecycleId,
+          triggerEventId: ctx.triggerEvent.eventId,
+          interactionType: ctx.type,
+        },
+      }).catch(() => {
+        // Content script may not be injected yet — non-fatal
+      });
+    })
+    .catch(() => {
+      // Tab query failed — non-fatal
+    });
+}
+
+/**
+ * Send a FINALIZE_EVIDENCE message to the content script when an interaction
+ * lifecycle completes. The EvidenceCollector immediately finalizes evidence
+ * for the matching window(s). This replaces the 5s timeout as the primary
+ * evidence delivery mechanism.
+ */
+function sendFinalizeEvidence(interaction: ComponentInteraction): void {
+  const eventIds: string[] = [];
+  if (interaction.triggerEvent?.eventId) {
+    eventIds.push(interaction.triggerEvent.eventId);
+  }
+  for (const ev of interaction.memberEvents ?? []) {
+    if (ev.eventId && !eventIds.includes(ev.eventId)) {
+      eventIds.push(ev.eventId);
+    }
+  }
+
+  chrome.tabs
+    .query({ active: true, currentWindow: true })
+    .then((tabs) => {
+      if (tabs.length === 0 || !tabs[0].id) return;
+      chrome.tabs.sendMessage(tabs[0].id, {
+        type: 'FINALIZE_EVIDENCE',
+        payload: {
+          lifecycleId: interaction.lifecycleId,
+          interactionId: interaction.interactionId,
+          interactionType: interaction.type,
+          eventIds,
+          metadata: interaction.metadata ?? {},
+          endState: interaction.endState,
+        },
+      }).catch(() => {
+        // Content script may have been destroyed (navigation) — non-fatal
+      });
+    })
+    .catch(() => {
+      // Tab query failed — non-fatal
+    });
 }
 
 /**
@@ -399,12 +470,23 @@ export function initRecording(): void {
       drainPendingEvidence(interaction);
       liveInteractions.push(interaction);
       persistLiveInteractions();
-      // P1-3: Start evidence timeout — if no evidence arrives within 5s,
-      // the interaction gets synthetic timeout evidence so the side panel
-      // shows "No evidence (timeout)" instead of "Collecting…" forever.
+
+      // Lifecycle-Driven Evidence: tell the content script to finalize
+      // evidence for this interaction NOW. This replaces the 5s timeout
+      // as the primary evidence delivery mechanism.
+      sendFinalizeEvidence(interaction);
+
+      // Emergency safety net: if no evidence arrives within EMERGENCY_TIMEOUT_MS
+      // (300s), attach synthetic evidence. This fires ONLY for broken states
+      // (content script crash, lost messages) — NOT for slow user interactions.
       if (!interaction.behavioralEvidence) {
         startEvidenceTimeout(interaction);
       }
+    },
+    onLifecycleStart: (ctx) => {
+      // Tell the content script that a new lifecycle has started so it can
+      // bind evidence windows to this lifecycle.
+      sendLifecycleBound(ctx);
     },
     evidenceLedger,
   };

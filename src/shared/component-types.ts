@@ -265,8 +265,9 @@ export interface ComponentContext {
   /**
    * Unique lifecycle ID for Evidence Ledger disposition tracking.
    * Assigned at createContext time. Format: `lc-{counter}`.
+   * Optional for compatibility with projected/synthetic interactions.
    */
-  lifecycleId: string;
+  lifecycleId?: string;
 
   /** Identity of the trigger element. */
   trigger: ElementIdentity;
@@ -282,6 +283,15 @@ export interface ComponentContext {
 
   /** Start time (timestamp of triggerEvent). */
   startTime: number;
+
+  /**
+   * Timestamp of the last event absorbed by this lifecycle.
+   * Updated whenever a memberEvent is pushed. Used by idle-time
+   * stale eviction: a lifecycle is evicted only if it has been idle
+   * (zero in-scope events) for longer than the idle timeout.
+   * Optional for compatibility with test fixtures.
+   */
+  lastActivityTime?: number;
 
   /** End time (timestamp of the event that completed/abandoned/interrupted). */
   endTime: number;
@@ -411,6 +421,8 @@ export interface ComponentDefinition {
 export interface ComponentInteraction {
   /** Unique interaction ID. */
   interactionId: string;
+  /** Lifecycle ID from ComponentRuntime (lc-{counter}). Optional for projected/synthetic interactions. */
+  lifecycleId?: string;
   /** Interaction type. */
   type: InteractionType;
   /** Trigger element identity. */
@@ -467,6 +479,14 @@ export interface RuntimeConfig {
    * The SW uses this to push to liveInteractions and write to storage.
    */
   onEmit: (interaction: ComponentInteraction) => void;
+
+  /**
+   * Callback invoked when a new lifecycle is created (createContext).
+   * The SW uses this to send a LIFECYCLE_BOUND message to the content
+   * script so the EvidenceCollector can bind evidence windows to the
+   * interaction lifecycle.
+   */
+  onLifecycleStart?: (ctx: ComponentContext) => void;
 
   /**
    * Starting interaction ID counter (for MV3 recovery — continues from

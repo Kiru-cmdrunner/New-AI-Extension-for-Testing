@@ -546,7 +546,29 @@ export type AppMessage =
   | { type: 'OBSERVED_EVENT'; payload: import('./component-types').ObservedEvent }
   // ── Behavioral Evidence Model (v3.0) ──
   | { type: 'BEHAVIORAL_EVIDENCE'; payload: import('./behavioral-evidence-types').BehavioralEvidence }
-  | { type: 'INTERACTION_EVIDENCE_UPDATE'; payload: { interactionId: string; evidence: import('./behavioral-evidence-types').BehavioralEvidence } };
+  | { type: 'INTERACTION_EVIDENCE_UPDATE'; payload: { interactionId: string; evidence: import('./behavioral-evidence-types').BehavioralEvidence } }
+  // ── Lifecycle-Driven Evidence (v3.1) ──
+  // SW → CS: a semantic interaction lifecycle has started
+  | {
+      type: 'LIFECYCLE_BOUND';
+      payload: {
+        lifecycleId: string;
+        triggerEventId: string;
+        interactionType: string;
+      };
+    }
+  // SW → CS: a semantic interaction lifecycle has completed — finalize evidence now
+  | {
+      type: 'FINALIZE_EVIDENCE';
+      payload: {
+        lifecycleId: string;
+        interactionId: string;
+        interactionType: string;
+        eventIds: string[];
+        metadata: Record<string, unknown>;
+        endState: string;
+      };
+    };
 
 /** Type guard: narrows an unknown value to AppMessage. */
 export function isAppMessage(value: unknown): value is AppMessage {
@@ -568,6 +590,8 @@ export function isAppMessage(value: unknown): value is AppMessage {
       'OBSERVED_EVENT',
       'BEHAVIORAL_EVIDENCE',
       'INTERACTION_EVIDENCE_UPDATE',
+      'LIFECYCLE_BOUND',
+      'FINALIZE_EVIDENCE',
     ].includes(msg['type'])
   );
 }

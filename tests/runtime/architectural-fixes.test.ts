@@ -445,7 +445,7 @@ describe('Fix 3: Per-type deduplication', () => {
 // ── Fix 4: Timeout-Based Lifecycle Abandonment ──────────────────────
 
 describe('Fix 4: Timeout-based lifecycle abandonment', () => {
-  it('abandons a component that exceeds MAX_LIFECYCLE_DURATION_MS', () => {
+  it('abandons a component that exceeds idle timeout (no in-scope events)', () => {
     // A lifecycle component that never completes on its own
     const stuckDef: ComponentDefinition = {
       type: 'Dropdown' as any,
@@ -487,8 +487,9 @@ describe('Fix 4: Timeout-based lifecycle abandonment', () => {
     runtime.process(e2);
     expect(runtime.activeCount).toBe(1);
 
-    // Event 15s+ later on another element — component should be abandoned by timeout
-    const e3 = clickEvent('c3', 'btn2', 'Another', baseTime + 16000);
+    // Event 300s+ later on another element — component should be abandoned by idle timeout
+    // (idle eviction: zero in-scope events for LIFECYCLE_IDLE_TIMEOUT_MS)
+    const e3 = clickEvent('c3', 'btn2', 'Another', baseTime + 300_001);
     ledger.append(e3);
     runtime.process(e3);
 

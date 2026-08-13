@@ -60,11 +60,18 @@ export interface RuntimeSnapshot {
 const SEEN_EVENTS_CAP = 500;
 
 /**
- * Maximum duration (ms) an active component can remain on the stack without
- * completing. Prevents zombie components from blocking discovery indefinitely.
+ * Maximum idle time (ms) an active component can remain on the stack without
+ * receiving any in-scope events. Prevents zombie components from blocking
+ * discovery indefinitely after the user has moved on to something else.
+ *
+ * This is an internal leak-protection mechanism — NOT a user-facing timing
+ * limit. A lifecycle that is actively receiving events (typing, browsing,
+ * mouse movement inside the surface) stays alive regardless of total duration.
+ * Only a lifecycle with ZERO in-scope events for this duration gets evicted.
+ *
  * Framework-independent: doesn't rely on DOM boundary heuristics.
  */
-const MAX_LIFECYCLE_DURATION_MS = 15_000;
+const LIFECYCLE_IDLE_TIMEOUT_MS = 300_000;
 
 /**
  * Browser event types that represent deliberate user actions.
@@ -238,6 +245,8 @@ class ComponentRuntimeImpl implements ComponentRuntime {
       if (inScope) {
         // Add event to member events
         ctx.memberEvents.push(event);
+        // Update last activity time for idle-based stale eviction
+        ctx.lastActivityTime = event.timestamp;
 
         let completion: ComponentCompletion | null = null;
         try {
@@ -404,9 +413,12 @@ class ComponentRuntimeImpl implements ComponentRuntime {
   }
 
   /**
-   * Abandon active components that have exceeded MAX_LIFECYCLE_DURATION_MS.
-   * This is the framework-independent lifecycle management mechanism —
-   * no DOM boundary checks, no CSS class heuristics.
+   * Abandon active components that have been idle for longer than
+   * LIFECYCLE_IDLE_TIMEOUT_MS. Idle means the lifecycle has received ZERO
+   * in-scope events for the entire idle period.
+   *
+   * This is leak-protection, NOT a user-facing timing limit. A lifecycle
+   * that is actively receiving events stays alive regardless of total age.
    *
    * Gesture components (Scroll) are completed, not abandoned, since they
    * accumulated valid data — the user just didn't do anything afterwards.
@@ -419,8 +431,8 @@ class ComponentRuntimeImpl implements ComponentRuntime {
   ): void {
     for (let i = this.activeStack.length - 1; i >= 0; i--) {
       const ctx = this.activeStack[i];
-      const duration = event.timestamp - ctx.startTime;
-      if (duration > MAX_LIFECYCLE_DURATION_MS) {
+      const idleTime = event.timestamp - (ctx.lastActivityTime ?? ctx.startTime);
+      if (idleTime > LIFECYCLE_IDLE_TIMEOUT_MS) {
         const def = this.findDefForType(ctx.type);
         const endState = def?.shouldCompleteOnOutside ? 'completed' : 'abandoned';
         ctx.state = endState;
@@ -505,7 +517,7 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     def: ComponentDefinition,
     event: ObservedEvent,
   ): ComponentContext {
-    return {
+    const ctx: ComponentContext = {
       type: def.type,
       lifecycleId: `lc-${++this.lifecycleCounter}`,
       state: 'active',
@@ -514,9 +526,22 @@ class ComponentRuntimeImpl implements ComponentRuntime {
       memberEvents: [event],
       scopeKeys: new Set([elementKey(event.target)]),
       startTime: event.timestamp,
+      lastActivityTime: event.timestamp,
       endTime: 0,
       data: {},
     };
+
+    // Notify the SW that a lifecycle has started so it can send
+    // LIFECYCLE_BOUND to the content script's EvidenceCollector.
+    if (this.config.onLifecycleStart) {
+      try {
+        this.config.onLifecycleStart(ctx);
+      } catch {
+        // Non-fatal — lifecycle still functions without the binding message
+      }
+    }
+
+    return ctx;
   }
 
   // M5: createUnclassifiedInteraction removed.
@@ -546,7 +571,7 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     if (this.isDuplicate(ctx, metadata, key)) {
       // Suppressed by dedup — release all absorbed events for this lifecycle.
       // The events were absorbed but no completed interaction backs them.
-      this.ledger?.releaseClaims(ctx.lifecycleId);
+      this.ledger?.releaseClaims(ctx.lifecycleId ?? '');
       return null;
     }
 
@@ -554,6 +579,7 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     this.interactionCounter++;
     const interaction: ComponentInteraction = {
       interactionId: `int-${this.interactionCounter}`,
+      lifecycleId: ctx.lifecycleId,
       type: ctx.type,
       trigger: ctx.trigger,
       triggerEvent: ctx.triggerEvent,
@@ -583,7 +609,7 @@ class ComponentRuntimeImpl implements ComponentRuntime {
         }
       } else {
         // Abandoned/interrupted — release all absorbed events for this lifecycle
-        this.ledger.releaseClaims(ctx.lifecycleId);
+        this.ledger.releaseClaims(ctx.lifecycleId ?? '');
       }
     }
 

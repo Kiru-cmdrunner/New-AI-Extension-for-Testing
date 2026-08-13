@@ -87,7 +87,10 @@ export interface EvidenceWindow {
     | 'typing-complete'
     | 'displaced'
     | 'evidence-timeout'
-    | 'page-reload-synthetic';
+    | 'page-reload-synthetic'
+    | 'lifecycle-complete'
+    | 'lifecycle-abandoned'
+    | 'page-reload';
 
   /**
    * Stability trace — quiescence period measurements taken during the window.

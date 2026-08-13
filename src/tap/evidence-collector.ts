@@ -141,6 +141,10 @@ interface ObservationWindowState {
    * that extend from a prior input event).
    */
   observedEvent: ObservedEvent | null;
+  /** Lifecycle-Driven Evidence: lifecycle ID bound to this window, if any. */
+  lifecycleId: string | null;
+  /** Lifecycle-Driven Evidence: whether this window is held open by a lifecycle. */
+  isLifecycleBound: boolean;
 }
 
 // ── EvidenceCollector ────────────────────────────────────────────────
@@ -176,6 +180,20 @@ export class EvidenceCollector {
 
   /** Network bridge for collecting network activity (M6). */
   private networkBridge: NetworkBridge | null = null;
+
+  // ── Lifecycle-Driven Evidence state ────────────────────────────────
+
+  /** Active lifecycle bindings: lifecycleId → binding info. */
+  private lifecycleBindings = new Map<string, {
+    triggerEventId: string;
+    interactionType: string;
+  }>();
+
+  /** Companion event suppression: prevents orphan evidence windows. */
+  private companionSuppressUntil = 0;
+
+  /** Whether the page is unloading (pagehide fired). */
+  private isUnloading = false;
 
   constructor(config: {
     targetStateCache: TargetStateCache;
@@ -246,6 +264,19 @@ export class EvidenceCollector {
     observedEvent?: ObservedEvent,
   ): void {
     if (!this.isRunning) return;
+
+    // Lifecycle-Driven Evidence: Companion event suppression.
+    // After a lifecycle finalizes, the companion click (e.g., click after
+    // mousedown completion) should not create an orphan evidence window.
+    // We suppress window creation for WINDOW_OPEN events within 300ms of
+    // the last finalization.
+    if (
+      this.companionSuppressUntil > 0 &&
+      Date.now() < this.companionSuppressUntil &&
+      WINDOW_OPEN_EVENTS.has(eventType)
+    ) {
+      return;
+    }
 
     // Capture-only events — no evidence window
     if (CAPTURE_ONLY_EVENTS.has(eventType)) return;
@@ -343,7 +374,16 @@ export class EvidenceCollector {
       isNavigationWindow: false,
       inflightNetworkUrls: new Set(),
       observedEvent, // P1-3 fix: store ObservedEvent for valueBefore/valueAfter fallback
+      lifecycleId: null,
+      isLifecycleBound: false,
     };
+
+    // Lifecycle-Driven Evidence: if any lifecycle bindings exist, hold this
+    // window open. It will be matched at finalization time by event ID.
+    if (this.lifecycleBindings.size > 0) {
+      state.isLifecycleBound = true;
+      adaptiveWindow.setHoldOpen(true);
+    }
 
     this.activeWindows.push(state);
 
@@ -910,6 +950,408 @@ export class EvidenceCollector {
     } catch {
       // silent degrade
     }
+  }
+
+  // ── Lifecycle-Driven Evidence (v3.1) ───────────────────────────────
+
+  /**
+   * Handle a LIFECYCLE_BOUND message from the SW.
+   * A new semantic interaction lifecycle has started. Mark any evidence
+   * window opened by the trigger event as lifecycle-bound (holdOpen).
+   */
+  handleLifecycleBound(payload: {
+    lifecycleId: string;
+    triggerEventId: string;
+    interactionType: string;
+  }): void {
+    // Store the binding
+    this.lifecycleBindings.set(payload.lifecycleId, {
+      triggerEventId: payload.triggerEventId,
+      interactionType: payload.interactionType,
+    });
+
+    // Retroactively mark any window opened by the trigger event
+    const window = this.activeWindows.find(
+      (w) => !w.isClosed && w.sourceEventId === payload.triggerEventId,
+    );
+    if (window) {
+      window.lifecycleId = payload.lifecycleId;
+      window.isLifecycleBound = true;
+      window.adaptiveWindow.setHoldOpen(true);
+    }
+  }
+
+  /**
+   * Handle a FINALIZE_EVIDENCE message from the SW.
+   * A semantic interaction lifecycle has completed. Immediately finalize
+   * evidence for the matching window(s). This replaces the 300ms stabilization
+   * timer and 5s timeout as the primary evidence delivery mechanism.
+   */
+  finalizeForInteraction(payload: {
+    lifecycleId: string;
+    interactionId: string;
+    interactionType: string;
+    eventIds: string[];
+    metadata: Record<string, unknown>;
+    endState: string;
+  }): void {
+    // Clear the lifecycle binding
+    this.lifecycleBindings.delete(payload.lifecycleId);
+
+    // Find matching windows by event ID
+    const matchingWindows = this.activeWindows.filter(
+      (w) => !w.isClosed && payload.eventIds.includes(w.sourceEventId),
+    );
+
+    // Determine the settle delay: 150ms normally, 0ms during page unload
+    const settleDelay = this.isUnloading ? 0 : 150;
+
+    if (matchingWindows.length > 0) {
+      // Finalize the first matching window
+      // (there should typically be exactly one)
+      const win = matchingWindows[0];
+      this.finalizeWindow(win, payload, settleDelay);
+
+      // Close any additional matching windows without evidence
+      for (let i = 1; i < matchingWindows.length; i++) {
+        this.closeWindowSilently(matchingWindows[i]);
+      }
+    } else {
+      // No matching window found — this happens when all completing events
+      // were capture-only (e.g., DatePicker focus+mousedown).
+      // Try to resolve the trigger element from the lifecycle bindings
+      // and create evidence targeting it.
+      this.finalizeWithoutWindow(payload, settleDelay);
+    }
+
+    // Set companion event suppression
+    this.companionSuppressUntil = Date.now() + 300;
+  }
+
+  /**
+   * Finalize a specific evidence window on lifecycle completion.
+   */
+  private finalizeWindow(
+    win: ObservationWindowState,
+    payload: {
+      interactionType: string;
+      metadata: Record<string, unknown>;
+      endState: string;
+    },
+    settleDelay: number,
+  ): void {
+    const endReason: 'lifecycle-complete' | 'lifecycle-abandoned' =
+      payload.endState === 'completed' ? 'lifecycle-complete' : 'lifecycle-abandoned';
+
+    // If page is unloading, finalize immediately (no settle delay)
+    if (settleDelay === 0) {
+      this.executeFinalization(win, payload.metadata, endReason);
+      return;
+    }
+
+    // Schedule a brief settle for framework handlers to propagate state changes
+    setTimeout(() => {
+      if (win.isClosed) return; // already closed by another path
+      this.executeFinalization(win, payload.metadata, endReason);
+    }, settleDelay);
+  }
+
+  /**
+   * Execute the finalization: capture after-snapshot, build evidence, deliver.
+   */
+  private executeFinalization(
+    win: ObservationWindowState,
+    metadata: Record<string, unknown>,
+    endReason: 'lifecycle-complete' | 'lifecycle-abandoned' | 'page-reload',
+  ): void {
+    if (win.isClosed) return;
+    win.isClosed = true;
+
+    // Close the adaptive window to stop timers
+    win.adaptiveWindow.close(endReason);
+
+    // Capture after snapshot from the target element
+    let afterSnapshot: TargetStateSnapshot | null = null;
+    try {
+      afterSnapshot = this.targetStateCache.capture(win.targetEl);
+    } catch {
+      // Element may have been removed from DOM
+    }
+
+    // Enrich after-snapshot from metadata (fallback only)
+    if (afterSnapshot) {
+      afterSnapshot = this.enrichFromMetadata(afterSnapshot, metadata);
+    }
+
+    // Build evidence using the existing closeWindow infrastructure
+    this.buildAndDeliverEvidence(win, afterSnapshot, endReason);
+  }
+
+  /**
+   * Build and deliver BehavioralEvidence from a finalized window.
+   * Reuses the same logic as closeWindow for consistency.
+   */
+  private buildAndDeliverEvidence(
+    state: ObservationWindowState,
+    afterSnapshot: TargetStateSnapshot | null,
+    endReason: 'lifecycle-complete' | 'lifecycle-abandoned' | 'page-reload',
+  ): void {
+    // Collect accumulated mutations
+    const allSummaries = this.domObserver.getAccumulatedSummaries();
+    const surfaces = this.domObserver.getSurfaceChanges();
+    const visibilityChanges = this.domObserver.getVisibilityChanges();
+    const perfMetrics = this.domObserver.getPerformanceMetrics();
+
+    // Collect network activity
+    let networkActivity: NetworkActivity[] = [];
+    if (this.networkBridge) {
+      networkActivity = this.networkBridge.collectForRange(
+        state.openedAt,
+        performance.now(),
+      );
+    }
+
+    // Apply 200-cap
+    const coarseMode = allSummaries.length > MAX_DOM_CHANGES;
+    const domChanges = allSummaries.slice(0, MAX_DOM_CHANGES);
+    const domChangeOverflow = Math.max(0, allSummaries.length - MAX_DOM_CHANGES);
+
+    const newSurfaces = surfaces.filter((s) => s.kind === 'added').slice(0, 50);
+    const removedSurfaces = surfaces.filter((s) => s.kind === 'removed').slice(0, 50);
+
+    // Build TargetEvidence
+    const targetEvidence: TargetEvidence = {
+      identity: state.identity as ElementIdentity,
+      identityCapturedAt: state.openedAt,
+      before: state.beforeSnapshot,
+      after: afterSnapshot,
+      focusMovement: this.captureFocusMovement(),
+    };
+
+    // P1-3 enrichment: use observedEvent valueBefore/valueAfter as fallback
+    if (state.observedEvent) {
+      const obs = state.observedEvent;
+      const beforeValueMissing =
+        targetEvidence.before === null || targetEvidence.before?.value === null;
+      if (beforeValueMissing) {
+        if (obs.valueBefore !== null) {
+          const beforeBase = targetEvidence.before ?? {
+            value: null, checked: null, className: '', disabled: false,
+            ariaExpanded: null, ariaChecked: null, ariaPressed: null,
+            textContent: null, childCount: 0, scrollTop: null, scrollLeft: null,
+            selectedValues: null, controlledValue: null, capturedAt: state.openedAt,
+          };
+          targetEvidence.before = { ...beforeBase, value: obs.valueBefore };
+        } else if (state.sourceEventType === 'input' && state.targetEl instanceof HTMLInputElement) {
+          const beforeBase = targetEvidence.before ?? {
+            value: null, checked: null, className: '', disabled: false,
+            ariaExpanded: null, ariaChecked: null, ariaPressed: null,
+            textContent: null, childCount: 0, scrollTop: null, scrollLeft: null,
+            selectedValues: null, controlledValue: null, capturedAt: state.openedAt,
+          };
+          targetEvidence.before = { ...beforeBase, value: '' };
+        }
+      }
+    }
+
+    // Build ApplicationEvidence
+    const applicationEvidence: ApplicationEvidence = {
+      domChanges,
+      domChangeOverflow,
+      coarseMode,
+      newSurfaces,
+      removedSurfaces,
+      visibilityChanges: visibilityChanges.slice(0, 50),
+      navigation: [...state.navEvents],
+      networkActivity,
+      performanceCondition: {
+        mainThreadBlocked: perfMetrics.longestBatchMs > 15,
+        highChurnMode: coarseMode,
+        longestBatchMs: perfMetrics.longestBatchMs,
+        totalBatches: perfMetrics.totalBatches,
+      },
+    };
+
+    // Build and deliver BehavioralEvidence
+    const evidence: BehavioralEvidence = {
+      sourceEventId: state.sourceEventId,
+      sourceEventType: state.sourceEventType,
+      windowId: state.windowId,
+      frameId: 'main',
+      window: {
+        openedAt: state.openedAt,
+        closedAt: performance.now(),
+        durationMs: performance.now() - state.openedAt,
+        endReason,
+        stabilityTrace: [],
+      },
+      targetEvidence,
+      applicationEvidence,
+    };
+
+    this.deliverEvidence(evidence);
+
+    // Clean up
+    this.cleanupWindow(state);
+  }
+
+  /**
+   * Finalize when no evidence window was opened (capture-only trigger path).
+   * Creates evidence targeting the trigger element by resolving it from the DOM.
+   */
+  private finalizeWithoutWindow(
+    payload: {
+      eventIds: string[];
+      metadata: Record<string, unknown>;
+      endState: string;
+    },
+    settleDelay: number,
+  ): void {
+    // No window was opened. We can't resolve the trigger element without
+    // a stored identity reference. For now, deliver evidence from metadata only.
+    // This handles the DatePicker case where focus+mousedown are capture-only.
+
+    const endReason: 'lifecycle-complete' | 'lifecycle-abandoned' =
+      payload.endState === 'completed' ? 'lifecycle-complete' : 'lifecycle-abandoned';
+
+    const doFinalize = () => {
+      // Build evidence from metadata
+      const metadata = payload.metadata;
+      let afterValue: string | null = null;
+      if (metadata.selectedDate) afterValue = metadata.selectedDate as string;
+      else if (metadata.selectedValue) afterValue = metadata.selectedValue as string;
+      else if (metadata.textValue) afterValue = metadata.textValue as string;
+
+      const afterSnapshot: TargetStateSnapshot | null = afterValue ? {
+        value: afterValue,
+        checked: null, className: '', disabled: false,
+        ariaExpanded: null, ariaChecked: null, ariaPressed: null,
+        textContent: null, childCount: 0, scrollTop: null, scrollLeft: null,
+        selectedValues: metadata.selectedValues as string[] ?? null,
+        controlledValue: null, capturedAt: performance.now(),
+      } : null;
+
+      // Use the first eventId as sourceEventId for SW correlation
+      const sourceEventId = payload.eventIds[0] ?? '';
+
+      const evidence: BehavioralEvidence = {
+        sourceEventId,
+        sourceEventType: 'lifecycle',
+        windowId: `lc-${sourceEventId}`,
+        frameId: 'main',
+        window: {
+          openedAt: 0,
+          closedAt: performance.now(),
+          durationMs: 0,
+          endReason,
+          stabilityTrace: [],
+        },
+        targetEvidence: {
+          identity: null,
+          identityCapturedAt: 0,
+          before: null,
+          after: afterSnapshot,
+          focusMovement: null,
+        },
+        applicationEvidence: {
+          domChanges: [],
+          domChangeOverflow: 0,
+          coarseMode: false,
+          newSurfaces: [],
+          removedSurfaces: [],
+          visibilityChanges: [],
+          navigation: [],
+          networkActivity: [],
+          performanceCondition: {
+            mainThreadBlocked: false,
+            highChurnMode: false,
+            longestBatchMs: 0,
+            totalBatches: 0,
+          },
+        },
+      };
+
+      this.deliverEvidence(evidence);
+    };
+
+    if (settleDelay === 0) {
+      doFinalize();
+    } else {
+      setTimeout(doFinalize, settleDelay);
+    }
+  }
+
+  /**
+   * Enrich after-snapshot from interaction metadata (fallback only).
+   * Only fills values when the DOM snapshot's value is null/empty.
+   */
+  private enrichFromMetadata(
+    snapshot: TargetStateSnapshot,
+    metadata: Record<string, unknown>,
+  ): TargetStateSnapshot {
+    const enriched = { ...snapshot };
+
+    if (enriched.value === null || enriched.value === '') {
+      if (metadata.selectedValue) {
+        enriched.value = metadata.selectedValue as string;
+      } else if (metadata.selectedValues) {
+        enriched.selectedValues = metadata.selectedValues as string[];
+      } else if (metadata.selectedDate) {
+        enriched.value = metadata.selectedDate as string;
+      } else if (metadata.textValue) {
+        enriched.value = metadata.textValue as string;
+      }
+    }
+
+    return enriched;
+  }
+
+  /**
+   * Close a window silently (no evidence delivery).
+   * Used when multiple windows match and only the first delivers evidence.
+   */
+  private closeWindowSilently(win: ObservationWindowState): void {
+    if (win.isClosed) return;
+    win.isClosed = true;
+    win.adaptiveWindow.close('displaced');
+    this.cleanupWindow(win);
+  }
+
+  /**
+   * Clean up a closed window: remove from active list, decrement refcount.
+   */
+  private cleanupWindow(win: ObservationWindowState): void {
+    this.activeWindows = this.activeWindows.filter((w) => w.windowId !== win.windowId);
+
+    if (this.activeTypingWindow?.windowId === win.windowId) {
+      this.activeTypingTarget = null;
+      this.activeTypingWindow = null;
+    }
+
+    if (this.domObserverRefcount > 0) {
+      this.domObserver.stop();
+      this.domObserverRefcount--;
+    }
+
+    this.domObserver.clearAccumulated();
+  }
+
+  /**
+   * Handle pagehide: immediately finalize all lifecycle-bound windows.
+   * Evidence is buffered to sessionStorage and flushed by the next page.
+   */
+  onPageHide(): void {
+    this.isUnloading = true;
+
+    // Immediately finalize all lifecycle-bound windows (zero settle delay)
+    for (const win of [...this.activeWindows]) {
+      if (!win.isClosed && win.isLifecycleBound) {
+        this.executeFinalization(win, {}, 'page-reload');
+      }
+    }
+
+    // Clear all lifecycle bindings
+    this.lifecycleBindings.clear();
   }
 
   /**
