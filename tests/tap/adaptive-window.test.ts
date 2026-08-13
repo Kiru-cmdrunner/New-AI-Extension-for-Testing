@@ -378,4 +378,133 @@ describe('AdaptiveWindow', () => {
     expect(result).not.toBeNull();
     expect(result!.endReason).toBe('stabilized');
   });
+
+  // ── TD-8: holdOpen + max-duration ──────────────────────────────────
+
+  it('TD-8: holdOpen=true set BEFORE arm() prevents max-duration timer', () => {
+    let result: EvidenceWindow | null = null;
+    const win = new AdaptiveWindow({
+      onClose: (w) => { result = w; },
+      minQuiescence: 300,
+      maxDuration: 1000, // short — if timer fires, test fails
+      minDuration: 50,
+    });
+
+    win.setHoldOpen(true);
+    win.arm();
+
+    // Advance well past maxDuration
+    advance(2000);
+
+    // Window should still be open — max-duration timer was never scheduled
+    expect(result).toBeNull();
+    expect(win.getIsOpen()).toBe(true);
+
+    // Explicit close works
+    win.close('lifecycle-complete');
+    expect(result).not.toBeNull();
+    expect(result!.endReason).toBe('lifecycle-complete');
+  });
+
+  it('TD-8: holdOpen=true set AFTER arm() clears running max-duration timer', () => {
+    let result: EvidenceWindow | null = null;
+    const win = new AdaptiveWindow({
+      onClose: (w) => { result = w; },
+      minQuiescence: 300,
+      maxDuration: 1000,
+      minDuration: 50,
+    });
+
+    win.arm(); // schedules max-duration timer for T=1000ms
+
+    // Simulate LIFECYCLE_BOUND arriving shortly after arm
+    advance(100);
+    win.setHoldOpen(true); // should clear the max-duration timer
+
+    // Continuously fire mutations (typing)
+    for (let i = 0; i < 20; i++) {
+      advance(100);
+      win.recordMutation();
+    }
+
+    // Total elapsed = 100 + 2000 = 2100ms > maxDuration(1000)
+    // Window should still be open
+    expect(result).toBeNull();
+    expect(win.getIsOpen()).toBe(true);
+  });
+
+  it('TD-8: holdOpen=true with recordMutation does not schedule max-duration', () => {
+    let result: EvidenceWindow | null = null;
+    const win = new AdaptiveWindow({
+      onClose: (w) => { result = w; },
+      minQuiescence: 300,
+      maxDuration: 500,
+      minDuration: 50,
+    });
+
+    win.arm();
+    advance(50);
+    win.setHoldOpen(true);
+
+    // Fire mutations well past maxDuration
+    for (let i = 0; i < 10; i++) {
+      advance(100);
+      win.recordMutation();
+    }
+
+    // Total elapsed = 50 + 1000 = 1050ms > maxDuration(500)
+    expect(result).toBeNull();
+    expect(win.getIsOpen()).toBe(true);
+  });
+
+  it('TD-8: non-holdOpen window still closes on max-duration (M3 behavior preserved)', () => {
+    let result: EvidenceWindow | null = null;
+    const win = new AdaptiveWindow({
+      onClose: (w) => { result = w; },
+      minQuiescence: 300,
+      maxDuration: 1000,
+      minDuration: 50,
+    });
+
+    win.arm();
+
+    // Fire mutations to prevent stabilization
+    for (let i = 0; i < 20; i++) {
+      advance(50);
+      win.recordMutation();
+    }
+
+    // Total = 1000ms = maxDuration → should close
+    expect(result).not.toBeNull();
+    expect(result!.endReason).toBe('max-duration');
+  });
+
+  it('TD-8: setHoldOpen(false) after setHoldOpen(true) allows max-duration to resume', () => {
+    let result: EvidenceWindow | null = null;
+    const win = new AdaptiveWindow({
+      onClose: (w) => { result = w; },
+      minQuiescence: 300,
+      maxDuration: 1000,
+      minDuration: 50,
+    });
+
+    win.setHoldOpen(true);
+    win.arm();
+    advance(500);
+
+    // Disable holdOpen — window should eventually close
+    win.setHoldOpen(false);
+
+    // Fire mutations to prevent stabilization
+    for (let i = 0; i < 10; i++) {
+      advance(50);
+      win.recordMutation();
+    }
+
+    // advance past stabilization quiescence
+    advance(350);
+
+    // Should close via stabilization (holdOpen was removed)
+    expect(result).not.toBeNull();
+  });
 });

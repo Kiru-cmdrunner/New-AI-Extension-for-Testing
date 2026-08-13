@@ -740,12 +740,20 @@ export class EvidenceCollector {
    * Handle input events using extend-on-input model.
    * First input → open new window. Subsequent → extend (reset timer).
    * GAP-1 fix: now receives and stores identity.
+   *
+   * TD-8 fix: extension path now updates observedEvent so the P1-3 enrichment
+   * fallback has the latest valueAfter, not just the first keystroke's.
    */
   private handleTypingEvent(targetEl: Element, eventId: string, identity: ElementIdentity | null = null, observedEvent: ObservedEvent | null = null): void {
     // If typing on the same element, extend the existing window
     if (this.activeTypingTarget === targetEl && this.activeTypingWindow && !this.activeTypingWindow.isClosed) {
       // Extend: reset stabilization timer
       this.activeTypingWindow.adaptiveWindow.recordMutation();
+      // TD-8: Update observedEvent to latest input so enrichment fallback
+      // sees the current value, not just the first keystroke's.
+      if (observedEvent) {
+        this.activeTypingWindow.observedEvent = observedEvent;
+      }
       return;
     }
 

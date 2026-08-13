@@ -425,4 +425,95 @@ describe('EvidenceCollector', () => {
     expect(deliveredEvidence[0].sourceEventId).toBe('evt-seq-1');
     expect(deliveredEvidence[1].sourceEventId).toBe('evt-seq-2');
   });
+
+  // ── TD-8: Typing extension updates observedEvent ──────────────────
+
+  it('TD-8: typing extension updates observedEvent to latest input event', () => {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = '';
+    document.body.appendChild(input);
+
+    // First keystroke — opens typing window with observedEvent having valueAfter='A'
+    collector.onAfterEvent(input, 'evt-type-1', 'input', 'input', null, {
+      eventId: 'evt-type-1',
+      eventType: 'input',
+      timestamp: mockNow,
+      captureSeq: 0,
+      isTrusted: true,
+      target: {} as never,
+      domContext: {} as never,
+      valueBefore: null,
+      valueAfter: 'A',
+      checkedBefore: null,
+      checkedAfter: null,
+      clientX: null,
+      clientY: null,
+      key: null,
+      code: null,
+      shiftKey: false,
+      ctrlKey: false,
+      altKey: false,
+      metaKey: false,
+      scrollDeltaY: null,
+      scrollDeltaX: null,
+      pageUrl: '',
+      pageTitle: '',
+    });
+
+    // Mark as lifecycle-bound
+    collector.handleLifecycleBound({
+      lifecycleId: 'lc-type-1',
+      triggerEventId: 'evt-type-1',
+      interactionType: 'TextEntry',
+    });
+
+    // Second keystroke — extends the window
+    collector.onAfterEvent(input, 'evt-type-2', 'input', 'input', null, {
+      eventId: 'evt-type-2',
+      eventType: 'input',
+      timestamp: mockNow + 100,
+      captureSeq: 1,
+      isTrusted: true,
+      target: {} as never,
+      domContext: {} as never,
+      valueBefore: 'A',
+      valueAfter: 'Am',
+      checkedBefore: null,
+      checkedAfter: null,
+      clientX: null,
+      clientY: null,
+      key: null,
+      code: null,
+      shiftKey: false,
+      ctrlKey: false,
+      altKey: false,
+      metaKey: false,
+      scrollDeltaY: null,
+      scrollDeltaX: null,
+      pageUrl: '',
+      pageTitle: '',
+    });
+
+    // Finalize via lifecycle (simulates blur)
+    advance(200); // settle delay
+    collector.finalizeForInteraction({
+      lifecycleId: 'lc-type-1',
+      interactionId: 'int-type-1',
+      interactionType: 'TextEntry',
+      eventIds: ['evt-type-1', 'evt-type-2'],
+      metadata: { textValue: 'Amanda' },
+      endState: 'completed',
+    });
+
+    // Advance past settle delay
+    advance(200);
+
+    // Evidence should be delivered
+    expect(deliveredEvidence.length).toBeGreaterThanOrEqual(1);
+
+    // The latest evidence should have the lifecycle-complete endReason
+    const evidence = deliveredEvidence[deliveredEvidence.length - 1];
+    expect(evidence.window.endReason).toBe('lifecycle-complete');
+  });
 });

@@ -104,14 +104,23 @@ export class AdaptiveWindow {
     // Schedule stabilization timer
     this.scheduleStabilization();
 
-    // Schedule max-duration hard cap
-    this.maxDurationTimer = setTimeout(() => {
-      this.close('max-duration');
-    }, this.maxDuration);
+    // Schedule max-duration hard cap — only for non-lifecycle-bound windows.
+    // Lifecycle-bound windows (holdOpen=true) are closed exclusively by
+    // explicit close() calls (FINALIZE_EVIDENCE, pagehide, etc.).
+    // TD-8 fix: max-duration was force-closing holdOpen windows after 10s,
+    // preempting the lifecycle-driven finalization path.
+    if (!this.holdOpen) {
+      this.maxDurationTimer = setTimeout(() => {
+        this.close('max-duration');
+      }, this.maxDuration);
+    }
   }
 
   /**
    * Record a mutation batch. Resets the stabilization timer.
+   *
+   * TD-8 fix: For holdOpen windows, also ensure the max-duration timer is
+   * cleared (it may have been scheduled before setHoldOpen was called).
    */
   recordMutation(batchIndex?: number): void {
     if (!this.isOpen) return;
@@ -129,6 +138,12 @@ export class AdaptiveWindow {
       this.stabilizationTimer = null;
     }
     this.scheduleStabilization();
+
+    // TD-8: Safety — clear any lingering max-duration timer on holdOpen windows
+    if (this.holdOpen && this.maxDurationTimer) {
+      clearTimeout(this.maxDurationTimer);
+      this.maxDurationTimer = null;
+    }
   }
 
   /**
@@ -173,11 +188,19 @@ export class AdaptiveWindow {
 
   /**
    * Set lifecycle-bound hold-open mode.
-   * When true, the stabilization timer continuously re-arms itself.
-   * The window stays open until explicitly closed (FINALIZE_EVIDENCE or pagehide).
+   * When true, the stabilization timer continuously re-arms itself and the
+   * max-duration timer is disabled. The window stays open until explicitly
+   * closed (FINALIZE_EVIDENCE or pagehide).
+   *
+   * TD-8 fix: When holdOpen is enabled after arm() has already scheduled the
+   * max-duration timer, clear it so lifecycle-bound windows aren't force-closed.
    */
   setHoldOpen(value: boolean): void {
     this.holdOpen = value;
+    if (value && this.maxDurationTimer) {
+      clearTimeout(this.maxDurationTimer);
+      this.maxDurationTimer = null;
+    }
   }
 
   /**
