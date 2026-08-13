@@ -115,3 +115,40 @@ export {
   MAX_NOTIFICATIONS_PER_APP,
   MAX_TRANSITIONS_PER_SESSION,
 } from './persistence/knowledge-types';
+
+// Knowledge consolidation & consistency (M9.6)
+export { KnowledgeLoader, scoreConfidence, DEFAULT_CONFIDENCE_CONFIG } from './consolidation/knowledge-loader';
+export type { ConfidenceConfig } from './consolidation/knowledge-loader';
+export { ConflictDetector, DEFAULT_CONFLICT_CONFIG } from './consolidation/conflict-detector';
+export type { ConflictDetectionConfig } from './consolidation/conflict-detector';
+export { JourneyReconstructor, DEFAULT_JOURNEY_CONFIG } from './consolidation/journey-reconstructor';
+export type { JourneyConfig } from './consolidation/journey-reconstructor';
+export { KnowledgePreloader } from './consolidation/knowledge-preloader';
+export { ConsistencyChecker } from './consolidation/consistency-checker';
+export type {
+  ApplicationKnowledge,
+  ConsolidatedEntity,
+  ConsolidatedView,
+  ConsolidatedCollection,
+  ConsolidatedCounter,
+  ViewGraph,
+  ViewGraphEdge,
+  OutcomePattern,
+  KnowledgeConfidence,
+  KnowledgeConfidenceLevel,
+  ConflictReport,
+  KnowledgeFinding,
+  DuplicateEntityFinding,
+  StaleKnowledgeFinding,
+  EvolvingEntityFinding,
+  OrphanedTransitionFinding,
+  FindingSeverity,
+  JourneyTimeline,
+  JourneyStep,
+  JourneyGap,
+  StateBuilderSeed,
+  PriorSessionEntity,
+  PriorSessionView,
+  PriorSessionCounter,
+  ConsistencyGap,
+} from './consolidation/application-knowledge';
