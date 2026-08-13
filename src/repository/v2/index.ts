@@ -17,10 +17,11 @@ export type {
 } from './interfaces/test-case-repository';
 export type { UnitOfWork, RepositorySet, UnitOfWorkFactory } from './interfaces/unit-of-work';
 export type { ExecutionRunRepository } from './interfaces/execution-run-repository';
+export type { BehavioralEvidenceRepository } from './interfaces/behavioral-evidence-repository';
 
 // Domain entities
 export type { ExecutionRun, ExecutionStepResult, ExecutionAssertionResult, ExecutionEnvironment } from '../../domain/entities/execution-run';
 
 // Dexie implementation (V1)
 export { DexieUnitOfWorkFactory } from './dexie/dexie-unit-of-work-factory';
-export type { CmdRunnerDatabase } from './dexie/dexie-database';
+export type { CmdRunnerDatabase, BehavioralEvidenceRow } from './dexie/dexie-database';

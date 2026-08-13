@@ -16,6 +16,7 @@ import type { SourceArtifact } from '../../../domain/entities/source-artifact';
 import type { ExecutionIRArtifact } from '../../../domain/execution-ir/types';
 import type { RecordingSession } from '../../../domain/entities/recording-session';
 import type { ExecutionRun } from '../../../domain/entities/execution-run';
+import type { BehavioralEvidence } from '../../../shared/behavioral-evidence-types';
 
 /** Database name — versioned for future migrations. */
 const DB_NAME = 'cmdrunner_repository';
@@ -56,6 +57,27 @@ export type RecordingSessionRow = RecordingSession;
 export type ExecutionRunRow = ExecutionRun;
 
 /**
+ * BehavioralEvidence row — extends BehavioralEvidence with linking fields
+ * for querying by interaction and recording session.
+ *
+ * Uses `windowId` as the primary key (format `bev-{eventId}`), which is
+ * already unique per evidence window. This gives natural idempotency:
+ * put() with the same windowId overwrites instead of duplicating.
+ *
+ * M8.1: Introduced in Dexie V4 schema migration.
+ */
+export interface BehavioralEvidenceRow extends BehavioralEvidence {
+  /** Links to the ComponentInteraction this evidence was attached to. */
+  interactionId: string;
+
+  /** Links to the RecordingSession this evidence belongs to. */
+  recordingSessionId: string;
+
+  /** Epoch timestamp (Date.now()) when the evidence was persisted to Dexie. */
+  persistedAt: number;
+}
+
+/**
  * The CmdRunner Dexie database.
  *
  * Table indexes are defined for the query patterns identified in the
@@ -74,6 +96,7 @@ export class CmdRunnerDatabase extends Dexie {
   executionIRs!: Table<ExecutionIRRow, string>;
   recordingSessions!: Table<RecordingSessionRow, string>;
   executionRuns!: Table<ExecutionRunRow, string>;
+  behavioralEvidence!: Table<BehavioralEvidenceRow, string>;
 
   constructor() {
     super(DB_NAME);
@@ -116,6 +139,27 @@ export class CmdRunnerDatabase extends Dexie {
       recordingSessions: 'id, projectId',
       // V3 new table
       executionRuns: 'id, testCaseVersionId, projectId',
+    });
+
+    // V4: Added BehavioralEvidence table (M8 — Persistence + Hardening).
+    // BehavioralEvidence is kept separate from the interaction record.
+    // Uses windowId as primary key (bev-{eventId}) for natural idempotency.
+    // Indexed by interactionId (get evidence for one interaction)
+    // and recordingSessionId (get all evidence for a recording).
+    this.version(4).stores({
+      // V1 tables
+      projects: 'id, status',
+      elements: 'id, projectId, [projectId+pageOrComponent], status',
+      testCases: 'id, projectId, *tags, status, priority',
+      testCaseVersions: 'id, testCaseId, [testCaseId+versionNumber]',
+      sourceArtifacts: 'id, projectId, [projectId+type]',
+      executionIRs: 'id, testCaseVersionId',
+      // V2 table
+      recordingSessions: 'id, projectId',
+      // V3 table
+      executionRuns: 'id, testCaseVersionId, projectId',
+      // V4 new table
+      behavioralEvidence: 'windowId, interactionId, recordingSessionId',
     });
   }
 }

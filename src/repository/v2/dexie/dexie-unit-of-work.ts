@@ -17,6 +17,7 @@ import type { SourceArtifactRepository } from '../interfaces/source-artifact-rep
 import type { ExecutionIRRepository } from '../interfaces/execution-ir-repository';
 import type { RecordingSessionRepository } from '../interfaces/recording-session-repository';
 import type { ExecutionRunRepository } from '../interfaces/execution-run-repository';
+import type { BehavioralEvidenceRepository } from '../interfaces/behavioral-evidence-repository';
 import type { CmdRunnerDatabase } from './dexie-database';
 import { DexieProjectRepository } from './dexie-project-repository';
 import { DexieTestCaseRepository } from './dexie-test-case-repository';
@@ -25,6 +26,7 @@ import { DexieSourceArtifactRepository } from './dexie-source-artifact-repositor
 import { DexieExecutionIRRepository } from './dexie-execution-ir-repository';
 import { DexieRecordingSessionRepository } from './dexie-recording-session-repository';
 import { DexieExecutionRunRepository } from './dexie-execution-run-repository';
+import { DexieBehavioralEvidenceRepository } from './dexie-behavioral-evidence-repository';
 
 /** A set of repositories that all operate on the same Dexie transaction. */
 class TransactionalRepositorySet implements RepositorySet {
@@ -35,6 +37,7 @@ class TransactionalRepositorySet implements RepositorySet {
   readonly executionIRs: ExecutionIRRepository;
   readonly recordingSessions: RecordingSessionRepository;
   readonly executionRuns: ExecutionRunRepository;
+  readonly behavioralEvidence: BehavioralEvidenceRepository;
 
   constructor(db: CmdRunnerDatabase) {
     this.projects = new DexieProjectRepository(db.projects);
@@ -44,6 +47,7 @@ class TransactionalRepositorySet implements RepositorySet {
     this.executionIRs = new DexieExecutionIRRepository(db.executionIRs);
     this.recordingSessions = new DexieRecordingSessionRepository(db.recordingSessions);
     this.executionRuns = new DexieExecutionRunRepository(db.executionRuns);
+    this.behavioralEvidence = new DexieBehavioralEvidenceRepository(db.behavioralEvidence);
   }
 }
 
@@ -63,6 +67,7 @@ export class DexieUnitOfWork implements UnitOfWork {
         this.db.executionIRs,
         this.db.recordingSessions,
         this.db.executionRuns,
+        this.db.behavioralEvidence,
       ],
       async () => {
         const repos = new TransactionalRepositorySet(this.db);
