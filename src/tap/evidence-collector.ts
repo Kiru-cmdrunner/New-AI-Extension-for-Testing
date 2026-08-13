@@ -920,24 +920,71 @@ export class EvidenceCollector {
 
   /**
    * Flush buffered evidence to the service worker.
-   * Called on recording start (recover from SW restart).
+   * Called on recording start (recover from SW restart or page navigation).
+   *
+   * TD-3 fix: Only removes evidence that was confirmed delivered (SW responded
+   * with { ok: true }). Undelivered evidence (SW cold-start, dead, or error)
+   * stays in the buffer for the next flush attempt. This prevents permanent
+   * evidence loss across page navigation when the SW isn't yet ready.
    */
   flushBufferedEvidence(): void {
     try {
       const raw = sessionStorage.getItem(EVIDENCE_BUFFER_KEY);
       if (!raw) return;
       const buffer: BehavioralEvidence[] = JSON.parse(raw);
-      for (const evidence of buffer) {
-        if (chrome?.runtime?.sendMessage) {
+      if (buffer.length === 0) {
+        sessionStorage.removeItem(EVIDENCE_BUFFER_KEY);
+        return;
+      }
+
+      // Track delivery status per item
+      const delivered = new Array<boolean>(buffer.length).fill(false);
+      let pending = buffer.length;
+
+      const updateBuffer = () => {
+        pending--;
+        if (pending > 0) return; // wait for all callbacks
+
+        // Rewrite sessionStorage with only undelivered evidence
+        const remaining = buffer.filter((_, i) => !delivered[i]);
+        try {
+          if (remaining.length === 0) {
+            sessionStorage.removeItem(EVIDENCE_BUFFER_KEY);
+          } else {
+            // Cap at MAX_EVIDENCE_BUFFER (drop oldest if overflow)
+            const capped = remaining.slice(-MAX_EVIDENCE_BUFFER);
+            sessionStorage.setItem(EVIDENCE_BUFFER_KEY, JSON.stringify(capped));
+          }
+        } catch {
+          // sessionStorage may be full — undelivered evidence is lost
+        }
+      };
+
+      for (let i = 0; i < buffer.length; i++) {
+        const evidence = buffer[i];
+        if (!chrome?.runtime?.sendMessage) {
+          updateBuffer();
+          continue;
+        }
+        try {
           chrome.runtime.sendMessage(
             { type: 'BEHAVIORAL_EVIDENCE', payload: evidence },
-            () => { void chrome.runtime.lastError; },
+            (response) => {
+              void chrome.runtime.lastError;
+              // Only mark delivered if SW confirmed receipt
+              if (response && response.ok === true) {
+                delivered[i] = true;
+              }
+              updateBuffer();
+            },
           );
+        } catch {
+          updateBuffer();
         }
       }
-      sessionStorage.removeItem(EVIDENCE_BUFFER_KEY);
     } catch {
-      // silent degrade
+      // JSON parse failure — clear corrupt buffer
+      try { sessionStorage.removeItem(EVIDENCE_BUFFER_KEY); } catch {}
     }
   }
 
