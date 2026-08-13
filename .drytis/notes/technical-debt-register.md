@@ -68,11 +68,20 @@ Track deferred issues from M7 lifecycle/evidence work. Address AFTER all lifecyc
 
 ## TD-7: F5/full-page-reload sessionStorage recovery path untested
 - **Added:** 2026-08-13 (Step 2 navigation validation)
-- **Status:** Open
+- **Status:** ✅ Validated via unit tests (commit `58aa24e`)
 - **Priority:** Low
 - **Root cause:** The Amazon navigation tests proved lifecycle-completed evidence survives navigation (delivered before pagehide). But the sessionStorage buffer recovery path (onPageHide → bufferEvidence → flushBufferedEvidence on next page) was never exercised because all tested interactions completed before pagehide fired.
-- **Scope:** Validation gap, not a code bug (yet). Related to TD-3 if the recovery path fails.
-- **Fix direction:** Test scenario: type in a field (no blur), press F5, verify evidence buffered and replayed.
+- **Validation:** 9 unit tests in `tests/tap/evidence-buffer-recovery.test.ts` covering:
+  1. onPageHide buffers lifecycle-bound evidence to sessionStorage
+  2. flushBufferedEvidence delivers + clears on confirmed `{ ok: true }`
+  3. flushBufferedEvidence retains evidence when SW cold-starting
+  4. Partial delivery (mixed confirmed/unconfirmed)
+  5. Buffer cap (50) drops oldest
+  6. Empty buffer no-op
+  7. Corrupt buffer cleared gracefully
+  8. Multi-flush (cold → warm)
+  9. Full F5 cycle simulation
+- **Remaining:** Real-browser F5 test still recommended to confirm sessionStorage persists across actual Chrome reload.
 
 ## TD-8: TextEntry max-duration / incorrect state after long pause
 - **Added:** 2026-08-13 (Phase 2 real-browser validation)
@@ -90,7 +99,7 @@ Track deferred issues from M7 lifecycle/evidence work. Address AFTER all lifecyc
 3. ✅ Freeze lifecycle architecture
 4. ✅ Phase 1: TD-2 (scroll text) + TD-1 (identity) — completed, validated
 5. ✅ Phase 2: TD-5 (navigation identity) — completed, validated
-6. → Phase 3: Buffer reliability — TD-3 (flushBufferedEvidence) + TD-7 (F5 test)
-7. → Phase 4: pagehide hardening — TD-6 (metadata) + TD-4 (non-bound windows)
+6. ✅ Phase 3: Buffer reliability — TD-3 (confirmed-delivery fix) + TD-7 (9 unit tests)
+7. ✅ Phase 4: pagehide hardening — TD-6 (metadata from observedEvent) + TD-4 (>500ms safety net)
 8. → Phase 5: TD-8 (TextEntry long pause)
 9. Final real-browser regression before M8
