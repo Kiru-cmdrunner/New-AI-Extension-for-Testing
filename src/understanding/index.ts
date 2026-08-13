@@ -91,3 +91,27 @@ export {
   createDefaultPageContentConfig,
   registerDomainSelectors,
 } from './page-content/page-content-config';
+
+// Knowledge persistence (M9.5)
+export { KnowledgeDatabase, createKnowledgeDatabase } from './persistence/knowledge-database';
+export { KnowledgeRepository } from './persistence/knowledge-repository';
+export { KnowledgePersistenceService, deriveAppId } from './persistence/knowledge-persistence-service';
+export type { KnowledgePersistenceInput } from './persistence/knowledge-persistence-service';
+export type {
+  ApplicationRow,
+  KnowledgeEntityRow,
+  KnowledgeViewRow,
+  KnowledgeViewTransitionRow,
+  KnowledgeCollectionRow,
+  KnowledgeCounterRow,
+  KnowledgeCounterEntry,
+  KnowledgeNotificationRow,
+  KnowledgeOutcomeRow,
+  KnowledgeEvidenceEntry,
+  KnowledgeStateTransitionRow,
+} from './persistence/knowledge-types';
+export {
+  MAX_COUNTER_HISTORY,
+  MAX_NOTIFICATIONS_PER_APP,
+  MAX_TRANSITIONS_PER_SESSION,
+} from './persistence/knowledge-types';
