@@ -152,3 +152,54 @@ export type {
   PriorSessionCounter,
   ConsistencyGap,
 } from './consolidation/application-knowledge';
+
+// Semantic enrichment (M9.7)
+export { enrichSemantically } from './enrichment/semantic-enricher';
+export type { SemanticEnricherInput } from './enrichment/semantic-enricher';
+export { classifyDomain } from './enrichment/domain-classifier';
+export { recognizeComponent } from './enrichment/component-recognizer';
+export { extractInteractionContract } from './enrichment/interaction-contract';
+export { labelIntent, labelAllIntents } from './enrichment/intent-labeler';
+export { discoverWorkflows } from './enrichment/workflow-discoverer';
+export {
+  buildApplicationSurface,
+  enrichSurfaceWithKnowledge,
+} from './enrichment/application-surface';
+export {
+  aggregateRecordedWorkflows,
+  getRecurringPatterns,
+} from './enrichment/recorded-workflow';
+export {
+  ECOMMERCE_SIGNATURE,
+  AUTHENTICATION_SIGNATURE,
+  ADMIN_CRM_SIGNATURE,
+  CONTENT_SIGNATURE,
+  registerDomainSignature,
+  getDomainSignatures,
+  resetDomainSignatures,
+} from './enrichment/domain-signatures';
+export {
+  ECOMMERCE_INTENT_VOCABULARY,
+  AUTHENTICATION_INTENT_VOCABULARY,
+  GENERAL_INTENT_VOCABULARY,
+  getAllVocabEntries,
+} from './enrichment/intent-vocabulary';
+export type {
+  DomainType,
+  DomainClassification,
+  DomainEvidence,
+  InteractionContract,
+  ElementType,
+  InputFormat,
+  ComponentModel,
+  IntentLabel,
+  SemanticWorkflow,
+  WorkflowEffects,
+  ApplicationSurface,
+  SurfaceView,
+  NavigationEdge,
+  RecordedWorkflow,
+  SemanticKnowledge,
+  EnrichmentMetadata,
+  EnrichmentCoverage,
+} from './enrichment/semantic-types';
