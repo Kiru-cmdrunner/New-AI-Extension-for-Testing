@@ -40,9 +40,6 @@ outputs = ${JSON.stringify(OUTPUT_FILES)}
 
 # Files to EXCLUDE from the zip (test/demo HTML, raw .ts source)
 EXCLUDE_EXTS = {'.ts'}
-EXCLUDE_FILES = {
-    'coverage-test.html', 'demo.html', 'test-harness.html', 'validation.html'
-}
 
 collected = []
 
@@ -55,7 +52,10 @@ for dirpath, dirnames, filenames in os.walk(dist_dir):
         ext = os.path.splitext(fn)[1]
         if ext in EXCLUDE_EXTS:
             continue
-        if fn in EXCLUDE_FILES:
+        # Exclude ALL root-level HTML files — these are test/validation pages
+        # copied from public/ by Vite. Only HTML under dist/src/ (side panel,
+        # settings, repository) is part of the actual extension.
+        if ext == '.html' and dirpath == dist_dir:
             continue
         full = os.path.join(dirpath, fn)
         arcname = os.path.relpath(full, dist_dir)  # flat: manifest.json, assets/..., src/...
