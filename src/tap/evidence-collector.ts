@@ -994,6 +994,7 @@ export class EvidenceCollector {
     eventIds: string[];
     metadata: Record<string, unknown>;
     endState: string;
+    triggerIdentity?: ElementIdentity;
   }): void {
     // Clear the lifecycle binding
     this.lifecycleBindings.delete(payload.lifecycleId);
@@ -1197,20 +1198,19 @@ export class EvidenceCollector {
 
   /**
    * Finalize when no evidence window was opened (capture-only trigger path).
-   * Creates evidence targeting the trigger element by resolving it from the DOM.
+   * Creates evidence from metadata + trigger identity (passed from the SW
+   * via FINALIZE_EVIDENCE payload). This handles the DatePicker/Dropdown case
+   * where focus+mousedown are capture-only and no evidence window was opened.
    */
   private finalizeWithoutWindow(
     payload: {
       eventIds: string[];
       metadata: Record<string, unknown>;
       endState: string;
+      triggerIdentity?: ElementIdentity;
     },
     settleDelay: number,
   ): void {
-    // No window was opened. We can't resolve the trigger element without
-    // a stored identity reference. For now, deliver evidence from metadata only.
-    // This handles the DatePicker case where focus+mousedown are capture-only.
-
     const endReason: 'lifecycle-complete' | 'lifecycle-abandoned' =
       payload.endState === 'completed' ? 'lifecycle-complete' : 'lifecycle-abandoned';
 
@@ -1247,8 +1247,8 @@ export class EvidenceCollector {
           stabilityTrace: [],
         },
         targetEvidence: {
-          identity: null,
-          identityCapturedAt: 0,
+          identity: payload.triggerIdentity ?? null,
+          identityCapturedAt: payload.triggerIdentity ? performance.now() : 0,
           before: null,
           after: afterSnapshot,
           focusMovement: null,

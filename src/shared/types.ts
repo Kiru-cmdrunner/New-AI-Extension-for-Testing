@@ -567,6 +567,9 @@ export type AppMessage =
         eventIds: string[];
         metadata: Record<string, unknown>;
         endState: string;
+        /** Trigger element identity from the interaction. Used when no evidence
+         *  window was opened (capture-only trigger path) to avoid null identity. */
+        triggerIdentity?: import('./types').ElementIdentity;
       };
     };
 

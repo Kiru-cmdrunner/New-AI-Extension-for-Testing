@@ -219,6 +219,7 @@ function sendFinalizeEvidence(interaction: ComponentInteraction): void {
           eventIds,
           metadata: interaction.metadata ?? {},
           endState: interaction.endState,
+          triggerIdentity: interaction.trigger ?? undefined,
         },
       }).catch(() => {
         // Content script may have been destroyed (navigation) — non-fatal
