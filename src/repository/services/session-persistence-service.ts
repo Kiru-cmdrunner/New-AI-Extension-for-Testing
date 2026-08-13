@@ -24,6 +24,7 @@ import type { UnderstandingResult } from '../../domain/entities/understanding-re
 import type { SessionEvent } from '../../shared/types';
 import type { ComponentInteraction } from '../../shared/component-types';
 import type { ExecutionIRPlan } from '../../domain/execution-ir/types';
+import type { BehavioralEvidenceRow } from '../v2/dexie/dexie-database';
 import {
   createRecordingSession,
 } from '../../domain/entities/recording-session';
@@ -107,5 +108,57 @@ export async function persistSession(
       irArtifactId: irArtifact.id,
       projectId,
     };
+  });
+}
+
+// ── M8.2: Behavioral Evidence Persistence ────────────────────────────
+
+/**
+ * Result of evidence persistence.
+ */
+export interface EvidencePersistenceResult {
+  /** Number of evidence rows persisted. */
+  readonly count: number;
+}
+
+/**
+ * Persist finalized BehavioralEvidence to the dedicated `behavioral_evidence`
+ * table, linked to both the interaction and the recording session.
+ *
+ * Called after persistSession succeeds — uses the returned sessionId to link
+ * every evidence row to the session. Each interaction that has behavioralEvidence
+ * produces exactly one row. Interactions without evidence are silently skipped.
+ *
+ * Idempotent: uses put() semantics by windowId primary key. Re-running with the
+ * same data overwrites rather than duplicating.
+ *
+ * Runs in its own UoW transaction so evidence persistence failure does not
+ * roll back the session persistence (and vice versa).
+ */
+export async function persistBehavioralEvidence(
+  uowFactory: UnitOfWorkFactory,
+  recordingSessionId: string,
+  interactions: ComponentInteraction[],
+): Promise<EvidencePersistenceResult> {
+  const uow = uowFactory.create();
+
+  return uow.execute(async (repos) => {
+    let count = 0;
+
+    for (const interaction of interactions) {
+      if (!interaction.behavioralEvidence) continue;
+
+      const row: BehavioralEvidenceRow = {
+        ...interaction.behavioralEvidence,
+        interactionId: interaction.interactionId,
+        recordingSessionId,
+        persistedAt: Date.now(),
+      };
+
+      await repos.behavioralEvidence.save(row);
+      count++;
+    }
+
+    return { count };
   });
 }

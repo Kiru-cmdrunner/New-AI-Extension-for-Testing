@@ -349,6 +349,16 @@ async function handleStopRecording(): Promise<void> {
       });
 
       await StorageService.setRaw(StorageKeys.REPOSITORY_SESSION_ID, persistenceResult.sessionId);
+
+      // M8.2: Persist behavioral evidence to the dedicated table.
+      // Runs after persistSession returns sessionId. Non-fatal — wrapped in
+      // the outer try/catch. Idempotent via windowId primary key (put).
+      try {
+        const { persistBehavioralEvidence } = await import('../repository/services/session-persistence-service');
+        await persistBehavioralEvidence(uowFactory, persistenceResult.sessionId, productionInteractions);
+      } catch (evErr) {
+        console.warn('[Repository V2] error during evidence persistence:', evErr);
+      }
     }
   } catch (e) {
     console.warn('[Repository V2] error during session persistence:', e);
