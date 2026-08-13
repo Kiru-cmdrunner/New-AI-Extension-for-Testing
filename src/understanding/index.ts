@@ -1,10 +1,10 @@
 /**
- * M9 — Application Understanding: Public API
+ * M9 - Application Understanding: Public API
  *
  * Barrel exports for the understanding layer.
  */
 
-// Types
+// Types (M9.1)
 export type {
   Signal,
   SignalSource,
@@ -23,7 +23,7 @@ export type {
   SignalExtractor,
 } from './types';
 
-// Signal extraction pipeline
+// Signal extraction pipeline (M9.1 + M9.2)
 export { SignalExtractionCoordinator } from './signal-extractors/signal-extractor';
 export { NavigationSignalExtractor } from './signal-extractors/navigation-signals';
 export { NetworkSignalExtractor } from './signal-extractors/network-signals';
@@ -37,7 +37,7 @@ export { CounterSignalExtractor, parseCounterValue } from './signal-extractors/c
 export { ListSignalExtractor } from './signal-extractors/list-signals';
 export { TargetStateSignalExtractor } from './signal-extractors/target-state-signals';
 
-// State builder
+// State builder (M9.2)
 export { StateBuilder } from './state-builder/state-builder';
 export { EntityTracker } from './state-builder/entity-tracker';
 export { CollectionTracker } from './state-builder/collection-tracker';
@@ -54,3 +54,15 @@ export type {
   ApplicationState,
   StateTransition,
 } from './state-builder/types';
+
+// Outcome determination (M9.3)
+export { OutcomeDeterminer } from './outcome/outcome-determiner';
+export { RelationshipTracker } from './outcome/relationship-tracker';
+export type {
+  OutcomeCategory,
+  ConfidenceLevel,
+  OutcomeEvidence,
+  ActionOutcome,
+  OutcomeDeterminerInput,
+} from './outcome/outcome-types';
+export { confidenceToLevel, CONFIRMATION_VIEWS } from './outcome/outcome-types';
