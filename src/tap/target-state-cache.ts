@@ -156,9 +156,20 @@ function snapshotElement(el: Element): TargetStateSnapshot {
   const ariaChecked = parseAriaBoolean(htmlEl.getAttribute('aria-checked'));
   const ariaPressed = parseAriaBoolean(htmlEl.getAttribute('aria-pressed'));
 
-  // textContent — truncate to prevent memory bloat on large containers
-  const rawText = htmlEl.textContent;
-  const textContent = rawText !== null ? rawText.slice(0, 500) : null;
+  // textContent — truncated to prevent memory bloat on large containers.
+  // Skip for scroll containers (html/body/large scrollable elements) where
+  // textContent is page-wide noise, not meaningful element state.
+  let textContent: string | null = null;
+  const tagName = htmlEl.tagName;
+  const isPageContainer =
+    tagName === 'HTML' || tagName === 'BODY' ||
+    (el instanceof HTMLElement &&
+     el.scrollHeight > el.clientHeight * 3 &&
+     el.childElementCount > 5);
+  if (!isPageContainer) {
+    const rawText = htmlEl.textContent;
+    textContent = rawText !== null ? rawText.slice(0, 500) : null;
+  }
 
   // childCount
   const childCount = htmlEl.childElementCount;
