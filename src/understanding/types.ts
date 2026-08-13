@@ -147,6 +147,78 @@ export interface OutcomeHint {
 // ── Signal Set (per interaction) ───────────────────────────────────────
 
 /**
+ * Signal: a notification surface appeared during the interaction.
+ * Extracted from SurfaceChange entries with role=alert/status/log.
+ */
+export interface NotificationSignal extends Signal {
+  type: 'notification';
+  source: 'surface';
+  /** Full text of the notification (accessible name). */
+  text: string;
+  /** Notification severity classification. */
+  severity: 'success' | 'error' | 'warning' | 'info' | 'unknown';
+  /** DOM path of the notification element. */
+  elementPath: string;
+  /** Whether the notification appeared or disappeared. */
+  kind: 'appeared' | 'disappeared';
+}
+
+/**
+ * Signal: a counter-like element changed value.
+ * Extracted from DomChangeSummary characterData deltas on short-numeric elements.
+ */
+export interface CounterChangeSignal extends Signal {
+  type: 'counter-change';
+  source: 'dom-mutation';
+  /** DOM path of the counter element. */
+  elementPath: string;
+  /** Previous value (parsed). */
+  oldValue: string | null;
+  /** New value (parsed). */
+  newValue: string;
+  /** Numeric delta if both values are numeric. */
+  numericDelta: number | null;
+  /** Label/role for identification. */
+  label: string | null;
+}
+
+/**
+ * Signal: a list-like container changed size.
+ * Extracted from DomChangeSummary childList mutations on list containers.
+ */
+export interface ListChangeSignal extends Signal {
+  type: 'list-change';
+  source: 'dom-mutation';
+  /** DOM path of the list container. */
+  containerPath: string;
+  /** Tag name of the container. */
+  containerTag: string;
+  /** Number of child nodes added. */
+  addedCount: number;
+  /** Number of child nodes removed. */
+  removedCount: number;
+  /** Net change in item count. */
+  netChange: number;
+}
+
+/**
+ * Signal: the target element's value changed (input/textarea).
+ * Extracted from TargetEvidence before/after value diff.
+ */
+export interface InputValueChangeSignal extends Signal {
+  type: 'input-value-change';
+  source: 'target-state';
+  /** DOM path or label of the input field. */
+  field: string;
+  /** Previous value. */
+  oldValue: string | null;
+  /** New value. */
+  newValue: string | null;
+  /** Element identity label. */
+  elementLabel: string | null;
+}
+
+/**
  * All signals extracted from a single interaction's behavioral evidence.
  */
 export interface SignalSet {
@@ -156,11 +228,14 @@ export interface SignalSet {
   viewChanges: ViewChangeSignal[];
   /** API operation signals (0+ per interaction). */
   apiOperations: ApiOperationSignal[];
-  // Future M9.2+ signal types will be added here:
-  //   notifications: NotificationSignal[];
-  //   counterChanges: CounterChangeSignal[];
-  //   listChanges: ListChangeSignal[];
-  //   inputChanges: InputValueChangeSignal[];
+  /** Notification signals (0+ per interaction). */
+  notifications: NotificationSignal[];
+  /** Counter change signals (0+ per interaction). */
+  counterChanges: CounterChangeSignal[];
+  /** List change signals (0+ per interaction). */
+  listChanges: ListChangeSignal[];
+  /** Input value change signals (0+ per interaction). */
+  inputChanges: InputValueChangeSignal[];
 }
 
 /**

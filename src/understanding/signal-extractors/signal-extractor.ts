@@ -28,6 +28,10 @@ export class SignalExtractionCoordinator {
       interactionId: interaction.interactionId,
       viewChanges: [],
       apiOperations: [],
+      notifications: [],
+      counterChanges: [],
+      listChanges: [],
+      inputChanges: [],
     };
 
     if (!interaction.behavioralEvidence) return result;
@@ -42,7 +46,18 @@ export class SignalExtractionCoordinator {
           case 'api-operation':
             result.apiOperations.push(signal as any);
             break;
-          // Future signal types: notifications, counterChanges, etc.
+          case 'notification':
+            result.notifications.push(signal as any);
+            break;
+          case 'counter-change':
+            result.counterChanges.push(signal as any);
+            break;
+          case 'list-change':
+            result.listChanges.push(signal as any);
+            break;
+          case 'input-value-change':
+            result.inputChanges.push(signal as any);
+            break;
           default:
             // Unknown signal type — ignore gracefully
             break;
