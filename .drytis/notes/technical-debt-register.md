@@ -85,10 +85,11 @@ Track deferred issues from M7 lifecycle/evidence work. Address AFTER all lifecyc
 
 ## TD-8: TextEntry max-duration / incorrect state after long pause
 - **Added:** 2026-08-13 (Phase 2 real-browser validation)
-- **Status:** Open
+- **Status:** ✅ Fixed (commit `4ed9bf8`) — awaiting real-browser validation
 - **Priority:** Medium
 - **Symptom:** "First Name" field: typed "Amanda", but after a 10s pause the evidence shows `manda → empty` (partial value, then cleared). EndReason appears to be `max-duration` rather than `lifecycle-complete`.
-- **Scope:** TextEntry lifecycle or evidence window behavior during long pauses between keystrokes.
+- **Root cause:** AdaptiveWindow maxDurationTimer ignored holdOpen flag, force-closing lifecycle-bound typing windows at 10s. Three defects fixed (D1: holdOpen guard in arm/setHoldOpen/recordMutation; D2: covered by D1; D3: typing extension now updates observedEvent).
+- **Spec:** `.drytis/specs/td8-textentry-long-pause.md`
 - **Do NOT touch:** Lifecycle architecture
 
 ---
@@ -101,5 +102,5 @@ Track deferred issues from M7 lifecycle/evidence work. Address AFTER all lifecyc
 5. ✅ Phase 2: TD-5 (navigation identity) — completed, validated
 6. ✅ Phase 3: Buffer reliability — TD-3 (confirmed-delivery fix) + TD-7 (9 unit tests)
 7. ✅ Phase 4: pagehide hardening — TD-6 (metadata from observedEvent) + TD-4 (>500ms safety net)
-8. → Phase 5: TD-8 (TextEntry long pause)
+8. ✅ Phase 5: TD-8 (TextEntry long pause) — fixed, awaiting browser validation
 9. Final real-browser regression before M8
