@@ -1391,6 +1391,12 @@ export class EvidenceCollector {
    * more than 500ms. This catches the narrow edge case where LIFECYCLE_BOUND
    * hasn't arrived yet when pagehide fires. Windows open <500ms are likely
    * companion events or transient and can be safely abandoned.
+   *
+   * TD-6: Construct fallback metadata from the window's observedEvent so that
+   * enrichFromMetadata can fill a null/empty after-value. The FINALIZE_EVIDENCE
+   * payload (which carries selectedValue/selectedDate from component buildResults)
+   * hasn't arrived yet — the lifecycle hasn't completed. observedEvent.valueAfter
+   * is the best available fallback at content-script level.
    */
   onPageHide(): void {
     this.isUnloading = true;
@@ -1401,12 +1407,18 @@ export class EvidenceCollector {
     for (const win of [...this.activeWindows]) {
       if (win.isClosed) continue;
 
+      // TD-6: Build fallback metadata from observedEvent valueAfter
+      const pageHideMetadata: Record<string, unknown> = {};
+      if (win.observedEvent?.valueAfter) {
+        pageHideMetadata.textValue = win.observedEvent.valueAfter;
+      }
+
       if (win.isLifecycleBound) {
-        this.executeFinalization(win, {}, 'page-reload');
+        this.executeFinalization(win, pageHideMetadata, 'page-reload');
       } else if (now - win.openedAt > 500) {
         // TD-4: Safety net for windows that never received a LIFECYCLE_BOUND
         // but have been open long enough that their evidence is worth saving.
-        this.executeFinalization(win, {}, 'page-reload');
+        this.executeFinalization(win, pageHideMetadata, 'page-reload');
       }
     }
 
