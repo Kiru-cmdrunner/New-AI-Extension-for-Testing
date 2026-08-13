@@ -39,6 +39,12 @@ export const LIVE_INTERACTIONS_KEY = 'cmdrunner_live_interactions';
 export const RUNTIME_SNAPSHOT_KEY = 'cmdrunner_runtime_snapshot';
 export const RECORDING_ACTIVE_KEY = 'cmdrunner_recording_active';
 
+/**
+ * M8.3: Storage key for pending evidence that arrived before its interaction
+ * was emitted. Without this, MV3 SW restart permanently loses all pending evidence.
+ */
+export const PENDING_EVIDENCE_KEY = 'cmdrunner_pending_evidence';
+
 // ── Singleton State ──────────────────────────────────────────────────
 
 let runtime: ComponentRuntime | null = null;
@@ -233,6 +239,10 @@ function sendFinalizeEvidence(interaction: ComponentInteraction): void {
 /**
  * Store incoming evidence in the pending map.
  * Called when evidence arrives but no matching interaction exists yet.
+ *
+ * M8.3: Also persists to chrome.storage.local (debounced) so pending evidence
+ * survives MV3 SW restart. Without this, evidence in the pending map is
+ * permanently lost when the SW is suspended.
  */
 export function storePendingEvidence(evidence: BehavioralEvidence): void {
   if (pendingEvidence.size >= MAX_PENDING_EVIDENCE) {
@@ -242,6 +252,7 @@ export function storePendingEvidence(evidence: BehavioralEvidence): void {
     }
   }
   pendingEvidence.set(evidence.sourceEventId, evidence);
+  persistPendingEvidence();
 }
 
 /**
@@ -462,6 +473,17 @@ export function initRecording(): void {
   evidenceLedger = new EvidenceLedger();
   lastVerificationResult = null;
 
+  // M8.3: Clear any stale pending evidence from a previous session.
+  // This covers the edge case where a new recording starts before
+  // resetState was called (e.g., immediate re-record after stop).
+  pendingEvidence.clear();
+  if (pendingEvidenceFlushTimer) {
+    clearTimeout(pendingEvidenceFlushTimer);
+    pendingEvidenceFlushTimer = null;
+  }
+  // Clear stale persisted pending evidence from storage
+  chrome.storage.local.remove(PENDING_EVIDENCE_KEY).catch(() => {});
+
   const config: RuntimeConfig = {
     onEmit: (interaction: ComponentInteraction) => {
       // Store IMMEDIATELY — no debounce, no timer
@@ -621,6 +643,8 @@ export function getLiveInteractions(): ComponentInteraction[] {
 
 /**
  * Clear all state (for testing or hard reset).
+ *
+ * M8.3: Also clears persisted pending evidence and the debounce timer.
  */
 export function resetState(): void {
   liveInteractions = [];
@@ -629,6 +653,10 @@ export function resetState(): void {
   evidenceLedger = null;
   lastVerificationResult = null;
   pendingEvidence.clear();
+  if (pendingEvidenceFlushTimer) {
+    clearTimeout(pendingEvidenceFlushTimer);
+    pendingEvidenceFlushTimer = null;
+  }
   // P1-3: Clear all evidence timeouts
   for (const handle of evidenceTimeouts.values()) {
     clearTimeout(handle);
@@ -639,6 +667,7 @@ export function resetState(): void {
     RUNTIME_SNAPSHOT_KEY,
     RECORDING_ACTIVE_KEY,
     EVIDENCE_LEDGER_KEY,
+    PENDING_EVIDENCE_KEY,
     'cmdrunner_verification_result',
   ]).catch(() => {});
 }
@@ -647,7 +676,14 @@ export function resetState(): void {
 
 /**
  * Restore state after MV3 service worker restart.
- * Reads live interactions and runtime snapshot from chrome.storage.local.
+ * Reads live interactions, runtime snapshot, evidence ledger, and pending
+ * evidence from chrome.storage.local.
+ *
+ * M8.3: Now also restores:
+ *   - Pending evidence (previously lost permanently on SW restart)
+ *   - Evidence timeout timers for interactions lacking evidence
+ *   - Lifecycle bridge callbacks (onLifecycleStart + sendFinalizeEvidence
+ *     were missing from the restored config — a latent bug)
  *
  * Returns true if a recording was active and successfully restored.
  */
@@ -658,6 +694,7 @@ export async function restoreFromStorage(): Promise<boolean> {
       LIVE_INTERACTIONS_KEY,
       RUNTIME_SNAPSHOT_KEY,
       EVIDENCE_LEDGER_KEY,
+      PENDING_EVIDENCE_KEY,
     ]);
 
     const wasRecording = result[RECORDING_ACTIVE_KEY] === true;
@@ -666,6 +703,16 @@ export async function restoreFromStorage(): Promise<boolean> {
     // Restore live interactions
     liveInteractions = result[LIVE_INTERACTIONS_KEY] ?? [];
 
+    // M8.3: Restore pending evidence (previously lost on SW restart)
+    const persistedPending = result[PENDING_EVIDENCE_KEY];
+    if (Array.isArray(persistedPending)) {
+      for (const [key, evidence] of persistedPending) {
+        if (pendingEvidence.size < MAX_PENDING_EVIDENCE) {
+          pendingEvidence.set(key, evidence);
+        }
+      }
+    }
+
     // Restore Evidence Ledger (triggers resetAbsorbedToUnclaimed)
     evidenceLedger = new EvidenceLedger();
     const ledgerEntries = result[EVIDENCE_LEDGER_KEY];
@@ -673,16 +720,28 @@ export async function restoreFromStorage(): Promise<boolean> {
       evidenceLedger.restore(ledgerEntries);
     }
 
-    // Recreate runtime with restored ledger
+    // Recreate runtime with restored ledger.
+    //
+    // M8.3: The restored config now matches initRecording() exactly —
+    // includes onLifecycleStart (for LIFECYCLE_BOUND) and sendFinalizeEvidence
+    // in onEmit (for FINALIZE_EVIDENCE). Previously these were missing,
+    // breaking the lifecycle bridge after SW restart.
     const config: RuntimeConfig = {
       onEmit: (interaction: ComponentInteraction) => {
         enrichInteraction(interaction);
         drainPendingEvidence(interaction);
         liveInteractions.push(interaction);
         persistLiveInteractions();
+
+        // Lifecycle-Driven Evidence: tell the content script to finalize
+        sendFinalizeEvidence(interaction);
+
         if (!interaction.behavioralEvidence) {
           startEvidenceTimeout(interaction);
         }
+      },
+      onLifecycleStart: (ctx) => {
+        sendLifecycleBound(ctx);
       },
       evidenceLedger,
     };
@@ -692,6 +751,16 @@ export async function restoreFromStorage(): Promise<boolean> {
     const snapshot = result[RUNTIME_SNAPSHOT_KEY];
     if (snapshot) {
       runtime.restore(snapshot);
+    }
+
+    // M8.3: Reconstruct evidence timeout timers for interactions that
+    // still lack behavioralEvidence. Without this, restored interactions
+    // that lost their SW between emit and evidence delivery will NEVER
+    // receive their emergency timeout evidence.
+    for (const interaction of liveInteractions) {
+      if (!interaction.behavioralEvidence) {
+        startEvidenceTimeout(interaction);
+      }
     }
 
     isRecording = true;
@@ -740,6 +809,28 @@ function persistEvidenceLedger(): void {
   }).catch(() => {
     // Non-fatal
   });
+}
+
+/**
+ * M8.3: Write pending evidence to chrome.storage.local.
+ * Debounced (PENDING_EVIDENCE_FLUSH_MS) to avoid excessive writes on
+ * high-churn apps. The Map is capped at MAX_PENDING_EVIDENCE (100),
+ * so worst case is 100 entries per session.
+ */
+const PENDING_EVIDENCE_FLUSH_MS = 500;
+let pendingEvidenceFlushTimer: ReturnType<typeof setTimeout> | null = null;
+
+function persistPendingEvidence(): void {
+  if (pendingEvidenceFlushTimer) clearTimeout(pendingEvidenceFlushTimer);
+  pendingEvidenceFlushTimer = setTimeout(() => {
+    pendingEvidenceFlushTimer = null;
+    const entries = Array.from(pendingEvidence.entries());
+    chrome.storage.local.set({
+      [PENDING_EVIDENCE_KEY]: entries,
+    }).catch(() => {
+      // Non-fatal
+    });
+  }, PENDING_EVIDENCE_FLUSH_MS);
 }
 
 /**

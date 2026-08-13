@@ -22,9 +22,8 @@ import {
 import type { UnderstandingResult } from '../src/domain/entities/understanding-result';
 import type { ExecutionIRPlan } from '../src/domain/execution-ir/types';
 import type { SessionEvent } from '../src/shared/types';
-import type { ComponentInteraction } from '../src/shared/component-types';
+import type { ComponentInteraction, ObservedEvent } from '../src/shared/component-types';
 import type { BehavioralEvidence } from '../src/shared/behavioral-evidence-types';
-import type { BehavioralEvidenceRow } from '../src/repository/v2/dexie/dexie-database';
 
 // ── Fixture helpers ────────────────────────────────────────────────────
 
@@ -63,27 +62,46 @@ function makeEvidence(overrides: Partial<BehavioralEvidence> = {}): BehavioralEv
   };
 }
 
+function makeObservedEvent(overrides: Partial<ObservedEvent> = {}): ObservedEvent {
+  return {
+    eventId: 'evt-001',
+    eventType: 'click',
+    timestamp: 1000,
+    captureSeq: 1,
+    isTrusted: true,
+    target: null as any,
+    domContext: null as any,
+    valueBefore: null,
+    valueAfter: null,
+    checkedBefore: null,
+    checkedAfter: null,
+    clientX: null,
+    clientY: null,
+    key: null,
+    code: null,
+    shiftKey: false,
+    ctrlKey: false,
+    altKey: false,
+    metaKey: false,
+    scrollDeltaY: null,
+    scrollDeltaX: null,
+    pageUrl: 'https://example.com',
+    pageTitle: 'Example',
+    ...overrides,
+  };
+}
+
 function makeInteraction(overrides: Partial<ComponentInteraction> = {}): ComponentInteraction {
   return {
     interactionId: 'int-001',
     lifecycleId: 'lc-1',
     type: 'Click',
     trigger: null as any,
-    triggerEvent: {
-      eventId: 'evt-001',
-      eventType: 'click',
-      timestamp: 1000,
-      captureSeq: 1,
-      isTrusted: true,
-      target: null as any,
-      domContext: null as any,
-      pageUrl: 'https://example.com',
-      pageTitle: 'Example',
-    },
+    triggerEvent: makeObservedEvent(),
     memberEvents: [],
     startTime: 1000,
     endTime: 2000,
-    endState: {},
+    endState: 'completed',
     metadata: {},
     ...overrides,
   };
@@ -386,7 +404,6 @@ describe('M8.2: persistBehavioralEvidence', () => {
       await persistBehavioralEvidence(factory, 'sess-overwrite', interactions);
       // Wait to ensure different timestamp
       await new Promise((r) => setTimeout(r, 10));
-      const t1 = Date.now();
       await persistBehavioralEvidence(factory, 'sess-overwrite', interactions);
       const t2 = Date.now();
 
