@@ -664,7 +664,7 @@ export function renderEvidence(
   if (endReason === 'page-reload-synthetic') {
     const notice = document.createElement('div');
     notice.className = 'evidence-synthetic-notice';
-    notice.textContent = '📋 Navigation evidence (page reloaded — behavioral details unavailable)';
+    notice.textContent = '📋 Navigation evidence (page reloaded — synthetic)';
     container.appendChild(notice);
   }
 

@@ -115,13 +115,26 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
     if (currentUrl === lastKnownUrl) return; // suppress duplicates
     lastKnownUrl = currentUrl;
 
+    // Build a navigation-specific identity. The raw body element identity is
+    // bare and unhelpful — enrich it with the destination URL so the side
+    // panel shows something meaningful instead of "Unknown element".
+    const navTarget = document.body || document.documentElement;
+    const baseIdentity = extractIdentity(navTarget);
+    const navIdentity = {
+      ...baseIdentity,
+      accessibleName: currentUrl,
+      ariaLabel: `Navigation to ${currentUrl}`,
+      href: currentUrl,
+      ariaRole: baseIdentity.ariaRole ?? 'document',
+    };
+
     const navEvent: ObservedEvent = {
       eventId: nextEventId(),
       eventType: 'navigation',
       timestamp: Date.now(),
       captureSeq: performance.now(),
       isTrusted: true, // user-initiated navigation (even if programmatic in the SPA)
-      target: extractIdentity(document.body || document.documentElement),
+      target: navIdentity,
       domContext: extractDomContext(document.body || document.documentElement),
       valueBefore: null,
       valueAfter: null,
@@ -148,14 +161,13 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
     // Uses document.body as the target element (no specific element for nav).
     // GAP-4 fix: pass the full ObservedEvent so EvidenceCollector has navType + pageUrl.
     if (config.onAfterEvent) {
-      const navTarget = document.body || document.documentElement;
       if (navTarget) {
         config.onAfterEvent(
           navTarget,
           navEvent.eventId,
           'navigation',
           '', // no CSS selector for synthetic nav events
-          navEvent.target, // identity from the body element
+          navIdentity, // enriched identity with destination URL
           navEvent, // full ObservedEvent with navType + pageUrl
         );
       }
