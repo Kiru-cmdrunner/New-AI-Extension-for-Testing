@@ -1386,13 +1386,26 @@ export class EvidenceCollector {
   /**
    * Handle pagehide: immediately finalize all lifecycle-bound windows.
    * Evidence is buffered to sessionStorage and flushed by the next page.
+   *
+   * TD-4: Also finalize non-lifecycle-bound windows that have been open for
+   * more than 500ms. This catches the narrow edge case where LIFECYCLE_BOUND
+   * hasn't arrived yet when pagehide fires. Windows open <500ms are likely
+   * companion events or transient and can be safely abandoned.
    */
   onPageHide(): void {
     this.isUnloading = true;
 
+    const now = performance.now();
+
     // Immediately finalize all lifecycle-bound windows (zero settle delay)
     for (const win of [...this.activeWindows]) {
-      if (!win.isClosed && win.isLifecycleBound) {
+      if (win.isClosed) continue;
+
+      if (win.isLifecycleBound) {
+        this.executeFinalization(win, {}, 'page-reload');
+      } else if (now - win.openedAt > 500) {
+        // TD-4: Safety net for windows that never received a LIFECYCLE_BOUND
+        // but have been open long enough that their evidence is worth saving.
         this.executeFinalization(win, {}, 'page-reload');
       }
     }
