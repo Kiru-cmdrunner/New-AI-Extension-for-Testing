@@ -11,7 +11,6 @@
 
 import { describe, it, expect } from 'vitest';
 import type {
-  BehavioralEvidence,
   TargetStateSnapshot,
 } from '../../src/shared/behavioral-evidence-types';
 
@@ -171,7 +170,7 @@ describe('Round 6: Evidence delivery pipeline correctness', () => {
   });
 
   it('click window sourceEventType uses peek (not capture)', () => {
-    const eventType = 'click';
+    const eventType: string = 'click';
     const useCapture = eventType === 'input';
     expect(useCapture).toBe(false);
   });
