@@ -353,9 +353,31 @@ async function handleStopRecording(): Promise<void> {
       // M8.2: Persist behavioral evidence to the dedicated table.
       // Runs after persistSession returns sessionId. Non-fatal — wrapped in
       // the outer try/catch. Idempotent via windowId primary key (put).
+      //
+      // M8.5: Use dedup guard to skip evidence already persisted in this
+      // recording cycle (e.g., from SW restart recovery re-persist).
       try {
-        const { persistBehavioralEvidence } = await import('../repository/services/session-persistence-service');
-        await persistBehavioralEvidence(uowFactory, persistenceResult.sessionId, productionInteractions);
+        const {
+          persistBehavioralEvidence,
+        } = await import('../repository/services/session-persistence-service');
+        const {
+          filterUnpersistedEvidence,
+          markEvidencePersisted,
+        } = await import('../runtime/sw-integration');
+
+        const unpersisted = filterUnpersistedEvidence(productionInteractions);
+        if (unpersisted.length > 0) {
+          await persistBehavioralEvidence(
+            uowFactory,
+            persistenceResult.sessionId,
+            unpersisted,
+          );
+          markEvidencePersisted(
+            unpersisted
+              .filter((i) => i.behavioralEvidence)
+              .map((i) => i.behavioralEvidence!.windowId),
+          );
+        }
       } catch (evErr) {
         console.warn('[Repository V2] error during evidence persistence:', evErr);
       }

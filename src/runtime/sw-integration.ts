@@ -62,6 +62,50 @@ let lastVerificationResult: VerificationResult | null = null;
 const pendingEvidence = new Map<string, BehavioralEvidence>();
 const MAX_PENDING_EVIDENCE = 100;
 
+// ── Evidence Persistence Dedup Guard (M8.5) ───────────────────────────
+//
+// Defense-in-depth: prevents redundant DB writes when persistBehavioralEvidence
+// is called more than once within a recording cycle (e.g., double-stopRecording,
+// SW restart recovery re-persisting recovered evidence).
+//
+// The DB layer (Dexie put by windowId) already guarantees exactly-once storage;
+// this guard avoids the unnecessary write entirely, and provides a clean test
+// surface for exactly-once behavior.
+
+const persistedEvidenceWindowIds = new Set<string>();
+
+/**
+ * M8.5: Mark a set of windowIds as persisted. Called after evidence persistence
+ * completes successfully.
+ */
+export function markEvidencePersisted(windowIds: string[]): void {
+  for (const wid of windowIds) {
+    persistedEvidenceWindowIds.add(wid);
+  }
+}
+
+/**
+ * M8.5: Filter interactions to only those whose evidence has not yet been
+ * persisted in this recording cycle. Returns the subset safe to persist.
+ * Interactions without behavioralEvidence are always excluded.
+ */
+export function filterUnpersistedEvidence(
+  interactions: ComponentInteraction[],
+): ComponentInteraction[] {
+  return interactions.filter(
+    (i) =>
+      i.behavioralEvidence &&
+      !persistedEvidenceWindowIds.has(i.behavioralEvidence.windowId),
+  );
+}
+
+/**
+ * M8.5: Clear the dedup guard. Called on initRecording and resetState.
+ */
+export function clearPersistedEvidenceGuard(): void {
+  persistedEvidenceWindowIds.clear();
+}
+
 // ── Evidence Timeout Tracking (Lifecycle-Driven Evidence v3.1) ───────
 //
 // Emergency safety net: if no behavioral evidence arrives for an interaction
@@ -481,6 +525,8 @@ export function initRecording(): void {
     clearTimeout(pendingEvidenceFlushTimer);
     pendingEvidenceFlushTimer = null;
   }
+  // M8.5: Clear the evidence persistence dedup guard for the new cycle.
+  clearPersistedEvidenceGuard();
   // Clear stale persisted pending evidence from storage
   chrome.storage.local.remove(PENDING_EVIDENCE_KEY).catch(() => {});
 
@@ -652,6 +698,8 @@ export function resetState(): void {
   isRecording = false;
   evidenceLedger = null;
   lastVerificationResult = null;
+  // M8.5: Clear the evidence persistence dedup guard.
+  clearPersistedEvidenceGuard();
   pendingEvidence.clear();
   if (pendingEvidenceFlushTimer) {
     clearTimeout(pendingEvidenceFlushTimer);
