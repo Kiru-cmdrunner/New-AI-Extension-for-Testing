@@ -18,6 +18,10 @@ import { EntityTracker } from './entity-tracker';
 import { CollectionTracker } from './collection-tracker';
 import { CounterTracker } from './counter-tracker';
 import { NotificationTracker } from './notification-tracker';
+import {
+  createEntityTypeRegistry,
+  EntityTypeRegistry,
+} from './entity-type-registry';
 import type { ApplicationState, StateTransition, Entity } from './types';
 
 export class StateBuilder {
@@ -29,6 +33,19 @@ export class StateBuilder {
   private readonly notificationTracker = new NotificationTracker();
   private interactionCount = 0;
   private lastInteractionId: string | null = null;
+  private readonly entityTypeRegistry: EntityTypeRegistry;
+
+  /**
+   * @param entityTypeRegistry Optional registry for custom entity types.
+   *   If omitted, a default-seeded registry is created. Pass `false` to
+   *   create a builder with no registry (legacy behavior, no custom types).
+   */
+  constructor(entityTypeRegistry?: EntityTypeRegistry | false) {
+    this.entityTypeRegistry =
+      entityTypeRegistry === false
+        ? new EntityTypeRegistry()
+        : entityTypeRegistry ?? createEntityTypeRegistry(true);
+  }
 
   /**
    * Process one interaction's signals and produce a state transition.
@@ -165,6 +182,34 @@ export class StateBuilder {
         changes.push(`search query (from URL): "${term}"`);
       }
     }
+
+    // M9.8: Registry-based view entity detection (non-e-commerce domains).
+    // Runs after legacy logic so existing behavior is never overridden.
+    const registryResult = this.entityTypeRegistry.resolveFromView(
+      vc.toView.id,
+      vc.toUrl,
+    );
+    if (registryResult) {
+      const entityId = registryResult.id
+        ? `${registryResult.type}:${registryResult.id}`
+        : `${registryResult.type}:${vc.interactionId}`;
+      // Don't overwrite an entity created by legacy logic
+      if (!this.entityTracker.get(entityId)) {
+        const entity: Entity = {
+          id: entityId,
+          type: registryResult.type,
+          attributes: {
+            url: vc.toUrl,
+            ...(registryResult.id ? { id: registryResult.id } : {}),
+          },
+          source: 'view-derived',
+          firstSeenAt: vc.interactionId,
+          lastUpdated: vc.interactionId,
+        };
+        this.entityTracker.upsert(entity);
+        changes.push(`${registryResult.type} entity (from registry)`);
+      }
+    }
   }
 
   /**
@@ -189,6 +234,29 @@ export class StateBuilder {
       this.entityTracker.upsert(entity);
       changes.push(`cart-item entity (from API)`);
     }
+
+    // M9.8: Registry-based API operation entity detection.
+    if (op.operation !== 'add-to-cart') {
+      const registryResult = this.entityTypeRegistry.resolveFromApiOperation(
+        op.operation,
+        op.interactionId,
+      );
+      if (registryResult && !this.entityTracker.get(registryResult.id)) {
+        const entity: Entity = {
+          id: registryResult.id,
+          type: registryResult.type,
+          attributes: {
+            via: op.url,
+            operation: op.operation,
+          },
+          source: 'inferred',
+          firstSeenAt: op.interactionId,
+          lastUpdated: op.interactionId,
+        };
+        this.entityTracker.upsert(entity);
+        changes.push(`${registryResult.type} entity (from API registry)`);
+      }
+    }
   }
 
   /**
@@ -201,7 +269,14 @@ export class StateBuilder {
     // Entities observed in content
     for (const obs of pc.observedEntities) {
       if (!obs.entityId) continue;
-      const type = (obs.entityType ?? 'unknown') as import('./types').EntityType;
+
+      // M9.8: Try the registry first for custom domain types.
+      // Falls back to the observed kind or 'unknown'.
+      const registryType = this.entityTypeRegistry.resolveFromPageContent(
+        obs.entityType,
+        obs.entityId,
+      );
+      const type = registryType ?? (obs.entityType ?? 'unknown');
       this.entityTracker.upsert({
         id: `${type}:${obs.entityId}`,
         type,

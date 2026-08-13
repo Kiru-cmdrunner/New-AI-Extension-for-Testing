@@ -43,6 +43,14 @@ export { EntityTracker } from './state-builder/entity-tracker';
 export { CollectionTracker } from './state-builder/collection-tracker';
 export { CounterTracker } from './state-builder/counter-tracker';
 export { NotificationTracker } from './state-builder/notification-tracker';
+
+// Entity type registry (M9.8)
+export {
+  EntityTypeRegistry,
+  createEntityTypeRegistry,
+} from './state-builder/entity-type-registry';
+export type { EntityTypeDetectionRule } from './state-builder/entity-type-registry';
+
 export type {
   Entity,
   EntityType,

@@ -12,15 +12,17 @@ import type { ViewDescriptor } from '../types';
 
 // ── Entity ─────────────────────────────────────────────────────────────
 
-export type EntityType =
-  | 'product'
-  | 'cart-item'
-  | 'search-query'
-  | 'order'
-  | 'user'
-  | 'filter'
-  | 'page-content'
-  | 'unknown';
+/**
+ * Entity type — generalized to string in M9.8.
+ *
+ * The 8 legacy types ('product', 'cart-item', 'search-query', 'order',
+ * 'user', 'filter', 'page-content', 'unknown') continue to work via
+ * StateBuilder's hard-coded derivation logic. New types are added through
+ * the EntityTypeRegistry (M9.8) without changing this type.
+ *
+ * Architecture: .drytis/specs/m9-8-entity-type-generalization.md
+ */
+export type EntityType = string;
 
 /**
  * A semantic object the application works with.
