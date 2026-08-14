@@ -38,7 +38,10 @@ export type BrowserEventType =
   | 'mousemove'
   | 'keydown'
   | 'scroll'
-  | 'navigation';
+  | 'navigation'
+  | 'dragstart'
+  | 'drop'
+  | 'submit';
 
 /**
  * DOM context captured at event time — structural information the
@@ -201,6 +204,9 @@ export type InteractionType =
   | 'Tab'
   | 'Scroll'
   | 'Navigation'
+  | 'DragDrop'
+  | 'KeyboardShortcut'
+  | 'CompoundInteraction'
   | 'Unclassified';
 
 // ── Component Lifecycle ────────────────────────────────────────────────

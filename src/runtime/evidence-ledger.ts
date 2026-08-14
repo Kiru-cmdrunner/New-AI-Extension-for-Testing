@@ -26,6 +26,7 @@ import type { ObservedEvent, InteractionType } from '../shared/component-types';
  */
 export const DISCRETE_ACTION_TYPES = new Set<string>([
   'click', 'contextmenu', 'mousedown', 'keydown',
+  'dragstart', 'drop', // M9.10 — drag & drop are discrete user actions
 ]);
 
 /**

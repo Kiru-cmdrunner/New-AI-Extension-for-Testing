@@ -150,7 +150,7 @@ describe('Generation Layer — build()', () => {
 
   // ── Interaction Type → IRAction Mapping ──────────────
 
-  describe('interaction type mapping (14 ComponentInteraction types)', () => {
+  describe('interaction type mapping (ComponentInteraction types)', () => {
     const cases: Array<[InteractionType, IRAction]> = [
       ['Click', IRAction.CLICK],
       ['TextEntry', IRAction.FILL],
@@ -165,6 +165,8 @@ describe('Generation Layer — build()', () => {
       ['ColorInput', IRAction.FILL],
       ['Tab', IRAction.CLICK],
       ['Navigation', IRAction.NAVIGATE],
+      ['DragDrop', IRAction.DRAG_DROP],
+      ['KeyboardShortcut', IRAction.KEYBOARD_SHORTCUT],
     ];
 
     for (const [type, expectedAction] of cases) {

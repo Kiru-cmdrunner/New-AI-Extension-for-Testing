@@ -354,6 +354,7 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
     'mouseenter', 'mouseleave', 'mousemove',
     'keydown',
     'scroll',
+    'dragstart', 'drop', // M9.10 — drag & drop interaction evidence
     'submit', // Behavioral Evidence Model v3.0 §4.1 — form submit evidence
   ];
 

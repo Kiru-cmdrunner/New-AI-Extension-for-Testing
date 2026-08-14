@@ -295,12 +295,14 @@ describe('EvidenceLedger — Milestone 2', () => {
 
   // ── DISCRETE_ACTION_TYPES constant ──────────────────────────────────
 
-  it('DISCRETE_ACTION_TYPES contains exactly click, contextmenu, mousedown, keydown', () => {
-    expect(DISCRETE_ACTION_TYPES.size).toBe(4);
+  it('DISCRETE_ACTION_TYPES contains click, contextmenu, mousedown, keydown, dragstart, drop', () => {
+    expect(DISCRETE_ACTION_TYPES.size).toBe(6);
     expect(DISCRETE_ACTION_TYPES.has('click')).toBe(true);
     expect(DISCRETE_ACTION_TYPES.has('contextmenu')).toBe(true);
     expect(DISCRETE_ACTION_TYPES.has('mousedown')).toBe(true);
     expect(DISCRETE_ACTION_TYPES.has('keydown')).toBe(true);
+    expect(DISCRETE_ACTION_TYPES.has('dragstart')).toBe(true);
+    expect(DISCRETE_ACTION_TYPES.has('drop')).toBe(true);
     expect(DISCRETE_ACTION_TYPES.has('focus')).toBe(false);
     expect(DISCRETE_ACTION_TYPES.has('scroll')).toBe(false);
     expect(DISCRETE_ACTION_TYPES.has('input')).toBe(false);

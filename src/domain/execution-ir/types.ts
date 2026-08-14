@@ -50,6 +50,8 @@ export enum IRAction {
   NAVIGATE = 'navigate',
   VERIFY = 'verify',
   WAIT = 'wait',
+  DRAG_DROP = 'dragDrop',
+  KEYBOARD_SHORTCUT = 'keyboardShortcut',
 
   // ── Execution-only (injected by pipeline, never authored) ──
   /** Injected before element-interacting steps when waitStrategy != 'none'. */

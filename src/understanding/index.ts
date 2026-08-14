@@ -217,3 +217,7 @@ export type {
   EnrichmentMetadata,
   EnrichmentCoverage,
 } from './enrichment/semantic-types';
+
+// Compound interaction detection (M9.10)
+export { detectCompoundActions } from './enrichment/compound-detector';
+export type { CompoundAction } from './enrichment/compound-detector';

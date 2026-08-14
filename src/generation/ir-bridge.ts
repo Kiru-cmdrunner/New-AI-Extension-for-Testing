@@ -67,6 +67,9 @@ const INTERACTION_TO_IR_ACTION: Record<InteractionType, IRAction> = {
   Tab: IRAction.CLICK,
   Scroll: IRAction.CLICK,      // filtered as noise below
   Navigation: IRAction.NAVIGATE,
+  DragDrop: IRAction.DRAG_DROP,
+  KeyboardShortcut: IRAction.KEYBOARD_SHORTCUT,
+  CompoundInteraction: IRAction.DRAG_DROP, // compound actions typically resolve to drag-drop or click
   Unclassified: IRAction.CLICK, // fallback
 };
 
@@ -172,6 +175,19 @@ function generateDescription(
     }
     case 'Link':
       return `Click the "${name}" link`;
+    case 'DragDrop': {
+      const source = (md['sourceName'] as string) ?? name;
+      const target = (md['dropTargetName'] as string) ?? 'target';
+      return `Drag "${source}" to ${target}`;
+    }
+    case 'KeyboardShortcut': {
+      const keys = (md['shortcut'] as string) ?? '';
+      return `Press ${keys}`;
+    }
+    case 'CompoundInteraction': {
+      const summary = (md['summary'] as string) ?? name;
+      return summary;
+    }
     default:
       return `Click the ${name}`;
   }
@@ -235,6 +251,15 @@ function extractInputValue(interaction: ComponentInteraction): IRInput {
 
     case 'FileUpload':
       return (md['fileName'] as string) ?? null;
+
+    case 'DragDrop': {
+      const source = (md['sourceName'] as string) ?? '';
+      const target = (md['dropTargetName'] as string) ?? '';
+      return source || target || null;
+    }
+
+    case 'KeyboardShortcut':
+      return (md['shortcut'] as string) ?? null;
 
     default:
       return null;

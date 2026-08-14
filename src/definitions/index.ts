@@ -15,6 +15,8 @@
  */
 
 import type { ComponentDefinition } from '../shared/component-types';
+import { dragDropDefinition } from './drag-drop';
+import { keyboardShortcutDefinition } from './keyboard-shortcut';
 import { datePickerDefinition } from './date-picker';
 import { dropdownDefinition } from './dropdown';
 import { sliderDefinition } from './slider';
@@ -49,28 +51,36 @@ import { clickDefinition } from './click';
  *  110 = Scroll
  *  120 = Navigation
  *  180 = Click (universal fallback — always checked last)
+ *
+ * M9.10 additions:
+ *    5 = DragDrop (dragstart is unambiguous, check before everything)
+ *    8 = KeyboardShortcut (modifier+keydown, check before TextEntry)
  */
 export const ALL_DEFINITIONS: ComponentDefinition[] = [
-  datePickerDefinition,    // priority 10
-  dropdownDefinition,      // priority 20
-  sliderDefinition,        // priority 25
-  colorInputDefinition,    // priority 15
-  checkboxDefinition,      // priority 30
-  fileUploadDefinition,    // priority 35
-  radioButtonDefinition,   // priority 40
-  textEntryDefinition,     // priority 50
-  hoverDefinition,         // priority 60
-  tabDefinition,           // priority 65
-  linkDefinition,          // priority 70
-  scrollDefinition,        // priority 110
-  navigationDefinition,    // priority 120
-  clickDefinition,         // priority 180 (fallback)
+  dragDropDefinition,        // priority 5
+  keyboardShortcutDefinition,// priority 8
+  datePickerDefinition,      // priority 10
+  dropdownDefinition,        // priority 20
+  sliderDefinition,          // priority 25
+  colorInputDefinition,      // priority 15
+  checkboxDefinition,        // priority 30
+  fileUploadDefinition,      // priority 35
+  radioButtonDefinition,     // priority 40
+  textEntryDefinition,       // priority 50
+  hoverDefinition,           // priority 60
+  tabDefinition,             // priority 65
+  linkDefinition,            // priority 70
+  scrollDefinition,          // priority 110
+  navigationDefinition,      // priority 120
+  clickDefinition,           // priority 180 (fallback)
 ];
 
 /**
  * For external consumers that need individual definitions.
  */
 export {
+  dragDropDefinition,
+  keyboardShortcutDefinition,
   datePickerDefinition,
   dropdownDefinition,
   sliderDefinition,

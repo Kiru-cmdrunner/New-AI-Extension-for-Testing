@@ -115,21 +115,24 @@ describe('BrowserEventType', () => {
       'click', 'mousedown', 'contextmenu', 'focus', 'blur',
       'input', 'change', 'mouseenter', 'mouseleave', 'keydown',
       'scroll', 'navigation',
+      'dragstart', 'drop', 'submit',
     ];
-    expect(types).toHaveLength(12);
+    expect(types).toHaveLength(15);
   });
 });
 
 // ── InteractionType ────────────────────────────────────────────────────
 
 describe('InteractionType', () => {
-  it('accepts all 13 interaction types', () => {
+  it('accepts all interaction types', () => {
     const types: InteractionType[] = [
       'Click', 'TextEntry', 'Dropdown', 'Checkbox', 'RadioButton',
       'DatePicker', 'Hover', 'Link', 'FileUpload', 'Slider',
       'Tab', 'Scroll', 'Navigation',
+      'DragDrop', 'KeyboardShortcut', 'CompoundInteraction',
+      'Unclassified',
     ];
-    expect(types).toHaveLength(13);
+    expect(types).toHaveLength(17);
   });
 });
 
