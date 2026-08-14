@@ -31,7 +31,8 @@
 import type { SemanticKnowledge } from '../../understanding/enrichment/semantic-types';
 import type { ApplicationKnowledge } from '../../understanding/consolidation/application-knowledge';
 import type { ActionOutcome } from '../../understanding/outcome/outcome-types';
-import type { StateTransition } from '../../understanding/state-builder/types';
+// D12 fix: use JSON-safe serialized form for the boundary type.
+import type { SerializedStateTransition } from '../../understanding/state-builder/serialize';
 
 /**
  * The complete output of the Understanding Layer for a single recording session.
@@ -67,8 +68,12 @@ export interface UnderstandingResult {
 
   /** Determined outcomes per interaction (D12). Serialized as array. */
   readonly outcomes?: ActionOutcome[];
-  /** State transitions from the recording session (D12). */
-  readonly transitions?: StateTransition[];
+  /**
+   * State transitions from the recording session (D12).
+   * Serialized form: Map fields in ApplicationState are converted to plain
+   * Record objects for JSON safety (D12 fix).
+   */
+  readonly transitions?: SerializedStateTransition[];
   /** Stable app ID derived from the recording origin (D12). */
   readonly appId?: string;
 }

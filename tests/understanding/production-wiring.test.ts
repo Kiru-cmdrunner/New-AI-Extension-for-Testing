@@ -25,6 +25,7 @@ import {
 import type { ComponentInteraction } from '../../src/shared/component-types';
 import type { BehavioralEvidence } from '../../src/shared/behavioral-evidence-types';
 import type { UnderstandingResult } from '../../src/domain/entities/understanding-result';
+import { serializeStateTransitions } from '../../src/understanding/state-builder/serialize';
 
 // ── Helpers: Build realistic ComponentInteractions ─────────────────────
 
@@ -356,9 +357,10 @@ describe('M9.12 — Production Wiring', () => {
       semanticKnowledge: outcome.semanticKnowledge ?? undefined,
       applicationKnowledge: outcome.applicationKnowledge ?? undefined,
       knowledgeWarnings: outcome.warnings.length > 0 ? outcome.warnings : undefined,
-      // D12: verify all pipeline artifacts are mappable
+      // D12: verify all pipeline artifacts are mappable.
+      // Use serialized transitions (Maps → Records) for JSON safety.
       outcomes: [...outcome.outcomes.values()],
-      transitions: outcome.transitions,
+      transitions: serializeStateTransitions(outcome.transitions),
       appId: outcome.appId,
     };
 

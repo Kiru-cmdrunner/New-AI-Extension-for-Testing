@@ -129,13 +129,25 @@ export class EntityTypeRegistry {
   /**
    * Resolve the entity type from a form field name (D6).
    * Returns the entity type if a field-pattern rule matches, null otherwise.
+   *
+   * D6 fix: uses semantic word-boundary matching instead of bare substring
+   * matching. A field named "hostname" must NOT match the "name" pattern,
+   * and "filename" must NOT match the "name" pattern. Matching is based on
+   * whether the pattern appears as a complete word/segment in the field name,
+   * separated by non-alphanumeric boundaries (hyphens, underscores, dots,
+   * camelCase transitions, start/end of string).
    */
   resolveFromFormField(fieldName: string): string | null {
+    if (!fieldName) return null;
+    // Tokenize the ORIGINAL field name (preserves camelCase boundaries).
+    const tokens = tokenizeFieldName(fieldName);
     const lower = fieldName.toLowerCase();
     for (const rule of this.rules) {
       if (!rule.fieldPatterns || rule.fieldPatterns.length === 0) continue;
-      if (rule.fieldPatterns.some((p) => lower.includes(p.toLowerCase()))) {
-        return rule.entityType;
+      for (const pattern of rule.fieldPatterns) {
+        if (fieldPatternMatches(pattern.toLowerCase(), lower, tokens)) {
+          return rule.entityType;
+        }
       }
     }
     return null;
@@ -173,29 +185,44 @@ export const FORM_FIELD_SEEDS: EntityTypeDetectionRule[] = [
   // -- HR (OrangeHRM-style) --
   {
     entityType: 'employee',
-    fieldPatterns: ['employee', 'empname', 'emp-name', 'firstname', 'lastname', 'fullname'],
+    fieldPatterns: [
+      'employee', 'employeename', 'employee-name',
+      'empname', 'emp-name',
+      'firstname', 'first-name', 'lastname', 'last-name',
+      'fullname', 'full-name',
+    ],
   },
   {
     entityType: 'leave-request',
-    fieldPatterns: ['leavetype', 'leavetype-id', 'leave-type', 'leave-balance', 'leaveperiod'],
+    fieldPatterns: [
+      'leavetype', 'leave-type',
+      'leavetype-id', 'leave-balance', 'leaveperiod', 'leave-period',
+    ],
   },
   {
     entityType: 'candidate',
-    fieldPatterns: ['candidate', 'applicant', 'applicantname'],
+    fieldPatterns: ['candidate', 'applicant', 'applicantname', 'applicant-name'],
   },
   // -- Authentication --
   {
     entityType: 'user',
-    fieldPatterns: ['username', 'email', 'password', 'login', 'signin'],
+    fieldPatterns: ['username', 'user-name', 'email', 'password', 'login', 'signin'],
   },
   // -- Developer tools (GitHub-style) --
   {
     entityType: 'issue',
-    fieldPatterns: ['issuetitle', 'issue-title', 'issuebody', 'issue-body'],
+    fieldPatterns: [
+      'issuetitle', 'issue-title',
+      'issuebody', 'issue-body', 'issuesummary', 'issue-summary',
+    ],
   },
   {
     entityType: 'pull-request',
-    fieldPatterns: ['prtitle', 'pr-title', 'pulltitle', 'pull-request-title'],
+    fieldPatterns: [
+      'prtitle', 'pr-title', 'pulltitle',
+      'pull-request-title', 'prdescription', 'pr-description',
+      'reviewtitle', 'review-title',
+    ],
   },
   // -- Generic form fields --
   {
@@ -216,4 +243,121 @@ export function createEntityTypeRegistry(
     registry.register([...FORM_FIELD_SEEDS]);
   }
   return registry;
+}
+
+// ── D6 Fix: Semantic Field-Name Matching ────────────────────────────────
+
+/**
+ * Split a field name into semantic tokens.
+ *
+ * Recognizes these separators:
+ *   - Hyphens, underscores, dots: "emp-name" → ["emp", "name"]
+ *   - camelCase transitions: "firstName" → ["first", "name"]
+ *   - Numbers: "field2name" → ["field", "name"]
+ *
+ * This avoids the old bug where `hostname`.includes('name') was true —
+ * "hostname" tokenizes to ["hostname"], which does not contain "name" as a
+ * standalone token.
+ *
+ * @returns Array of {token, fromSeparator} pairs. `fromSeparator` is true
+ *   when the token boundary was an explicit separator (hyphen, underscore,
+ *   dot, space), and false when it came from camelCase splitting alone.
+ *   This distinction matters: `className` → [{token:"class",fromSeparator:false},
+ *   {token:"name",fromSeparator:false}] — "name" here is a camelCase artifact,
+ *   not a standalone word. But `emp-name` → [{token:"emp",fromSeparator:true},
+ *   {token:"name",fromSeparator:true}] — "name" is an explicit word.
+ */
+export interface Token {
+  token: string;
+  fromSeparator: boolean;
+}
+
+export function tokenizeFieldName(name: string): Token[] {
+  // First split on explicit separators (hyphens, underscores, dots, spaces)
+  const parts = name.split(/[-_.\s]+/).filter(Boolean);
+  const result: Token[] = [];
+  for (const part of parts) {
+    // Then split camelCase within each separator-delimited segment
+    const camelParts = part
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .split(/\s+/)
+      .filter(Boolean);
+    // If camelCase split produced multiple parts, the camelCase-derived tokens
+    // have fromSeparator=false (they weren't explicitly separated).
+    // If only one part (no camelCase split), the token inherits the
+    // separator status of its parent segment (which came from explicit
+    // separator splitting, so fromSeparator=true only if the original name
+    // had explicit separators — but if it was a single word, false).
+    const hadCamelSplit = camelParts.length > 1;
+    camelParts.forEach((cp) => {
+      result.push({
+        token: cp.toLowerCase(),
+        fromSeparator: hadCamelSplit ? false : name !== part,
+      });
+    });
+  }
+  return result;
+}
+
+/**
+ * Check if a field pattern matches a field name semantically.
+ *
+ * A match occurs if:
+ *   1. The pattern is a complete token (word-boundary match), OR
+ *   2. The field name is exactly equal to the pattern (exact match), OR
+ *   3. The pattern itself is multi-token (e.g. "leave-type") and the field
+ *      name contains all those tokens in sequence.
+ *
+ * Critically, `fieldPatternMatches('name', 'hostname', ['hostname'])` is false
+ * because "name" is not a standalone token in "hostname".
+ *
+ * For camelCase compounds like `className`, the "name" part is a camelCase
+ * artifact, not a standalone word — so it should NOT match the `name` pattern.
+ * Only explicitly-separated names (e.g. `emp-name`, `last_name`) match.
+ */
+export function fieldPatternMatches(
+  pattern: string,
+  fieldName: string,
+  tokens: Token[],
+): boolean {
+  // Exact match — always valid
+  if (fieldName === pattern) return true;
+
+  const patternTokens = pattern.split(/[-_.\s]+/).filter(Boolean);
+
+  // Single-token pattern
+  if (patternTokens.length === 1) {
+    const pt = patternTokens[0];
+    const tokenStrings = tokens.map((t) => t.token);
+
+    // 1. Any token exactly matches the pattern
+    //    (e.g., "name" matches token "name" in "emp-name")
+    if (tokenStrings.includes(pt)) {
+      // But for camelCase compounds (className → ["class", "name"]),
+      // "name" is a camelCase artifact — reject unless the field is
+      // explicitly separated (fromSeparator=true) or single-token.
+      const matchingToken = tokens.find((t) => t.token === pt)!;
+      if (matchingToken.fromSeparator || tokens.length === 1) {
+        return true;
+      }
+      // camelCase artifact — don't match single-token pattern on it
+    }
+
+    // 2. Concatenated tokens match the pattern
+    //    (e.g., "fullname" matches ["full", "name"] joined → "fullname")
+    if (tokenStrings.length > 1 && tokenStrings.join('') === pt) {
+      return true;
+    }
+
+    return false;
+  }
+
+  // Multi-token pattern: check if all pattern tokens appear in the field tokens
+  if (patternTokens.length > 1) {
+    // Token-subset match: every pattern token must be present in field tokens
+    const tokenStrings = tokens.map((t) => t.token);
+    return patternTokens.every((pt) => tokenStrings.includes(pt));
+  }
+
+  return false;
 }

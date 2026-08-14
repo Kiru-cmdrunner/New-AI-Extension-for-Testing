@@ -325,6 +325,7 @@ async function handleStopRecording(): Promise<void> {
   try {
     if (productionInteractions.length > 0) {
       const { runUnderstandingPipeline } = await import('../understanding/pipeline/understanding-pipeline');
+      const { serializeStateTransitions } = await import('../understanding/state-builder/serialize');
       const origin = recordingStartUrl || (await getActiveTab())?.url || '';
       const sessionId = `session-${Date.now()}`;
 
@@ -342,9 +343,11 @@ async function handleStopRecording(): Promise<void> {
         semanticKnowledge: pipelineOutcome.semanticKnowledge ?? undefined,
         applicationKnowledge: pipelineOutcome.applicationKnowledge ?? undefined,
         knowledgeWarnings: pipelineOutcome.warnings.length > 0 ? pipelineOutcome.warnings : undefined,
-        // D12: carry pipeline artifacts that were previously dropped
+        // D12: carry pipeline artifacts that were previously dropped.
+        // Serialize transitions to JSON-safe form (Maps → Records) so
+        // chrome.storage, side-panel, export, and API consumers all work.
         outcomes: [...pipelineOutcome.outcomes.values()],
-        transitions: pipelineOutcome.transitions,
+        transitions: serializeStateTransitions(pipelineOutcome.transitions),
         appId: pipelineOutcome.appId,
       };
 

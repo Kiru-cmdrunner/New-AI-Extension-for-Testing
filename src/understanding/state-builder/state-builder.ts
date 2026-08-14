@@ -86,9 +86,25 @@ export class StateBuilder {
       this.deriveEntitiesFromApiOp(op, changes);
     }
 
+    // ── Build dedup guard from signal-level changes ──
+    // D2/dup fix: collect paths that CounterSignalExtractor and
+    // ListSignalExtractor already handle, so processPageContent() can
+    // skip re-recording them.
+    const counterPaths = new Set(
+      signals.counterChanges.map((cc) => cc.elementPath),
+    );
+    const collectionPaths = new Set(
+      signals.listChanges.map((lc) => lc.containerPath),
+    );
+
     // ── Page content snapshot (M9.4) ──
     if (signals.pageContent) {
-      this.processPageContent(signals.pageContent, changes);
+      this.processPageContent(
+        signals.pageContent,
+        changes,
+        counterPaths,
+        collectionPaths,
+      );
     }
 
     // ── Notifications ──
@@ -318,8 +334,17 @@ export class StateBuilder {
   /**
    * Process a page-content snapshot (M9.4) into the state model:
    * entities, collections, counters, notifications.
+   *
+   * D2/dup fix: counterPaths and collectionPaths contain DOM paths that
+   * CounterSignalExtractor / ListSignalExtractor already handle for this
+   * interaction. We skip those paths here to prevent double-recording.
    */
-  private processPageContent(pc: PageContentSignal, changes: string[]): void {
+  private processPageContent(
+    pc: PageContentSignal,
+    changes: string[],
+    counterPaths?: Set<string>,
+    collectionPaths?: Set<string>,
+  ): void {
     const iid = pc.interactionId;
 
     // Entities observed in content
@@ -350,9 +375,11 @@ export class StateBuilder {
       changes.push(`page-content entity: ${type}:${obs.entityId}`);
     }
 
-    // Counters observed in content (set absolute value)
+    // Counters observed in content — skip paths already handled by
+    // CounterSignalExtractor to prevent double-recording (D2/dup fix).
     for (const obs of pc.observedCounters) {
       if (obs.numericValue === null) continue;
+      if (counterPaths?.has(obs.domPath)) continue; // already processed
       const counterViewId = this.currentView?.id ?? pc.snapshot.viewId ?? undefined;
       this.counterTracker.record(
         obs.domPath,
@@ -364,9 +391,11 @@ export class StateBuilder {
       changes.push(`page-content counter: ${obs.domPath} = ${obs.numericValue}`);
     }
 
-    // Collections observed in content (set absolute count)
+    // Collections observed in content — skip paths already handled by
+    // ListSignalExtractor to prevent corrupted counts (D2/dup fix).
     for (const obs of pc.observedCollections) {
       if (obs.numericValue === null) continue;
+      if (collectionPaths?.has(obs.domPath)) continue; // already processed
       const collViewId = this.currentView?.id ?? pc.snapshot.viewId ?? undefined;
       this.collectionTracker.setCount(obs.domPath, obs.numericValue, iid, collViewId);
       changes.push(`page-content collection: ${obs.domPath} = ${obs.numericValue} items`);
