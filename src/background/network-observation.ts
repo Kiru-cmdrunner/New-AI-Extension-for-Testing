@@ -71,6 +71,22 @@ export interface PendingMainFrameRequest {
   method: string;
   requestBody?: Record<string, string>;
   sourceEventId?: string;
+  /**
+   * RACE FIX: completion status recorded by onCompleted/onErrorOccurred.
+   *
+   * Chrome dispatches webRequest.onCompleted (full body received) BEFORE
+   * webNavigation.onCommitted reaches the extension for fast document
+   * responses (Amazon add-to-cart: POST → 200 HTML directly). The old code
+   * DELETED the pending record at onCompleted, so the commit-time recovery
+   * read null and the POST was lost. Now completion only STAMPS status —
+   * the record stays alive until the onCommitted path consumes it
+   * (consumeMainFrameCorrelation).
+   *
+   * undefined        → still in flight
+   * number >= 0      → completed with this HTTP status
+   * number < 0       → errored (network error, cancel; -1 by convention)
+   */
+  completionStatus?: number;
 }
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -251,6 +267,28 @@ export function getMainFrameCorrelation(tabId: number): PendingMainFrameRequest 
 }
 
 /**
+ * RACE FIX: Consume the pending main-frame record for a tab — called from
+ * the webNavigation.onCommitted path, which is the single owner that may
+ * delete it. Returns the record (with completion status stamped by an
+ * earlier onCompleted, if the losing race order occurred) or null.
+ */
+export function consumeMainFrameCorrelation(tabId: number): PendingMainFrameRequest | null {
+  const rec = pendingMainFrameByTab.get(tabId) ?? null;
+  if (rec) pendingMainFrameByTab.delete(tabId);
+  return rec;
+}
+
+/**
+ * RACE FIX: Find completed ring entries stamped with a trusted-action
+ * sourceEventId — the stop-recording drain join key. Entries whose
+ * interaction-level evidence was already delivered (direct content-script
+ * capture) are excluded by the caller via requestId membership.
+ */
+export function getCompletedBySourceEventId(sourceEventId: string): CompletedWebRequest[] {
+  return completedRequests.filter((r) => r.sourceEventId === sourceEventId);
+}
+
+/**
  * CER-2: Tag all in-flight requests for a tab with the navEvent that is
  * committing — "requests issued from the destroyed document". Membership
  * is by lifecycle state (started, not finished) at commit time, NOT by
@@ -404,10 +442,14 @@ function registerWebRequestListeners(): void {
     const inFlight = inFlightRequests.get(details.requestId);
     inFlightRequests.delete(details.requestId);
 
+    // RACE FIX: do NOT delete the pending main-frame record here. Chrome
+    // may dispatch onCompleted before webNavigation.onCommitted; the
+    // commit path must still find the POST. Stamp completion status and
+    // leave ownership with the commit consumer.
     const pendingDoc = pendingMainFrameByTab.get(details.tabId);
     const isDocumentRequest = pendingDoc?.requestId === details.requestId;
     if (isDocumentRequest) {
-      pendingMainFrameByTab.delete(details.tabId);
+      pendingDoc!.completionStatus = details.statusCode;
     }
 
     // Buffer completed request for synthetic nav evidence recovery.
@@ -450,10 +492,11 @@ function registerWebRequestListeners(): void {
     const inFlight = inFlightRequests.get(details.requestId);
     inFlightRequests.delete(details.requestId);
 
+    // RACE FIX: same handoff semantics as onCompleted — stamp, don't delete.
     const pendingDoc = pendingMainFrameByTab.get(details.tabId);
     const isDocumentRequest = pendingDoc?.requestId === details.requestId;
     if (isDocumentRequest) {
-      pendingMainFrameByTab.delete(details.tabId);
+      pendingDoc!.completionStatus = -1; // network error / cancelled
     }
 
     const chain = redirectChains.get(details.requestId);

@@ -1,0 +1,143 @@
+/**
+ * RACE FIX — Stop-Recording Network Evidence Drain
+ *
+ * The commit-time recovery (recoverNetworkForNavigationById) covers the
+ * common ordering. Two residual loss windows remain when neither the
+ * content-script delivery nor the commit-time consumer captured a request:
+ *
+ *   1. A main-frame POST whose pending record was consumed by a DIFFERENT
+ *      commit on the same tab (e.g. quick back-to-back navigations), or
+ *      whose commit arrived before the SW finished restoring state.
+ *   2. Any completed request stamped with a trusted-action sourceEventId
+ *      whose interaction-level evidence delivery was destroyed by the
+ *      page reload (the classic Amazon add-to-cart shape).
+ *
+ * The ring buffer retains these entries (originalUrl, method, status,
+ * requestBody, sourceEventId) — this module is the promised second pass
+ * that joins them back onto the correct interaction at stop-recording
+ * time, BEFORE the understanding pipeline consumes the interactions.
+ *
+ * Pure functions: no chrome.* access — fully unit-testable.
+ */
+
+import type { NetworkActivity } from '../shared/behavioral-evidence-types';
+import type { ComponentInteraction } from '../shared/component-types';
+
+/** Ring entry shape exposed by network-observation (CompletedWebRequest). */
+export interface DrainEntry {
+  url: string;
+  method: string;
+  status: number;
+  requestId: string;
+  sourceEventId?: string;
+  requestBody?: Record<string, string>;
+  documentRequest?: boolean;
+}
+
+/** Result of a drain pass. */
+export interface DrainResult {
+  /** Interactions with recovered evidence merged in (same references, mutated). */
+  updatedInteractions: ComponentInteraction[];
+  /** requestIds actually merged, for logging/diagnostics. */
+  mergedRequestIds: string[];
+}
+
+/** Analytics/noise URL filter — mirrors the commit-time recovery filter. */
+const NOISE_URL_RE =
+  /\.(png|jpg|jpeg|gif|webp|svg|ico|css|js|mjs|woff2?|ttf)(\?|$)/i;
+
+const TELEMETRY_URL_RE =
+  /\/unagi|\/events\/|\/beacon|\/pixel|\/csm|\/aax2|\/impression|fls-|\/1\/batch\/|uedata/i;
+
+/** Max recovered entries per interaction — matches commit-time cap shape. */
+const MAX_PER_INTERACTION = 20;
+
+/**
+ * Drain completed ring entries onto the interactions that triggered them.
+ *
+ * Join: ringEntry.sourceEventId === interaction.behavioralEvidence.sourceEventId
+ * (exact-event join — the trusted action active when the request STARTED).
+ *
+ * Exactly-once guarantee:
+ *  - entries already present in the interaction's networkActivity (by
+ *    requestId) are skipped — direct content-script capture wins;
+ *  - merged requestIds are tracked across interactions, so an entry is
+ *    merged onto at most one interaction even if two interactions share
+ *    a sourceEventId (defensive; should not occur).
+ *
+ * Synthetic-navigation interactions are EXCLUDED as merge targets — the
+ * commit-time recovery already attached evidence to them, and the causal
+ * owner is the trusted action (the click), not the navigation.
+ *
+ * @returns the set of mutated interactions and merged requestIds
+ */
+export function drainNetworkEvidence(
+  interactions: ComponentInteraction[],
+  ringEntries: DrainEntry[],
+): DrainResult {
+  const updatedInteractions: ComponentInteraction[] = [];
+  const mergedRequestIds: string[] = [];
+
+  // Pre-compute existing requestIds per interaction (exactly-once guard A).
+  const existingIds = new Map<string, Set<string>>();
+  for (const i of interactions) {
+    const ids = new Set<string>();
+    for (const entry of i.behavioralEvidence?.applicationEvidence?.networkActivity ?? []) {
+      const rid = (entry as NetworkActivity & { requestId?: string }).requestId;
+      if (rid) ids.add(rid);
+    }
+    existingIds.set(i.interactionId, ids);
+  }
+
+  // Index trusted actions by their event id — first (and only) occurrence.
+  const byEventId = new Map<string, ComponentInteraction>();
+  for (const i of interactions) {
+    const evId = i.behavioralEvidence?.sourceEventId;
+    if (!evId) continue;
+    // Synthetic navigations are not merge targets (see docblock).
+    const endReason = i.behavioralEvidence?.window?.endReason;
+    if (endReason === 'page-reload-synthetic') continue;
+    if (!byEventId.has(evId)) byEventId.set(evId, i);
+  }
+
+  // requestIds merged anywhere in this pass (exactly-once guard B).
+  const mergedIds = new Set<string>();
+
+  for (const entry of ringEntries) {
+    if (!entry.sourceEventId) continue; // unstamped → not attributable
+    if (mergedIds.has(entry.requestId)) continue; // already drained
+    if (NOISE_URL_RE.test(entry.url)) continue;
+    if (TELEMETRY_URL_RE.test(entry.url)) continue;
+
+    const target = byEventId.get(entry.sourceEventId);
+    if (!target) continue; // no trusted action owns it — never guess
+
+    // Guard A: direct capture already delivered this request.
+    if (existingIds.get(target.interactionId)?.has(entry.requestId)) continue;
+
+    const appEv = target.behavioralEvidence?.applicationEvidence;
+    if (!appEv) continue; // nowhere to attach
+    if ((appEv.networkActivity?.length ?? 0) >= MAX_PER_INTERACTION) continue;
+
+    const activity: NetworkActivity & { requestId?: string } = {
+      url: entry.url,
+      method: entry.method,
+      status: entry.status,
+      startRelativeToEvent: 0,
+      endRelativeToEvent: null,
+      durationMs: null,
+      resourceType: 'unknown',
+      source: 'webrequest',
+      requestBody: entry.requestBody,
+      sourceEventId: entry.sourceEventId,
+      requestId: entry.requestId,
+    };
+
+    appEv.networkActivity = [...(appEv.networkActivity ?? []), activity];
+    mergedIds.add(entry.requestId);
+    mergedRequestIds.push(entry.requestId);
+    if (!updatedInteractions.includes(target)) updatedInteractions.push(target);
+  }
+
+  return { updatedInteractions, mergedRequestIds };
+}

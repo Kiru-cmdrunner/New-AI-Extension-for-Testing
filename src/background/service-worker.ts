@@ -42,7 +42,7 @@ import {
   startNetworkObservation,
   stopNetworkObservation,
   setLastTrustedAction,
-  getMainFrameCorrelation,
+  consumeMainFrameCorrelation,
   snapshotInFlightForTab,
   getNetworkEvidenceForNavigation,
 } from '../background/network-observation';
@@ -315,6 +315,46 @@ async function handleStopRecording(): Promise<void> {
 
   // Store production interactions for UI display
   await StorageService.setRaw(StorageKeys.LIVE_INTERACTIONS, productionInteractions);
+
+  // ── RACE FIX: stop-recording network evidence drain ──
+  // Second recovery pass for requests whose evidence delivery was
+  // destroyed by a full-page reload and whose commit-time consumer missed
+  // them (onBeforeRequest → onCompleted → onCommitted ordering race).
+  // Joins ring entries to interactions by exact sourceEventId BEFORE the
+  // understanding pipeline consumes them. Exactly-once: requestIds already
+  // captured directly are skipped; telemetry/noise filtered here too.
+  try {
+    const { getCompletedBySourceEventId } = await import('./network-observation');
+    const { drainNetworkEvidence } = await import('./network-drain');
+    const stamped: import('./network-drain').DrainEntry[] = [];
+    for (const i of productionInteractions) {
+      const evId = i.behavioralEvidence?.sourceEventId;
+      if (!evId) continue;
+      for (const r of getCompletedBySourceEventId(evId)) {
+        stamped.push({
+          url: r.url,
+          method: r.method,
+          status: r.status,
+          requestId: r.requestId,
+          sourceEventId: r.sourceEventId,
+          requestBody: r.requestBody,
+          documentRequest: r.documentRequest,
+        });
+      }
+    }
+    const { updatedInteractions, mergedRequestIds } =
+      drainNetworkEvidence(productionInteractions, stamped);
+    if (mergedRequestIds.length > 0) {
+      console.info(
+        `[NetworkDrain] recovered ${mergedRequestIds.length} request(s) onto ` +
+        `${updatedInteractions.length} interaction(s) by sourceEventId`,
+      );
+      await StorageService.setRaw(StorageKeys.LIVE_INTERACTIONS, productionInteractions);
+    }
+  } catch (e) {
+    // Non-fatal — pipeline runs on whatever evidence already exists
+    console.warn('[NetworkDrain] drain failed:', (e as Error).message);
+  }
 
   // ── M9.12: Application Understanding Pipeline ──
   // Runs the full deterministic understanding chain (M9.1→M9.7) over
@@ -905,8 +945,12 @@ function recoverNetworkForNavigationById(
     // Exact-ID evidence: ring entries + in-flight entries tagged with this navEvent
     const byId = getNetworkEvidenceForNavigation(navEventId);
 
-    // The pending main-frame POST (if any) — captured pre-redirect.
-    const pendingDoc = getMainFrameCorrelation(details.tabId);
+    // RACE FIX: CONSUME the pending main-frame record here — onCommitted is
+    // the single owner allowed to delete it. If onCompleted already fired
+    // (losing race order: onBeforeRequest → onCompleted → onCommitted), the
+    // record survives with completionStatus stamped; otherwise it carries
+    // undefined (= still in flight at commit → honest status null).
+    const pendingDoc = consumeMainFrameCorrelation(details.tabId);
 
     const activities: NetworkActivity[] = [];
     const seenRequestIds = new Set<string>();
@@ -917,7 +961,9 @@ function recoverNetworkForNavigationById(
       activities.push({
         url: pendingDoc.originalUrl,
         method: pendingDoc.method,
-        status: null,
+        // RACE FIX: use the stamped completion status when the race was
+        // lost (onCompleted arrived first). undefined = still in flight.
+        status: pendingDoc.completionStatus ?? null,
         startRelativeToEvent: 0,
         endRelativeToEvent: null,
         durationMs: null,
