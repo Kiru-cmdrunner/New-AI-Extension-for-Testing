@@ -249,6 +249,13 @@ async function startRecording(): Promise<void> {
   isRecording = true;
   sessionStorage.setItem(RECORDING_KEY, 'true');
 
+  // MV3 lifecycle fix: flag the document for the MAIN-world interceptor.
+  // network-inject.js is a manifest content script present on EVERY page;
+  // it gates its dispatches on this attribute (shared DOM between MAIN
+  // and ISOLATED worlds). Set BEFORE anything else so requests issued
+  // during startup are captured.
+  document.documentElement.setAttribute('data-cmdrunner-net-active', 'true');
+
   // Flush any stale events from a previous session — but do NOT
   // clear them. If the SW is alive, they get delivered. If not,
   // they stay for the next alive SW.
@@ -298,6 +305,10 @@ async function stopRecording(): Promise<void> {
   if (!isRecording) return;
   isRecording = false;
   sessionStorage.setItem(RECORDING_KEY, 'false');
+
+  // MV3 lifecycle fix: clear the MAIN-world interceptor gate FIRST —
+  // requests issued after stop must not dispatch evidence.
+  document.documentElement.setAttribute('data-cmdrunner-net-active', 'false');
 
   // Final flush attempt
   await flushPendingEvents();

@@ -18,6 +18,27 @@
 
 // ── Types ────────────────────────────────────────────────────────────
 
+/**
+ * Persisted per-tab recording gate (MV3 lifecycle fix).
+ *
+ * chrome.storage.local key holding the array of tabIds whose recordings are
+ * active. Written at startNetworkObservation, cleared at stopNetworkObservation.
+ * On service-worker restart the module re-seeds its gate from this key, so
+ * webRequest callbacks registered at top level can decide — without any
+ * in-memory state — whether a request belongs to an active recording.
+ */
+export const OBSERVING_TABS_KEY = 'cmdrunner_net_observing_tabs';
+
+/**
+ * Persisted last trusted action per recording (MV3 lifecycle fix).
+ * Survives SW restarts so requests waking a fresh SW can still be stamped
+ * with the click that triggered them (exact sourceEventId join).
+ */
+export const LAST_ACTION_KEY = 'cmdrunner_net_last_action';
+
+/** Max age of a persisted last-action stamp before it is ignored (ms). */
+export const LAST_ACTION_TTL_MS = 30_000;
+
 /** In-flight webRequest tracking for matching start → complete. */
 interface InFlightWebRequest {
   url: string;
@@ -141,6 +162,20 @@ const lastTrustedActionByTab = new Map<
 /** Whether webRequest listeners are currently registered. */
 let listenersActive = false;
 
+/**
+ * MV3 lifecycle fix: true once module init has re-seeded the observing-tabs
+ * gate from chrome.storage. Callbacks firing before this resolves use the
+ * unknown-state buffering path (capture to ring, no forward) so no request
+ * is lost during the SW-wake read window.
+ */
+let gateSeeded = false;
+
+/**
+ * TabIds known to have an active recording (mirrors the persisted set).
+ * Members are recording tabs regardless of which SW instance started them.
+ */
+const observingTabIds = new Set<number>();
+
 /** Callback for onBeforeRequest. */
 let onBeforeRequestCallback:
   | ((details: chrome.webRequest.WebRequestBodyDetails) => void)
@@ -161,7 +196,97 @@ let onErrorCallback:
   | ((details: chrome.webRequest.WebResponseErrorDetails) => void)
   | null = null;
 
-// ── Public API ───────────────────────────────────────────────────────
+// ── MV3 Lifecycle: persisted gate + top-level registration ───────────
+
+/**
+ * Whether requests from this tab belong to an active recording.
+ *
+ * MV3 lifecycle fix: membership in `observingTabIds` is the authoritative
+ * gate — NOT the registration timing. Listeners are registered at top level
+ * (every SW start); a tab that is recording keeps being captured even when
+ * the SW instance that started the recording is long dead.
+ */
+function tabIsObserving(tabId: number): boolean {
+  return observingTabIds.has(tabId);
+}
+
+/**
+ * Per-callback capture gate.
+ *
+ * true  → tab is recording (in-memory set or persisted set re-seeded).
+ * false → tab is NOT recording.
+ * Special case — unknown state (gateSeeded false, set empty): process and
+ * buffer into the ring but do NOT forward to the content script. The
+ * stop-time drain (sourceEventId join) recovers these. Conservative in the
+ * direction of capturing evidence, never fabricating it.
+ */
+function shouldProcessRequest(tabId: number): boolean {
+  if (observingTabIds.size > 0) return tabIsObserving(tabId);
+  if (gateSeeded) return false; // storage read finished; set genuinely empty
+  return true; // unknown state — SW just woke; capture for the drain
+}
+
+/**
+ * Whether a captured request should be forwarded to the content script's
+ * NetworkBridge (live evidence window collection) or held in the SW ring
+ * only (unknown-state / restarted-SW case).
+ */
+function shouldForwardToTab(tabId: number): boolean {
+  // Forward only when this SW instance is the live observer for the tab —
+  // the bridge lives in the page and only exists while it was started by
+  // this instance's recording session... but the bridge auto-resumes on
+  // pageshow via the content script, so membership alone is sufficient.
+  return tabIsObserving(tabId);
+}
+
+/**
+ * Persist the observing-tabs set to chrome.storage.
+ * Fire-and-forget: in-memory set is the synchronous source of truth;
+ * storage is the cross-SW-restart source of truth.
+ */
+function persistObservingTabs(): void {
+  try {
+    const record: Record<string, unknown> = {
+      [OBSERVING_TABS_KEY]: [...observingTabIds],
+    };
+    void (chrome?.storage?.local?.set
+      ? chrome.storage.local.set(record)
+      : Promise.resolve());
+  } catch {
+    // Storage unavailable — degraded to in-memory-only gate
+  }
+}
+
+/**
+ * Re-seed the observing-tabs gate from chrome.storage on module load.
+ *
+ * Runs once per SW start, async. While it is in flight (or when storage is
+ * unavailable), `gateSeeded` is false and callbacks take the conservative
+ * unknown-state path: buffer requests from any tab into the ring (bounded),
+ * never forward to the content script. Nothing is lost; the stop-time drain
+ * joins by sourceEventId as the recovery path.
+ */
+function seedObservingTabsFromStorage(): void {
+  try {
+    void chrome.storage.local
+      .get(OBSERVING_TABS_KEY)
+      .then((result) => {
+        const stored = result?.[OBSERVING_TABS_KEY];
+        if (Array.isArray(stored)) {
+          for (const id of stored) {
+            if (typeof id === 'number') observingTabIds.add(id);
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        gateSeeded = true;
+      });
+  } catch {
+    // storage API missing (tests) — mark seeded, in-memory gate only
+    gateSeeded = true;
+  }
+}
 
 /**
  * Start network observation for a tab.
@@ -181,10 +306,17 @@ export async function startNetworkObservation(tabId: number): Promise<void> {
   redirectChains.clear();
   lastTrustedActionByTab.clear();
 
+  // MV3 lifecycle fix: register the tab in the persisted observing set.
+  // Top-level listeners (registered at module load) gate on this set —
+  // recording survives SW restarts.
+  observingTabIds.add(tabId);
+  persistObservingTabs();
+
   // 1. Register webRequest listeners IMMEDIATELY (race coverage)
   registerWebRequestListeners();
 
-  // 2. Inject MAIN-world interceptor
+  // 2. Inject MAIN-world interceptor (idempotent; manifest content script
+  //    also auto-injects on every document — this covers the start race)
   await injectNetworkInterceptor(tabId);
 }
 
@@ -198,12 +330,17 @@ export async function startNetworkObservation(tabId: number): Promise<void> {
  * @param tabId The tab to stop observing
  */
 export function stopNetworkObservation(_tabId: number): void {
-  unregisterWebRequestListeners();
+  if (activeTabId !== null) {
+    observingTabIds.delete(activeTabId);
+    persistObservingTabs();
+  }
+  activeTabId = null;
   inFlightRequests.clear();
   pendingMainFrameByTab.clear();
   redirectChains.clear();
   lastTrustedActionByTab.clear();
-  activeTabId = null;
+  // Keep listeners registered — top-level registration is now permanent
+  // and gated per-tab by the persisted observing set (MV3 lifecycle fix).
 
   // Note: MAIN-world restoration is handled by the content script's
   // NetworkBridge.sendStopSignal() which dispatches 'cmdrunner-net-stop'
@@ -214,6 +351,16 @@ export function stopNetworkObservation(_tabId: number): void {
  */
 export function isObserving(): boolean {
   return listenersActive;
+}
+
+/**
+ * TEST-ONLY hook: simulate the SW-wake window by directly setting the gate
+ * state (seeded flag + observing set). No production caller.
+ */
+export function __testSetGateStateForSim(state: { seeded: boolean; tabs: number[] }): void {
+  gateSeeded = state.seeded;
+  observingTabIds.clear();
+  for (const t of state.tabs) observingTabIds.add(t);
 }
 
 /**
@@ -255,6 +402,55 @@ export function setLastTrustedAction(
     ...action,
     wallClock: Date.now(),
   });
+  // MV3 lifecycle fix: persist so a SW-restart instance can still stamp
+  // requests with the correct trusted action (exact-event join survives
+  // service-worker death between the click and the request).
+  try {
+    const record: Record<string, unknown> = {
+      [LAST_ACTION_KEY]: {
+        tabId,
+        action,
+        wallClock: Date.now(),
+      },
+    };
+    void (chrome?.storage?.local?.set
+      ? chrome.storage.local.set(record)
+      : Promise.resolve());
+  } catch {
+    // Storage unavailable — in-memory only (pre-restart behavior)
+  }
+}
+
+/**
+ * MV3 lifecycle fix: restore the persisted last trusted action for a tab
+ * after SW restart. Returns null when none persisted or stale.
+ */
+export function restoreLastTrustedActionFromStorage(): void {
+  try {
+    void chrome.storage.local
+      .get(LAST_ACTION_KEY)
+      .then((result) => {
+        const rec = result?.[LAST_ACTION_KEY] as
+          | { tabId: number; action: { eventId: string; interactionId: string }; wallClock: number }
+          | undefined;
+        if (
+          rec &&
+          typeof rec.tabId === 'number' &&
+          rec.action &&
+          typeof rec.action.eventId === 'string' &&
+          Date.now() - rec.wallClock < LAST_ACTION_TTL_MS
+        ) {
+          lastTrustedActionByTab.set(rec.tabId, {
+            eventId: rec.action.eventId,
+            interactionId: rec.action.interactionId,
+            wallClock: rec.wallClock,
+          });
+        }
+      })
+      .catch(() => {});
+  } catch {
+    // Storage API missing (tests) — no-op
+  }
 }
 
 /**
@@ -368,8 +564,10 @@ function registerWebRequestListeners(): void {
   void filter;
 
   onBeforeRequestCallback = (details) => {
-    // Only process requests from the active tab
-    if (activeTabId !== null && details.tabId !== activeTabId) return;
+    // MV3 lifecycle fix: membership in the persisted observing set is the
+    // gate — not which SW instance is alive. Unknown-state (gate not yet
+    // seeded from storage) captures conservatively into the ring.
+    if (!shouldProcessRequest(details.tabId)) return;
 
     // Parse requestBody formData into a flat key→string map.
     // Chrome provides this when extraInfoSpec includes 'requestBody'.
@@ -416,20 +614,24 @@ function registerWebRequestListeners(): void {
     }
 
     // P1-4 Fix: Include wallClock (Date.now()) for cross-process timestamp normalization
-    forwardToTab(details.tabId, {
-      url: details.url,
-      method: details.method,
-      timestamp: performance.now(),
-      wallClock: Date.now(),
-      phase: 'start' as const,
-      status: null,
-      requestId: details.requestId,
-    });
+    // MV3 lifecycle: forward only when the live bridge should receive it;
+    // unknown-state captures stay SW-side for the drain.
+    if (shouldForwardToTab(details.tabId)) {
+      forwardToTab(details.tabId, {
+        url: details.url,
+        method: details.method,
+        timestamp: performance.now(),
+        wallClock: Date.now(),
+        phase: 'start' as const,
+        status: null,
+        requestId: details.requestId,
+      });
+    }
   };
 
   // CER: record redirect hops — requestId is reused across the chain.
   onBeforeRedirectCallback = (details) => {
-    if (activeTabId !== null && details.tabId !== activeTabId) return;
+    if (!shouldProcessRequest(details.tabId)) return;
     const chain = redirectChains.get(details.requestId) ?? [details.url];
     // details.url at onBeforeRedirect is the URL BEFORE this hop
     chain.push(details.redirectUrl);
@@ -437,7 +639,7 @@ function registerWebRequestListeners(): void {
   };
 
   onCompletedCallback = (details) => {
-    if (activeTabId !== null && details.tabId !== activeTabId) return;
+    if (!shouldProcessRequest(details.tabId)) return;
 
     const inFlight = inFlightRequests.get(details.requestId);
     inFlightRequests.delete(details.requestId);
@@ -475,19 +677,22 @@ function registerWebRequestListeners(): void {
     });
 
     // P1-4 Fix: Include wallClock
-    forwardToTab(details.tabId, {
-      url: details.url,
-      method: inFlight?.method ?? details.method,
-      timestamp: performance.now(),
-      wallClock: Date.now(),
-      phase: 'complete' as const,
-      status: details.statusCode,
-      requestId: details.requestId,
-    });
+    // MV3 lifecycle: gate live forwarding (unknown-state captures stay SW-side)
+    if (shouldForwardToTab(details.tabId)) {
+      forwardToTab(details.tabId, {
+        url: details.url,
+        method: inFlight?.method ?? details.method,
+        timestamp: performance.now(),
+        wallClock: Date.now(),
+        phase: 'complete' as const,
+        status: details.statusCode,
+        requestId: details.requestId,
+      });
+    }
   };
 
   onErrorCallback = (details) => {
-    if (activeTabId !== null && details.tabId !== activeTabId) return;
+    if (!shouldProcessRequest(details.tabId)) return;
 
     const inFlight = inFlightRequests.get(details.requestId);
     inFlightRequests.delete(details.requestId);
@@ -520,15 +725,18 @@ function registerWebRequestListeners(): void {
     });
 
     // P1-4 Fix: Include wallClock
-    forwardToTab(details.tabId, {
-      url: details.url,
-      method: inFlight?.method ?? 'GET',
-      timestamp: performance.now(),
-      wallClock: Date.now(),
-      phase: 'complete' as const,
-      status: 0,
-      requestId: details.requestId,
-    });
+    // MV3 lifecycle: gate live forwarding (unknown-state captures stay SW-side)
+    if (shouldForwardToTab(details.tabId)) {
+      forwardToTab(details.tabId, {
+        url: details.url,
+        method: inFlight?.method ?? 'GET',
+        timestamp: performance.now(),
+        wallClock: Date.now(),
+        phase: 'complete' as const,
+        status: 0,
+        requestId: details.requestId,
+      });
+    }
   };
 
   // Use a broad URL filter and filter by tabId in callbacks
@@ -561,8 +769,12 @@ function registerWebRequestListeners(): void {
 
 /**
  * Unregister chrome.webRequest listeners.
+ *
+ * MV3 lifecycle fix: no longer called in production — listeners are
+ * registered at top level on every SW start and permanently gated by the
+ * persisted observing set. Retained as an explicit teardown for tests.
  */
-function unregisterWebRequestListeners(): void {
+export function unregisterWebRequestListeners(): void {
   if (!listenersActive) return;
   if (!chrome?.webRequest) return;
 
@@ -662,4 +874,21 @@ function forwardToTab(
   } catch {
     // Tab may not exist — silent
   }
+}
+
+// ── MV3 Lifecycle: top-level registration ────────────────────────────
+//
+// webRequest listeners are registered at EVERY service-worker start —
+// before this fix they were registered only inside startNetworkObservation,
+// so any SW death mid-recording silently disabled network capture for the
+// rest of the session (Amazon add-to-cart: observed commit + fromUrl but
+// zero network evidence). Registration is permanent; capture is gated per
+// tab by the persisted observing set, so non-recording traffic costs
+// nothing beyond the early-return filter.
+//
+// Guarded so the module is importable in tests / non-extension contexts.
+if (typeof chrome !== 'undefined' && chrome?.webRequest) {
+  seedObservingTabsFromStorage();
+  restoreLastTrustedActionFromStorage();
+  registerWebRequestListeners();
 }

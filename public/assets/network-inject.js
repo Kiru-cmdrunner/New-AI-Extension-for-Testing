@@ -25,12 +25,26 @@
   }
   window.__cmdrunnerNetPatched = true;
 
+  // MV3 lifecycle fix: recording gate.
+  //
+  // This script is now a MANIFEST content script (world: MAIN) — it loads
+  // on EVERY document, recording or not. The isolated-world recorder
+  // (recorder-entry.ts) sets data-cmdrunner-net-active="true" on
+  // <html> while recording is active. The attribute is shared between
+  // MAIN and ISOLATED worlds (same DOM), so it is the reliable gate.
+  // When not recording: patches stay installed but dispatch NOTHING.
+  function isRecordingActive() {
+    var el = document.documentElement;
+    return !!(el && el.getAttribute('data-cmdrunner-net-active') === 'true');
+  }
+
   // Save originals for restoration
   var originalFetch = window.fetch;
   var originalXhrOpen = XMLHttpRequest.prototype.open;
   var originalXhrSend = XMLHttpRequest.prototype.send;
 
   function dispatch(detail) {
+    if (!isRecordingActive()) return;
     // Add resourceType if not already set
     if (!detail.resourceType) {
       detail.resourceType = 'fetch';

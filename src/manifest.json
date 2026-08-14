@@ -31,6 +31,13 @@
       "js": ["src/recorder/phase5/recorder-entry.ts"],
       "all_frames": true,
       "run_at": "document_start"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["public/assets/network-inject.js"],
+      "all_frames": true,
+      "run_at": "document_start",
+      "world": "MAIN"
     }
   ],
   "icons": {

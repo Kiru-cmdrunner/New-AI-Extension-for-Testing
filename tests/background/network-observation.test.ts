@@ -126,7 +126,9 @@ describe('NetworkObservation', () => {
 
     it('isObserving returns true after start', async () => {
       const mod = await importModule();
-      expect(mod.isObserving()).toBe(false);
+      // MV3 lifecycle fix: listeners register at module load (top level),
+      // so observation is active from import onward.
+      expect(mod.isObserving()).toBe(true);
       await mod.startNetworkObservation(123);
       expect(mod.isObserving()).toBe(true);
     });
@@ -142,16 +144,18 @@ describe('NetworkObservation', () => {
   });
 
   describe('stopNetworkObservation', () => {
-    it('removes webRequest listeners', async () => {
+    it('keeps listeners registered — gate closes, not teardown (MV3 lifecycle fix)', async () => {
       const mod = await importModule();
       await mod.startNetworkObservation(123);
       expect(mod.isObserving()).toBe(true);
 
       mod.stopNetworkObservation(123);
-      expect(mod.isObserving()).toBe(false);
-      expect(mockWebRequestListeners.onBeforeRequest).toHaveLength(0);
-      expect(mockWebRequestListeners.onCompleted).toHaveLength(0);
-      expect(mockWebRequestListeners.onErrorOccurred).toHaveLength(0);
+      // Listeners stay registered (top-level registration is permanent);
+      // capture stops via the persisted observing-set gate.
+      expect(mod.isObserving()).toBe(true);
+      expect(mockWebRequestListeners.onBeforeRequest).toHaveLength(1);
+      expect(mockWebRequestListeners.onCompleted).toHaveLength(1);
+      expect(mockWebRequestListeners.onErrorOccurred).toHaveLength(1);
     });
   });
 
