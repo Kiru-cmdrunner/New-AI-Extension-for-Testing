@@ -25,6 +25,20 @@ import type { ViewDescriptor } from '../types';
 export type EntityType = string;
 
 /**
+ * A single lifecycle state transition for an entity.
+ */
+export interface EntityStateChange {
+  /** Previous state (null when this is the initial observation). */
+  from: string | null;
+  /** New state. */
+  to: string;
+  /** Interaction ID when this transition was observed. */
+  changedAt: string;
+  /** Detection evidence description. */
+  evidence: string;
+}
+
+/**
  * A semantic object the application works with.
  */
 export interface Entity {
@@ -40,6 +54,10 @@ export interface Entity {
   firstSeenAt: string;
   /** Interaction ID of last update. */
   lastUpdated: string;
+  /** Current lifecycle state (e.g., 'pending', 'approved', 'open', 'merged'). M9.9. */
+  currentState?: string;
+  /** Ordered lifecycle transitions. M9.9. */
+  stateHistory?: EntityStateChange[];
 }
 
 export type EntitySource = 'view-derived' | 'target-derived' | 'counter-derived' | 'inferred';

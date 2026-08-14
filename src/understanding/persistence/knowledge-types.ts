@@ -58,6 +58,24 @@ export interface KnowledgeEntityRow {
   revision: number;
   /** Last recording session that observed this entity. */
   lastSessionId: string;
+  /** Current lifecycle state (e.g., 'pending', 'approved'). M9.9. */
+  currentState?: string;
+  /** Ordered lifecycle transitions. M9.9. */
+  stateHistory?: KnowledgeEntityStateChange[];
+}
+
+/**
+ * A persisted entity state transition. M9.9.
+ */
+export interface KnowledgeEntityStateChange {
+  /** Previous state (null when this is the initial observation). */
+  from: string | null;
+  /** New state. */
+  to: string;
+  /** Interaction ID when this transition was observed. */
+  changedAt: string;
+  /** Detection evidence description. */
+  evidence: string;
 }
 
 // -- View --

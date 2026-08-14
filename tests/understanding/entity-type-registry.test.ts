@@ -66,6 +66,7 @@ function makePageContent(
     observedCounters: [],
     observedCollections: [],
     observedNotifications: [],
+    observedStatusBadges: [],
     ...overrides,
   };
 }

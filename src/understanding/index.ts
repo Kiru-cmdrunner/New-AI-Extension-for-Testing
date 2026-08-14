@@ -51,10 +51,14 @@ export {
 } from './state-builder/entity-type-registry';
 export type { EntityTypeDetectionRule } from './state-builder/entity-type-registry';
 
+// Entity state tracker (M9.9)
+export { EntityStateTracker, normalizeStateText, extractStateFromNotification } from './state-builder/entity-state-tracker';
+
 export type {
   Entity,
   EntityType,
   EntitySource,
+  EntityStateChange,
   Collection,
   CounterRecord,
   CounterValue,
@@ -108,6 +112,7 @@ export type { KnowledgePersistenceInput } from './persistence/knowledge-persiste
 export type {
   ApplicationRow,
   KnowledgeEntityRow,
+  KnowledgeEntityStateChange,
   KnowledgeViewRow,
   KnowledgeViewTransitionRow,
   KnowledgeCollectionRow,
@@ -136,6 +141,7 @@ export { ConsistencyChecker } from './consolidation/consistency-checker';
 export type {
   ApplicationKnowledge,
   ConsolidatedEntity,
+  EntityStateChangeSummary,
   ConsolidatedView,
   ConsolidatedCollection,
   ConsolidatedCounter,

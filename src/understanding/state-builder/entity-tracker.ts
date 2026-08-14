@@ -35,6 +35,14 @@ export class EntityTracker {
       // Merge attributes — new values overwrite old
       existing.attributes = { ...existing.attributes, ...entity.attributes };
       existing.lastUpdated = entity.lastUpdated;
+      // M9.9: preserve lifecycle state — only the EntityStateTracker may
+      // change it, and it does so through observe(); never through upsert.
+      if (existing.currentState !== undefined) {
+        existing.currentState = existing.currentState;
+      }
+      if (existing.stateHistory !== undefined) {
+        existing.stateHistory = existing.stateHistory;
+      }
       return existing;
     }
     this.entities.set(entity.id, entity);

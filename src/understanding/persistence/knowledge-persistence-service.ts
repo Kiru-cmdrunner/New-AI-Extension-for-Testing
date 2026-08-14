@@ -197,6 +197,13 @@ export class KnowledgePersistenceService {
         lastSeenAt: now,
         revision: 1,
         lastSessionId: sessionId,
+        currentState: entity.currentState,
+        stateHistory: entity.stateHistory?.map((h) => ({
+          from: h.from,
+          to: h.to,
+          changedAt: h.changedAt,
+          evidence: h.evidence,
+        })),
       });
     }
   }

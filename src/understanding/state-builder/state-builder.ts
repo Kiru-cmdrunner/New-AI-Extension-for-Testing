@@ -13,7 +13,7 @@
  */
 
 import type { SignalSet, ViewChangeSignal, ApiOperationSignal } from '../types';
-import type { PageContentSignal } from '../page-content/page-content-types';
+import type { PageContentSignal, ObservedItem } from '../page-content/page-content-types';
 import { EntityTracker } from './entity-tracker';
 import { CollectionTracker } from './collection-tracker';
 import { CounterTracker } from './counter-tracker';
@@ -22,6 +22,11 @@ import {
   createEntityTypeRegistry,
   EntityTypeRegistry,
 } from './entity-type-registry';
+import {
+  EntityStateTracker,
+  normalizeStateText,
+  extractStateFromNotification,
+} from './entity-state-tracker';
 import type { ApplicationState, StateTransition, Entity } from './types';
 
 export class StateBuilder {
@@ -31,6 +36,7 @@ export class StateBuilder {
   private readonly collectionTracker = new CollectionTracker();
   private readonly counterTracker = new CounterTracker();
   private readonly notificationTracker = new NotificationTracker();
+  private readonly stateTracker = new EntityStateTracker();
   private interactionCount = 0;
   private lastInteractionId: string | null = null;
   private readonly entityTypeRegistry: EntityTypeRegistry;
@@ -84,6 +90,9 @@ export class StateBuilder {
           signals.interactionId,
         );
         changes.push(`notification: "${notif.text.substring(0, 50)}" (${notif.severity})`);
+
+        // M9.9: Notification text may indicate a state transition.
+        this.detectStateFromNotification(notif.text, signals.interactionId);
       } else {
         this.notificationTracker.recordDisappearance(notif.elementPath, signals.interactionId);
       }
@@ -322,16 +331,146 @@ export class StateBuilder {
       );
       changes.push(`page-content notification: "${obs.text.substring(0, 40)}"`);
     }
+
+    // M9.9: Status badges → entity lifecycle state.
+    for (const obs of pc.observedStatusBadges) {
+      this.processStatusBadge(obs, iid, changes);
+    }
+  }
+
+  // ── M9.9: Entity State Detection ──────────────────────────────────────
+
+  /**
+   * M9.9: Process a status badge observation into an entity state change.
+   */
+  private processStatusBadge(obs: ObservedItem, iid: string, changes: string[]): void {
+    const state = normalizeStateText(obs.text);
+    if (!state) return; // unrecognized state keyword — skip silently
+
+    // Case 1: the badge carries an entity reference.
+    if (obs.entityId) {
+      const target = this.resolveEntityId(obs.entityId, obs.entityType);
+      if (target) {
+        const changed = this.stateTracker.observe(
+          target,
+          state,
+          iid,
+          `status-badge "${obs.text}" (${obs.domPath})`,
+        );
+        if (changed) changes.push(`state: ${target} → "${state}"`);
+      }
+      return;
+    }
+
+    // Case 2: no entity reference — associate with the single tracked entity.
+    const entities = this.entityTracker.snapshot();
+    if (entities.size === 0) return;
+    if (entities.size === 1) {
+      const [onlyId] = [...entities.keys()];
+      const changed = this.stateTracker.observe(
+        onlyId,
+        state,
+        iid,
+        `status-badge "${obs.text}" (${obs.domPath}, sole entity)`,
+      );
+      if (changed) changes.push(`state: ${onlyId} → "${state}"`);
+      return;
+    }
+
+    // Case 3: multiple entities — apply to all entities matching the badge's
+    // entity type (if the badge names one). Otherwise skip (ambiguous).
+    if (obs.entityType) {
+      const matching = [...entities.entries()].filter(([, e]) => e.type === obs.entityType);
+      if (matching.length >= 1) {
+        for (const [id] of matching) {
+          const changed = this.stateTracker.observe(
+            id,
+            state,
+            iid,
+            `status-badge "${obs.text}" (${obs.domPath}, type match)`,
+          );
+          if (changed) changes.push(`state: ${id} → "${state}"`);
+        }
+      }
+    }
+  }
+
+  /**
+   * M9.9: Resolve a badge's entity reference to an actual tracked entity ID.
+   */
+  private resolveEntityId(entityId: string, entityType: string | null): string | null {
+    // Direct hit on a tracked entity.
+    if (this.entityTracker.get(entityId)) return entityId;
+
+    // Try prefixed form ("leave-request:123" for observed entityId "123").
+    if (entityType) {
+      const prefixed = `${entityType}:${entityId}`;
+      if (this.entityTracker.get(prefixed)) return prefixed;
+    }
+
+    // Try suffix match on tracked entities.
+    for (const candidate of this.entityTracker.snapshot().keys()) {
+      if (candidate.endsWith(`:${entityId}`)) return candidate;
+    }
+    return null;
+  }
+
+  /**
+   * M9.9: Notification text may indicate a state transition.
+   * E.g., "Leave request approved" → state "approved".
+   *
+   * Association: if only one entity exists, apply to it. Otherwise pick the
+   * most-recently-updated entity (deterministic tie-break).
+   */
+  private detectStateFromNotification(text: string, iid: string): void {
+    const state = extractStateFromNotification(text);
+    if (!state) return;
+
+    const entities = this.entityTracker.snapshot();
+    if (entities.size === 0) return;
+
+    if (entities.size === 1) {
+      const [onlyId] = [...entities.keys()];
+      this.stateTracker.observe(
+        onlyId,
+        state,
+        iid,
+        `notification "${text.substring(0, 60)}"`,
+      );
+      return;
+    }
+
+    // Multiple entities: pick the most recently updated.
+    let latestId: string | null = null;
+    let latestUpdated = '';
+    for (const [id, e] of entities) {
+      if (String(e.lastUpdated) > latestUpdated) {
+        latestUpdated = String(e.lastUpdated);
+        latestId = id;
+      }
+    }
+    if (latestId) {
+      this.stateTracker.observe(
+        latestId,
+        state,
+        iid,
+        `notification "${text.substring(0, 60)}" (most-recent entity)`,
+      );
+    }
   }
 
   /**
    * Get the current application state snapshot.
    */
   getCurrentState(): ApplicationState {
+    // M9.9: apply tracked state to entity snapshot before returning.
+    const entities = this.entityTracker.snapshot();
+    this.stateTracker.applyToEntities(entities);
+
     return {
       currentView: this.currentView ? { ...this.currentView } : null,
       currentUrl: this.currentUrl,
-      entities: this.entityTracker.snapshot(),
+      entities,
       collections: this.collectionTracker.snapshot(),
       counters: this.counterTracker.snapshot(),
       notifications: this.notificationTracker.getAll(),
@@ -350,6 +489,7 @@ export class StateBuilder {
     this.collectionTracker.clear();
     this.counterTracker.clear();
     this.notificationTracker.clear();
+    this.stateTracker.clear();
     this.interactionCount = 0;
     this.lastInteractionId = null;
   }

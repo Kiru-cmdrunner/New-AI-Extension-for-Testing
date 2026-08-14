@@ -89,6 +89,8 @@ export interface PageContentSignal extends Signal {
   observedCollections: ObservedItem[];
   /** Extracted notification observations from the snapshot. */
   observedNotifications: ObservedItem[];
+  /** Extracted status-badge observations (M9.9 lifecycle states). */
+  observedStatusBadges: ObservedItem[];
 }
 
 // -- Selector Config --

@@ -11,6 +11,7 @@ import type { KnowledgeDatabase } from './knowledge-database';
 import type {
   ApplicationRow,
   KnowledgeEntityRow,
+  KnowledgeEntityStateChange,
   KnowledgeViewRow,
   KnowledgeViewTransitionRow,
   KnowledgeCollectionRow,
@@ -88,6 +89,15 @@ export class KnowledgeRepository {
         lastSeenAt: sameSession ? existing.lastSeenAt : entity.lastSeenAt,
         lastSessionId: entity.lastSessionId,
         revision: sameSession ? existing.revision : existing.revision + 1,
+        // M9.9: carry through lifecycle state from the new observation.
+        // When sameSession, keep the existing state (already current for this session).
+        // Otherwise take the new entity's state if provided.
+        currentState: sameSession
+          ? existing.currentState
+          : (entity.currentState ?? existing.currentState),
+        stateHistory: sameSession
+          ? existing.stateHistory
+          : mergeStateHistory(existing.stateHistory, entity.stateHistory),
       });
     } else {
       await this.db.knowledgeEntities.put(entity);
@@ -355,4 +365,32 @@ export class KnowledgeRepository {
 
     return { entities, views, transitions, collections, counters, notifications, outcomes };
   }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────
+
+/**
+ * Merge two state histories, appending only transitions from `incoming`
+ * whose `to` differs from the last transition in `existing`.
+ * Deduplicates by (from → to) pair when identical evidence text.
+ *
+ * M9.9
+ */
+function mergeStateHistory(
+  existing: KnowledgeEntityStateChange[] | undefined,
+  incoming: KnowledgeEntityStateChange[] | undefined,
+): KnowledgeEntityStateChange[] | undefined {
+  if (!incoming || incoming.length === 0) return existing;
+  if (!existing || existing.length === 0) return incoming;
+
+  const merged = [...existing];
+  for (const change of incoming) {
+    const last = merged[merged.length - 1];
+    if (last && last.to === change.to && last.from === change.from) {
+      // Skip duplicate of the last transition.
+      continue;
+    }
+    merged.push(change);
+  }
+  return merged;
 }

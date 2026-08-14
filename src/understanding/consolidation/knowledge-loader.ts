@@ -209,6 +209,8 @@ export class KnowledgeLoader {
         firstSeenAt: row.firstSeenAt,
         lastSeenAt: row.lastSeenAt,
         observedInSessions: sessions,
+        currentState: row.currentState,
+        stateHistory: row.stateHistory,
       };
     });
   }

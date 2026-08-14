@@ -24,6 +24,7 @@ export function extractFromSnapshot(
   const observedCounters = snapshot.items.filter((i) => i.kind === 'counter');
   const observedCollections = snapshot.items.filter((i) => i.kind === 'collection');
   const observedNotifications = snapshot.items.filter((i) => i.kind === 'notification');
+  const observedStatusBadges = snapshot.items.filter((i) => i.kind === 'status-badge');
 
   return {
     type: 'page-content',
@@ -35,6 +36,7 @@ export function extractFromSnapshot(
     observedCounters,
     observedCollections,
     observedNotifications,
+    observedStatusBadges,
   };
 }
 

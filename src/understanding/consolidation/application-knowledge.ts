@@ -54,6 +54,21 @@ export interface ConsolidatedEntity {
   lastSeenAt: number;
   /** Session IDs that observed this entity. */
   observedInSessions: string[];
+  /** Current lifecycle state (e.g., 'pending', 'approved'). M9.9. */
+  currentState?: string;
+  /** Ordered lifecycle transitions. M9.9. */
+  stateHistory?: EntityStateChangeSummary[];
+}
+
+/**
+ * A consolidated lifecycle transition for M9.6 read-model. M9.9.
+ * Mirrors KnowledgeEntityStateChange from M9.5.
+ */
+export interface EntityStateChangeSummary {
+  from: string | null;
+  to: string;
+  changedAt: string;
+  evidence: string;
 }
 
 // ── Consolidated View ──────────────────────────────────────────────────
