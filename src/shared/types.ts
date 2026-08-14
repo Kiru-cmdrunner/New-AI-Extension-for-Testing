@@ -72,6 +72,8 @@ export enum StorageKeys {
   EXECUTION_RESULT = 'execution_result',
   // ── Component Runtime: Live interactions (in-progress recording state) ──
   LIVE_INTERACTIONS = 'cmdrunner_live_interactions',
+  // ── Form-submit recovery: durable attribution ledger (stamped, unattached) ──
+  UNATTACHED_REQUESTS = 'cmdrunner_unattached_requests',
 }
 
 /**

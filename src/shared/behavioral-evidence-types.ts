@@ -88,6 +88,7 @@ export interface EvidenceWindow {
     | 'displaced'
     | 'evidence-timeout'
     | 'page-reload-synthetic'
+    | 'sw-recovered-form-submit'
     | 'lifecycle-complete'
     | 'lifecycle-abandoned'
     | 'page-reload';

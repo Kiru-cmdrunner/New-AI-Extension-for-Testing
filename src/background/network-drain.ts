@@ -22,6 +22,10 @@
 
 import type { NetworkActivity } from '../shared/behavioral-evidence-types';
 import type { ComponentInteraction } from '../shared/component-types';
+import {
+  resolveInteractionForEventId,
+  synthesizeMinimalEvidence,
+} from './evidence-attribution';
 
 /** Ring entry shape exposed by network-observation (CompletedWebRequest). */
 export interface DrainEntry {
@@ -90,14 +94,23 @@ export function drainNetworkEvidence(
   }
 
   // Index trusted actions by their event id — first (and only) occurrence.
+  // INV-1 (identity join): triggerEvent.eventId / memberEvents[].eventId are
+  // the authoritative join keys; behavioralEvidence.sourceEventId is a
+  // legacy fallback so previously-collected evidence still joins.
   const byEventId = new Map<string, ComponentInteraction>();
   for (const i of interactions) {
-    const evId = i.behavioralEvidence?.sourceEventId;
-    if (!evId) continue;
     // Synthetic navigations are not merge targets (see docblock).
     const endReason = i.behavioralEvidence?.window?.endReason;
     if (endReason === 'page-reload-synthetic') continue;
-    if (!byEventId.has(evId)) byEventId.set(evId, i);
+    const triggerId = i.triggerEvent?.eventId;
+    if (triggerId) {
+      if (!byEventId.has(triggerId)) byEventId.set(triggerId, i);
+    }
+    for (const e of i.memberEvents ?? []) {
+      if (!byEventId.has(e.eventId)) byEventId.set(e.eventId, i);
+    }
+    const evId = i.behavioralEvidence?.sourceEventId;
+    if (evId && !byEventId.has(evId)) byEventId.set(evId, i);
   }
 
   // requestIds merged anywhere in this pass (exactly-once guard B).
@@ -106,17 +119,26 @@ export function drainNetworkEvidence(
   for (const entry of ringEntries) {
     if (!entry.sourceEventId) continue; // unstamped → not attributable
     if (mergedIds.has(entry.requestId)) continue; // already drained
-    if (NOISE_URL_RE.test(entry.url)) continue;
-    if (TELEMETRY_URL_RE.test(entry.url)) continue;
+    // Telemetry/noise filters — with the form-submit exemption: a
+    // DOCUMENT request (main_frame) POST stamped with a trusted action is
+    // user-caused navigation, never background telemetry.
+    const isStampedDocPost = entry.documentRequest && entry.method !== 'GET';
+    if (!isStampedDocPost && NOISE_URL_RE.test(entry.url)) continue;
+    if (!isStampedDocPost && TELEMETRY_URL_RE.test(entry.url)) continue;
 
-    const target = byEventId.get(entry.sourceEventId);
+    const target =
+      byEventId.get(entry.sourceEventId) ??
+      resolveInteractionForEventId(entry.sourceEventId, interactions);
     if (!target) continue; // no trusted action owns it — never guess
 
     // Guard A: direct capture already delivered this request.
     if (existingIds.get(target.interactionId)?.has(entry.requestId)) continue;
 
-    const appEv = target.behavioralEvidence?.applicationEvidence;
-    if (!appEv) continue; // nowhere to attach
+    const appEv =
+      target.behavioralEvidence?.applicationEvidence ??
+      // Fast form-submit case: click evidence lost at pagehide — synthesize
+      // thin evidence anchored to the exact sourceEventId (INV-4).
+      synthesizeMinimalEvidence(target, entry.sourceEventId).applicationEvidence;
     if ((appEv.networkActivity?.length ?? 0) >= MAX_PER_INTERACTION) continue;
 
     const activity: NetworkActivity & { requestId?: string } = {

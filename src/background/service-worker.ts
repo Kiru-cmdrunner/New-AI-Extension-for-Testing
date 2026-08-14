@@ -33,6 +33,7 @@ import {
   resetState,
   storePendingEvidence,
   attachEvidenceToInteraction,
+  persistLiveInteractions,
 } from '../runtime/sw-integration';
 import {
   filterProductionInteractions,
@@ -45,6 +46,7 @@ import {
   consumeMainFrameCorrelation,
   snapshotInFlightForTab,
   getNetworkEvidenceForNavigation,
+  getAttributionLedger,
 } from '../background/network-observation';
 import type { NavigationEvidence, NetworkActivity } from '../shared/behavioral-evidence-types';
 
@@ -65,6 +67,33 @@ async function ensureSessionRestored(): Promise<void> {
   if (sessionRestored) return;
   sessionRestored = true;
   await restoreFromStorage();
+
+  // ── Boot reconciliation (form-submit recovery, event-driven) ──
+  // Rehydrate the durable attribution ledger and attach any stamped
+  // requests whose owning interactions now exist. Covers crash-point B
+  // (stored, never attached) and crash-point A cleanup (attached, not
+  // acked). Unresolved entries stay durable — retried on the next
+  // BEHAVIORAL_EVIDENCE / onCommitted / STOP event.
+  try {
+    const { getLiveInteractions, persistLiveInteractions } =
+      await import('../runtime/sw-integration');
+    const live = getLiveInteractions();
+    const ledger = getAttributionLedger();
+    const result = await ledger.rehydrate(live);
+    if (result.attached.length > 0) {
+      persistLiveInteractions(); // persist BEFORE ack (delete-after-persist)
+      console.info(
+        `[AttributionLedger] boot reconciliation attached ${result.attached.length} request(s)`,
+      );
+    }
+    if (result.unresolved.length > 0) {
+      console.info(
+        `[AttributionLedger] ${result.unresolved.length} stored request(s) awaiting owning interaction`,
+      );
+    }
+  } catch (e) {
+    console.warn('[AttributionLedger] boot reconciliation failed:', (e as Error).message);
+  }
 }
 
 ensureSessionRestored();
@@ -245,6 +274,11 @@ async function handleStartRecording(): Promise<void> {
   resetState();
   initRecording();
 
+  // Session-end cleanup for the durable attribution ledger (INV session
+  // scoping): stale entries from a prior session never join this session's
+  // interactions.
+  await getAttributionLedger().clearAll().catch(() => {});
+
   // Persist recording context (start URL + title) so the side panel
   // can display the current page URL immediately.
   try {
@@ -351,6 +385,22 @@ async function handleStopRecording(): Promise<void> {
       );
       await StorageService.setRaw(StorageKeys.LIVE_INTERACTIONS, productionInteractions);
     }
+
+    // ── Durable ledger drain (form-submit recovery, T11–T16 path) ──
+    // Third pass: entries the ring lost (TTL/capacity) or that only exist
+    // in the durable store (captured pre-completion / SW restart survivors).
+    // Identity join, synthesize-on-missing — exactly-once via ownership.
+    const ledger = getAttributionLedger();
+    const attachedCount = ledger.attachToInteractions(productionInteractions);
+    if (attachedCount > 0) {
+      console.info(
+        `[AttributionLedger] stop drain attached ${attachedCount} request(s)`,
+      );
+      await StorageService.setRaw(StorageKeys.LIVE_INTERACTIONS, productionInteractions);
+    }
+    // Session-end cleanup (INV session scoping): the ledger never outlives
+    // its recording session.
+    await ledger.clearAll().catch(() => {});
   } catch (e) {
     // Non-fatal — pipeline runs on whatever evidence already exists
     console.warn('[NetworkDrain] drain failed:', (e as Error).message);
@@ -1022,6 +1072,45 @@ function recoverNetworkForNavigationById(
  * state forever.
  */
 function attachSyntheticNavEvidence(navEventId: string, details: chrome.webNavigation.WebNavigationTransitionCallbackDetails, previousCommittedUrl: string = ''): void {
+  // ── Commit-time causal routing (INV-5, form-submit recovery) ──
+  // Entries recovered for this navigation that carry a trusted-action stamp
+  // belong to the CLICK that caused the navigation — route them to that
+  // interaction via the durable attribution ledger (identity join,
+  // synthesize-on-missing), not to the synthetic nav. Only unstamped /
+  // unresolved entries remain for the synthetic nav's own network evidence.
+  const recovered = recoverNetworkForNavigationById(navEventId, details);
+  const routedToClick: NetworkActivity[] = [];
+  const forSyntheticNav: NetworkActivity[] = [];
+  {
+    // getLiveInteractions / persistLiveInteractions are imported at top of
+    // file from ../runtime/sw-integration (ESM — no require).
+    const live = getLiveInteractions();
+    const ledger = getAttributionLedger();
+    for (const activity of recovered) {
+      const stamped = activity.sourceEventId;
+      if (!stamped) {
+        forSyntheticNav.push(activity);
+        continue;
+      }
+      // Feed the stamp to the ledger (idempotent — already durable at
+      // capture; this only enriches status/url if completion data is newer).
+      ledger.attachStampedActivity({
+        url: activity.url,
+        method: activity.method,
+        status: activity.status ?? 0,
+        requestId: (activity as NetworkActivity & { requestId?: string }).requestId
+          ?? `${activity.method}:${activity.url}:${stamped}`,
+        sourceEventId: stamped,
+        requestBody: activity.requestBody,
+        documentRequest: true,
+        mainFrame: activity.resourceType === 'navigation' || activity.method !== 'GET',
+      }, live).then((routed) => {
+        if (routed) persistLiveInteractions(); // persist BEFORE ack
+      });
+      routedToClick.push(activity);
+    }
+  }
+
   // Map webNavigation transitionType to NavigationEvidence.type
   const navTypeMap: Record<string, NavigationEvidence['type']> = {
     'link': 'full-reload',
@@ -1089,7 +1178,10 @@ function attachSyntheticNavEvidence(navEventId: string, details: chrome.webNavig
       removedSurfaces: [],
       visibilityChanges: [],
       navigation: [navEvidenceEntry],
-      networkActivity: recoverNetworkForNavigationById(navEventId, details),
+      // INV-5: only unstamped/unresolved entries — stamped form-submit POSTs
+      // were routed to their causal owner above; the nav records the link
+      // via causedByInteractionId (stamped by the ledger on attach).
+      networkActivity: forSyntheticNav,
       performanceCondition: {
         mainThreadBlocked: false,
         highChurnMode: false,

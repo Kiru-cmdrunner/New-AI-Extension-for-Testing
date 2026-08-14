@@ -89,6 +89,43 @@ const WINDOW_OPEN_EVENTS = new Set([
   'click', 'contextmenu', 'change', 'keydown',
 ]);
 
+/**
+ * Event types whose windows are ALWAYS finalized at pagehide (INV-4):
+ * user-action windows carry the causal anchor (sourceEventId + identity)
+ * for stamp-joined network recovery — age is never a criterion.
+ */
+export const ACTION_WINDOW_EVENT_TYPES = new Set([
+  'click', 'contextmenu', 'change', 'keydown', 'submit',
+]);
+
+/**
+ * Pagehide finalization decision — pure, content+type based (no clocks).
+ *
+ * OLD rule (removed): only lifecycle-bound windows or windows open >500ms.
+ * That silently abandoned fast form-submit clicks (<500ms, LIFECYCLE_BOUND
+ * still in flight), destroying the causal anchor the CER-2 stamp needs.
+ *
+ * NEW rule: ALL open action windows finalize. Non-action windows finalize
+ * only when they carry signal (navEvents). Everything else drops.
+ */
+export function finalizeAtPagehide(
+  win: {
+    isClosed: boolean;
+    isLifecycleBound: boolean;
+    sourceEventType: string;
+    navEvents: unknown[];
+  },
+  _now: number,
+): { finalize: boolean; endReason: 'page-reload' | null } {
+  if (win.isClosed) return { finalize: false, endReason: null };
+  if (win.isLifecycleBound) return { finalize: true, endReason: 'page-reload' };
+  if (ACTION_WINDOW_EVENT_TYPES.has(win.sourceEventType)) {
+    return { finalize: true, endReason: 'page-reload' };
+  }
+  if (win.navEvents.length > 0) return { finalize: true, endReason: 'page-reload' };
+  return { finalize: false, endReason: null };
+}
+
 /** Event types that use extend-on-input typing model. */
 const TYPING_EVENTS = new Set(['input']);
 
@@ -1441,7 +1478,12 @@ export class EvidenceCollector {
 
     const now = performance.now();
 
-    // Immediately finalize all lifecycle-bound windows (zero settle delay)
+    // INV-4 (form-submit recovery): finalize by CONTENT, never by age.
+    // The old >500ms guard abandoned fast form-submit clicks whose
+    // LIFECYCLE_BOUND was still in flight at pagehide — the exact Amazon
+    // case. Action windows (click/keydown/change/contextmenu/submit) always
+    // finalize and carry the sourceEventId anchor; zero-signal non-action
+    // windows drop.
     for (const win of [...this.activeWindows]) {
       if (win.isClosed) continue;
 
@@ -1451,12 +1493,12 @@ export class EvidenceCollector {
         pageHideMetadata.textValue = win.observedEvent.valueAfter;
       }
 
-      if (win.isLifecycleBound) {
-        this.executeFinalization(win, pageHideMetadata, 'page-reload');
-      } else if (now - win.openedAt > 500) {
-        // TD-4: Safety net for windows that never received a LIFECYCLE_BOUND
-        // but have been open long enough that their evidence is worth saving.
-        this.executeFinalization(win, pageHideMetadata, 'page-reload');
+      const decision = finalizeAtPagehide(win, now);
+      if (decision.finalize && decision.endReason) {
+        this.executeFinalization(win, pageHideMetadata, decision.endReason);
+      } else {
+        // Zero-signal non-action window — abandon silently
+        this.closeWindowSilently(win);
       }
     }
 

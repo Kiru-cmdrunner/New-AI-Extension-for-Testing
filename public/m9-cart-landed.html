@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cart — M9 validation landing</title>
+  <style>body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }</style>
+</head>
+<body>
+  <h1>Cart</h1>
+  <p id="echo"></p>
+  <script>
+    // Echo the submit params so the validator can confirm the form POST
+    // carried the ASIN/quantity payload.
+    const params = new URLSearchParams(location.search);
+    document.getElementById('echo').textContent =
+      params.toString()
+        ? `Added: ASIN=${params.get('ASIN')}, quantity=${params.get('quantity')}`
+        : 'Cart is empty (navigated directly).';
+  </script>
+  <p><a href="m9-form-submit-validation.html">← back to validation page</a></p>
+</body>
+</html>

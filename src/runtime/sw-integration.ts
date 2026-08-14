@@ -823,8 +823,9 @@ export async function restoreFromStorage(): Promise<boolean> {
 
 /**
  * Write live interactions to chrome.storage.local immediately.
+ * Exported for the SW's attach paths (persist-before-ack contract).
  */
-function persistLiveInteractions(): void {
+export function persistLiveInteractions(): void {
   chrome.storage.local.set({
     [LIVE_INTERACTIONS_KEY]: liveInteractions,
   }).catch(() => {

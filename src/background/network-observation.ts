@@ -598,6 +598,23 @@ function registerWebRequestListeners(): void {
       sourceEventId,
     });
 
+    // DURABILITY GATE (form-submit recovery): a stamped request is durably
+    // recorded at CAPTURE — before any completion/commit event can race, and
+    // before a possible SW termination. Awaited in-dispatch; memory-only
+    // degrade on storage failure (never throws into the listener).
+    if (sourceEventId) {
+      void recordStampedRequest({
+        url: details.url,
+        method: details.method,
+        status: 0, // completion not yet observed
+        requestId: details.requestId,
+        sourceEventId,
+        requestBody,
+        documentRequest: details.type === 'main_frame',
+        resourceKind: details.type ?? 'other',
+      });
+    }
+
     // CER-2: capture main-frame POSTs IMMEDIATELY, before redirects can
     // rewrite the URL and before completion timing matters. This is the
     // authoritative form-submit record (Amazon #add-to-cart-button case).
@@ -675,6 +692,21 @@ function registerWebRequestListeners(): void {
       sourceEventId: inFlight?.sourceEventId,
       requestBody: inFlight?.requestBody,
     });
+
+    // Durable ledger enrichment (completion status) — the at-capture write
+    // is already durable; this refreshes status for attach-time fidelity.
+    if (inFlight?.sourceEventId) {
+      void recordStampedRequest({
+        url: inFlight.originalUrl ?? details.url,
+        method: inFlight.method,
+        status: details.statusCode,
+        requestId: details.requestId,
+        sourceEventId: inFlight.sourceEventId,
+        requestBody: inFlight.requestBody,
+        documentRequest: isDocumentRequest,
+        resourceKind: inFlight.resourceKind,
+      });
+    }
 
     // P1-4 Fix: Include wallClock
     // MV3 lifecycle: gate live forwarding (unknown-state captures stay SW-side)
@@ -809,7 +841,9 @@ export function unregisterWebRequestListeners(): void {
  */
 function pushCompletedRequest(entry: CompletedWebRequest): void {
   completedRequests.push(entry);
-  // Evict entries older than TTL or over capacity
+  // Evict entries older than TTL or over capacity (unstamped/speculative
+  // data only — stamped entries are ALSO durably recorded via the
+  // attribution ledger, whose eviction is state-based, not time-based).
   const cutoff = Date.now() - COMPLETED_BUFFER_TTL_MS;
   while (completedRequests.length > 0 && completedRequests[0].endWallClock < cutoff) {
     completedRequests.shift();
@@ -817,6 +851,52 @@ function pushCompletedRequest(entry: CompletedWebRequest): void {
   while (completedRequests.length > MAX_COMPLETED_ENTRIES) {
     completedRequests.shift();
   }
+}
+
+// ── Durable attribution ledger write-through (form-submit recovery) ────
+//
+// Singleton ledger shared with the service worker's attach paths. Stamped
+// requests are written through to chrome.storage.local (awaited, inside the
+// webRequest dispatch) so they survive MV3 SW termination.
+
+import { DurableAttributionLedger } from './evidence-attribution';
+
+/** Process-wide ledger singleton (one per SW instance). */
+const attributionLedger = new DurableAttributionLedger();
+
+/** Access the shared durable ledger (service-worker attach paths). */
+export function getAttributionLedger(): DurableAttributionLedger {
+  return attributionLedger;
+}
+
+/**
+ * DURABILITY GATE: record a stamped request durably. Called inside the
+ * webRequest listener dispatch — the handler is not complete until the
+ * chrome.storage.local write settles (or fails → memory-only degrade).
+ */
+export function recordStampedRequest(
+  entry: {
+    url: string;
+    method: string;
+    status: number;
+    requestId: string;
+    sourceEventId?: string;
+    requestBody?: Record<string, string>;
+    documentRequest?: boolean;
+    resourceKind?: string;
+  },
+): Promise<void> {
+  if (!entry.sourceEventId) return Promise.resolve();
+  return attributionLedger.pushStamped({
+    url: entry.url,
+    method: entry.method,
+    status: entry.status,
+    requestId: entry.requestId,
+    sourceEventId: entry.sourceEventId,
+    requestBody: entry.requestBody,
+    documentRequest: entry.documentRequest,
+    mainFrame: entry.resourceKind === 'main_frame',
+  });
 }
 
 /**
