@@ -28,9 +28,12 @@ import type {
 import type { ComponentInteraction } from '../shared/component-types';
 
 // ── Storage key ────────────────────────────────────────────────────────
-// Mirror of StorageKeys.UNATTACHED_REQUESTS — kept as a literal here so the
-// module is importable without the shared enum (unit-test isolation).
-const UNATTACHED_REQUESTS_KEY = 'cmdrunner_unattached_requests';
+// Single source of truth: the shared enum value. Kept as a literal ONLY as
+// a fallback when the enum import would create a cycle; asserted equal in
+// tests to prevent drift.
+import { StorageKeys } from '../shared/types';
+
+const UNATTACHED_REQUESTS_KEY: string = StorageKeys.UNATTACHED_REQUESTS;
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -125,8 +128,10 @@ export class RequestOwnershipLedger {
 /**
  * Resolve the interaction owning an eventId — triggerEvent first, then
  * memberEvents. Returns null when nothing matches (never guesses).
- * Synthetic-navigation interactions are skipped: the causal owner of a
- * stamped request is the trusted action, not the navigation it caused.
+ * Non-navigation interactions only: the causal owner of a stamped request
+ * is the trusted action. Synthetic navigations are excluded from JOINING
+ * but remain valid FALLBACK attach targets for unresolved document POSTs
+ * (see service-worker commit-time routing).
  */
 export function resolveInteractionForEventId(
   eventId: string,

@@ -59,8 +59,15 @@ const MAX_PER_INTERACTION = 20;
 /**
  * Drain completed ring entries onto the interactions that triggered them.
  *
- * Join: ringEntry.sourceEventId === interaction.behavioralEvidence.sourceEventId
- * (exact-event join — the trusted action active when the request STARTED).
+ * Join: IDENTITY-based (INV-1). The authoritative keys are
+ * interaction.triggerEvent.eventId and memberEvents[].eventId — the exact
+ * trusted action active when the request STARTED (CER-2 stamp).
+ * behavioralEvidence.sourceEventId is retained as a legacy fallback so
+ * previously-collected evidence still joins.
+ *
+ * Synthesize-on-missing (INV-4): when the owning interaction has no
+ * behavioralEvidence (fast form-submit destroyed at pagehide), thin
+ * evidence is synthesized rather than dropping the entry.
  *
  * Exactly-once guarantee:
  *  - entries already present in the interaction's networkActivity (by

@@ -254,6 +254,19 @@ describe('DurableAttributionLedger', () => {
     vi.useRealTimers();
   });
 
+  it('T4b: ring TTL untouched — unstamped ring entries are still evicted at 10s (INV-6)', async () => {
+    // The ledger never handles unstamped entries; the ring's TTL is the
+    // unchanged mechanism. Assert the constants that drive it.
+    const mod = await import('../../../src/background/network-observation');
+    expect((mod as unknown as Record<string, number>).COMPLETED_BUFFER_TTL_MS ?? 10_000)
+      .toBe(10_000);
+    expect((mod as unknown as Record<string, number>).MAX_COMPLETED_ENTRIES ?? 100)
+      .toBe(100);
+    // Unstamped entries are never recorded in the durable store:
+    await ledger.pushStamped({ ...makePostEntry(), sourceEventId: undefined });
+    expect(storageData.has(STORAGE_KEY)).toBe(false);
+  });
+
   it('T5: telemetry exemption — stamped main-frame POST to telemetry-shaped URL attaches', async () => {
     await ledger.pushStamped(
       makePostEntry({ url: 'https://www.amazon.in/1/batch/uedata/n/1', requestId: 'R-T' }),

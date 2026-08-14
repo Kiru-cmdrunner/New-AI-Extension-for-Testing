@@ -563,7 +563,9 @@ function registerWebRequestListeners(): void {
   // We use a broader filter and filter by tabId in callbacks
   void filter;
 
-  onBeforeRequestCallback = (details) => {
+  // Async: the awaited durable-ledger write inside extends SW lifetime
+  // (MV3 keeps the worker alive while the handler's promise is pending).
+  onBeforeRequestCallback = async (details) => {
     // MV3 lifecycle fix: membership in the persisted observing set is the
     // gate — not which SW instance is alive. Unknown-state (gate not yet
     // seeded from storage) captures conservatively into the ring.
@@ -598,26 +600,10 @@ function registerWebRequestListeners(): void {
       sourceEventId,
     });
 
-    // DURABILITY GATE (form-submit recovery): a stamped request is durably
-    // recorded at CAPTURE — before any completion/commit event can race, and
-    // before a possible SW termination. Awaited in-dispatch; memory-only
-    // degrade on storage failure (never throws into the listener).
-    if (sourceEventId) {
-      void recordStampedRequest({
-        url: details.url,
-        method: details.method,
-        status: 0, // completion not yet observed
-        requestId: details.requestId,
-        sourceEventId,
-        requestBody,
-        documentRequest: details.type === 'main_frame',
-        resourceKind: details.type ?? 'other',
-      });
-    }
-
     // CER-2: capture main-frame POSTs IMMEDIATELY, before redirects can
     // rewrite the URL and before completion timing matters. This is the
     // authoritative form-submit record (Amazon #add-to-cart-button case).
+    // Synchronous — readers in the same event turn must observe it.
     if (details.type === 'main_frame' && details.frameId === 0) {
       pendingMainFrameByTab.set(details.tabId, {
         requestId: details.requestId,
@@ -627,6 +613,25 @@ function registerWebRequestListeners(): void {
         method: details.method,
         requestBody,
         sourceEventId,
+      });
+    }
+
+    // DURABILITY GATE (form-submit recovery): a stamped request is durably
+    // recorded at CAPTURE — the AWAIT happens inside this same listener
+    // dispatch (MV3 keeps the SW alive until the storage write settles;
+    // memory-only degrade on failure; never throws into the listener).
+    // Ordered AFTER the synchronous in-memory records so same-turn readers
+    // (race-fix consumeMainFrameCorrelation) observe capture state first.
+    if (sourceEventId) {
+      await recordStampedRequest({
+        url: details.url,
+        method: details.method,
+        status: 0, // completion not yet observed
+        requestId: details.requestId,
+        sourceEventId,
+        requestBody,
+        documentRequest: details.type === 'main_frame',
+        resourceKind: details.type ?? 'other',
       });
     }
 
@@ -655,7 +660,9 @@ function registerWebRequestListeners(): void {
     redirectChains.set(details.requestId, chain);
   };
 
-  onCompletedCallback = (details) => {
+  // Async: the awaited durable-ledger enrichment write inside extends SW
+  // lifetime until the storage write settles.
+  onCompletedCallback = async (details) => {
     if (!shouldProcessRequest(details.tabId)) return;
 
     const inFlight = inFlightRequests.get(details.requestId);
@@ -695,8 +702,9 @@ function registerWebRequestListeners(): void {
 
     // Durable ledger enrichment (completion status) — the at-capture write
     // is already durable; this refreshes status for attach-time fidelity.
+    // Awaited in-dispatch (durability gate).
     if (inFlight?.sourceEventId) {
-      void recordStampedRequest({
+      await recordStampedRequest({
         url: inFlight.originalUrl ?? details.url,
         method: inFlight.method,
         status: details.statusCode,

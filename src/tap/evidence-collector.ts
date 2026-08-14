@@ -1459,19 +1459,21 @@ export class EvidenceCollector {
   }
 
   /**
-   * Handle pagehide: immediately finalize all lifecycle-bound windows.
-   * Evidence is buffered to sessionStorage and flushed by the next page.
+   * Handle pagehide: finalize windows by CONTENT, not age.
    *
-   * TD-4: Also finalize non-lifecycle-bound windows that have been open for
-   * more than 500ms. This catches the narrow edge case where LIFECYCLE_BOUND
-   * hasn't arrived yet when pagehide fires. Windows open <500ms are likely
-   * companion events or transient and can be safely abandoned.
+   * INV-4 (form-submit recovery): ALL open action windows are finalized
+   * (zero settle delay) with endReason 'page-reload' — they carry the
+   * sourceEventId anchor the CER-2 stamp joins to. Non-action windows are
+   * finalized only when they carry signal (navEvents); zero-signal
+   * non-action windows are abandoned. The decision is delegated to the
+   * pure finalizeAtPagehide rule.
    *
-   * TD-6: Construct fallback metadata from the window's observedEvent so that
-   * enrichFromMetadata can fill a null/empty after-value. The FINALIZE_EVIDENCE
-   * payload (which carries selectedValue/selectedDate from component buildResults)
-   * hasn't arrived yet — the lifecycle hasn't completed. observedEvent.valueAfter
-   * is the best available fallback at content-script level.
+   * TD-6: Construct fallback metadata from the window's observedEvent so
+   * that enrichFromMetadata can fill a null/empty after-value. The
+   * FINALIZE_EVIDENCE payload (which carries selectedValue/selectedDate
+   * from component buildResults) hasn't arrived yet — the lifecycle hasn't
+   * completed. observedEvent.valueAfter is the best available fallback at
+   * content-script level.
    */
   onPageHide(): void {
     this.isUnloading = true;

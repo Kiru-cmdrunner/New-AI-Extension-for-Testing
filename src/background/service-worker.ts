@@ -75,8 +75,6 @@ async function ensureSessionRestored(): Promise<void> {
   // acked). Unresolved entries stay durable — retried on the next
   // BEHAVIORAL_EVIDENCE / onCommitted / STOP event.
   try {
-    const { getLiveInteractions, persistLiveInteractions } =
-      await import('../runtime/sw-integration');
     const live = getLiveInteractions();
     const ledger = getAttributionLedger();
     const result = await ledger.rehydrate(live);
@@ -630,6 +628,20 @@ function handleBehavioralEvidence(
     }).catch(() => {
       // Side panel may not be open — ignore
     });
+
+    // Event-driven ledger retry (form-submit recovery): the interaction the
+    // evidence just attached to may be the owner of unresolved stamped
+    // requests (crash-point-B leftovers / pre-completion captures). Attach
+    // them now rather than waiting for STOP.
+    try {
+      const ledger = getAttributionLedger();
+      const live = getLiveInteractions();
+      if (ledger.attachToInteractions(live) > 0) {
+        persistLiveInteractions(); // persist BEFORE ack
+      }
+    } catch {
+      // Non-fatal — STOP drain is the backstop
+    }
   } else {
     // No match — store for later drain when interaction is emitted
     storePendingEvidence(evidence);
@@ -1079,11 +1091,13 @@ function attachSyntheticNavEvidence(navEventId: string, details: chrome.webNavig
   // synthesize-on-missing), not to the synthetic nav. Only unstamped /
   // unresolved entries remain for the synthetic nav's own network evidence.
   const recovered = recoverNetworkForNavigationById(navEventId, details);
-  const routedToClick: NetworkActivity[] = [];
   const forSyntheticNav: NetworkActivity[] = [];
   {
-    // getLiveInteractions / persistLiveInteractions are imported at top of
-    // file from ../runtime/sw-integration (ESM — no require).
+    // Commit-time causal routing (INV-5). Synchronous decision, async-free
+    // determinism: resolve each stamped entry's owner NOW; if the owner
+    // exists, the ledger attaches (persist-before-ack happens in the same
+    // tick); if not, the entry falls back to the synthetic nav (unchanged
+    // legacy behavior — the nav owns it when the click never existed).
     const live = getLiveInteractions();
     const ledger = getAttributionLedger();
     for (const activity of recovered) {
@@ -1092,22 +1106,31 @@ function attachSyntheticNavEvidence(navEventId: string, details: chrome.webNavig
         forSyntheticNav.push(activity);
         continue;
       }
-      // Feed the stamp to the ledger (idempotent — already durable at
-      // capture; this only enriches status/url if completion data is newer).
-      ledger.attachStampedActivity({
-        url: activity.url,
-        method: activity.method,
-        status: activity.status ?? 0,
-        requestId: (activity as NetworkActivity & { requestId?: string }).requestId
-          ?? `${activity.method}:${activity.url}:${stamped}`,
-        sourceEventId: stamped,
-        requestBody: activity.requestBody,
-        documentRequest: true,
-        mainFrame: activity.resourceType === 'navigation' || activity.method !== 'GET',
-      }, live).then((routed) => {
-        if (routed) persistLiveInteractions(); // persist BEFORE ack
-      });
-      routedToClick.push(activity);
+      const ownerExists = live.some(
+        (i) =>
+          i.triggerEvent?.eventId === stamped ||
+          i.memberEvents?.some((e) => e.eventId === stamped),
+      );
+      if (ownerExists) {
+        // Route to the causal CLICK — attachStampedActivity is idempotent
+        // (dedup by requestId inside the ledger).
+        void ledger.attachStampedActivity({
+          url: activity.url,
+          method: activity.method,
+          status: activity.status ?? 0,
+          requestId: (activity as NetworkActivity & { requestId?: string }).requestId
+            ?? `${activity.method}:${activity.url}:${stamped}`,
+          sourceEventId: stamped,
+          requestBody: activity.requestBody,
+          documentRequest: true,
+          mainFrame: activity.resourceType === 'navigation' || activity.method !== 'GET',
+        }, live).then((routed) => {
+          if (routed) persistLiveInteractions(); // persist BEFORE ack
+        });
+      } else {
+        // Unresolved stamp — the synthetic nav keeps the entry (old behavior)
+        forSyntheticNav.push(activity);
+      }
     }
   }
 
