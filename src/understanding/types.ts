@@ -138,6 +138,12 @@ export interface ApiOperationSignal extends Signal {
    * leaveType, employeeId, etc.
    */
   entityHints?: { field: string; value: string; hint: string }[];
+  /**
+   * CER: the trusted user-action event id active when the request started
+   * (from webRequest lastTrustedAction stamping). Exact-event join key for
+   * click→network attribution across full-page reloads.
+   */
+  sourceEventId?: string;
 }
 
 /**

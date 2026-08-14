@@ -434,9 +434,25 @@ export class UnderstandingPipeline {
     signalMap: Map<string, ReturnType<SignalExtractionCoordinator['extract']>['signals'] extends Map<string, infer S> ? S : never>,
     outcomes: Map<string, ActionOutcome>,
   ): void {
-    /** window timestamps keyed by interactionId for ordering */
-    const idxOf = new Map<string, number>();
-    interactions.forEach((i, n) => idxOf.set(i.interactionId, n));
+    /**
+     * CER-4: exact-ID join replaces the timestamp window.
+     *
+     * The SW stamps every request with the lastTrustedAction sourceEventId
+     * active when the request STARTED (network-observation.ts). For a
+     * full-page form submit (Amazon Add-to-Cart), the main-frame POST is
+     * stamped with the click's event id. The post-reload synthetic nav
+     * evidence carries the recovered op with that same sourceEventId —
+     * so attribution is an O(1) map lookup, not a 10s-window scan.
+     *
+     * Fallback: when the recovered op carries no sourceEventId (older
+     * recorded sessions / main-world-only entries), the nearest preceding
+     * action with an evidence-free outcome still receives attribution.
+     */
+    const byEventId = new Map<string, ComponentInteraction>();
+    for (const i of interactions) {
+      const evId = i.behavioralEvidence?.sourceEventId;
+      if (evId) byEventId.set(evId, i);
+    }
 
     for (const interaction of interactions) {
       // Only synthetic navigation interactions carry recovered evidence
@@ -446,11 +462,6 @@ export class UnderstandingPipeline {
       const recovered = signals.apiOperations.filter(
         (op) => op.source === 'network-url' || op.source === 'network-status',
       );
-      // Recovered ops come from webrequest-sourced entries; in-pipeline we
-      // distinguish them via their behavioral evidence source. For the
-      // synthetic nav, ALL api ops are recovered (the content script was
-      // destroyed), so treat any op on a synthetic-nav interaction as
-      // recoverable attribution candidates.
       if (recovered.length === 0) continue;
 
       const ev = interaction.behavioralEvidence;
@@ -458,21 +469,42 @@ export class UnderstandingPipeline {
       const isSyntheticNav = ev.window?.endReason === 'page-reload-synthetic';
       if (!isSyntheticNav) continue;
 
-      // Find the nearest preceding ACTION interaction within 10s
-      const idx = idxOf.get(interaction.interactionId) ?? -1;
-      if (idx < 0) continue;
-
-      const navTime = interaction.endTime ?? interaction.startTime ?? 0;
-      const actionTypes = new Set(['Click', 'KeyboardShortcut', 'CompoundInteraction', 'Link']);
+      // Primary: exact sourceEventId join. The click's event id equals the
+      // trusted-action stamp recorded on the recovered main-frame POST.
       let target: ComponentInteraction | null = null;
-      for (let n = idx - 1; n >= 0; n--) {
-        const cand = interactions[n];
-        if (!actionTypes.has(cand.type)) continue;
-        const candEnd = cand.endTime ?? cand.startTime ?? 0;
-        if (navTime - candEnd <= 10_000) {
-          target = cand;
+      const stamped = recovered.filter((op) => op.sourceEventId);
+      if (stamped.length > 0) {
+        const first = byEventId.get(stamped[0].sourceEventId!);
+        if (first) target = first;
+        // Multi-op recovery: all stamped ops must agree on the same event,
+        // otherwise attribution is ambiguous and we fall back.
+        const agree = stamped.every((op) => op.sourceEventId === stamped[0].sourceEventId);
+        if (!agree) target = null;
+      }
+
+      // Fallback: nearest preceding action (un-stamped evidence only).
+      if (!target) {
+        const unstamped = recovered.filter((op) => !op.sourceEventId);
+        if (unstamped.length !== recovered.length) continue; // stamped evidence exists but didn't join — do not guess
+
+        const idxOf = new Map<string, number>();
+        interactions.forEach((i, n) => idxOf.set(i.interactionId, n));
+        const idx = idxOf.get(interaction.interactionId) ?? -1;
+        if (idx < 0) continue;
+
+        const navTime = interaction.endTime ?? interaction.startTime ?? 0;
+        const actionTypes = new Set(['Click', 'KeyboardShortcut', 'CompoundInteraction', 'Link']);
+        let candidate: ComponentInteraction | null = null;
+        for (let n = idx - 1; n >= 0; n--) {
+          const cand = interactions[n];
+          if (!actionTypes.has(cand.type)) continue;
+          const candEnd = cand.endTime ?? cand.startTime ?? 0;
+          if (navTime - candEnd <= 10_000) {
+            candidate = cand;
+          }
+          break; // nearest preceding action only
         }
-        break; // nearest preceding action only
+        target = candidate;
       }
       if (!target) continue;
 

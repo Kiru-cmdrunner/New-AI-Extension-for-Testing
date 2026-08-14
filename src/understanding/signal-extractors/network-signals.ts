@@ -308,6 +308,7 @@ export class NetworkSignalExtractor implements SignalExtractor {
         outcomeHint,
         requestBody: entry.requestBody,
         entityHints: entityHints.length > 0 ? entityHints : undefined,
+        sourceEventId: entry.sourceEventId,
       });
     }
 

@@ -16,6 +16,7 @@ const mockWebRequestListeners = {
   onBeforeRequest: [] as Array<(d: unknown) => void>,
   onCompleted: [] as Array<(d: unknown) => void>,
   onErrorOccurred: [] as Array<(d: unknown) => void>,
+  onBeforeRedirect: [] as Array<(d: unknown) => void>,
 };
 
 const mockScriptingExecuteScript = vi.fn();
@@ -27,6 +28,7 @@ beforeEach(() => {
   mockWebRequestListeners.onBeforeRequest = [];
   mockWebRequestListeners.onCompleted = [];
   mockWebRequestListeners.onErrorOccurred = [];
+  mockWebRequestListeners.onBeforeRedirect = [];
   mockScriptingExecuteScript.mockClear();
 
   (globalThis as Record<string, unknown>).chrome = {
@@ -56,6 +58,15 @@ beforeEach(() => {
         removeListener: (cb: (d: unknown) => void) => {
           const idx = mockWebRequestListeners.onErrorOccurred.indexOf(cb);
           if (idx >= 0) mockWebRequestListeners.onErrorOccurred.splice(idx, 1);
+        },
+      },
+      onBeforeRedirect: {
+        addListener: (cb: (d: unknown) => void) => {
+          mockWebRequestListeners.onBeforeRedirect.push(cb);
+        },
+        removeListener: (cb: (d: unknown) => void) => {
+          const idx = mockWebRequestListeners.onBeforeRedirect.indexOf(cb);
+          if (idx >= 0) mockWebRequestListeners.onBeforeRedirect.splice(idx, 1);
         },
       },
     },

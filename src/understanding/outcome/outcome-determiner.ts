@@ -117,6 +117,11 @@ export class OutcomeDeterminer {
     // API operations
     for (const op of signals.apiOperations) {
       if (op.operation === 'analytics' || op.operation === 'resource') continue;
+      // CER-6: unknown-classification ops must not vote. A URL that no
+      // pattern matched (e.g. telemetry beacons on unrecognized hosts)
+      // carries no semantic evidence about the user action's outcome —
+      // voting on it fabricates success/failure from unrelated traffic.
+      if (op.operation === 'unknown') continue;
       if (op.succeeded === true) {
         votes.push({
           result: 'success',

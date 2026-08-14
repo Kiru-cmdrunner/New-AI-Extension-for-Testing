@@ -41,7 +41,10 @@ import { normalizeWorkflow } from '../presentation/workflow-normalizer';
 import {
   startNetworkObservation,
   stopNetworkObservation,
-  getRecentRequests,
+  setLastTrustedAction,
+  getMainFrameCorrelation,
+  snapshotInFlightForTab,
+  getNetworkEvidenceForNavigation,
 } from '../background/network-observation';
 import type { NavigationEvidence, NetworkActivity } from '../shared/behavioral-evidence-types';
 
@@ -473,6 +476,22 @@ async function handleStopRecording(): Promise<void> {
 async function handleObservedEvent(payload: ObservedEvent): Promise<void> {
   await ensureSessionRestored();
 
+  // CER-2: track the last trusted user action per tab. Network requests
+  // that start while this action is current are stamped with its eventId —
+  // the exact-event join for click→request attribution (replaces the
+  // 10s timestamp window).
+  if (payload.isTrusted && payload.eventType !== 'navigation') {
+    const actionTab = await getActiveTab().catch(() => null);
+    if (actionTab?.id != null) {
+      setLastTrustedAction(actionTab.id, {
+        eventId: payload.eventId,
+        // interactionId unknown at this point; the eventId is the join key
+        // (interactions carry triggerEvent.eventId / memberEvents[].eventId).
+        interactionId: '',
+      });
+    }
+  }
+
   // Process through the Component Runtime
   const emitted = processObservedEvent(payload);
 
@@ -842,65 +861,102 @@ chrome.webNavigation.onCommitted.addListener(async (details: chrome.webNavigatio
   // page is being replaced — content script destroyed.
   const fullReloadTypes = ['reload', 'form_submit', 'auto_toplevel', 'auto_subframe', 'link', 'typed'];
   if (fullReloadTypes.includes(details.transitionType)) {
-    // Short delay to let the runtime emit the navigation interaction
-    setTimeout(() => {
-      attachSyntheticNavEvidence(navEvent.eventId, details, previousCommittedUrl);
-    }, 200);
+    // CER-2: Tag in-flight requests from the destroyed document with this
+    // navEvent — lifecycle membership (started, not finished), not timestamps.
+    snapshotInFlightForTab(details.tabId, navEvent.eventId);
+
+    // CER-2: attach evidence IMMEDIATELY (event-driven) — the interaction
+    // may not be emitted yet, but pendingEvidence drain (sw-integration)
+    // attaches by sourceEventId when it arrives. The old 200ms timer raced
+    // the document download and is removed. Exact-ID recovery happens at
+    // stop-recording time via getNetworkEvidenceForNavigation(navEventId),
+    // which reads the ring buffer THEN (by then onCompleted has fired) —
+    // so late completions are not lost.
+    attachSyntheticNavEvidence(navEvent.eventId, details, previousCommittedUrl);
   }
 });
 
 /**
- * Recover network requests that were captured by the SW's webRequest
- * listener but never delivered to the content script (because the page
- * was destroyed by a full-page reload).
+ * CER-2: Recover network evidence for a synthetic navigation by EXACT ID.
  *
- * This bridges the decisive gap for form-submit apps like Amazon: the
- * POST to /cart/add-to-cart is captured by webRequest, buffered in the
- * SW's completed-request ring buffer, and injected here into the
- * synthetic navigation evidence of the resulting page load.
+ * Replaces the timing-based design (onCommitted+200ms + 10s lookback),
+ * which could never see the main-frame POST: ring entries were written at
+ * onCompleted — strictly after onCommitted — and the ring entry's URL was
+ * the post-redirect final URL.
  *
- * DDC-3: The 10-second lookback matches the ring buffer TTL and the
- * pipeline's click-attribution window. A form-submit POST precedes its
- * resulting page load by the request+render latency; 10s covers slow
- * backends without pulling in unrelated stale traffic.
+ * New flow:
+ *  - At onBeforeRequest, main-frame POSTs are registered per-tab with their
+ *    ORIGINAL url/method/body (pendingMainFrame).
+ *  - At onCommitted, all in-flight requests from the destroyed document are
+ *    tagged with the navEventId (lifecycle membership, no timestamps).
+ *  - Here (called from attachSyntheticNavEvidence, which the SW calls at
+ *    stop-recording and at commit for display), we join by navEventId and
+ *    by the pending main-frame POST — IDs only, no time math.
+ *
+ * Document-request handling: the navigation request itself is EXCLUDED
+ * unless it is a POST with a request body (form-submit POST-is-navigation,
+ * e.g. Amazon Add to Cart) — the exact case we must recover.
  */
-function recoverNetworkForNavigation(
+function recoverNetworkForNavigationById(
+  navEventId: string,
   details: chrome.webNavigation.WebNavigationTransitionCallbackDetails,
 ): NetworkActivity[] {
-  // Look back 10 seconds from the navigation timestamp (DDC-3)
-  const sinceWallClock = details.timeStamp - 10_000;
-
   try {
-    const recent = getRecentRequests(sinceWallClock);
-    if (recent.length === 0) return [];
+    // Exact-ID evidence: ring entries + in-flight entries tagged with this navEvent
+    const byId = getNetworkEvidenceForNavigation(navEventId);
 
-    // Convert CompletedWebRequest → NetworkActivity format.
-    // Exclude the navigation request itself (it would duplicate the
-    // navigation evidence). We want the API calls (POST /cart/add-to-cart,
-    // GET /api/leave, etc.) that triggered or accompanied the navigation.
-    const navUrl = details.url;
+    // The pending main-frame POST (if any) — captured pre-redirect.
+    const pendingDoc = getMainFrameCorrelation(details.tabId);
+
     const activities: NetworkActivity[] = [];
+    const seenRequestIds = new Set<string>();
 
-    for (const req of recent) {
-      // Skip the navigation request itself
-      if (req.url === navUrl) continue;
+    // 1. The form-submit POST itself (Amazon case) — authoritative record.
+    if (pendingDoc && pendingDoc.method !== 'GET' && pendingDoc.requestBody) {
+      seenRequestIds.add(pendingDoc.requestId);
+      activities.push({
+        url: pendingDoc.originalUrl,
+        method: pendingDoc.method,
+        status: null,
+        startRelativeToEvent: 0,
+        endRelativeToEvent: null,
+        durationMs: null,
+        resourceType: 'unknown',
+        source: 'webrequest',
+        requestBody: pendingDoc.requestBody,
+        // CER-4: exact-event join key for pipeline attribution
+        sourceEventId: pendingDoc.sourceEventId ?? undefined,
+      });
+    }
 
-      // Skip static resources and analytics — they add noise
-      // (the signal extractor would filter them anyway, but keeping
-      // the evidence clean helps the side panel display too)
+    // 2. ID-tagged entries (in-flight at commit or completed since).
+    for (const req of byId) {
+      if (seenRequestIds.has(req.requestId)) continue;
+      seenRequestIds.add(req.requestId);
+
+      // Document request without a body = plain GET navigation — the
+      // navigation evidence already records it. Skip (no double-count).
+      if (req.documentRequest && !req.requestBody) continue;
+
+      // Skip static resources and analytics — they add noise and can
+      // fabricate outcome votes for attributed clicks.
       if (/\.(png|jpg|jpeg|gif|webp|svg|ico|css|js|mjs|woff2?|ttf)(\?|$)/i.test(req.url)) continue;
-      if (/\/unagi|\/events\/|\/beacon|\/pixel|\/csm|\/aax2|\/impression/i.test(req.url)) continue;
+      if (/\/unagi|\/events\/|\/beacon|\/pixel|\/csm|\/aax2|\/impression|fls-|\/1\/batch\/|uedata/i.test(req.url)) continue;
+
+      // status -1 = still in flight → null (honest unknown)
+      const status = req.status === -1 ? null : req.status;
 
       activities.push({
         url: req.url,
         method: req.method,
-        status: req.status,
+        status,
         startRelativeToEvent: 0,
         endRelativeToEvent: null,
         durationMs: null,
         resourceType: 'unknown',
         source: 'webrequest',
         requestBody: req.requestBody,
+        sourceEventId: req.sourceEventId ?? undefined,
       });
     }
 
@@ -987,7 +1043,7 @@ function attachSyntheticNavEvidence(navEventId: string, details: chrome.webNavig
       removedSurfaces: [],
       visibilityChanges: [],
       navigation: [navEvidenceEntry],
-      networkActivity: recoverNetworkForNavigation(details),
+      networkActivity: recoverNetworkForNavigationById(navEventId, details),
       performanceCondition: {
         mainThreadBlocked: false,
         highChurnMode: false,

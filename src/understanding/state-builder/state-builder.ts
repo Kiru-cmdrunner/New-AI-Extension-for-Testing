@@ -15,6 +15,7 @@
 import type { SignalSet, ViewChangeSignal, ApiOperationSignal } from '../types';
 import type { PageContentSignal, ObservedItem } from '../page-content/page-content-types';
 import { EntityTracker } from './entity-tracker';
+import { compareInteractionIds } from './interaction-ordering';
 import { CollectionTracker } from './collection-tracker';
 import { CounterTracker } from './counter-tracker';
 import { NotificationTracker } from './notification-tracker';
@@ -549,11 +550,15 @@ export class StateBuilder {
     // D11: No entityType match — fall back to most-recently-updated entity.
     // This mirrors the notification path's strategy and prevents badges
     // from being silently dropped in multi-entity applications.
+    // CER-5: numeric ordering — "int-10" must sort after "int-9".
     let latestId: string | null = null;
-    let latestUpdated = '';
+    let latestIdForCompare: string | null = null;
     for (const [id, e] of entities) {
-      if (String(e.lastUpdated) > latestUpdated) {
-        latestUpdated = String(e.lastUpdated);
+      if (
+        latestIdForCompare === null ||
+        compareInteractionIds(String(e.lastUpdated), latestIdForCompare) > 0
+      ) {
+        latestIdForCompare = String(e.lastUpdated);
         latestId = id;
       }
     }
@@ -614,11 +619,15 @@ export class StateBuilder {
     }
 
     // Multiple entities: pick the most recently updated.
+    // CER-5: numeric ordering — "int-10" must sort after "int-9".
     let latestId: string | null = null;
-    let latestUpdated = '';
+    let latestIdForCompare: string | null = null;
     for (const [id, e] of entities) {
-      if (String(e.lastUpdated) > latestUpdated) {
-        latestUpdated = String(e.lastUpdated);
+      if (
+        latestIdForCompare === null ||
+        compareInteractionIds(String(e.lastUpdated), latestIdForCompare) > 0
+      ) {
+        latestIdForCompare = String(e.lastUpdated);
         latestId = id;
       }
     }

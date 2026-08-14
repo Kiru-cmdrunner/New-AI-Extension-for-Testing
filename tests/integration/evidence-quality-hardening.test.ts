@@ -85,6 +85,7 @@ function makeNavEvent(navType: string = 'pushState', _fromUrl: string = 'https:/
 // ── Mock NetworkBridge ───────────────────────────────────────────────
 
 function createMockNetworkBridge(collectedData: NetworkActivity[] = [], inflightCount = 0) {
+  const known = new Set<string>();
   return {
     start: vi.fn(),
     stop: vi.fn(),
@@ -94,6 +95,13 @@ function createMockNetworkBridge(collectedData: NetworkActivity[] = [], inflight
     clearBuffer: vi.fn(),
     getBufferSize: vi.fn(() => 0),
     getInFlightCount: vi.fn(() => inflightCount),
+    // CER-3: membership-based window↔network join surface
+    snapshotRequestIds: vi.fn(() => new Set(known)),
+    requestIdsStartedDuring: vi.fn((_atOpen: Set<string>, atClose: Set<string>) => {
+      const started = new Set<string>();
+      for (const id of atClose) if (!known.has(id)) started.add(id);
+      return started;
+    }),
   };
 }
 

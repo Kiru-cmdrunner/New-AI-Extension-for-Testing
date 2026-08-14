@@ -374,6 +374,12 @@ export interface NetworkActivity {
    * Example: { ASIN: 'B08KGRVW2S', quantity: '1' }
    */
   requestBody?: Record<string, string>;
+  /**
+   * CER: the trusted user-action event id active when the request started.
+   * Exact-event join key for click→network attribution (replaces the
+   * timestamp window). Present on webRequest-sourced entries only.
+   */
+  sourceEventId?: string;
 }
 
 /**

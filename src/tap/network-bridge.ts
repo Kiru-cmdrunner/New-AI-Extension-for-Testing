@@ -52,6 +52,8 @@ interface WebRequestDetail {
   status: number | null;
   requestId: string;
   requestBody?: Record<string, string>;
+  /** CER: trusted-action eventId at request start (exact join key). */
+  sourceEventId?: string;
 }
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -75,6 +77,8 @@ interface InFlightRequest {
   method: string;
   startTimestamp: number;
   source: 'main-world' | 'webrequest';
+  requestId?: string;
+  sourceEventId?: string;
 }
 
 /**
@@ -224,17 +228,33 @@ export class NetworkBridge {
    * Returns entries with relativeTime adjusted to the evidence window.
    * Applies the 50-entry cap (spec §6.6).
    *
+   * CER-3: When `windowRequestIds` is provided, entries whose requestId is
+   * a member are included REGARDLESS of timestamp (ID join primary).
+   * Time-range matching remains only as the fallback for main-world
+   * entries that carry no requestId (fetch/XHR patch events).
+   *
    * @param openedAt - performance.now() when the evidence window opened
    * @param closedAt - performance.now() when the evidence window closed
+   * @param windowRequestIds - requestIds that STARTED during this window
+   *   (from snapshotRequestIds at window open → collect at close).
    * @returns NetworkActivity[] capped at 50 entries
    */
-  collectForRange(openedAt: number, closedAt: number): NetworkActivity[] {
-    // Filter entries within the time range
-    const inRange = this.buffer.filter(
-      (entry) =>
+  collectForRange(
+    openedAt: number,
+    closedAt: number,
+    windowRequestIds?: Set<string>,
+  ): NetworkActivity[] {
+    // Filter entries: ID membership OR time range (fallback for
+    // main-world-only entries without requestIds)
+    const inRange = this.buffer.filter((entry) => {
+      if (windowRequestIds && entry.requestId && windowRequestIds.has(entry.requestId)) {
+        return true;
+      }
+      return (
         entry.absStartTimestamp >= openedAt - 50 &&
-        entry.absStartTimestamp <= closedAt + 50,
-    );
+        entry.absStartTimestamp <= closedAt + 50
+      );
+    });
 
     // Deduplicate: prefer 'main-world' source over 'webrequest'
     const deduped = this.deduplicate(inRange);
@@ -260,6 +280,7 @@ export class NetworkBridge {
         resourceType: entry.resourceType,
         source: entry.source,
         requestBody: entry.requestBody,
+        sourceEventId: entry.sourceEventId,
       }))
       .sort((a, b) => a.startRelativeToEvent - b.startRelativeToEvent)
       .slice(0, MAX_NETWORK_PER_WINDOW);
@@ -272,6 +293,36 @@ export class NetworkBridge {
    */
   clearBuffer(): void {
     this.buffer = [];
+  }
+
+  /**
+   * CER-3: Snapshot the set of requestIds currently known to the buffer.
+   * Called by EvidenceCollector when an interaction window OPENS. At
+   * close, collectForRange receives the requestIds that STARTED during
+   * the window = (snapshot at close) − (snapshot at open). This is the
+   * deterministic window↔network join — no timestamp overlap needed.
+   */
+  snapshotRequestIds(): Set<string> {
+    const ids = new Set<string>();
+    for (const entry of this.buffer) {
+      if (entry.requestId) ids.add(entry.requestId);
+    }
+    return ids;
+  }
+
+  /**
+   * CER-3: Compute the requestIds that started between two snapshots
+   * (window-open snapshot vs window-close snapshot).
+   */
+  requestIdsStartedDuring(
+    atOpen: Set<string>,
+    atClose: Set<string>,
+  ): Set<string> {
+    const started = new Set<string>();
+    for (const id of atClose) {
+      if (!atOpen.has(id)) started.add(id);
+    }
+    return started;
   }
 
   /**
@@ -336,6 +387,11 @@ export class NetworkBridge {
       source === 'main-world'
         ? (detail as NetEventDetail).resourceType
         : 'unknown';
+    // CER-3: thread requestId + sourceEventId from webRequest events.
+    const requestId =
+      source === 'webrequest' ? (detail as WebRequestDetail).requestId : undefined;
+    const sourceEventId =
+      source === 'webrequest' ? (detail as WebRequestDetail).sourceEventId : undefined;
 
     // P1-4 Fix: Normalize timestamp for webRequest events.
     // MAIN-world events use the same performance.now() as the content script
@@ -365,6 +421,8 @@ export class NetworkBridge {
         method,
         startTimestamp: timestamp,
         source,
+        requestId,
+        sourceEventId,
       });
       this.inFlight.set(key, existing);
 
@@ -378,6 +436,8 @@ export class NetworkBridge {
         resourceType,
         source,
         requestBody,
+        requestId,
+        sourceEventId,
       });
     } else {
       // Complete phase — find matching in-flight request
@@ -407,6 +467,9 @@ export class NetworkBridge {
           if (requestBody && !startEntry.requestBody) {
             startEntry.requestBody = requestBody;
           }
+          // CER-3: late-arriving IDs backfill the start entry
+          if (requestId && !startEntry.requestId) startEntry.requestId = requestId;
+          if (sourceEventId && !startEntry.sourceEventId) startEntry.sourceEventId = sourceEventId;
         }
       } else {
         // No matching start (missed or from before recording) — create standalone entry.
@@ -425,6 +488,8 @@ export class NetworkBridge {
           resourceType,
           source: isPoEntry ? 'performance-observer' : source,
           requestBody,
+          requestId,
+          sourceEventId,
         });
       }
     }
@@ -444,8 +509,10 @@ export class NetworkBridge {
 
   /**
    * Deduplicate entries — prefer main-world over webrequest.
-   * Entries from different sources with the same URL + method and
-   * timestamps within DEDUP_WINDOW_MS are considered duplicates.
+   * CER-3: requestId equality is the primary duplicate signal for
+   * webrequest-vs-main-world pairs (exact same HTTP request seen by both
+   * channels). URL+method+timestamp remains the fallback when either
+   * entry lacks a requestId.
    *
    * DDC-1: Also drop PerformanceObserver duplicates of fetch/XHR patch
    * entries. PO entries carry no method and no real status — when the
@@ -460,9 +527,24 @@ export class NetworkBridge {
     const usedWebrequestIndices = new Set<number>();
     const usedPoIndices = new Set<number>();
 
+    // Index webrequest entries by requestId for exact matching
+    const webrequestByRequestId = new Map<string, number>();
+    entries.forEach((e, i) => {
+      if (e.source === 'webrequest' && e.requestId) {
+        webrequestByRequestId.set(e.requestId, i);
+      }
+    });
+
     for (const entry of entries) {
       if (entry.source === 'main-world') {
-        // Mark any webrequest duplicates
+        // CER-3: exact-ID dedup — a main-world entry whose requestId
+        // matches a webrequest entry is the same HTTP request; the
+        // webrequest twin (richer: body, sourceEventId) wins, this drops.
+        if (entry.requestId && webrequestByRequestId.has(entry.requestId)) {
+          usedWebrequestIndices.delete(webrequestByRequestId.get(entry.requestId)!);
+          continue;
+        }
+        // Mark any webrequest duplicates (fallback: url+method+time)
         for (let i = 0; i < entries.length; i++) {
           if (
             entries[i].source === 'webrequest' &&
@@ -532,4 +614,8 @@ interface TimestampedNetworkActivity {
   resourceType: 'xhr' | 'fetch' | 'unknown' | 'navigation' | 'resource';
   source: 'main-world' | 'webrequest' | 'performance-observer';
   requestBody?: Record<string, string>;
+  /** CER-3: webRequest requestId — exact join/dedup key. */
+  requestId?: string;
+  /** CER-4: trusted-action eventId at request start. */
+  sourceEventId?: string;
 }

@@ -145,6 +145,13 @@ interface ObservationWindowState {
   lifecycleId: string | null;
   /** Lifecycle-Driven Evidence: whether this window is held open by a lifecycle. */
   isLifecycleBound: boolean;
+  /**
+   * CER-3: requestIds known to the NetworkBridge when this window OPENED.
+   * At close, requestIdsStartedDuring(atOpen, atClose) yields the exact set
+   * of requests that started during the window — the deterministic
+   * window↔network join (no timestamp overlap required).
+   */
+  requestIdsAtOpen: Set<string> | null;
 }
 
 // ── EvidenceCollector ────────────────────────────────────────────────
@@ -353,6 +360,12 @@ export class EvidenceCollector {
     const windowId = `ev-${eventId}`;
     const openedAt = performance.now();
 
+    // CER-3: snapshot the requestIds the bridge already knows about, so the
+    // window↔network join at close is membership-based, not timestamp-based.
+    const requestIdsAtOpen = this.networkBridge
+      ? this.networkBridge.snapshotRequestIds()
+      : null;
+
     // Create AdaptiveWindow
     const adaptiveWindow = new AdaptiveWindow({
       onClose: (evidenceWindow) => {
@@ -376,6 +389,7 @@ export class EvidenceCollector {
       observedEvent, // P1-3 fix: store ObservedEvent for valueBefore/valueAfter fallback
       lifecycleId: null,
       isLifecycleBound: false,
+      requestIdsAtOpen,
     };
 
     // Lifecycle-Driven Evidence: if any lifecycle bindings exist, hold this
@@ -425,9 +439,17 @@ export class EvidenceCollector {
     // for requests that started within the window but haven't completed yet.
     let networkActivity: NetworkActivity[] = [];
     if (this.networkBridge) {
+      // CER-3: primary join is requestId membership — requests that STARTED
+      // during this window (per the open/close snapshots). Timestamp range
+      // remains only as fallback for main-world entries with no requestId.
+      const atClose = this.networkBridge.snapshotRequestIds();
+      const startedDuring = state.requestIdsAtOpen
+        ? this.networkBridge.requestIdsStartedDuring(state.requestIdsAtOpen, atClose)
+        : atClose;
       networkActivity = this.networkBridge.collectForRange(
         state.openedAt,
         performance.now(),
+        startedDuring.size > 0 ? startedDuring : undefined,
       );
 
       // GAP-5: Check for in-flight requests that started within this window.
@@ -1161,9 +1183,17 @@ export class EvidenceCollector {
     // Collect network activity
     let networkActivity: NetworkActivity[] = [];
     if (this.networkBridge) {
+      // CER-3: same membership-based join as closeWindow — requests that
+      // STARTED during this window, by requestId, with time-range fallback
+      // for entries carrying no requestId.
+      const atClose = this.networkBridge.snapshotRequestIds();
+      const startedDuring = state.requestIdsAtOpen
+        ? this.networkBridge.requestIdsStartedDuring(state.requestIdsAtOpen, atClose)
+        : atClose;
       networkActivity = this.networkBridge.collectForRange(
         state.openedAt,
         performance.now(),
+        startedDuring.size > 0 ? startedDuring : undefined,
       );
     }
 
