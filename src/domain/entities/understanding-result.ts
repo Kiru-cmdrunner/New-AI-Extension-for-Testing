@@ -25,6 +25,12 @@
  * Reference: Phase 9.5 architectural design discussion
  */
 
+// M9.12: type-only imports from understanding layer.
+// These are additive optional fields — no runtime coupling to the
+// understanding module from the domain layer.
+import type { SemanticKnowledge } from '../../understanding/enrichment/semantic-types';
+import type { ApplicationKnowledge } from '../../understanding/consolidation/application-knowledge';
+
 /**
  * The complete output of the Understanding Layer for a single recording session.
  *
@@ -46,9 +52,12 @@ export interface UnderstandingResult {
   /** Schema version for forward compatibility. */
   readonly schemaVersion: number;
 
-  // ── Future artifacts (optional, additive) ──
-  // fragment?: StructuralFragment;
-  // domainEntities?: DomainEntity[];
-  // navigationGraph?: NavigationGraph;
-  // businessRules?: BusinessRule[];
+  // ── M9.12 — Application Understanding (optional, additive) ──
+
+  /** Semantic knowledge from M9.7 enrichment (domain, surface, workflows...). */
+  readonly semanticKnowledge?: SemanticKnowledge;
+  /** Consolidated cross-session application knowledge from M9.6. */
+  readonly applicationKnowledge?: ApplicationKnowledge;
+  /** Non-fatal warnings from the understanding pipeline. */
+  readonly knowledgeWarnings?: string[];
 }

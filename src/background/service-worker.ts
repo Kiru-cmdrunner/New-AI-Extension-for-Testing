@@ -50,6 +50,11 @@ let sessionRestored = false;
 let recordingStartUrl = '';
 let recordingStartTitle = '';
 
+// M9.12: Prior-knowledge seed loaded at startRecording, passed to
+// the understanding pipeline at stopRecording.  Null = preload failed
+// or first session on this app.
+let understandingSeed: import('../understanding/consolidation/application-knowledge').StateBuilderSeed | null = null;
+
 // ── MV3 Recovery: restore session on SW startup ─────────────────────────
 
 async function ensureSessionRestored(): Promise<void> {
@@ -248,6 +253,20 @@ async function handleStartRecording(): Promise<void> {
     });
   } catch { /* non-fatal */ }
 
+  // M9.12: Preload prior application knowledge for this origin so the
+  // understanding pipeline can recognize cross-session entities/views.
+  // Non-fatal — a preload failure never blocks recording start.
+  understandingSeed = null;
+  try {
+    if (startUrl) {
+      const { preloadPriorKnowledge } = await import('../understanding/pipeline/understanding-pipeline');
+      understandingSeed = await preloadPriorKnowledge(startUrl);
+    }
+  } catch (e) {
+    console.warn('[M9] prior-knowledge preload failed:', e);
+    understandingSeed = null;
+  }
+
   // Ensure content script is injected in the active tab
   // (Critical: if the extension was reloaded, the content script may be
   // missing from already-open tabs.)
@@ -293,6 +312,47 @@ async function handleStopRecording(): Promise<void> {
   // Store production interactions for UI display
   await StorageService.setRaw(StorageKeys.LIVE_INTERACTIONS, productionInteractions);
 
+  // ── M9.12: Application Understanding Pipeline ──
+  // Runs the full deterministic understanding chain (M9.1→M9.7) over
+  // the session's interactions.  Non-fatal: if M9 throws, recording
+  // still completes with a minimal understanding stub.
+  let understandingResult: import('../domain/entities/understanding-result').UnderstandingResult = {
+    sessionId: `session-${Date.now()}`,
+    generatedAt: new Date().toISOString(),
+    schemaVersion: 1,
+  };
+
+  try {
+    if (productionInteractions.length > 0) {
+      const { runUnderstandingPipeline } = await import('../understanding/pipeline/understanding-pipeline');
+      const origin = recordingStartUrl || (await getActiveTab())?.url || '';
+      const sessionId = `session-${Date.now()}`;
+
+      const pipelineOutcome = await runUnderstandingPipeline({
+        interactions: productionInteractions,
+        origin,
+        sessionId,
+        seed: understandingSeed,
+      });
+
+      understandingResult = {
+        sessionId,
+        generatedAt: new Date().toISOString(),
+        schemaVersion: 2,
+        semanticKnowledge: pipelineOutcome.semanticKnowledge ?? undefined,
+        applicationKnowledge: pipelineOutcome.applicationKnowledge ?? undefined,
+        knowledgeWarnings: pipelineOutcome.warnings.length > 0 ? pipelineOutcome.warnings : undefined,
+      };
+
+      // Store for side-panel display (best-effort)
+      await StorageService.setRaw(StorageKeys.UNDERSTANDING_RESULT, understandingResult);
+    }
+  } catch (e) {
+    console.warn('[M9] understanding pipeline failed:', e);
+  } finally {
+    understandingSeed = null; // clear for next session
+  }
+
   // ── Generation Layer: compile interactions → ExecutionIRPlan ──
   try {
     const { build: buildIRPlan } = await import('../generation/ir-bridge');
@@ -335,11 +395,7 @@ async function handleStopRecording(): Promise<void> {
     if (irPlan) {
       const uowFactory = new DexieUnitOfWorkFactory();
       const persistenceResult = await persistSession(uowFactory, {
-        understanding: {
-          sessionId: `session-${Date.now()}`,
-          generatedAt: new Date().toISOString(),
-          schemaVersion: 1,
-        },
+        understanding: understandingResult,
         events: [],
         interactions: productionInteractions,
         url: (await getActiveTab())?.url ?? '',

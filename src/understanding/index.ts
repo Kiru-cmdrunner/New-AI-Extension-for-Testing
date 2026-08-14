@@ -231,3 +231,13 @@ export { NetworkPatternRegistry } from './domain-config/network-pattern-registry
 export { ECOMMERCE_PACK } from './domain-config/packs/ecommerce-pack';
 export { HR_PACK } from './domain-config/packs/hr-pack';
 export { DEVTOOLS_PACK } from './domain-config/packs/devtools-pack';
+
+// Production pipeline (M9.12)
+export {
+  UnderstandingPipeline,
+  createDefaultUnderstandingPipeline,
+  createDefaultDomainPackRegistry,
+  runUnderstandingPipeline,
+  preloadPriorKnowledge,
+} from './pipeline/understanding-pipeline';
+export type { PipelineInput, PipelineOutcome } from './pipeline/understanding-pipeline';
