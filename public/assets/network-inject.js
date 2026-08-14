@@ -146,29 +146,24 @@
         for (var i = 0; i < entries.length; i++) {
           var entry = entries[i];
 
-          // Skip entries we already capture via fetch/XHR patches.
-          // PerformanceObserver 'resource' entries include fetch/XHR;
-          // 'navigation' entries are document loads (form submits, link clicks).
+          // 'navigation' entries are document loads (form submits, link
+          // clicks); 'resource' entries include fetch/XHR.
           var entryType = entry.entryType;
           var resourceType = entryType === 'navigation' ? 'navigation' : 'resource';
 
-          // Determine HTTP status from transferSize (PerformanceObserver
-          // doesn't expose status codes directly, but transferSize > 0
-          // implies a completed response).
-          // entry.transferSize is available for 'resource' and 'navigation'
-          // entries when the Resource Timing API is available.
-          var hasResponse = entry.transferSize !== undefined && entry.transferSize > 0;
-
+          // DDC-1: NEVER fabricate an HTTP status from PerformanceObserver.
+          // PerformanceObserver cannot read status codes. Inferring 200 from
+          // transferSize fed synthetic success votes into outcome
+          // determination. status: null means "completed, status unknown" —
+          // the URL is still classified, but no status-derived vote fires.
+          // When a fetch/XHR twin exists, the bridge drops this PO entry
+          // entirely (dedup) and the real status comes from that twin.
           dispatch({
             url: entry.name,
-            method: 'GET', // PerformanceObserver doesn't expose method;
-                           // navigation entries are always GET for the document
-                           // request. POST form-submit navigations appear as
-                           // navigation entries with the POST method not exposed.
-                           // The SW webRequest path captures the actual method.
+            method: 'GET', // PO cannot read the method; dedup ignores method
             timestamp: performance.now() - (entry.duration || 0),
             phase: 'complete',
-            status: hasResponse ? 200 : null, // Best-effort: assume 200 if data arrived
+            status: null,
             resourceType: resourceType,
           });
         }

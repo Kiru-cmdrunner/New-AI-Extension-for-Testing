@@ -19,6 +19,7 @@ import type {
   KnowledgeNotificationRow,
   KnowledgeOutcomeRow,
   KnowledgeStateTransitionRow,
+  KnowledgeRecordedWorkflowRow,
 } from './knowledge-types';
 
 /** Database name — separate from cmdrunner_repository. */
@@ -26,7 +27,8 @@ const KNOWLEDGE_DB_NAME = 'cmdrunner_knowledge';
 
 /**
  * The Application Knowledge database.
- * V1 only — no migration path needed (new database).
+ * V1: 9 tables. V2: + knowledgeRecordedWorkflows (DDC-4, additive).
+ * cmdrunner_repository (M1–M8 frozen) is untouched.
  */
 export class KnowledgeDatabase extends Dexie {
   applications!: Table<ApplicationRow, string>;
@@ -38,6 +40,7 @@ export class KnowledgeDatabase extends Dexie {
   knowledgeNotifications!: Table<KnowledgeNotificationRow, string>;
   knowledgeOutcomes!: Table<KnowledgeOutcomeRow, string>;
   knowledgeStateTransitions!: Table<KnowledgeStateTransitionRow, string>;
+  knowledgeRecordedWorkflows!: Table<KnowledgeRecordedWorkflowRow, string>;
 
   constructor() {
     super(KNOWLEDGE_DB_NAME);
@@ -52,6 +55,11 @@ export class KnowledgeDatabase extends Dexie {
       knowledgeNotifications: 'key, appId, [appId+severity]',
       knowledgeOutcomes: 'key, appId, [appId+outcome]',
       knowledgeStateTransitions: 'key, appId, sessionId',
+    });
+
+    // DDC-4: additive migration — new table only.
+    this.version(2).stores({
+      knowledgeRecordedWorkflows: 'key, appId, patternId, lastSeenAt',
     });
   }
 }

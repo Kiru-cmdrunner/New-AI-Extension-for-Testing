@@ -27,7 +27,7 @@ import type { ComponentInteraction } from '../../shared/component-types';
 import type { ActionOutcome } from '../outcome/outcome-types';
 import type { ApplicationState, StateTransition } from '../state-builder/types';
 import type { ApplicationKnowledge } from '../consolidation/application-knowledge';
-import type { SemanticKnowledge } from '../enrichment/semantic-types';
+import type { SemanticKnowledge, SemanticWorkflow } from '../enrichment/semantic-types';
 import type { StateBuilderSeed } from '../consolidation/application-knowledge';
 
 // M9.1
@@ -60,6 +60,8 @@ import { KnowledgeLoader } from '../consolidation/knowledge-loader';
 import { KnowledgePreloader } from '../consolidation/knowledge-preloader';
 // M9.7
 import { enrichSemantically } from '../enrichment/semantic-enricher';
+import { aggregateRecordedWorkflows } from '../enrichment/recorded-workflow';
+import type { RecordedWorkflow } from '../enrichment/semantic-types';
 // M9.11
 import {
   DomainPackRegistry,
@@ -276,15 +278,35 @@ export class UnderstandingPipeline {
           const transition = transitions.find(
             (t) => t.interactionId === interaction.interactionId,
           ) ?? null;
+
+          // DDC-5: evidence-quality flags from behavioral evidence
+          const appEv = interaction.behavioralEvidence?.applicationEvidence;
+          const evidenceQuality = appEv
+            ? {
+                mainThreadBlocked: appEv.performanceCondition?.mainThreadBlocked ?? false,
+                domChangeOverflow: appEv.domChangeOverflow ?? 0,
+                coarseMode: appEv.coarseMode ?? false,
+              }
+            : undefined;
+
           const outcome = this.outcomeDeterminer.determine({
             interactionId: interaction.interactionId,
             actionType: interaction.type,
             actionTarget: interaction.trigger.accessibleName ?? interaction.trigger.tag ?? '',
             signals,
             transition,
+            evidenceQuality,
           });
           outcomes.set(interaction.interactionId, outcome);
         }
+
+        // DDC-3: click→network→outcome attribution for full-page reloads.
+        // A form-submit click (int-19) often destroys the page before its
+        // network evidence lands; the recovered API ops are attached to the
+        // FOLLOWING synthetic navigation interaction (int-20). Without this
+        // pass, the user's action records 'incomplete' while a synthetic
+        // navigation owns the outcome — the causal link is severed.
+        this.attributeReloadOutcomes(input.interactions, signalResult.signals, outcomes);
       }
     } catch (e) {
       warnings.push(`outcome-determination: ${(e as Error).message}`);
@@ -294,10 +316,13 @@ export class UnderstandingPipeline {
     // D4: Load prior knowledge BEFORE persisting the current session.
     // This ensures enrichment sees only prior sessions (not the current
     // one) and prevents double-counting of navigation edges and outcomes.
+    // DDC-4: also load prior recorded-workflow patterns for recurrence.
     let priorKnowledge: ApplicationKnowledge | null = null;
+    let priorRecordedWorkflows: import('../enrichment/semantic-types').RecordedWorkflow[] = [];
     if (this.knowledgeLoader) {
       try {
         priorKnowledge = await this.knowledgeLoader.load(appId);
+        priorRecordedWorkflows = await this.knowledgeLoader.loadRecordedWorkflows(appId);
       } catch (e) {
         warnings.push(`knowledge-load: ${(e as Error).message}`);
       }
@@ -306,6 +331,7 @@ export class UnderstandingPipeline {
     // ── Stage 5: Knowledge Persistence (M9.5) ──
     if (this.persistenceService && finalState) {
       try {
+        // DDC-3: enriched outcomes (click-attribution pass) are persisted.
         await this.persistenceService.persist({
           origin: input.origin,
           projectId: appId,
@@ -329,11 +355,36 @@ export class UnderstandingPipeline {
         transitions,
         currentState: finalState,
         priorKnowledge,
+        // DDC-4: seed aggregation with persisted patterns
+        priorRecordedWorkflows,
         sessionId: input.sessionId,
         intentVocabularyRegistry: this.domainRegistry.intentVocabulary,
       });
     } catch (e) {
       warnings.push(`semantic-enrichment: ${(e as Error).message}`);
+    }
+
+    // ── Stage 7: Persist recorded workflows (DDC-4) ──
+    // Persist THIS SESSION's contribution only (occurrences observed now),
+    // not the prior-merged recurring patterns — the repository accumulates
+    // across sessions. Persisting merged counts would double-count priors.
+    if (this.persistenceService && semanticKnowledge) {
+      try {
+        await this.persistenceService.persist({
+          origin: input.origin,
+          projectId: appId,
+          recordingSessionId: input.sessionId,
+          applicationState: finalState!,
+          transitions,
+          outcomes: [...outcomes.values()],
+          recordedWorkflows: aggregateRecordedWorkflowsForPersist(
+            semanticKnowledge.workflows,
+            input.sessionId,
+          ),
+        });
+      } catch (e) {
+        warnings.push(`recorded-workflow-persistence: ${(e as Error).message}`);
+      }
     }
 
     return {
@@ -362,6 +413,108 @@ export class UnderstandingPipeline {
 
   // ── Helpers ──
 
+  /**
+   * DDC-3: Attribute recovered network evidence to the triggering click.
+   *
+   * For each synthetic-navigation interaction carrying recovered API
+   * operations (source 'webrequest' entries that the SW ring buffer
+   * injected), find the nearest preceding action interaction (Click /
+   * KeyboardShortcut / CompoundInteraction) within 10s. If that interaction
+   * has NO api-operations of its own and its current outcome is
+   * 'incomplete' (no votes), re-run determination with the recovered ops
+   * merged into its signal set — the click then gets an evidenced outcome.
+   *
+   * Deterministic guards:
+   *  - only merges ops the click interaction itself did NOT capture
+   *  - only fires when the click's outcome has zero supporting evidence
+   *  - bounded to the nearest preceding action, ≤3 ops
+   */
+  private attributeReloadOutcomes(
+    interactions: ComponentInteraction[],
+    signalMap: Map<string, ReturnType<SignalExtractionCoordinator['extract']>['signals'] extends Map<string, infer S> ? S : never>,
+    outcomes: Map<string, ActionOutcome>,
+  ): void {
+    /** window timestamps keyed by interactionId for ordering */
+    const idxOf = new Map<string, number>();
+    interactions.forEach((i, n) => idxOf.set(i.interactionId, n));
+
+    for (const interaction of interactions) {
+      // Only synthetic navigation interactions carry recovered evidence
+      const signals = signalMap.get(interaction.interactionId);
+      if (!signals) continue;
+
+      const recovered = signals.apiOperations.filter(
+        (op) => op.source === 'network-url' || op.source === 'network-status',
+      );
+      // Recovered ops come from webrequest-sourced entries; in-pipeline we
+      // distinguish them via their behavioral evidence source. For the
+      // synthetic nav, ALL api ops are recovered (the content script was
+      // destroyed), so treat any op on a synthetic-nav interaction as
+      // recoverable attribution candidates.
+      if (recovered.length === 0) continue;
+
+      const ev = interaction.behavioralEvidence;
+      if (!ev) continue;
+      const isSyntheticNav = ev.window?.endReason === 'page-reload-synthetic';
+      if (!isSyntheticNav) continue;
+
+      // Find the nearest preceding ACTION interaction within 10s
+      const idx = idxOf.get(interaction.interactionId) ?? -1;
+      if (idx < 0) continue;
+
+      const navTime = interaction.endTime ?? interaction.startTime ?? 0;
+      const actionTypes = new Set(['Click', 'KeyboardShortcut', 'CompoundInteraction', 'Link']);
+      let target: ComponentInteraction | null = null;
+      for (let n = idx - 1; n >= 0; n--) {
+        const cand = interactions[n];
+        if (!actionTypes.has(cand.type)) continue;
+        const candEnd = cand.endTime ?? cand.startTime ?? 0;
+        if (navTime - candEnd <= 10_000) {
+          target = cand;
+        }
+        break; // nearest preceding action only
+      }
+      if (!target) continue;
+
+      const targetSignals = signalMap.get(target.interactionId);
+      if (!targetSignals) continue;
+      // The click already captured its own ops (delivery won the race) —
+      // do not double-attribute.
+      if (targetSignals.apiOperations.length > 0) continue;
+
+      const existingOutcome = outcomes.get(target.interactionId);
+      // Only re-determine when the click's outcome is evidence-free
+      if (!existingOutcome || existingOutcome.supportingEvidence.length > 0) continue;
+
+      // Merge up to 3 recovered ops into the click's signal set
+      const merged = {
+        ...targetSignals,
+        apiOperations: [...targetSignals.apiOperations, ...recovered.slice(0, 3)],
+      };
+
+      const transition = null; // the click's transition (if any) already exists in caller scope; re-lookup below
+      const outcome = this.outcomeDeterminer.determine({
+        interactionId: target.interactionId,
+        actionType: target.type,
+        actionTarget: target.trigger.accessibleName ?? target.trigger.tag ?? '',
+        signals: merged,
+        transition,
+        evidenceQuality: {
+          mainThreadBlocked: target.behavioralEvidence?.applicationEvidence?.performanceCondition?.mainThreadBlocked ?? false,
+          domChangeOverflow: target.behavioralEvidence?.applicationEvidence?.domChangeOverflow ?? 0,
+          coarseMode: target.behavioralEvidence?.applicationEvidence?.coarseMode ?? false,
+        },
+      });
+      // Mark attribution provenance in the evidence detail
+      for (const e of outcome.supportingEvidence) {
+        if (e.kind === 'api-operation') {
+          e.detail = `${e.detail} [attributed via reload recovery]`;
+        }
+      }
+      outcomes.set(target.interactionId, outcome);
+    }
+  }
+
   private collectConfirmationViews(): Set<string> {
     // Collect confirmation views from all installed packs
     const views = new Set<string>();
@@ -384,6 +537,22 @@ export class UnderstandingPipeline {
 }
 
 // ── Factory ────────────────────────────────────────────────────────────
+
+/**
+ * DDC-4 helper: build single-occurrence RecordedWorkflow rows from this
+ * session's SemanticWorkflows so first-time patterns persist too (they
+ * become "recurring" only after a second session matches them).
+ */
+function aggregateRecordedWorkflowsForPersist(
+  workflows: SemanticWorkflow[],
+  sessionId: string,
+): RecordedWorkflow[] {
+  // Reuse the aggregation with no prior seed, then keep ALL patterns
+  return aggregateRecordedWorkflows(workflows, []).map((w) => ({
+    ...w,
+    sessionIds: [sessionId],
+  }));
+}
 
 /**
  * Create a DomainPackRegistry with HR + DevTools packs installed.

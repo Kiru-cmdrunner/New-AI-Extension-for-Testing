@@ -177,6 +177,76 @@ function extractEntityHints(body: Record<string, string>): { field: string; valu
   return hints;
 }
 
+// ── GraphQL operationName extraction (DDC-7) ──────────────────────────
+
+/**
+ * Extract a GraphQL operation name from a request body.
+ *
+ * Handles the two standard shapes:
+ *  - { query: "mutation AddToCart($asin:String!){...}", variables: "{...}" }
+ *  - { operationName: "AddToCart", query: "..." }
+ *  - batched operations: [ { query: "..." }, ... ]
+ *
+ * Returns `graphql:<Name>` on match, null otherwise. Deterministic — pure
+ * regex on the captured body, no inference.
+ */
+export function extractGraphqlOperation(
+  body: Record<string, string> | undefined,
+): string | null {
+  if (!body) return null;
+
+  // 1. Explicit operationName field (Apollo-style)
+  if (typeof body.operationName === 'string' && body.operationName.length > 0) {
+    return `graphql:${body.operationName}`;
+  }
+
+  // 2. Parse the query/operations string for "mutation|query <Name>"
+  const queryStr =
+    typeof body.query === 'string' ? body.query :
+    typeof body.operations === 'string' ? body.operations :
+    null;
+  if (queryStr) {
+    const m = queryStr.match(/\b(?:mutation|query|subscription)\s+([A-Za-z0-9_]+)/);
+    if (m) return `graphql:${m[1]}`;
+    // Bare query with no name ("{ cart { items } }") — no name to use
+    return null;
+  }
+
+  return null;
+}
+
+/**
+ * Extract entity hints from a GraphQL body's `variables` JSON string.
+ * Variables carry the identifiers: { "asin": "B08KGRVW2S", "qty": 1 }.
+ */
+function extractGraphqlVariableHints(
+  body: Record<string, string> | undefined,
+): { field: string; value: string; hint: string }[] {
+  if (!body) return [];
+  const varsStr = typeof body.variables === 'string' ? body.variables : null;
+  if (!varsStr) return [];
+
+  let vars: Record<string, unknown>;
+  try {
+    vars = JSON.parse(varsStr);
+  } catch {
+    return [];
+  }
+  if (!vars || typeof vars !== 'object') return [];
+
+  const hints: { field: string; value: string; hint: string }[] = [];
+  for (const [key, value] of Object.entries(vars)) {
+    if (typeof value !== 'string' && typeof value !== 'number') continue;
+    for (const pattern of ENTITY_HINT_PATTERNS) {
+      if (pattern.field.test(key)) {
+        hints.push({ field: `variables.${key}`, value: String(value), hint: pattern.hint });
+        break;
+      }
+    }
+  }
+  return hints;
+}
+
 export class NetworkSignalExtractor implements SignalExtractor {
   readonly name = 'NetworkSignalExtractor';
 
@@ -200,7 +270,15 @@ export class NetworkSignalExtractor implements SignalExtractor {
     const signals: ApiOperationSignal[] = [];
 
     for (const entry of networkEntries) {
-      const operation = classifyUrl(entry.url, this.domainPatternRegistry);
+      let operation = classifyUrl(entry.url, this.domainPatternRegistry);
+
+      // DDC-7: GraphQL bodies override URL classification — a single
+      // /graphql endpoint classifies as 'unknown' for every operation;
+      // the operationName carries the actual semantic.
+      const graphqlOp = extractGraphqlOperation(entry.requestBody);
+      if (graphqlOp) {
+        operation = graphqlOp;
+      }
 
       // Skip analytics and static resources — they carry no semantic value
       // for application understanding.
@@ -209,13 +287,19 @@ export class NetworkSignalExtractor implements SignalExtractor {
       const outcomeHint = deriveOutcomeHint(entry.status);
 
       // Extract entity hints from request body if available
-      const entityHints = entry.requestBody ? extractEntityHints(entry.requestBody) : undefined;
+      // (form fields first, GraphQL variables second)
+      let entityHints = entry.requestBody ? extractEntityHints(entry.requestBody) : [];
+      if (entityHints.length === 0 && entry.requestBody) {
+        entityHints = extractGraphqlVariableHints(entry.requestBody);
+      }
 
       signals.push({
         type: 'api-operation',
         interactionId: interaction.interactionId,
         source: entry.status !== null ? 'network-status' : 'network-url',
-        confidence: operation === 'unknown' ? 0.2 : 0.7,
+        confidence:
+          graphqlOp ? 0.8 :
+          operation === 'unknown' ? 0.2 : 0.7,
         operation,
         method: entry.method,
         status: entry.status,
@@ -223,7 +307,7 @@ export class NetworkSignalExtractor implements SignalExtractor {
         url: entry.url,
         outcomeHint,
         requestBody: entry.requestBody,
-        entityHints,
+        entityHints: entityHints.length > 0 ? entityHints : undefined,
       });
     }
 

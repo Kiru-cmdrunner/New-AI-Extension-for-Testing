@@ -284,8 +284,40 @@ export interface KnowledgeStateTransitionRow {
   timestamp: number;
 }
 
+// -- Recorded Workflow (DDC-4) --
+
+/**
+ * Persisted cross-session workflow pattern.
+ * Mirrors enrichment RecordedWorkflow but with persistence metadata.
+ */
+export interface KnowledgeRecordedWorkflowRow {
+  /** Compound key: appId + ':' + patternId. */
+  key: string;
+  /** App scope. */
+  appId: string;
+  /** Stable hash of the canonical step sequence. */
+  patternId: string;
+  /** Human label. */
+  label: string;
+  /** Canonical step sequence (intent names). */
+  canonicalSteps: string[];
+  /** View transition pattern. */
+  viewSequence: string[];
+  /** Sessions where this pattern was observed. */
+  sessionIds: string[];
+  /** Total occurrences across all sessions. */
+  occurrenceCount: number;
+  /** Workflow instance IDs (bounded — last MAX_WORKFLOW_INSTANCES kept). */
+  instances: string[];
+  /** Epoch ms first seen. */
+  firstSeenAt: number;
+  /** Epoch ms last seen. */
+  lastSeenAt: number;
+}
+
 // -- Constants --
 
 export const MAX_COUNTER_HISTORY = 100;
 export const MAX_NOTIFICATIONS_PER_APP = 500;
 export const MAX_TRANSITIONS_PER_SESSION = 500;
+export const MAX_WORKFLOW_INSTANCES = 200;

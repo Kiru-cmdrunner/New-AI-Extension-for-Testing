@@ -44,6 +44,26 @@ export class StateBuilder {
   private lastInteractionId: string | null = null;
   private readonly entityTypeRegistry: EntityTypeRegistry;
   private readonly stateVocabularyRegistry: StateVocabularyRegistry | null;
+  /**
+   * DDC-5: evidence-quality flags set by the pipeline for the NEXT
+   * processSignals call (read from the interaction's behavioral evidence).
+   */
+  private pendingEvidenceQuality: {
+    mainThreadBlocked: boolean;
+    domChangeOverflow: number;
+    coarseMode: boolean;
+  } | null = null;
+
+  /**
+   * DDC-5: set evidence-quality flags for the next processSignals call.
+   */
+  setEvidenceQuality(q: {
+    mainThreadBlocked: boolean;
+    domChangeOverflow: number;
+    coarseMode: boolean;
+  } | null): void {
+    this.pendingEvidenceQuality = q;
+  }
 
   /**
    * @param entityTypeRegistry Optional registry for custom entity types.
@@ -70,6 +90,16 @@ export class StateBuilder {
   processSignals(signals: SignalSet): StateTransition {
     const before = this.getCurrentState();
     const changes: string[] = [];
+
+    // DDC-5: record evidence-quality degradation markers so persistence
+    // (stateTransitions.changes) carries WHY confidence was downgraded.
+    if (this.pendingEvidenceQuality) {
+      const q = this.pendingEvidenceQuality;
+      if (q.mainThreadBlocked) changes.push('evidence-degraded: main-thread-blocked');
+      if (q.domChangeOverflow > 0) changes.push(`evidence-degraded: dom-change-overflow (${q.domChangeOverflow})`);
+      if (q.coarseMode) changes.push('evidence-degraded: coarse-mode');
+      this.pendingEvidenceQuality = null;
+    }
 
     // ── View changes ──
     for (const vc of signals.viewChanges) {
@@ -193,6 +223,34 @@ export class StateBuilder {
         };
         this.entityTracker.upsert(entity);
         changes.push(`form field entity (${registryType}): "${ic.newValue}"`);
+      }
+    }
+
+    // ── Control state changes (DDC-6) ──
+    // Checkbox toggles, accordion expand/collapse, toggle buttons,
+    // multi-select changes. Recorded as transition changes; the interacted
+    // element's entity attribute is updated when a form-field entity for
+    // the same field exists.
+    for (const csc of signals.controlStateChanges ?? []) {
+      const desc = csc.elementLabel ? `${csc.elementLabel} (${csc.property})` : csc.property;
+      changes.push(`control: ${desc} ${csc.oldValue ?? '∅'} → ${csc.newValue ?? '∅'}`);
+
+      // Update the attribute on any entity created from this same field
+      // (e.g., form-field entity keyed by the field's value).
+      const attrKey = `control.${csc.property}`;
+      for (const [id, entity] of this.entityTracker.snapshot()) {
+        if (
+          entity.attributes &&
+          (entity.attributes['field'] === csc.field ||
+            (entity.attributes['field'] as string | undefined)?.includes(csc.field))
+        ) {
+          this.entityTracker.upsert({
+            ...entity,
+            attributes: { ...entity.attributes, [attrKey]: csc.newValue ?? '' },
+            lastUpdated: signals.interactionId,
+          });
+          changes.push(`entity attribute: ${id} ${attrKey}=${csc.newValue}`);
+        }
       }
     }
 

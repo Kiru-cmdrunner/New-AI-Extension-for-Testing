@@ -76,19 +76,33 @@ export class OutcomeDeterminer {
     const resultingEntities = this.extractResultingEntities(input);
 
     const outcome = this.categorize(votes, stateChanges);
-    const confidence = this.computeConfidence(outcome);
+    const degraded = this.isDegraded(input);
+    const confidence = this.computeConfidence(outcome, degraded);
 
     return {
       interactionId: input.interactionId,
       actionType: input.actionType,
       actionTarget: input.actionTarget,
       outcome: outcome.outcome,
-      confidence: confidence,
+      confidence,
       confidenceLevel: confidenceToLevel(confidence),
       supportingEvidence: votes.map((v) => v.evidence),
       resultingEntities,
       stateChanges,
     };
+  }
+
+  // ── Evidence Quality (DDC-5) ──────────────────────────────────────────
+
+  /**
+   * Whether the evidence window was degraded. Degraded windows may have
+   * silently truncated DOM evidence — recorded in stateChanges so the
+   * degradation marker persists into the outcomes/stateTransitions rows.
+   */
+  private isDegraded(input: OutcomeDeterminerInput): boolean {
+    const q = input.evidenceQuality;
+    if (!q) return false;
+    return q.mainThreadBlocked || q.domChangeOverflow > 0 || q.coarseMode;
   }
 
   // ── Vote Collection ───────────────────────────────────────────────────
@@ -98,7 +112,7 @@ export class OutcomeDeterminer {
    */
   private collectVotes(input: OutcomeDeterminerInput): OutcomeVote[] {
     const votes: OutcomeVote[] = [];
-    const { signals, transition } = input;
+    const { signals } = input;
 
     // API operations
     for (const op of signals.apiOperations) {
@@ -291,27 +305,13 @@ export class OutcomeDeterminer {
       }
     }
 
-    // If no votes from signals, check the state transition for entity/collection changes
-    if (votes.length === 0 && transition && transition.changes.length > 0) {
-      // A non-empty change set without explicit failure signals suggests success
-      // But we only give this a low weight since it's indirect
-      const hasFailureHint = transition.changes.some((c) =>
-        c.includes('error') || c.includes('fail'),
-      );
-      if (!hasFailureHint) {
-        votes.push({
-          result: 'success',
-          weight: 0.1,
-          evidence: {
-            kind: 'view-change',
-            result: 'success',
-            weight: 0.1,
-            detail: `State changes detected (${transition.changes.length} changes)`,
-            interactionId: input.interactionId,
-          },
-        });
-      }
-    }
+    // DDC-8: The old +0.1 "state changes exist → success" fallback is
+    // REMOVED. It fabricated success outcomes with zero real evidence
+    // (any DOM change voted success), polluting the persisted outcomes
+    // table. State changes WITHOUT any signal-derived vote now stay
+    // 'incomplete' (indeterminate) — the honest answer is "we don't know",
+    // not a low-confidence "success". Degraded windows (DDC-5) likewise
+    // never fabricate.
 
     return votes;
   }
@@ -358,30 +358,39 @@ export class OutcomeDeterminer {
       return { outcome: 'ambiguous', successSum, failureSum };
     }
 
-    // Votes exist from state changes only (low-weight)
-    return { outcome: 'success', successSum, failureSum };
+    // DDC-8: votes.length === 0 with state changes — indeterminate, NOT
+    // success. Previously returned success from the removed +0.1 fallback.
+    return { outcome: 'incomplete', successSum, failureSum };
   }
 
   // ── Confidence ────────────────────────────────────────────────────────
 
   /**
    * Compute confidence score based on outcome and total evidence weight.
+   * DDC-5: degraded evidence windows halve the confidence — the recorded
+   * number must reflect that DOM evidence may have been truncated.
    */
   private computeConfidence(
     categorized: { outcome: OutcomeCategory; successSum: number; failureSum: number },
+    degraded: boolean = false,
   ): number {
+    let confidence: number;
     if (categorized.outcome === 'incomplete') {
-      return 0;
-    }
-    if (categorized.outcome === 'ambiguous') {
+      confidence = 0;
+    } else if (categorized.outcome === 'ambiguous') {
       // Confidence in ambiguity = how balanced the evidence is
       const total = categorized.successSum + categorized.failureSum;
-      return Math.min(1, total * 0.5);
+      confidence = Math.min(1, total * 0.5);
+    } else {
+      // Success or failure: confidence = winning side weight, capped at 1
+      const winning = categorized.outcome === 'success' ? categorized.successSum : categorized.failureSum;
+      confidence = Math.min(1, winning);
     }
 
-    // Success or failure: confidence = winning side weight, capped at 1
-    const winning = categorized.outcome === 'success' ? categorized.successSum : categorized.failureSum;
-    return Math.min(1, winning);
+    if (degraded && confidence > 0) {
+      confidence = confidence * 0.5;
+    }
+    return confidence;
   }
 
   // ── State Change Extraction ───────────────────────────────────────────

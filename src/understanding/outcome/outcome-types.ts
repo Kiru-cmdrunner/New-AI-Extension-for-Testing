@@ -102,6 +102,18 @@ export interface OutcomeDeterminerInput {
   signals: SignalSet;
   /** State transition (before -> after) for this interaction. Null if no state builder. */
   transition: StateTransition | null;
+  /**
+   * DDC-5: Evidence-quality degradation flags read from the interaction's
+   * behavioral evidence. When the window was degraded (main thread blocked,
+   * DOM-change overflow, coarse mode), DOM-derived evidence may be
+   * incomplete — the determiner halves confidence and suppresses
+   * fabrication so degraded windows don't masquerade as clean ones.
+   */
+  evidenceQuality?: {
+    mainThreadBlocked: boolean;
+    domChangeOverflow: number;
+    coarseMode: boolean;
+  };
 }
 
 // ── Confidence helpers ──────────────────────────────────────────────────

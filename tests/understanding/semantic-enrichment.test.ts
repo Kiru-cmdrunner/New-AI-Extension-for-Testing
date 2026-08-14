@@ -752,7 +752,8 @@ describe('SemanticEnricher (end-to-end)', () => {
     // Surface
     expect(result.surface.views.length).toBeGreaterThan(0);
     // Metadata
-    expect(result.metadata.enricherVersion).toBe('m9.7-deterministic-v2');
+    // DDC: enricher version bumped for recorded-workflow persistence wiring
+    expect(result.metadata.enricherVersion).toBe('m9.7-deterministic-v3-ddc');
     expect(result.metadata.interactionCount).toBe(3);
     expect(result.metadata.coverage.intentCoverage).toBeGreaterThan(0);
   });

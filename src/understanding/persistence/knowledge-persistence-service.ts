@@ -18,6 +18,7 @@ import type {
 import type { ApplicationState } from '../state-builder/types';
 import type { ActionOutcome } from '../outcome/outcome-types';
 import type { StateTransition } from '../state-builder/types';
+import type { RecordedWorkflow } from '../enrichment/semantic-types';
 
 /**
  * Input for persisting a session's knowledge.
@@ -35,6 +36,8 @@ export interface KnowledgePersistenceInput {
   transitions: StateTransition[];
   /** All determined outcomes from the session. */
   outcomes: ActionOutcome[];
+  /** DDC-4: recorded workflow patterns from semantic enrichment. */
+  recordedWorkflows?: RecordedWorkflow[];
 }
 
 /**
@@ -89,6 +92,11 @@ export class KnowledgePersistenceService {
 
     // 9. State transitions
     await this.persistStateTransitions(appId, input.transitions, input.recordingSessionId, now);
+
+    // 10. Recorded workflows (DDC-4)
+    if (input.recordedWorkflows && input.recordedWorkflows.length > 0) {
+      await this.persistRecordedWorkflows(appId, input.recordedWorkflows, now);
+    }
   }
 
   // -- Application --
@@ -340,6 +348,30 @@ export class KnowledgePersistenceService {
         toViewId: t.after.currentView?.id ?? null,
         affectedEntities,
         timestamp: now,
+      });
+    }
+  }
+
+  // -- Recorded Workflows (DDC-4) --
+
+  private async persistRecordedWorkflows(
+    appId: string,
+    workflows: RecordedWorkflow[],
+    now: number,
+  ): Promise<void> {
+    for (const wf of workflows) {
+      await this.repo.upsertRecordedWorkflow({
+        key: `${appId}:${wf.patternId}`,
+        appId,
+        patternId: wf.patternId,
+        label: wf.label,
+        canonicalSteps: [...wf.canonicalSteps],
+        viewSequence: [...wf.viewSequence],
+        sessionIds: [...wf.sessionIds],
+        occurrenceCount: wf.occurrenceCount,
+        instances: [...wf.instances],
+        firstSeenAt: now,
+        lastSeenAt: now,
       });
     }
   }

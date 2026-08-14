@@ -30,6 +30,7 @@ import type {
   OutcomePattern,
   ViewGraph,
 } from './application-knowledge';
+import type { RecordedWorkflow } from '../enrichment/semantic-types';
 
 // ── Confidence scoring (deterministic, configurable) ───────────────────
 
@@ -100,6 +101,27 @@ export class KnowledgeLoader {
     private readonly repo: KnowledgeRepository,
     private readonly config: ConfidenceConfig = DEFAULT_CONFIDENCE_CONFIG,
   ) {}
+
+  /**
+   * DDC-4: Load persisted recorded-workflow patterns for an app.
+   * Returns [] when the app has never recorded workflows.
+   */
+  async loadRecordedWorkflows(appId: string): Promise<RecordedWorkflow[]> {
+    try {
+      const rows = await this.repo.getRecordedWorkflows(appId);
+      return rows.map((r) => ({
+        patternId: r.patternId,
+        label: r.label,
+        canonicalSteps: [...r.canonicalSteps],
+        viewSequence: [...r.viewSequence],
+        sessionIds: [...r.sessionIds],
+        occurrenceCount: r.occurrenceCount,
+        instances: [...r.instances],
+      }));
+    } catch {
+      return [];
+    }
+  }
 
   /**
    * Load and consolidate all knowledge for an app.

@@ -20,11 +20,13 @@ import type {
   KnowledgeOutcomeRow,
   KnowledgeStateTransitionRow,
   KnowledgeCounterEntry,
+  KnowledgeRecordedWorkflowRow,
 } from './knowledge-types';
 import {
   MAX_COUNTER_HISTORY,
   MAX_NOTIFICATIONS_PER_APP,
   MAX_TRANSITIONS_PER_SESSION,
+  MAX_WORKFLOW_INSTANCES,
 } from './knowledge-types';
 
 // -- Helpers --
@@ -310,6 +312,44 @@ export class KnowledgeRepository {
     return this.db.knowledgeStateTransitions.where('sessionId').equals(sessionId).toArray();
   }
 
+  // -- Recorded Workflows (DDC-4) --
+
+  /**
+   * Upsert a recorded workflow pattern (merge by patternId).
+   * Merge semantics: union sessionIds, union instances (bounded),
+   * occurrenceCount = existing + new occurrences observed THIS call
+   * (row.occurrenceCount counts THIS call's observations), keep newer
+   * label/steps.
+   */
+  async upsertRecordedWorkflow(row: KnowledgeRecordedWorkflowRow): Promise<void> {
+    const existing = await this.db.knowledgeRecordedWorkflows.get(row.key);
+    if (existing) {
+      const sessionIds = [...new Set([...existing.sessionIds, ...row.sessionIds])];
+      const instances = [...existing.instances, ...row.instances]
+        .filter((v, i, a) => a.indexOf(v) === i) // dedup instances
+        .slice(-MAX_WORKFLOW_INSTANCES);
+      await this.db.knowledgeRecordedWorkflows.put({
+        ...existing,
+        label: row.label || existing.label,
+        canonicalSteps: row.canonicalSteps.length > 0 ? row.canonicalSteps : existing.canonicalSteps,
+        viewSequence: row.viewSequence.length > 0 ? row.viewSequence : existing.viewSequence,
+        sessionIds,
+        occurrenceCount: existing.occurrenceCount + row.occurrenceCount,
+        instances,
+        lastSeenAt: Math.max(existing.lastSeenAt, row.lastSeenAt),
+      });
+    } else {
+      await this.db.knowledgeRecordedWorkflows.put({
+        ...row,
+        instances: [...new Set(row.instances)].slice(-MAX_WORKFLOW_INSTANCES),
+      });
+    }
+  }
+
+  async getRecordedWorkflows(appId: string): Promise<KnowledgeRecordedWorkflowRow[]> {
+    return this.db.knowledgeRecordedWorkflows.where('appId').equals(appId).toArray();
+  }
+
   // -- Cleanup --
 
   /**
@@ -341,6 +381,7 @@ export class KnowledgeRepository {
       this.db.knowledgeNotifications.where('appId').equals(appId).delete(),
       this.db.knowledgeOutcomes.where('appId').equals(appId).delete(),
       this.db.knowledgeStateTransitions.where('appId').equals(appId).delete(),
+      this.db.knowledgeRecordedWorkflows.where('appId').equals(appId).delete(),
       this.db.applications.where('appId').equals(appId).delete(),
     ]);
   }

@@ -361,10 +361,13 @@ export interface NetworkActivity {
   resourceType: 'xhr' | 'fetch' | 'unknown' | 'navigation' | 'resource';
   /**
    * Source of this record.
-   * 'main-world' — dynamically injected MAIN-world monkeypatch or PerformanceObserver.
+   * 'main-world' — dynamically injected MAIN-world monkeypatch (fetch/XHR).
    * 'webrequest' — SW chrome.webRequest (url/method/status/timing/requestBody).
+   * 'performance-observer' — MAIN-world PerformanceObserver entry
+   *   (navigation/resource). No method, no real status — used only when no
+   *   fetch/XHR twin exists (document navigations, beacons).
    */
-  source: 'main-world' | 'webrequest';
+  source: 'main-world' | 'webrequest' | 'performance-observer';
   /**
    * Parsed request body (formData key→value pairs) for POST requests.
    * Available when captured via webRequest with requestBody extraInfoSpec.

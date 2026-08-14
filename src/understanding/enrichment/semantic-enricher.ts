@@ -21,6 +21,7 @@ import type { ActionOutcome } from '../outcome/outcome-types';
 import type { ApplicationState, StateTransition } from '../state-builder/types';
 import type { ApplicationKnowledge } from '../consolidation/application-knowledge';
 import type { SemanticKnowledge, SemanticWorkflow, EnrichmentMetadata, EnrichmentCoverage } from './semantic-types';
+import type { RecordedWorkflow } from './semantic-types';
 import type { IntentVocabularyRegistry } from '../domain-config/intent-vocabulary-registry';
 import { classifyDomain } from './domain-classifier';
 import { recognizeComponent } from './component-recognizer';
@@ -30,7 +31,7 @@ import { discoverWorkflows } from './workflow-discoverer';
 import { buildApplicationSurface, enrichSurfaceWithKnowledge } from './application-surface';
 import { aggregateRecordedWorkflows, getRecurringPatterns } from './recorded-workflow';
 
-const ENRICHER_VERSION = 'm9.7-deterministic-v2';
+const ENRICHER_VERSION = 'm9.7-deterministic-v3-ddc';
 
 /**
  * Input for the enricher.
@@ -47,8 +48,9 @@ export interface SemanticEnricherInput {
   currentState: ApplicationState | null;
   /** Cross-session knowledge from M9.6 (optional — available after ≥2 sessions). */
   priorKnowledge: ApplicationKnowledge | null;
-  /** Prior recorded workflows from previous enrichment runs. */
-  priorRecordedWorkflows?: SemanticWorkflow[] | null;
+  /** DDC-4: Prior recorded workflow patterns loaded from persistence.
+   *  Typed RecordedWorkflow[] (merged by patternId during aggregation). */
+  priorRecordedWorkflows?: RecordedWorkflow[] | null;
   /** Session ID. */
   sessionId: string;
   /** D1: Domain intent vocabulary registry (M9.11). When provided,
@@ -112,11 +114,11 @@ export function enrichSemantically(input: SemanticEnricherInput): SemanticKnowle
     surface = enrichSurfaceWithKnowledge(surface, priorKnowledge);
   }
 
-  // 7. Recorded workflow aggregation
+  // 7. Recorded workflow aggregation (DDC-4: seeded with persisted prior
+  //    patterns so cross-session recurrence actually accumulates)
   const allRecorded = aggregateRecordedWorkflows(
     workflows,
-    // If priorKnowledge has recorded patterns, they'd come via priorRecordedWorkflows
-    // For now, we don't have a stored format — use empty
+    input.priorRecordedWorkflows ?? [],
   );
   const recordedWorkflows = getRecurringPatterns(allRecorded);
 

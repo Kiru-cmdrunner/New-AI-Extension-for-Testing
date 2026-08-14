@@ -32,6 +32,7 @@ export class SignalExtractionCoordinator {
       counterChanges: [],
       listChanges: [],
       inputChanges: [],
+      controlStateChanges: [], // DDC-6 — always present in coordinator output
       pageContent: null,
     };
 
@@ -58,6 +59,10 @@ export class SignalExtractionCoordinator {
             break;
           case 'input-value-change':
             result.inputChanges.push(signal as any);
+            break;
+          case 'control-state-change':
+            // DDC-6: control toggles (checked/expanded/pressed/selection).
+            (result.controlStateChanges ??= []).push(signal as any);
             break;
           case 'page-content':
             // D2: Merge page-content into the SignalSet — the most recent

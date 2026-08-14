@@ -227,6 +227,29 @@ export interface InputValueChangeSignal extends Signal {
 }
 
 /**
+ * Signal: a non-value control state changed on the interacted element.
+ * DDC-6: checkbox/radio `checked`, `aria-expanded`, `aria-checked`,
+ * `aria-pressed`, multi-select `selectedValues`, and `controlledValue`.
+ * Extracted from TargetEvidence before/after snapshots — these fields were
+ * captured since M6 but never diffed, so toggles/accordions/multi-selects
+ * produced zero signals.
+ */
+export interface ControlStateChangeSignal extends Signal {
+  type: 'control-state-change';
+  source: 'target-state';
+  /** Which control-state property changed. */
+  property: 'checked' | 'expanded' | 'checked-aria' | 'pressed' | 'selection' | 'controlled-value';
+  /** DOM path or element id of the element. */
+  field: string;
+  /** Previous value (string form; joined list for selection). */
+  oldValue: string | null;
+  /** New value (string form; joined list for selection). */
+  newValue: string | null;
+  /** Element identity label. */
+  elementLabel: string | null;
+}
+
+/**
  * All signals extracted from a single interaction's behavioral evidence.
  */
 export interface SignalSet {
@@ -244,6 +267,9 @@ export interface SignalSet {
   listChanges: ListChangeSignal[];
   /** Input value change signals (0+ per interaction). */
   inputChanges: InputValueChangeSignal[];
+  /** Control state change signals (0+ per interaction). DDC-6.
+   *  Optional for backward compatibility with pre-DDC-6 SignalSet fixtures. */
+  controlStateChanges?: ControlStateChangeSignal[];
   /** Page content snapshot signal (0 or 1 per interaction). */
   pageContent: import('./page-content/page-content-types').PageContentSignal | null;
 }

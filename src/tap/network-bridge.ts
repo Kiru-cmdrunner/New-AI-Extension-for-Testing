@@ -409,7 +409,13 @@ export class NetworkBridge {
           }
         }
       } else {
-        // No matching start (missed or from before recording) — create standalone entry
+        // No matching start (missed or from before recording) — create standalone entry.
+        // DDC-1: PerformanceObserver completions arrive with no start phase.
+        // Tag them 'performance-observer' so dedup can drop them when a
+        // fetch/XHR twin (which carries the REAL method + status) exists.
+        const isPoEntry =
+          source === 'main-world' &&
+          (resourceType === 'navigation' || resourceType === 'resource');
         this.pushBuffer({
           url,
           method,
@@ -417,7 +423,7 @@ export class NetworkBridge {
           absStartTimestamp: timestamp,
           absEndTimestamp: timestamp,
           resourceType,
-          source,
+          source: isPoEntry ? 'performance-observer' : source,
           requestBody,
         });
       }
@@ -440,12 +446,19 @@ export class NetworkBridge {
    * Deduplicate entries — prefer main-world over webrequest.
    * Entries from different sources with the same URL + method and
    * timestamps within DEDUP_WINDOW_MS are considered duplicates.
+   *
+   * DDC-1: Also drop PerformanceObserver duplicates of fetch/XHR patch
+   * entries. PO entries carry no method and no real status — when the
+   * fetch/XHR twin exists (same URL within DEDUP_WINDOW_MS), the twin is
+   * strictly richer, so the PO entry is dropped. Method is NOT compared
+   * for PO dedup because PO cannot read the HTTP method.
    */
   private deduplicate(
     entries: TimestampedNetworkActivity[],
   ): TimestampedNetworkActivity[] {
     const result: TimestampedNetworkActivity[] = [];
     const usedWebrequestIndices = new Set<number>();
+    const usedPoIndices = new Set<number>();
 
     for (const entry of entries) {
       if (entry.source === 'main-world') {
@@ -462,6 +475,19 @@ export class NetworkBridge {
             usedWebrequestIndices.add(i);
           }
         }
+        // DDC-1: mark any PerformanceObserver duplicates — URL only,
+        // no method comparison (PO cannot read the method)
+        for (let i = 0; i < entries.length; i++) {
+          if (
+            entries[i].source === 'performance-observer' &&
+            entries[i].url === entry.url &&
+            Math.abs(
+              entries[i].absStartTimestamp - entry.absStartTimestamp,
+            ) < DEDUP_WINDOW_MS
+          ) {
+            usedPoIndices.add(i);
+          }
+        }
         result.push(entry);
       }
     }
@@ -471,6 +497,18 @@ export class NetworkBridge {
       if (
         entries[i].source === 'webrequest' &&
         !usedWebrequestIndices.has(i)
+      ) {
+        result.push(entries[i]);
+      }
+    }
+
+    // DDC-1: add PerformanceObserver entries that weren't deduplicated —
+    // these are requests the fetch/XHR patch never saw (document
+    // navigations, beacons, CSP-blocked fetches, etc.)
+    for (let i = 0; i < entries.length; i++) {
+      if (
+        entries[i].source === 'performance-observer' &&
+        !usedPoIndices.has(i)
       ) {
         result.push(entries[i]);
       }
@@ -492,6 +530,6 @@ interface TimestampedNetworkActivity {
   absStartTimestamp: number;
   absEndTimestamp: number | null;
   resourceType: 'xhr' | 'fetch' | 'unknown' | 'navigation' | 'resource';
-  source: 'main-world' | 'webrequest';
+  source: 'main-world' | 'webrequest' | 'performance-observer';
   requestBody?: Record<string, string>;
 }

@@ -41,8 +41,9 @@ import { normalizeWorkflow } from '../presentation/workflow-normalizer';
 import {
   startNetworkObservation,
   stopNetworkObservation,
+  getRecentRequests,
 } from '../background/network-observation';
-import type { NavigationEvidence } from '../shared/behavioral-evidence-types';
+import type { NavigationEvidence, NetworkActivity } from '../shared/behavioral-evidence-types';
 
 // ── Singletons ──────────────────────────────────────────────────────────
 
@@ -733,6 +734,17 @@ function broadcastExecutionResult(
 
 // ── Navigation capture ──────────────────────────────────────────────────
 
+/**
+ * DDC-2: Last committed main-frame URL per tab. Written on every
+ * webNavigation.onCommitted BEFORE synthetic evidence is created, so
+ * synthetic navigation evidence can carry a real `fromUrl` (the PREVIOUS
+ * committed URL) instead of ''. Without it, the view-transition graph has
+ * no edges for full-page-reload apps (traditional form submits).
+ * Memory-bounded: MAX_TRACKED_TABS entries, shift-evict.
+ */
+const lastCommittedUrls = new Map<number, string>();
+const MAX_TRACKED_TABS = 50;
+
 chrome.webNavigation.onCommitted.addListener(async (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
   // Only capture main frame navigations
   if (details.frameId !== 0) return;
@@ -742,6 +754,17 @@ chrome.webNavigation.onCommitted.addListener(async (details: chrome.webNavigatio
   // Check if recording is active by checking if we have a runtime
   const liveInts = getLiveInteractions();
   if (liveInts.length === 0 && !await isRecordingActive()) return;
+
+  // DDC-2: capture the PREVIOUS committed URL for this tab before
+  // overwriting the map — this is the synthetic nav's fromUrl.
+  const previousCommittedUrl = lastCommittedUrls.get(details.tabId) ?? '';
+
+  // Update the per-tab committed-URL map (bounded)
+  lastCommittedUrls.set(details.tabId, details.url);
+  if (lastCommittedUrls.size > MAX_TRACKED_TABS) {
+    const oldestKey = lastCommittedUrls.keys().next().value;
+    if (oldestKey !== undefined) lastCommittedUrls.delete(oldestKey);
+  }
 
   // Get the page title (may be empty at commit time)
   let title = '';
@@ -821,10 +844,72 @@ chrome.webNavigation.onCommitted.addListener(async (details: chrome.webNavigatio
   if (fullReloadTypes.includes(details.transitionType)) {
     // Short delay to let the runtime emit the navigation interaction
     setTimeout(() => {
-      attachSyntheticNavEvidence(navEvent.eventId, details);
+      attachSyntheticNavEvidence(navEvent.eventId, details, previousCommittedUrl);
     }, 200);
   }
 });
+
+/**
+ * Recover network requests that were captured by the SW's webRequest
+ * listener but never delivered to the content script (because the page
+ * was destroyed by a full-page reload).
+ *
+ * This bridges the decisive gap for form-submit apps like Amazon: the
+ * POST to /cart/add-to-cart is captured by webRequest, buffered in the
+ * SW's completed-request ring buffer, and injected here into the
+ * synthetic navigation evidence of the resulting page load.
+ *
+ * DDC-3: The 10-second lookback matches the ring buffer TTL and the
+ * pipeline's click-attribution window. A form-submit POST precedes its
+ * resulting page load by the request+render latency; 10s covers slow
+ * backends without pulling in unrelated stale traffic.
+ */
+function recoverNetworkForNavigation(
+  details: chrome.webNavigation.WebNavigationTransitionCallbackDetails,
+): NetworkActivity[] {
+  // Look back 10 seconds from the navigation timestamp (DDC-3)
+  const sinceWallClock = details.timeStamp - 10_000;
+
+  try {
+    const recent = getRecentRequests(sinceWallClock);
+    if (recent.length === 0) return [];
+
+    // Convert CompletedWebRequest → NetworkActivity format.
+    // Exclude the navigation request itself (it would duplicate the
+    // navigation evidence). We want the API calls (POST /cart/add-to-cart,
+    // GET /api/leave, etc.) that triggered or accompanied the navigation.
+    const navUrl = details.url;
+    const activities: NetworkActivity[] = [];
+
+    for (const req of recent) {
+      // Skip the navigation request itself
+      if (req.url === navUrl) continue;
+
+      // Skip static resources and analytics — they add noise
+      // (the signal extractor would filter them anyway, but keeping
+      // the evidence clean helps the side panel display too)
+      if (/\.(png|jpg|jpeg|gif|webp|svg|ico|css|js|mjs|woff2?|ttf)(\?|$)/i.test(req.url)) continue;
+      if (/\/unagi|\/events\/|\/beacon|\/pixel|\/csm|\/aax2|\/impression/i.test(req.url)) continue;
+
+      activities.push({
+        url: req.url,
+        method: req.method,
+        status: req.status,
+        startRelativeToEvent: 0,
+        endRelativeToEvent: null,
+        durationMs: null,
+        resourceType: 'unknown',
+        source: 'webrequest',
+        requestBody: req.requestBody,
+      });
+    }
+
+    // Cap at 20 to avoid flooding synthetic evidence
+    return activities.slice(0, 20);
+  } catch {
+    return [];
+  }
+}
 
 /**
  * Create and attach synthetic navigation evidence for full-page-reload
@@ -834,7 +919,7 @@ chrome.webNavigation.onCommitted.addListener(async (details: chrome.webNavigatio
  * the actual URL and navigation type, rather than staying in "Collecting…"
  * state forever.
  */
-function attachSyntheticNavEvidence(navEventId: string, details: chrome.webNavigation.WebNavigationTransitionCallbackDetails): void {
+function attachSyntheticNavEvidence(navEventId: string, details: chrome.webNavigation.WebNavigationTransitionCallbackDetails, previousCommittedUrl: string = ''): void {
   // Map webNavigation transitionType to NavigationEvidence.type
   const navTypeMap: Record<string, NavigationEvidence['type']> = {
     'link': 'full-reload',
@@ -848,7 +933,8 @@ function attachSyntheticNavEvidence(navEventId: string, details: chrome.webNavig
 
   const navEvidenceEntry: NavigationEvidence = {
     type: navType,
-    fromUrl: '', // SW doesn't know the previous URL at this point
+    // DDC-2: real previous committed URL (was '' — broke the view graph)
+    fromUrl: previousCommittedUrl,
     toUrl: details.url,
     relativeTime: 0,
     batchIndex: null,
@@ -901,7 +987,7 @@ function attachSyntheticNavEvidence(navEventId: string, details: chrome.webNavig
       removedSurfaces: [],
       visibilityChanges: [],
       navigation: [navEvidenceEntry],
-      networkActivity: [],
+      networkActivity: recoverNetworkForNavigation(details),
       performanceCondition: {
         mainThreadBlocked: false,
         highChurnMode: false,

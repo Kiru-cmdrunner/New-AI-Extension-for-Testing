@@ -106,7 +106,8 @@ describe('KnowledgeDatabase (M9.5)', () => {
   it('creates with version 1 and all 9 tables', async () => {
     const db = createKnowledgeDatabase();
     await db.open();
-    expect(db.verno).toBe(1);
+    // DDC-4: version 2 — additive migration adds knowledgeRecordedWorkflows
+    expect(db.verno).toBe(2);
     expect(db.tables.map((t) => t.name).sort()).toEqual([
       'applications',
       'knowledgeCollections',
@@ -114,6 +115,7 @@ describe('KnowledgeDatabase (M9.5)', () => {
       'knowledgeEntities',
       'knowledgeNotifications',
       'knowledgeOutcomes',
+      'knowledgeRecordedWorkflows',
       'knowledgeStateTransitions',
       'knowledgeViewTransitions',
       'knowledgeViews',
