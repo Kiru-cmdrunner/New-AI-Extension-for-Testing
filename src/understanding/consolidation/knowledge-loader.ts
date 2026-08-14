@@ -211,6 +211,7 @@ export class KnowledgeLoader {
         observedInSessions: sessions,
         currentState: row.currentState,
         stateHistory: row.stateHistory,
+        viewIds: row.viewIds,
       };
     });
   }

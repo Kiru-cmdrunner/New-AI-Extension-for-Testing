@@ -2,8 +2,8 @@
  * M9.7 — Interaction Contract Extractor
  *
  * Extracts a deterministic interaction contract from a ComponentInteraction's
- * element identity. Purely from DOM attributes captured in trigger — no
- * JS-based validation rules (those require LLM in a future layer).
+ * element identity and behavioral evidence. D9: now reads actual
+ * TargetStateSnapshot evidence instead of hardcoding state defaults.
  *
  * Architecture: .drytis/specs/m9-7-deterministic-semantic-enrichment.md
  */
@@ -17,12 +17,49 @@ import type {
 } from './semantic-types';
 
 /**
- * Extract an interaction contract from a component interaction's trigger.
+ * Extract an interaction contract from a component interaction's trigger
+ * and behavioral evidence.
+ *
+ * D9: State fields (disabled, checked, expanded, optionCount, required)
+ * are now populated from actual TargetStateSnapshot evidence in
+ * behavioralEvidence.targetEvidence, falling back to triggerEvent.domContext,
+ * then to safe defaults only when neither is available.
  */
 export function extractInteractionContract(
   interaction: ComponentInteraction,
 ): InteractionContract {
   const trigger = interaction.trigger;
+
+  // D9: Extract actual state evidence from multiple sources.
+  const targetEvidence = interaction.behavioralEvidence?.targetEvidence;
+  const after = targetEvidence?.after ?? null;
+  const domContext = interaction.triggerEvent?.domContext ?? null;
+
+  // disabled: prefer target state snapshot, then domContext
+  const disabled = after?.disabled
+    ?? (domContext?.disabled ?? false);
+
+  // checked: prefer target state snapshot.checked, then ariaChecked
+  const checked: boolean | null =
+    after?.checked ??
+    after?.ariaChecked ??
+    null;
+
+  // expanded: prefer target state snapshot.ariaExpanded, then domContext.ariaExpanded
+  const expanded: boolean | null =
+    after?.ariaExpanded ??
+    domContext?.ariaExpanded ??
+    null;
+
+  // required: prefer domContext.required (actual DOM attribute); only use
+  // heuristic when domContext is unavailable (e.g., synthetic interactions).
+  const required: boolean | null =
+    domContext ? domContext.required : inferRequired(trigger);
+
+  // optionCount: for select-like elements, use childCount from target state snapshot
+  const tag = (trigger.tag ?? '').toLowerCase();
+  const optionCount: number | null =
+    (tag === 'select' && after?.childCount != null) ? after.childCount : null;
 
   return {
     interactionId: interaction.interactionId,
@@ -31,12 +68,12 @@ export function extractInteractionContract(
     elementType: deriveElementType(trigger),
     inputType: trigger.inputType,
     format: deriveFormat(trigger),
-    disabled: false,
-    checked: null,
-    expanded: null,
-    required: inferRequired(trigger),
+    disabled,
+    checked,
+    expanded,
+    required,
     placeholder: trigger.placeholder,
-    optionCount: null,
+    optionCount,
     elementPath: trigger.xPath ?? trigger.cssSelector ?? '',
   };
 }
@@ -98,9 +135,9 @@ function deriveFormat(trigger: ElementIdentity): InputFormat | null {
 
 /**
  * Infer whether the element is required.
- * M1–M9 does NOT capture the `required` attribute in the behavioral
- * evidence path — so we infer from aria-required and CSS class patterns.
- * This is explicitly a best-effort heuristic.
+ * D9: Now a fallback only — the primary source is domContext.required.
+ * This heuristic is used when domContext is unavailable (e.g., synthetic
+ * interactions without full evidence).
  */
 function inferRequired(trigger: ElementIdentity): boolean | null {
   // aria-label might contain required indicator

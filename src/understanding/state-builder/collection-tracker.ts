@@ -22,6 +22,7 @@ export class CollectionTracker {
     removedCount: number,
     interactionId: string,
     entityType: EntityType = 'unknown',
+    viewId?: string,
   ): Collection {
     const id = `collection:${containerPath}`;
     let coll = this.collections.get(id);
@@ -33,8 +34,13 @@ export class CollectionTracker {
         count: null,
         containerPath,
         lastUpdated: interactionId,
+        viewIds: viewId ? [viewId] : undefined,
       };
       this.collections.set(id, coll);
+    } else if (viewId) {
+      const ids = new Set(coll.viewIds ?? []);
+      ids.add(viewId);
+      coll.viewIds = Array.from(ids);
     }
 
     // Update count: if we had a known count, apply the delta; otherwise start from 0
@@ -48,7 +54,7 @@ export class CollectionTracker {
   /**
    * Set the count directly (e.g., from a page content snapshot).
    */
-  setCount(containerPath: string, count: number, interactionId: string): void {
+  setCount(containerPath: string, count: number, interactionId: string, viewId?: string): void {
     const id = `collection:${containerPath}`;
     let coll = this.collections.get(id);
     if (!coll) {
@@ -58,8 +64,15 @@ export class CollectionTracker {
         count,
         containerPath,
         lastUpdated: interactionId,
+        viewIds: viewId ? [viewId] : undefined,
       };
       this.collections.set(id, coll);
+    } else {
+      if (viewId) {
+        const ids = new Set(coll.viewIds ?? []);
+        ids.add(viewId);
+        coll.viewIds = Array.from(ids);
+      }
     }
     coll.count = count;
     coll.lastUpdated = interactionId;

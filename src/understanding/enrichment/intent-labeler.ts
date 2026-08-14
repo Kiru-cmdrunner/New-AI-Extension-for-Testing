@@ -49,15 +49,20 @@ export function labelIntent(
 
 /**
  * Label all interactions. Returns a map keyed by interactionId.
+ *
+ * M9.11/D1: The optional IntentVocabularyRegistry is now threaded
+ * through to each labelIntent call so domain-specific intents are
+ * resolved before built-in vocabulary.
  */
 export function labelAllIntents(
   interactions: ComponentInteraction[],
   outcomes: Map<string, ActionOutcome>,
+  vocabRegistry?: IntentVocabularyRegistry | null,
 ): Map<string, IntentLabel> {
   const result = new Map<string, IntentLabel>();
   for (const interaction of interactions) {
     const outcome = outcomes.get(interaction.interactionId);
-    result.set(interaction.interactionId, labelIntent(interaction, outcome));
+    result.set(interaction.interactionId, labelIntent(interaction, outcome, vocabRegistry));
   }
   return result;
 }
@@ -140,7 +145,7 @@ function resolveFromDomainVocabulary(
       return {
         interactionId: interaction.interactionId,
         intent: entry.intent,
-        resolutionPath: 'button-text',
+        resolutionPath: 'button-text', // domain vocabulary match (text-based)
         confidence: entry.baseConfidence,
       };
     }

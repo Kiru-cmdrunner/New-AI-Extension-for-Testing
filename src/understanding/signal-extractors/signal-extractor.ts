@@ -59,6 +59,11 @@ export class SignalExtractionCoordinator {
           case 'input-value-change':
             result.inputChanges.push(signal as any);
             break;
+          case 'page-content':
+            // D2: Merge page-content into the SignalSet — the most recent
+            // snapshot wins (later scans supersede earlier ones).
+            result.pageContent = signal as any;
+            break;
           default:
             // Unknown signal type — ignore gracefully
             break;

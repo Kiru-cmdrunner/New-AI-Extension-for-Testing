@@ -62,6 +62,8 @@ export interface KnowledgeEntityRow {
   currentState?: string;
   /** Ordered lifecycle transitions. M9.9. */
   stateHistory?: KnowledgeEntityStateChange[];
+  /** Views where this entity has been observed. D5. */
+  viewIds?: string[];
 }
 
 /**

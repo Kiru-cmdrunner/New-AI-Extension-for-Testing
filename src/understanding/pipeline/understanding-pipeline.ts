@@ -38,6 +38,7 @@ import { NotificationSignalExtractor } from '../signal-extractors/notification-s
 import { CounterSignalExtractor } from '../signal-extractors/counter-signals';
 import { ListSignalExtractor } from '../signal-extractors/list-signals';
 import { TargetStateSignalExtractor } from '../signal-extractors/target-state-signals';
+import { PageContentEvidenceExtractor } from '../signal-extractors/page-content-evidence-extractor';
 import { createDefaultViewRegistry } from '../signal-extractors/view-registry';
 // M9.2
 import { StateBuilder } from '../state-builder/state-builder';
@@ -156,6 +157,10 @@ export class UnderstandingPipeline {
     this.coordinator.register(new CounterSignalExtractor());
     this.coordinator.register(new ListSignalExtractor());
     this.coordinator.register(new TargetStateSignalExtractor());
+    // D2: Page-content evidence extractor derives observed items from
+    // newSurfaces and domChanges in behavioral evidence — bridges the
+    // M9.4 PageContentObserver into the post-hoc pipeline.
+    this.coordinator.register(new PageContentEvidenceExtractor());
 
     // ── M9.2 State Builder (with M9.8 entity types + M9.9/11 state vocab) ──
     const entityTypeRegistry = createEntityTypeRegistry(true);
@@ -243,6 +248,11 @@ export class UnderstandingPipeline {
     const transitions: StateTransition[] = [];
     let finalState: ApplicationState | null = null;
     try {
+      // D3: Apply prior-knowledge seed before processing signals
+      if (input.seed && input.seed.hasPriorKnowledge) {
+        this.stateBuilder.loadSeed(input.seed);
+      }
+
       if (signalResult) {
         for (const interaction of input.interactions) {
           const signals = signalResult.signals.get(interaction.interactionId);
@@ -280,7 +290,20 @@ export class UnderstandingPipeline {
       warnings.push(`outcome-determination: ${(e as Error).message}`);
     }
 
-    // ── Stage 4: Knowledge Persistence (M9.5) ──
+    // ── Stage 4: Knowledge Consolidation / Load PRIOR (M9.6) ──
+    // D4: Load prior knowledge BEFORE persisting the current session.
+    // This ensures enrichment sees only prior sessions (not the current
+    // one) and prevents double-counting of navigation edges and outcomes.
+    let priorKnowledge: ApplicationKnowledge | null = null;
+    if (this.knowledgeLoader) {
+      try {
+        priorKnowledge = await this.knowledgeLoader.load(appId);
+      } catch (e) {
+        warnings.push(`knowledge-load: ${(e as Error).message}`);
+      }
+    }
+
+    // ── Stage 5: Knowledge Persistence (M9.5) ──
     if (this.persistenceService && finalState) {
       try {
         await this.persistenceService.persist({
@@ -296,16 +319,6 @@ export class UnderstandingPipeline {
       }
     }
 
-    // ── Stage 5: Knowledge Consolidation / Load (M9.6) ──
-    let priorKnowledge: ApplicationKnowledge | null = null;
-    if (this.knowledgeLoader) {
-      try {
-        priorKnowledge = await this.knowledgeLoader.load(appId);
-      } catch (e) {
-        warnings.push(`knowledge-load: ${(e as Error).message}`);
-      }
-    }
-
     // ── Stage 6: Semantic Enrichment (M9.7) ──
     let semanticKnowledge: SemanticKnowledge | null = null;
     try {
@@ -317,6 +330,7 @@ export class UnderstandingPipeline {
         currentState: finalState,
         priorKnowledge,
         sessionId: input.sessionId,
+        intentVocabularyRegistry: this.domainRegistry.intentVocabulary,
       });
     } catch (e) {
       warnings.push(`semantic-enrichment: ${(e as Error).message}`);

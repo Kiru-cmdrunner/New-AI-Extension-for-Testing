@@ -21,6 +21,7 @@ import type { ActionOutcome } from '../outcome/outcome-types';
 import type { ApplicationState, StateTransition } from '../state-builder/types';
 import type { ApplicationKnowledge } from '../consolidation/application-knowledge';
 import type { SemanticKnowledge, SemanticWorkflow, EnrichmentMetadata, EnrichmentCoverage } from './semantic-types';
+import type { IntentVocabularyRegistry } from '../domain-config/intent-vocabulary-registry';
 import { classifyDomain } from './domain-classifier';
 import { recognizeComponent } from './component-recognizer';
 import { extractInteractionContract } from './interaction-contract';
@@ -29,7 +30,7 @@ import { discoverWorkflows } from './workflow-discoverer';
 import { buildApplicationSurface, enrichSurfaceWithKnowledge } from './application-surface';
 import { aggregateRecordedWorkflows, getRecurringPatterns } from './recorded-workflow';
 
-const ENRICHER_VERSION = 'm9.7-deterministic-v1';
+const ENRICHER_VERSION = 'm9.7-deterministic-v2';
 
 /**
  * Input for the enricher.
@@ -50,6 +51,9 @@ export interface SemanticEnricherInput {
   priorRecordedWorkflows?: SemanticWorkflow[] | null;
   /** Session ID. */
   sessionId: string;
+  /** D1: Domain intent vocabulary registry (M9.11). When provided,
+   *  domain-specific intents are resolved before built-in vocabulary. */
+  intentVocabularyRegistry?: IntentVocabularyRegistry | null;
 }
 
 /**
@@ -81,8 +85,8 @@ export function enrichSemantically(input: SemanticEnricherInput): SemanticKnowle
     return recognizeComponent(i, outcome, viewId);
   });
 
-  // 4. Intent labeling
-  const intentMap = labelAllIntents(interactions, outcomes);
+  // 4. Intent labeling (D1: pass domain vocab registry)
+  const intentMap = labelAllIntents(interactions, outcomes, input.intentVocabularyRegistry);
   const intents = [...intentMap.values()];
 
   // 5. Workflow discovery

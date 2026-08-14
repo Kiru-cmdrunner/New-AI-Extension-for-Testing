@@ -204,6 +204,7 @@ export class KnowledgePersistenceService {
           changedAt: h.changedAt,
           evidence: h.evidence,
         })),
+        viewIds: entity.viewIds,
       });
     }
   }

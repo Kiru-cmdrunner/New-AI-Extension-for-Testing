@@ -21,6 +21,7 @@ export class CounterTracker {
     newValue: string,
     interactionId: string,
     label: string | null = null,
+    viewId?: string,
   ): CounterRecord {
     const id = `counter:${elementPath}`;
     let counter = this.counters.get(id);
@@ -31,8 +32,13 @@ export class CounterTracker {
         label: label ?? elementPath,
         elementPath,
         values: [],
+        viewIds: viewId ? [viewId] : undefined,
       };
       this.counters.set(id, counter);
+    } else if (viewId) {
+      const ids = new Set(counter.viewIds ?? []);
+      ids.add(viewId);
+      counter.viewIds = Array.from(ids);
     }
 
     // Compute delta from last value

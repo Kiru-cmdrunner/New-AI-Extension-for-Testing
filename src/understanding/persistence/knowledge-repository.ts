@@ -98,6 +98,10 @@ export class KnowledgeRepository {
         stateHistory: sameSession
           ? existing.stateHistory
           : mergeStateHistory(existing.stateHistory, entity.stateHistory),
+        // D5: merge viewIds across sessions
+        viewIds: sameSession
+          ? existing.viewIds
+          : mergeStringArrays(existing.viewIds, entity.viewIds),
       });
     } else {
       await this.db.knowledgeEntities.put(entity);
@@ -393,4 +397,17 @@ function mergeStateHistory(
     merged.push(change);
   }
   return merged;
+}
+
+/**
+ * Merge two string arrays, deduplicating the result. D5.
+ */
+function mergeStringArrays(
+  existing: string[] | undefined,
+  incoming: string[] | undefined,
+): string[] | undefined {
+  if (!incoming || incoming.length === 0) return existing;
+  if (!existing || existing.length === 0) return incoming;
+  const merged = new Set([...existing, ...incoming]);
+  return Array.from(merged);
 }

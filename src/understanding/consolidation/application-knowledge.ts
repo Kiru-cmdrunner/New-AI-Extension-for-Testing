@@ -58,6 +58,8 @@ export interface ConsolidatedEntity {
   currentState?: string;
   /** Ordered lifecycle transitions. M9.9. */
   stateHistory?: EntityStateChangeSummary[];
+  /** Views where this entity has been observed. D5. */
+  viewIds?: string[];
 }
 
 /**
@@ -313,6 +315,8 @@ export interface PriorSessionEntity {
   source: string;
   /** Marks this entity as preloaded, not freshly observed. */
   provenance: 'prior-session';
+  /** Views where this entity was observed in prior sessions. D5. */
+  viewIds?: string[];
 }
 
 export interface PriorSessionView {

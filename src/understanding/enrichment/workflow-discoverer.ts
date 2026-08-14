@@ -138,6 +138,11 @@ function buildWorkflow(
 
 /**
  * Compute aggregated workflow effects from outcomes + transitions.
+ *
+ * D10: now reads from structured state (before/after Maps) instead of
+ * regex-matching free-form change strings. This fixes counterDeltas,
+ * collectionChanges, entitiesModified, and view transitions, all of
+ * which were previously always empty or mis-detected.
  */
 function computeEffects(
   group: ComponentInteraction[],
@@ -155,7 +160,7 @@ function computeEffects(
     const outcome = outcomes.get(interaction.interactionId);
     const transition = transitionMap.get(interaction.interactionId);
 
-    // Resulting entities
+    // Resulting entities (structured — already worked before D10)
     if (outcome?.resultingEntities) {
       for (const entityId of outcome.resultingEntities) {
         if (!entitiesCreated.includes(entityId)) {
@@ -164,52 +169,90 @@ function computeEffects(
       }
     }
 
-    // Counter deltas (from transition changes)
-    if (transition) {
-      for (const change of transition.changes) {
-        const counterMatch = change.match(/counter[:\s]+(\S+).*delta[:\s]+(-?\d+)/i);
-        if (counterMatch) {
-          counterDeltas.push({
-            counterId: counterMatch[1],
-            delta: parseInt(counterMatch[2], 10),
-          });
-        }
+    if (!transition) continue;
 
-        const collectionMatch = change.match(/collection[:\s]+(\S+).*count[:\s]+(-?\d+)/i);
-        if (collectionMatch) {
-          collectionChanges.push({
-            collectionId: collectionMatch[1],
-            netChange: parseInt(collectionMatch[2], 10),
-          });
-        }
+    // D10: Counter deltas — diff before/after counter value maps.
+    const beforeCounters = transition.before.counters;
+    const afterCounters = transition.after.counters;
+    for (const [counterId, afterCounter] of afterCounters) {
+      const beforeCounter = beforeCounters.get(counterId);
+      const afterValues = afterCounter.values;
+      const beforeValues = beforeCounter?.values ?? [];
+      if (afterValues.length === 0) continue;
 
-        // View transitions
-        if (change.includes('view') || change.includes('View')) {
-          const fromView = transition.before.currentView?.id;
-          const toView = transition.after.currentView?.id;
-          if (fromView && toView && fromView !== toView) {
-            viewTransitions.push({ from: fromView, to: toView });
-          }
+      const afterVal = Number(afterValues[afterValues.length - 1].value);
+      const beforeVal = beforeValues.length > 0
+        ? Number(beforeValues[beforeValues.length - 1].value)
+        : NaN;
+
+      if (!Number.isFinite(afterVal)) continue;
+      const delta = Number.isFinite(beforeVal) ? afterVal - beforeVal : afterVal;
+      if (delta === 0 && beforeValues.length > 0) continue;
+
+      counterDeltas.push({ counterId, delta });
+    }
+
+    // D10: Collection changes — diff before/after collection counts.
+    const beforeColls = transition.before.collections;
+    const afterColls = transition.after.collections;
+    for (const [collId, afterColl] of afterColls) {
+      const beforeColl = beforeColls.get(collId);
+      const afterCount = afterColl.count ?? 0;
+      const beforeCount = beforeColl?.count ?? null;
+
+      // New collection or changed count
+      if (!beforeColl || beforeCount !== afterCount) {
+        const netChange = beforeCount !== null ? afterCount - beforeCount : afterCount;
+        if (netChange !== 0 || !beforeColl) {
+          collectionChanges.push({ collectionId: collId, netChange });
         }
       }
     }
 
-    // Notifications
-    if (transition) {
-      for (
-        let i = 0;
-        i < transition.after.notifications.length;
-        i++
-      ) {
-        const notif = transition.after.notifications[i];
-        // Only count notifications that appeared in this transition
-        if (notif.appearedAt === interaction.interactionId) {
-          notificationsEmitted.push({
-            text: notif.text,
-            severity: notif.severity,
-          });
+    // D10: Entities modified — detect entities whose attributes changed
+    // or whose state changed between before and after.
+    const beforeEnts = transition.before.entities;
+    const afterEnts = transition.after.entities;
+    for (const [entId, afterEnt] of afterEnts) {
+      const beforeEnt = beforeEnts.get(entId);
+      if (!beforeEnt) continue; // new entity → already in entitiesCreated
+
+      // Check if attributes changed
+      const beforeKeys = Object.keys(beforeEnt.attributes);
+      const afterKeys = Object.keys(afterEnt.attributes);
+      const keysChanged = beforeKeys.length !== afterKeys.length
+        || beforeKeys.some((k) => beforeEnt.attributes[k] !== afterEnt.attributes[k]);
+
+      // Check if lifecycle state changed
+      const stateChanged = beforeEnt.currentState !== afterEnt.currentState;
+
+      if (keysChanged || stateChanged) {
+        if (!entitiesModified.includes(entId)) {
+          entitiesModified.push(entId);
         }
-        void i; // avoid unused
+      }
+    }
+
+    // D10: View transitions — use structured before/after view IDs.
+    const fromView = transition.before.currentView?.id;
+    const toView = transition.after.currentView?.id;
+    if (fromView && toView && fromView !== toView) {
+      // Avoid duplicates
+      const exists = viewTransitions.some(
+        (vt) => vt.from === fromView && vt.to === toView,
+      );
+      if (!exists) {
+        viewTransitions.push({ from: fromView, to: toView });
+      }
+    }
+
+    // Notifications (structured — already worked before D10)
+    for (const notif of transition.after.notifications) {
+      if (notif.appearedAt === interaction.interactionId) {
+        notificationsEmitted.push({
+          text: notif.text,
+          severity: notif.severity,
+        });
       }
     }
   }

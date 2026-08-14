@@ -34,6 +34,11 @@ export interface EntityTypeDetectionRule {
   apiOperation?: string;
   /** Match when the element has this data-* attribute with the given value. */
   dataAttribute?: { name: string; value?: string };
+  /**
+   * Match when an input field name matches this substring (case-insensitive).
+   * Used by D6 form-field entity creation. Multiple patterns are OR'd.
+   */
+  fieldPatterns?: string[];
 }
 
 /**
@@ -120,6 +125,21 @@ export class EntityTypeRegistry {
     }
     return null;
   }
+
+  /**
+   * Resolve the entity type from a form field name (D6).
+   * Returns the entity type if a field-pattern rule matches, null otherwise.
+   */
+  resolveFromFormField(fieldName: string): string | null {
+    const lower = fieldName.toLowerCase();
+    for (const rule of this.rules) {
+      if (!rule.fieldPatterns || rule.fieldPatterns.length === 0) continue;
+      if (rule.fieldPatterns.some((p) => lower.includes(p.toLowerCase()))) {
+        return rule.entityType;
+      }
+    }
+    return null;
+  }
 }
 
 // ── Built-in Seed Types ────────────────────────────────────────────────
@@ -145,6 +165,46 @@ export const ENTITY_TYPE_SEEDS: EntityTypeDetectionRule[] = [
 ];
 
 /**
+ * Built-in form-field entity rules (D6).
+ * Maps recognizable form-field names to entity types for domains
+ * where entity creation was previously limited to search/query fields.
+ */
+export const FORM_FIELD_SEEDS: EntityTypeDetectionRule[] = [
+  // -- HR (OrangeHRM-style) --
+  {
+    entityType: 'employee',
+    fieldPatterns: ['employee', 'empname', 'emp-name', 'firstname', 'lastname', 'fullname'],
+  },
+  {
+    entityType: 'leave-request',
+    fieldPatterns: ['leavetype', 'leavetype-id', 'leave-type', 'leave-balance', 'leaveperiod'],
+  },
+  {
+    entityType: 'candidate',
+    fieldPatterns: ['candidate', 'applicant', 'applicantname'],
+  },
+  // -- Authentication --
+  {
+    entityType: 'user',
+    fieldPatterns: ['username', 'email', 'password', 'login', 'signin'],
+  },
+  // -- Developer tools (GitHub-style) --
+  {
+    entityType: 'issue',
+    fieldPatterns: ['issuetitle', 'issue-title', 'issuebody', 'issue-body'],
+  },
+  {
+    entityType: 'pull-request',
+    fieldPatterns: ['prtitle', 'pr-title', 'pulltitle', 'pull-request-title'],
+  },
+  // -- Generic form fields --
+  {
+    entityType: 'form-entry',
+    fieldPatterns: ['title', 'name', 'description', 'comment', 'message', 'note'],
+  },
+];
+
+/**
  * Create a registry seeded with the built-in type rules.
  */
 export function createEntityTypeRegistry(
@@ -153,6 +213,7 @@ export function createEntityTypeRegistry(
   const registry = new EntityTypeRegistry();
   if (seed) {
     registry.register([...ENTITY_TYPE_SEEDS]);
+    registry.register([...FORM_FIELD_SEEDS]);
   }
   return registry;
 }

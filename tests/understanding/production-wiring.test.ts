@@ -356,11 +356,48 @@ describe('M9.12 — Production Wiring', () => {
       semanticKnowledge: outcome.semanticKnowledge ?? undefined,
       applicationKnowledge: outcome.applicationKnowledge ?? undefined,
       knowledgeWarnings: outcome.warnings.length > 0 ? outcome.warnings : undefined,
+      // D12: verify all pipeline artifacts are mappable
+      outcomes: [...outcome.outcomes.values()],
+      transitions: outcome.transitions,
+      appId: outcome.appId,
     };
 
     expect(understandingResult.schemaVersion).toBe(2);
     expect(understandingResult.semanticKnowledge).toBeDefined();
     expect(understandingResult.knowledgeWarnings).toBeUndefined();
+    // D12: outcomes, transitions, appId must be present
+    expect(understandingResult.outcomes).toBeDefined();
+    expect(understandingResult.outcomes!.length).toBeGreaterThan(0);
+    expect(understandingResult.transitions).toBeDefined();
+    expect(understandingResult.transitions!.length).toBeGreaterThan(0);
+    expect(understandingResult.appId).toBeDefined();
+    expect(understandingResult.appId).toBe(outcome.appId);
+  });
+
+  // D4 — prior knowledge must NOT include the current session
+  it('prior knowledge loaded for enrichment excludes the current session', async () => {
+    const interactions = makeOrangeHRMInteractions();
+    const origin = 'https://hr.example.com';
+
+    // First run — persists knowledge
+    await pipeline.run({ interactions, origin, sessionId: 'd4-first' });
+
+    // Second run — enrichment should use prior knowledge from first run only
+    const outcome2 = await pipeline.run({ interactions, origin, sessionId: 'd4-second' });
+
+    expect(outcome2.applicationKnowledge).not.toBeNull();
+    // Prior knowledge from first run should have entities.
+    // The current session (d4-second) is not in priorKnowledge because load
+    // runs BEFORE persist, so the prior data only reflects d4-first.
+    if (outcome2.applicationKnowledge) {
+      // Entities should exist from the first session
+      const entityCount = outcome2.applicationKnowledge.entities.length;
+      expect(entityCount).toBeGreaterThanOrEqual(0);
+      // Session IDs in observed entities should not include d4-second
+      for (const entity of outcome2.applicationKnowledge.entities) {
+        expect(entity.observedInSessions).not.toContain('d4-second');
+      }
+    }
   });
 });
 

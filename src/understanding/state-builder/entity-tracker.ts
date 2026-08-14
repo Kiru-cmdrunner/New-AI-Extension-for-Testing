@@ -43,6 +43,12 @@ export class EntityTracker {
       if (existing.stateHistory !== undefined) {
         existing.stateHistory = existing.stateHistory;
       }
+      // D5: merge viewIds — accumulate across views
+      if (entity.viewIds && entity.viewIds.length > 0) {
+        const existingIds = new Set(existing.viewIds ?? []);
+        for (const vid of entity.viewIds) existingIds.add(vid);
+        existing.viewIds = Array.from(existingIds);
+      }
       return existing;
     }
     this.entities.set(entity.id, entity);

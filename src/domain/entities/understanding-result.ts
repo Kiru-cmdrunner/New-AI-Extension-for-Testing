@@ -30,6 +30,8 @@
 // understanding module from the domain layer.
 import type { SemanticKnowledge } from '../../understanding/enrichment/semantic-types';
 import type { ApplicationKnowledge } from '../../understanding/consolidation/application-knowledge';
+import type { ActionOutcome } from '../../understanding/outcome/outcome-types';
+import type { StateTransition } from '../../understanding/state-builder/types';
 
 /**
  * The complete output of the Understanding Layer for a single recording session.
@@ -60,4 +62,13 @@ export interface UnderstandingResult {
   readonly applicationKnowledge?: ApplicationKnowledge;
   /** Non-fatal warnings from the understanding pipeline. */
   readonly knowledgeWarnings?: string[];
+
+  // ── D12 — Pipeline artifacts (optional, additive) ──
+
+  /** Determined outcomes per interaction (D12). Serialized as array. */
+  readonly outcomes?: ActionOutcome[];
+  /** State transitions from the recording session (D12). */
+  readonly transitions?: StateTransition[];
+  /** Stable app ID derived from the recording origin (D12). */
+  readonly appId?: string;
 }

@@ -52,6 +52,7 @@ export class KnowledgePreloader {
         attributes: { ...entity.attributes },
         source: entity.source,
         provenance: 'prior-session',
+        viewIds: entity.viewIds,
       });
     }
 

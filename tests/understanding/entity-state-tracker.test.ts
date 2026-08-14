@@ -328,16 +328,20 @@ describe('M9.9 StateBuilder badge → entity state', () => {
     expect(state.entities.get('leave-request:102')!.currentState).toBe('approved');
   });
 
-  it('ambiguous badge (multi entities, different types, no type on badge) is skipped', () => {
+  it('ambiguous badge (multi entities, different types, no type on badge) applies to most-recent entity (D11)', () => {
     builder.processSignals(makeSignalSet([
       makeEntityObs('101', 'leave-request', 'A'),
       makeEntityObs('7', 'issue', 'I'),
     ], 'int-1'));
     builder.processSignals(makeSignalSet([makeBadge('Approved')], 'int-2'));
 
+    // D11: Previously skipped silently. Now applies to the most-recently-updated
+    // entity (deterministic fallback) instead of being silently dropped.
     const state = builder.getCurrentState();
-    expect(state.entities.get('leave-request:101')!.currentState).toBeUndefined();
-    expect(state.entities.get('issue:7')!.currentState).toBeUndefined();
+    // Exactly one entity should have the state (the most-recent one)
+    const withState = [...state.entities.values()].filter((e) => e.currentState !== undefined);
+    expect(withState.length).toBe(1);
+    expect(withState[0].currentState).toBe('approved');
   });
 
   it('repeated badge observations do not duplicate history entries', () => {

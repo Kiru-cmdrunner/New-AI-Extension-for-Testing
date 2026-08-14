@@ -42,6 +42,14 @@ export function parseCounterValue(text: string | null): number | null {
 /** Path segments that suggest counter semantics. */
 const COUNTER_PATH_HINTS = /cart|count|badge|total|qty|quantity|items?|results?|notification/i;
 
+/**
+ * Attribute names that suggest counter semantics (D7).
+ * Matches aria-valuenow, aria-valuetext, data-count, data-badge,
+ * data-quantity, data-total, data-num, data-value, data-progress.
+ */
+const COUNTER_ATTR_HINTS =
+  /^(?:aria-valuenow|aria-valuetext|data-count|data-badge|data-quantity|data-total|data-num|data-value|data-progress)$/i;
+
 export class CounterSignalExtractor implements SignalExtractor {
   readonly name = 'CounterSignalExtractor';
 
@@ -57,7 +65,34 @@ export class CounterSignalExtractor implements SignalExtractor {
     for (const change of domChanges) {
       // Counters change via characterData or attribute mutations on their text
       const cdd = change.characterDataDelta;
-      if (!cdd) continue;
+      if (!cdd) {
+        // D7: attribute-based counters (e.g., aria-valuenow, data-count)
+        if (change.types.includes('attributes') && change.attributeDeltas) {
+          for (const [attrName, delta] of Object.entries(change.attributeDeltas)) {
+            if (!COUNTER_ATTR_HINTS.test(attrName)) continue;
+            const oldNum = parseCounterValue(delta.old);
+            const newNum = parseCounterValue(delta.new);
+            if (oldNum === null || newNum === null) continue;
+
+            const label = COUNTER_PATH_HINTS.test(change.targetPath)
+              ? change.targetPath.split('/').pop() ?? null
+              : null;
+
+            signals.push({
+              type: 'counter-change',
+              interactionId: interaction.interactionId,
+              source: 'dom-mutation',
+              confidence: 0.8,
+              elementPath: change.targetPath,
+              oldValue: delta.old,
+              newValue: delta.new!,
+              numericDelta: newNum - oldNum,
+              label: label ?? attrName,
+            });
+          }
+        }
+        continue;
+      }
 
       const oldNum = parseCounterValue(cdd.old);
       const newNum = parseCounterValue(cdd.new);

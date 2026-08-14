@@ -30,6 +30,7 @@ import {
 import type { ApplicationState, StateTransition, Entity } from './types';
 
 import type { StateVocabularyRegistry } from '../domain-config/state-vocabulary-registry';
+import type { StateBuilderSeed } from '../consolidation/application-knowledge';
 
 export class StateBuilder {
   private currentView: import('../types').ViewDescriptor | null = null;
@@ -110,7 +111,13 @@ export class StateBuilder {
 
     // ── Counter changes ──
     for (const cc of signals.counterChanges) {
-      this.counterTracker.record(cc.elementPath, cc.newValue, signals.interactionId, cc.label);
+      this.counterTracker.record(
+        cc.elementPath,
+        cc.newValue,
+        signals.interactionId,
+        cc.label,
+        this.currentView?.id,
+      );
       const deltaStr = cc.numericDelta !== null ? ` (Δ${cc.numericDelta > 0 ? '+' : ''}${cc.numericDelta})` : '';
       changes.push(`counter: ${cc.oldValue ?? '?'} → ${cc.newValue}${deltaStr}`);
     }
@@ -122,14 +129,22 @@ export class StateBuilder {
         lc.addedCount,
         lc.removedCount,
         signals.interactionId,
+        'unknown',
+        this.currentView?.id,
       );
       changes.push(`list: ${lc.containerPath} (${lc.netChange >= 0 ? '+' : ''}${lc.netChange} items)`);
     }
 
     // ── Input value changes ──
     for (const ic of signals.inputChanges) {
-      // Create or update a search-query entity if the field looks like a search input
-      if (ic.field.toLowerCase().includes('search') || ic.field.toLowerCase().includes('query')) {
+      const fieldName = ic.field.toLowerCase();
+
+      // D6: Generalized form-field entity creation.
+      // First try the EntityTypeRegistry for domain-specific field patterns.
+      const registryType = this.entityTypeRegistry.resolveFromFormField(ic.field);
+
+      // Legacy: search/query fields always produce search-query entities.
+      if (fieldName.includes('search') || fieldName.includes('query')) {
         if (ic.newValue && ic.newValue.trim().length > 0) {
           const entity: Entity = {
             id: `search-query:${ic.newValue}`,
@@ -141,10 +156,27 @@ export class StateBuilder {
             source: 'target-derived',
             firstSeenAt: signals.interactionId,
             lastUpdated: signals.interactionId,
+            viewIds: this.currentView ? [this.currentView.id] : undefined,
           };
           this.entityTracker.upsert(entity);
           changes.push(`search query: "${ic.newValue}"`);
         }
+      } else if (registryType && ic.newValue && ic.newValue.trim().length > 0) {
+        // D6: Registry-based form-field entity creation for non-search domains.
+        const entity: Entity = {
+          id: `${registryType}:${ic.newValue}`,
+          type: registryType,
+          attributes: {
+            value: ic.newValue,
+            field: ic.field,
+          },
+          source: 'target-derived',
+          firstSeenAt: signals.interactionId,
+          lastUpdated: signals.interactionId,
+          viewIds: this.currentView ? [this.currentView.id] : undefined,
+        };
+        this.entityTracker.upsert(entity);
+        changes.push(`form field entity (${registryType}): "${ic.newValue}"`);
       }
     }
 
@@ -175,6 +207,7 @@ export class StateBuilder {
           source: 'view-derived',
           firstSeenAt: vc.interactionId,
           lastUpdated: vc.interactionId,
+          viewIds: [vc.toView.id],
         };
         this.entityTracker.upsert(entity);
         changes.push(`product entity: ${asin}`);
@@ -196,6 +229,7 @@ export class StateBuilder {
           source: 'view-derived',
           firstSeenAt: vc.interactionId,
           lastUpdated: vc.interactionId,
+          viewIds: [vc.toView.id],
         };
         this.entityTracker.upsert(entity);
         changes.push(`search query (from URL): "${term}"`);
@@ -224,6 +258,7 @@ export class StateBuilder {
           source: 'view-derived',
           firstSeenAt: vc.interactionId,
           lastUpdated: vc.interactionId,
+          viewIds: [vc.toView.id],
         };
         this.entityTracker.upsert(entity);
         changes.push(`${registryResult.type} entity (from registry)`);
@@ -249,6 +284,7 @@ export class StateBuilder {
         source: 'inferred',
         firstSeenAt: op.interactionId,
         lastUpdated: op.interactionId,
+        viewIds: this.currentView ? [this.currentView.id] : undefined,
       };
       this.entityTracker.upsert(entity);
       changes.push(`cart-item entity (from API)`);
@@ -271,6 +307,7 @@ export class StateBuilder {
           source: 'inferred',
           firstSeenAt: op.interactionId,
           lastUpdated: op.interactionId,
+          viewIds: this.currentView ? [this.currentView.id] : undefined,
         };
         this.entityTracker.upsert(entity);
         changes.push(`${registryResult.type} entity (from API registry)`);
@@ -296,6 +333,7 @@ export class StateBuilder {
         obs.entityId,
       );
       const type = registryType ?? (obs.entityType ?? 'unknown');
+      const viewId = this.currentView?.id ?? pc.snapshot.viewId ?? undefined;
       this.entityTracker.upsert({
         id: `${type}:${obs.entityId}`,
         type,
@@ -307,6 +345,7 @@ export class StateBuilder {
         source: 'view-derived',
         firstSeenAt: iid,
         lastUpdated: iid,
+        viewIds: viewId ? [viewId] : undefined,
       });
       changes.push(`page-content entity: ${type}:${obs.entityId}`);
     }
@@ -314,11 +353,13 @@ export class StateBuilder {
     // Counters observed in content (set absolute value)
     for (const obs of pc.observedCounters) {
       if (obs.numericValue === null) continue;
+      const counterViewId = this.currentView?.id ?? pc.snapshot.viewId ?? undefined;
       this.counterTracker.record(
         obs.domPath,
         String(obs.numericValue),
         iid,
         obs.attributes['aria-label'] ?? null,
+        counterViewId,
       );
       changes.push(`page-content counter: ${obs.domPath} = ${obs.numericValue}`);
     }
@@ -326,7 +367,8 @@ export class StateBuilder {
     // Collections observed in content (set absolute count)
     for (const obs of pc.observedCollections) {
       if (obs.numericValue === null) continue;
-      this.collectionTracker.setCount(obs.domPath, obs.numericValue, iid);
+      const collViewId = this.currentView?.id ?? pc.snapshot.viewId ?? undefined;
+      this.collectionTracker.setCount(obs.domPath, obs.numericValue, iid, collViewId);
       changes.push(`page-content collection: ${obs.domPath} = ${obs.numericValue} items`);
     }
 
@@ -388,7 +430,9 @@ export class StateBuilder {
     }
 
     // Case 3: multiple entities — apply to all entities matching the badge's
-    // entity type (if the badge names one). Otherwise skip (ambiguous).
+    // entity type (if the badge names one). Otherwise apply to the most
+    // recently-updated entity (D11: previously skipped silently, which lost
+    // all state transitions in multi-entity apps).
     if (obs.entityType) {
       const matching = [...entities.entries()].filter(([, e]) => e.type === obs.entityType);
       if (matching.length >= 1) {
@@ -401,7 +445,29 @@ export class StateBuilder {
           );
           if (changed) changes.push(`state: ${id} → "${state}"`);
         }
+        return;
       }
+    }
+
+    // D11: No entityType match — fall back to most-recently-updated entity.
+    // This mirrors the notification path's strategy and prevents badges
+    // from being silently dropped in multi-entity applications.
+    let latestId: string | null = null;
+    let latestUpdated = '';
+    for (const [id, e] of entities) {
+      if (String(e.lastUpdated) > latestUpdated) {
+        latestUpdated = String(e.lastUpdated);
+        latestId = id;
+      }
+    }
+    if (latestId) {
+      const changed = this.stateTracker.observe(
+        latestId,
+        state,
+        iid,
+        `status-badge "${obs.text}" (${obs.domPath}, most-recent entity)`,
+      );
+      if (changed) changes.push(`state: ${latestId} → "${state}"`);
     }
   }
 
@@ -502,6 +568,27 @@ export class StateBuilder {
     this.stateTracker.clear();
     this.interactionCount = 0;
     this.lastInteractionId = null;
+  }
+
+  /**
+   * D3: Load a prior-knowledge seed (from M9.6 KnowledgePreloader).
+   *
+   * Pre-populates entity, view, and counter trackers with cross-session
+   * knowledge so the builder recognizes previously-seen entities from
+   * the first interaction of the new session.
+   */
+  loadSeed(seed: StateBuilderSeed): void {
+    for (const [, entity] of seed.entities) {
+      this.entityTracker.upsert({
+        id: entity.id,
+        type: entity.type,
+        attributes: entity.attributes,
+        source: 'inferred', // prior-session knowledge
+        firstSeenAt: 'prior-session',
+        lastUpdated: 'prior-session',
+        viewIds: entity.viewIds,
+      });
+    }
   }
 }
 

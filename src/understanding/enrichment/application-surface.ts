@@ -113,20 +113,39 @@ export function buildApplicationSurface(
   }
 
   // ── Assign entity types, collections, counters from state ──────────
+  // D5: scope to views where actually observed via viewIds, instead of
+  // broadcasting every entity to every view. Fallback to broadcast ONLY
+  // when an entity has no viewIds (e.g., legacy data without view context).
   if (state) {
-    for (const view of views.values()) {
-      for (const entity of state.entities.values()) {
-        if (!view.entityTypeRefs.includes(entity.type)) {
+    for (const entity of state.entities.values()) {
+      const targetViews = entity.viewIds && entity.viewIds.length > 0
+        ? entity.viewIds
+        : [...views.keys()];
+      for (const viewId of targetViews) {
+        const view = views.get(viewId);
+        if (view && !view.entityTypeRefs.includes(entity.type)) {
           view.entityTypeRefs.push(entity.type);
         }
       }
-      for (const collection of state.collections.values()) {
-        if (!view.collectionRefs.includes(collection.id)) {
+    }
+    for (const collection of state.collections.values()) {
+      const targetViews = collection.viewIds && collection.viewIds.length > 0
+        ? collection.viewIds
+        : [...views.keys()];
+      for (const viewId of targetViews) {
+        const view = views.get(viewId);
+        if (view && !view.collectionRefs.includes(collection.id)) {
           view.collectionRefs.push(collection.id);
         }
       }
-      for (const counter of state.counters.values()) {
-        if (!view.counterRefs.includes(counter.id)) {
+    }
+    for (const counter of state.counters.values()) {
+      const targetViews = counter.viewIds && counter.viewIds.length > 0
+        ? counter.viewIds
+        : [...views.keys()];
+      for (const viewId of targetViews) {
+        const view = views.get(viewId);
+        if (view && !view.counterRefs.includes(counter.id)) {
           view.counterRefs.push(counter.id);
         }
       }

@@ -58,6 +58,8 @@ export interface Entity {
   currentState?: string;
   /** Ordered lifecycle transitions. M9.9. */
   stateHistory?: EntityStateChange[];
+  /** Views where this entity has been observed. D5. */
+  viewIds?: string[];
 }
 
 export type EntitySource = 'view-derived' | 'target-derived' | 'counter-derived' | 'inferred';
@@ -78,6 +80,8 @@ export interface Collection {
   containerPath: string | null;
   /** Interaction ID when last updated. */
   lastUpdated: string;
+  /** Views where this collection has been observed. D5. */
+  viewIds?: string[];
 }
 
 // ── Counter ────────────────────────────────────────────────────────────
@@ -94,6 +98,8 @@ export interface CounterRecord {
   elementPath: string;
   /** Value history. */
   values: CounterValue[];
+  /** Views where this counter has been observed. D5. */
+  viewIds?: string[];
 }
 
 /**

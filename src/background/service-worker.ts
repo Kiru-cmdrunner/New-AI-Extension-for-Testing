@@ -342,6 +342,10 @@ async function handleStopRecording(): Promise<void> {
         semanticKnowledge: pipelineOutcome.semanticKnowledge ?? undefined,
         applicationKnowledge: pipelineOutcome.applicationKnowledge ?? undefined,
         knowledgeWarnings: pipelineOutcome.warnings.length > 0 ? pipelineOutcome.warnings : undefined,
+        // D12: carry pipeline artifacts that were previously dropped
+        outcomes: [...pipelineOutcome.outcomes.values()],
+        transitions: pipelineOutcome.transitions,
+        appId: pipelineOutcome.appId,
       };
 
       // Store for side-panel display (best-effort)
