@@ -17,6 +17,7 @@ import type {
   ApiOperationType,
   OutcomeHint,
 } from '../types';
+import type { NetworkPatternRegistry } from '../domain-config/network-pattern-registry';
 
 /**
  * A URL pattern → operation classification rule.
@@ -114,11 +115,23 @@ function deriveOutcomeHint(status: number | null): OutcomeHint | null {
 
 /**
  * Classify a URL into an API operation type.
+ *
+ * M9.11: When a domain pattern registry is provided, domain patterns are
+ * checked FIRST — a domain-specific match wins over built-in defaults.
+ * Domain-specific operations that aren't in the built-in union are
+ * reported as their string label (the ApiOperationType union remains
+ * open for new domains via the registry).
  */
-function classifyUrl(url: string): ApiOperationType {
+function classifyUrl(url: string, domainRegistry?: NetworkPatternRegistry | null): ApiOperationType | string {
   // Check resource patterns first
   for (const re of RESOURCE_PATTERNS) {
     if (re.test(url)) return 'resource';
+  }
+
+  // M9.11: domain patterns take priority over built-in defaults
+  if (domainRegistry && domainRegistry.size > 0) {
+    const domainOp = domainRegistry.classify(url);
+    if (domainOp) return domainOp;
   }
 
   // Check operation patterns in order
@@ -133,6 +146,16 @@ function classifyUrl(url: string): ApiOperationType {
 export class NetworkSignalExtractor implements SignalExtractor {
   readonly name = 'NetworkSignalExtractor';
 
+  private readonly domainPatternRegistry: NetworkPatternRegistry | null;
+
+  /**
+   * @param domainPatternRegistry Optional M9.11 domain pattern registry.
+   *   When provided, domain patterns are checked before built-in defaults.
+   */
+  constructor(domainPatternRegistry?: NetworkPatternRegistry | null) {
+    this.domainPatternRegistry = domainPatternRegistry ?? null;
+  }
+
   extract(interaction: ComponentInteraction): Signal[] {
     const evidence = interaction.behavioralEvidence;
     if (!evidence) return [];
@@ -143,7 +166,7 @@ export class NetworkSignalExtractor implements SignalExtractor {
     const signals: ApiOperationSignal[] = [];
 
     for (const entry of networkEntries) {
-      const operation = classifyUrl(entry.url);
+      const operation = classifyUrl(entry.url, this.domainPatternRegistry);
 
       // Skip analytics and static resources — they carry no semantic value
       // for application understanding.

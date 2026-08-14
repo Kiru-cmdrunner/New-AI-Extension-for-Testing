@@ -221,3 +221,13 @@ export type {
 // Compound interaction detection (M9.10)
 export { detectCompoundActions } from './enrichment/compound-detector';
 export type { CompoundAction } from './enrichment/compound-detector';
+
+// Multi-domain configuration (M9.11)
+export type { DomainPack, ViewPatternSpec, NetworkPatternSpec, StateVocabEntry } from './domain-config/domain-pack-types';
+export { DomainPackRegistry } from './domain-config/domain-pack-registry';
+export { StateVocabularyRegistry } from './domain-config/state-vocabulary-registry';
+export { IntentVocabularyRegistry } from './domain-config/intent-vocabulary-registry';
+export { NetworkPatternRegistry } from './domain-config/network-pattern-registry';
+export { ECOMMERCE_PACK } from './domain-config/packs/ecommerce-pack';
+export { HR_PACK } from './domain-config/packs/hr-pack';
+export { DEVTOOLS_PACK } from './domain-config/packs/devtools-pack';

@@ -13,6 +13,7 @@
  */
 
 import type { Entity, EntityStateChange } from './types';
+import type { StateVocabularyRegistry } from '../domain-config/state-vocabulary-registry';
 
 /**
  * Common lifecycle state keywords recognized deterministically.
@@ -70,10 +71,19 @@ const STATE_KEYWORDS: Record<string, string> = {
  *
  * Matching: word-boundary, case-insensitive, longest-match-first so
  * "Awaiting Approval" → 'pending' and not a partial hit.
+ *
+ * M9.11: When a StateVocabularyRegistry is provided, domain-specific
+ * keywords are checked BEFORE the built-in vocabulary.
  */
-export function normalizeStateText(text: string): string | null {
+export function normalizeStateText(text: string, domainRegistry?: StateVocabularyRegistry): string | null {
   const lower = text.trim().toLowerCase();
   if (!lower) return null;
+
+  // M9.11: Check domain registry first (if provided).
+  if (domainRegistry && domainRegistry.size > 0) {
+    const domainResult = domainRegistry.resolve(text);
+    if (domainResult) return domainResult;
+  }
 
   // Exact match first (whole string)
   if (STATE_KEYWORDS[lower]) return STATE_KEYWORDS[lower];
@@ -95,9 +105,9 @@ export function normalizeStateText(text: string): string | null {
  * Extract a state transition verb from notification text.
  * E.g., "Leave request approved" → 'approved', "Issue closed" → 'closed'.
  */
-export function extractStateFromNotification(text: string): string | null {
+export function extractStateFromNotification(text: string, domainRegistry?: StateVocabularyRegistry): string | null {
   // Try the whole text first — handles "Approved" toasts
-  const direct = normalizeStateText(text);
+  const direct = normalizeStateText(text, domainRegistry);
   if (direct) return direct;
 
   // Past-tense verbs often indicate a transition ("has been approved",

@@ -15,13 +15,20 @@ import type { ComponentInteraction } from '../../shared/component-types';
 import type { ActionOutcome } from '../outcome/outcome-types';
 import type { IntentLabel } from './semantic-types';
 import { getAllVocabEntries, type IntentVocabEntry } from './intent-vocabulary';
+import type { IntentVocabularyRegistry } from '../domain-config/intent-vocabulary-registry';
 
 /**
  * Label a single interaction with its intent.
+ *
+ * @param interaction The interaction to label.
+ * @param outcome Optional outcome for API-operation path.
+ * @param vocabRegistry Optional M9.11 domain vocabulary registry. When
+ *   provided, domain entries are checked BEFORE built-in vocabulary.
  */
 export function labelIntent(
   interaction: ComponentInteraction,
   outcome?: ActionOutcome,
+  vocabRegistry?: IntentVocabularyRegistry | null,
 ): IntentLabel {
   // 1. API-operation path
   if (outcome) {
@@ -29,7 +36,10 @@ export function labelIntent(
     if (apiIntent) return apiIntent;
   }
 
-  // 2. Vocabulary template path
+  // 2. Vocabulary template path (domain registry first, then built-in)
+  const domainIntent = vocabRegistry ? resolveFromDomainVocabulary(interaction, vocabRegistry) : null;
+  if (domainIntent) return domainIntent;
+
   const vocabIntent = resolveFromVocabulary(interaction);
   if (vocabIntent) return vocabIntent;
 
@@ -106,6 +116,31 @@ function resolveFromVocabulary(
         interactionId: interaction.interactionId,
         intent: entry.intent,
         resolutionPath: 'button-text', // vocabulary match is text-based
+        confidence: entry.baseConfidence,
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * M9.11: Resolve intent from domain-specific vocabulary registry.
+ * Domain entries take priority over built-in vocabulary.
+ */
+function resolveFromDomainVocabulary(
+  interaction: ComponentInteraction,
+  registry: IntentVocabularyRegistry,
+): IntentLabel | null {
+  const entries = registry.getAll();
+  const trigger = interaction.trigger;
+
+  for (const entry of entries) {
+    if (matchesEntry(trigger, entry)) {
+      return {
+        interactionId: interaction.interactionId,
+        intent: entry.intent,
+        resolutionPath: 'button-text',
         confidence: entry.baseConfidence,
       };
     }

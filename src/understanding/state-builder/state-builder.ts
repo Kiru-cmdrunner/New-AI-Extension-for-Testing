@@ -29,6 +29,8 @@ import {
 } from './entity-state-tracker';
 import type { ApplicationState, StateTransition, Entity } from './types';
 
+import type { StateVocabularyRegistry } from '../domain-config/state-vocabulary-registry';
+
 export class StateBuilder {
   private currentView: import('../types').ViewDescriptor | null = null;
   private currentUrl: string | null = null;
@@ -40,17 +42,25 @@ export class StateBuilder {
   private interactionCount = 0;
   private lastInteractionId: string | null = null;
   private readonly entityTypeRegistry: EntityTypeRegistry;
+  private readonly stateVocabularyRegistry: StateVocabularyRegistry | null;
 
   /**
    * @param entityTypeRegistry Optional registry for custom entity types.
    *   If omitted, a default-seeded registry is created. Pass `false` to
    *   create a builder with no registry (legacy behavior, no custom types).
+   * @param stateVocabRegistry Optional registry for domain-specific state
+   *   keywords (M9.11). When provided, badge/notification state detection
+   *   checks domain vocabulary before built-in keywords.
    */
-  constructor(entityTypeRegistry?: EntityTypeRegistry | false) {
+  constructor(
+    entityTypeRegistry?: EntityTypeRegistry | false,
+    stateVocabRegistry?: StateVocabularyRegistry | null,
+  ) {
     this.entityTypeRegistry =
       entityTypeRegistry === false
         ? new EntityTypeRegistry()
         : entityTypeRegistry ?? createEntityTypeRegistry(true);
+    this.stateVocabularyRegistry = stateVocabRegistry ?? null;
   }
 
   /**
@@ -344,7 +354,7 @@ export class StateBuilder {
    * M9.9: Process a status badge observation into an entity state change.
    */
   private processStatusBadge(obs: ObservedItem, iid: string, changes: string[]): void {
-    const state = normalizeStateText(obs.text);
+    const state = normalizeStateText(obs.text, this.stateVocabularyRegistry ?? undefined);
     if (!state) return; // unrecognized state keyword — skip silently
 
     // Case 1: the badge carries an entity reference.
@@ -423,7 +433,7 @@ export class StateBuilder {
    * most-recently-updated entity (deterministic tie-break).
    */
   private detectStateFromNotification(text: string, iid: string): void {
-    const state = extractStateFromNotification(text);
+    const state = extractStateFromNotification(text, this.stateVocabularyRegistry ?? undefined);
     if (!state) return;
 
     const entities = this.entityTracker.snapshot();

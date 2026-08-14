@@ -118,8 +118,8 @@ export type ApiOperationType =
 export interface ApiOperationSignal extends Signal {
   type: 'api-operation';
   source: 'network-url' | 'network-status';
-  /** Classified operation type. */
-  operation: ApiOperationType;
+  /** Classified operation type (built-in union or domain-specific string via M9.11). */
+  operation: ApiOperationType | string;
   /** HTTP method. */
   method: string;
   /** HTTP status code (null if not yet completed). */

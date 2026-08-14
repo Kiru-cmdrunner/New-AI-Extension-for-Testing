@@ -47,6 +47,20 @@ const WEIGHTS = {
 
 export class OutcomeDeterminer {
   /**
+   * Optional additional confirmation view IDs from domain packs (M9.11).
+   * Checked in addition to the built-in CONFIRMATION_VIEWS set.
+   */
+  private readonly extraConfirmationViews: Set<string>;
+
+  /**
+   * @param extraConfirmationViews Optional set of additional view IDs that
+   *   indicate successful confirmation (e.g., domain-specific views from
+   *   a DomainPack). M9.11.
+   */
+  constructor(extraConfirmationViews?: Set<string>) {
+    this.extraConfirmationViews = extraConfirmationViews ?? new Set();
+  }
+  /**
    * Determine the outcome for a single interaction.
    *
    * Steps:
@@ -189,9 +203,9 @@ export class OutcomeDeterminer {
       }
     }
 
-    // View changes to confirmation views
+    // View changes to confirmation views (built-in + domain-specific)
     for (const vc of signals.viewChanges) {
-      if (CONFIRMATION_VIEWS.has(vc.toView.id)) {
+      if (CONFIRMATION_VIEWS.has(vc.toView.id) || this.extraConfirmationViews.has(vc.toView.id)) {
         votes.push({
           result: 'success',
           weight: WEIGHTS.viewConfirmation,
