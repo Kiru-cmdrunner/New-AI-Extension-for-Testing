@@ -130,6 +130,14 @@ export interface ApiOperationSignal extends Signal {
   url: string;
   /** Outcome hint derived from status code. */
   outcomeHint: OutcomeHint | null;
+  /** Parsed request body (formData key→value) for POST requests (webRequest only). */
+  requestBody?: Record<string, string>;
+  /**
+   * Entity hints extracted from the request body.
+   * Common patterns: ASIN (Amazon product ID), productId, quantity,
+   * leaveType, employeeId, etc.
+   */
+  entityHints?: { field: string; value: string; hint: string }[];
 }
 
 /**

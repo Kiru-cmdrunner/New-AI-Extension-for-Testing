@@ -285,25 +285,35 @@ export class StateBuilder {
   /**
    * Derive entities from API operations.
    * E.g., add-to-cart creates a cart-item entity.
+   *
+   * Network Hardening: When the request body contains product identifiers
+   * (ASIN, productId), the cart-item entity is linked to the product
+   * entity via attributes.productId.
    */
   private deriveEntitiesFromApiOp(op: ApiOperationSignal, changes: string[]): void {
     if (op.operation === 'add-to-cart' && op.succeeded !== false) {
-      // We know a cart item was added, but we may not know which product yet.
-      // Create a tentative cart-item entity.
+      // Extract product ID from entity hints if available
+      const productIdHint = op.entityHints?.find(h => h.hint === 'product-id');
+      const quantityHint = op.entityHints?.find(h => h.hint === 'quantity');
+
       const entity: Entity = {
-        id: `cart-item:${op.interactionId}`,
+        id: productIdHint
+          ? `cart-item:${productIdHint.value}`
+          : `cart-item:${op.interactionId}`,
         type: 'cart-item',
         attributes: {
           addedAt: op.interactionId,
           via: op.url,
+          ...(productIdHint ? { productId: productIdHint.value } : {}),
+          ...(quantityHint ? { quantity: quantityHint.value } : {}),
         },
-        source: 'inferred',
+        source: productIdHint ? 'inferred' : 'inferred',
         firstSeenAt: op.interactionId,
         lastUpdated: op.interactionId,
         viewIds: this.currentView ? [this.currentView.id] : undefined,
       };
       this.entityTracker.upsert(entity);
-      changes.push(`cart-item entity (from API)`);
+      changes.push(`cart-item entity (from API${productIdHint ? ', productId=' + productIdHint.value : ''})`);
     }
 
     // M9.8: Registry-based API operation entity detection.

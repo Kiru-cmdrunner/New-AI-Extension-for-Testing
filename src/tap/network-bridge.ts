@@ -27,6 +27,7 @@ import type { NetworkActivity } from '../shared/behavioral-evidence-types';
 
 /**
  * Raw event detail from MAIN-world network-inject.js CustomEvents.
+ * Includes PerformanceObserver entries with resourceType 'navigation' or 'resource'.
  */
 interface NetEventDetail {
   url: string;
@@ -34,13 +35,13 @@ interface NetEventDetail {
   timestamp: number; // performance.now() from MAIN world
   phase: 'start' | 'complete';
   status: number | null;
-  resourceType: 'fetch' | 'xhr';
+  resourceType: 'fetch' | 'xhr' | 'navigation' | 'resource';
 }
 
 /**
  * Raw event from webRequest (forwarded by SW via chrome.runtime message).
  * P1-4 Fix: wallClock field for cross-process timestamp normalization.
- * Optional: older SW code or tests may not include it.
+ * Network Hardening: requestBody for POST form data (e.g., ASIN, quantity).
  */
 interface WebRequestDetail {
   url: string;
@@ -50,6 +51,7 @@ interface WebRequestDetail {
   phase: 'start' | 'complete';
   status: number | null;
   requestId: string;
+  requestBody?: Record<string, string>;
 }
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -257,6 +259,7 @@ export class NetworkBridge {
             : null,
         resourceType: entry.resourceType,
         source: entry.source,
+        requestBody: entry.requestBody,
       }))
       .sort((a, b) => a.startRelativeToEvent - b.startRelativeToEvent)
       .slice(0, MAX_NETWORK_PER_WINDOW);
@@ -324,6 +327,11 @@ export class NetworkBridge {
     const method = detail.method;
     const phase = detail.phase;
     const status = detail.status;
+    // Extract requestBody from webRequest source (MAIN-world doesn't have it)
+    const requestBody =
+      source === 'webrequest'
+        ? (detail as WebRequestDetail).requestBody
+        : undefined;
     const resourceType =
       source === 'main-world'
         ? (detail as NetEventDetail).resourceType
@@ -369,6 +377,7 @@ export class NetworkBridge {
         absEndTimestamp: null,
         resourceType,
         source,
+        requestBody,
       });
     } else {
       // Complete phase — find matching in-flight request
@@ -394,6 +403,10 @@ export class NetworkBridge {
         if (startEntry) {
           startEntry.absEndTimestamp = timestamp;
           startEntry.status = status;
+          // Attach requestBody if available from the start phase
+          if (requestBody && !startEntry.requestBody) {
+            startEntry.requestBody = requestBody;
+          }
         }
       } else {
         // No matching start (missed or from before recording) — create standalone entry
@@ -405,6 +418,7 @@ export class NetworkBridge {
           absEndTimestamp: timestamp,
           resourceType,
           source,
+          requestBody,
         });
       }
     }
@@ -477,6 +491,7 @@ interface TimestampedNetworkActivity {
   status: number | null;
   absStartTimestamp: number;
   absEndTimestamp: number | null;
-  resourceType: 'xhr' | 'fetch' | 'unknown';
+  resourceType: 'xhr' | 'fetch' | 'unknown' | 'navigation' | 'resource';
   source: 'main-world' | 'webrequest';
+  requestBody?: Record<string, string>;
 }

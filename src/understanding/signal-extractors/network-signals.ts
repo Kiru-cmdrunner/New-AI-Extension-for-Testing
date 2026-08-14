@@ -143,6 +143,40 @@ function classifyUrl(url: string, domainRegistry?: NetworkPatternRegistry | null
   return 'unknown';
 }
 
+/**
+ * Patterns for extracting entity hints from request body fields.
+ * When a POST body contains these keys, we extract the value as a
+ * potential entity identifier.
+ */
+const ENTITY_HINT_PATTERNS: { field: RegExp; hint: string }[] = [
+  { field: /^asin$/i, hint: 'product-id' },
+  { field: /^product[_-]?id$/i, hint: 'product-id' },
+  { field: /^item[_-]?id$/i, hint: 'product-id' },
+  { field: /^sku$/i, hint: 'product-id' },
+  { field: /^quantity$/i, hint: 'quantity' },
+  { field: /^qty$/i, hint: 'quantity' },
+  { field: /^leave[_-]?type$/i, hint: 'leave-type' },
+  { field: /^employee[_-]?id$/i, hint: 'employee-id' },
+  { field: /^issue[_-]?id$/i, hint: 'issue-id' },
+  { field: /^user[_-]?id$/i, hint: 'user-id' },
+];
+
+/**
+ * Extract entity hints from a parsed request body.
+ */
+function extractEntityHints(body: Record<string, string>): { field: string; value: string; hint: string }[] {
+  const hints: { field: string; value: string; hint: string }[] = [];
+  for (const [key, value] of Object.entries(body)) {
+    for (const pattern of ENTITY_HINT_PATTERNS) {
+      if (pattern.field.test(key)) {
+        hints.push({ field: key, value, hint: pattern.hint });
+        break;
+      }
+    }
+  }
+  return hints;
+}
+
 export class NetworkSignalExtractor implements SignalExtractor {
   readonly name = 'NetworkSignalExtractor';
 
@@ -174,6 +208,9 @@ export class NetworkSignalExtractor implements SignalExtractor {
 
       const outcomeHint = deriveOutcomeHint(entry.status);
 
+      // Extract entity hints from request body if available
+      const entityHints = entry.requestBody ? extractEntityHints(entry.requestBody) : undefined;
+
       signals.push({
         type: 'api-operation',
         interactionId: interaction.interactionId,
@@ -185,6 +222,8 @@ export class NetworkSignalExtractor implements SignalExtractor {
         succeeded: entry.status !== null ? (entry.status >= 200 && entry.status < 300) : null,
         url: entry.url,
         outcomeHint,
+        requestBody: entry.requestBody,
+        entityHints,
       });
     }
 

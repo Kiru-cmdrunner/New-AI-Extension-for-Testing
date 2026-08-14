@@ -31,6 +31,10 @@
   var originalXhrSend = XMLHttpRequest.prototype.send;
 
   function dispatch(detail) {
+    // Add resourceType if not already set
+    if (!detail.resourceType) {
+      detail.resourceType = 'fetch';
+    }
     window.dispatchEvent(new CustomEvent('cmdrunner-net', { detail: detail }));
   }
 
@@ -126,12 +130,65 @@
     return originalXhrSend.apply(this, arguments);
   };
 
+  // ── PerformanceObserver for navigation/resource requests ────────
+  //
+  // fetch/XHR patches can't see form-submit navigations or sendBeacon.
+  // PerformanceObserver captures ALL requests including document navigations,
+  // giving us coverage for traditional (non-SPA) apps like Amazon.
+  //
+  // Entries may duplicate fetch/XHR-captured requests — the ISOLATED-world
+  // NetworkBridge handles deduplication by URL+method+timestamp.
+
+  if (typeof PerformanceObserver !== 'undefined') {
+    try {
+      var perfObserver = new PerformanceObserver(function (list) {
+        var entries = list.getEntries();
+        for (var i = 0; i < entries.length; i++) {
+          var entry = entries[i];
+
+          // Skip entries we already capture via fetch/XHR patches.
+          // PerformanceObserver 'resource' entries include fetch/XHR;
+          // 'navigation' entries are document loads (form submits, link clicks).
+          var entryType = entry.entryType;
+          var resourceType = entryType === 'navigation' ? 'navigation' : 'resource';
+
+          // Determine HTTP status from transferSize (PerformanceObserver
+          // doesn't expose status codes directly, but transferSize > 0
+          // implies a completed response).
+          // entry.transferSize is available for 'resource' and 'navigation'
+          // entries when the Resource Timing API is available.
+          var hasResponse = entry.transferSize !== undefined && entry.transferSize > 0;
+
+          dispatch({
+            url: entry.name,
+            method: 'GET', // PerformanceObserver doesn't expose method;
+                           // navigation entries are always GET for the document
+                           // request. POST form-submit navigations appear as
+                           // navigation entries with the POST method not exposed.
+                           // The SW webRequest path captures the actual method.
+            timestamp: performance.now() - (entry.duration || 0),
+            phase: 'complete',
+            status: hasResponse ? 200 : null, // Best-effort: assume 200 if data arrived
+            resourceType: resourceType,
+          });
+        }
+      });
+      perfObserver.observe({ entryTypes: ['navigation', 'resource'] });
+    } catch (e) {
+      // PerformanceObserver may be unavailable in some contexts
+    }
+  }
+
   // ── Listen for stop signal from ISOLATED world ───────────────────
 
   function handleStop() {
     window.fetch = originalFetch;
     XMLHttpRequest.prototype.open = originalXhrOpen;
     XMLHttpRequest.prototype.send = originalXhrSend;
+    if (perfObserver) {
+      try { perfObserver.disconnect(); } catch (e) {}
+      perfObserver = null;
+    }
     delete window.__cmdrunnerNetPatched;
     window.removeEventListener('cmdrunner-net-stop', handleStop);
   }

@@ -345,9 +345,11 @@ export interface NavigationEvidence {
  * Network request observed during the observation window.
  *
  * PRIMARY: captured by MAIN-world fetch/XHR monkeypatch (dynamically injected).
- * FALLBACK/PARALLEL: captured by chrome.webRequest in SW (metadata only).
+ * SECONDARY: captured by MAIN-world PerformanceObserver (navigation + resource entries).
+ * FALLBACK: captured by chrome.webRequest in SW (url/method/status/timing/requestBody).
  *
- * Records metadata only — no request/response bodies.
+ * Records metadata only — no response bodies. Request body (formData) is
+ * captured for POST requests via webRequest when available.
  */
 export interface NetworkActivity {
   url: string;
@@ -356,13 +358,19 @@ export interface NetworkActivity {
   startRelativeToEvent: number;
   endRelativeToEvent: number | null;
   durationMs: number | null;
-  resourceType: 'xhr' | 'fetch' | 'unknown';
+  resourceType: 'xhr' | 'fetch' | 'unknown' | 'navigation' | 'resource';
   /**
    * Source of this record.
-   * 'main-world' — dynamically injected MAIN-world monkeypatch (full metadata).
-   * 'webrequest' — SW chrome.webRequest (url/method/status/timing).
+   * 'main-world' — dynamically injected MAIN-world monkeypatch or PerformanceObserver.
+   * 'webrequest' — SW chrome.webRequest (url/method/status/timing/requestBody).
    */
   source: 'main-world' | 'webrequest';
+  /**
+   * Parsed request body (formData key→value pairs) for POST requests.
+   * Available when captured via webRequest with requestBody extraInfoSpec.
+   * Example: { ASIN: 'B08KGRVW2S', quantity: '1' }
+   */
+  requestBody?: Record<string, string>;
 }
 
 /**

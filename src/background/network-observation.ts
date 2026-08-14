@@ -24,12 +24,33 @@ interface InFlightWebRequest {
   method: string;
   startTime: number;
   requestId: string;
+  requestBody?: Record<string, string>;
+}
+
+/**
+ * Completed request record for the ring buffer.
+ * Used by synthetic nav evidence to recover form-submit POSTs.
+ */
+export interface CompletedWebRequest {
+  url: string;
+  method: string;
+  status: number;
+  startWallClock: number;
+  endWallClock: number;
+  requestId: string;
+  requestBody?: Record<string, string>;
 }
 
 // ── Constants ────────────────────────────────────────────────────────
 
 /** URL filter for webRequest listeners. */
 const URL_FILTER = ['http://*/*', 'https://*/*'];
+
+/** How long to retain completed requests in the ring buffer (ms). */
+const COMPLETED_BUFFER_TTL_MS = 10_000;
+
+/** Maximum completed requests to retain. */
+const MAX_COMPLETED_ENTRIES = 100;
 
 // ── Module state ─────────────────────────────────────────────────────
 
@@ -38,6 +59,13 @@ let activeTabId: number | null = null;
 
 /** In-flight requests keyed by requestId. */
 const inFlightRequests = new Map<string, InFlightWebRequest>();
+
+/**
+ * Ring buffer of recently completed requests.
+ * Used to bridge network evidence into synthetic navigation interactions
+ * for full-page-reload apps (e.g., Amazon Add to Cart).
+ */
+const completedRequests: CompletedWebRequest[] = [];
 
 /** Whether webRequest listeners are currently registered. */
 let listenersActive = false;
@@ -72,6 +100,7 @@ let onErrorCallback:
 export async function startNetworkObservation(tabId: number): Promise<void> {
   activeTabId = tabId;
   inFlightRequests.clear();
+  completedRequests.length = 0;
 
   // 1. Register webRequest listeners IMMEDIATELY (race coverage)
   registerWebRequestListeners();
@@ -105,6 +134,29 @@ export function isObserving(): boolean {
   return listenersActive;
 }
 
+/**
+ * Return recently completed requests matching a time range and optional URL filter.
+ *
+ * Used by `attachSyntheticNavEvidence` to recover form-submit POSTs that
+ * were captured by webRequest but never delivered to the content script
+ * (because the page was destroyed by the reload).
+ *
+ * @param sinceWallClock - Date.now() threshold; only entries with
+ *   `endWallClock >= sinceWallClock` are returned.
+ * @param urlPattern - Optional regex string; only matching URLs returned.
+ */
+export function getRecentRequests(
+  sinceWallClock: number,
+  urlPattern?: string,
+): CompletedWebRequest[] {
+  const re = urlPattern ? new RegExp(urlPattern, 'i') : null;
+  return completedRequests.filter(
+    (r) =>
+      r.endWallClock >= sinceWallClock &&
+      (!re || re.test(r.url)),
+  );
+}
+
 // ── webRequest Listener Management ───────────────────────────────────
 
 /**
@@ -124,11 +176,24 @@ function registerWebRequestListeners(): void {
     // Only process requests from the active tab
     if (activeTabId !== null && details.tabId !== activeTabId) return;
 
+    // Parse requestBody formData into a flat key→string map.
+    // Chrome provides this when extraInfoSpec includes 'requestBody'.
+    let requestBody: Record<string, string> | undefined;
+    if (details.requestBody?.formData) {
+      requestBody = {};
+      for (const [key, values] of Object.entries(details.requestBody.formData)) {
+        if (Array.isArray(values) && values.length > 0) {
+          requestBody[key] = values[0];
+        }
+      }
+    }
+
     inFlightRequests.set(details.requestId, {
       url: details.url,
       method: details.method,
       startTime: performance.now(),
       requestId: details.requestId,
+      requestBody,
     });
 
     // P1-4 Fix: Include wallClock (Date.now()) for cross-process timestamp normalization
@@ -149,6 +214,17 @@ function registerWebRequestListeners(): void {
     const inFlight = inFlightRequests.get(details.requestId);
     inFlightRequests.delete(details.requestId);
 
+    // Buffer completed request for synthetic nav evidence recovery
+    pushCompletedRequest({
+      url: details.url,
+      method: inFlight?.method ?? details.method,
+      status: details.statusCode,
+      startWallClock: inFlight ? Date.now() - (performance.now() - inFlight.startTime) : Date.now(),
+      endWallClock: Date.now(),
+      requestId: details.requestId,
+      requestBody: inFlight?.requestBody,
+    });
+
     // P1-4 Fix: Include wallClock
     forwardToTab(details.tabId, {
       url: details.url,
@@ -166,6 +242,17 @@ function registerWebRequestListeners(): void {
 
     const inFlight = inFlightRequests.get(details.requestId);
     inFlightRequests.delete(details.requestId);
+
+    // Buffer errored request too (status=0 signals failure)
+    pushCompletedRequest({
+      url: details.url,
+      method: inFlight?.method ?? 'GET',
+      status: 0,
+      startWallClock: inFlight ? Date.now() - (performance.now() - inFlight.startTime) : Date.now(),
+      endWallClock: Date.now(),
+      requestId: details.requestId,
+      requestBody: inFlight?.requestBody,
+    });
 
     // P1-4 Fix: Include wallClock
     forwardToTab(details.tabId, {
@@ -188,6 +275,7 @@ function registerWebRequestListeners(): void {
     chrome.webRequest.onBeforeRequest.addListener(
       onBeforeRequestCallback,
       broadFilter,
+      ['requestBody'],
     );
     chrome.webRequest.onCompleted.addListener(
       onCompletedCallback,
@@ -231,6 +319,21 @@ function unregisterWebRequestListeners(): void {
 }
 
 // ── MAIN-world Injection ─────────────────────────────────────────────
+
+/**
+ * Push a completed request to the ring buffer with TTL eviction.
+ */
+function pushCompletedRequest(entry: CompletedWebRequest): void {
+  completedRequests.push(entry);
+  // Evict entries older than TTL or over capacity
+  const cutoff = Date.now() - COMPLETED_BUFFER_TTL_MS;
+  while (completedRequests.length > 0 && completedRequests[0].endWallClock < cutoff) {
+    completedRequests.shift();
+  }
+  while (completedRequests.length > MAX_COMPLETED_ENTRIES) {
+    completedRequests.shift();
+  }
+}
 
 /**
  * Dynamically inject the MAIN-world network interceptor.
