@@ -30,7 +30,13 @@ export class TargetStateSignalExtractor implements SignalExtractor {
     if (!evidence) return [];
 
     const target = evidence.targetEvidence;
-    if (!target.before || !target.after) return [];
+    // G3-supplement safety (R12): network-only evidence supplements carry
+    // targetEvidence: null (evidence-collector.ts scheduleLateNetworkReCollect).
+    // The declared type is non-null, but runtime producers violate it — a
+    // throw here discards the WHOLE Stage-1 batch (coordinator has no
+    // per-extractor isolation), losing api-operation signals for every other
+    // interaction. Guard the null instead of dereferencing it.
+    if (!target || !target.before || !target.after) return [];
 
     const signals: (InputValueChangeSignal | ControlStateChangeSignal)[] = [];
 

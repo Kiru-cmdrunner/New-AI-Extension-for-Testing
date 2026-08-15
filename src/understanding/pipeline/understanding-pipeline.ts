@@ -368,13 +368,17 @@ export class UnderstandingPipeline {
     // Persist THIS SESSION's contribution only (occurrences observed now),
     // not the prior-merged recurring patterns — the repository accumulates
     // across sessions. Persisting merged counts would double-count priors.
-    if (this.persistenceService && semanticKnowledge) {
+    // Guard matches Stage 5: when Stage 1/2 failed, finalState is null and
+    // KnowledgePersistenceService.persist → persistViews would dereference
+    // null (state.currentView) after a partial write. Skip instead — the
+    // session's recorded workflows are only meaningful with a built state.
+    if (this.persistenceService && semanticKnowledge && finalState) {
       try {
         await this.persistenceService.persist({
           origin: input.origin,
           projectId: appId,
           recordingSessionId: input.sessionId,
-          applicationState: finalState!,
+          applicationState: finalState,
           transitions,
           outcomes: [...outcomes.values()],
           recordedWorkflows: aggregateRecordedWorkflowsForPersist(

@@ -825,6 +825,21 @@ export function getCompletedBySourceEventId(
 }
 
 /**
+ * Status-enrichment ring lookup: completed requests by requestId only.
+ *
+ * Unlike getCompletedBySourceEventId, this join needs NO eventId — the
+ * interaction's row already carries the real requestId. This covers the
+ * SW-restart edge: a ring entry with requestId + real status whose
+ * sourceEventId mapping was lost (inFlightRequests is memory-only) can
+ * still complete a null-status row captured in the previous SW instance.
+ * Real statuses only (callers filter; ring error rows carry status 0).
+ */
+export function getCompletedByRequestIds(ids: Set<string>): CompletedWebRequest[] {
+  if (ids.size === 0) return [];
+  return completedRequests.filter((r) => r.requestId != null && ids.has(r.requestId));
+}
+
+/**
  * CER-2: Tag all in-flight requests for a tab with the navEvent that is
  * committing — "requests issued from the destroyed document". Membership
  * is by lifecycle state (started, not finished) at commit time, NOT by

@@ -186,3 +186,110 @@ export function drainNetworkEvidence(
 
   return { updatedInteractions, mergedRequestIds };
 }
+
+// ── Stop-time status enrichment ────────────────────────────────────────
+//
+// First-delivery freeze: a row captured at onBeforeRequest carries
+// status null (start phase) — and every later path that learns the real
+// status is page-destroyed, ring-TTL-evicted, or suppressed by a correct
+// duplicate guard (this module's guard A; the ledger's ownership; the
+// content-script merge's requestId-first rule). The duplicate guards are
+// RIGHT for rows — one row per request — but they conflated "row exists"
+// with "row complete".
+//
+// This pass upgrades the STATUS FIELD ONLY of an existing null-status row,
+// keyed by requestId, from the best surviving completion record:
+//   - the durable attribution ledger (merge-enriched at onCompleted by
+//     pushStamped's status upgrade; survives page destruction AND ring TTL)
+//   - the completed-requests ring (by requestId; covers the SW-restart
+//     edge where the eventId mapping was lost but the row kept the id)
+//
+// Exactly-once ROW semantics preserved: no row is added, removed, or
+// reordered; rows with an existing status are never touched (no
+// downgrade/overwrite); rows without a requestId are never touched (no
+// URL-based guessing). Runs at Stop AFTER the drain attach passes and
+// BEFORE the understanding pipeline consumes the interactions.
+
+/** Status-enrichment source: ledger entry shape (StampedRequest). */
+export interface EnrichSourceLedger {
+  url: string;
+  method: string;
+  status: number;
+  requestId: string;
+  [k: string]: unknown;
+}
+
+/** Audit record for one upgraded row. */
+export interface StatusEnrichmentRecord {
+  interactionId: string;
+  requestId: string;
+  from: null;
+  to: number;
+}
+
+export interface StatusEnrichmentResult {
+  /** Interactions whose rows were upgraded (same references, mutated). */
+  updatedInteractions: ComponentInteraction[];
+  /** Audit trail — one record per upgraded row. */
+  enriched: StatusEnrichmentRecord[];
+}
+
+/**
+ * Upgrade null-status networkActivity rows to their real completion status,
+ * keyed strictly by requestId. See module docblock above for the contract.
+ * Pure: no chrome.* access, no network calls, no attribution changes.
+ */
+export function enrichNetworkRowStatuses(
+  interactions: ComponentInteraction[],
+  sources: {
+    ledger?: EnrichSourceLedger[];
+    ring?: DrainEntry[];
+  },
+): StatusEnrichmentResult {
+  // Completion map: requestId → real status (> 0 only). Ledger wins over
+  // ring on conflict (durable source of record for the same HTTP request).
+  const statusByRequestId = new Map<string, number>();
+  if (sources.ring) {
+    for (const r of sources.ring) {
+      if (typeof r.status === 'number' && r.status > 0) {
+        statusByRequestId.set(r.requestId, r.status);
+      }
+    }
+  }
+  if (sources.ledger) {
+    for (const e of sources.ledger) {
+      if (typeof e.status === 'number' && e.status > 0) {
+        statusByRequestId.set(e.requestId, e.status);
+      }
+    }
+  }
+  if (statusByRequestId.size === 0) {
+    return { updatedInteractions: [], enriched: [] };
+  }
+
+  const updatedInteractions: ComponentInteraction[] = [];
+  const enriched: StatusEnrichmentRecord[] = [];
+
+  for (const interaction of interactions) {
+    const rows = interaction.behavioralEvidence?.applicationEvidence?.networkActivity;
+    if (!rows || rows.length === 0) continue;
+
+    let touched = false;
+    for (const row of rows) {
+      const r = row as NetworkActivity & { requestId?: string };
+      // Null-status rows with a requestId ONLY — never touch real statuses
+      // (no downgrade), never touch id-less rows (no URL guessing).
+      if (r.status !== null && r.status !== undefined) continue;
+      if (!r.requestId) continue;
+      const to = statusByRequestId.get(r.requestId);
+      if (to === undefined) continue;
+
+      r.status = to; // in-place upgrade of the EXISTING row — that's all
+      touched = true;
+      enriched.push({ interactionId: interaction.interactionId, requestId: r.requestId, from: null, to });
+    }
+    if (touched) updatedInteractions.push(interaction);
+  }
+
+  return { updatedInteractions, enriched };
+}

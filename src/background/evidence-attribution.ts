@@ -100,6 +100,11 @@ const MAX_PER_INTERACTION = 20;
 /** Memory safety valve only — never a correctness mechanism (state eviction). */
 const MAX_GLOBAL_STAMPED = 500;
 
+/** True when a status is a REAL observed completion status (200/302/404…). */
+function isRealStatus(status: number | null | undefined): boolean {
+  return typeof status === 'number' && status > 0;
+}
+
 // ── Ownership ledger (exactly-once authority, INV-2) ───────────────────
 
 /**
@@ -272,6 +277,16 @@ export class DurableAttributionLedger {
   private readonly ownership = new RequestOwnershipLedger();
   /** Whether a durable write has succeeded this session (degrade tracking). */
   private durable = true;
+  /**
+   * Fix B bookkeeping: requestIds whose owning interaction row was STILL
+   * NULL-status at the moment they were marked attached (first-delivery
+   * freeze). Their ledger entries are NOT pruned at attach — they are the
+   * Stop-time status-enrichment source until the completion merge lands a
+   * real status (Fix A), the session ends (clearAll), or they are
+   * acknowledged. Cleared on acknowledge/clearAll — the enrichment window
+   * is bounded to the live session.
+   */
+  private readonly nullOwnedRequestIds = new Set<string>();
   /** Resolves AFTER the latest in-flight durable write settles (gate). */
   private writeChain: Promise<void> = Promise.resolve();
 
@@ -280,13 +295,66 @@ export class DurableAttributionLedger {
   /**
    * Record a stamped request. Durable before this promise resolves
    * (or memory-only if storage rejected — logged, non-fatal).
+   *
+   * STATUS ENRICHMENT: a duplicate push (same requestId) is a *completion*
+   * update, not a no-op — the at-capture write stores status 0 ("completion
+   * not yet observed", network-observation.ts:984) and the onCompleted
+   * dispatch (:1066) re-pushes with the real status. Merge-in-place:
+   *   - status: upgrade-only (incoming > 0 AND stored <= 0 → adopt);
+   *     a stored real status is NEVER overwritten or downgraded.
+   *   - requestBody/sourceEventId/captureOrigin/documentRequest/mainFrame:
+   *     fill-absent only, never clobber.
+   * The stored object is mutated in place (no splice/re-push) so FIFO
+   * eviction order and landed/ownership state are preserved.
    */
   async pushStamped(entry: StampedRequest): Promise<void> {
     if (!entry.sourceEventId) return; // unstamped → not attributable, not our case
-    if (this.ownership.isAttached(entry.requestId)) return; // already attached
+    if (this.ownership.isAttached(entry.requestId)) {
+      // COMPLETION ENRICHMENT (ledger-completion-enrichment.md Fix A +
+      // ledger-completion-preservation.md Fix 1): the requestId is already
+      // attached, BUT a completion push (real status > 0) still carries the
+      // one thing the at-capture copy never had — the final status — while
+      // the owning interaction's row was frozen at null (first-delivery,
+      // pre-window-close). Upgrade-only merge; never re-attach, never a
+      // second row. Status-0/absent pushes for owned ids: legacy no-op.
+      if (!isRealStatus(entry.status)) return;
+      // Find the KEPT ledger copy for this requestId (any key — the stamp
+      // eventId is the natural one, but a re-pushed entry is authoritative
+      // wherever it lands).
+      const stored = this.findStoredByRequestId(entry.requestId);
+      if (stored) {
+        this.mergeIntoStored(stored, entry);
+        this.writeChain = this.writeChain.then(() => this.persist()).catch(() => {
+          /* keep chain alive on failure */ });
+        await this.writeChain;
+        return;
+      }
+      // Not in the map (pruned post-attach / acked / different key) →
+      // RE-INSERT as a held completion. pendingComplete entries are
+      // enrichment-only: never re-attached (ownership already holds the id),
+      // never admitted to pendingAck, wiped by clearAll at session end.
+      const held: StampedRequest & { pendingComplete?: boolean } = { ...entry };
+      held.pendingComplete = true;
+      const heldList = this.entries.get(entry.sourceEventId) ?? [];
+      heldList.push(held);
+      this.entries.set(entry.sourceEventId, heldList);
+      this.nullOwnedRequestIds.add(entry.requestId);
+      this.writeChain = this.writeChain.then(() => this.persist()).catch(() => {
+        /* keep chain alive on failure */ });
+      await this.writeChain;
+      return;
+    }
 
     const list = this.entries.get(entry.sourceEventId) ?? [];
-    if (list.some((e) => e.requestId === entry.requestId)) return; // dedup
+    const stored = list.find((e) => e.requestId === entry.requestId);
+    if (stored) {
+      this.mergeIntoStored(stored, entry);
+      // Durable write-through for the merged update (same serialized gate).
+      this.writeChain = this.writeChain.then(() => this.persist()).catch(() => {
+        /* keep chain alive on failure */ });
+      await this.writeChain;
+      return;
+    }
     list.push(entry);
     if (list.length > MAX_PER_INTERACTION) list.splice(0, list.length - MAX_PER_INTERACTION);
     this.entries.set(entry.sourceEventId, list);
@@ -300,6 +368,62 @@ export class DurableAttributionLedger {
       /* keep chain alive on failure */ });
     await this.writeChain;
   }
+
+  /**
+   * Fix A helper: locate the kept ledger copy of an already-owned requestId
+   * (any sourceEventId key). Null when none survived (pruned + acked).
+   */
+  private findStoredByRequestId(requestId: string): StampedRequest | undefined {
+    for (const list of this.entries.values()) {
+      const hit = list.find((e) => e.requestId === requestId);
+      if (hit) return hit;
+    }
+    return undefined;
+  }
+
+  /**
+   * Status-enrichment merge (in-place): upgrade-only status, fill-absent
+   * metadata. See pushStamped's doc comment for the contract.
+   */
+  private mergeIntoStored(stored: StampedRequest, incoming: StampedRequest): void {
+    if (
+      typeof incoming.status === 'number' &&
+      incoming.status > 0 &&
+      !(typeof stored.status === 'number' && stored.status > 0)
+    ) {
+      stored.status = incoming.status;
+    }
+    if (stored.requestBody === undefined && incoming.requestBody !== undefined) {
+      stored.requestBody = incoming.requestBody;
+    }
+    if (stored.captureOrigin === undefined && incoming.captureOrigin !== undefined) {
+      stored.captureOrigin = incoming.captureOrigin;
+    }
+    if (stored.documentRequest === undefined && incoming.documentRequest !== undefined) {
+      stored.documentRequest = incoming.documentRequest;
+    }
+    if (stored.mainFrame === undefined && incoming.mainFrame !== undefined) {
+      stored.mainFrame = incoming.mainFrame;
+    }
+    // sourceEventId: identical by construction (it is the map key).
+  }
+
+  /** Read-only flat copy of all stamped entries (status-enrichment source). */
+  snapshotStamped(): StampedRequest[] {
+    const out: StampedRequest[] = [];
+    for (const list of this.entries.values()) {
+      for (const e of list) out.push({ ...e });
+    }
+    return out;
+  }
+
+  /**
+   * Fix B bookkeeping: remember the interactions the ledger last saw so the
+   * already-owned skip branch can inspect the owning row's CURRENT status
+   * (live paths keep mutating rows after attach). Replaced on every
+   * attachToInteractions pass.
+   */
+  private lastSeenInteractions: ComponentInteraction[] = [];
 
   /**
    * Pre-attach filter + attempt: used by push-time fast paths that have
@@ -356,6 +480,7 @@ export class DurableAttributionLedger {
   attachToInteractions(interactions: ComponentInteraction[]): number {
     if (this.entries.size === 0) return 0;
     this.ownership.rebuildFromInteractions(interactions);
+    this.lastSeenInteractions = interactions;
 
     let attached = 0;
     const attachedNow: StampedRequest[] = [];
@@ -370,7 +495,24 @@ export class DurableAttributionLedger {
       if (!target) continue;
 
       for (const entry of [...list]) {
-        if (this.ownership.isAttached(entry.requestId)) continue;
+        if (this.ownership.isAttached(entry.requestId)) {
+          // FIX B (already-owned skip): the requestId was attached by an
+          // EARLIER path (live supplement) — check THAT owner's row now: if
+          // it is still null-status, keep this ledger copy as the
+          // enrichment source exactly as the fresh-attach branch does.
+          const owner = this.ownership.getInteractionId(entry.requestId);
+          const ownerRow = owner
+            ? this.findNetworkRow(owner, entry.requestId)
+            : undefined;
+          if (owner && ownerRow && ownerRow.status == null) {
+            this.nullOwnedRequestIds.add(entry.requestId);
+          } else {
+            // Owner's row now carries a real status → nothing left to
+            // enrich; converge back to legacy prune behavior.
+            this.nullOwnedRequestIds.delete(entry.requestId);
+          }
+          continue;
+        }
         if (!shouldAttach(entry)) {
           this.entries.get(sourceEventId)?.splice(
             this.entries.get(sourceEventId)!.indexOf(entry), 1);
@@ -381,6 +523,19 @@ export class DurableAttributionLedger {
         if (net.length >= MAX_PER_INTERACTION) continue;
         net.push(toNetworkActivity(entry));
         this.ownership.markAttached(entry.requestId, target.interactionId);
+        // FIX B: the freshly attached row mirrors this entry (status 0 →
+        // null). Null-row owners keep their ledger copy as the enrichment
+        // source until the completion merge (Fix A) lands the real status.
+        const freshRow = net[net.length - 1];
+        if (freshRow && freshRow.status == null) {
+          this.nullOwnedRequestIds.add(entry.requestId);
+        }
+        // pendingComplete (completion re-insert) entries are held for the
+        // Stop-time enrichment snapshot only — never re-attached, never
+        // acked away (their consumer is enrichNetworkRowStatuses).
+        if ((entry as StampedRequest & { pendingComplete?: boolean }).pendingComplete) {
+          continue;
+        }
         attachedNow.push(entry);
         // INV-5 causal ownership: a recovered main-frame document request
         // stamps the causal link onto the synthetic navigation it produced.
@@ -398,6 +553,18 @@ export class DurableAttributionLedger {
   }
 
   /**
+   * FIX B (pendingAck admission): a freshly attached entry whose new row is
+   * still null-status must NOT be admitted to pendingAck — the ack that
+   * follows LIVE_INTERACTIONS persistence would delete the only durable
+   * completion record before onCompleted can merge the real status (the
+   * ack window fires mid-request on a main-frame POST). Its enrichment
+   * source must survive until Stop.
+   */
+  private isEnrichmentHeld(entry: StampedRequest): boolean {
+    return this.nullOwnedRequestIds.has(entry.requestId);
+  }
+
+  /**
    * Acknowledge that the caller's LIVE_INTERACTIONS persistence LANDED —
    * now the attached entries may leave the durable store. Call this ONLY
    * after the persist resolved (directly awaited, or via
@@ -405,8 +572,13 @@ export class DurableAttributionLedger {
    */
   acknowledgePersisted(): void {
     if (this.pendingAck.length === 0) return;
-    const ids = new Set(this.pendingAck.map((e) => e.requestId));
-    this.pendingAck = [];
+    const ids = new Set(
+      this.pendingAck
+        // FIX B: never ack away a held completion source (null-owned row).
+        .filter((e) => !this.isEnrichmentHeld(e))
+        .map((e) => e.requestId),
+    );
+    this.pendingAck = this.pendingAck.filter((e) => this.isEnrichmentHeld(e));
     this.acknowledge([...ids]);
   }
 
@@ -424,6 +596,7 @@ export class DurableAttributionLedger {
   async rehydrate(interactions: ComponentInteraction[]): Promise<RehydrateResult> {
     this.entries.clear();
     this.ownership.rebuildFromInteractions(interactions);
+    this.lastSeenInteractions = interactions;
 
     const raw = await chrome.storage.local.get(UNATTACHED_REQUESTS_KEY);
     const stored = (raw?.[UNATTACHED_REQUESTS_KEY] ?? {}) as Record<
@@ -435,9 +608,23 @@ export class DurableAttributionLedger {
     }
 
     // Drop crash-point-A leftovers (attached but not acked) before joining.
+    // FIX B invariant: an entry leaves ONLY when its owning interaction's
+    // row for that requestId already has a REAL status — a null-status row
+    // still needs this entry as its completion source.
+    this.nullOwnedRequestIds.clear();
     let changed = false;
     for (const [k, list] of this.entries) {
-      const surviving = list.filter((e) => !this.ownership.isAttached(e.requestId));
+      const surviving = list.filter((e) => {
+        if (!this.ownership.isAttached(e.requestId)) return true; // not attached
+        // Attached → keep only while the owning row is still null-status.
+        const owner = this.ownership.getInteractionId(e.requestId);
+        const row = owner ? this.findNetworkRow(owner, e.requestId) : undefined;
+        if (row && row.status == null) {
+          this.nullOwnedRequestIds.add(e.requestId);
+          return true;
+        }
+        return false;
+      });
       if (surviving.length !== list.length) changed = true;
       if (surviving.length === 0) this.entries.delete(k);
       else this.entries.set(k, surviving);
@@ -496,6 +683,9 @@ export class DurableAttributionLedger {
   acknowledge(requestIds: string[]): void {
     if (requestIds.length === 0) return;
     for (const rid of requestIds) {
+      // FIX B: a held completion source (owning row still null-status) is
+      // never acked away — its only consumer is Stop-time enrichment.
+      if (this.nullOwnedRequestIds.has(rid)) continue;
       for (const [k, list] of this.entries) {
         const idx = list.findIndex((e) => e.requestId === rid);
         if (idx >= 0) {
@@ -510,6 +700,8 @@ export class DurableAttributionLedger {
   /** Session-end cleanup: STOP / new recording start (INV session scoping). */
   async clearAll(): Promise<void> {
     this.entries.clear();
+    this.nullOwnedRequestIds.clear();
+    this.lastSeenInteractions = [];
     this.ownership.rebuildFromInteractions([]);
     await chrome.storage.local.remove(UNATTACHED_REQUESTS_KEY).catch(() => {});
     this.durable = true;
@@ -549,11 +741,31 @@ export class DurableAttributionLedger {
 
   // ── Internal ───────────────────────────────────────────────────────
 
+  /** The owning interaction's current row for a requestId (null when absent). */
+  private findNetworkRow(
+    interactionId: string,
+    requestId: string,
+  ): NetworkActivity | undefined {
+    for (const i of this.lastSeenInteractions) {
+      if (i.interactionId !== interactionId) continue;
+      const net = i.behavioralEvidence?.applicationEvidence?.networkActivity ?? [];
+      return net.find(
+        (e) => (e as NetworkActivity & { requestId?: string }).requestId === requestId,
+      );
+    }
+    return undefined;
+  }
+
   /** Drop entries already attached/filtered under a key; delete key if empty. */
   private pruneKey(sourceEventId: string): void {
     const list = this.entries.get(sourceEventId);
     if (!list) return;
-    const surviving = list.filter((e) => !this.ownership.isAttached(e.requestId));
+    // FIX B: attached entries whose owning row is STILL null-status keep
+    // their ledger copy — it is the Stop-time status-enrichment source
+    // (snapshotStamped). Entries owned with a REAL status drop as before.
+    const surviving = list.filter(
+      (e) => !this.ownership.isAttached(e.requestId) || this.nullOwnedRequestIds.has(e.requestId),
+    );
     if (surviving.length === 0) this.entries.delete(sourceEventId);
     else this.entries.set(sourceEventId, surviving);
   }

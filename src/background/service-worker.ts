@@ -420,6 +420,44 @@ async function handleStopRecording(): Promise<void> {
       await StorageService.setRaw(StorageKeys.LIVE_INTERACTIONS, productionInteractions);
       ledger.acknowledgePersisted(); // durable delete — persist landed above
     }
+
+    // ── Stop-time status enrichment (first-delivery freeze fix) ──
+    // Rows captured at onBeforeRequest carry status null (start phase);
+    // the completion record survives in the durable ledger (merge-enriched
+    // at onCompleted) and/or the completed-requests ring. Upgrade the
+    // STATUS FIELD ONLY of existing null-status rows, keyed by requestId —
+    // no row is added, removed, or reordered; no attribution changes.
+    // Runs AFTER the attach passes (their rows are enrichable too) and
+    // BEFORE ledger.clearAll() (the ledger is a source) and the M9 pipeline.
+    try {
+      const { enrichNetworkRowStatuses } = await import('./network-drain');
+      const nullIds = new Set<string>();
+      for (const i of productionInteractions) {
+        for (const r of i.behavioralEvidence?.applicationEvidence?.networkActivity ?? []) {
+          const rid = (r as { requestId?: string; status?: number | null }).requestId;
+          if (rid && (r as { status?: number | null }).status == null) nullIds.add(rid);
+        }
+      }
+      if (nullIds.size > 0) {
+        const { getCompletedByRequestIds } = await import('./network-observation');
+        const { enriched } = enrichNetworkRowStatuses(productionInteractions, {
+          ledger: ledger.snapshotStamped(),
+          ring: getCompletedByRequestIds(nullIds) as unknown as
+            import('./network-drain').DrainEntry[],
+        });
+        if (enriched.length > 0) {
+          console.info(
+            `[NetworkDrain] status-enriched ${enriched.length} row(s): ` +
+            enriched.map((e) => `${e.requestId}→${e.to}`).join(', '),
+          );
+          await StorageService.setRaw(StorageKeys.LIVE_INTERACTIONS, productionInteractions);
+        }
+      }
+    } catch (e) {
+      // Non-fatal — pipeline runs on whatever statuses already exist.
+      console.warn('[NetworkDrain] status enrichment failed:', (e as Error).message);
+    }
+
     // Session-end cleanup (INV session scoping): the ledger never outlives
     // its recording session.
     await ledger.clearAll().catch(() => {});
