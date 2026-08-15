@@ -148,13 +148,17 @@ function classifyUrl(url: string, domainRegistry?: NetworkPatternRegistry | null
  * When a POST body contains these keys, we extract the value as a
  * potential entity identifier.
  */
+// Amazon cart-page / multi-item add-to-cart posts indexed form fields
+// (ASIN.1, quantity.1, ASIN.2, …) — the (?:\.\d+)? suffix allows them.
+// Suffix forms of the other fields are intentionally NOT matched (see
+// .drytis/specs/entity-hint-suffix-patterns.md — out of scope).
 const ENTITY_HINT_PATTERNS: { field: RegExp; hint: string }[] = [
-  { field: /^asin$/i, hint: 'product-id' },
+  { field: /^asin(?:\.\d+)?$/i, hint: 'product-id' },
   { field: /^product[_-]?id$/i, hint: 'product-id' },
   { field: /^item[_-]?id$/i, hint: 'product-id' },
   { field: /^sku$/i, hint: 'product-id' },
-  { field: /^quantity$/i, hint: 'quantity' },
-  { field: /^qty$/i, hint: 'quantity' },
+  { field: /^quantity(?:\.\d+)?$/i, hint: 'quantity' },
+  { field: /^qty(?:\.\d+)?$/i, hint: 'quantity' },
   { field: /^leave[_-]?type$/i, hint: 'leave-type' },
   { field: /^employee[_-]?id$/i, hint: 'employee-id' },
   { field: /^issue[_-]?id$/i, hint: 'issue-id' },
