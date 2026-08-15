@@ -74,6 +74,8 @@ export enum StorageKeys {
   LIVE_INTERACTIONS = 'cmdrunner_live_interactions',
   // ── Form-submit recovery: durable attribution ledger (stamped, unattached) ──
   UNATTACHED_REQUESTS = 'cmdrunner_unattached_requests',
+  /** G1-B: pending (uncommitted) main-frame document request per tab. */
+  PENDING_NAV_DOCS = 'cmdrunner_pending_nav_docs',
 }
 
 /**

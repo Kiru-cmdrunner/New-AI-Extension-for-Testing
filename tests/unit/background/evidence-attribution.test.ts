@@ -52,6 +52,13 @@ import {
   resolveInteractionForEventId,
   synthesizeMinimalEvidence,
 } from '../../../src/background/evidence-attribution';
+import {
+  // Ring eviction constants imported as VALUES to prove they are unchanged
+  // (INV-6: stamped recovery never depends on them). Re-exported through
+  // network-observation — importing them here pins the production values.
+  COMPLETED_BUFFER_TTL_MS,
+  MAX_COMPLETED_ENTRIES,
+} from '../../../src/background/network-observation';
 
 const STORAGE_KEY = 'cmdrunner_unattached_requests';
 
@@ -166,7 +173,7 @@ describe('DurableAttributionLedger', () => {
     expect(stored['evt-click-1'][0].requestId).toBe('R1');
   });
 
-  it('T1b: capture → attach — stamped POST attaches to evidence-less click, evidence synthesized, entry acked', async () => {
+  it('T1b: capture → attach — stamped POST attaches to evidence-less click, evidence synthesized; store empties only after ack', async () => {
     await ledger.pushStamped(makePostEntry());
     const click = makeClickInteraction('evt-click-1', 'int-1', false);
 
@@ -182,9 +189,12 @@ describe('DurableAttributionLedger', () => {
     expect(net[0].requestBody).toEqual({ ASIN: 'B08KGRVW2S', quantity: '1' });
     // End-reason marks the SW recovery path
     expect(click.behavioralEvidence!.window.endReason).toBe('sw-recovered-form-submit');
-    // Acknowledged: no longer in the durable store
-    const stored = storageData.get(STORAGE_KEY) as Record<string, LedgerEntry[]> | undefined;
-    expect(stored?.['evt-click-1']).toBeUndefined();
+    // Delete-after-persist: still durable until the caller acknowledges
+    const staged = storageData.get(STORAGE_KEY) as Record<string, LedgerEntry[]> | undefined;
+    expect(staged?.['evt-click-1']).toBeDefined();
+    ledger.acknowledgePersisted(); // caller persisted LIVE_INTERACTIONS → ack
+    await Promise.resolve();
+    expect(storageData.has(STORAGE_KEY)).toBe(false);
   });
 
   it('T1c: awaiting pushStamped is the durability gate — the promise resolves only after the storage write', async () => {
@@ -254,17 +264,16 @@ describe('DurableAttributionLedger', () => {
     vi.useRealTimers();
   });
 
-  it('T4b: ring TTL untouched — unstamped ring entries are still evicted at 10s (INV-6)', async () => {
-    // The ledger never handles unstamped entries; the ring's TTL is the
-    // unchanged mechanism. Assert the constants that drive it.
-    const mod = await import('../../../src/background/network-observation');
-    expect((mod as unknown as Record<string, number>).COMPLETED_BUFFER_TTL_MS ?? 10_000)
-      .toBe(10_000);
-    expect((mod as unknown as Record<string, number>).MAX_COMPLETED_ENTRIES ?? 100)
-      .toBe(100);
-    // Unstamped entries are never recorded in the durable store:
+  it('T4b: ring TTL untouched — unstamped entries are never durable (INV-6)', async () => {
+    // The ledger only accepts stamped entries — the ring's 10s TTL remains
+    // the sole mechanism for UNSTAMPED captures, and stamped data never
+    // depends on it (the ledger has no TTL — proven by T4).
     await ledger.pushStamped({ ...makePostEntry(), sourceEventId: undefined });
     expect(storageData.has(STORAGE_KEY)).toBe(false);
+
+    // The ring's production eviction constants are unchanged (INV-6).
+    expect(COMPLETED_BUFFER_TTL_MS).toBe(10_000);
+    expect(MAX_COMPLETED_ENTRIES).toBe(100);
   });
 
   it('T5: telemetry exemption — stamped main-frame POST to telemetry-shaped URL attaches', async () => {
@@ -278,7 +287,7 @@ describe('DurableAttributionLedger', () => {
 });
 
 describe('DurableAttributionLedger — boot reconciliation (T11–T16)', () => {
-  it('T11: SW-restart recovery — rehydrate attaches stored entries to live interactions and empties the store', async () => {
+  it('T11: SW-restart recovery — rehydrate attaches stored entries; store empties after persist+ack', async () => {
     // Simulate: previous SW wrote the entry then died before attaching
     storageData.set(STORAGE_KEY, {
       'evt-click-1': [makePostEntry()],
@@ -289,7 +298,11 @@ describe('DurableAttributionLedger — boot reconciliation (T11–T16)', () => {
 
     expect(result.attached.length).toBe(1);
     expect((click.behavioralEvidence!.applicationEvidence.networkActivity[0] as { requestId?: string }).requestId).toBe('R1');
-    expect(storageData.has(STORAGE_KEY)).toBe(false); // emptied
+    // Delete-after-persist: still durable until the caller acks
+    expect(storageData.get(STORAGE_KEY)).toBeDefined();
+    ledger.acknowledgePersisted();
+    await Promise.resolve();
+    expect(storageData.has(STORAGE_KEY)).toBe(false); // emptied after ack
   });
 
   it('T12: crash-point A — already attached but not acked; rehydrate must not duplicate', async () => {
@@ -371,6 +384,83 @@ describe('DurableAttributionLedger — boot reconciliation (T11–T16)', () => {
     expect(result.attached).toHaveLength(0);
     expect(result.unresolved).toHaveLength(0);
     expect(chrome.storage.local.set).not.toHaveBeenCalled();
+  });
+
+  it('T17: delete-after-persist — attached entries stay durable until acknowledgePersisted (no ack-skip loss)', async () => {
+    await ledger.pushStamped(makePostEntry());
+    const click = makeClickInteraction('evt-click-1');
+
+    // Attach WITHOUT acknowledging (simulates: LIVE_INTERACTIONS persist
+    // not yet landed / SW died right after in-memory attach)
+    ledger.attachToInteractions([click]);
+    expect(click.behavioralEvidence).toBeDefined();
+
+    // The durable store still holds the entry — a restart recovers it.
+    expect(storageData.get(STORAGE_KEY)).toBeDefined();
+
+    // Crash point: boot reconciliation on a NEW ledger sees the stored
+    // entry + the already-attached interaction → crash-point-A cleanup
+    // (no duplicate), then the entry is acknowledged away.
+    const fresh = new DurableAttributionLedger();
+    const result = await fresh.rehydrate([click]);
+    expect(result.attached).toHaveLength(0); // no duplicate attach
+    const net = click.behavioralEvidence!.applicationEvidence.networkActivity as
+      (import('../../../src/shared/behavioral-evidence-types').NetworkActivity & { requestId?: string })[];
+    expect(net).toHaveLength(1); // still exactly one
+
+    // Acknowledge (caller persisted): NOW the store empties.
+    fresh.acknowledgePersisted();
+    await Promise.resolve();
+    expect(storageData.has(STORAGE_KEY)).toBe(false);
+  });
+
+  it('T18: acknowledgePersisted after normal flow — persist-then-ack empties the store', async () => {
+    await ledger.pushStamped(makePostEntry());
+    const click = makeClickInteraction('evt-click-1');
+    const attached = ledger.attachToInteractions([click]);
+    expect(attached).toBe(1);
+
+    // Caller persists LIVE_INTERACTIONS, then acks
+    await chrome.storage.local.set({ cmdrunner_live_interactions: [click] });
+    ledger.acknowledgePersisted();
+    await Promise.resolve();
+    expect(storageData.has(STORAGE_KEY)).toBe(false);
+  });
+
+  it('T19: failed persist never acks — acknowledgeAfterPersist keeps the durable entry for boot reconciliation', async () => {
+    await ledger.pushStamped(makePostEntry());
+    const click = makeClickInteraction('evt-click-1');
+    expect(ledger.attachToInteractions([click])).toBe(1);
+
+    // The caller's LIVE_INTERACTIONS write FAILED (persist resolves false —
+    // persistLiveInteractions never rejects, so an unguarded `await` +
+    // ack would silently delete the durable entry). The helper must NOT ack.
+    const failedPersist = Promise.resolve(false);
+    ledger.acknowledgeAfterPersist(failedPersist);
+    await new Promise((r) => setTimeout(r, 5)); // let the chain settle
+
+    // Entry survives — boot reconciliation will attach it next boot.
+    expect(storageData.get(STORAGE_KEY)).toBeDefined();
+    expect(
+      (click.behavioralEvidence!.applicationEvidence.networkActivity[0] as { requestId?: string }).requestId,
+    ).toBe('R1');
+
+    // Recovery: next boot, rehydrate on a fresh ledger attaches it exactly
+    // once (crash-point-B shape — nothing was lost).
+    const fresh = new DurableAttributionLedger();
+    const recovered = await fresh.rehydrate([makeClickInteraction('evt-click-1')]);
+    expect(recovered.attached).toHaveLength(1);
+  });
+
+  it('T19b: landed persist acks via acknowledgeAfterPersist — the happy path chains the delete', async () => {
+    await ledger.pushStamped(makePostEntry());
+    const click = makeClickInteraction('evt-click-1');
+    expect(ledger.attachToInteractions([click])).toBe(1);
+
+    ledger.acknowledgeAfterPersist(Promise.resolve(true));
+    await new Promise((r) => setTimeout(r, 5));
+
+    expect(storageData.has(STORAGE_KEY)).toBe(false); // deleted after landed
   });
 });
 

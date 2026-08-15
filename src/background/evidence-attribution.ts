@@ -77,7 +77,12 @@ const TELEMETRY_URL_RE =
  * (e.g. Amazon uedata endpoints receiving cart actions).
  */
 function shouldAttach(entry: StampedRequest): boolean {
-  if (entry.mainFrame && entry.method !== 'GET') return true;
+  // G2 identity-not-shape: a STAMPED mainFrame document request is
+  // user-caused by definition (the stamp is causal proof — sync dispatch
+  // write or form_submit back-fill). Method and body presence are display
+  // metadata; they never gate participation. GET form submits and
+  // body-less POSTs (Chrome only parses urlencoded/multipart) attach.
+  if (entry.mainFrame) return true;
   if (NOISE_URL_RE.test(entry.url)) return false;
   if (TELEMETRY_URL_RE.test(entry.url)) return false;
   return true;
@@ -295,20 +300,27 @@ export class DurableAttributionLedger {
 
   // ── Attach (identity join + synthesize-on-missing, INV-1/INV-4) ────
 
+  /** Attached entries awaiting the caller's LIVE_INTERACTIONS persist. */
+  private pendingAck: StampedRequest[] = [];
+
   /**
    * Attach every attachable stamped entry to its owning interaction
    * (two-tier identity join). Synthesizes thin evidence when the interaction
    * has none. Returns the number of entries attached (not interactions).
    *
-   * Callers MUST persist LIVE_INTERACTIONS after this returns non-zero, then
-   * call acknowledge() with the persisted requestIds — delete-after-persist
-   * ordering is the caller's side of the crash-point contract.
+   * DELETE-AFTER-PERSIST: attached entries move to `pendingAck`, NOT yet
+   * deleted from the durable store. The caller persists LIVE_INTERACTIONS
+   * and then calls `acknowledgePersisted()` — only then are they durably
+   * deleted. A crash between attach and ack converges via boot
+   * reconciliation's ownership rebuild (crash-point A drops the leftover;
+   * nothing duplicates, nothing is lost).
    */
   attachToInteractions(interactions: ComponentInteraction[]): number {
     if (this.entries.size === 0) return 0;
     this.ownership.rebuildFromInteractions(interactions);
 
     let attached = 0;
+    const attachedNow: StampedRequest[] = [];
     for (const [sourceEventId, list] of this.entries) {
       const target = resolveInteractionForEventId(sourceEventId, interactions);
       if (!target) continue;
@@ -325,6 +337,7 @@ export class DurableAttributionLedger {
         if (net.length >= MAX_PER_INTERACTION) continue;
         net.push(toNetworkActivity(entry));
         this.ownership.markAttached(entry.requestId, target.interactionId);
+        attachedNow.push(entry);
         // INV-5 causal ownership: a recovered main-frame document request
         // stamps the causal link onto the synthetic navigation it produced.
         if (entry.mainFrame || entry.documentRequest) {
@@ -332,11 +345,25 @@ export class DurableAttributionLedger {
         }
         attached++;
       }
-      // Remove entries that were attached or filtered out.
+      // Remove entries that were attached or filtered out (memory-side only;
+      // the durable copy stays until the caller acknowledges).
       this.pruneKey(sourceEventId);
     }
-    if (attached > 0) this.persist(); // durable store shrinks as we attach
+    if (attachedNow.length > 0) this.pendingAck.push(...attachedNow);
     return attached;
+  }
+
+  /**
+   * Acknowledge that the caller's LIVE_INTERACTIONS persistence LANDED —
+   * now the attached entries may leave the durable store. Call this ONLY
+   * after the persist resolved (directly awaited, or via
+   * `acknowledgeAfterPersist` which gates on `landed === true`).
+   */
+  acknowledgePersisted(): void {
+    if (this.pendingAck.length === 0) return;
+    const ids = new Set(this.pendingAck.map((e) => e.requestId));
+    this.pendingAck = [];
+    this.acknowledge([...ids]);
   }
 
   // ── Boot reconciliation (event-driven recovery, T11–T16) ───────────
@@ -381,10 +408,11 @@ export class DurableAttributionLedger {
     const unresolved: StampedRequest[] = [];
     for (const list of this.entries.values()) unresolved.push(...list);
 
-    if (attached > 0 || changed) {
-      // Persist the SURVIVORS (unresolved entries stay durable — they are
-      // retried on the next event trigger); persist() removes the key when
-      // everything attached, which is the acknowledge for this pass.
+    if (changed) {
+      // Crash-point-A leftovers were dropped — persist the shrunk set. The
+      // attached entries are NOT yet removed: they sit in pendingAck until
+      // the caller persists LIVE_INTERACTIONS and calls
+      // acknowledgePersisted() (delete-after-persist contract).
       await this.persist();
     }
     return {
@@ -446,6 +474,33 @@ export class DurableAttributionLedger {
   /** Whether the last durable write succeeded (diagnostics). */
   isDurable(): boolean {
     return this.durable;
+  }
+
+  // ── Ack ordering (LANDED-INV Delete-after-persist) ─────────────────
+
+  /**
+   * Chain the durable delete to a persist that LANDED.
+   *
+   * `persist` resolves `true` when the caller's LIVE_INTERACTIONS write
+   * landed, `false` on failure (and is rejected-safe). Only a landed persist
+   * acknowledges: a failed persist keeps the durable entry so boot
+   * reconciliation can recover it — never ack-after-failed-persist.
+   *
+   * All fire-and-forget ack call sites MUST go through this helper instead
+   * of calling acknowledgePersisted() on the line after a persist — an
+   * unguarded ack deletes the durable entry before/without its interaction
+   * landing in storage, losing the request irrecoverably.
+   */
+  acknowledgeAfterPersist(persist: Promise<boolean>): void {
+    void persist.then(
+      (landed) => {
+        if (landed) this.acknowledgePersisted();
+      },
+      () => {
+        // Persist rejected (should not happen — persistLiveInteractions never
+        // rejects) — entry stays durable for boot reconciliation.
+      },
+    );
   }
 
   // ── Internal ───────────────────────────────────────────────────────

@@ -126,12 +126,13 @@ export function drainNetworkEvidence(
   for (const entry of ringEntries) {
     if (!entry.sourceEventId) continue; // unstamped → not attributable
     if (mergedIds.has(entry.requestId)) continue; // already drained
-    // Telemetry/noise filters — with the form-submit exemption: a
-    // DOCUMENT request (main_frame) POST stamped with a trusted action is
-    // user-caused navigation, never background telemetry.
-    const isStampedDocPost = entry.documentRequest && entry.method !== 'GET';
-    if (!isStampedDocPost && NOISE_URL_RE.test(entry.url)) continue;
-    if (!isStampedDocPost && TELEMETRY_URL_RE.test(entry.url)) continue;
+    // Telemetry/noise filters — with the form-submit exemption (G2): a
+    // STAMPED DOCUMENT request (main_frame) is user-caused navigation by
+    // causal proof of the stamp, never background telemetry — GET form
+    // submits and body-less POSTs included (identity, not shape).
+    const isStampedDoc = entry.documentRequest;
+    if (!isStampedDoc && NOISE_URL_RE.test(entry.url)) continue;
+    if (!isStampedDoc && TELEMETRY_URL_RE.test(entry.url)) continue;
 
     const target =
       byEventId.get(entry.sourceEventId) ??

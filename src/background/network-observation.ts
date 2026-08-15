@@ -18,6 +18,8 @@
 
 // ── Types ────────────────────────────────────────────────────────────
 
+import { StorageKeys } from '../shared/types';
+
 /**
  * Persisted per-tab recording gate (MV3 lifecycle fix).
  *
@@ -116,10 +118,13 @@ export interface PendingMainFrameRequest {
 const URL_FILTER = ['http://*/*', 'https://*/*'];
 
 /** How long to retain completed requests in the ring buffer (ms). */
-const COMPLETED_BUFFER_TTL_MS = 10_000;
+// Exported for the INV-6 regression pin (tests assert the production values
+// are unchanged — stamped recovery never depends on ring eviction).
+export const COMPLETED_BUFFER_TTL_MS = 10_000;
 
 /** Maximum completed requests to retain. */
-const MAX_COMPLETED_ENTRIES = 100;
+// Exported for the INV-6 regression pin (same rationale as TTL above).
+export const MAX_COMPLETED_ENTRIES = 100;
 
 // ── Module state ─────────────────────────────────────────────────────
 
@@ -142,6 +147,67 @@ const completedRequests: CompletedWebRequest[] = [];
  * of the form-submit POST (original URL + method + body).
  */
 const pendingMainFrameByTab = new Map<number, PendingMainFrameRequest>();
+
+/**
+ * G1-B (native form-submit attribution): pending main-frame records are
+ * DURABLE for every main_frame request, stamped or not. Write-through:
+ * the in-memory map remains the synchronous source of truth for same-turn
+ * readers; this persist makes the record survive SW termination between
+ * capture (onBeforeRequest) and its sole consumer (onCommitted). Shape:
+ * { [tabId]: PendingMainFrameRequest } under StorageKeys.PENDING_NAV_DOCS.
+ * No TTL — eviction is state-based (consume at commit) or session-scoped
+ * cleanup (STOP / startNetworkObservation).
+ */
+const PENDING_NAV_DOCS_KEY = 'cmdrunner_pending_nav_docs';
+void PENDING_NAV_DOCS_KEY; // single-sourced via StorageKeys.PENDING_NAV_DOCS above
+
+/** Serialize + persist the current pending-doc map (single key, atomic). */
+function persistPendingNavDocs(): Promise<void> {
+  try {
+    const snapshot: Record<string, PendingMainFrameRequest> = {};
+    for (const [tabId, rec] of pendingMainFrameByTab) {
+      snapshot[String(tabId)] = rec;
+    }
+    return (chrome?.storage?.local?.set
+      ? chrome.storage.local.set({ [StorageKeys.PENDING_NAV_DOCS]: snapshot })
+      : Promise.resolve()
+    ).then(
+      () => undefined,
+      () => undefined, // storage failure — memory remains source of truth
+    );
+  } catch {
+    // Storage unavailable — in-memory only (pre-fix behavior)
+    return Promise.resolve();
+  }
+}
+
+/**
+ * G1-B boot path: restore durable pending-doc records after SW restart so
+ * the commit consumer still finds its record (MV3 lifecycle continuity).
+ * In-memory entries win (they are newer or equal).
+ */
+export function restorePendingNavDocsFromStorage(): Promise<void> {
+  const p: Promise<Record<string, unknown>> = chrome?.storage?.local?.get
+    ? chrome.storage.local.get(StorageKeys.PENDING_NAV_DOCS)
+    : Promise.resolve({});
+  return p.then(
+    (raw) => {
+      const stored = (raw?.[StorageKeys.PENDING_NAV_DOCS] ?? {}) as Record<
+        string,
+        PendingMainFrameRequest
+      >;
+      for (const [tabIdStr, rec] of Object.entries(stored)) {
+        const tabId = Number(tabIdStr);
+        if (Number.isFinite(tabId) && rec && !pendingMainFrameByTab.has(tabId)) {
+          pendingMainFrameByTab.set(tabId, rec);
+        }
+      }
+    },
+    () => {
+      // Storage read failure — in-memory only
+    },
+  );
+}
 
 /**
  * CER-2: redirect chains keyed by requestId. requestId is reused across
@@ -305,6 +371,9 @@ export async function startNetworkObservation(tabId: number): Promise<void> {
   pendingMainFrameByTab.clear();
   redirectChains.clear();
   lastTrustedActionByTab.clear();
+  // G1-B: new recording session — session-scoped cleanup (never outlives
+  // its session), then persist the empty state.
+  persistPendingNavDocs();
 
   // MV3 lifecycle fix: register the tab in the persisted observing set.
   // Top-level listeners (registered at module load) gate on this set —
@@ -339,6 +408,8 @@ export function stopNetworkObservation(_tabId: number): void {
   pendingMainFrameByTab.clear();
   redirectChains.clear();
   lastTrustedActionByTab.clear();
+  // G1-B: STOP — session-scoped cleanup of the durable pending-doc store.
+  persistPendingNavDocs();
   // Keep listeners registered — top-level registration is now permanent
   // and gated per-tab by the persisted observing set (MV3 lifecycle fix).
 
@@ -422,6 +493,18 @@ export function setLastTrustedAction(
 }
 
 /**
+ * G1-C: read the current trusted action for a tab (the in-memory map is the
+ * source of truth; it is write-through persisted and restored on boot).
+ * Null when no trusted action is recorded for the tab.
+ */
+export function getLastTrustedAction(
+  tabId: number,
+): { eventId: string; interactionId: string } | null {
+  const rec = lastTrustedActionByTab.get(tabId);
+  return rec ? { eventId: rec.eventId, interactionId: rec.interactionId } : null;
+}
+
+/**
  * MV3 lifecycle fix: restore the persisted last trusted action for a tab
  * after SW restart. Returns null when none persisted or stale.
  */
@@ -470,7 +553,11 @@ export function getMainFrameCorrelation(tabId: number): PendingMainFrameRequest 
  */
 export function consumeMainFrameCorrelation(tabId: number): PendingMainFrameRequest | null {
   const rec = pendingMainFrameByTab.get(tabId) ?? null;
-  if (rec) pendingMainFrameByTab.delete(tabId);
+  if (rec) {
+    pendingMainFrameByTab.delete(tabId);
+    // G1-B: the commit consumer is the sole deleter — sync the durable copy.
+    persistPendingNavDocs();
+  }
   return rec;
 }
 
@@ -614,6 +701,15 @@ function registerWebRequestListeners(): void {
         requestBody,
         sourceEventId,
       });
+      // G1-B: durable for EVERY main_frame request, stamped or not —
+      // capture before classify. An unstamped record survives to the
+      // onCommitted consumer, where the form_submit transition type can
+      // back-fill identity (G1-C). AWAITED in-dispatch (same durability
+      // gate as stamped entries — WARN-1 fix): an unstamped record is the
+      // exact artifact G1-C needs, so its write must settle before the
+      // handler is considered complete. Ordered AFTER the synchronous
+      // in-memory write (same-turn readers observe capture first).
+      await persistPendingNavDocs();
     }
 
     // DURABILITY GATE (form-submit recovery): a stamped request is durably
@@ -676,6 +772,8 @@ function registerWebRequestListeners(): void {
     const isDocumentRequest = pendingDoc?.requestId === details.requestId;
     if (isDocumentRequest) {
       pendingDoc!.completionStatus = details.statusCode;
+      // G1-B: enrich the durable copy (status survives SW restart pre-commit).
+      persistPendingNavDocs();
     }
 
     // Buffer completed request for synthetic nav evidence recovery.
@@ -742,6 +840,8 @@ function registerWebRequestListeners(): void {
     const isDocumentRequest = pendingDoc?.requestId === details.requestId;
     if (isDocumentRequest) {
       pendingDoc!.completionStatus = -1; // network error / cancelled
+      // G1-B: enrich the durable copy.
+      persistPendingNavDocs();
     }
 
     const chain = redirectChains.get(details.requestId);
@@ -978,5 +1078,8 @@ function forwardToTab(
 if (typeof chrome !== 'undefined' && chrome?.webRequest) {
   seedObservingTabsFromStorage();
   restoreLastTrustedActionFromStorage();
+  // G1-B: rehydrate durable pending-doc records so the commit consumer
+  // still finds its navigation record after a mid-navigation SW restart.
+  void restorePendingNavDocsFromStorage();
   registerWebRequestListeners();
 }

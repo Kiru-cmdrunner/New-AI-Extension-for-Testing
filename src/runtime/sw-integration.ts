@@ -824,13 +824,25 @@ export async function restoreFromStorage(): Promise<boolean> {
 /**
  * Write live interactions to chrome.storage.local immediately.
  * Exported for the SW's attach paths (persist-before-ack contract).
+ *
+ * Returns the persist promise resolving to true when the write landed:
+ * delete-after-persist call sites MUST chain `ledger.acknowledgePersisted()`
+ * onto a TRUE result — never call ack synchronously on the next line (the
+ * durable delete could beat the LIVE_INTERACTIONS write) and never ack on a
+ * failed persist (the durable entry must survive for boot reconciliation).
+ * A failed persist resolves to false, never rejects.
  */
-export function persistLiveInteractions(): void {
-  chrome.storage.local.set({
-    [LIVE_INTERACTIONS_KEY]: liveInteractions,
-  }).catch(() => {
-    // Storage may be full or SW terminating — non-fatal
-  });
+export function persistLiveInteractions(): Promise<boolean> {
+  return chrome.storage.local
+    .set({ [LIVE_INTERACTIONS_KEY]: liveInteractions })
+    .then(
+      () => true,
+      () => {
+        // Storage may be full or SW terminating — non-fatal, but ack callers
+        // must NOT delete the durable ledger on this path.
+        return false;
+      },
+    );
 }
 
 /**

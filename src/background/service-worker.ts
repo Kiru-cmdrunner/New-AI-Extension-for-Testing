@@ -43,6 +43,7 @@ import {
   startNetworkObservation,
   stopNetworkObservation,
   setLastTrustedAction,
+  getLastTrustedAction,
   consumeMainFrameCorrelation,
   snapshotInFlightForTab,
   getNetworkEvidenceForNavigation,
@@ -79,7 +80,8 @@ async function ensureSessionRestored(): Promise<void> {
     const ledger = getAttributionLedger();
     const result = await ledger.rehydrate(live);
     if (result.attached.length > 0) {
-      persistLiveInteractions(); // persist BEFORE ack (delete-after-persist)
+      // delete-after-persist: ack only after LIVE_INTERACTIONS lands
+      ledger.acknowledgeAfterPersist(persistLiveInteractions());
       console.info(
         `[AttributionLedger] boot reconciliation attached ${result.attached.length} request(s)`,
       );
@@ -395,6 +397,7 @@ async function handleStopRecording(): Promise<void> {
         `[AttributionLedger] stop drain attached ${attachedCount} request(s)`,
       );
       await StorageService.setRaw(StorageKeys.LIVE_INTERACTIONS, productionInteractions);
+      ledger.acknowledgePersisted(); // durable delete — persist landed above
     }
     // Session-end cleanup (INV session scoping): the ledger never outlives
     // its recording session.
@@ -564,21 +567,11 @@ async function handleStopRecording(): Promise<void> {
 async function handleObservedEvent(payload: ObservedEvent): Promise<void> {
   await ensureSessionRestored();
 
-  // CER-2: track the last trusted user action per tab. Network requests
-  // that start while this action is current are stamped with its eventId —
-  // the exact-event join for click→request attribution (replaces the
-  // 10s timestamp window).
-  if (payload.isTrusted && payload.eventType !== 'navigation') {
-    const actionTab = await getActiveTab().catch(() => null);
-    if (actionTab?.id != null) {
-      setLastTrustedAction(actionTab.id, {
-        eventId: payload.eventId,
-        // interactionId unknown at this point; the eventId is the join key
-        // (interactions carry triggerEvent.eventId / memberEvents[].eventId).
-        interactionId: '',
-      });
-    }
-  }
+  // CER-2 / G1-A: the trusted-action stamp moved to the onMessage
+  // dispatcher — synchronous, keyed by sender.tab.id, before any await, so
+  // it is strictly ordered before a native form submit's onBeforeRequest.
+  // By the time this async handler runs, the stamp is already authoritative;
+  // re-stamping here via getActiveTab() would only add a race back.
 
   // Process through the Component Runtime
   const emitted = processObservedEvent(payload);
@@ -637,7 +630,8 @@ function handleBehavioralEvidence(
       const ledger = getAttributionLedger();
       const live = getLiveInteractions();
       if (ledger.attachToInteractions(live) > 0) {
-        persistLiveInteractions(); // persist BEFORE ack
+        // delete-after-persist: ack only after LIVE_INTERACTIONS lands
+        ledger.acknowledgeAfterPersist(persistLiveInteractions());
       }
     } catch {
       // Non-fatal — STOP drain is the backstop
@@ -995,9 +989,13 @@ chrome.webNavigation.onCommitted.addListener(async (details: chrome.webNavigatio
  *    stop-recording and at commit for display), we join by navEventId and
  *    by the pending main-frame POST — IDs only, no time math.
  *
- * Document-request handling: the navigation request itself is EXCLUDED
- * unless it is a POST with a request body (form-submit POST-is-navigation,
- * e.g. Amazon Add to Cart) — the exact case we must recover.
+ * Document-request handling: an unstamped document request is EXCLUDED
+ * (the navigation evidence records it) — UNLESS the navigation itself is
+ * form-induced: `transitionType === 'form_submit'` is the browser's own
+ * causal classification (GET and POST alike). For those, the pending
+ * record's missing sourceEventId is back-filled from the tab's current
+ * trusted action (G1-C — belt-and-braces with the synchronous G1-A stamp)
+ * and the entry participates in recovery by IDENTITY, not by shape.
  */
 function recoverNetworkForNavigationById(
   navEventId: string,
@@ -1014,11 +1012,27 @@ function recoverNetworkForNavigationById(
     // undefined (= still in flight at commit → honest status null).
     const pendingDoc = consumeMainFrameCorrelation(details.tabId);
 
+    // G1-C: browser-declared causality. A form_submit-typed navigation is
+    // caused by the page's form, and the form was triggered by the tab's
+    // current trusted action. Back-fill the stamp when the G1-A race was
+    // lost (or the form was submitted programmatically — no submit event).
+    // Idempotent with G1-A: same eventId, no conflict.
+    const navIsFormSubmit = details.transitionType === 'form_submit';
+    if (pendingDoc && navIsFormSubmit && !pendingDoc.sourceEventId) {
+      const stamp = getLastTrustedAction(details.tabId);
+      if (stamp?.eventId) {
+        pendingDoc.sourceEventId = stamp.eventId;
+      }
+    }
+
     const activities: NetworkActivity[] = [];
     const seenRequestIds = new Set<string>();
 
-    // 1. The form-submit POST itself (Amazon case) — authoritative record.
-    if (pendingDoc && pendingDoc.method !== 'GET' && pendingDoc.requestBody) {
+    // 1. The form-submit document request itself (Amazon case) —
+    // authoritative record. G2 identity-not-shape: participation requires
+    // identity (stamp or form_submit type); method and body presence are
+    // display metadata, never gates.
+    if (pendingDoc && (pendingDoc.sourceEventId || navIsFormSubmit)) {
       seenRequestIds.add(pendingDoc.requestId);
       activities.push({
         url: pendingDoc.originalUrl,
@@ -1031,7 +1045,9 @@ function recoverNetworkForNavigationById(
         durationMs: null,
         resourceType: 'unknown',
         source: 'webrequest',
-        requestBody: pendingDoc.requestBody,
+        // G2: honest display — body rendered when Chrome parsed one, null
+        // otherwise (GET submits / non-urlencoded encodings).
+        requestBody: pendingDoc.requestBody ?? undefined,
         // CER-4: exact-event join key for pipeline attribution
         sourceEventId: pendingDoc.sourceEventId ?? undefined,
       });
@@ -1042,9 +1058,12 @@ function recoverNetworkForNavigationById(
       if (seenRequestIds.has(req.requestId)) continue;
       seenRequestIds.add(req.requestId);
 
-      // Document request without a body = plain GET navigation — the
+      // G2 identity-not-shape: an unstamped, non-form-submit document
+      // request (address bar, reload) is the navigation itself — the
       // navigation evidence already records it. Skip (no double-count).
-      if (req.documentRequest && !req.requestBody) continue;
+      // Identity (stamp) or form_submit type participates regardless of
+      // method/body shape.
+      if (req.documentRequest && !req.sourceEventId && !navIsFormSubmit) continue;
 
       // Skip static resources and analytics — they add noise and can
       // fabricate outcome votes for attributed clicks.
@@ -1106,10 +1125,14 @@ function attachSyntheticNavEvidence(navEventId: string, details: chrome.webNavig
         forSyntheticNav.push(activity);
         continue;
       }
+      // Parity with resolveInteractionForEventId: synthetic navigations are
+      // never join OWNERS (the causal owner is the trusted action), so they
+      // must not satisfy ownerExists either.
       const ownerExists = live.some(
         (i) =>
-          i.triggerEvent?.eventId === stamped ||
-          i.memberEvents?.some((e) => e.eventId === stamped),
+          i.behavioralEvidence?.window?.endReason !== 'page-reload-synthetic' &&
+          (i.triggerEvent?.eventId === stamped ||
+            i.memberEvents?.some((e) => e.eventId === stamped)),
       );
       if (ownerExists) {
         // Route to the causal CLICK — attachStampedActivity is idempotent
@@ -1123,9 +1146,17 @@ function attachSyntheticNavEvidence(navEventId: string, details: chrome.webNavig
           sourceEventId: stamped,
           requestBody: activity.requestBody,
           documentRequest: true,
-          mainFrame: activity.resourceType === 'navigation' || activity.method !== 'GET',
+          // WARN-2 fix: every activity on this path IS a document request
+          // (pendingDoc or ring document entry) — the flag must not depend
+          // on resourceType ('unknown' here) or method, or a back-filled
+          // GET form submit would enter the ledger as a non-mainFrame
+          // entry and fall through the telemetry filter (INV-N4 breach).
+          mainFrame: true,
         }, live).then((routed) => {
-          if (routed) persistLiveInteractions(); // persist BEFORE ack
+          if (routed) {
+            // delete-after-persist: ack only after LIVE_INTERACTIONS lands
+            ledger.acknowledgeAfterPersist(persistLiveInteractions());
+          }
         });
       } else {
         // Unresolved stamp — the synthetic nav keeps the entry (old behavior)
@@ -1290,6 +1321,24 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
 
     case 'OBSERVED_EVENT': {
       const msg = message as { type: string; payload: ObservedEvent };
+      // G1-A (native form-submit attribution): stamp the trusted action
+      // SYNCHRONOUSLY at message dispatch, before any await. The tap sends
+      // OBSERVED_EVENT during the click's own dispatch; the default action
+      // (a native form submit's main_frame request) cannot start until that
+      // dispatch completes — so this write is strictly ordered before
+      // onBeforeRequest can observe the request. sender.tab.id is the
+      // request's true tab (getActiveTab() both raced the stamp and could
+      // resolve to a different focused tab).
+      if (
+        msg.payload?.isTrusted &&
+        msg.payload.eventType !== 'navigation' &&
+        _sender?.tab?.id != null
+      ) {
+        setLastTrustedAction(_sender.tab.id, {
+          eventId: msg.payload.eventId,
+          interactionId: '',
+        });
+      }
       handleObservedEvent(msg.payload);
       sendResponse({ ok: true });
       return true;

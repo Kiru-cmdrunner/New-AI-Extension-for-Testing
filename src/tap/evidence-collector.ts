@@ -1172,6 +1172,60 @@ export class EvidenceCollector {
   }
 
   /**
+   * G3: schedule one bounded +1000ms network re-collect for a closing
+   * window that has in-flight requests (display enrichment only).
+   * Uses the SAME semantics as closeWindow's GAP-5 re-check: re-collect
+   * the window range, deliver a supplement only when NEW completion data
+   * arrived. Dedup upstream (requestId membership + evidence replace) keeps
+   * rows exactly-once.
+   */
+  private scheduleLateNetworkReCollect(state: ObservationWindowState): void {
+    const inflightCount = this.networkBridge?.getInFlightCount?.() ?? 0;
+    if (inflightCount === 0 || state.isNavigationWindow) return;
+
+    const openedAt = state.openedAt;
+    const sourceEventId = state.sourceEventId;
+    const sourceEventType = state.sourceEventType;
+    const windowId = state.windowId;
+
+    setTimeout(() => {
+      // The window IS closed now — that is the point: this is a
+      // post-close display supplement for late-completing requests.
+      const lateNetwork =
+        this.networkBridge?.collectForRange(openedAt, performance.now()) ?? [];
+      if (lateNetwork.length === 0) return;
+
+      const lateEvidence = {
+        sourceEventId,
+        sourceEventType,
+        windowId,
+        frameId: 'main' as const,
+        // Synthetic display window — the ORIGINAL evidence already
+        // delivered; this supplement only carries the updated network set.
+        window: {
+          openedAt,
+          closedAt: performance.now(),
+          durationMs: 1000,
+          endReason: 'stabilized' as const,
+          targetSelector: null,
+        },
+        targetEvidence: null,
+        applicationEvidence: {
+          domChanges: [],
+          domChangeOverflow: 0,
+          coarseMode: false,
+          newSurfaces: [],
+          removedSurfaces: [],
+          visibilityChanges: [],
+          navigation: [],
+          networkActivity: lateNetwork,
+        },
+      };
+      this.deliverEvidence(lateEvidence as unknown as BehavioralEvidence);
+    }, 1000);
+  }
+
+  /**
    * Execute the finalization: capture after-snapshot, build evidence, deliver.
    */
   private executeFinalization(
@@ -1180,6 +1234,14 @@ export class EvidenceCollector {
     endReason: 'lifecycle-complete' | 'lifecycle-abandoned' | 'page-reload',
   ): void {
     if (win.isClosed) return;
+    // G3 (display-only, INV-N7): schedule the +1000ms re-collect BEFORE
+    // marking the window closed — this is the ONLY path on which a
+    // lifecycle-finalized window can still surface late-completing XHRs
+    // for DISPLAY. Correctness never depends on it: requests started by
+    // page JS after the click carry the still-active per-tab stamp and are
+    // attached SW-side by the drain / boot reconcile even if this timer
+    // dies with the document.
+    this.scheduleLateNetworkReCollect(win);
     win.isClosed = true;
 
     // Close the adaptive window to stop timers
