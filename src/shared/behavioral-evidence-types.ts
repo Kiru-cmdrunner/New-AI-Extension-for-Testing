@@ -381,6 +381,13 @@ export interface NetworkActivity {
    * timestamp window). Present on webRequest-sourced entries only.
    */
   sourceEventId?: string;
+  /**
+   * G5 (INV-F3/F6): the Chrome webRequest requestId — globally unique per
+   * HTTP request. The single dedup key across capture paths (content-script
+   * bridge window evidence vs SW recovery rows). Absent on main-world /
+   * performance-observer rows that never passed through webRequest.
+   */
+  requestId?: string;
 }
 
 /**

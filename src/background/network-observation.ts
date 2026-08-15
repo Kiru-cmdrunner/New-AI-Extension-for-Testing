@@ -21,13 +21,15 @@
 import { StorageKeys } from '../shared/types';
 
 /**
- * Persisted per-tab recording gate (MV3 lifecycle fix).
+ * Persisted FORWARDING hint (MV3 lifecycle fix + G4-A demotion).
  *
- * chrome.storage.local key holding the array of tabIds whose recordings are
- * active. Written at startNetworkObservation, cleared at stopNetworkObservation.
- * On service-worker restart the module re-seeds its gate from this key, so
- * webRequest callbacks registered at top level can decide — without any
- * in-memory state — whether a request belongs to an active recording.
+ * chrome.storage.local key holding the array of tabIds whose pages hold a
+ * live NetworkBridge. Written at startNetworkObservation, grown by
+ * noteRecordingScopeTab (recording-scope messages), cleared at
+ * stopNetworkObservation. On service-worker restart the module re-seeds the
+ * set from this key. INV-G4: membership influences whether captured
+ * requests are FORWARDED to the page — never whether they are captured or
+ * attributed (that is `recordingActiveFlag`).
  */
 export const OBSERVING_TABS_KEY = 'cmdrunner_net_observing_tabs';
 
@@ -49,6 +51,8 @@ interface InFlightWebRequest {
   method: string;
   startTime: number;
   requestId: string;
+  /** G4-A: owning tab — required now that capture spans multiple tabs. */
+  tabId: number;
   frameId: number;
   /** Chrome resource type: main_frame, sub_frame, xmlhttprequest, ... */
   resourceKind: string;
@@ -75,6 +79,8 @@ export interface CompletedWebRequest {
   startWallClock: number;
   endWallClock: number;
   requestId: string;
+  /** G4-B triple key: owning tab (multi-tab capture). */
+  tabId?: number;
   frameId?: number;
   /** True when this request IS the navigation document (CER-2). */
   documentRequest?: boolean;
@@ -128,7 +134,11 @@ export const MAX_COMPLETED_ENTRIES = 100;
 
 // ── Module state ─────────────────────────────────────────────────────
 
-/** Currently tracked tabId for webRequest filtering. */
+/**
+ * G4-A: the tab recording STARTED in. Retained for diagnostics only —
+ * capture is gated by `recordingActiveFlag` (recording-scoped), never by
+ * tab identity (INV-G1). Read via __testGetGateState().startTab in tests.
+ */
 let activeTabId: number | null = null;
 
 /** In-flight requests keyed by requestId. */
@@ -216,25 +226,55 @@ export function restorePendingNavDocsFromStorage(): Promise<void> {
 const redirectChains = new Map<string, string[]>();
 
 /**
- * CER-2: last trusted user action per tab { eventId, interactionId }.
- * Set by the service worker (CER-2 wiring); read at onBeforeRequest to
- * stamp requests with the action that likely triggered them.
+ * CER-2: last trusted user action per TAB+FRAME, keyed `tabId:frameId`
+ * (G4-B triple-key attribution). Set by the service worker dispatcher on
+ * every stamp-ELIGIBLE trusted event (INV-G3); read at onBeforeRequest via
+ * the EXACT frame key — no cross-frame fallback (INV-G2/G10).
  */
-const lastTrustedActionByTab = new Map<
-  number,
-  { eventId: string; interactionId: string; wallClock: number }
+const lastTrustedActionByFrame = new Map<
+  string,
+  { tabId: number; frameId: number; eventId: string; interactionId: string; wallClock: number }
 >();
+
+/** Frame-stamp map key. */
+export function frameKey(tabId: number, frameId: number): string {
+  return `${tabId}:${frameId}`;
+}
 
 /** Whether webRequest listeners are currently registered. */
 let listenersActive = false;
 
 /**
- * MV3 lifecycle fix: true once module init has re-seeded the observing-tabs
- * gate from chrome.storage. Callbacks firing before this resolves use the
- * unknown-state buffering path (capture to ring, no forward) so no request
- * is lost during the SW-wake read window.
+ * MV3 lifecycle vestige (G4-A): true once module init has re-seeded the
+ * observing set. Kept for diagnostics/test hooks only — the unknown-state
+ * capture signal is the tri-state `recordingActiveFlag` (null = boot
+ * unknown → ring-only capture, no forward), not this flag.
  */
 let gateSeeded = false;
+
+/**
+ * G4-A (multi-tab capture): in-memory mirror of the recording-active flag.
+ * THE capture gate — while true, webRequest traffic from EVERY tab is
+ * captured (INV-G1). `observingTabIds` is demoted to a forwarding hint
+ * (INV-G4) and never gates capture again.
+ *   true              → capture (any tab)
+ *   false             → drop
+ *   null (boot-unknown, flag not yet seeded) → capture conservatively,
+ *                        ring-only, never forward
+ */
+let recordingActiveFlag: boolean | null = null;
+
+/** Storage key backing `recordingActiveFlag` (sw-integration owns writes). */
+const RECORDING_ACTIVE_KEY = 'cmdrunner_recording_active';
+
+/**
+ * G4-D (boot-restore ordering): single awaitable promise that settles when
+ * ALL durable state (observing set + frame stamps + pending nav docs) has
+ * been re-read. Consumers (`ensureSessionRestored`) await this BEFORE
+ * reading restored state; capture writers never block on it (in-memory
+ * state wins — INV-G5).
+ */
+let bootRestorePromise: Promise<void> | null = null;
 
 /**
  * TabIds known to have an active recording (mirrors the persisted set).
@@ -265,32 +305,34 @@ let onErrorCallback:
 // ── MV3 Lifecycle: persisted gate + top-level registration ───────────
 
 /**
- * Whether requests from this tab belong to an active recording.
- *
- * MV3 lifecycle fix: membership in `observingTabIds` is the authoritative
- * gate — NOT the registration timing. Listeners are registered at top level
- * (every SW start); a tab that is recording keeps being captured even when
- * the SW instance that started the recording is long dead.
+ * Whether captured requests from this tab should be FORWARDED to the page's
+ * NetworkBridge. G4-A demotion: this is a forwarding hint, NOT the capture
+ * gate — capture is gated by `recordingActiveFlag` (recording-scoped, any
+ * tab). Listeners are registered at top level (every SW start).
  */
 function tabIsObserving(tabId: number): boolean {
   return observingTabIds.has(tabId);
 }
 
 /**
- * Per-callback capture gate.
+ * Per-callback capture gate (G4-A: recording-scoped, NOT tab-scoped).
  *
- * true  → tab is recording (in-memory set or persisted set re-seeded).
- * false → tab is NOT recording.
- * Special case — unknown state (gateSeeded false, set empty): process and
- * buffer into the ring but do NOT forward to the content script. The
- * stop-time drain (sourceEventId join) recovers these. Conservative in the
- * direction of capturing evidence, never fabricating it.
+ * true  → a recording is active — capture from EVERY tab (INV-G1).
+ * false → recording stopped → drop.
+ * boot-unknown (flag not yet seeded) → capture conservatively into the
+ * ring, never forward. The stop-time drain (sourceEventId join) recovers
+ * these. Conservative in the direction of capturing evidence, never
+ * fabricating it.
  */
 function shouldProcessRequest(tabId: number): boolean {
-  if (observingTabIds.size > 0) return tabIsObserving(tabId);
-  if (gateSeeded) return false; // storage read finished; set genuinely empty
-  return true; // unknown state — SW just woke; capture for the drain
+  void tabId; // G4-A: tab identity NEVER gates capture (INV-G1)
+  if (recordingActiveFlag === true) return true;   // recording → any tab
+  if (recordingActiveFlag === false) return false;  // stopped → drop
+  return true; // boot-unknown → conservative ring-only capture
 }
+
+/** Exported for tests. */
+export const shouldProcessRequestForTest = shouldProcessRequest;
 
 /**
  * Whether a captured request should be forwarded to the content script's
@@ -298,11 +340,16 @@ function shouldProcessRequest(tabId: number): boolean {
  * only (unknown-state / restarted-SW case).
  */
 function shouldForwardToTab(tabId: number): boolean {
-  // Forward only when this SW instance is the live observer for the tab —
-  // the bridge lives in the page and only exists while it was started by
-  // this instance's recording session... but the bridge auto-resumes on
-  // pageshow via the content script, so membership alone is sufficient.
+  // G4-A (INV-G4): forwarding only. The bridge lives in the page and exists
+  // while this SW instance's session started it (or it auto-resumed via the
+  // content script). Capture correctness NEVER depends on this answer.
+  if (recordingActiveFlag !== true) return false; // unknown/stopped → never
   return tabIsObserving(tabId);
+}
+
+/** Exported for tests. */
+export function __testForwardToTab(tabId: number): boolean {
+  return shouldForwardToTab(tabId);
 }
 
 /**
@@ -332,26 +379,34 @@ function persistObservingTabs(): void {
  * never forward to the content script. Nothing is lost; the stop-time drain
  * joins by sourceEventId as the recovery path.
  */
-function seedObservingTabsFromStorage(): void {
-  try {
-    void chrome.storage.local
-      .get(OBSERVING_TABS_KEY)
-      .then((result) => {
-        const stored = result?.[OBSERVING_TABS_KEY];
-        if (Array.isArray(stored)) {
-          for (const id of stored) {
-            if (typeof id === 'number') observingTabIds.add(id);
-          }
+function seedObservingTabsFromStorage(): Promise<void> {
+  return (async () => {
+    try {
+      const result = (await chrome.storage.local.get(OBSERVING_TABS_KEY)) as {
+        [k: string]: unknown;
+      };
+      const stored = result?.[OBSERVING_TABS_KEY];
+      if (Array.isArray(stored)) {
+        for (const id of stored) {
+          if (typeof id === 'number') observingTabIds.add(id);
         }
-      })
-      .catch(() => {})
-      .finally(() => {
-        gateSeeded = true;
-      });
-  } catch {
-    // storage API missing (tests) — mark seeded, in-memory gate only
-    gateSeeded = true;
-  }
+      }
+    } catch {
+      // storage API missing (tests) — in-memory gate only
+    }
+  })();
+}
+
+/**
+ * G4-A (INV-G4): deterministic observing-set membership growth — a tab
+ * enters the FORWARDING set when the SW receives a recording-scope message
+ * from it (OBSERVED_EVENT / BEHAVIORAL_EVIDENCE). No probing, no timers.
+ * Membership influences forwarding only — never capture or attribution.
+ */
+export function noteRecordingScopeTab(tabId: number): void {
+  if (observingTabIds.has(tabId)) return;
+  observingTabIds.add(tabId);
+  persistObservingTabs();
 }
 
 /**
@@ -365,21 +420,30 @@ function seedObservingTabsFromStorage(): void {
  * @param tabId The tab to observe
  */
 export async function startNetworkObservation(tabId: number): Promise<void> {
+  // G4-A: recording-scoped capture gate — set SYNCHRONOUSLY first so the
+  // very first request of the session already passes (INV-G1).
+  recordingActiveFlag = true;
+  try {
+    void chrome?.storage?.local?.set?.({ [RECORDING_ACTIVE_KEY]: true });
+  } catch { /* storage missing (tests) — in-memory gate is enough */ }
   activeTabId = tabId;
   inFlightRequests.clear();
   completedRequests.length = 0;
   pendingMainFrameByTab.clear();
   redirectChains.clear();
-  lastTrustedActionByTab.clear();
+  lastTrustedActionByFrame.clear();
   // G1-B: new recording session — session-scoped cleanup (never outlives
   // its session), then persist the empty state.
   persistPendingNavDocs();
+  persistLastTrustedActionSnapshot();
 
-  // MV3 lifecycle fix: register the tab in the persisted observing set.
-  // Top-level listeners (registered at module load) gate on this set —
-  // recording survives SW restarts.
+  // INV-G4: the observing set is a FORWARDING hint only. It is seeded with
+  // the start tab and grows as the SW receives recording-scope messages
+  // from other tabs (deterministic membership growth — no probing).
+  observingTabIds.clear();
   observingTabIds.add(tabId);
   persistObservingTabs();
+  gateSeeded = true;
 
   // 1. Register webRequest listeners IMMEDIATELY (race coverage)
   registerWebRequestListeners();
@@ -399,17 +463,26 @@ export async function startNetworkObservation(tabId: number): Promise<void> {
  * @param tabId The tab to stop observing
  */
 export function stopNetworkObservation(_tabId: number): void {
-  if (activeTabId !== null) {
-    observingTabIds.delete(activeTabId);
-    persistObservingTabs();
-  }
+  // G4-A: close the capture gate FIRST (synchronous) — drains have already
+  // run; nothing captured after STOP belongs to this session (INV-G6).
+  recordingActiveFlag = false;
+  try {
+    void chrome?.storage?.local?.set?.({ [RECORDING_ACTIVE_KEY]: false });
+  } catch { /* storage missing (tests) */ }
+  gateSeeded = true; // a stopped session is never "unknown"
   activeTabId = null;
+
+  // G4-E: WHOLESALE cleanup — every tab, memory AND persisted. The old
+  // code deleted only the stop-time active tab, so a start/stop tab
+  // mismatch persisted stale ids into the next session.
+  observingTabIds.clear();
+  persistObservingTabs();
   inFlightRequests.clear();
   pendingMainFrameByTab.clear();
-  redirectChains.clear();
-  lastTrustedActionByTab.clear();
-  // G1-B: STOP — session-scoped cleanup of the durable pending-doc store.
   persistPendingNavDocs();
+  redirectChains.clear();
+  lastTrustedActionByFrame.clear();
+  persistLastTrustedActionSnapshot();
   // Keep listeners registered — top-level registration is now permanent
   // and gated per-tab by the persisted observing set (MV3 lifecycle fix).
 
@@ -432,6 +505,56 @@ export function __testSetGateStateForSim(state: { seeded: boolean; tabs: number[
   gateSeeded = state.seeded;
   observingTabIds.clear();
   for (const t of state.tabs) observingTabIds.add(t);
+}
+
+/** G4-A test hook: set the recording-active flag (tri-state — undefined = boot-unknown). */
+export function __testSetRecordingActive(v: boolean | undefined): void {
+  recordingActiveFlag = v === undefined ? null : v;
+}
+
+/** G4-A test hook: observe the gate state. */
+export function __testGetGateState(): { seeded: boolean; recordingActive: boolean | null; tabs: number[]; startTab: number | null } {
+  return {
+    seeded: gateSeeded,
+    recordingActive: recordingActiveFlag,
+    tabs: [...observingTabIds],
+    startTab: activeTabId,
+  };
+}
+
+/** G4-A test hook: force listener (re-)registration under a fresh chrome stub. */
+export function __testRegisterForListeners(): void {
+  listenersActive = false;
+  registerWebRequestListeners();
+}
+
+/** Test-only: clear all frame stamps + in-flight state (fresh-module simulation). */
+export function __testResetStamps(): void {
+  lastTrustedActionByFrame.clear();
+  inFlightRequests.clear();
+}
+
+/** G4-D test hook: the single awaitable boot-restore promise. */
+export function getBootRestorePromise(): Promise<void> {
+  return bootRestorePromise ?? Promise.resolve();
+}
+
+/** G4-B helper: persist the current frame-stamp snapshot (wholesale write). */
+function persistLastTrustedActionSnapshot(): void {
+  try {
+    const snapshot: Record<string, unknown> = {};
+    for (const [k, rec] of lastTrustedActionByFrame) {
+      snapshot[k] = {
+        tabId: rec.tabId,
+        frameId: rec.frameId,
+        action: { eventId: rec.eventId, interactionId: rec.interactionId },
+        wallClock: rec.wallClock,
+      };
+    }
+    void chrome?.storage?.local?.set?.({ [LAST_ACTION_KEY]: snapshot });
+  } catch {
+    // storage missing (tests) — in-memory only
+  }
 }
 
 /**
@@ -460,32 +583,87 @@ export function getRecentRequests(
 // ── CER: ID/Lifecycle-based correlation APIs ─────────────────────────
 
 /**
- * CER-2: Record the last trusted user action for a tab.
- * Called by the service worker on every trusted OBSERVED_EVENT (click,
- * keydown). Read at onBeforeRequest to stamp requests with the exact
- * event that likely triggered them — replaces timestamp-window attribution.
+ * G4-C (INV-G3): only interaction-creating events may stamp a trusted
+ * action. Mirrors ACTION_WINDOW_EVENT_TYPES (evidence-collector) + `drop`
+ * (M9.10 drag&drop). mousemove/focus/blur/input/… are evidence inputs but
+ * never create interactions, so they can NEVER create or overwrite a stamp
+ * (the R14 stamp-steal defect).
+ *
+ * G5-A (INV-F2) amends this: `submit` is demoted to a SECONDARY (create-
+ * only) stamp. A native form submission is a *consequence* of the
+ * initiating action (click on a submit button, Enter keydown); the trusted
+ * `submit` DOM event must never overwrite the initiating action's stamp
+ * (the int-18/int-19 duplicate attribution defect). It may create a stamp
+ * only when the exact (tabId, frameId) has none — the sole case where the
+ * submit IS the trusted cause (programmatic form.submit()).
+ */
+const STAMP_ELIGIBLE_EVENT_TYPES = new Set<string>([
+  'click', 'contextmenu', 'change', 'drop',
+]);
+
+/** G5-A: stamp classes. `secondary` = create-only (never overwrites). */
+export type StampClass = 'primary' | 'secondary' | 'ineligible';
+
+/** Event types that OVERWRITE the frame stamp (trusted causes). */
+const SECONDARY_STAMP_EVENT_TYPES = new Set<string>(['submit']);
+
+/**
+ * G5-A: classify an event's stamping authority.
+ *  - primary:   click / contextmenu / change / drop / keydown(Enter) —
+ *               interaction-creating trusted actions; overwrite.
+ *  - secondary: submit — create-only (INV-F2).
+ *  - ineligible: everything else (mousemove/focus/blur/input/other keys).
+ */
+export function stampClass(eventType: string, key?: string | null): StampClass {
+  if (eventType === 'keydown') return key === 'Enter' ? 'primary' : 'ineligible';
+  if (SECONDARY_STAMP_EVENT_TYPES.has(eventType)) return 'secondary';
+  if (STAMP_ELIGIBLE_EVENT_TYPES.has(eventType)) return 'primary';
+  return 'ineligible';
+}
+
+/**
+ * G4-C: whether an observed event may stamp (keydown: Enter only).
+ * G5-A back-compat: `submit` still returns true — the create-only
+ * semantics are enforced by the dispatcher calling
+ * `setLastTrustedActionIfAbsent` for secondary-class events.
+ */
+export function stampEligible(eventType: string, key?: string | null): boolean {
+  return stampClass(eventType, key) !== 'ineligible';
+}
+
+/**
+ * CER-2 / G4-B: Record the last trusted user action for a TAB+FRAME.
+ * Called synchronously by the service worker dispatcher (G1-A ordering:
+ * before any await, during the click's own message dispatch). Read at
+ * onBeforeRequest via the exact `tabId:frameId` key (INV-G2).
  */
 export function setLastTrustedAction(
   tabId: number,
+  frameId: number,
   action: { eventId: string; interactionId: string },
 ): void {
-  lastTrustedActionByTab.set(tabId, {
+  lastTrustedActionByFrame.set(frameKey(tabId, frameId), {
+    tabId,
+    frameId,
     ...action,
     wallClock: Date.now(),
   });
   // MV3 lifecycle fix: persist so a SW-restart instance can still stamp
   // requests with the correct trusted action (exact-event join survives
-  // service-worker death between the click and the request).
+  // service-worker death between the click and the request). Per-frame
+  // map shape: { [`${tabId}:${frameId}`]: { tabId, frameId, action, wallClock } }.
   try {
-    const record: Record<string, unknown> = {
-      [LAST_ACTION_KEY]: {
-        tabId,
-        action,
-        wallClock: Date.now(),
-      },
-    };
+    const snapshot: Record<string, unknown> = {};
+    for (const [k, rec] of lastTrustedActionByFrame) {
+      snapshot[k] = {
+        tabId: rec.tabId,
+        frameId: rec.frameId,
+        action: { eventId: rec.eventId, interactionId: rec.interactionId },
+        wallClock: rec.wallClock,
+      };
+    }
     void (chrome?.storage?.local?.set
-      ? chrome.storage.local.set(record)
+      ? chrome.storage.local.set({ [LAST_ACTION_KEY]: snapshot })
       : Promise.resolve());
   } catch {
     // Storage unavailable — in-memory only (pre-restart behavior)
@@ -493,47 +671,109 @@ export function setLastTrustedAction(
 }
 
 /**
- * G1-C: read the current trusted action for a tab (the in-memory map is the
- * source of truth; it is write-through persisted and restored on boot).
- * Null when no trusted action is recorded for the tab.
+ * G5-C (INV-F2): SECONDARY stamp write — create-only. Writes the frame
+ * stamp iff the exact (tabId, frameId) has NO stamp yet. Used for the
+ * trusted `submit` DOM event: it is a consequence of the initiating
+ * action (click/Enter), so it must never overwrite an existing stamp —
+ * but when it is the ONLY trusted cause (programmatic form.submit() with
+ * no prior click), it IS the trusted cause and may create the stamp.
+ */
+export function setLastTrustedActionIfAbsent(
+  tabId: number,
+  frameId: number,
+  action: { eventId: string; interactionId: string },
+): void {
+  if (lastTrustedActionByFrame.has(frameKey(tabId, frameId))) return; // create-only
+  setLastTrustedAction(tabId, frameId, action);
+}
+
+/**
+ * G4-B: read the trusted action for an EXACT tab+frame (null when that
+ * frame has no live stamp — no cross-frame fallback, INV-G10). `frameId`
+ * defaults to 0 (top document).
  */
 export function getLastTrustedAction(
   tabId: number,
+  frameId: number = 0,
 ): { eventId: string; interactionId: string } | null {
-  const rec = lastTrustedActionByTab.get(tabId);
+  const rec = lastTrustedActionByFrame.get(frameKey(tabId, frameId));
   return rec ? { eventId: rec.eventId, interactionId: rec.interactionId } : null;
 }
 
 /**
- * MV3 lifecycle fix: restore the persisted last trusted action for a tab
- * after SW restart. Returns null when none persisted or stale.
+ * G4-B: all live stamps of a tab (frame-keyed map copy) — consumed by the
+ * G1-C deterministic 3-rule back-fill resolution.
  */
-export function restoreLastTrustedActionFromStorage(): void {
-  try {
-    void chrome.storage.local
-      .get(LAST_ACTION_KEY)
-      .then((result) => {
-        const rec = result?.[LAST_ACTION_KEY] as
-          | { tabId: number; action: { eventId: string; interactionId: string }; wallClock: number }
-          | undefined;
-        if (
-          rec &&
-          typeof rec.tabId === 'number' &&
-          rec.action &&
-          typeof rec.action.eventId === 'string' &&
-          Date.now() - rec.wallClock < LAST_ACTION_TTL_MS
-        ) {
-          lastTrustedActionByTab.set(rec.tabId, {
-            eventId: rec.action.eventId,
-            interactionId: rec.action.interactionId,
-            wallClock: rec.wallClock,
-          });
-        }
-      })
-      .catch(() => {});
-  } catch {
-    // Storage API missing (tests) — no-op
+export function getFrameStamp(
+  tabId: number,
+): Map<string, { eventId: string; interactionId: string }> {
+  const out = new Map<string, { eventId: string; interactionId: string }>();
+  for (const [k, rec] of lastTrustedActionByFrame) {
+    if (rec.tabId === tabId) out.set(k, { eventId: rec.eventId, interactionId: rec.interactionId });
   }
+  return out;
+}
+
+/**
+ * G1-C / G4-B: deterministic back-fill resolution for an unstamped
+ * form_submit-typed navigation. STATIC precedence — not a time comparison:
+ *   1. frame 0's stamp (the top document's trusted action);
+ *   2. the tab's ONLY stamp (unambiguous single frame);
+ *   3. null — ambiguous (multiple frames, none is frame 0) → the entry
+ *      renders on the synthetic nav (INV-G10 honest degradation).
+ */
+export function resolveBackfillStamp(tabId: number): string | null {
+  const frame0 = lastTrustedActionByFrame.get(frameKey(tabId, 0));
+  if (frame0) return frame0.eventId;
+  const stamps = getFrameStamp(tabId);
+  if (stamps.size === 1) {
+    return stamps.values().next().value?.eventId ?? null;
+  }
+  return null;
+}
+
+/**
+ * MV3 lifecycle fix: restore persisted frame stamps after SW restart.
+ * Accepts the per-frame map shape; the LEGACY single-record shape
+ * ({tabId, action, wallClock}) is intentionally NOT resurrected as a frame
+ * stamp (it carries no frameId — migrating it would guess the frame and
+ * risk misattribution; R22 pins the no-throw, no-resurrect behavior).
+ * In-memory state wins (INV-G5).
+ */
+export function restoreLastTrustedActionFromStorage(): Promise<void> {
+  return (async () => {
+    try {
+      const result = (await chrome.storage.local.get(LAST_ACTION_KEY)) as {
+        [k: string]: unknown;
+      };
+      const stored = result?.[LAST_ACTION_KEY] as
+        | Record<string, { tabId: number; frameId: number; action: { eventId: string; interactionId: string }; wallClock: number }>
+        | undefined;
+      if (stored && typeof stored === 'object') {
+        for (const [k, rec] of Object.entries(stored)) {
+          if (
+            !lastTrustedActionByFrame.has(k) &&
+            rec &&
+            typeof rec.tabId === 'number' &&
+            typeof rec.frameId === 'number' &&
+            rec.action &&
+            typeof rec.action.eventId === 'string' &&
+            Date.now() - rec.wallClock < LAST_ACTION_TTL_MS
+          ) {
+            lastTrustedActionByFrame.set(k, {
+              tabId: rec.tabId,
+              frameId: rec.frameId,
+              eventId: rec.action.eventId,
+              interactionId: rec.action.interactionId,
+              wallClock: rec.wallClock,
+            });
+          }
+        }
+      }
+    } catch {
+      // Storage API missing (tests) — no-op
+    }
+  })();
 }
 
 /**
@@ -567,8 +807,21 @@ export function consumeMainFrameCorrelation(tabId: number): PendingMainFrameRequ
  * interaction-level evidence was already delivered (direct content-script
  * capture) are excluded by the caller via requestId membership.
  */
-export function getCompletedBySourceEventId(sourceEventId: string): CompletedWebRequest[] {
-  return completedRequests.filter((r) => r.sourceEventId === sourceEventId);
+export function getCompletedBySourceEventId(
+  sourceEventId: string,
+  origin?: { tabId: number; frameId: number },
+): CompletedWebRequest[] {
+  return completedRequests.filter((r) => {
+    if (r.sourceEventId !== sourceEventId) return false;
+    // G4-B triple key: when an origin is given AND the ring entry carries
+    // one, they must match (tab + frame). Legacy/origin-less entries join
+    // on eventId alone (primary key).
+    if (origin && typeof r.tabId === 'number') {
+      if (r.tabId !== origin.tabId) return false;
+      if (typeof r.frameId === 'number' && r.frameId !== origin.frameId) return false;
+    }
+    return true;
+  });
 }
 
 /**
@@ -578,7 +831,7 @@ export function getCompletedBySourceEventId(sourceEventId: string): CompletedWeb
  * timestamp. Returns the tagged entries.
  */
 export function snapshotInFlightForTab(
-  _tabId: number,
+  tabId: number,
   navEventId: string,
 ): { requestId: string; url: string; originalUrl: string; method: string; requestBody?: Record<string, string> }[] {
   const snapped: {
@@ -586,9 +839,10 @@ export function snapshotInFlightForTab(
     requestBody?: Record<string, string>;
   }[] = [];
   for (const entry of inFlightRequests.values()) {
-    // In-flight entries are only tracked for the active tab (filter above),
-    // so tab membership is implicit; frame scoping keeps sub-frame noise out
-    // of the main-document commit correlation.
+    // G4-A: capture spans multiple tabs — filter by the OWNING tab, then
+    // frame/resource scoping keeps sub-frame noise out of the main-document
+    // commit correlation.
+    if (entry.tabId !== tabId) continue;
     if (entry.frameId === 0 || entry.resourceKind === 'xmlhttprequest' || entry.resourceKind === 'fetch') {
       entry.navEventId = navEventId;
       snapped.push({
@@ -624,6 +878,7 @@ export function getNetworkEvidenceForNavigation(navEventId: string): CompletedWe
         startWallClock: Date.now(),
         endWallClock: Date.now(),
         requestId: entry.requestId,
+        tabId: entry.tabId,
         frameId: entry.frameId,
         documentRequest: entry.resourceKind === 'main_frame',
         navEventId: entry.navEventId,
@@ -643,6 +898,7 @@ export function getNetworkEvidenceForNavigation(navEventId: string): CompletedWe
 function registerWebRequestListeners(): void {
   if (listenersActive) return;
   if (!chrome?.webRequest) return;
+  void listenersActive; // (kept for isObserving diagnostics)
 
   const filter: chrome.webRequest.RequestFilter = {
     urls: URL_FILTER,
@@ -670,9 +926,11 @@ function registerWebRequestListeners(): void {
       }
     }
 
-    // CER-2: stamp the trusted action active when the request started —
-    // the exact-event join key for click→request attribution.
-    const action = lastTrustedActionByTab.get(details.tabId);
+    // CER-2 / G4-B: stamp the trusted action active when the request
+    // started — the exact-event join key for click→request attribution.
+    // EXACT tabId:frameId lookup; a request from a frame with no stamp is
+    // unstamped (no cross-frame guessing — INV-G10).
+    const action = lastTrustedActionByFrame.get(frameKey(details.tabId, details.frameId));
     const sourceEventId = action?.eventId;
 
     inFlightRequests.set(details.requestId, {
@@ -681,6 +939,7 @@ function registerWebRequestListeners(): void {
       method: details.method,
       startTime: performance.now(),
       requestId: details.requestId,
+      tabId: details.tabId,
       frameId: details.frameId,
       resourceKind: details.type ?? 'other',
       requestBody,
@@ -728,6 +987,7 @@ function registerWebRequestListeners(): void {
         requestBody,
         documentRequest: details.type === 'main_frame',
         resourceKind: details.type ?? 'other',
+        captureOrigin: { tabId: details.tabId, frameId: details.frameId },
       });
     }
 
@@ -791,6 +1051,7 @@ function registerWebRequestListeners(): void {
       startWallClock: inFlight ? Date.now() - (performance.now() - inFlight.startTime) : Date.now(),
       endWallClock: Date.now(),
       requestId: details.requestId,
+      tabId: inFlight?.tabId ?? details.tabId,
       frameId: inFlight?.frameId ?? details.frameId,
       documentRequest: isDocumentRequest,
       navEventId: inFlight?.navEventId,
@@ -811,6 +1072,7 @@ function registerWebRequestListeners(): void {
         requestBody: inFlight.requestBody,
         documentRequest: isDocumentRequest,
         resourceKind: inFlight.resourceKind,
+        captureOrigin: { tabId: inFlight.tabId, frameId: inFlight.frameId },
       });
     }
 
@@ -857,6 +1119,7 @@ function registerWebRequestListeners(): void {
       startWallClock: inFlight ? Date.now() - (performance.now() - inFlight.startTime) : Date.now(),
       endWallClock: Date.now(),
       requestId: details.requestId,
+      tabId: inFlight?.tabId ?? details.tabId,
       frameId: inFlight?.frameId ?? details.frameId,
       documentRequest: isDocumentRequest,
       navEventId: inFlight?.navEventId,
@@ -992,6 +1255,7 @@ export function recordStampedRequest(
     requestBody?: Record<string, string>;
     documentRequest?: boolean;
     resourceKind?: string;
+    captureOrigin?: { tabId: number; frameId: number };
   },
 ): Promise<void> {
   if (!entry.sourceEventId) return Promise.resolve();
@@ -1004,6 +1268,7 @@ export function recordStampedRequest(
     requestBody: entry.requestBody,
     documentRequest: entry.documentRequest,
     mainFrame: entry.resourceKind === 'main_frame',
+    captureOrigin: entry.captureOrigin,
   });
 }
 
@@ -1070,16 +1335,45 @@ function forwardToTab(
 // before this fix they were registered only inside startNetworkObservation,
 // so any SW death mid-recording silently disabled network capture for the
 // rest of the session (Amazon add-to-cart: observed commit + fromUrl but
-// zero network evidence). Registration is permanent; capture is gated per
-// tab by the persisted observing set, so non-recording traffic costs
+// zero network evidence). Registration is permanent; capture is gated by
+// the recording-active flag (G4-A), so non-recording traffic costs
 // nothing beyond the early-return filter.
+//
+// G4-D (boot-restore ordering): ONE awaitable promise covering all three
+// restores. Consumers await it (via ensureSessionRestored) before reading
+// restored state; capture writers never block on it and in-memory state
+// always wins (INV-G5).
 //
 // Guarded so the module is importable in tests / non-extension contexts.
 if (typeof chrome !== 'undefined' && chrome?.webRequest) {
-  seedObservingTabsFromStorage();
-  restoreLastTrustedActionFromStorage();
-  // G1-B: rehydrate durable pending-doc records so the commit consumer
-  // still finds its navigation record after a mid-navigation SW restart.
-  void restorePendingNavDocsFromStorage();
+  bootRestorePromise = (async () => {
+    // G4-D: ALL restores awaited — the promise settles only when every
+    // durable structure (observing set, recording flag, frame stamps,
+    // pending docs) has been re-read. INV-G5 await graph, no fire-and-forget.
+    await seedObservingTabsFromStorage();
+    await seedRecordingActiveFromStorage();
+    await restoreLastTrustedActionFromStorage();
+    // G1-B: rehydrate durable pending-doc records so the commit consumer
+    // still finds its navigation record after a mid-navigation SW restart.
+    await restorePendingNavDocsFromStorage();
+  })();
   registerWebRequestListeners();
+}
+
+/** G4-D: seed the recording-active mirror from storage (never overwrites a decided flag). */
+function seedRecordingActiveFromStorage(): Promise<void> {
+  return (async () => {
+    try {
+      const result = (await chrome.storage.local.get(RECORDING_ACTIVE_KEY)) as {
+        [k: string]: unknown;
+      };
+      const v = result?.[RECORDING_ACTIVE_KEY];
+      if (recordingActiveFlag === null) {
+        if (v === true) recordingActiveFlag = true;
+        if (v === false) recordingActiveFlag = false;
+      }
+    } catch {
+      // storage API missing (tests) — leave unknown
+    }
+  })();
 }

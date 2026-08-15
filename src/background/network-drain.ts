@@ -36,6 +36,8 @@ export interface DrainEntry {
   sourceEventId?: string;
   requestBody?: Record<string, string>;
   documentRequest?: boolean;
+  /** G4-B triple key: the tab/frame the request was captured in (optional). */
+  captureOrigin?: { tabId: number; frameId: number };
 }
 
 /** Result of a drain pass. */
@@ -134,9 +136,22 @@ export function drainNetworkEvidence(
     if (!isStampedDoc && NOISE_URL_RE.test(entry.url)) continue;
     if (!isStampedDoc && TELEMETRY_URL_RE.test(entry.url)) continue;
 
-    const target =
-      byEventId.get(entry.sourceEventId) ??
-      resolveInteractionForEventId(entry.sourceEventId, interactions);
+    // G4-B triple key: prefer the index hit, but VERIFY origin compatibility
+    // when both sides carry one (INV-G2 everywhere); fall through to the
+    // origin-aware resolver otherwise. eventId remains the primary key.
+    const idxHit = byEventId.get(entry.sourceEventId);
+    const idxOrigin = idxHit?.metadata?.captureOrigin as
+      | { tabId: number; frameId: number }
+      | undefined;
+    const idxOk =
+      !idxHit ||
+      !entry.captureOrigin ||
+      !idxOrigin ||
+      (idxOrigin.tabId === entry.captureOrigin.tabId &&
+        idxOrigin.frameId === entry.captureOrigin.frameId);
+    const target = idxOk && idxHit
+      ? idxHit
+      : resolveInteractionForEventId(entry.sourceEventId, interactions, entry.captureOrigin);
     if (!target) continue; // no trusted action owns it — never guess
 
     // Guard A: direct capture already delivered this request.

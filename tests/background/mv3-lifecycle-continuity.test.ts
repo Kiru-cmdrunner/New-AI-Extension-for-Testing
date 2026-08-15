@@ -176,12 +176,17 @@ describe('MV3 lifecycle network continuity', () => {
     it('persists observing tabs and the last trusted action', async () => {
       const mod = await importFresh();
       await mod.startNetworkObservation(7);
-      mod.setLastTrustedAction(7, { eventId: 'click-19', interactionId: 'int-19' });
+      mod.setLastTrustedAction(7, 0, { eventId: 'click-19', interactionId: 'int-19' });
 
       expect(storageData.get('cmdrunner_net_observing_tabs')).toEqual([7]);
+      // G4-B: persisted shape is the per-frame stamp map
+      // { [`${tabId}:${frameId}`]: { tabId, frameId, action, wallClock } }
       expect(storageData.get('cmdrunner_net_last_action')).toMatchObject({
-        tabId: 7,
-        action: { eventId: 'click-19', interactionId: 'int-19' },
+        '7:0': {
+          tabId: 7,
+          frameId: 0,
+          action: { eventId: 'click-19', interactionId: 'int-19' },
+        },
       });
     });
 
@@ -189,7 +194,7 @@ describe('MV3 lifecycle network continuity', () => {
       // SW instance 1 starts recording
       const mod1 = await importFresh();
       await mod1.startNetworkObservation(7);
-      mod1.setLastTrustedAction(7, { eventId: 'click-19', interactionId: 'int-19' });
+      mod1.setLastTrustedAction(7, 0, { eventId: 'click-19', interactionId: 'int-19' });
 
       // ── SW DIES (module state reset — fresh import = fresh instance) ──
       const mod2 = await importFresh();
@@ -306,7 +311,7 @@ describe('MV3 lifecycle network continuity', () => {
     it('drain join key (sourceEventId) is stamped on post-restart captures', async () => {
       const mod1 = await importFresh();
       await mod1.startNetworkObservation(7);
-      mod1.setLastTrustedAction(7, { eventId: 'click-42', interactionId: 'int-42' });
+      mod1.setLastTrustedAction(7, 0, { eventId: 'click-42', interactionId: 'int-42' });
 
       const mod2 = await importFresh(); // SW restart
       fireBeforeRequest(7, 'req-300', 'https://app.example.com/api/save', 'POST');

@@ -22,7 +22,7 @@ import type {
   ComponentContext,
   RuntimeConfig,
 } from '../shared/component-types';
-import type { BehavioralEvidence } from '../shared/behavioral-evidence-types';
+import type { BehavioralEvidence, NetworkActivity } from '../shared/behavioral-evidence-types';
 import {
   EvidenceLedger,
   EVIDENCE_LEDGER_KEY,
@@ -312,6 +312,31 @@ export function storePendingEvidence(evidence: BehavioralEvidence): void {
  *
  * @returns interactionId if matched, null if no match.
  */
+/**
+ * G5-E (INV-F3): requestId-first network dedup. A Chrome requestId is
+ * globally unique per request; two capture paths (content-script bridge
+ * window evidence vs SW recovery rows) can deliver representations of
+ * the SAME request. Duplicate rows are dropped by requestId when either
+ * side carries one, falling back to method:url only when NEITHER does.
+ */
+export function mergeNetworkActivity(
+  existing: NetworkActivity[],
+  incoming: NetworkActivity[],
+): NetworkActivity[] {
+  const existingIds = new Set(
+    existing.map((n) => n.requestId).filter((id): id is string => !!id),
+  );
+  const existingUrls = new Set(
+    existing.map((n) => `${n.method}:${n.url}`),
+  );
+  const newEntries = incoming.filter((n) => {
+    if (n.requestId && existingIds.has(n.requestId)) return false;
+    if (!n.requestId && existingUrls.has(`${n.method}:${n.url}`)) return false;
+    return true;
+  });
+  return [...existing, ...newEntries];
+}
+
 export function attachEvidenceToInteraction(
   sourceEventId: string,
   evidence: BehavioralEvidence,
@@ -322,27 +347,23 @@ export function attachEvidenceToInteraction(
       scoreEvidenceRichness(incoming) <= 2; // only network entries, no state changes
   };
 
-  // Helper: merge network entries into existing evidence
+  // Helper: merge network entries into existing evidence (G5-E dedup)
   const mergeNetworkEvidence = (
     existing: BehavioralEvidence,
     incoming: BehavioralEvidence,
   ): BehavioralEvidence => {
-    const existingUrls = new Set(
-      (existing.applicationEvidence?.networkActivity ?? []).map((n) => `${n.method}:${n.url}`),
+    const merged = mergeNetworkActivity(
+      existing.applicationEvidence?.networkActivity ?? [],
+      incoming.applicationEvidence?.networkActivity ?? [],
     );
-    const newEntries = (incoming.applicationEvidence?.networkActivity ?? []).filter(
-      (n) => !existingUrls.has(`${n.method}:${n.url}`),
-    );
-    if (newEntries.length === 0) return existing; // nothing new to merge
-
+    if (merged.length === (existing.applicationEvidence?.networkActivity ?? []).length) {
+      return existing; // nothing new to merge
+    }
     return {
       ...existing,
       applicationEvidence: {
         ...existing.applicationEvidence,
-        networkActivity: [
-          ...(existing.applicationEvidence?.networkActivity ?? []),
-          ...newEntries,
-        ],
+        networkActivity: merged,
       },
     };
   };
@@ -371,13 +392,11 @@ export function attachEvidenceToInteraction(
     const newScore = scoreEvidenceRichness(evidence);
     if (newScore > existingScore) {
       // But preserve any network activity from the existing evidence
-      const preservedNetwork = interaction.behavioralEvidence.applicationEvidence?.networkActivity ?? [];
-      const newNetwork = evidence.applicationEvidence?.networkActivity ?? [];
-      const allUrls = new Set(preservedNetwork.map((n) => `${n.method}:${n.url}`));
-      const merged = [
-        ...preservedNetwork,
-        ...newNetwork.filter((n) => !allUrls.has(`${n.method}:${n.url}`)),
-      ];
+      // (G5-E: requestId-first dedup across both capture paths)
+      const merged = mergeNetworkActivity(
+        interaction.behavioralEvidence.applicationEvidence?.networkActivity ?? [],
+        evidence.applicationEvidence?.networkActivity ?? [],
+      );
       interaction.behavioralEvidence = {
         ...evidence,
         applicationEvidence: {
@@ -423,8 +442,7 @@ export function attachEvidenceToInteraction(
  * ApplicationEvidence entries. This ensures the typing/input evidence
  * (with real value changes) wins over the focus evidence (empty diff).
  */
-function drainPendingEvidence(interaction: ComponentInteraction): void {
-  if (interaction.behavioralEvidence) return;
+function drainPendingEvidence(interaction: ComponentInteraction): void {  if (interaction.behavioralEvidence) return;
 
   // Collect ALL pending evidence for this interaction's events
   const candidates: BehavioralEvidence[] = [];
@@ -536,6 +554,13 @@ export function initRecording(): void {
       // Bug 1 fix: debounce timer was killed by MV3 SW termination
       // before the Login button form-submit navigation
       enrichInteraction(interaction);
+      // G4-B: propagate the capture origin (tab/frame) from the trigger
+      // event onto the interaction metadata so every downstream join
+      // (ledger, drain, panel) can use the triple key.
+      const origin = interaction.triggerEvent?.captureOrigin;
+      if (origin) {
+        interaction.metadata.captureOrigin = { ...origin };
+      }
       drainPendingEvidence(interaction);
       liveInteractions.push(interaction);
       persistLiveInteractions();
@@ -777,6 +802,11 @@ export async function restoreFromStorage(): Promise<boolean> {
     const config: RuntimeConfig = {
       onEmit: (interaction: ComponentInteraction) => {
         enrichInteraction(interaction);
+        // G4-B: capture-origin propagation (same as initRecording config).
+        const origin = interaction.triggerEvent?.captureOrigin;
+        if (origin) {
+          interaction.metadata.captureOrigin = { ...origin };
+        }
         drainPendingEvidence(interaction);
         liveInteractions.push(interaction);
         persistLiveInteractions();

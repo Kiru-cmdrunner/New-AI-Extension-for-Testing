@@ -49,6 +49,13 @@ export interface StampedRequest {
   documentRequest?: boolean;
   /** True when captured as a main_frame request (CER-2 pre-redirect record). */
   mainFrame?: boolean;
+  /**
+   * G4-B (triple key): the tab/frame the request was captured in. Optional
+   * (older records / tests omit it). When BOTH the entry and the candidate
+   * interaction carry an origin, they must MATCH (tab and frame); when
+   * either side lacks one, the eventId alone decides (primary key).
+   */
+  captureOrigin?: { tabId: number; frameId: number };
   /** Serialized shape stored durably (status may be null pre-completion). */
   [k: string]: unknown;
 }
@@ -141,11 +148,23 @@ export class RequestOwnershipLedger {
 export function resolveInteractionForEventId(
   eventId: string,
   interactions: ComponentInteraction[],
+  origin?: { tabId: number; frameId: number },
 ): ComponentInteraction | null {
+  // G4-B triple-key rule: when BOTH the stamped request and the candidate
+  // interaction carry a capture origin, they must match (tab + frame).
+  // When either side lacks an origin, eventId alone decides (primary key).
+  const matches = (i: ComponentInteraction): boolean => {
+    const io = i.metadata?.captureOrigin as { tabId: number; frameId: number } | undefined;
+    if (origin && io) {
+      return io.tabId === origin.tabId && io.frameId === origin.frameId;
+    }
+    return true;
+  };
   // Tier 1: trigger match
   for (const interaction of interactions) {
     if (interaction.triggerEvent?.eventId === eventId) {
       if (isSyntheticNavigation(interaction)) continue;
+      if (!matches(interaction)) continue;
       return interaction;
     }
   }
@@ -153,6 +172,7 @@ export function resolveInteractionForEventId(
   for (const interaction of interactions) {
     if (interaction.memberEvents?.some((e) => e.eventId === eventId)) {
       if (isSyntheticNavigation(interaction)) continue;
+      if (!matches(interaction)) continue;
       return interaction;
     }
   }
@@ -182,11 +202,18 @@ export function synthesizeMinimalEvidence(
 ): BehavioralEvidence {
   if (interaction.behavioralEvidence) return interaction.behavioralEvidence;
 
+  // G4-B: frameId mapping 0 ↔ 'main' — the synthesized evidence claims the
+  // same frame as the trigger event's capture origin.
+  const originFrame = (interaction.metadata?.captureOrigin as
+    | { tabId: number; frameId: number }
+    | undefined)?.frameId;
+  const frameIdStr = originFrame === undefined || originFrame === 0 ? 'main' : String(originFrame);
+
   const evidence: BehavioralEvidence = {
     sourceEventId,
     sourceEventType: interaction.triggerEvent?.eventType ?? 'click',
     windowId: `sw-${sourceEventId}`,
-    frameId: 'main',
+    frameId: frameIdStr,
     window: {
       openedAt: 0,
       closedAt: 0,
@@ -278,6 +305,17 @@ export class DurableAttributionLedger {
    * Pre-attach filter + attempt: used by push-time fast paths that have
    * interactions at hand (not currently wired — kept for parity).
    */
+  /**
+   * G5-D (INV-F5): hold a stamped doc request whose owner is not yet live.
+   * Idempotent — same dedup rules as `pushStamped` (requestId ownership +
+   * per-key dedup). The entry stays durable for the retry paths (STOP
+   * drain, BEHAVIORAL_EVIDENCE retry, boot rehydrate); it is NEVER
+   * rendered on the synthetic nav.
+   */
+  async holdStampedActivity(entry: StampedRequest): Promise<void> {
+    await this.pushStamped(entry);
+  }
+
   size(): number {
     return this.countAll();
   }
@@ -322,7 +360,13 @@ export class DurableAttributionLedger {
     let attached = 0;
     const attachedNow: StampedRequest[] = [];
     for (const [sourceEventId, list] of this.entries) {
-      const target = resolveInteractionForEventId(sourceEventId, interactions);
+      // G4-B: pass the (first) entry's capture origin for triple-key
+      // disambiguation — entries under one eventId share the stamp frame.
+      const target = resolveInteractionForEventId(
+        sourceEventId,
+        interactions,
+        list[0]?.captureOrigin,
+      );
       if (!target) continue;
 
       for (const entry of [...list]) {

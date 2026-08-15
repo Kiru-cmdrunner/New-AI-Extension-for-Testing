@@ -120,6 +120,14 @@ export interface ObservedEvent {
   /** Whether the event is trusted (user-initiated). Synthetic events are rejected. */
   isTrusted: boolean;
 
+  /**
+   * G4-B (triple-key attribution): the tab/frame the event was captured in,
+   * attached by the SW dispatcher from `sender` (content scripts cannot know
+   * their tabId). Optional — older events and tests omit it; the eventId
+   * remains the primary join key, this disambiguates.
+   */
+  captureOrigin?: { tabId: number; frameId: number };
+
   /** Target element identity (18-field, extracted at capture time). */
   target: ElementIdentity;
 

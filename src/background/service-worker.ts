@@ -42,8 +42,11 @@ import { normalizeWorkflow } from '../presentation/workflow-normalizer';
 import {
   startNetworkObservation,
   stopNetworkObservation,
+  stampClass,
   setLastTrustedAction,
-  getLastTrustedAction,
+  setLastTrustedActionIfAbsent,
+  resolveBackfillStamp,
+  noteRecordingScopeTab,
   consumeMainFrameCorrelation,
   snapshotInFlightForTab,
   getNetworkEvidenceForNavigation,
@@ -67,6 +70,16 @@ let understandingSeed: import('../understanding/consolidation/application-knowle
 async function ensureSessionRestored(): Promise<void> {
   if (sessionRestored) return;
   sessionRestored = true;
+  // G4-D (INV-G5): every consumer of stamps / pending nav docs must be
+  // ordered AFTER the module's boot restore (observing set + frame stamps +
+  // pending docs) — an await graph, not a timer. Capture writers are
+  // unaffected (they never blocked and in-memory state wins).
+  try {
+    const { getBootRestorePromise } = await import('./network-observation');
+    await getBootRestorePromise();
+  } catch {
+    // boot restore unavailable (tests) — continue with in-memory state
+  }
   await restoreFromStorage();
 
   // ── Boot reconciliation (form-submit recovery, event-driven) ──
@@ -364,7 +377,12 @@ async function handleStopRecording(): Promise<void> {
     for (const i of productionInteractions) {
       const evId = i.behavioralEvidence?.sourceEventId;
       if (!evId) continue;
-      for (const r of getCompletedBySourceEventId(evId)) {
+      // G4-B: pass the interaction's capture origin so the ring join is
+      // triple-keyed (an eventId alone may collide across tabs).
+      const origin = i.metadata?.captureOrigin as
+        | { tabId: number; frameId: number }
+        | undefined;
+      for (const r of getCompletedBySourceEventId(evId, origin)) {
         stamped.push({
           url: r.url,
           method: r.method,
@@ -373,6 +391,9 @@ async function handleStopRecording(): Promise<void> {
           sourceEventId: r.sourceEventId,
           requestBody: r.requestBody,
           documentRequest: r.documentRequest,
+          captureOrigin: typeof r.tabId === 'number'
+            ? { tabId: r.tabId, frameId: r.frameId ?? 0 }
+            : undefined,
         });
       }
     }
@@ -554,12 +575,13 @@ async function handleStopRecording(): Promise<void> {
   // Notify all tabs (content scripts listen for STOP_RECORDING to sync state)
   broadcastToTabs({ type: 'STOP_RECORDING' });
 
-  // M6: Stop network observation (webRequest listeners removed).
-  // MAIN-world restoration is handled by the content script's NetworkBridge.
-  const stopTab = await getActiveTab();
-  if (stopTab?.id) {
-    stopNetworkObservation(stopTab.id);
-  }
+  // M6: Stop network observation — wholesale, UNCONDITIONAL session cleanup
+  // (G4-E / INV-G6). The getActiveTab lookup below is display-only and must
+  // never gate the cleanup: if tabs.query failed, the capture gate must
+  // still close (a failed lookup must not leave the gate open forever).
+  stopNetworkObservation(-1);
+  const stopTab = await getActiveTab().catch(() => null);
+  void stopTab;
 }
 
 // ── OBSERVED_EVENT handler (Component Runtime) ──────────────────────────
@@ -1014,14 +1036,17 @@ function recoverNetworkForNavigationById(
 
     // G1-C: browser-declared causality. A form_submit-typed navigation is
     // caused by the page's form, and the form was triggered by the tab's
-    // current trusted action. Back-fill the stamp when the G1-A race was
+    // trusted action. Back-fill the stamp when the G1-A race was
     // lost (or the form was submitted programmatically — no submit event).
     // Idempotent with G1-A: same eventId, no conflict.
+    // G4-B: resolution is the deterministic 3-rule precedence (frame 0 →
+    // tab-unique → null). Never a time comparison; null leaves the entry
+    // unstamped → it renders on the synthetic nav (INV-G10).
     const navIsFormSubmit = details.transitionType === 'form_submit';
     if (pendingDoc && navIsFormSubmit && !pendingDoc.sourceEventId) {
-      const stamp = getLastTrustedAction(details.tabId);
-      if (stamp?.eventId) {
-        pendingDoc.sourceEventId = stamp.eventId;
+      const stampId = resolveBackfillStamp(details.tabId);
+      if (stampId) {
+        pendingDoc.sourceEventId = stampId;
       }
     }
 
@@ -1050,6 +1075,10 @@ function recoverNetworkForNavigationById(
         requestBody: pendingDoc.requestBody ?? undefined,
         // CER-4: exact-event join key for pipeline attribution
         sourceEventId: pendingDoc.sourceEventId ?? undefined,
+        // G5-D (INV-F6): carry the REAL Chrome requestId so every consumer
+        // (ownership ledger, mergeNetworkActivity dedup, ring join) can
+        // identify this exact request across capture paths.
+        requestId: pendingDoc.requestId,
       });
     }
 
@@ -1084,6 +1113,9 @@ function recoverNetworkForNavigationById(
         source: 'webrequest',
         requestBody: req.requestBody,
         sourceEventId: req.sourceEventId ?? undefined,
+        // G5-D (INV-F6): real requestId — one owning interaction per
+        // requestId across all capture paths.
+        requestId: req.requestId,
       });
     }
 
@@ -1128,11 +1160,21 @@ function attachSyntheticNavEvidence(navEventId: string, details: chrome.webNavig
       // Parity with resolveInteractionForEventId: synthetic navigations are
       // never join OWNERS (the causal owner is the trusted action), so they
       // must not satisfy ownerExists either.
+      // G4-B: origin-aware owner check (INV-G2) — eventId match plus, when
+      // both sides carry origins, tab/frame match. Owner candidates are
+      // non-synthetic interactions; the ledger join enforces the same rule
+      // again at attach time (defense in depth).
+      const stampedOrigin = { tabId: details.tabId, frameId: 0 };
       const ownerExists = live.some(
         (i) =>
           i.behavioralEvidence?.window?.endReason !== 'page-reload-synthetic' &&
           (i.triggerEvent?.eventId === stamped ||
-            i.memberEvents?.some((e) => e.eventId === stamped)),
+            i.memberEvents?.some((e) => e.eventId === stamped)) &&
+          (() => {
+            const io = i.metadata?.captureOrigin as { tabId: number; frameId: number } | undefined;
+            if (!io) return true; // interaction lacks origin — eventId decides
+            return io.tabId === stampedOrigin.tabId && io.frameId === stampedOrigin.frameId;
+          })(),
       );
       if (ownerExists) {
         // Route to the causal CLICK — attachStampedActivity is idempotent
@@ -1146,6 +1188,9 @@ function attachSyntheticNavEvidence(navEventId: string, details: chrome.webNavig
           sourceEventId: stamped,
           requestBody: activity.requestBody,
           documentRequest: true,
+          // G4-B triple key: carry the commit's (tab, frame 0) origin so
+          // the ledger join disambiguates cross-tab eventId collisions.
+          captureOrigin: { tabId: details.tabId, frameId: 0 },
           // WARN-2 fix: every activity on this path IS a document request
           // (pendingDoc or ring document entry) — the flag must not depend
           // on resourceType ('unknown' here) or method, or a back-filled
@@ -1159,8 +1204,26 @@ function attachSyntheticNavEvidence(navEventId: string, details: chrome.webNavig
           }
         });
       } else {
-        // Unresolved stamp — the synthetic nav keeps the entry (old behavior)
-        forSyntheticNav.push(activity);
+        // G5-D (INV-F5): a STAMPED doc request is NEVER admitted to the
+        // synthetic nav's networkActivity. The stamp proves a causal owner
+        // exists (or will be emitted); the ledger already holds the entry
+        // durably from capture time (durability gate). Hold it — the STOP
+        // drain, BEHAVIORAL_EVIDENCE retry, and boot rehydrate are the
+        // designed recovery paths. Rendering it on the nav duplicates the
+        // request across two interactions (the int-18/int-19 defect).
+        // holdStampedActivity is idempotent (dedup by requestId).
+        void ledger.holdStampedActivity({
+          url: activity.url,
+          method: activity.method,
+          status: activity.status ?? 0,
+          requestId: (activity as NetworkActivity & { requestId?: string }).requestId
+            ?? `${activity.method}:${activity.url}:${stamped}`,
+          sourceEventId: stamped,
+          requestBody: activity.requestBody,
+          documentRequest: true,
+          mainFrame: true,
+          captureOrigin: { tabId: details.tabId, frameId: 0 },
+        });
       }
     }
   }
@@ -1329,16 +1392,44 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
       // onBeforeRequest can observe the request. sender.tab.id is the
       // request's true tab (getActiveTab() both raced the stamp and could
       // resolve to a different focused tab).
+      //
+      // G4-B: the stamp key is (tabId, sender.frameId) — the exact frame
+      // the event came from. G4-C (INV-G3): only interaction-creating
+      // event types stamp; mousemove/focus/blur/input never overwrite a
+      // click's stamp between the click and a JS-delayed form.submit().
+      // Enter-key keydown stamps; other keys do not.
+      //
+      // G5-B (INV-F1/F2): `submit` is demoted to a SECONDARY (create-only)
+      // stamp — the native submit DOM event is a consequence of the
+      // initiating click/Enter, never a new trusted action. Primary events
+      // overwrite as before; secondary events stamp only when the frame
+      // has no stamp (the programmatic form.submit() case).
       if (
         msg.payload?.isTrusted &&
-        msg.payload.eventType !== 'navigation' &&
         _sender?.tab?.id != null
       ) {
-        setLastTrustedAction(_sender.tab.id, {
-          eventId: msg.payload.eventId,
-          interactionId: '',
-        });
+        const cls = stampClass(msg.payload.eventType, msg.payload.key);
+        if (cls === 'primary') {
+          setLastTrustedAction(_sender.tab.id, _sender.frameId ?? 0, {
+            eventId: msg.payload.eventId,
+            interactionId: '',
+          });
+        } else if (cls === 'secondary') {
+          setLastTrustedActionIfAbsent(_sender.tab.id, _sender.frameId ?? 0, {
+            eventId: msg.payload.eventId,
+            interactionId: '',
+          });
+        }
       }
+      // G4-B: record the capture origin (tab/frame) on the payload so the
+      // interaction/evidence join can use the triple key downstream.
+      if (_sender?.tab?.id != null && !msg.payload.captureOrigin) {
+        msg.payload.captureOrigin = { tabId: _sender.tab.id, frameId: _sender.frameId ?? 0 };
+      }
+      // G4-A (INV-G4): the sender's tab joins the FORWARDING set —
+      // recording-scope traffic proves the tab is recording. Deterministic
+      // membership growth; forwarding-only (never gates capture).
+      if (_sender?.tab?.id != null) noteRecordingScopeTab(_sender.tab.id);
       handleObservedEvent(msg.payload);
       sendResponse({ ok: true });
       return true;
@@ -1346,6 +1437,9 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
 
     case 'BEHAVIORAL_EVIDENCE': {
       const msg = message as { type: string; payload: import('../shared/behavioral-evidence-types').BehavioralEvidence };
+      // G4-A (INV-G4): evidence traffic proves the sender's tab is
+      // recording — forward-eligibility grows deterministically.
+      if (_sender?.tab?.id != null) noteRecordingScopeTab(_sender.tab.id);
       handleBehavioralEvidence(msg.payload);
       sendResponse({ ok: true });
       return true;

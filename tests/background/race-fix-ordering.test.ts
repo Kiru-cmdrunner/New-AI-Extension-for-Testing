@@ -77,7 +77,7 @@ describe('RACE FIX — onCompleted → onCommitted ordering', () => {
     await mod.startNetworkObservation(42);
 
     // The click was stamped as the trusted action before the POST fired.
-    mod.setLastTrustedAction(42, { eventId: 'evt-int-14', interactionId: 'int-14' });
+    mod.setLastTrustedAction(42, 0, { eventId: 'evt-int-14', interactionId: 'int-14' });
 
     // 1. onBeforeRequest — main-frame form POST
     mockWebRequestListeners.onBeforeRequest[0]({
@@ -128,7 +128,7 @@ describe('RACE FIX — onCompleted → onCommitted ordering', () => {
   it('WINNING order: commit before completion still sees undefined status (honest null)', async () => {
     const mod = await importModule();
     await mod.startNetworkObservation(42);
-    mod.setLastTrustedAction(42, { eventId: 'evt-a', interactionId: 'int-a' });
+    mod.setLastTrustedAction(42, 0, { eventId: 'evt-a', interactionId: 'int-a' });
 
     mockWebRequestListeners.onBeforeRequest[0]({
       url: 'https://www.amazon.in/cart/add-to-cart/ref=x',
@@ -160,7 +160,7 @@ describe('RACE FIX — onCompleted → onCommitted ordering', () => {
   it('network error stamps completionStatus -1 and survives to commit', async () => {
     const mod = await importModule();
     await mod.startNetworkObservation(42);
-    mod.setLastTrustedAction(42, { eventId: 'evt-b', interactionId: 'int-b' });
+    mod.setLastTrustedAction(42, 0, { eventId: 'evt-b', interactionId: 'int-b' });
 
     mockWebRequestListeners.onBeforeRequest[0]({
       url: 'https://www.amazon.in/cart/add-to-cart/ref=y',
@@ -186,7 +186,7 @@ describe('RACE FIX — onCompleted → onCommitted ordering', () => {
   it('ring entries are findable by sourceEventId for the stop-recording drain', async () => {
     const mod = await importModule();
     await mod.startNetworkObservation(42);
-    mod.setLastTrustedAction(42, { eventId: 'evt-int-14', interactionId: 'int-14' });
+    mod.setLastTrustedAction(42, 0, { eventId: 'evt-int-14', interactionId: 'int-14' });
 
     // A sub-frame/XHR POST also stamps the same trusted action.
     mockWebRequestListeners.onBeforeRequest[0]({

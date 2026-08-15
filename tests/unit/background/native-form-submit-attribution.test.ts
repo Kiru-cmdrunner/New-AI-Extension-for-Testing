@@ -98,20 +98,20 @@ describe('R1 — G1-A synchronous stamp ordering', () => {
   it('setLastTrustedAction makes the stamp observable in the SAME turn (before any microtask)', () => {
     // R1: the dispatcher writes the stamp synchronously; a main_frame
     // onBeforeRequest firing later in the same turn must see it.
-    setLastTrustedAction(7, { eventId: 'evt-click-26', interactionId: '' });
+    setLastTrustedAction(7, 0, { eventId: 'evt-click-26', interactionId: '' });
 
     // No await, no setTimeout — same synchronous turn:
-    const stamp = getLastTrustedAction(7);
+    const stamp = getLastTrustedAction(7, 0);
     expect(stamp).not.toBeNull();
     expect(stamp!.eventId).toBe('evt-click-26');
   });
 
   it('stamp is per-tab and replaces the previous trusted action (latest-wins determinism)', () => {
-    setLastTrustedAction(7, { eventId: 'evt-a', interactionId: '' });
-    setLastTrustedAction(7, { eventId: 'evt-b', interactionId: '' });
-    setLastTrustedAction(9, { eventId: 'evt-other-tab', interactionId: '' });
-    expect(getLastTrustedAction(7)!.eventId).toBe('evt-b');
-    expect(getLastTrustedAction(9)!.eventId).toBe('evt-other-tab');
+    setLastTrustedAction(7, 0, { eventId: 'evt-a', interactionId: '' });
+    setLastTrustedAction(7, 0, { eventId: 'evt-b', interactionId: '' });
+    setLastTrustedAction(9, 0, { eventId: 'evt-other-tab', interactionId: '' });
+    expect(getLastTrustedAction(7, 0)!.eventId).toBe('evt-b');
+    expect(getLastTrustedAction(9, 0)!.eventId).toBe('evt-other-tab');
   });
 });
 
@@ -244,8 +244,8 @@ describe('G1-C/G2 — recoverNetworkForNavigationById integration shape', () => 
     // G1-C contract: at onCommitted the pendingDoc's missing sourceEventId
     // is back-filled from the tab stamp, then pushed to the ledger. The
     // ledger then attaches it — this is that half, end to end.
-    setLastTrustedAction(7, { eventId: 'evt-click-26', interactionId: '' });
-    const stamp = getLastTrustedAction(7)!;
+    setLastTrustedAction(7, 0, { eventId: 'evt-click-26', interactionId: '' });
+    const stamp = getLastTrustedAction(7, 0)!;
 
     const ledger = new DurableAttributionLedger();
     await ledger.pushStamped({
