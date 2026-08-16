@@ -33,6 +33,9 @@ import type { ApplicationKnowledge } from '../../understanding/consolidation/app
 import type { ActionOutcome } from '../../understanding/outcome/outcome-types';
 // D12 fix: use JSON-safe serialized form for the boundary type.
 import type { SerializedStateTransition } from '../../understanding/state-builder/serialize';
+// CP5: application behavior model (optional, additive; schemaVersion stays 2 —
+// availability is expressed by field presence, version is a writer stamp).
+import type { AppBehaviorModel } from '../../understanding/behavior-model/model-types';
 
 /**
  * The complete output of the Understanding Layer for a single recording session.
@@ -76,4 +79,16 @@ export interface UnderstandingResult {
   readonly transitions?: SerializedStateTransition[];
   /** Stable app ID derived from the recording origin (D12). */
   readonly appId?: string;
+
+  // ── CP5 — Application Behavior Model (optional, additive) ──
+
+  /**
+   * CP5 Stage 3.5 output: the session's AppBehaviorModel (ActionEpisodes,
+   * CausalEdges T1–T4, EvidenceRefs, horizons, episode outcomes, coverage).
+   * Present iff Stage 3.5 succeeded and the session had interactions;
+   * absent otherwise. JSON-safe by CP1 design (no Maps). Typed warnings
+   * live inside `behaviorModel.warnings`. schemaVersion is unchanged (2) —
+   * optional-field additions do not bump the writer stamp (D12 precedent).
+   */
+  readonly behaviorModel?: AppBehaviorModel;
 }

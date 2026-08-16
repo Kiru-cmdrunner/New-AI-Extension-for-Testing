@@ -69,6 +69,33 @@ let recordingStartTitle = '';
 // or first session on this app.
 let understandingSeed: import('../understanding/consolidation/application-knowledge').StateBuilderSeed | null = null;
 
+// CP5 / R1: Session-scoped retention of consumed post-nav records.
+//
+// The pending store (post-nav-capture.ts) is consume-on-pull (exactly-once
+// per navigation per document) and in-memory only — after the destination
+// content script pulls, the record is gone, and with it the T2 lineage
+// evidence (navEventId, committedAt, fromUrl/toUrl) the behavior model
+// needs. Retention copies the record AT the consume call site (before the
+// store's internal delete) so store semantics are untouched.
+//
+// Session isolation (INV session scoping, same rationale as the ledger
+// clearAll below): cleared in handleStartRecording alongside the attribution
+// ledger, so a stale record from session N can never reach session N+1's
+// model. Tab isolation is structural: T2 matching is exact-navEventId
+// (CER-2), never tab-based. navEventIds are unique per navigation
+// (`nav-<Date.now()>-<rand6>`, and the early write + re-confirm write use
+// the SAME id), so retention cannot duplicate a navigation. Bounded FIFO —
+// cap mirrors the extension's other bounded stores.
+const SESSION_NAV_RECORDS_CAP = 200;
+const sessionNavRecords: import('../shared/post-nav-types').PostNavCaptureRecord[] = [];
+
+function retainNavRecord(record: import('../shared/post-nav-types').PostNavCaptureRecord): void {
+  sessionNavRecords.push(record);
+  if (sessionNavRecords.length > SESSION_NAV_RECORDS_CAP) {
+    sessionNavRecords.shift();
+  }
+}
+
 // ── MV3 Recovery: restore session on SW startup ─────────────────────────
 
 async function ensureSessionRestored(): Promise<void> {
@@ -296,6 +323,11 @@ async function handleStartRecording(): Promise<void> {
   // interactions.
   await getAttributionLedger().clearAll().catch(() => {});
 
+  // CP5/R1: same INV session-scoping for retained post-nav records — a
+  // stale navigation record from a prior session must never enter this
+  // session's Behavior Model.
+  sessionNavRecords.length = 0;
+
   // Persist recording context (start URL + title) so the side panel
   // can display the current page URL immediately.
   try {
@@ -374,6 +406,9 @@ async function handleStopRecording(): Promise<void> {
   // Joins ring entries to interactions by exact sourceEventId BEFORE the
   // understanding pipeline consumes them. Exactly-once: requestIds already
   // captured directly are skipped; telemetry/noise filtered here too.
+  // CP5: the ledger snapshot for Stage 3.5 is captured in this block,
+  // before the session-end clearAll() below.
+  let sessionStampedRequests: import('./evidence-attribution').StampedRequest[] = [];
   try {
     const { getCompletedBySourceEventId } = await import('./network-observation');
     const { drainNetworkEvidence } = await import('./network-drain');
@@ -464,6 +499,10 @@ async function handleStopRecording(): Promise<void> {
 
     // Session-end cleanup (INV session scoping): the ledger never outlives
     // its recording session.
+    // CP5: snapshot BEFORE clearing — the behavior model (Stage 3.5) reads
+    // this snapshot as its T1 evidence source. clearAll() below destroys
+    // the ledger; snapshotting after it would always yield [].
+    sessionStampedRequests = ledger.snapshotStamped();
     await ledger.clearAll().catch(() => {});
   } catch (e) {
     // Non-fatal — pipeline runs on whatever evidence already exists
@@ -492,6 +531,15 @@ async function handleStopRecording(): Promise<void> {
         origin,
         sessionId,
         seed: understandingSeed,
+        // CP5: composition-root clock + session capture artifacts for the
+        // behavior model (Stage 3.5). stampedRequests were snapshotted
+        // BEFORE the ledger's session-end clearAll (see RACE FIX block);
+        // postNavRecords are the session-retained consumed records (R1).
+        generatedAtMs: Date.now(),
+        captureArtifacts: {
+          stampedRequests: sessionStampedRequests,
+          postNavRecords: [...sessionNavRecords],
+        },
       });
 
       understandingResult = {
@@ -507,6 +555,8 @@ async function handleStopRecording(): Promise<void> {
         outcomes: [...pipelineOutcome.outcomes.values()],
         transitions: serializeStateTransitions(pipelineOutcome.transitions),
         appId: pipelineOutcome.appId,
+        // CP5: application behavior model (optional field; whole + untransformed).
+        behaviorModel: pipelineOutcome.behaviorModel ?? undefined,
       };
 
       // Store for side-panel display (best-effort)
@@ -1547,6 +1597,10 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
         return false;
       }
       const record = consumePendingNavCapture(_sender.tab.id);
+      // CP5/R1: retain the consumed record for this session's behavior
+      // model (copy-in-hand; the store's delete already happened inside
+      // consume). No-op when null.
+      if (record) retainNavRecord(record);
       sendResponse({ type: 'NAV_PENDING_RESPONSE', payload: record });
       return false;
     }

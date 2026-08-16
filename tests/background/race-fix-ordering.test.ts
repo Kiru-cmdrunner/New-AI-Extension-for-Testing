@@ -301,3 +301,37 @@ describe('RACE FIX — drainNetworkEvidence (stop-recording drain)', () => {
 });
 
 import { drainNetworkEvidence } from '../../src/background/network-drain';
+
+// ── CP5 ordering regression — snapshot BEFORE session-end clearAll ──────
+
+describe('CP5 — ledger snapshot ordering at stop-recording', () => {
+  it('the Stage 3.5 stampedRequests snapshot is taken BEFORE ledger.clearAll()', async () => {
+    const fs = await import('fs');
+    const sw = fs.readFileSync('src/background/service-worker.ts', 'utf-8');
+
+    // Scope to the stop-recording drain block: the snapshot assignment must
+    // precede the session-end cleanup clearAll in the SAME block (there is a
+    // separate, unrelated clearAll at session start). If someone reorders
+    // these, the behavior model's T1 evidence source becomes permanently
+    // empty.
+    const sessionEndIdx = sw.indexOf('Session-end cleanup (INV session scoping)');
+    const snapIdx = sw.indexOf('sessionStampedRequests = ledger.snapshotStamped()');
+    const clearIdx = sw.indexOf('ledger.clearAll()', sessionEndIdx);
+
+    expect(sessionEndIdx).toBeGreaterThan(-1);
+    expect(snapIdx).toBeGreaterThan(-1);
+    expect(snapIdx).toBeGreaterThan(sessionEndIdx);
+    expect(clearIdx).toBeGreaterThan(snapIdx);
+  });
+
+  it('the pipeline consumes the snapshotted array, not a post-clear live snapshot', async () => {
+    const fs = await import('fs');
+    const sw = fs.readFileSync('src/background/service-worker.ts', 'utf-8');
+
+    // The pipeline must read sessionStampedRequests (pre-clear snapshot),
+    // never a fresh snapshotStamped() call (which would race the cleanup).
+    const pipeIdx = sw.indexOf('stampedRequests: sessionStampedRequests');
+    expect(pipeIdx).toBeGreaterThan(-1);
+    expect(sw.indexOf('await getAttributionLedger().snapshotStamped()')).toBe(-1);
+  });
+});

@@ -241,3 +241,8 @@ export {
   preloadPriorKnowledge,
 } from './pipeline/understanding-pipeline';
 export type { PipelineInput, PipelineOutcome } from './pipeline/understanding-pipeline';
+
+// CP5 — behavior model activation (Stage 3.5 wiring)
+export { extractBehaviorModelInputs } from './behavior-model/capture-inputs';
+export type { CaptureArtifacts, BehaviorModelInputs } from './behavior-model/capture-inputs';
+export type { AppBehaviorModel } from './behavior-model/model-types';

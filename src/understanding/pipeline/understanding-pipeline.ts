@@ -29,6 +29,11 @@ import type { ApplicationState, StateTransition } from '../state-builder/types';
 import type { ApplicationKnowledge } from '../consolidation/application-knowledge';
 import type { SemanticKnowledge, SemanticWorkflow } from '../enrichment/semantic-types';
 import type { StateBuilderSeed } from '../consolidation/application-knowledge';
+// CP5 — Stage 3.5 wiring (behavior model activation)
+import { extractBehaviorModelInputs } from '../behavior-model/capture-inputs';
+import type { CaptureArtifacts } from '../behavior-model/capture-inputs';
+import { deriveBehaviorModel } from '../behavior-model/behavior-model';
+import type { AppBehaviorModel } from '../behavior-model/model-types';
 
 // M9.1
 import { SignalExtractionCoordinator } from '../signal-extractors/signal-extractor';
@@ -90,6 +95,10 @@ export interface PipelineOutcome {
   warnings: string[];
   /** Stable appId derived from the recording origin. */
   appId: string;
+  /** CP5: application behavior model from Stage 3.5, or null (failure/empty). */
+  behaviorModel: AppBehaviorModel | null;
+  /** CP5: flattened behavior-model warnings (`code: refs`) for observability. */
+  behaviorModelWarnings: string[];
 }
 
 /**
@@ -104,6 +113,19 @@ export interface PipelineInput {
   sessionId: string;
   /** Prior-knowledge seed loaded at startRecording (or empty). */
   seed?: StateBuilderSeed | null;
+  /**
+   * CP5: wall-clock ms for the model's generatedAtMs. Injected by the
+   * service worker (composition root). When absent, Stage 3.5 falls back to
+   * max(interaction.endTime) — data-derived, keeps tests deterministic.
+   */
+  generatedAtMs?: number;
+  /**
+   * CP5: session capture artifacts for Stage 3.5 (stamped requests from the
+   * attribution ledger + retained post-nav records). Absent → derivation
+   * runs on Stage 1–3 outputs alone (documented degradation: no T1 rows /
+   * no T2 latencies from these sources).
+   */
+  captureArtifacts?: CaptureArtifacts;
 }
 
 // ── Pipeline class ─────────────────────────────────────────────────────
@@ -312,6 +334,43 @@ export class UnderstandingPipeline {
       warnings.push(`outcome-determination: ${(e as Error).message}`);
     }
 
+    // ── Stage 3.5: Application Behavior Model (CP5) ──
+    // Wiring/activation layer ONLY: routes Stage 1–3 outputs + session capture
+    // artifacts into the CP1–CP4 derivation. Isolated like every other stage —
+    // failure yields a null model + warning; the pipeline continues. Spec:
+    // .drytis/specs/cp5-pipeline-wiring.md.
+    let behaviorModel: import('../behavior-model/model-types').AppBehaviorModel | null = null;
+    let behaviorModelWarnings: string[] = [];
+    try {
+      if (input.interactions.length > 0) {
+        const inputs = extractBehaviorModelInputs(
+          input.interactions,
+          transitions,
+          outcomes,
+          input.captureArtifacts ?? null,
+        );
+        // Determinism: callers inject the wall clock (SW: Date.now()).
+        // Fallback is data-derived (max endTime) so tests/headless callers
+        // stay reproducible without a clock.
+        const generatedAtMs =
+          input.generatedAtMs ??
+          input.interactions.reduce((max, i) => Math.max(max, i.endTime), -Infinity);
+        const derived = deriveBehaviorModel({
+          ...inputs,
+          sessionId: input.sessionId,
+          generatedAtMs,
+        });
+        // Flatten warnings BEFORE exposing the model, so the outcome is
+        // never partially populated (audit WARN-1: assignment order).
+        behaviorModelWarnings = derived.warnings.map(
+          (w) => `${w.code}: ${w.refs.join(',')}`,
+        );
+        behaviorModel = derived.model;
+      }
+    } catch (e) {
+      warnings.push(`behavior-model: ${(e as Error).message}`);
+    }
+
     // ── Stage 4: Knowledge Consolidation / Load PRIOR (M9.6) ──
     // D4: Load prior knowledge BEFORE persisting the current session.
     // This ensures enrichment sees only prior sessions (not the current
@@ -399,6 +458,9 @@ export class UnderstandingPipeline {
       finalState,
       warnings,
       appId,
+      // CP5 — Stage 3.5 outputs
+      behaviorModel,
+      behaviorModelWarnings,
     };
   }
 
