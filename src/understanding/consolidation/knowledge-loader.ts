@@ -31,6 +31,14 @@ import type {
   ViewGraph,
 } from './application-knowledge';
 import type { RecordedWorkflow } from '../enrichment/semantic-types';
+import type {
+  BehaviorKnowledge,
+  BehaviorKnowledgeSignature,
+} from './behavior-knowledge';
+import { STALE_AFTER_SESSIONS } from '../persistence/knowledge-types';
+
+/** Sessions fetched for the read model — bounded read, matches retention. */
+const MAX_SAFE_SESSIONS = 50;
 
 // ── Confidence scoring (deterministic, configurable) ───────────────────
 
@@ -120,6 +128,108 @@ export class KnowledgeLoader {
       }));
     } catch {
       return [];
+    }
+  }
+
+  /**
+   * CP6 — load the Behavior Knowledge read model for an app.
+   *
+   * Read-only join over Stratum 2 (signatures) + Stratum 1 (sessions):
+   * - behaviorVersion derived from signatureSetHash changes over seq
+   * - consequence evidence samples get a read-time existence check (R7)
+   * - deterministic ordering throughout
+   * Returns null when the app has no behavior sessions.
+   */
+  async loadBehaviorKnowledge(
+    appId: string,
+  ): Promise<BehaviorKnowledge | null> {
+    try {
+      const [sessionRows, signatureRows, gapRows] = await Promise.all([
+        this.repo.getRecentBehaviorSessions(appId, MAX_SAFE_SESSIONS),
+        this.repo.getSignatures(appId),
+        this.repo.getGaps(appId),
+      ]);
+      if (sessionRows.length === 0) return null;
+
+      const sessionsAsc = [...sessionRows].sort((a, b) => a.seq - b.seq);
+      const currentSeq = sessionsAsc[sessionsAsc.length - 1].seq;
+
+      // behaviorVersion: count of signatureSetHash changes over seq.
+      let behaviorVersion = 1;
+      for (let i = 1; i < sessionsAsc.length; i++) {
+        if (sessionsAsc[i].signatureSetHash !== sessionsAsc[i - 1].signatureSetHash) {
+          behaviorVersion++;
+        }
+      }
+
+      // R7: evidence-sample existence — the sample's session must still be
+      // within the retained manifest set.
+      const retainedSessions = new Set(sessionsAsc.map((s) => s.sessionId));
+
+      const signatures: BehaviorKnowledgeSignature[] = signatureRows.map((s) => ({
+        key: s.key,
+        appId: s.appId,
+        actionType: s.actionType,
+        normalizedTarget: s.normalizedTarget,
+        anchorViewId: s.anchorViewId,
+        occurrenceCount: s.occurrenceCount,
+        sessionsSinceSeen: Math.max(0, currentSeq - s.lastSeenSeq),
+        status:
+          currentSeq - s.lastSeenSeq > STALE_AFTER_SESSIONS ? 'stale' : 'active',
+        firstSeenAtSession: s.firstSeenAtSession,
+        lastSeenAtSession: s.lastSeenAtSession,
+        lastSeenSeq: s.lastSeenSeq,
+        consequenceProfile: s.consequenceProfile.map((c) => ({
+          ...c,
+          evidenceSamples: c.evidenceSamples.map((sample) => ({
+            sessionId: sample.sessionId,
+            edgeKey: sample.edgeKey,
+            resolvable: retainedSessions.has(sample.sessionId),
+          })),
+        })),
+        divergenceFlags: [...s.divergenceFlags],
+      }));
+
+      // Gap summary: totals by reason + most recent occurrences.
+      const byReasonMap = new Map<string, number>();
+      for (const g of gapRows) {
+        byReasonMap.set(g.reason, (byReasonMap.get(g.reason) ?? 0) + 1);
+      }
+      const byReason = [...byReasonMap.entries()]
+        .map(([reason, count]) => ({ reason, count }))
+        .sort((a, b) => b.count - a.count || (a.reason < b.reason ? -1 : 1));
+      const recent = [...gapRows]
+        .sort((a, b) => b.observedAtMs - a.observedAtMs)
+        .slice(0, 10)
+        .map((g) => ({
+          sessionId: g.sessionId,
+          gapId: g.gapId,
+          observedKind: g.observedKind,
+          reason: g.reason,
+          detail: g.detail,
+          observedAtMs: g.observedAtMs,
+        }));
+
+      return {
+        appId,
+        behaviorVersion,
+        currentSeq,
+        sessions: sessionsAsc
+          .map((s) => ({
+            sessionId: s.sessionId,
+            seq: s.seq,
+            generatedAtMs: s.generatedAtMs,
+            episodeCount: s.episodeCount,
+            edgeCount: s.edgeCount,
+            gapCount: s.gapCount,
+            signatureSetHash: s.signatureSetHash,
+            viewSetHash: s.viewSetHash,
+          })),
+        signatures,
+        gapSummary: { total: gapRows.length, byReason, recent },
+      };
+    } catch {
+      return null;
     }
   }
 

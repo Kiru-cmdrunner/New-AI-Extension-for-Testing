@@ -19,6 +19,8 @@ import type { ApplicationState } from '../state-builder/types';
 import type { ActionOutcome } from '../outcome/outcome-types';
 import type { StateTransition } from '../state-builder/types';
 import type { RecordedWorkflow } from '../enrichment/semantic-types';
+import type { AppBehaviorModel } from '../behavior-model/model-types';
+import { mapBehaviorModel } from './behavior-knowledge-mapper';
 
 /**
  * Input for persisting a session's knowledge.
@@ -38,6 +40,12 @@ export interface KnowledgePersistenceInput {
   outcomes: ActionOutcome[];
   /** DDC-4: recorded workflow patterns from semantic enrichment. */
   recordedWorkflows?: RecordedWorkflow[];
+  /**
+   * CP6: behavior model from Stage 3.5 (optional — absent on the Stage 7
+   * re-persist call). When present, the session's behavior knowledge is
+   * mapped and persisted as step 11.
+   */
+  behaviorModel?: AppBehaviorModel | null;
 }
 
 /**
@@ -96,6 +104,28 @@ export class KnowledgePersistenceService {
     // 10. Recorded workflows (DDC-4)
     if (input.recordedWorkflows && input.recordedWorkflows.length > 0) {
       await this.persistRecordedWorkflows(appId, input.recordedWorkflows, now);
+    }
+
+    // 11. Behavior knowledge (CP6) — Stage 3.5 model, when present.
+    // Zero-episode models are skipped gracefully (nothing to persist).
+    // Isolation: steps 1–10 already ran in their own implicit transactions,
+    // so this rethrow cannot roll them back; the tagged error surfaces via
+    // the pipeline's Stage 5 catch as a distinguishable warning while
+    // Stages 6–7 proceed unaffected.
+    if (input.behaviorModel && input.behaviorModel.episodes.length > 0) {
+      try {
+        const mapped = mapBehaviorModel({
+          appId,
+          sessionId: input.recordingSessionId,
+          model: input.behaviorModel,
+          transitions: input.transitions,
+        });
+        await this.repo.upsertBehaviorKnowledge(mapped, now);
+      } catch (err) {
+        throw new Error(
+          `behavior-knowledge-persist: ${(err as Error).message}`,
+        );
+      }
     }
   }
 

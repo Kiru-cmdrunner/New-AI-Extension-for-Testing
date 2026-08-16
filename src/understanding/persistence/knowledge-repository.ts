@@ -8,6 +8,7 @@
  */
 
 import type { KnowledgeDatabase } from './knowledge-database';
+import Dexie from 'dexie';
 import type {
   ApplicationRow,
   KnowledgeEntityRow,
@@ -21,13 +22,21 @@ import type {
   KnowledgeStateTransitionRow,
   KnowledgeCounterEntry,
   KnowledgeRecordedWorkflowRow,
+  KnowledgeBehaviorSessionRow,
+  KnowledgeEpisodeRow,
+  KnowledgeEdgeRow,
+  KnowledgeGapRow,
+  KnowledgeActionSignatureRow,
 } from './knowledge-types';
 import {
   MAX_COUNTER_HISTORY,
   MAX_NOTIFICATIONS_PER_APP,
   MAX_TRANSITIONS_PER_SESSION,
   MAX_WORKFLOW_INSTANCES,
+  MAX_BEHAVIOR_SESSIONS_PER_APP,
 } from './knowledge-types';
+import { mergeSignature } from './behavior-knowledge-merge';
+import type { MappedBehaviorRows } from './behavior-knowledge-mapper';
 
 // -- Helpers --
 
@@ -366,6 +375,16 @@ export class KnowledgeRepository {
       .equals(sessionId)
       .toArray();
     await this.db.knowledgeStateTransitions.bulkDelete(transitions.map((t) => t.key));
+
+    // CP6: cascade behavior-knowledge rows for this session (signatures
+    // survive — accumulated knowledge is demoted, not destroyed).
+    const sessions = await this.db.knowledgeBehaviorSessions
+      .where('sessionId')
+      .equals(sessionId)
+      .toArray();
+    for (const s of sessions) {
+      await this.deleteBehaviorSession(s.appId, s.sessionId);
+    }
   }
 
   /**
@@ -382,6 +401,12 @@ export class KnowledgeRepository {
       this.db.knowledgeOutcomes.where('appId').equals(appId).delete(),
       this.db.knowledgeStateTransitions.where('appId').equals(appId).delete(),
       this.db.knowledgeRecordedWorkflows.where('appId').equals(appId).delete(),
+      // CP6: behavior-knowledge stores (full teardown includes signatures).
+      this.db.knowledgeBehaviorSessions.where('appId').equals(appId).delete(),
+      this.db.knowledgeEpisodes.where('appId').equals(appId).delete(),
+      this.db.knowledgeEdges.where('appId').equals(appId).delete(),
+      this.db.knowledgeGaps.where('appId').equals(appId).delete(),
+      this.db.knowledgeSignatures.where('appId').equals(appId).delete(),
       this.db.applications.where('appId').equals(appId).delete(),
     ]);
   }
@@ -410,9 +435,278 @@ export class KnowledgeRepository {
 
     return { entities, views, transitions, collections, counters, notifications, outcomes };
   }
+
+// ── CP6: Behavior knowledge stores (Dexie v3) ─────────────────────────
+
+/**
+ * CP6 — write one session's mapped behavior knowledge atomically.
+ *
+ * CP6 — write one session's mapped behavior knowledge atomically.
+ *
+ * ONE rw transaction over exactly the five new stores:
+ *   1. Manifest idempotency gate — if this sessionId already exists,
+ *      the write is a full NO-OP (replay-safe by construction).
+ *   2. seq assignment INSIDE the transaction ([appId+seq].last() + 1).
+ *   3. put manifest; bulkPut stratum-1 rows.
+ *   4. Load touched signature rows → pure mergeSignature folds, in
+ *      deterministic episode order → bulkPut.
+ *   5. FIFO eviction beyond MAX_BEHAVIOR_SESSIONS_PER_APP (cascade).
+ *
+ * Failure of this transaction cannot roll back persist() steps 1–10
+ * (they run in their own implicit transactions, exactly as today).
+ */
+async upsertBehaviorKnowledge(
+  mapped: MappedBehaviorRows,
+  generatedAtMs: number,
+): Promise<void> {
+  await this.db.transaction(
+    'rw',
+    [
+      this.db.knowledgeBehaviorSessions,
+      this.db.knowledgeEpisodes,
+      this.db.knowledgeEdges,
+      this.db.knowledgeGaps,
+      this.db.knowledgeSignatures,
+    ],
+    async () => {
+      const { session, episodes, edges, gaps, signatureInputs } = mapped;
+
+      // 1. Idempotency gate — replay of a session is a no-op.
+      const manifest = await this.db.knowledgeBehaviorSessions.get(session.key);
+      if (manifest) return;
+
+      // 2. seq assignment INSIDE the transaction: highest existing seq
+      //    for this app, via the compound index range query, +1.
+      const sessionsForApp = await this.db.knowledgeBehaviorSessions
+        .where('[appId+seq]')
+        .between([session.appId, Dexie.minKey], [session.appId, Dexie.maxKey])
+        .toArray();
+      const seq = sessionsForApp.reduce((m, r) => Math.max(m, r.seq), 0) + 1;
+      const finalSession = { ...session, seq, generatedAtMs };
+
+      // 3. Manifest + stratum-1 rows.
+      await this.db.knowledgeBehaviorSessions.put(finalSession);
+      await this.db.knowledgeEpisodes.bulkPut(episodes);
+      await this.db.knowledgeEdges.bulkPut(edges);
+      await this.db.knowledgeGaps.bulkPut(gaps);
+
+      // 4. Stratum-2 merge (episode order = mapper output order). Seq and
+      //    timestamp are injected here — inside the transaction — so
+      //    signature rows never carry a stale sequence number.
+      const sigRows = new Map<string, KnowledgeActionSignatureRow>();
+      for (const input of signatureInputs) {
+        const existing =
+          sigRows.get(input.key) ??
+          (await this.db.knowledgeSignatures.get(input.key));
+        const merged = mergeSignature(existing, {
+          ...input,
+          sessionSeq: seq,
+          generatedAtMs,
+        });
+        sigRows.set(input.key, merged);
+      }
+      await this.db.knowledgeSignatures.bulkPut([...sigRows.values()]);
+
+      // 5. FIFO eviction (cascade) beyond the bound.
+      await this.evictOldestBehaviorSessions(session.appId);
+    },
+  );
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────
+/** CP6 — read one behavior session manifest. */
+async getBehaviorSession(
+  appId: string,
+  sessionId: string,
+): Promise<KnowledgeBehaviorSessionRow | undefined> {
+  return this.db.knowledgeBehaviorSessions.get(`${appId}:${sessionId}`);
+}
+
+/** CP6 — recent behavior sessions, newest seq first. */
+async getRecentBehaviorSessions(
+  appId: string,
+  limit = 10,
+): Promise<KnowledgeBehaviorSessionRow[]> {
+  const rows = await this.db.knowledgeBehaviorSessions
+    .where('appId')
+    .equals(appId)
+    .toArray();
+  return rows.sort((a, b) => b.seq - a.seq).slice(0, limit);
+}
+
+/** CP6 — episodes of one session. */
+async getEpisodesBySession(
+  appId: string,
+  sessionId: string,
+): Promise<KnowledgeEpisodeRow[]> {
+  return this.db.knowledgeEpisodes
+    .where('[appId+sessionId]')
+    .equals([appId, sessionId])
+    .toArray();
+}
+
+/** CP6 — edges of one session. */
+async getEdgesBySession(
+  appId: string,
+  sessionId: string,
+): Promise<KnowledgeEdgeRow[]> {
+  return this.db.knowledgeEdges
+    .where('[appId+sessionId]')
+    .equals([appId, sessionId])
+    .toArray();
+}
+
+/** CP6 — gaps, optionally filtered by session and/or reason. */
+async getGaps(
+  appId: string,
+  query: { sessionId?: string; reason?: string } = {},
+): Promise<KnowledgeGapRow[]> {
+  if (query.sessionId) {
+    const rows = await this.db.knowledgeGaps
+      .where('[appId+sessionId]')
+      .equals([appId, query.sessionId])
+      .toArray();
+    return query.reason ? rows.filter((r) => r.reason === query.reason) : rows;
+  }
+  if (query.reason) {
+    return this.db.knowledgeGaps
+      .where('[appId+reason]')
+      .equals([appId, query.reason])
+      .toArray();
+  }
+  const rows = await this.db.knowledgeGaps.where('appId').equals(appId).toArray();
+  return rows.sort((a, b) => a.observedAtMs - b.observedAtMs);
+}
+
+/** CP6 — one signature row. */
+async getSignature(key: string): Promise<KnowledgeActionSignatureRow | undefined> {
+  return this.db.knowledgeSignatures.get(key);
+}
+
+/** CP6 — all signatures for an app, most recently seen first. */
+async getSignatures(appId: string): Promise<KnowledgeActionSignatureRow[]> {
+  const rows = await this.db.knowledgeSignatures
+    .where('appId')
+    .equals(appId)
+    .toArray();
+  return rows.sort(
+    (a, b) =>
+      b.lastSeenSeq - a.lastSeenSeq ||
+      (a.key < b.key ? -1 : a.key > b.key ? 1 : 0),
+  );
+}
+
+/**
+ * CP6 — signature search (index + in-memory filter; documented R5 — no
+ * substring index in Dexie, fine at knowledge-layer scale).
+ */
+async searchSignatures(
+  appId: string,
+  filter: { actionType?: string; targetIncludes?: string; status?: 'active' | 'stale' },
+): Promise<KnowledgeActionSignatureRow[]> {
+  let rows: KnowledgeActionSignatureRow[];
+  if (filter.actionType) {
+    rows = await this.db.knowledgeSignatures
+      .where('[appId+actionType]')
+      .equals([appId, filter.actionType])
+      .toArray();
+  } else {
+    rows = await this.db.knowledgeSignatures.where('appId').equals(appId).toArray();
+  }
+  let filtered = rows;
+  if (filter.status) filtered = filtered.filter((r) => r.status === filter.status);
+  if (filter.targetIncludes) {
+    const needle = filter.targetIncludes.toLowerCase();
+    filtered = filtered.filter((r) => r.normalizedTarget.includes(needle));
+  }
+  return filtered.sort(
+    (a, b) =>
+      b.lastSeenSeq - a.lastSeenSeq ||
+      (a.key < b.key ? -1 : a.key > b.key ? 1 : 0),
+  );
+}
+
+/**
+ * CP6 — FIFO eviction with cascade: delete the oldest session's manifest +
+ * episodes + edges + gaps. Signatures are NEVER deleted (knowledge is
+ * demoted, not destroyed); evicted sessions' evidence samples degrade at
+ * read time (R7).
+ */
+async evictOldestBehaviorSessions(
+  appId: string,
+  keep = MAX_BEHAVIOR_SESSIONS_PER_APP,
+): Promise<void> {
+  const sessions = await this.db.knowledgeBehaviorSessions
+    .where('appId')
+    .equals(appId)
+    .toArray();
+  const excess = sessions
+    .sort((a, b) => a.seq - b.seq)
+    .slice(0, Math.max(0, sessions.length - keep));
+  for (const s of excess) {
+    await this.db.knowledgeBehaviorSessions.delete(s.key);
+    await this.db.knowledgeEpisodes
+      .where('[appId+sessionId]')
+      .equals([s.appId, s.sessionId])
+      .delete();
+    await this.db.knowledgeEdges
+      .where('[appId+sessionId]')
+      .equals([s.appId, s.sessionId])
+      .delete();
+    await this.db.knowledgeGaps
+      .where('[appId+sessionId]')
+      .equals([s.appId, s.sessionId])
+      .delete();
+  }
+}
+
+/**
+ * CP6 — read-repair: delete stratum-1 rows whose session manifest is
+ * missing (orphaned writes from a torn transaction). Bounded query.
+ * Signatures untouched — knowledge outlives its evidence (R7).
+ */
+async sweepOrphans(appId: string): Promise<number> {
+  const manifests = await this.db.knowledgeBehaviorSessions
+    .where('appId')
+    .equals(appId)
+    .toArray();
+  const known = new Set(manifests.map((m) => m.sessionId));
+  let removed = 0;
+  for (const table of [
+    this.db.knowledgeEpisodes,
+    this.db.knowledgeEdges,
+    this.db.knowledgeGaps,
+  ] as const) {
+    const rows = await table.where('appId').equals(appId).toArray();
+    const orphans = rows.filter((r) => !known.has(r.sessionId));
+    for (const o of orphans) {
+      await table.delete(o.key);
+      removed++;
+    }
+  }
+  return removed;
+}
+
+/**
+ * CP6 — cascade session delete: remove manifest + episodes + edges + gaps
+ * for one session. Signatures survive (accumulated knowledge, R2).
+ */
+async deleteBehaviorSession(appId: string, sessionId: string): Promise<void> {
+  await this.db.knowledgeBehaviorSessions.delete(`${appId}:${sessionId}`);
+  await this.db.knowledgeEpisodes
+    .where('[appId+sessionId]')
+    .equals([appId, sessionId])
+    .delete();
+  await this.db.knowledgeEdges
+    .where('[appId+sessionId]')
+    .equals([appId, sessionId])
+    .delete();
+  await this.db.knowledgeGaps
+    .where('[appId+sessionId]')
+    .equals([appId, sessionId])
+    .delete();
+}
+
+}
 
 /**
  * Merge two state histories, appending only transitions from `incoming`

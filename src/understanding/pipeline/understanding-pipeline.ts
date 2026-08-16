@@ -391,6 +391,10 @@ export class UnderstandingPipeline {
     if (this.persistenceService && finalState) {
       try {
         // DDC-3: enriched outcomes (click-attribution pass) are persisted.
+        // CP6: Stage 3.5 behavior model persists here (step 11) — passed
+        // ONLY on this Stage 5 call; the Stage 7 re-persist omits it, and
+        // the session-manifest idempotency gate covers accidental
+        // double-pass regardless.
         await this.persistenceService.persist({
           origin: input.origin,
           projectId: appId,
@@ -398,6 +402,7 @@ export class UnderstandingPipeline {
           applicationState: finalState,
           transitions,
           outcomes: [...outcomes.values()],
+          behaviorModel,
         });
       } catch (e) {
         warnings.push(`knowledge-persistence: ${(e as Error).message}`);
