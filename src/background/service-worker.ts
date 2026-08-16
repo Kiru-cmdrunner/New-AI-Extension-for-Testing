@@ -52,6 +52,10 @@ import {
   getNetworkEvidenceForNavigation,
   getAttributionLedger,
 } from '../background/network-observation';
+import {
+  recordPendingNavCapture,
+  consumePendingNavCapture,
+} from '../background/post-nav-capture';
 import type { NavigationEvidence, NetworkActivity } from '../shared/behavioral-evidence-types';
 
 // ── Singletons ──────────────────────────────────────────────────────────
@@ -920,9 +924,37 @@ function broadcastExecutionResult(
 const lastCommittedUrls = new Map<number, string>();
 const MAX_TRACKED_TABS = 50;
 
+// NAV pull model: transition types that replace the document (content
+// script destroyed). Must match the fullReloadTypes list used below for
+// synthetic evidence — hoisted so the pre-await pendingNavCapture write can
+// use the same guard without duplicating the literal list.
+const FULL_RELOAD_TRANSITION_TYPES = ['reload', 'form_submit', 'auto_toplevel', 'auto_subframe', 'link', 'typed'];
+
 chrome.webNavigation.onCommitted.addListener(async (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
   // Only capture main frame navigations
   if (details.frameId !== 0) return;
+
+  // NAV pull model — record SYNCHRONOUSLY, before ANY await
+  // (.drytis/specs/post-nav-evidence-capture.md, AC2-race): the destination
+  // page's content script is injected at document_start and pulls
+  // (NAV_PENDING_REQUEST) in the same tick as the commit it belongs to. If
+  // this record is written after even one await (session restore, tabs.get),
+  // the CS pull can arrive first, read null, and never retry — the
+  // placeholder would silently stand forever. Recording-active check is
+  // deferred to the async tail below; a stale record for a non-recording
+  // tab is harmless (bounded map + 30s TTL + consume-on-pull), and the CS
+  // only pulls when its sessionStorage recording flag says recording.
+  const navPullEventId = `nav-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const isFullReload = FULL_RELOAD_TRANSITION_TYPES.includes(details.transitionType);
+  if (isFullReload) {
+    recordPendingNavCapture(details.tabId, {
+      navEventId: navPullEventId,
+      fromUrl: lastCommittedUrls.get(details.tabId) ?? '',
+      toUrl: details.url,
+      navType: details.transitionType,
+      committedAt: Date.now(),
+    });
+  }
 
   await ensureSessionRestored();
 
@@ -950,7 +982,7 @@ chrome.webNavigation.onCommitted.addListener(async (details: chrome.webNavigatio
 
   // Create a navigation ObservedEvent and process it
   const navEvent: ObservedEvent = {
-    eventId: `nav-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    eventId: navPullEventId,
     eventType: 'navigation' as any,
     timestamp: Date.now(),
     captureSeq: performance.now(),
@@ -1015,8 +1047,7 @@ chrome.webNavigation.onCommitted.addListener(async (details: chrome.webNavigatio
   //
   // transitionType 'reload', 'auto_subframe', 'form_submit' indicate the
   // page is being replaced — content script destroyed.
-  const fullReloadTypes = ['reload', 'form_submit', 'auto_toplevel', 'auto_subframe', 'link', 'typed'];
-  if (fullReloadTypes.includes(details.transitionType)) {
+  if (FULL_RELOAD_TRANSITION_TYPES.includes(details.transitionType)) {
     // CER-2: Tag in-flight requests from the destroyed document with this
     // navEvent — lifecycle membership (started, not finished), not timestamps.
     snapshotInFlightForTab(details.tabId, navEvent.eventId);
@@ -1029,6 +1060,28 @@ chrome.webNavigation.onCommitted.addListener(async (details: chrome.webNavigatio
     // which reads the ring buffer THEN (by then onCompleted has fired) —
     // so late completions are not lost.
     attachSyntheticNavEvidence(navEvent.eventId, details, previousCommittedUrl);
+
+    // NAV pull model (.drytis/specs/post-nav-evidence-capture.md): the
+    // destination page's content script pulls the commit record
+    // (NAV_PENDING_REQUEST) after auto-resume and opens a post-navigation
+    // evidence window attributed to navEventId — capturing the destination
+    // DOM/surface/visibility churn that the full reload previously
+    // destroyed. If never pulled, the record simply expires and the
+    // placeholder above stands. The record was already written
+    // synchronously at the top of this listener (pre-await) with the same
+    // navPullEventId — this branch just re-confirms it with the canonical
+    // navEvent once title/URL bookkeeping is complete (idempotent overwrite,
+    // same shape; the CS may already have pulled the early record — both
+    // carry the identical navEventId so attachment is exactly-once).
+    if (navPullEventId === navEvent.eventId) {
+      recordPendingNavCapture(details.tabId, {
+        navEventId: navEvent.eventId,
+        fromUrl: previousCommittedUrl,
+        toUrl: details.url,
+        navType: details.transitionType,
+        committedAt: Date.now(),
+      });
+    }
   }
 });
 
@@ -1481,6 +1534,21 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
       handleBehavioralEvidence(msg.payload);
       sendResponse({ ok: true });
       return true;
+    }
+
+    case 'NAV_PENDING_REQUEST': {
+      // NAV pull model: the destination page's content script asks for the
+      // pending full-reload navigation record for ITS tab. Consume-on-pull
+      // (exactly-once per navigation). No record → null (SPA nav, already
+      // pulled, expired TTL, or no full-reload commit) — the caller keeps
+      // the placeholder. Async response.
+      if (_sender?.tab?.id == null) {
+        sendResponse({ type: 'NAV_PENDING_RESPONSE', payload: null });
+        return false;
+      }
+      const record = consumePendingNavCapture(_sender.tab.id);
+      sendResponse({ type: 'NAV_PENDING_RESPONSE', payload: record });
+      return false;
     }
 
     default:

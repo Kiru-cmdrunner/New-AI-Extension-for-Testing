@@ -551,6 +551,11 @@ export type AppMessage =
   // ── Behavioral Evidence Model (v3.0) ──
   | { type: 'BEHAVIORAL_EVIDENCE'; payload: import('./behavioral-evidence-types').BehavioralEvidence }
   | { type: 'INTERACTION_EVIDENCE_UPDATE'; payload: { interactionId: string; evidence: import('./behavioral-evidence-types').BehavioralEvidence } }
+  // ── Post-Navigation Capture (NAV pull model) ──
+  // CS → SW: destination page asks for this tab's pending full-reload nav record
+  | { type: 'NAV_PENDING_REQUEST' }
+  // SW → CS: the record, or null when absent/consumed/expired
+  | { type: 'NAV_PENDING_RESPONSE'; payload: import('./post-nav-types').PostNavCaptureRecord | null }
   // ── Lifecycle-Driven Evidence (v3.1) ──
   // SW → CS: a semantic interaction lifecycle has started
   | {
@@ -597,6 +602,8 @@ export function isAppMessage(value: unknown): value is AppMessage {
       'OBSERVED_EVENT',
       'BEHAVIORAL_EVIDENCE',
       'INTERACTION_EVIDENCE_UPDATE',
+      'NAV_PENDING_REQUEST',
+      'NAV_PENDING_RESPONSE',
       'LIFECYCLE_BOUND',
       'FINALIZE_EVIDENCE',
     ].includes(msg['type'])

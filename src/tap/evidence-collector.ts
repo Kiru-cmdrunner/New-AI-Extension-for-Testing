@@ -45,7 +45,8 @@ import { DOMObserver } from './dom-observer';
 import { AdaptiveWindow } from './adaptive-window';
 import type { NetworkActivity } from '../shared/behavioral-evidence-types';
 import type { NetworkBridge } from './network-bridge';
-import { captureValue } from './identity-extractor';
+import type { PostNavCaptureRecord } from '../shared/post-nav-types';
+import { captureValue, extractIdentity } from './identity-extractor';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
@@ -83,6 +84,16 @@ const MAX_DOM_CHANGES = 200;
 /** SessionStorage key for evidence buffer (SW restart recovery). */
 const EVIDENCE_BUFFER_KEY = 'cmdrunner_evidence_buffer';
 const MAX_EVIDENCE_BUFFER = 50;
+
+/**
+ * Post-navigation window bounds (NAV pull model).
+ * POST_NAV_MAX_DURATION_MS is passed to AdaptiveWindow as maxDuration — a
+ * hard cap independent of mutation churn (spec AC2). POST_NAV_BODY_WAIT_MS
+ * bounds how long the collector waits for document.body after a
+ * document_start injection before giving up (placeholder stands).
+ */
+const POST_NAV_MAX_DURATION_MS = 3000;
+const POST_NAV_BODY_WAIT_MS = 10_000;
 
 /** Event types that open evidence windows. */
 const WINDOW_OPEN_EVENTS = new Set([
@@ -170,6 +181,14 @@ interface ObservationWindowState {
   isClosed: boolean;
   /** Whether this is a navigation-triggered window. */
   isNavigationWindow: boolean;
+  /**
+   * Fix Pair 2+4 (INV-C2): whether this is the dedicated post-navigation
+   * capture window (openPostNavWindow). Such a window is finalized ONLY by
+   * its own AdaptiveWindow (stabilization / 3s hard cap), pagehide, or
+   * recording stop — never by generic FINALIZE_EVIDENCE matching and never
+   * held open by handleLifecycleBound.
+   */
+  isPostNavWindow: boolean;
   /** In-flight network requests at window close time (for bounded re-check). */
   inflightNetworkUrls: Set<string>;
   /**
@@ -221,6 +240,13 @@ export class EvidenceCollector {
 
   /** Last known URL for navigation fromUrl tracking (GAP-4). */
   private lastKnownUrl: string = '';
+
+  /**
+   * NAV pull model: navEventIds for which a post-navigation window was
+   * already requested in this document (exactly-once guard, spec AC3).
+   * Entries are `opened:<id>` once the window actually opened.
+   */
+  private postNavOpenedFor = new Set<string>();
 
   /** Network bridge for collecting network activity (M6). */
   private networkBridge: NetworkBridge | null = null;
@@ -365,6 +391,7 @@ export class EvidenceCollector {
     eventType: string,
     identity: ElementIdentity | null = null,
     observedEvent: ObservedEvent | null = null,
+    maxDurationMs?: number,
   ): void {
     // Enforce max concurrent windows with displacement
     this.enforceMaxConcurrent();
@@ -374,7 +401,19 @@ export class EvidenceCollector {
       this.domObserver.start();
     }
     this.domObserverRefcount++;
-    this.domObserver.clearAccumulated();
+    // Fix Pair 2 (INV-C1): the shared accumulation clears only at a TRUE
+    // boundary — when the window being opened is the only live window.
+    // A second window opening while another is still open (Amazon's native
+    // form 'submit' firing ~40-80ms after the add-to-cart 'click') must NOT
+    // wipe the churn the first window accumulated and will drain at its
+    // 150ms lifecycle finalize. Attribution/lifecycle semantics are
+    // unchanged: overlapping windows simply share the accumulated
+    // DOM/surface/visibility summaries (bounded by the caps + Tier-1
+    // exact-id attach + richness replace upstream).
+    const otherLiveWindows = this.activeWindows.some((w) => !w.isClosed);
+    if (!otherLiveWindows) {
+      this.domObserver.clearAccumulated();
+    }
 
     // Peek TargetStateCache for before snapshot
     // Fix Round 6: For typing (input) windows, the cache might not have a
@@ -408,6 +447,7 @@ export class EvidenceCollector {
       onClose: (evidenceWindow) => {
         this.closeWindow(windowId, evidenceWindow);
       },
+      ...(maxDurationMs !== undefined ? { maxDuration: maxDurationMs } : {}),
     });
 
     const state: ObservationWindowState = {
@@ -422,6 +462,7 @@ export class EvidenceCollector {
       navEvents: [],
       isClosed: false,
       isNavigationWindow: false,
+      isPostNavWindow: false,
       inflightNetworkUrls: new Set(),
       observedEvent, // P1-3 fix: store ObservedEvent for valueBefore/valueAfter fallback
       lifecycleId: null,
@@ -447,6 +488,89 @@ export class EvidenceCollector {
         adaptiveWindow.recordMutation(batchIndex);
       }
     });
+  }
+
+  /**
+   * Open a post-navigation evidence window (NAV pull model).
+   *
+   * Called by the recorder entry after auto-resume on the DESTINATION page
+   * of a full-page navigation, with the SW-provided capture record. The
+   * window is attributed to the navEventId (the synthetic navigation
+   * interaction's triggerEvent.eventId), so delivered evidence attaches to
+   * the Navigation interaction — never to the preceding click/typing
+   * interaction.
+   *
+   * Differences from openWindow:
+   *  - Waits for document.body (DOMObserver can only observe a live body;
+   *    at document_start it is still null).
+   *  - Exactly-once per document for a given navEventId (duplicate pulls or
+   *    duplicate calls are no-ops).
+   *  - Bounded hard cap POST_NAV_MAX_DURATION_MS regardless of churn —
+   *    lifecycle bindings must NOT hold this window open (its lifecycle is
+   *    the navigation itself, already committed).
+   *  - Seeds the navigation entry from the SW record so the delivered
+   *    evidence re-includes it (the richness-replacement path does not
+   *    carry the placeholder's navigation array over).
+   */
+  openPostNavWindow(record: PostNavCaptureRecord): void {
+    if (!this.isRunning) return;
+    if (this.postNavOpenedFor.has(record.navEventId)) return;
+    this.postNavOpenedFor.add(record.navEventId);
+
+    const open = (): void => {
+      // Re-check running: the await may have raced a STOP.
+      if (!this.isRunning || document.body === null) return;
+      if (this.postNavOpenedFor.has(`opened:${record.navEventId}`)) return;
+      this.postNavOpenedFor.add(`opened:${record.navEventId}`);
+
+      const targetEl = document.body;
+      // Navigation identity — enriched like emitSpaNavigation's, so the
+      // delivered evidence carries a meaningful identity for the document.
+      const navIdentity: ElementIdentity = {
+        ...extractIdentity(targetEl),
+        accessibleName: record.toUrl,
+        ariaLabel: `Navigation to ${record.toUrl}`,
+        href: record.toUrl,
+        ariaRole: extractIdentity(targetEl).ariaRole ?? 'document',
+      };
+      const navEntry: NavigationEvidence = {
+        type: record.navType as NavigationEvidence['type'],
+        fromUrl: record.fromUrl,
+        toUrl: record.toUrl,
+        relativeTime: performance.now(),
+        batchIndex: this.domObserver.getBatchCounter(),
+      };
+
+      this.openWindow(targetEl, record.navEventId, 'navigation', navIdentity, null, POST_NAV_MAX_DURATION_MS);
+      const navWin = this.activeWindows[this.activeWindows.length - 1];
+      if (navWin && !navWin.isClosed) {
+        navWin.isNavigationWindow = true;
+        navWin.isPostNavWindow = true; // Fix Pair 4 (INV-C2)
+        // The post-nav window's lifecycle is the navigation itself (already
+        // committed) — it must never be held open by lifecycle bindings, or
+        // the hard cap would be disabled (spec AC2).
+        navWin.isLifecycleBound = false;
+        navWin.adaptiveWindow.setHoldOpen(false);
+        navWin.navEvents.push(navEntry);
+      }
+    };
+
+    if (document.body !== null) {
+      open();
+      return;
+    }
+
+    // Body not yet parsed — wait for it (DOMContentLoaded at the latest).
+    const startedAt = performance.now();
+    const tryOpen = (): void => {
+      if (document.body !== null) {
+        open();
+        return;
+      }
+      if (performance.now() - startedAt > POST_NAV_BODY_WAIT_MS) return; // give up silently — placeholder stands
+      setTimeout(tryOpen, 50);
+    };
+    setTimeout(tryOpen, 50);
   }
 
   /**
@@ -722,7 +846,10 @@ export class EvidenceCollector {
     }
 
     // Clear accumulated data for next window
-    this.domObserver.clearAccumulated();
+    // Fix Pair 2 (INV-C1): true-boundary rule — only clear when this was the
+    // last live window. Otherwise a later submit-window close would wipe the
+    // shared accumulation an earlier click window still depends on.
+    this.clearAccumulatedIfBoundary(windowId);
   }
 
   /**
@@ -1090,8 +1217,15 @@ export class EvidenceCollector {
     );
     if (window) {
       window.lifecycleId = payload.lifecycleId;
-      window.isLifecycleBound = true;
-      window.adaptiveWindow.setHoldOpen(true);
+      // Fix Pair 4 (INV-C2): the dedicated post-navigation window must never
+      // be held open by a lifecycle binding — its lifecycle IS the navigation
+      // (already committed). Holding it open would disable the 3s hard cap
+      // (setHoldOpen clears the max-duration timer), leaving the window open
+      // until recording stop.
+      if (!window.isPostNavWindow) {
+        window.isLifecycleBound = true;
+        window.adaptiveWindow.setHoldOpen(true);
+      }
     }
   }
 
@@ -1112,6 +1246,29 @@ export class EvidenceCollector {
   }): void {
     // Clear the lifecycle binding
     this.lifecycleBindings.delete(payload.lifecycleId);
+
+    // Fix Pair 4 (INV-C2): a dedicated post-navigation window is finalized
+    // ONLY by its own AdaptiveWindow (stabilization / 3s hard cap), pagehide,
+    // or recording stop. The Navigation definition completes immediately on
+    // trigger, so its FINALIZE_EVIDENCE arrives ~150ms into the destination
+    // page's churn — matching it here cut the post-nav window off early
+    // (observed: lifecycle-complete @154ms instead of the designed settle).
+    // A given eventId opens at most one window (windowId is `ev-${eventId}`),
+    // so "a matching window is post-nav" ⇒ the payload targets the post-nav
+    // window and nothing else.
+    const matchesPostNavWindow = this.activeWindows.some(
+      (w) => !w.isClosed && w.isPostNavWindow && payload.eventIds.includes(w.sourceEventId),
+    );
+    if (matchesPostNavWindow) {
+      // Early return — do NOT run finalizeWithoutWindow for this payload:
+      // that path emits a synthetic 0-richness evidence whose only content
+      // is nav metadata, which can never win the richness-replace attach and
+      // would at best deliver nothing and at worst race the real post-nav
+      // window. The synthetic-navigation placeholder (SW-side) remains the
+      // fallback if the destination content script never captures evidence.
+      // Companion suppression stays unset — no lifecycle finalize happened.
+      return;
+    }
 
     // Find matching windows by event ID
     const matchingWindows = this.activeWindows.filter(
@@ -1517,7 +1674,25 @@ export class EvidenceCollector {
       this.domObserverRefcount--;
     }
 
-    this.domObserver.clearAccumulated();
+    // Fix Pair 2 (INV-C1): same true-boundary rule as closeWindow — while
+    // another window still lives, its accumulation must survive this close.
+    this.clearAccumulatedIfBoundary(win.windowId);
+  }
+
+  /**
+   * Fix Pair 2 (INV-C1): clear the shared DOM/surface/visibility
+   * accumulation only at a true boundary — after the window identified by
+   * `closedWindowId` has been removed, when no other live window remains to
+   * drain it. Called from every close path (closeWindow tail, cleanupWindow)
+   * and from openWindow (guarded there by "is this the only live window").
+   */
+  private clearAccumulatedIfBoundary(closedWindowId: string): void {
+    const stillOpen = this.activeWindows.some(
+      (w) => !w.isClosed && w.windowId !== closedWindowId,
+    );
+    if (!stillOpen) {
+      this.domObserver.clearAccumulated();
+    }
   }
 
   /**

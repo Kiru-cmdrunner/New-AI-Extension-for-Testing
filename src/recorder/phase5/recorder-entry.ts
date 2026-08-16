@@ -391,7 +391,16 @@ window.addEventListener('pagehide', () => {
  */
 window.addEventListener('pageshow', () => {
   if (sessionStorage.getItem(RECORDING_KEY) === 'true') {
-    startRecording();
+    // startRecording is async: evidenceCollector only exists after its
+    // internal awaits settle. Pull AFTER it resolves — pullPendingNavCapture
+    // no-ops when the collector is still null.
+    void startRecording().then(() => {
+      // bfcache restore: the script was NOT re-evaluated, but if this page is
+      // itself a destination document whose pull never ran (SW was suspended),
+      // try the pull now. openPostNavWindow's per-navEventId guard makes this
+      // safe; a bfcache page whose nav already pulled is a no-op.
+      pullPendingNavCapture();
+    });
   }
 });
 
@@ -402,5 +411,40 @@ window.addEventListener('pageshow', () => {
  * recording was active, resume immediately.
  */
 if (sessionStorage.getItem(RECORDING_KEY) === 'true') {
-  startRecording();
+  // NAV pull model (.drytis/specs/post-nav-evidence-capture.md): ask the
+  // SW for this tab's pending full-reload navigation record. If present,
+  // open a post-navigation evidence window attributed to the navEventId —
+  // the destination page's DOM churn lands on the Navigation interaction,
+  // replacing its commit-time placeholder. If absent (SPA nav, no reload,
+  // already pulled, expired), this document contributes nothing — the
+  // placeholder stands.
+  //
+  // startRecording is async and evidenceCollector is assigned only after
+  // its internal awaits (flushPendingEvents) — pulling in the same tick
+  // would read evidenceCollector === null and silently skip. Await, then
+  // pull.
+  void startRecording().then(() => {
+    pullPendingNavCapture();
+  });
+}
+
+/**
+ * Pull the SW's pending full-reload navigation record for this tab and, if
+ * found, open the post-navigation evidence window. Per-document guard is
+ * inside openPostNavWindow (exactly-once per navEventId); the pull is
+ * race-free because the CS initiates it (the reply wakes the MV3 SW).
+ */
+function pullPendingNavCapture(): void {
+  if (!evidenceCollector) return;
+  try {
+    chrome.runtime.sendMessage({ type: 'NAV_PENDING_REQUEST' }, (response) => {
+      if (chrome.runtime.lastError) return; // SW unavailable — placeholder stands
+      const record = (response as { payload?: unknown } | undefined)?.payload;
+      if (record && typeof record === 'object' && 'navEventId' in record) {
+        evidenceCollector?.openPostNavWindow(record as import('../../shared/post-nav-types').PostNavCaptureRecord);
+      }
+    });
+  } catch {
+    // Extension context invalidated mid-navigation — placeholder stands.
+  }
 }
