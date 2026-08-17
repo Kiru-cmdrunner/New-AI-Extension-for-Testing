@@ -300,4 +300,59 @@ describe('CP6 behavior-knowledge-mapper', () => {
     } as never;
     expect(consequenceTargetIdentity(edge)).toBe('POST /cart/add');
   });
+
+  // ── CP7 P2 — unparsed api detail fallback (no collapse sink) ─────────
+  it('P2: unparsed api detail → api:unparsed:<hash>, never the constant "api"', () => {
+    const edge = {
+      kind: 'api',
+      tier: 'T1-stamp',
+      to: { type: 'api', requestId: 'r-1' },
+      detail: 'custom-format /cart/add?x=1 initiated during ep-9',
+    } as never;
+    const identity = consequenceTargetIdentity(edge);
+    expect(identity).toMatch(/^api:unparsed:[0-9a-f]{8}$/);
+    expect(identity).not.toBe('api');
+  });
+
+  it('P2: same unparsed endpoint via different episodes → SAME identity (merge-safe)', () => {
+    const mk = (ep: string) => ({
+      kind: 'api',
+      tier: 'T1-stamp',
+      to: { type: 'api', requestId: 'r-1' },
+      detail: `custom-format /cart/add?x=1 initiated during ${ep}`,
+    } as never);
+    expect(consequenceTargetIdentity(mk('ep-9'))).toBe(
+      consequenceTargetIdentity(mk('ep-int-402')),
+    );
+  });
+
+  it('P2: distinct unparsed details → DISTINCT identities (no silent merge)', () => {
+    const mk = (url: string) => ({
+      kind: 'api',
+      tier: 'T1-stamp',
+      to: { type: 'api', requestId: 'r-1' },
+      detail: `custom-format ${url} initiated during ep-9`,
+    } as never);
+    expect(consequenceTargetIdentity(mk('/cart/add'))).not.toBe(
+      consequenceTargetIdentity(mk('/checkout/pay')),
+    );
+  });
+
+  // ── CP7 P3 — entity colon guard ──────────────────────────────────────
+  it('P3: colon-less entityId degrades to unknown:<op>, never mis-parses', () => {
+    const edge = {
+      kind: 'entity',
+      tier: 'T1-stamp',
+      to: { type: 'entity', entityId: 'B0FFF9VPMN', operation: 'create' },
+      detail: 'entity created during ep-1',
+    } as never;
+    expect(consequenceTargetIdentity(edge)).toBe('unknown:create');
+  });
+
+  it('P3: existing identities byte-identical after the guard (fixture regression)', () => {
+    const mapped = mapBehaviorModel({ appId: 'app-1', sessionId: 's1', model: makeModelFixture(), transitions: makeTransitions() });
+    const identities = mapped.signatureInputs[0].consequences.map((c) => c.identity);
+    expect(identities).toContain('T1-stamp|api|POST /cart/add');
+    expect(identities).toContain('T1-stamp|entity|cart-item:create');
+  });
 });

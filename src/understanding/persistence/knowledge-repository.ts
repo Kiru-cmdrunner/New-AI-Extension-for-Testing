@@ -34,6 +34,7 @@ import {
   MAX_TRANSITIONS_PER_SESSION,
   MAX_WORKFLOW_INSTANCES,
   MAX_BEHAVIOR_SESSIONS_PER_APP,
+  STALE_AFTER_SESSIONS,
 } from './knowledge-types';
 import { mergeSignature } from './behavior-knowledge-merge';
 import type { MappedBehaviorRows } from './behavior-knowledge-mapper';
@@ -598,6 +599,17 @@ async getSignatures(appId: string): Promise<KnowledgeActionSignatureRow[]> {
 /**
  * CP6 — signature search (index + in-memory filter; documented R5 — no
  * substring index in Dexie, fine at knowledge-layer scale).
+ *
+ * `status` semantics (CP7 P1): the stored `status`/`sessionsSinceSeen`
+ * mean "as of LAST observation" — a merge always writes 'active' because
+ * the folding session observed the signature. The EFFECTIVE status is
+ * relative to the app's current seq (which advances via other
+ * signatures' sessions) and is therefore computed read-time, using the
+ * loader's exact formula. Stored status is never trusted here.
+ *
+ * Seq monotonicity: eviction is FIFO (oldest first), so the max-seq
+ * manifest is never evicted while newer ones exist — the in-transaction
+ * `max+1` assignment can never reuse a seq.
  */
 async searchSignatures(
   appId: string,
@@ -613,7 +625,22 @@ async searchSignatures(
     rows = await this.db.knowledgeSignatures.where('appId').equals(appId).toArray();
   }
   let filtered = rows;
-  if (filter.status) filtered = filtered.filter((r) => r.status === filter.status);
+  if (filter.status) {
+    // Read-time effective status (loader formula): 'stale' once the
+    // signature's last observed seq trails the app's current seq by more
+    // than STALE_AFTER_SESSIONS. currentSeq = max retained manifest seq.
+    const sessions = await this.db.knowledgeBehaviorSessions
+      .where('appId')
+      .equals(appId)
+      .toArray();
+    if (sessions.length === 0) return [];
+    const currentSeq = Math.max(...sessions.map((s) => s.seq));
+    filtered = filtered.filter((r) => {
+      const effective: 'active' | 'stale' =
+        currentSeq - r.lastSeenSeq > STALE_AFTER_SESSIONS ? 'stale' : 'active';
+      return effective === filter.status;
+    });
+  }
   if (filter.targetIncludes) {
     const needle = filter.targetIncludes.toLowerCase();
     filtered = filtered.filter((r) => r.normalizedTarget.includes(needle));

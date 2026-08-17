@@ -394,6 +394,52 @@ describe('CP6 behavior knowledge repository', () => {
     expect(atc?.sessionsSinceSeen).toBe(STALE_AFTER_SESSIONS + 1);
   });
 
+  // ── CP7 P1 — searchSignatures read-time status filter ────────────────
+  it('P1: searchSignatures({status:"stale"}) finds signatures aged past STALE_AFTER_SESSIONS despite stored "active"', async () => {
+    // Signature A ("add to cart") seen only in s1; sessions s2..s12 observe
+    // a DIFFERENT signature B ("different button") → A's stored status is
+    // still 'active' (as of last observation) but its effective status is
+    // stale (currentSeq 12 − lastSeenSeq 1 > STALE_AFTER_SESSIONS).
+    await persistSession('s1', makeModel(), 1000);
+    for (let i = 2; i <= STALE_AFTER_SESSIONS + 2; i++) {
+      const m = makeModel({ withCartApi: false, id: `abm-${i}` });
+      m.episodes[0].anchor.actionTarget = 'Different Button';
+      await persistSession(`s${i}`, m, 1000 * i);
+    }
+    const stale = await repo.searchSignatures(APP, { status: 'stale' });
+    expect(stale.map((s) => s.normalizedTarget)).toEqual(['add to cart']);
+    const active = await repo.searchSignatures(APP, { status: 'active' });
+    expect(active.map((s) => s.normalizedTarget)).toEqual(['different button']);
+    const all = await repo.searchSignatures(APP, {});
+    expect(all).toHaveLength(2);
+    // Loader agreement: read model computes the same effective statuses.
+    const loader = new KnowledgeLoader(repo);
+    const bk = await loader.loadBehaviorKnowledge(APP);
+    const statuses = Object.fromEntries(bk!.signatures.map((s) => [s.normalizedTarget, s.status]));
+    expect(statuses['add to cart']).toBe('stale');
+    expect(statuses['different button']).toBe('active');
+  });
+
+  it('P1: no retained manifests + surviving signatures → status search returns []', async () => {
+    await persistSession('s1', makeModel(), 1000);
+    // Wipe manifests only (simulates post-eviction/anomaly state);
+    // signatures survive with no current-seq anchor to compare against.
+    await db.knowledgeBehaviorSessions.clear();
+    expect(await repo.searchSignatures(APP, { status: 'active' })).toEqual([]);
+    expect(await repo.searchSignatures(APP, { status: 'stale' })).toEqual([]);
+    // Unfiltered search is unaffected (index-driven, not seq-relative).
+    const all = await repo.searchSignatures(APP, {});
+    expect(all).toHaveLength(1);
+  });
+
+  it('P1: fresh signature is active in read-time filter (no stale false-positive)', async () => {
+    await persistSession('s1', makeModel(), 1000);
+    await persistSession('s2', makeModel({ id: 'abm-2' }), 2000);
+    const active = await repo.searchSignatures(APP, { status: 'active' });
+    expect(active.map((s) => s.normalizedTarget)).toEqual(['add to cart']);
+    expect(await repo.searchSignatures(APP, { status: 'stale' })).toEqual([]);
+  });
+
   it('evidence ring is bounded to MAX_EVIDENCE_SAMPLES (last distinct sessions)', async () => {
     for (let i = 1; i <= MAX_EVIDENCE_SAMPLES + 4; i++) {
       await persistSession(`s${i}`, makeModel({ id: `abm-${i}` }), 1000 * i);

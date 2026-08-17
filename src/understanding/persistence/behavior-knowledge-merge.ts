@@ -140,6 +140,11 @@ function appendSample(
  *   (per-consequence session guard = lastSeenAtSession);
  *   a hit resets missedObservations to 0.
  * - New identity → inserted with hitCount 1 (this session contains it).
+ * - Same-identity inputs within ONE session collapse to a single entry
+ *   (F2): a session observing the same consequence more than once counts
+ *   as one observation for hitCount/insertion (no duplicate entries, no
+ *   amplification on later folds), while occurrenceCount still counts
+ *   every observation.
  * - Unobserved existing identity at a boundary → missedObservations++,
  *   confidence and status recomputed (decay, never delete).
  * - Inputs never mutated; every output object is fresh.
@@ -152,7 +157,18 @@ export function mergeConsequenceProfile(
   boundary: boolean,
 ): KnowledgeConsequence[] {
   const byIdentity = new Map(existing.map((c) => [c.identity, c]));
-  const observedIdentities = new Set(inputs.map((c) => c.identity));
+  // F2: collapse same-identity inputs within this fold to a single
+  // observation (first occurrence wins — deterministic sample). Without
+  // this, duplicate identities in one session insert parallel entries and
+  // amplify on every subsequent hit-fold.
+  const collapsed: SignatureConsequenceInput[] = [];
+  const seenInFold = new Set<string>();
+  for (const input of inputs) {
+    if (seenInFold.has(input.identity)) continue;
+    seenInFold.add(input.identity);
+    collapsed.push(input);
+  }
+  const observedIdentities = new Set(collapsed.map((c) => c.identity));
 
   // 1) Existing entries (ordered by first insertion — profile order is stable).
   const merged: KnowledgeConsequence[] = existing.map((c) => {
@@ -187,8 +203,10 @@ export function mergeConsequenceProfile(
     };
   });
 
-  // 2) New identities (input order — deterministic).
-  for (const input of inputs) {
+  // 2) New identities (input order — deterministic). `collapsed` is
+  // identity-unique by construction, so each insert is a genuinely new
+  // identity — duplicate inserts are structurally impossible.
+  for (const input of collapsed) {
     if (byIdentity.has(input.identity)) continue;
     merged.push({
       identity: input.identity,
@@ -211,7 +229,7 @@ export function mergeConsequenceProfile(
   return merged;
 
   function sampleFor(identity: string): KnowledgeEvidenceSample {
-    const input = inputs.find((c) => c.identity === identity);
+    const input = collapsed.find((c) => c.identity === identity);
     return { sessionId, edgeKey: input?.edgeKey ?? '' };
   }
 }

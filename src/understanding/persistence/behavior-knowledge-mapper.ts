@@ -29,6 +29,15 @@ import type { StateTransition } from '../state-builder/types';
 /**
  * Stable, deterministic, non-cryptographic content hash.
  * Same input → same output, forever (identity grammar frozen at v1).
+ *
+ * Volume acceptance (CP7 P3 doc): FNV-1a 32-bit → birthday bound at
+ * ~65k distinct inputs. Expected volume is ≤ ~1k distinct signatures per
+ * app (50 retained sessions × ≤200 episodes, heavily deduplicated by
+ * identity), giving a collision probability of ~1e-4. A collision is
+ * inspectable, not silent: rows retain actionType / normalizedTarget /
+ * anchorViewId, so two actions sharing a key are visible in the store.
+ * Accepted at v1; revisit (wider hash) only if signature counts per app
+ * approach the tens of thousands.
  */
 export function stableHash(input: string): string {
   let h = 0x811c9dc5;
@@ -67,11 +76,23 @@ export function signatureKey(
  * Generalize a consequence target for cross-session identity. NEVER literal
  * DOM/URL — the grammar extracts the semantic invariant of the consequence.
  *
- *   api       → `METHOD /path`        host-stripped pathname (query excluded)
- *   entity    → `type:op`             entity type + operation
+ *   api       → `METHOD /path`        host-stripped pathname (query excluded);
+ *                                      unparsed details → `api:unparsed:<hash>`
+ *                                      of the episode-stripped tail (P2 — never
+ *                                      collapses distinct endpoints)
+ *   entity    → `type:op`             entity type + operation; colon-less ids
+ *                                      degrade to `unknown:op` (P3 — no
+ *                                      mis-parse; state-builder always emits
+ *                                      `type:id`, so this is defensive)
  *   nav       → `to:/path`            destination pathname (query excluded —
  *                                      per-session ids live in query strings)
- *   state     → `from→to`             view transition identity
+ *   state     → `from→to`             view transition identity. View ids are
+ *                                      state-builder slugs (e.g. 'product',
+ *                                      'search-results'); a slug containing
+ *                                      '→' or ':' would be ambiguous here —
+ *                                      theoretical only, documented (no
+ *                                      runtime guard; the grammar is FROZEN
+ *                                      at v1 and slugs never contain either)
  *   ui        → `anchor-window` | `post-anchor`   horizon role, never DOM
  *   member    → `member:<id>`         fallback (should not recur)
  */
@@ -80,8 +101,13 @@ export function consequenceTargetIdentity(edge: CausalEdge): string {
   switch (t.type) {
     case 'api':
       return apiIdentity(edge);
-    case 'entity':
-      return `${t.entityId.split(':')[0]}:${t.operation}`;
+    case 'entity': {
+      // P3 guard: a colon-less entityId must not mis-parse as its own type.
+      const type = t.entityId.includes(':')
+        ? t.entityId.split(':')[0]
+        : 'unknown';
+      return `${type}:${t.operation}`;
+    }
     case 'navigation':
       return `to:${navGeneralization(t.toUrl)}`;
     case 'state':
@@ -109,7 +135,17 @@ function apiIdentity(edge: CausalEdge): string {
       return `${m[1]} ${m[2]}`;
     }
   }
-  return 'api';
+  // CP7 P2 — unparsed detail fallback: hash the tail with the episode
+  // reference stripped. Distinct unparsed endpoints stay distinct (no
+  // collapse into a single 'api' identity), while the same endpoint seen
+  // via different episodes yields the SAME identity (the per-observation
+  // episode id must not fragment merging).
+  return `api:unparsed:${stableHash(stripEpisodeRef(edge.detail))}`;
+}
+
+/** Remove the trailing " initiated during <episode-id>" reference. */
+function stripEpisodeRef(detail: string): string {
+  return detail.replace(/\s+initiated during \S+\s*$/, '');
 }
 
 /** Generalize a navigation destination to its pathname. */
