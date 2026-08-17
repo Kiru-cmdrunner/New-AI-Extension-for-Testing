@@ -18,6 +18,21 @@ import { getAllVocabEntries, type IntentVocabEntry } from './intent-vocabulary';
 import type { IntentVocabularyRegistry } from '../domain-config/intent-vocabulary-registry';
 
 /**
+ * D7: Intent labels produced ONLY by the api-operation resolution path.
+ * They describe network activity (often ambient background polling or a
+ * navigation document GET) attributed to whichever step preceded it — not
+ * the user's own action. canonicalizeSteps() drops them from workflow
+ * identity so this attribution noise cannot split one physical workflow
+ * into distinct patternIds.
+ */
+export const AMBIENT_API_INTENTS: ReadonlySet<string> = new Set([
+  'Fetch data',
+  'Submit form',
+  'Update resource',
+  'Delete resource',
+]);
+
+/**
  * Label a single interaction with its intent.
  *
  * @param interaction The interaction to label.
@@ -69,13 +84,46 @@ export function labelAllIntents(
 
 // ── Resolution paths ───────────────────────────────────────────────────
 
+/**
+ * D7.5: Whether an api-operation evidence row describes one of the
+ * interaction's OWN navigation destinations.
+ *
+ * Synthetic navigation interactions (the projected twin of a full-page
+ * form submit / link click) often carry the destination document GET as
+ * attributed network evidence. That GET is the navigation itself, not
+ * user-triggered data fetching — letting the api-operation path claim it
+ * flips the step's intent label between "Fetch data" (when the row has a
+ * status) and the accessible-name URL (when it doesn't yet), which made
+ * workflow identity depend on a capture-timing race (F1 family).
+ *
+ * The evidence detail embeds the URL verbatim ("<op> API <method> <url>
+ * -> <status>"), so the comparison is a substring containment against the
+ * interaction's navigation toUrl set. F1 and the status-enrichment logic
+ * are untouched — this only makes the LABEL invariant to them.
+ */
+function evidenceDescribesOwnDestination(
+  interaction: ComponentInteraction,
+  detail: string,
+): boolean {
+  const nav = interaction.behavioralEvidence?.applicationEvidence?.navigation;
+  if (!nav || nav.length === 0) return false;
+  for (const n of nav) {
+    if (!n.toUrl) continue;
+    if (detail.includes(n.toUrl.toLowerCase())) return true;
+  }
+  return false;
+}
+
 function resolveFromApiOperation(
   interaction: ComponentInteraction,
   outcome: ActionOutcome,
 ): IntentLabel | null {
-  // Look for api-operation evidence in the outcome
+  // D7.5: skip evidence rows describing the interaction's own navigation
+  // destination(s) — they must not produce an ambient API intent label.
   const apiEvidence = outcome.supportingEvidence.find(
-    (e) => e.kind === 'api-operation',
+    (e) =>
+      e.kind === 'api-operation' &&
+      !evidenceDescribesOwnDestination(interaction, (e.detail ?? '').toLowerCase()),
   );
   if (!apiEvidence) return null;
 

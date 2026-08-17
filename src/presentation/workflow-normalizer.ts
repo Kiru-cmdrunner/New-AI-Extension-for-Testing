@@ -51,6 +51,18 @@ export function normalizeWorkflow(
 ): ComponentInteraction[] {
   if (interactions.length === 0) return [];
 
+  // D1: capture origin (tab) of an interaction — triggerEvent carries it
+  // for recognized interactions (SW stamping) and for projected twins
+  // (Projection Engine propagation); metadata.captureOrigin is the
+  // alternate location sw-integration stamps. Null when unknown.
+  const originOf = (i: ComponentInteraction): { tabId: number } | null => {
+    const fromEvent = i.triggerEvent?.captureOrigin?.tabId;
+    if (typeof fromEvent === 'number') return { tabId: fromEvent };
+    const fromMeta = (i.metadata?.captureOrigin as { tabId?: number } | undefined)?.tabId;
+    if (typeof fromMeta === 'number') return { tabId: fromMeta };
+    return null;
+  };
+
   // Build an index of recognized interactions by elementKey.
   // Map<elementKey, Array of recognized interactions>
   const recognizedByKey = new Map<string, ComponentInteraction[]>();
@@ -76,8 +88,24 @@ export function normalizeWorkflow(
     const candidates = recognizedByKey.get(key);
     if (!candidates) continue; // No recognized interaction on this element
 
+    // D1: tab affinity — when BOTH sides carry a capture origin, they must
+    // be the same tab. An unknown origin (null) on either side is not a
+    // mismatch (legacy rows / synthetic events never learned their tab),
+    // so comparison is skipped rather than failing the subsumption.
+    const candidateOrigin = originOf(candidate);
+
     // Check temporal proximity — find the nearest recognized interaction
     for (const recognized of candidates) {
+      // D1: same-tab requirement (see above).
+      const recognizedOrigin = originOf(recognized);
+      if (
+        candidateOrigin &&
+        recognizedOrigin &&
+        candidateOrigin.tabId !== recognizedOrigin.tabId
+      ) {
+        continue;
+      }
+
       const delta = recognized.startTime - candidate.startTime;
 
       // Unclassified must precede or be simultaneous with the recognized

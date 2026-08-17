@@ -14,7 +14,7 @@
  *               Projection Engine → Observed Workflow / Capability Analysis / IR
  */
 
-import type { ObservedEvent, InteractionType } from '../shared/component-types';
+import type { ObservedEvent, InteractionType, ElementIdentity } from '../shared/component-types';
 
 /**
  * Browser event types that represent deliberate user actions.
@@ -76,6 +76,25 @@ export interface LedgerEntry {
   targetName: string;
   /** ARIA role of the target element, or null if none. */
   targetRole: string | null;
+
+  // ── D1: Full identity + capture origin for unclaimed-event projection ──
+  //
+  // The diagnostic fields above are too impoverished for workflow
+  // subsumption: a projected Unclassified twin built from tag/name alone
+  // gets an elementKey like 'tag:INPUT' that never matches the recognized
+  // interaction's rich key ('name:X|sel:Y'), so normalizeWorkflow's
+  // same-element affinity silently failed and one physical click produced
+  // two logical actions (Click + Unclassified twin).
+  //
+  // These two optional fields (null on legacy snapshots) carry the full
+  // element identity and the capturing tab/frame so the Projection Engine
+  // can build a twin with equivalent affinity. Shallow copies only — the
+  // ledger never mutates the event's identity objects.
+
+  /** Full element identity snapshot at append() time; null on legacy rows. */
+  targetIdentity: ElementIdentity | null;
+  /** Capture origin (tab/frame) of the event; null on legacy rows. */
+  captureOrigin: { tabId: number; frameId: number } | null;
 }
 
 /** Chrome storage key for the evidence ledger. */
@@ -119,6 +138,14 @@ export class EvidenceLedger {
       targetTag: event.target.tag,
       targetName: event.target.accessibleName,
       targetRole: event.target.ariaRole,
+      // D1: full identity + origin for twin affinity.
+      targetIdentity: event.target ? { ...event.target } : null,
+      captureOrigin: event.captureOrigin
+        ? {
+            tabId: event.captureOrigin.tabId,
+            frameId: event.captureOrigin.frameId,
+          }
+        : null,
     });
   }
 
@@ -195,7 +222,14 @@ export class EvidenceLedger {
   restore(entries: LedgerEntry[]): void {
     this.entries.clear();
     for (const entry of entries) {
-      this.entries.set(entry.eventId, { ...entry });
+      // D1: normalize legacy snapshots (pre-D1 rows have neither optional
+      // field) to explicit nulls so downstream consumers never see
+      // 'undefined' vs 'null' divergence in affinity comparisons.
+      this.entries.set(entry.eventId, {
+        ...entry,
+        targetIdentity: entry.targetIdentity ?? null,
+        captureOrigin: entry.captureOrigin ?? null,
+      });
     }
     this.resetAbsorbedToUnclaimed();
   }

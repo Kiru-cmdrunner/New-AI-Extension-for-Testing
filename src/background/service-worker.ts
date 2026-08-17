@@ -1086,6 +1086,10 @@ chrome.webNavigation.onCommitted.addListener(async (details: chrome.webNavigatio
     scrollDeltaX: null,
     pageUrl: details.url,
     pageTitle: title,
+    // D1: stamp the synthetic navigation event with its capture origin so
+    // downstream tab-scoping (episode builder, workflow subsumption) never
+    // degrades to 'unknown-tab-resolution' for full-page navigations.
+    captureOrigin: { tabId: details.tabId, frameId: 0 },
   };
 
   processObservedEvent(navEvent);

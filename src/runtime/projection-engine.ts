@@ -26,63 +26,55 @@ import type { ComponentInteraction, InteractionType } from '../shared/component-
  * The entry carries diagnostic identity (targetTag, targetName, targetRole)
  * populated at capture time — the result carries real element identity
  * instead of placeholder stubs.
+ *
+ * D1: when the entry captured the FULL element identity + capture origin
+ * (targetIdentity/captureOrigin, present for events appended after D1),
+ * the projected twin is built from them so its elementKey matches the
+ * recognized interaction's rich key — enabling normalizeWorkflow's
+ * same-element subsumption to fold the twin away. Legacy entries (null
+ * identity) keep the old diagnostic-only shape.
  */
 function createUnclassifiedFromLedger(
   entry: LedgerEntry,
   interactionCounter: { value: number },
 ): ComponentInteraction {
   interactionCounter.value++;
+
+  // D1: prefer the full captured identity; fall back to diagnostics.
+  const id = entry.targetIdentity ?? null;
+  const identity = id ? { ...id } : {
+    accessibleName: entry.targetName,
+    ariaRole: entry.targetRole,
+    ariaLabel: null,
+    ariaLabelledBy: null,
+    placeholder: null,
+    tag: entry.targetTag,
+    className: null,
+    name: null,
+    stableId: null,
+    testId: null,
+    dataCy: null,
+    dataQa: null,
+    cssSelector: '',
+    xPath: '',
+    inIframe: false,
+    shadowDom: false,
+    href: null,
+    inputType: null,
+    elementId: '',
+  };
+
   return {
     interactionId: `int-${interactionCounter.value}`,
     type: 'Unclassified' as InteractionType,
-    trigger: {
-      accessibleName: entry.targetName,
-      ariaRole: entry.targetRole,
-      ariaLabel: null,
-      ariaLabelledBy: null,
-      placeholder: null,
-      tag: entry.targetTag,
-      className: null,
-      name: null,
-      stableId: null,
-      testId: null,
-      dataCy: null,
-      dataQa: null,
-      cssSelector: '',
-      xPath: '',
-      inIframe: false,
-      shadowDom: false,
-      href: null,
-      inputType: null,
-      elementId: '',
-    },
+    trigger: identity,
     triggerEvent: {
       eventId: entry.eventId,
       eventType: entry.eventType as any,
       timestamp: entry.timestamp,
       captureSeq: entry.captureSeq,
       isTrusted: true,
-      target: {
-        accessibleName: entry.targetName,
-        ariaRole: entry.targetRole,
-        ariaLabel: null,
-        ariaLabelledBy: null,
-        placeholder: null,
-        tag: entry.targetTag,
-        className: null,
-        name: null,
-        stableId: null,
-        testId: null,
-        dataCy: null,
-        dataQa: null,
-        cssSelector: '',
-        xPath: '',
-        inIframe: false,
-        shadowDom: false,
-        href: null,
-        inputType: null,
-        elementId: '',
-      },
+      target: identity,
       domContext: {
         inputType: null,
         ariaExpanded: null,
@@ -111,6 +103,12 @@ function createUnclassifiedFromLedger(
       scrollDeltaX: null,
       pageUrl: '',
       pageTitle: '',
+      // D1: carry the capture origin so downstream consumers (episode
+      // builder tab scoping, workflow subsumption) see the same tab as the
+      // recognized interaction.
+      captureOrigin: entry.captureOrigin
+        ? { ...entry.captureOrigin }
+        : undefined,
     },
     memberEvents: [],
     startTime: entry.timestamp,
@@ -123,6 +121,12 @@ function createUnclassifiedFromLedger(
       targetName: entry.targetName,
       targetTag: entry.targetTag,
       targetRole: entry.targetRole,
+      // D1: propagate the origin into metadata as well — sw-integration
+      // stamps interaction.metadata.captureOrigin for recognized
+      // interactions, and affinity comparisons read both places.
+      captureOrigin: entry.captureOrigin
+        ? { ...entry.captureOrigin }
+        : undefined,
     },
   };
 }

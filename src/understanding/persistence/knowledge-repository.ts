@@ -38,6 +38,7 @@ import {
 } from './knowledge-types';
 import { mergeSignature } from './behavior-knowledge-merge';
 import type { MappedBehaviorRows } from './behavior-knowledge-mapper';
+import { hashPattern } from '../enrichment/recorded-workflow';
 
 // -- Helpers --
 
@@ -341,7 +342,22 @@ export class KnowledgeRepository {
    * label/steps.
    */
   async upsertRecordedWorkflow(row: KnowledgeRecordedWorkflowRow): Promise<void> {
-    const existing = await this.db.knowledgeRecordedWorkflows.get(row.key);
+    let existing = await this.db.knowledgeRecordedWorkflows.get(row.key);
+
+    // D7 identity migration: if the incoming key is absent, a legacy row
+    // for the SAME app may still hold the old (pre-canonicalization)
+    // identity for this workflow — its stored canonicalSteps re-hash (under
+    // the CURRENT canonicalization) to the incoming patternId. Merge into
+    // that row under the canonical key and delete the legacy one so the
+    // pattern converges instead of splitting into occurrenceCount=1 rows.
+    if (!existing) {
+      const legacy = await this.findLegacyPatternRow(row);
+      if (legacy) {
+        await this.db.knowledgeRecordedWorkflows.delete(legacy.key);
+        existing = legacy;
+      }
+    }
+
     if (existing) {
       const sessionIds = [...new Set([...existing.sessionIds, ...row.sessionIds])];
       const instances = [...existing.instances, ...row.instances]
@@ -349,6 +365,9 @@ export class KnowledgeRepository {
         .slice(-MAX_WORKFLOW_INSTANCES);
       await this.db.knowledgeRecordedWorkflows.put({
         ...existing,
+        // D7: the canonical key wins so the row converges on the new id.
+        key: row.key,
+        patternId: row.patternId,
         label: row.label || existing.label,
         canonicalSteps: row.canonicalSteps.length > 0 ? row.canonicalSteps : existing.canonicalSteps,
         viewSequence: row.viewSequence.length > 0 ? row.viewSequence : existing.viewSequence,
@@ -363,6 +382,32 @@ export class KnowledgeRepository {
         instances: [...new Set(row.instances)].slice(-MAX_WORKFLOW_INSTANCES),
       });
     }
+  }
+
+  /**
+   * D7 identity migration: find a same-app row whose stored canonicalSteps
+   * re-hash (current canonicalization) to the incoming patternId but whose
+   * key differs — i.e. the same physical workflow recorded before the
+   * canonicalization change. Returns undefined when no such row exists.
+   */
+  private async findLegacyPatternRow(
+    row: KnowledgeRecordedWorkflowRow,
+  ): Promise<KnowledgeRecordedWorkflowRow | undefined> {
+    const appRows = await this.db.knowledgeRecordedWorkflows
+      .where('appId')
+      .equals(row.appId)
+      .toArray();
+    for (const r of appRows) {
+      if (r.key === row.key) continue;
+      // Re-hash the stored identity steps under the current rules.
+      const reHashed = hashPattern(r.canonicalSteps);
+      // The legacy row belongs to this pattern if either its re-hashed
+      // identity or its own patternId matches the incoming one.
+      if (reHashed === row.patternId || r.patternId === row.patternId) {
+        return r;
+      }
+    }
+    return undefined;
   }
 
   async getRecordedWorkflows(appId: string): Promise<KnowledgeRecordedWorkflowRow[]> {

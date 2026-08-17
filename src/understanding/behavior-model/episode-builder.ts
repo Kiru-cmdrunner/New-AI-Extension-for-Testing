@@ -117,6 +117,15 @@ export interface EpisodeBuilderResult {
 export const PARAMETER_LINK_WINDOW_MS = 30_000;
 
 /**
+ * D1b: how close to a non-link anchor (the suggestion-<div> shape) a
+ * completed input may sit to still be linked as that anchor's parameter
+ * via the gesture-adjacency rule. Typing then immediately picking a
+ * suggestion is one gesture — observed lag is well under 500ms — while a
+ * submit-capable button keeps the original generous window.
+ */
+export const GESTURE_ADJACENT_MS = 500;
+
+/**
  * Effective settling span added to a navigation member's end: mirrors the
  * Phase-1 post-navigation observation window's 3s hard cap. The navigation
  * interaction itself completes immediately at commit, but the destination
@@ -324,6 +333,38 @@ export function buildEpisodes(input: EpisodeBuilderInput): EpisodeBuilderResult 
     return undefined;
   }
 
+  // ── D1b pre-pass (pure): anchors that own a committed NAVIGATION member.
+  //
+  // A click on a plain <div> (search suggestion) that triggers a
+  // programmatic form submit is the canonical "caused a navigation" shape:
+  // the div is not submit-capable (isSubmitCapable is false), so Rule 2
+  // below would never fire and the typed query lost its parameterInputs.
+  // Owning a committed navigation on the same tab is the observable proof
+  // the gesture submitted the form. Computed BEFORE member resolution
+  // (navigation roles are assigned in step 3a) from the same inputs the
+  // builder already has: pure, no extra state, no ordering coupling.
+  const navOwnerAnchorIds = new Set<string>();
+  {
+    const navType = all.filter(
+      (i) => i.type === 'Navigation' && !i.malformed && i.raw.triggerEvent?.eventId,
+    );
+    for (const nav of navType) {
+      const navRecord = input.postNavRecords?.find(
+        (r) => r.navEventId === nav.raw.triggerEvent?.eventId,
+      );
+      const commitEpoch = navRecord ? navRecord.committedAt : nav.t0;
+      // Find the latest anchor whose gesture owns this commit: same tab,
+      // anchor T₀ ≤ commit, no later anchor in between.
+      let owner: NormalizedInteraction | null = null;
+      for (const a of anchors) {
+        if (a.tabId !== nav.tabId) continue;
+        if (a.t0 > commitEpoch) continue;
+        if (!owner || a.t0 > owner.t0) owner = a;
+      }
+      if (owner) navOwnerAnchorIds.add(owner.id);
+    }
+  }
+
   /** Provisional uiOwnership upper bound for membership containment:
    *  the next anchor's T₀ (exclusive) — members may end before it. */
   function provisionalBound(tabId: number | null, t0: number): number {
@@ -369,7 +410,7 @@ export function buildEpisodes(input: EpisodeBuilderInput): EpisodeBuilderResult 
 
     // (b) PARAMETER — input-type interaction linked to an anchor.
     if (!i.malformed && INPUT_INTERACTION_TYPES.has(i.type)) {
-      const linked = linkParameter(i, skeletons, nextAnchorT0);
+      const linked = linkParameter(i, skeletons, nextAnchorT0, navOwnerAnchorIds);
       if (linked) {
         i.assignedEpisodeId = linked.skeleton.episodeId;
         i.assignedRole = 'parameter';
@@ -558,6 +599,7 @@ function linkParameter(
     tabId: number | null;
   }>,
   nextAnchorT0: (tabId: number | null, epoch: number) => number | undefined,
+  navOwnerAnchorIds: Set<string>,
 ): {
   skeleton: { episodeId: string; members: NormalizedInteraction[] };
   link: ParameterLink;
@@ -582,11 +624,24 @@ function linkParameter(
     // PARAMETER_LINK_WINDOW_MS note): anchor is submit-capable, same
     // document, input completed inside the link window before the anchor,
     // no intervening anchor on the tab.
-    if (!isSubmitCapable(s.anchor)) continue;
+    //
+    // D1b: OR the anchor is gesture-adjacent AND owns a committed
+    // navigation (the suggestion-<div> programmatic-submit shape — not
+    // submit-capable, but its click navigated). A-links are excluded: a
+    // link click does not submit a form, so its parameters come from
+    // Rule 1 only. The window tightens to GESTURE_ADJACENT_MS for this
+    // arm to keep the same-document guard meaningful.
+    const submitCapable = isSubmitCapable(s.anchor);
+    const gestureAdjacentNavOwner =
+      !submitCapable &&
+      navOwnerAnchorIds.has(s.anchor.id) &&
+      s.anchor.raw.trigger?.tag !== 'A';
+    if (!submitCapable && !gestureAdjacentNavOwner) continue;
     if (i.tabId !== s.tabId) continue;
     if (i.pageId === null || s.anchor.pageId === null || i.pageId !== s.anchor.pageId) continue;
     if (i.endTime > s.anchor.t0) continue; // must complete before the anchor
-    if (s.anchor.t0 - i.endTime > PARAMETER_LINK_WINDOW_MS) continue;
+    const windowMs = gestureAdjacentNavOwner ? GESTURE_ADJACENT_MS : PARAMETER_LINK_WINDOW_MS;
+    if (s.anchor.t0 - i.endTime > windowMs) continue;
     const intervening = nextAnchorT0(s.tabId, i.endTime);
     if (intervening !== undefined && intervening < s.anchor.t0) continue;
 

@@ -21,6 +21,7 @@ import type { StateTransition } from '../state-builder/types';
 import type { RecordedWorkflow } from '../enrichment/semantic-types';
 import type { AppBehaviorModel } from '../behavior-model/model-types';
 import { mapBehaviorModel } from './behavior-knowledge-mapper';
+import { hashPattern } from '../enrichment/recorded-workflow';
 
 /**
  * Input for persisting a session's knowledge.
@@ -390,10 +391,15 @@ export class KnowledgePersistenceService {
     now: number,
   ): Promise<void> {
     for (const wf of workflows) {
+      // D7: recompute the pattern identity from the canonical steps under
+      // the CURRENT canonicalization rules so a row arriving through an
+      // older path (or with a stale patternId) still lands on the canonical
+      // key — the repository's legacy-row migration depends on it.
+      const patternId = hashPattern(wf.canonicalSteps);
       await this.repo.upsertRecordedWorkflow({
-        key: `${appId}:${wf.patternId}`,
+        key: `${appId}:${patternId}`,
         appId,
-        patternId: wf.patternId,
+        patternId,
         label: wf.label,
         canonicalSteps: [...wf.canonicalSteps],
         viewSequence: [...wf.viewSequence],
