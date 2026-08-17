@@ -79,6 +79,15 @@ export class KnowledgeRepository {
     return this.db.applications.get(appId);
   }
 
+  /**
+   * CP8 — list all known applications (contract app discovery).
+   * Deterministic order: appId asc. Additive read-only method.
+   */
+  async listApplications(): Promise<ApplicationRow[]> {
+    const rows = await this.db.applications.toArray();
+    return rows.sort((a, b) => (a.appId < b.appId ? -1 : 1));
+  }
+
   async getApplicationByOrigin(origin: string): Promise<ApplicationRow | undefined> {
     return this.db.applications.where('origin').equals(origin).first();
   }

@@ -246,3 +246,30 @@ export type { PipelineInput, PipelineOutcome } from './pipeline/understanding-pi
 export { extractBehaviorModelInputs } from './behavior-model/capture-inputs';
 export type { CaptureArtifacts, BehaviorModelInputs } from './behavior-model/capture-inputs';
 export type { AppBehaviorModel } from './behavior-model/model-types';
+
+// CP8 — Knowledge Consumer Contract v1 (read-only, versioned)
+export { KnowledgeContract } from './contract/knowledge-contract';
+export { CONTRACT_VERSION } from './contract/contract-types';
+export type {
+  ContractEnvelope,
+  ApplicationDescriptor,
+  ActionDescriptor,
+  ConsequenceDescriptor,
+  EvidenceSampleRef,
+  EvidenceDescriptor,
+  ParameterInputDescriptor,
+  WorkflowStep,
+  WorkflowTrace,
+  ApiSurfaceEntry,
+  EntityDescriptor,
+  GraphEdge,
+  GapReport,
+  ActionContextBlock,
+  AbsenceReason,
+  Unavailable,
+  ConsequenceLifecycle,
+  KnowledgeProvenance,
+  ExternalKnowledgeWriter,
+  ExecutionRecord,
+  ExecutionIngestionPort,
+} from './contract/contract-types';
