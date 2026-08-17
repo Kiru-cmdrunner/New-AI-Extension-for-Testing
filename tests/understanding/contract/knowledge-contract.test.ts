@@ -156,7 +156,8 @@ describe('CP8 KnowledgeContract facade invariants', () => {
       value: null, reason: 'capture-ceiling', wouldBe: 'css:role:aria locator',
     });
     expect(a.workflowPatternIds).toEqual([]);
-    expect(a.workflowPatternAbsence).toBe('linkage-pending');
+    // D6: no workflow rows in this fixture → 'none-recorded' (typed absence).
+    expect(a.workflowPatternAbsence).toBe('none-recorded');
     const api = await contract.getApiSurface(APP);
     expect(api.data.every((e) => e.payloadSchema === 'unrecorded')).toBe(true);
     const app = await contract.describeApplication(APP);

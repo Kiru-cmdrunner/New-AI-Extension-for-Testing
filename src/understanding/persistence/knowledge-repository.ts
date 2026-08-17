@@ -363,6 +363,29 @@ export class KnowledgeRepository {
       const instances = [...existing.instances, ...row.instances]
         .filter((v, i, a) => a.indexOf(v) === i) // dedup instances
         .slice(-MAX_WORKFLOW_INSTANCES);
+      // D6: linkage merge — union signature keys (sorted), union the
+      // per-instance maps, and keep the map EXHAUSTIVE over the bounded
+      // instance list (every retained instance has an entry; [] = no
+      // signature keys recorded for that instance — absence, never a
+      // fabricated claim). linkageState stays monotone ('linked' once
+      // linked, never demoted by a later linkage-less upsert).
+      const mergedInstanceLinkage: Record<string, string[]> = {
+        ...(existing.instanceSignatureIds ?? {}),
+      };
+      for (const [instanceId, sigs] of Object.entries(row.instanceSignatureIds ?? {})) {
+        const cur = mergedInstanceLinkage[instanceId] ?? [];
+        mergedInstanceLinkage[instanceId] = [...new Set([...cur, ...sigs])].sort();
+      }
+      const prunedLinkage: Record<string, string[]> = {};
+      for (const instanceId of instances) {
+        prunedLinkage[instanceId] = mergedInstanceLinkage[instanceId] ?? [];
+      }
+      const signatureIds = [...new Set([
+        ...(existing.signatureIds ?? []),
+        ...(row.signatureIds ?? []),
+      ])].sort();
+      const linkageState: 'linked' | 'linkage-pending' =
+        signatureIds.length > 0 ? 'linked' : 'linkage-pending';
       await this.db.knowledgeRecordedWorkflows.put({
         ...existing,
         // D7: the canonical key wins so the row converges on the new id.
@@ -374,12 +397,21 @@ export class KnowledgeRepository {
         sessionIds,
         occurrenceCount: existing.occurrenceCount + row.occurrenceCount,
         instances,
+        signatureIds,
+        linkageState,
+        instanceSignatureIds: prunedLinkage,
         lastSeenAt: Math.max(existing.lastSeenAt, row.lastSeenAt),
       });
     } else {
       await this.db.knowledgeRecordedWorkflows.put({
         ...row,
         instances: [...new Set(row.instances)].slice(-MAX_WORKFLOW_INSTANCES),
+        signatureIds: [...new Set(row.signatureIds ?? [])].sort(),
+        linkageState: (row.signatureIds ?? []).length > 0 ? 'linked' : 'linkage-pending',
+        instanceSignatureIds: KnowledgeRepository.exhaustiveInstanceLinkage(
+          row.instanceSignatureIds ?? {},
+          [...new Set(row.instances)].slice(-MAX_WORKFLOW_INSTANCES),
+        ),
       });
     }
   }
@@ -413,6 +445,24 @@ export class KnowledgeRepository {
   async getRecordedWorkflows(appId: string): Promise<KnowledgeRecordedWorkflowRow[]> {
     return this.db.knowledgeRecordedWorkflows.where('appId').equals(appId).toArray();
   }
+
+  // -- D6 helpers --
+
+  /**
+   * Normalize a per-instance linkage map to EXACTLY the given instance ids
+   * (exhaustive): every retained instance gets an entry ([] = no signature
+   * keys recorded for that instance); ids outside the bound are dropped.
+   */
+  private static exhaustiveInstanceLinkage = (
+    map: Record<string, string[]>,
+    instances: string[],
+  ): Record<string, string[]> => {
+    const out: Record<string, string[]> = {};
+    for (const id of instances) {
+      out[id] = [...new Set(map[id] ?? [])].sort();
+    }
+    return out;
+  };
 
   // -- Cleanup --
 

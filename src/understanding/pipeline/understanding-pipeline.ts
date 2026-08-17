@@ -56,6 +56,7 @@ import {
   createKnowledgeDatabase,
 } from '../persistence/knowledge-database';
 import { KnowledgeRepository } from '../persistence/knowledge-repository';
+import { signatureKey, normalizeTarget } from '../persistence/behavior-knowledge-mapper';
 import {
   KnowledgePersistenceService,
   deriveAppId,
@@ -448,6 +449,10 @@ export class UnderstandingPipeline {
           recordedWorkflows: aggregateRecordedWorkflowsForPersist(
             semanticKnowledge.workflows,
             input.sessionId,
+            // D6: anchor interaction → signature key, derived exactly as
+            // mapBehaviorModel derives it (same helpers, same inputs) so
+            // linkage keys are byte-identical to the signature store.
+            buildSignatureByInteraction(behaviorModel, transitions, appId),
           ),
         });
       } catch (e) {
@@ -649,12 +654,48 @@ export class UnderstandingPipeline {
 function aggregateRecordedWorkflowsForPersist(
   workflows: SemanticWorkflow[],
   sessionId: string,
+  signatureByInteraction?: Map<string, string>,
 ): RecordedWorkflow[] {
-  // Reuse the aggregation with no prior seed, then keep ALL patterns
-  return aggregateRecordedWorkflows(workflows, []).map((w) => ({
-    ...w,
-    sessionIds: [sessionId],
-  }));
+  // Reuse the aggregation with no prior seed, then keep ALL patterns.
+  // D6: signatureByInteraction maps anchor interaction ids to their
+  // behavior-signature keys (built at the Stage 7 call site from the same
+  // model+transitions the mapper uses — byte-identical key derivation).
+  return aggregateRecordedWorkflows(workflows, [], signatureByInteraction)
+    .map((w) => ({ ...w, sessionIds: [sessionId] }));
+}
+
+/**
+ * D6: map each episode ANCHOR interaction id to its behavior-signature key.
+ * Key derivation mirrors mapBehaviorModel exactly (same signatureKey /
+ * normalizeTarget helpers, same anchorViewId resolution from the anchor's
+ * transition before-view) so linkage keys match the signature store
+ * byte-for-byte. Returns undefined when there is no behavior model (no
+ * linkage possible — aggregation then reports honest absence).
+ */
+function buildSignatureByInteraction(
+  behaviorModel: AppBehaviorModel | null,
+  transitions: StateTransition[],
+  appId: string,
+): Map<string, string> | undefined {
+  if (!behaviorModel || behaviorModel.episodes.length === 0) return undefined;
+  const transitionByInteraction = new Map<string, StateTransition>();
+  for (const t of transitions) transitionByInteraction.set(t.interactionId, t);
+  const map = new Map<string, string>();
+  for (const ep of behaviorModel.episodes) {
+    const anchorViewId =
+      transitionByInteraction.get(ep.anchor.interactionId)
+        ?.before?.currentView?.id ?? null;
+    map.set(
+      ep.anchor.interactionId,
+      signatureKey(
+        appId,
+        ep.anchor.actionType,
+        normalizeTarget(ep.anchor.actionTarget),
+        anchorViewId,
+      ),
+    );
+  }
+  return map;
 }
 
 /**

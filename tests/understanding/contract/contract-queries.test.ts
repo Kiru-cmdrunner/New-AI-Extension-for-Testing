@@ -230,8 +230,9 @@ describe('CP8 contract queries', () => {
     for (const a of actions) {
       expect(a.selector.value).toBeNull();
       expect(a.selector.reason).toBe('capture-ceiling');
+      // D6: fixture seeds no workflow rows → typed absence 'none-recorded'.
       expect(a.workflowPatternIds).toEqual([]);
-      expect(a.workflowPatternAbsence).toBe('linkage-pending');
+      expect(a.workflowPatternAbsence).toBe('none-recorded');
     }
     const go = actions.find((a) => a.normalizedTarget === 'go');
     expect(go).toBeTruthy();
@@ -347,5 +348,137 @@ describe('CP8 contract queries', () => {
     });
     expect(await reconstructWorkflow(repo, 'app-none', 's-none')).toBeNull();
     expect(await getActionDescriptor(repo, loader, 'no-such-key')).toBeNull();
+  });
+
+  // ── D6: workflow linkage in descriptors ────────────────────────────────
+
+  it('D6: descriptor reports linked patterns sorted; honest absence otherwise; deterministic; stores untouched', async () => {
+    // Grab the two fixture signatures ('go' and 'add to cart').
+    const actions = await listActions(repo, loader, APP);
+    const go = actions.find((a) => a.normalizedTarget === 'go')!;
+    const cart = actions.find((a) => a.normalizedTarget === 'add to cart')!;
+
+    // Baseline BEFORE any workflow rows: 'none-recorded'.
+    const before = await getActionDescriptor(repo, loader, go.signatureKey);
+    expect(before!.workflowPatternIds).toEqual([]);
+    expect(before!.workflowPatternAbsence).toBe('none-recorded');
+
+    // Seed a workflow row linked to BOTH signatures (linked set), and a
+    // second pattern linked to neither (pending), via the repository.
+    await repo.upsertRecordedWorkflow({
+      key: `${APP}:wf-pattern-aaaa1111`,
+      appId: APP,
+      patternId: 'wf-pattern-aaaa1111',
+      label: 'Search + add to cart',
+      canonicalSteps: ['go', 'add to cart'],
+      viewSequence: ['search-results', 'cart'],
+      sessionIds: ['session-1'],
+      occurrenceCount: 2,
+      instances: ['wf-session-1-0', 'wf-session-1-1'],
+      firstSeenAt: 1000,
+      lastSeenAt: 2000,
+      signatureIds: [cart.signatureKey, go.signatureKey],
+      linkageState: 'linked',
+      instanceSignatureIds: {
+        'wf-session-1-0': [go.signatureKey],
+        'wf-session-1-1': [cart.signatureKey],
+      },
+    });
+    await repo.upsertRecordedWorkflow({
+      key: `${APP}:wf-pattern-bbbb2222`,
+      appId: APP,
+      patternId: 'wf-pattern-bbbb2222',
+      label: 'Text-only flow',
+      canonicalSteps: ['type query'],
+      viewSequence: ['search-results'],
+      sessionIds: ['session-1'],
+      occurrenceCount: 1,
+      instances: ['wf-session-1-2'],
+      firstSeenAt: 1000,
+      lastSeenAt: 2000,
+    });
+
+    // Linked signature → sorted pattern ids.
+    const goAfter = await getActionDescriptor(repo, loader, go.signatureKey);
+    expect(goAfter!.workflowPatternIds).toEqual(['wf-pattern-aaaa1111']);
+    expect(goAfter!.workflowPatternAbsence).toBe('linked');
+
+    // Multi-pattern: second row now links 'go' too → both ids, sorted.
+    await repo.upsertRecordedWorkflow({
+      key: `${APP}:wf-pattern-00000000`,
+      appId: APP,
+      patternId: 'wf-pattern-00000000',
+      label: 'Go again',
+      canonicalSteps: ['go'],
+      viewSequence: ['search-results'],
+      sessionIds: ['session-1'],
+      occurrenceCount: 1,
+      instances: ['wf-session-1-3'],
+      firstSeenAt: 1000,
+      lastSeenAt: 2000,
+      signatureIds: [go.signatureKey],
+      linkageState: 'linked',
+      instanceSignatureIds: { 'wf-session-1-3': [go.signatureKey] },
+    });
+    const goMulti = await getActionDescriptor(repo, loader, go.signatureKey);
+    expect(goMulti!.workflowPatternIds).toEqual(
+      ['wf-pattern-00000000', 'wf-pattern-aaaa1111'].sort(),
+    );
+
+    // Determinism: repeated reads identical.
+    const again = await getActionDescriptor(repo, loader, go.signatureKey);
+    expect(again!.workflowPatternIds).toEqual(goMulti!.workflowPatternIds);
+
+    // Read-only: signature rows unchanged by descriptor reads (fixture
+    // seeds one session → 'go' occ=1; reads must not bump any count).
+    const sigsAfter = await repo.getSignatures(APP);
+    const goAfterReads = sigsAfter.find((s) => s.key === go.signatureKey)!;
+    const cartAfterReads = sigsAfter.find((s) => s.key === cart.signatureKey)!;
+    expect(goAfterReads.occurrenceCount).toBe(1);
+    expect(goAfterReads.consequenceProfile.length).toBeGreaterThan(0);
+    expect(cartAfterReads.occurrenceCount).toBe(1);
+    const wfRows = await repo.getRecordedWorkflows(APP);
+    expect(wfRows).toHaveLength(3);
+    const linked = wfRows.find((r) => r.patternId === 'wf-pattern-aaaa1111')!;
+    expect(linked.signatureIds).toEqual([cart.signatureKey, go.signatureKey].sort());
+    expect(linked.instanceSignatureIds).toEqual({
+      'wf-session-1-0': [go.signatureKey],
+      'wf-session-1-1': [cart.signatureKey],
+    });
+
+    // Honest absence: the pending pattern's session-only flow → the 'type
+    // query' signature doesn't exist, but a descriptor for an UNLINKED
+    // signature must report 'linkage-pending' (rows exist, none co-occur).
+    // 'add to cart' currently links only aaaa1111 → still 'linked'.
+    const cartAfter = await getActionDescriptor(repo, loader, cart.signatureKey);
+    expect(cartAfter!.workflowPatternIds).toEqual(['wf-pattern-aaaa1111']);
+    expect(cartAfter!.workflowPatternAbsence).toBe('linked');
+
+    // A signature linked by NO row: seed one directly via the table
+    // (signatures are normally written only through upsertBehaviorKnowledge;
+    // this row is a read-model fixture for the contract, test-only).
+    await (repo as unknown as { db: { knowledgeSignatures: { put: (r: unknown) => Promise<string> } } })
+      .db.knowledgeSignatures.put({
+        key: `${APP}:sig:unlinked`,
+        appId: APP,
+        actionType: 'Click',
+        normalizedTarget: 'unlinked target',
+        anchorViewId: null,
+        firstSeenAtSession: 'session-1',
+        lastSeenAtSession: 'session-1',
+        firstSeenSeq: 1,
+        lastSeenSeq: 1,
+        firstSeenAtMs: 1000,
+        lastSeenAtMs: 1000,
+        occurrenceCount: 1,
+        sessionsSinceSeen: 0,
+        status: 'active',
+        source: 'behavior',
+        consequenceProfile: [],
+        divergenceFlags: [],
+      });
+    const unlinked = await getActionDescriptor(repo, loader, `${APP}:sig:unlinked`);
+    expect(unlinked!.workflowPatternIds).toEqual([]);
+    expect(unlinked!.workflowPatternAbsence).toBe('linkage-pending');
   });
 });

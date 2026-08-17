@@ -33,12 +33,22 @@ export type AbsenceReason =
   | 'capture-ceiling'
   /** Request/response bodies are never recorded (CP1–CP7 invariant). */
   | 'payload-unrecorded'
-  /** workflowPatternIds reserved but not yet populated. */
+  /** No workflow row exists for the app yet — nothing recorded. */
+  | 'none-recorded'
+  /** Workflow rows exist but none co-occurs with this signature. */
   | 'linkage-pending'
   /** No database oracle exists in the core repository. */
   | 'db-ground-truth-unavailable'
   /** Payload of the field was FIFO-evicted with its session (R7). */
   | 'session-evicted';
+
+/**
+ * D6: workflow-linkage outcome for an action descriptor.
+ * 'linked' carries the pattern ids; otherwise an absence reason applies.
+ */
+export type WorkflowLinkage =
+  | { state: 'linked'; workflowPatternIds: string[] }
+  | { state: 'absent'; reason: Extract<AbsenceReason, 'none-recorded' | 'linkage-pending'> };
 
 /** A value that is not captured/available, with its reason. */
 export interface Unavailable<T = string> {
@@ -109,9 +119,17 @@ export interface ActionDescriptor {
   lastSeenSeq: number;
   /** Durable locator (CSS/role/aria) — capture ceiling, always null in v1. */
   selector: Unavailable<'css:role:aria locator'>;
-  /** Reserved workflow linkage — unpopulated in v1. */
+  /**
+   * D6: workflow linkage — patterns whose instances co-occur with this
+   * signature (anchor inside the instance). Empty when not linked.
+   */
   workflowPatternIds: string[];
-  workflowPatternAbsence: AbsenceReason;
+  /**
+   * D6: 'linked' when workflowPatternIds is populated; otherwise the typed
+   * absence ('none-recorded' = no workflow rows for the app,
+   * 'linkage-pending' = rows exist, none co-occur with this signature).
+   */
+  workflowPatternAbsence: 'linked' | AbsenceReason;
   parameterInputs: ParameterInputDescriptor[];
   consequences: ConsequenceDescriptor[];
   divergenceFlags: string[];

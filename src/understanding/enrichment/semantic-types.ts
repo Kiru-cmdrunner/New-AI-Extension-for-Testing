@@ -216,6 +216,26 @@ export interface RecordedWorkflow {
   viewSequence: string[];
   /** Sessions where this pattern was observed. */
   sessionIds: string[];
+  /**
+   * D6: behavior-signature keys co-occurring with this pattern — one entry
+   * per signature whose episode ANCHOR interaction is part of some recorded
+   * instance (pure observation: same app, same session, anchor inside the
+   * instance's interaction set). Sorted. Undefined on rows written before
+   * D6 (converges on next upsert).
+   */
+  signatureIds?: string[];
+  /**
+   * D6: linkage status. 'linked' once at least one signature co-occurs;
+   * 'linkage-pending' when the pattern was recorded but no signature anchor
+   * was observed inside any instance (honest absence — never fabricated).
+   */
+  linkageState?: 'linked' | 'linkage-pending';
+  /**
+   * D6: raw per-instance linkage — workflow instance id → sorted signature
+   * keys whose anchors are steps of THAT instance. Pruned to the bounded
+   * instance list. Undefined on pre-D6 rows.
+   */
+  instanceSignatureIds?: Record<string, string[]>;
   /** Number of occurrences across all sessions. */
   occurrenceCount: number;
   /** Workflow IDs of all instances. */

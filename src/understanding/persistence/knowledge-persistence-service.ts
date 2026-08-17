@@ -406,6 +406,13 @@ export class KnowledgePersistenceService {
         sessionIds: [...wf.sessionIds],
         occurrenceCount: wf.occurrenceCount,
         instances: [...wf.instances],
+        // D6: linkage fields pass through (optional; absent when Stage 7
+        // had no behavior model — repository treats that as pending).
+        ...(wf.signatureIds !== undefined ? { signatureIds: [...wf.signatureIds] } : {}),
+        ...(wf.linkageState !== undefined ? { linkageState: wf.linkageState } : {}),
+        ...(wf.instanceSignatureIds !== undefined
+          ? { instanceSignatureIds: { ...wf.instanceSignatureIds } }
+          : {}),
         firstSeenAt: now,
         lastSeenAt: now,
       });

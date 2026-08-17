@@ -186,6 +186,22 @@ async function toActionDescriptor(
         })),
     }));
 
+  // D6: workflow linkage — honest, read-only, deterministic. Patterns whose
+  // stored signatureIds contain this signature's key; typed absence when
+  // nothing links ('none-recorded' when the app has no workflow rows at
+  // all, 'linkage-pending' when rows exist but none co-occur).
+  const workflowRows = await repo.getRecordedWorkflows(appId);
+  const linkedPatternIds = workflowRows
+    .filter((w) => (w.signatureIds ?? []).includes(row.key))
+    .map((w) => w.patternId)
+    .sort();
+  const workflowPatternAbsence: ActionDescriptor['workflowPatternAbsence'] =
+    workflowRows.length === 0
+      ? 'none-recorded'
+      : linkedPatternIds.length > 0
+        ? 'linked'
+        : 'linkage-pending';
+
   return {
     signatureKey: row.key,
     appId: row.appId,
@@ -199,8 +215,8 @@ async function toActionDescriptor(
     lastSeenAtSession: row.lastSeenAtSession,
     lastSeenSeq: row.lastSeenSeq,
     selector: SELECTOR_UNAVAILABLE,
-    workflowPatternIds: [],
-    workflowPatternAbsence: 'linkage-pending',
+    workflowPatternIds: linkedPatternIds,
+    workflowPatternAbsence,
     parameterInputs,
     consequences: consequences.sort(byIdentity),
     divergenceFlags: [...row.divergenceFlags],

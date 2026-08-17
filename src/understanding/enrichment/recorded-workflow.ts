@@ -87,8 +87,22 @@ export function canonicalizeSteps(steps: string[]): string[] {
 export function aggregateRecordedWorkflows(
   workflows: SemanticWorkflow[],
   priorRecorded: RecordedWorkflow[] = [],
+  signatureByInteraction?: Map<string, string>,
 ): RecordedWorkflow[] {
   const patternMap = new Map<string, RecordedWorkflow>();
+  // D6: patternId → union of per-instance signature sets (sorted).
+  const unionByPattern = new Map<string, string[]>();
+
+  /** D6 helper: linkage for one instance, [] when unmapped. */
+  const linkageFor = (stepIds: string[]): string[] => {
+    if (!signatureByInteraction) return [];
+    const keys = new Set<string>();
+    for (const id of stepIds) {
+      const sig = signatureByInteraction.get(id);
+      if (sig) keys.add(sig);
+    }
+    return [...keys].sort();
+  };
 
   // Seed with prior patterns — recompute hash from canonicalized steps
   for (const prior of priorRecorded) {
@@ -100,15 +114,31 @@ export function aggregateRecordedWorkflows(
       existing.sessionIds = [...new Set([...existing.sessionIds, ...prior.sessionIds])];
       existing.instances = mergeInstances(existing.instances, prior.instances);
       existing.occurrenceCount += prior.occurrenceCount;
+      // D6: merge linkage across collapsing priors.
+      mergeLinkageInto(unionByPattern, patternId, [
+        ...(prior.signatureIds ?? []),
+        ...(existing.signatureIds ?? []),
+      ]);
+      existing.signatureIds = unionByPattern.get(patternId) ?? [];
+      existing.linkageState = linkageStateOf(existing.signatureIds);
+      mergeInstanceLinkage(existing, prior.instanceSignatureIds ?? {});
     } else {
+      // D6: seed the union from the prior's own linkage before copying.
+      mergeLinkageInto(unionByPattern, patternId, prior.signatureIds ?? []);
+      const priorInstances = [...prior.instances];
       patternMap.set(patternId, {
         ...prior,
         patternId,
         // D7: store canonical identity steps (legacy rows re-canonicalize
         // here so re-persisted patterns converge on the canonical form).
         canonicalSteps: canonicalizeSteps(prior.canonicalSteps),
-        instances: [...prior.instances],
+        instances: priorInstances,
         sessionIds: [...prior.sessionIds],
+        signatureIds: unionByPattern.get(patternId) ?? [],
+        linkageState: linkageStateOf(unionByPattern.get(patternId) ?? []),
+        // D6: exhaustive per-instance map over the prior's own instances
+        // ([] = no signature keys recorded for that instance).
+        instanceSignatureIds: exhaustiveMap(prior.instanceSignatureIds, priorInstances),
       });
     }
   }
@@ -116,6 +146,10 @@ export function aggregateRecordedWorkflows(
   // Process new workflows
   for (const wf of workflows) {
     const patternId = hashPattern(wf.stepIntents);
+    // D6: linkage for THIS instance — sorted unique signature keys whose
+    // episode anchor is a step of the instance (observation only; the map
+    // is caller-derived, never fabricated here).
+    const instanceSigs = linkageFor(wf.stepIds);
 
     const existing = patternMap.get(patternId);
     if (existing) {
@@ -125,7 +159,16 @@ export function aggregateRecordedWorkflows(
       }
       existing.instances.push(wf.workflowId);
       existing.occurrenceCount++;
+      // D6: fold this instance's linkage into the pattern union.
+      mergeLinkageInto(unionByPattern, patternId, instanceSigs);
+      existing.signatureIds = unionByPattern.get(patternId) ?? [];
+      existing.linkageState = linkageStateOf(existing.signatureIds);
+      existing.instanceSignatureIds = {
+        ...(existing.instanceSignatureIds ?? {}),
+        [wf.workflowId]: instanceSigs,
+      };
     } else {
+      unionByPattern.set(patternId, instanceSigs);
       patternMap.set(patternId, {
         patternId,
         label: wf.label,
@@ -136,6 +179,9 @@ export function aggregateRecordedWorkflows(
         sessionIds: [wf.sessionId],
         occurrenceCount: 1,
         instances: [wf.workflowId],
+        signatureIds: instanceSigs,
+        linkageState: linkageStateOf(instanceSigs),
+        instanceSignatureIds: { [wf.workflowId]: instanceSigs },
       });
     }
   }
@@ -143,6 +189,50 @@ export function aggregateRecordedWorkflows(
   // Return patterns sorted by occurrence count (descending)
   return [...patternMap.values()]
     .sort((a, b) => b.occurrenceCount - a.occurrenceCount);
+}
+
+/** D6: 'linked' iff at least one co-occurring signature; else pending. */
+function linkageStateOf(signatureIds: string[]): 'linked' | 'linkage-pending' {
+  return signatureIds.length > 0 ? 'linked' : 'linkage-pending';
+}
+
+/**
+ * D6: exhaustive per-instance map over the given instances — every
+ * instance gets an entry ([] = no signature keys recorded for it); ids
+ * not in the list are dropped. Never invents non-empty values.
+ */
+function exhaustiveMap(
+  map: Record<string, string[]> | undefined,
+  instances: string[],
+): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  for (const id of instances) {
+    out[id] = [...new Set(map?.[id] ?? [])].sort();
+  }
+  return out;
+}
+
+/** D6: fold signature keys into the pattern's union (sorted, deduped). */
+function mergeLinkageInto(
+  unionByPattern: Map<string, string[]>,
+  patternId: string,
+  keys: string[],
+): void {
+  const current = unionByPattern.get(patternId) ?? [];
+  unionByPattern.set(patternId, [...new Set([...current, ...keys])].sort());
+}
+
+/** D6: merge per-instance maps; values unioned, sorted, deduped. */
+function mergeInstanceLinkage(
+  target: RecordedWorkflow,
+  source: Record<string, string[]>,
+): void {
+  const merged: Record<string, string[]> = { ...(target.instanceSignatureIds ?? {}) };
+  for (const [instanceId, sigs] of Object.entries(source)) {
+    const cur = merged[instanceId] ?? [];
+    merged[instanceId] = [...new Set([...cur, ...sigs])].sort();
+  }
+  target.instanceSignatureIds = merged;
 }
 
 /** Bound the merged instance list (keeps the most recent entries). */

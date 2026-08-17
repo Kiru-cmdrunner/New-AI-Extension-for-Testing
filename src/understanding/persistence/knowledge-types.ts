@@ -309,6 +309,19 @@ export interface KnowledgeRecordedWorkflowRow {
   occurrenceCount: number;
   /** Workflow instance IDs (bounded — last MAX_WORKFLOW_INSTANCES kept). */
   instances: string[];
+  /**
+   * D6: behavior-signature keys co-occurring with this pattern (sorted,
+   * deduped union across instances). Undefined on rows written before D6.
+   */
+  signatureIds?: string[];
+  /** D6: 'linked' once any signature co-occurs; else 'linkage-pending'. */
+  linkageState?: 'linked' | 'linkage-pending';
+  /**
+   * D6: per-instance linkage — instance id → sorted signature keys whose
+   * anchors are steps of that instance. Keys pruned to the bounded
+   * instances list. Undefined on rows written before D6.
+   */
+  instanceSignatureIds?: Record<string, string[]>;
   /** Epoch ms first seen. */
   firstSeenAt: number;
   /** Epoch ms last seen. */
