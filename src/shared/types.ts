@@ -52,7 +52,6 @@ export enum StorageKeys {
   REPOSITORY = 'test_repository',
   SCREENSHOTS = 'session_screenshots',
   TEST_CASE_DRAFT = 'test_case_draft',
-  REPLAY_JSON = 'replay_json',
   DETECTED_INTERACTIONS = 'detected_interactions',
   DETECTED_INTERACTIONS_V2 = 'detected_interactions_v2',
   DETECTED_INTERACTIONS_MERGED = 'detected_interactions_merged',
@@ -66,8 +65,6 @@ export enum StorageKeys {
   UNDERSTANDING_RESULT = 'understanding_result',
   // ── Phase 10.3: Repository V2 Persistence ──
   REPOSITORY_SESSION_ID = 'repo_session_id',
-  // ── Phase 11: Self-Healing Locators ──
-  ELEMENT_HEAL_RESULT = 'element_heal_result',
   // ── Phase 12: Execution Engine ──
   EXECUTION_RESULT = 'execution_result',
   // ── Component Runtime: Live interactions (in-progress recording state) ──

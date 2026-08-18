@@ -761,27 +761,6 @@ body {
   font-family: var(--font-mono, 'Courier New', monospace);
 }
 
-/* ── Collapsible Toggle (Raw Events, etc.) ── */
-.collapsible-toggle {
-  background: none;
-  border: none;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-family: inherit;
-  font-weight: 600;
-  transition: var(--transition);
-}
-
-.collapsible-toggle:hover {
-  background: var(--color-bg-hover);
-  color: var(--color-text);
-}
-
 /* ── Action-Oriented Interaction Description ── */
 .interaction-action-text {
   font-size: 13px;
@@ -1806,81 +1785,6 @@ body {
 .semantic-effect__confidence--low {
   color: #6b7280;
   background: #f3f4f6;
-  font-style: italic;
-}
-
-/* ── Capability Model: Phase 6 ── */
-
-.capability-record {
-  padding: 8px 10px;
-  margin-bottom: 6px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: #fafbfc;
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.capability-record__header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
-}
-
-.capability-record__icon {
-  font-size: 14px;
-}
-
-.capability-record__name {
-  font-weight: 600;
-  color: #1f2937;
-  flex: 1;
-}
-
-.capability-record__confidence {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  padding: 1px 6px;
-  border-radius: 10px;
-}
-
-.capability__confidence--high {
-  color: #065f46;
-  background: #d1fae5;
-}
-
-.capability__confidence--medium {
-  color: #92400e;
-  background: #fef3c7;
-}
-
-.capability__confidence--low {
-  color: #6b7280;
-  background: #f3f4f6;
-}
-
-.capability-record__target,
-.capability-record__physical,
-.capability-record__effects,
-.capability-record__keywords {
-  color: #4b5563;
-  font-size: 11px;
-  margin-top: 2px;
-}
-
-.capability-record__alternatives {
-  color: #8b5cf6;
-  font-size: 10px;
-  margin-top: 4px;
-  font-style: italic;
-}
-
-.capability-record__reason {
-  color: #6b7280;
-  font-size: 10px;
-  margin-top: 4px;
   font-style: italic;
 }
 

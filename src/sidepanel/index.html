@@ -205,15 +205,6 @@
           <div class="timeline__events" id="detected-interactions-list"></div>
         </div>
 
-        <!-- Raw Event Timeline (collapsible — for developers) -->
-        <div class="timeline" id="stopped-timeline">
-          <div class="timeline__header">
-            <h2 class="timeline__title">Raw Event Timeline</h2>
-            <button class="collapsible-toggle" id="raw-events-toggle" type="button">▶ Show Raw Events</button>
-          </div>
-          <div class="timeline__events" id="stopped-timeline-events" hidden></div>
-        </div>
-
         <!-- ══════ IR Plan: Generated Test Steps (Phase 8) ══════ -->
         <div class="steps-section" id="ir-steps-section" hidden>
           <div class="steps-section__header">
@@ -232,29 +223,12 @@
           <div class="ir-files-list" id="ir-files-list"></div>
         </div>
 
-        <!-- ══════ Capability Model: Semantic Classification (Phase 6) ══════ -->
-        <div class="steps-section" id="capability-records-section" hidden>
-          <div class="steps-section__header">
-            <h2 class="steps-section__title">🧠 Capability Analysis</h2>
-            <span class="step-count" id="capability-records-count">0</span>
-          </div>
-          <div class="steps-list" id="capability-records-list"></div>
-        </div>
-
         <!-- ══════ Repository Persistence Status (Phase 10.4) ══════ -->
         <div class="repo-status" id="repo-status-section" hidden>
           <div class="repo-status__header">
             <h2 class="repo-status__title">🗄️ Repository</h2>
           </div>
           <div class="repo-status__body" id="repo-status-body"></div>
-        </div>
-
-        <!-- ══════ Element Healing Summary (Phase 11.5) ══════ -->
-        <div class="repo-status" id="healing-status-section" hidden>
-          <div class="repo-status__header">
-            <h2 class="repo-status__title">🔧 Element Healing</h2>
-          </div>
-          <div class="repo-status__body" id="healing-status-body"></div>
         </div>
 
         <!-- ══════ Execution Results (Phase 12.6) ══════ -->
@@ -274,15 +248,6 @@
           <div class="repo-status__body">
             <p class="repo-status__label">Running test against live browser. Steps are executing sequentially.</p>
           </div>
-        </div>
-
-        <!-- Replay JSON -->
-        <div class="playwright-section" id="replay-section" hidden>
-          <div class="playwright-section__header">
-            <h2 class="playwright-section__title">📋 Replay JSON</h2>
-            <button class="step-card__json-toggle" id="replay-toggle" type="button">▶ Show Replay JSON</button>
-          </div>
-          <pre class="playwright-section__code" id="replay-code" hidden></pre>
         </div>
 
         <!-- Next Actions -->

@@ -5,8 +5,11 @@
  *
  * Phase 2 additions:
  *   - Detected interactions view with type badges + metadata
- *   - Raw event timeline (Phase 1, kept for debugging)
- *   - Replay JSON (Phase 1)
+ *
+ * D5: removed dead sections with no data writers — Raw Event Timeline,
+ * Capability Analysis (residue of the capability-model removal), Element
+ * Healing (no writer; service kept in healing-service.ts awaiting D3),
+ * and Replay JSON (no writer since Phase 1).
  */
 
 import {
@@ -20,7 +23,6 @@ import { sendMessage } from '../shared/messaging';
 import { RepositoryService } from '../repository/repository-service';
 import { renderProductionInteractions } from './interaction-renderer';
 import { updateEvidenceOnInteraction } from './evidence-renderer';
-import type { ReplayJson } from '../recorder/recorded-event';
 import type { ComponentInteraction } from '../shared/component-types';
 import type { BehavioralEvidence } from '../shared/behavioral-evidence-types';
 import type { ExecutionIRPlan, IRAssertion } from '../domain/execution-ir/types';
@@ -91,15 +93,10 @@ const tcBadgeStopped = document.getElementById('tc-badge-stopped')!;
 const tcBadgeNameStopped = document.getElementById('tc-badge-name-stopped')!;
 const stoppedRecordingContext = document.getElementById('stopped-recording-context')!;
 const stoppedRecordingContextUrl = document.getElementById('stopped-recording-context-url') as HTMLAnchorElement;
-const stoppedTimelineEvents = document.getElementById('stopped-timeline-events')!;
 const detectedInteractionsSection = document.getElementById('detected-interactions-section')!;
 const detectedInteractionsList = document.getElementById('detected-interactions-list')!;
 const detectedInteractionsCount = document.getElementById('detected-interactions-count')!;
-const rawEventsToggle = document.getElementById('raw-events-toggle') as HTMLButtonElement;
 const recordAnotherBtn = document.getElementById('record-another-btn')!;
-const replayToggle = document.getElementById('replay-toggle') as HTMLButtonElement;
-const replaySection = document.getElementById('replay-section')!;
-const replayCode = document.getElementById('replay-code')!;
 
 // IR Plan sections (Phase 8)
 const irStepsSection = document.getElementById('ir-steps-section')!;
@@ -112,8 +109,6 @@ const irFilesCount = document.getElementById('ir-files-count')!;
 // Repository status section (Phase 10.4)
 const repoStatusSection = document.getElementById('repo-status-section')!;
 const repoStatusBody = document.getElementById('repo-status-body')!;
-const healingStatusSection = document.getElementById('healing-status-section')!;
-const healingStatusBody = document.getElementById('healing-status-body')!;
 
 // Execution section (Phase 12.6)
 const executionSection = document.getElementById('execution-section')!;
@@ -426,19 +421,6 @@ async function handleStopRecording(): Promise<void> {
     detectedInteractionsSection.hidden = true;
   }
 
-  // Load and display Replay JSON
-  try {
-    const replayJson = await loadReplayJson();
-    if (replayJson) {
-      replayCode.textContent = JSON.stringify(replayJson, null, 2);
-      replaySection.hidden = false;
-    } else {
-      replaySection.hidden = true;
-    }
-  } catch {
-    replaySection.hidden = true;
-  }
-
   // Load and display IR Plan steps + Playwright files (Phase 8)
   try {
     const irPlan = await loadIRPlan();
@@ -489,15 +471,6 @@ function showDetectedInteractions(interactions: ComponentInteraction[]): void {
   detectedInteractionsCount.textContent = String(interactions.length);
   renderProductionInteractions(detectedInteractionsList, interactions);
   detectedInteractionsSection.hidden = false;
-}
-
-async function loadReplayJson(): Promise<ReplayJson | null> {
-  try {
-    const result = await chrome.storage.local.get(StorageKeys.REPLAY_JSON);
-    return (result[StorageKeys.REPLAY_JSON] as ReplayJson) ?? null;
-  } catch {
-    return null;
-  }
 }
 
 // ── IR Plan Rendering (Phase 8) ────────────────────────────
@@ -735,60 +708,6 @@ function renderRepositoryStatus(data: RepoStatusData): void {
   repoStatusSection.hidden = false;
 }
 
-// ── Healing Summary (Phase 11.5) ──────────────────────────
-
-interface HealingSummary {
-  examined: number;
-  healed: number;
-  created: number;
-  details: Array<{ elementId: string; logicalName: string; action: string }>;
-}
-
-async function loadHealingSummary(): Promise<HealingSummary | null> {
-  try {
-    const result = await chrome.storage.local.get(StorageKeys.ELEMENT_HEAL_RESULT);
-    const data = result[StorageKeys.ELEMENT_HEAL_RESULT];
-    if (!data) return null;
-    return data as HealingSummary;
-  } catch {
-    return null;
-  }
-}
-
-function renderHealingSummary(data: HealingSummary): void {
-  healingStatusBody.innerHTML = '';
-
-  // Summary row
-  const summaryRow = document.createElement('div');
-  summaryRow.className = 'repo-status__row';
-  const summaryLabel = document.createElement('span');
-  summaryLabel.className = 'repo-status__label';
-  summaryLabel.textContent = 'Elements:';
-  const summaryValue = document.createElement('span');
-  summaryValue.className = 'repo-status__value';
-  summaryValue.textContent = `${data.healed} healed, ${data.created} new, ${data.examined} examined`;
-  summaryRow.append(summaryLabel, summaryValue);
-  healingStatusBody.appendChild(summaryRow);
-
-  // Details
-  if (data.details && data.details.length > 0) {
-    for (const detail of data.details.slice(0, 5)) {
-      const detailRow = document.createElement('div');
-      detailRow.className = 'repo-status__row';
-      const badge = document.createElement('span');
-      badge.className = `repo-status__badge repo-status__badge--${detail.action === 'healed' ? 'merged' : 'new'}`;
-      badge.textContent = detail.action;
-      const name = document.createElement('span');
-      name.className = 'repo-status__value';
-      name.textContent = detail.logicalName;
-      detailRow.append(badge, name);
-      healingStatusBody.appendChild(detailRow);
-    }
-  }
-
-  healingStatusSection.hidden = false;
-}
-
 // ── Execution Results (Phase 12.6) ─────────────────────────
 
 interface ExecutionStepDisplay {
@@ -991,12 +910,10 @@ async function handleRecordAnother(): Promise<void> {
   try { await chrome.storage.local.remove(StorageKeys.GENERATED_FILES); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.UNDERSTANDING_RESULT); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.REPOSITORY_SESSION_ID); } catch {}
-  try { await chrome.storage.local.remove(StorageKeys.ELEMENT_HEAL_RESULT); } catch {}
   try { await chrome.storage.local.remove(StorageKeys.EXECUTION_RESULT); } catch {}
   irStepsSection.hidden = true;
   irPlaywrightSection.hidden = true;
   repoStatusSection.hidden = true;
-  healingStatusSection.hidden = true;
   executionSection.hidden = true;
   executionRunningSection.hidden = true;
   await openNewTestCase();
@@ -1106,16 +1023,6 @@ function setupLiveListeners(): void {
       const status = await loadRepositoryStatus();
       if (status) {
         renderRepositoryStatus(status);
-      }
-    }
-  });
-
-  // Healing summary — fires when service worker finishes cross-session healing
-  StorageService.onKeyChanged(StorageKeys.ELEMENT_HEAL_RESULT, async (newValue) => {
-    if (newValue && !views['stopped'].hidden) {
-      const summary = await loadHealingSummary();
-      if (summary) {
-        renderHealingSummary(summary);
       }
     }
   });
@@ -1254,22 +1161,6 @@ recordAnotherBtn.addEventListener('click', () => handleRecordAnother());
 // Execution (Phase 12.6)
 runTestBtn.addEventListener('click', () => handleRunTest());
 
-// Raw Event Timeline toggle (collapsible)
-if (rawEventsToggle) {
-  rawEventsToggle.addEventListener('click', () => {
-    stoppedTimelineEvents.hidden = !stoppedTimelineEvents.hidden;
-    rawEventsToggle.textContent = stoppedTimelineEvents.hidden ? '▶ Show Raw Events' : '▼ Hide Raw Events';
-  });
-}
-
-// Replay JSON toggle
-if (replayToggle) {
-  replayToggle.addEventListener('click', () => {
-    replayCode.hidden = !replayCode.hidden;
-    replayToggle.textContent = replayCode.hidden ? '▶ Show Replay JSON' : '▼ Hide Replay JSON';
-  });
-}
-
 // Header
 settingsBtn.addEventListener('click', () => chrome.runtime.openOptionsPage());
 repoBtn.addEventListener('click', () => {
@@ -1315,14 +1206,6 @@ async function init(): Promise<void> {
       detectedInteractionsSection.hidden = true;
     }
 
-    const replayJson = await loadReplayJson();
-    if (replayJson) {
-      replayCode.textContent = JSON.stringify(replayJson, null, 2);
-      replaySection.hidden = false;
-    } else {
-      replaySection.hidden = true;
-    }
-
     // Load IR Plan steps + Playwright files (Phase 8)
     const irPlan = await loadIRPlan();
     if (irPlan) {
@@ -1344,14 +1227,6 @@ async function init(): Promise<void> {
       renderRepositoryStatus(repoStatus);
     } else {
       repoStatusSection.hidden = true;
-    }
-
-    // Load healing summary (Phase 11.5)
-    const healingSummary = await loadHealingSummary();
-    if (healingSummary) {
-      renderHealingSummary(healingSummary);
-    } else {
-      healingStatusSection.hidden = true;
     }
 
     // Load execution results (Phase 12.6)

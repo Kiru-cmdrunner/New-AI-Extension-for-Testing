@@ -303,7 +303,7 @@ export class StorageService {
 
   /**
    * Persist any value under a storage key.
-   * Used for keys that don't have a dedicated typed method (e.g. REPLAY_JSON).
+   * Used for keys that don't have a dedicated typed method (e.g. EXECUTION_IR_PLAN).
    */
   static async setRaw(key: StorageKeys, value: unknown): Promise<void> {
     await chrome.storage.local.set({ [key]: value });
