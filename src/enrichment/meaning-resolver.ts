@@ -9,6 +9,7 @@
 
 import type { ComponentInteraction } from '../shared/component-types';
 import type { ComponentDetectionResult } from './component-types';
+import { quoteSafeTitle } from './quote-safe';
 
 /**
  * Resolve a human-readable business meaning from an interaction.
@@ -175,7 +176,10 @@ export function resolveMeaning(
 
     case 'Navigation': {
       const url = String(metadata.pageUrl ?? '');
-      const title = String(metadata.pageTitle ?? '');
+      // D10 (audit D11): titles arrive raw from the page and may contain or
+      // be wrapped in double quotes — normalize so the label never renders
+      // nested/doubled quotes.
+      const title = quoteSafeTitle(String(metadata.pageTitle ?? ''));
       if (title) return `Navigate to "${title}"`;
       return `Navigate to ${url}`;
     }

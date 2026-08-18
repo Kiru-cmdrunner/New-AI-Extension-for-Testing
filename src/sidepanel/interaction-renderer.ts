@@ -19,6 +19,7 @@
 
 import type { ComponentInteraction } from '../shared/component-types';
 import { renderEvidence, renderEvidencePlaceholder } from './evidence-renderer';
+import { quoteSafeTitle } from '../enrichment/quote-safe';
 
 // ── Layer 1: Type Display Config ──────────────────────────────────────
 
@@ -151,7 +152,10 @@ function fallbackActionDescription(interaction: ComponentInteraction): string {
 
     case 'Navigation': {
       const url = String(metadata.pageUrl ?? '');
-      const title = String(metadata.pageTitle ?? '');
+      // D10 (audit D11): titles arrive raw from the page and may contain or
+      // be wrapped in double quotes — normalize so the label never renders
+      // nested/doubled quotes.
+      const title = quoteSafeTitle(String(metadata.pageTitle ?? ''));
       if (title) return `Navigate to "${title}"`;
       return `Navigate to ${url}`;
     }
