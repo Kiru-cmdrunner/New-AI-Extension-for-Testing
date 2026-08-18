@@ -77,6 +77,9 @@ export interface EvidenceWindow {
    * 'displaced'          — displaced by max-concurrent-windows limit.
    * 'evidence-timeout'   — P1-3: 5s timeout, no behavioral evidence arrived.
    * 'page-reload-synthetic' — P1-3: SW-generated synthetic evidence for full-page reloads.
+   * 'consequence-settled' — consequence-settling: window closed by quiescence
+   *                          + causal-network-idle after lifecycle finalize
+   *                          entered settle mode.
    */
   endReason:
     | 'stabilized'
@@ -91,7 +94,8 @@ export interface EvidenceWindow {
     | 'sw-recovered-form-submit'
     | 'lifecycle-complete'
     | 'lifecycle-abandoned'
-    | 'page-reload';
+    | 'page-reload'
+    | 'consequence-settled';
 
   /**
    * Stability trace — quiescence period measurements taken during the window.

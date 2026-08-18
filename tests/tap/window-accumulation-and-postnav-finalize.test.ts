@@ -105,7 +105,8 @@ describe('Fix 2: overlapping-window accumulation protection', () => {
     btn.appendChild(late);
     await flushMutations();
 
-    // lifecycle finalize for the click (SW FINALIZE_EVIDENCE, 150ms settle)
+    // lifecycle finalize for the click (SW FINALIZE_EVIDENCE → settle mode;
+    // consequence-settling replaces the old fixed 150ms settle)
     (collector as unknown as { finalizeForInteraction: (p: object) => void }).finalizeForInteraction({
       lifecycleId: 'lc-1',
       interactionId: 'int-23',
@@ -114,13 +115,13 @@ describe('Fix 2: overlapping-window accumulation protection', () => {
       metadata: {},
       endState: 'completed',
     });
-    await new Promise((r) => setTimeout(r, 220));
+    await new Promise((r) => setTimeout(r, 600));
 
     const clickEv = deliveredEvidence.find((e) => e.sourceEventId === 'evt-click-1');
     expect(clickEv).toBeDefined();
     // INV-C1: the 5 widget summaries must have survived the submit open.
     expect(clickEv!.applicationEvidence.domChanges.length).toBeGreaterThanOrEqual(5);
-    expect(clickEv!.window.endReason).toBe('lifecycle-complete');
+    expect(clickEv!.window.endReason).toBe('consequence-settled');
   });
 
   it('T2: click evidence keeps surfaces and visibility across the submit open', async () => {
@@ -157,7 +158,7 @@ describe('Fix 2: overlapping-window accumulation protection', () => {
       metadata: {},
       endState: 'completed',
     });
-    await new Promise((r) => setTimeout(r, 220));
+    await new Promise((r) => setTimeout(r, 600));
 
     const clickEv = deliveredEvidence.find((e) => e.sourceEventId === 'evt-click-2');
     expect(clickEv).toBeDefined();
@@ -208,6 +209,8 @@ describe('Fix 2: overlapping-window accumulation protection', () => {
     await flushMutations();
 
     // The submit lifecycle finalizes (the SW path for form submits).
+    // Settle era: the submit window also enters settle mode; its own
+    // quiescence closes it (consequence-settled) after the churn settles.
     (collector as unknown as { finalizeForInteraction: (p: object) => void }).finalizeForInteraction({
       lifecycleId: 'lc-submit-3',
       interactionId: 'int-submit',
@@ -216,13 +219,13 @@ describe('Fix 2: overlapping-window accumulation protection', () => {
       metadata: {},
       endState: 'completed',
     });
-    await new Promise((r) => setTimeout(r, 220));
+    await new Promise((r) => setTimeout(r, 600));
 
     const ev = deliveredEvidence.find((e) => e.sourceEventId === 'evt-submit-3');
     expect(ev).toBeDefined();
     expect(ev!.sourceEventId).toBe('evt-submit-3');
     expect(ev!.applicationEvidence.domChanges.length).toBeGreaterThanOrEqual(2);
-    expect(['stabilized', 'max-duration', 'lifecycle-complete']).toContain(ev!.window.endReason);
+    expect(['stabilized', 'max-duration', 'lifecycle-complete', 'consequence-settled']).toContain(ev!.window.endReason);
   });
 });
 
@@ -380,12 +383,13 @@ describe('Fix 4: post-nav finalization isolation', () => {
       metadata: {},
       endState: 'completed',
     });
-    await new Promise((r) => setTimeout(r, 220));
+    // Settle era: no fixed 150ms close — the window settles on quiescence.
+    await new Promise((r) => setTimeout(r, 600));
 
     const ev = deliveredEvidence.find((e) => e.sourceEventId === 'evt-click-3');
     expect(ev).toBeDefined();
-    expect(ev!.window.endReason).toBe('lifecycle-complete');
-    expect(ev!.window.durationMs).toBeLessThan(400);
+    expect(ev!.window.endReason).toBe('consequence-settled');
+    expect(ev!.window.durationMs).toBeLessThan(4000);
   });
 
   it('T8: handleLifecycleBound does not hold the post-nav window open', async () => {

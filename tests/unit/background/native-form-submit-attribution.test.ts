@@ -395,7 +395,13 @@ describe('R7/R8 — G3 finalize-path late network re-collect (display-only)', ()
     };
 
     vi.useFakeTimers();
+    // Consequence-settling: the settle close goes through AdaptiveWindow
+    // quiescence, which reads performance.now() elapsed — mock the clock
+    // alongside the fake timers (same convention as adaptive-window.test.ts).
+    let fakeNow = 0;
+    const perfSpy = vi.spyOn(performance, 'now').mockImplementation(() => fakeNow);
     try {
+      const advance = (ms: number) => { fakeNow += ms; vi.advanceTimersByTime(ms); };
       collector.onAfterEvent(
         document.body,
         'evt-late-1',
@@ -412,8 +418,9 @@ describe('R7/R8 — G3 finalize-path late network re-collect (display-only)', ()
         metadata: {},
         endState: 'complete',
       });
-      vi.advanceTimersByTime(150); // settle delay → executeFinalization
-      vi.advanceTimersByTime(1000); // +1000ms late re-collect
+      advance(150); // (settle-mode era: finalize enters settle mode)
+      advance(300); // quiescence + minDuration → settle close
+      advance(1000); // +1000ms late re-collect
 
       const supplements = delivered.filter(
         (e) =>
@@ -427,6 +434,7 @@ describe('R7/R8 — G3 finalize-path late network re-collect (display-only)', ()
       expect(net).toHaveLength(1);
       expect(net[0].url).toBe('https://api.example.com/late');
     } finally {
+      perfSpy.mockRestore();
       vi.useRealTimers();
       collector.stop();
     }

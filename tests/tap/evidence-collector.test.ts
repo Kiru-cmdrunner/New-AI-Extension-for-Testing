@@ -496,7 +496,7 @@ describe('EvidenceCollector', () => {
     });
 
     // Finalize via lifecycle (simulates blur)
-    advance(200); // settle delay
+    advance(200); // pre-finalize settling time
     collector.finalizeForInteraction({
       lifecycleId: 'lc-type-1',
       interactionId: 'int-type-1',
@@ -506,14 +506,15 @@ describe('EvidenceCollector', () => {
       endState: 'completed',
     });
 
-    // Advance past settle delay
-    advance(200);
+    // Advance past quiescence settle (consequence-settling: the window
+    // closes on DOM quiescence, not a fixed 150ms settle)
+    advance(500);
 
     // Evidence should be delivered
     expect(deliveredEvidence.length).toBeGreaterThanOrEqual(1);
 
-    // The latest evidence should have the lifecycle-complete endReason
+    // Settle era: the evidence carries consequence-settled
     const evidence = deliveredEvidence[deliveredEvidence.length - 1];
-    expect(evidence.window.endReason).toBe('lifecycle-complete');
+    expect(evidence.window.endReason).toBe('consequence-settled');
   });
 });

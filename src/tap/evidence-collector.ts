@@ -202,6 +202,16 @@ interface ObservationWindowState {
   /** Lifecycle-Driven Evidence: whether this window is held open by a lifecycle. */
   isLifecycleBound: boolean;
   /**
+   * Consequence-settling (.drytis/specs/consequence-settling.md §5):
+   * set when FINALIZE_EVIDENCE (non-unloading) arrives — the window has
+   * entered settle mode: holdOpen released, canClose gate installed, cap
+   * re-armed from OPEN. The window self-closes via quiescence+idle or the
+   * 10s cap; the closeWindow settle branch then delivers once.
+   */
+  settleMode: boolean;
+  /** Metadata captured at finalize for the settle-close enrichment. */
+  settleMetadata: Record<string, unknown> | null;
+  /**
    * CER-3: requestIds known to the NetworkBridge when this window OPENED.
    * At close, requestIdsStartedDuring(atOpen, atClose) yields the exact set
    * of requests that started during the window — the deterministic
@@ -467,6 +477,8 @@ export class EvidenceCollector {
       observedEvent, // P1-3 fix: store ObservedEvent for valueBefore/valueAfter fallback
       lifecycleId: null,
       isLifecycleBound: false,
+      settleMode: false,
+      settleMetadata: null,
       requestIdsAtOpen,
     };
 
@@ -582,6 +594,34 @@ export class EvidenceCollector {
 
     state.isClosed = true;
     state.adaptiveWindow = evidenceWindow as unknown as AdaptiveWindow; // store the evidence window data
+
+    // Consequence-settling (§5): a window closing while in settle mode
+    // delivers ONCE through this branch — remapping 'stabilized' to
+    // 'consequence-settled', scheduling the G3 re-collect, and building
+    // evidence with the metadata captured at finalize. Cap closes keep
+    // their raw endReason. No other delivery path runs for this window
+    // (executeFinalization is never invoked for settle-mode windows).
+    if (state.settleMode) {
+      const reason =
+        evidenceWindow.endReason === 'stabilized'
+          ? 'consequence-settled'
+          : evidenceWindow.endReason;
+      // G3 kept verbatim from the executeFinalization path — schedule
+      // BEFORE cleanup so late-completing causal requests still surface.
+      this.scheduleLateNetworkReCollect(state);
+      let afterSnapshot: TargetStateSnapshot | null = null;
+      try {
+        afterSnapshot = this.targetStateCache.capture(state.targetEl);
+      } catch {
+        // Element may have been removed from DOM
+      }
+      const metadata = state.settleMetadata ?? {};
+      if (afterSnapshot) {
+        afterSnapshot = this.enrichFromMetadata(afterSnapshot, metadata);
+      }
+      this.buildAndDeliverEvidence(state, afterSnapshot, reason);
+      return;
+    }
 
     // Capture after snapshot
     const afterSnapshot = this.targetStateCache.capture(state.targetEl);
@@ -1315,17 +1355,63 @@ export class EvidenceCollector {
     const endReason: 'lifecycle-complete' | 'lifecycle-abandoned' =
       payload.endState === 'completed' ? 'lifecycle-complete' : 'lifecycle-abandoned';
 
-    // If page is unloading, finalize immediately (no settle delay)
+    // If page is unloading, finalize immediately (no settle delay) — the
+    // INV-4 form-submit recovery path. UNCHANGED by consequence-settling.
     if (settleDelay === 0) {
       this.executeFinalization(win, payload.metadata, endReason);
       return;
     }
 
-    // Schedule a brief settle for framework handlers to propagate state changes
-    setTimeout(() => {
-      if (win.isClosed) return; // already closed by another path
-      this.executeFinalization(win, payload.metadata, endReason);
-    }, settleDelay);
+    // Consequence-settling (.drytis/specs/consequence-settling.md §5):
+    // the fixed 150ms settle is REPLACED by the settle-mode transition.
+    // The window returns to its own AdaptiveWindow quiescence mechanism
+    // (holdOpen released, canClose = causal-network-idle gate installed,
+    // 10s-from-open cap re-armed). It self-closes when the application
+    // consequence has settled (DOM quiescent + causal in-flight == 0) or
+    // at the hard cap — whichever comes first. The settle-close branch in
+    // closeWindow delivers the evidence exactly once.
+    this.enterSettleMode(win, payload.metadata);
+  }
+
+  /**
+   * Consequence-settling (§5): transition a lifecycle-finalized window
+   * into settle mode. Idempotent — a second FINALIZE_EVIDENCE (duplicate
+   * or racing lifecycle) is a no-op. Releasing holdOpen (a) re-enables the
+   * window's own quiescence close and (b) re-arms the max-duration timer
+   * with the REMAINING time measured from OPEN (never now+10s).
+   */
+  private enterSettleMode(
+    win: ObservationWindowState,
+    metadata: Record<string, unknown>,
+  ): void {
+    if (win.isClosed) return;
+    if (win.settleMode) return; // idempotent
+
+    win.settleMode = true;
+    win.settleMetadata = { ...metadata };
+
+    win.adaptiveWindow.setHoldOpen(false);
+    win.adaptiveWindow.setCanClose(() => this.causalNetworkIdle(win));
+  }
+
+  /**
+   * Consequence-settling (§8): the causal-idle predicate.
+   * causalInFlight = current in-flight (noise-excluded) − requestIdsAtOpen.
+   * A request already in flight when the window OPENED is background
+   * activity, not a consequence — membership is the join, no timing.
+   * No bridge ⇒ pure DOM-quiescence settling (network dimension absent).
+   */
+  private causalNetworkIdle(win: ObservationWindowState): boolean {
+    if (!this.networkBridge || typeof this.networkBridge.getInFlightRequestIds !== 'function') {
+      return true;
+    }
+    const inFlight = this.networkBridge.getInFlightRequestIds();
+    if (inFlight.size === 0) return true;
+    if (!win.requestIdsAtOpen) return false;
+    for (const id of inFlight) {
+      if (!win.requestIdsAtOpen.has(id)) return false; // causal in-flight
+    }
+    return true;
   }
 
   /**
@@ -1428,7 +1514,7 @@ export class EvidenceCollector {
   private buildAndDeliverEvidence(
     state: ObservationWindowState,
     afterSnapshot: TargetStateSnapshot | null,
-    endReason: 'lifecycle-complete' | 'lifecycle-abandoned' | 'page-reload',
+    endReason: EvidenceWindow['endReason'],
   ): void {
     // Collect accumulated mutations
     const allSummaries = this.domObserver.getAccumulatedSummaries();

@@ -341,10 +341,29 @@ export function attachEvidenceToInteraction(
   sourceEventId: string,
   evidence: BehavioralEvidence,
 ): string | null {
-  // Helper: check if incoming evidence is a network-only supplement
+  // Helper: check if incoming evidence is a network-only supplement.
+  //
+  // Structural classification (RCA 2026-08-18, network-supplement shape
+  // guard): a supplement is evidence whose ONLY content is network rows —
+  // no targetEvidence and every other application array empty. The previous
+  // score-based check (`scoreEvidenceRichness(incoming) <= 2`) held only
+  // while a supplement carried ≤1 network row (rows score ×2 each); a
+  // request burst (iPhone add-to-cart: 34 late XHR/fetch completions →
+  // score 68) escaped classification, fell into the richness-REPLACE
+  // branch, and destroyed the real click evidence (supplements hardcode
+  // targetEvidence: null — G3 scheduleLateNetworkReCollect). Shape does not
+  // lie: a supplement is a supplement at 1 row or 120.
   const isNetworkSupplement = (incoming: BehavioralEvidence): boolean => {
-    return incoming.applicationEvidence?.networkActivity?.length > 0 &&
-      scoreEvidenceRichness(incoming) <= 2; // only network entries, no state changes
+    const app = incoming.applicationEvidence;
+    return incoming.targetEvidence == null &&
+      app != null &&
+      app.networkActivity != null &&
+      app.networkActivity.length > 0 &&
+      (app.domChanges?.length ?? 0) === 0 &&
+      (app.newSurfaces?.length ?? 0) === 0 &&
+      (app.removedSurfaces?.length ?? 0) === 0 &&
+      (app.visibilityChanges?.length ?? 0) === 0 &&
+      (app.navigation?.length ?? 0) === 0;
   };
 
   // Helper: merge network entries into existing evidence (G5-E dedup)
@@ -388,6 +407,18 @@ export function attachEvidenceToInteraction(
       return true;
     }
     // Fix Round 5: Replace if the new evidence is richer
+    // Shape-guard (2026-08-18 RCA): an incoming evidence with NO target
+    // evidence must never replace an existing evidence that HAS one — no
+    // matter its raw richness score. Synthetic/derived producers (G3
+    // network supplements, network-only drains) legitimately carry
+    // targetEvidence: null; letting them win on score destroys the captured
+    // element identity, before/after state, and the real window shape.
+    if (
+      evidence.targetEvidence == null &&
+      interaction.behavioralEvidence.targetEvidence != null
+    ) {
+      return false;
+    }
     const existingScore = scoreEvidenceRichness(interaction.behavioralEvidence);
     const newScore = scoreEvidenceRichness(evidence);
     if (newScore > existingScore) {

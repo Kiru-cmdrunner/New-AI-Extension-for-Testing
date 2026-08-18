@@ -67,6 +67,19 @@ const DEDUP_WINDOW_MS = 2000;
 /** Maximum network activity entries per evidence window. */
 const MAX_NETWORK_PER_WINDOW = 50;
 
+/**
+ * Consequence-settling noise filter (§8): analytics/telemetry/static URLs
+ * that must never block a window from settling. Mirrors the SW-side drain
+ * filters (src/background/network-drain.ts) — same patterns, kept local to
+ * avoid pulling the SW module into the content-script bundle.
+ */
+const NOISE_URL_RE_CAUSAL =
+  /\.(png|jpg|jpeg|gif|webp|svg|ico|css|js|mjs|woff2?|ttf)(\?|$)/i;
+
+/** Telemetry/beacon URLs — also never block settling (§8). */
+const TELEMETRY_URL_RE_CAUSAL =
+  /\/unagi|\/events\/|\/beacon|\/pixel|\/csm|\/aax2|\/impression|fls-|\/1\/batch\/|uedata/i;
+
 // ── NetworkBridge ────────────────────────────────────────────────────
 
 /**
@@ -369,6 +382,26 @@ export class NetworkBridge {
       count += list.length;
     }
     return count;
+  }
+
+  /**
+   * Consequence-settling (.drytis/specs/consequence-settling.md §8):
+   * requestIds of all currently in-flight requests that are NOT noise
+   * (analytics/telemetry/static-asset URLs — same filter family the SW-side
+   * network drain applies; content-based, not product-specific).
+   * The collector computes causalInFlight = this − requestIdsAtOpen;
+   * membership is the join — no timing correlation.
+   */
+  getInFlightRequestIds(): Set<string> {
+    const ids = new Set<string>();
+    for (const list of this.inFlight.values()) {
+      for (const req of list) {
+        if (req.requestId && !NOISE_URL_RE_CAUSAL.test(req.url) && !TELEMETRY_URL_RE_CAUSAL.test(req.url)) {
+          ids.add(req.requestId);
+        }
+      }
+    }
+    return ids;
   }
 
   // ── Internal ─────────────────────────────────────────────────────

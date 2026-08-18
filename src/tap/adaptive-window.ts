@@ -77,16 +77,29 @@ export class AdaptiveWindow {
    */
   private holdOpen = false;
 
+  /**
+   * Consequence-settling gate (.drytis/specs/consequence-settling.md §7).
+   * Consulted in checkStabilized() ONLY after the quiescence interval has
+   * elapsed and minDuration is satisfied. Returning false delays the close
+   * (re-schedules the stabilization check at the quiescence cadence); it
+   * can never force a close. Undefined ⇒ pure DOM quiescence (unchanged
+   * behavior for post-nav and non-lifecycle windows).
+   */
+  private canClose: (() => boolean) | null;
+
   constructor(config: {
     onClose: (window: EvidenceWindow) => void;
     minQuiescence?: number;
     maxDuration?: number;
     minDuration?: number;
+    /** Consequence-settling gate — see field docs. Optional. */
+    canClose?: () => boolean;
   }) {
     this.onClose = config.onClose;
     this.minQuiescence = config.minQuiescence ?? 300;
     this.maxDuration = config.maxDuration ?? 10000;
     this.minDuration = config.minDuration ?? 50;
+    this.canClose = config.canClose ?? null;
     this.openedAt = performance.now();
   }
 
@@ -153,6 +166,8 @@ export class AdaptiveWindow {
     if (!this.isOpen) return;
     this.isOpen = false;
     this.closedAt = performance.now();
+    // Consequence-settling: drop the gate on close — the window is done.
+    this.canClose = null;
     // Clear timers
     if (this.stabilizationTimer) {
       clearTimeout(this.stabilizationTimer);
@@ -194,6 +209,13 @@ export class AdaptiveWindow {
    *
    * TD-8 fix: When holdOpen is enabled after arm() has already scheduled the
    * max-duration timer, clear it so lifecycle-bound windows aren't force-closed.
+   *
+   * Consequence-settling (§5, §6): setHoldOpen(false) is the settle-mode
+   * transition. Because arm() never schedules the max-duration timer for
+   * holdOpen windows, entering settle mode must (re)arm it with the
+   * REMAINING time measured from OPEN — so the window can never outlive
+   * open+maxDuration regardless of when the lifecycle finalized. If the
+   * cap has already elapsed, close immediately.
    */
   setHoldOpen(value: boolean): void {
     this.holdOpen = value;
@@ -201,6 +223,25 @@ export class AdaptiveWindow {
       clearTimeout(this.maxDurationTimer);
       this.maxDurationTimer = null;
     }
+    if (!value && this.isOpen && this.maxDurationTimer === null) {
+      const remaining = this.maxDuration - this.getElapsedMs();
+      if (remaining <= 0) {
+        this.close('max-duration');
+        return;
+      }
+      this.maxDurationTimer = setTimeout(() => {
+        this.close('max-duration');
+      }, remaining);
+    }
+  }
+
+  /**
+   * Set the consequence-settling close gate (§6.1). Callers install this
+   * at settle-mode entry; close() clears it. Optional by design — windows
+   * without a gate keep pure DOM-quiescence behavior.
+   */
+  setCanClose(fn: (() => boolean) | null): void {
+    this.canClose = fn;
   }
 
   /**
@@ -244,6 +285,14 @@ export class AdaptiveWindow {
     if (elapsed >= this.minDuration) {
       if (this.holdOpen) {
         // Lifecycle-bound: don't close on stabilization. Re-schedule.
+        this.scheduleStabilization();
+        return;
+      }
+      // Consequence-settling gate (§7): consult ONLY after quiescence +
+      // minDuration are satisfied. A false result re-schedules the check
+      // at the quiescence cadence — the network-idle poll loop. It never
+      // forces a close and is never consulted before quiescence.
+      if (this.canClose && !this.canClose()) {
         this.scheduleStabilization();
         return;
       }
