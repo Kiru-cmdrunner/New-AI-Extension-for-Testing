@@ -506,7 +506,7 @@ async function loadReplayJson(): Promise<ReplayJson | null> {
  * Render an ExecutionIRPlan's steps in the side panel.
  * Shows action, description, target locators, input, and assertions.
  */
-function renderIRSteps(plan: ExecutionIRPlan): void {
+export function renderIRSteps(plan: ExecutionIRPlan): void {
   irStepsCount.textContent = String(plan.steps.length);
   irStepsList.innerHTML = '';
 
@@ -543,11 +543,17 @@ function renderIRSteps(plan: ExecutionIRPlan): void {
       card.appendChild(input);
     }
 
-    // Assertions
+    // Assertions — D4: state unavailability explicitly instead of
+    // silently omitting the row (implying assertions might exist).
     if (step.assertions.length > 0) {
       const assertDiv = document.createElement('div');
       assertDiv.className = 'step-card__ids';
       assertDiv.textContent = `Assertions: ${step.assertions.map(formatAssertion).join('; ')}`;
+      card.appendChild(assertDiv);
+    } else {
+      const assertDiv = document.createElement('div');
+      assertDiv.className = 'step-card__unavailable';
+      assertDiv.textContent = 'Assertions: none — not derived for this recording';
       card.appendChild(assertDiv);
     }
 
@@ -818,7 +824,7 @@ async function loadExecutionResult(): Promise<ExecutionSummaryData | null> {
   }
 }
 
-function renderExecutionResult(data: ExecutionSummaryData): void {
+export function renderExecutionResult(data: ExecutionSummaryData): void {
   executionBody.innerHTML = '';
 
   // Status badge
@@ -832,6 +838,25 @@ function renderExecutionResult(data: ExecutionSummaryData): void {
   summaryText.textContent = `${data.passedSteps}/${data.stepCount} steps passed · ${Math.round(data.durationMs)}ms`;
   statusRow.append(statusBadge, summaryText);
   executionBody.appendChild(statusRow);
+
+  // D4: when no step carried assertions, say so — the run above is a
+  // replay of actions with zero verification checks, and the PASS badge
+  // alone would imply a verified test.
+  const hasAnyAssertionResult = (data.stepResults ?? []).some(
+    (s) => s.assertionResults && s.assertionResults.length > 0,
+  );
+  if (data.stepResults && data.stepResults.length > 0 && !hasAnyAssertionResult) {
+    const assertionsRow = document.createElement('div');
+    assertionsRow.className = 'repo-status__row repo-status__unavailable';
+    const assertionsLabel = document.createElement('span');
+    assertionsLabel.className = 'repo-status__label';
+    assertionsLabel.textContent = 'Assertions:';
+    const assertionsValue = document.createElement('span');
+    assertionsValue.className = 'repo-status__value';
+    assertionsValue.textContent = 'none evaluated — replay-only run (0 checks)';
+    assertionsRow.append(assertionsLabel, assertionsValue);
+    executionBody.appendChild(assertionsRow);
+  }
 
   // Step counts
   if (data.failedSteps > 0 || data.errorSteps > 0 || data.skippedSteps > 0) {

@@ -1975,6 +1975,19 @@ body {
   font-style: italic;
 }
 
+/* D4 — assertion-availability honesty: dim (not alarming) markers for
+   missing verification. Precedent: .evidence-row--muted above. */
+.step-card__unavailable {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.repo-status__unavailable .repo-status__label,
+.repo-status__unavailable .repo-status__value {
+  color: #9ca3af;
+  font-style: italic;
+}
+
 .evidence-row--network {
   white-space: nowrap;
   overflow: hidden;

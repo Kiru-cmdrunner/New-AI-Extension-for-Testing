@@ -13,7 +13,38 @@ import { renderAction } from './action-renderer';
 import { renderAssertion } from './assertion-renderer';
 import { buildPageObjects } from './page-object-renderer';
 
-// ── Types ─────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────
+
+/**
+ * D4 (assertion-availability honesty): banner emitted at the top of a
+ * generated test body when NO step in the plan carries assertions.
+ *
+ * Today every plan produced by the recording pipeline is unasserted —
+ * deriveAssertions() is a stub (INV-GEN-7) and enrichment is never wired.
+ * Rendering an `expect` import with zero call sites implied verification
+ * existed; this banner states the truth instead.
+ */
+const NO_ASSERTIONS_BANNER =
+  '// NOTE: No assertions generated — assertion derivation is not available. This test replays actions only.';
+
+/**
+ * True when the rendered steps contain at least one step to render and
+ * NONE of them carry assertions. Empty plans get no banner (nothing to
+ * qualify), and plans with even one asserted step get none either (that
+ * plan IS partially verified).
+ */
+function isUnasserted(steps: IRStep[]): boolean {
+  return steps.length > 0 && steps.every((s) => s.assertions.length === 0);
+}
+
+/**
+ * Steps that actually produce output. WAIT_FOR_ELEMENT is omitted by both
+ * renderers (Playwright auto-waits), so it must not count toward the
+ * banner decision either.
+ */
+function renderableSteps(steps: IRStep[]): IRStep[] {
+  return steps.filter((s) => s.action !== IRAction.WAIT_FOR_ELEMENT);
+}
 
 /** Options for rendering a test function. */
 export interface RenderTestOptions {
@@ -65,6 +96,12 @@ export function renderTestFile(plan: ExecutionIRPlan, options?: RenderTestOption
  */
 export function renderTestBody(steps: IRStep[], indent: string): string[] {
   const lines: string[] = [];
+
+  // D4: state honestly when a plan replays actions with no verification.
+  if (isUnasserted(renderableSteps(steps))) {
+    lines.push(`${indent}${NO_ASSERTIONS_BANNER}`);
+    lines.push('');
+  }
 
   for (const step of steps) {
     // WAIT_FOR_ELEMENT is omitted entirely — Playwright auto-waits.
@@ -195,6 +232,12 @@ function renderPomTestBody(
   indent: string,
 ): string[] {
   const lines: string[] = [];
+
+  // D4: state honestly when a plan replays actions with no verification.
+  if (isUnasserted(renderableSteps(steps))) {
+    lines.push(`${indent}${NO_ASSERTIONS_BANNER}`);
+    lines.push('');
+  }
 
   for (const step of steps) {
     if (step.action === IRAction.WAIT_FOR_ELEMENT) continue;
