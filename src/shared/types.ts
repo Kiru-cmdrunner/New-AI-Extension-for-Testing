@@ -89,6 +89,11 @@ export interface RecordingContext {
   startTitle: string;
   /** ISO timestamp when the context was captured. */
   capturedAt: string;
+  /**
+   * D9: content viewport of the tab at capture time
+   * (chrome.tabs.Tab width/height). Optional — capture failures omit it.
+   */
+  viewport?: { width: number; height: number };
 }
 
 /** Shape of the persisted UI state. */

@@ -128,14 +128,16 @@ describe('Generation Layer — build()', () => {
       const plan = build(makeInput({ interactions: [] }));
       expect(plan.steps).toHaveLength(0);
       expect(plan.title).toBe('Test Case');
-      expect(plan.environment.baseUrl).toBe('https://example.com/login');
+      // D9: baseUrl is origin semantics; the recorded page is startUrl.
+      expect(plan.environment.baseUrl).toBe('https://example.com');
+      expect(plan.environment.startUrl).toBe('https://example.com/login');
     });
 
     it('returns a plan with correct environment', () => {
       const plan = build(makeInput({
         recordingContext: { startUrl: 'https://app.example.com/dashboard', title: 'Dashboard' },
       }));
-      expect(plan.environment.baseUrl).toBe('https://app.example.com/dashboard');
+      expect(plan.environment.baseUrl).toBe('https://app.example.com');
       expect(plan.environment.browser).toBe('chrome');
       expect(plan.environment.viewport).toEqual({ width: 1280, height: 720 });
     });
@@ -577,7 +579,9 @@ describe('Generation Layer — build()', () => {
       expect(plan.steps[3].action).toBe(IRAction.NAVIGATE);
       expect(plan.steps[3].target.kind).toBe('url');
       expect(plan.tags).toContain('login');
-      expect(plan.environment.baseUrl).toBe('https://example.com/login');
+      // D9: origin baseUrl, recorded page preserved as startUrl.
+      expect(plan.environment.baseUrl).toBe('https://example.com');
+      expect(plan.environment.startUrl).toBe('https://example.com/login');
     });
   });
 

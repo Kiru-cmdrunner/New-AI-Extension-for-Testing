@@ -30,6 +30,12 @@ export interface RecordingContext {
   readonly startUrl: string;
   /** The page title at recording start (for test case naming). */
   readonly title: string | null;
+  /**
+   * Content viewport of the tab at recording start (D9, from
+   * chrome.tabs.Tab width/height). Optional: legacy sessions and capture
+   * failures fall back to the documented 1280×720 default.
+   */
+  readonly viewport?: { width: number; height: number };
 }
 
 // ── Enrichment ──────────────────────────────────────────────────────────

@@ -84,6 +84,71 @@ const NOISE_TYPES: Set<InteractionType> = new Set([
   'Unclassified',
 ]);
 
+// ── D9: Deterministic IDs + Honest Environment ──────────────
+
+/**
+ * D9 invariant: the recorder runs exclusively in Chrome (MV3 extension
+ * against the chrome.* API surface). IREnvironment.browser is therefore a
+ * constant, not a guess — if this ever changes, this const moves to the
+ * recording context capture in the service worker.
+ */
+const RECORDING_BROWSER: IREnvironment['browser'] = 'chrome';
+
+/**
+ * D9 fallback viewport when the recording context does not carry one
+ * (e.g. legacy sessions captured before viewport recording, or a tab
+ * whose width/height were unavailable at capture time).
+ */
+const FALLBACK_VIEWPORT = { width: 1280, height: 720 };
+
+/**
+ * Compute the origin to use as IREnvironment.baseUrl.
+ *
+ * D9: baseUrl is a URL-resolution base (adapters prepend it to relative
+ * paths; Playwright config uses it as baseURL). The recorded startUrl is
+ * preserved verbatim in IREnvironment.startUrl instead. Non-http(s)
+ * schemes (e.g. about:blank) have no origin — the raw startUrl is the
+ * honest fallback so replays still start where the recording started.
+ */
+function baseUrlFor(startUrl: string): string {
+  try {
+    const url = new URL(startUrl);
+    if (url.protocol === 'http:' || url.protocol === 'https:') {
+      return url.origin;
+    }
+  } catch {
+    // unparseable — fall through to raw
+  }
+  return startUrl;
+}
+
+/**
+ * Deterministic djb2 hash (same construction as D7's hashPattern) over
+ * the plan's semantic identity: test-case name, recording startUrl, and
+ * the ordered step fingerprint. INV-GEN-1: identical recording →
+ * identical IDs, so ExecutionRun history can correlate replays.
+ */
+function hashIdentity(seed: string): string {
+  let hash = 5381;
+  for (let i = 0; i < seed.length; i++) {
+    hash = ((hash << 5) + hash) + seed.charCodeAt(i);
+    hash = hash & 0xffffffff; // keep 32-bit
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+/**
+ * Fingerprint the compiled steps for ID derivation: id, action, target
+ * kind, and input. Deliberately excludes timestamps, event ids, and
+ * transient metadata — only what the test case IS, not when it ran.
+ */
+function fingerprintSteps(steps: readonly IRStep[]): string {
+  return steps
+    .map((s) => `${s.id}:${s.action}:${s.target.kind}:${String(s.input ?? '')}`)
+    .join('|');
+}
+
+
 // ── Locator Resolution (ElementIdentity → ResolvedLocator[]) ──
 
 /**
@@ -438,16 +503,24 @@ export function build(input: GenerationInput): ExecutionIRPlan {
   // Derive tags
   const tags = deriveTags(recordingContext, enrichment);
 
-  // Build environment
+  // Build environment (D9: honest baseUrl origin, preserved startUrl,
+  // captured viewport with documented fallback, browser invariant).
   const environment: IREnvironment = {
-    baseUrl: recordingContext.startUrl,
-    browser: 'chrome',
-    viewport: { width: 1280, height: 720 },
+    baseUrl: baseUrlFor(recordingContext.startUrl),
+    startUrl: recordingContext.startUrl,
+    browser: RECORDING_BROWSER,
+    viewport: recordingContext.viewport ?? FALLBACK_VIEWPORT,
   };
 
+  // D9: deterministic IDs derived from the plan's semantic identity
+  // (INV-GEN-1). Same recording → same tc-/tcv- pair, so replays
+  // correlate in ExecutionRun history.
+  const identity = `${testCaseName}|${recordingContext.startUrl}|${fingerprintSteps(finalSteps)}`;
+  const identityHash = hashIdentity(identity);
+
   return {
-    testCaseId: `tc-${Date.now()}`,
-    testCaseVersionId: `tcv-${Date.now()}`,
+    testCaseId: `tc-${identityHash}`,
+    testCaseVersionId: `tcv-${identityHash}`,
     testCaseVersionNumber: 1,
     title: testCaseName,
     tags,

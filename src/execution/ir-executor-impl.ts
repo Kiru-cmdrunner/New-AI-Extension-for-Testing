@@ -160,7 +160,9 @@ export class IRExecutorImpl implements IRExecutor {
     let runFailed = false;
 
     // Determine start URL from the plan's environment
-    const startUrl = plan.environment.baseUrl;
+    // D9: prefer the recorded startUrl (exact page); pre-D9 cached plans
+    // carry only the pathful baseUrl and fall back to it.
+    const startUrl = plan.environment.startUrl ?? plan.environment.baseUrl;
 
     // 1. Create a tab and navigate to the start URL
     let tabId: number;

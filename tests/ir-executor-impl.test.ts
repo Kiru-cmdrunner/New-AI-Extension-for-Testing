@@ -140,6 +140,41 @@ describe('IRExecutorImpl', () => {
       expect(opts.createTabMock).toHaveBeenCalledWith('https://app.example.com/login');
     });
 
+    // ── D9: startUrl preference ──────────────────────────────
+
+    it('D9: prefers environment.startUrl over baseUrl when present', async () => {
+      const opts = createMockOptions();
+      const executor = new IRExecutorImpl(opts);
+      const plan = makePlan({
+        environment: {
+          baseUrl: 'http://127.0.0.1:8098',
+          startUrl: 'http://127.0.0.1:8098/search.html?q=headphones',
+          browser: 'chrome',
+          viewport: { width: 1100, height: 760 },
+        },
+      });
+
+      await executor.execute(plan);
+
+      expect(opts.createTabMock).toHaveBeenCalledWith('http://127.0.0.1:8098/search.html?q=headphones');
+    });
+
+    it('D9: falls back to baseUrl when startUrl is absent (pre-D9 cached plan)', async () => {
+      const opts = createMockOptions();
+      const executor = new IRExecutorImpl(opts);
+      const plan = makePlan({
+        environment: {
+          baseUrl: 'https://legacy.example.com/full/path.html',
+          browser: 'chrome',
+          viewport: { width: 1280, height: 720 },
+        },
+      });
+
+      await executor.execute(plan);
+
+      expect(opts.createTabMock).toHaveBeenCalledWith('https://legacy.example.com/full/path.html');
+    });
+
     it('injects the executor content script after tab creation', async () => {
       const opts = createMockOptions();
       const executor = new IRExecutorImpl(opts);

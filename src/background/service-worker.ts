@@ -63,6 +63,8 @@ import type { NavigationEvidence, NetworkActivity } from '../shared/behavioral-e
 let sessionRestored = false;
 let recordingStartUrl = '';
 let recordingStartTitle = '';
+/** D9: content viewport of the tab at recording start (tab.width/height). */
+let recordingViewport: { width: number; height: number } | undefined;
 
 // M9.12: Prior-knowledge seed loaded at startRecording, passed to
 // the understanding pipeline at stopRecording.  Null = preload failed
@@ -313,6 +315,12 @@ async function handleStartRecording(): Promise<void> {
   const startTitle = tab?.title ?? '';
   recordingStartUrl = startUrl;
   recordingStartTitle = startTitle;
+  // D9: chrome.tabs.Tab width/height are the tab's content box (the actual
+  // viewport the user recorded at). Absent on some platforms → undefined,
+  // and the IR bridge falls back to the documented 1280×720 default.
+  recordingViewport = (tab?.width && tab?.height)
+    ? { width: tab.width, height: tab.height }
+    : undefined;
 
   // Reset Component Runtime for a fresh recording session
   resetState();
@@ -336,6 +344,8 @@ async function handleStartRecording(): Promise<void> {
         startUrl,
         startTitle,
         capturedAt: new Date().toISOString(),
+        // D9: content viewport for honest IR environment + config output
+        ...(recordingViewport ? { viewport: recordingViewport } : {}),
       },
     });
   } catch { /* non-fatal */ }
@@ -580,6 +590,8 @@ async function handleStopRecording(): Promise<void> {
       recordingContext: {
         startUrl: recordingStartUrl || tab?.url || 'about:blank',
         title: recordingStartTitle || tab?.title || null,
+        // D9: honest viewport from the tab's content box at recording start
+        ...(recordingViewport ? { viewport: recordingViewport } : {}),
       },
       testCaseName: (await StorageService.getTestCaseDraft())?.name ?? 'Recorded Test',
     });

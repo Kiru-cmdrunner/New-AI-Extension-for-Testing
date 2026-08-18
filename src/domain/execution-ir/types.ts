@@ -205,8 +205,14 @@ export interface IRStep {
  * Environment Profile — everything it needs is here.
  */
 export interface IREnvironment {
-  /** Fully resolved base URL (from Environment Profile). */
+  /** Fully resolved base URL (origin semantics — adapters resolve relative paths against it). */
   readonly baseUrl: string;
+  /**
+   * The exact page URL the recording started on (D9). Replays start
+   * here. Optional for backward compatibility: plans cached before D9
+   * carry only the (pathful) baseUrl and fall back to it.
+   */
+  readonly startUrl?: string;
   readonly browser: 'chrome' | 'firefox' | 'safari' | 'edge';
   readonly viewport: { width: number; height: number };
 }
