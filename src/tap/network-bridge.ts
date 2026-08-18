@@ -145,6 +145,15 @@ export class NetworkBridge {
     };
     window.addEventListener('cmdrunner-net', this.netListener);
 
+    // D8: The MAIN-world interceptor loads at document_start and dispatches
+    // its ready event ONCE at document load — long before START_RECORDING
+    // constructs this bridge. The durable cross-world signal is the shared
+    // DOM marker the interceptor sets alongside its dispatch. If present,
+    // the MAIN world is already active; no wait, no false diagnostic.
+    if (document.documentElement.getAttribute('data-cmdrunner-net-ready') === 'true') {
+      this.mainWorldActive = true;
+    }
+
     // Listen for ready signal
     this.readyListener = () => {
       this.mainWorldActive = true;
@@ -156,12 +165,17 @@ export class NetworkBridge {
     };
     window.addEventListener('cmdrunner-net-ready', this.readyListener);
 
-    // Set timeout for ready signal (500ms per spec §6.2)
-    this.readyTimeout = setTimeout(() => {
-      // Ready signal not received — fall back to webRequest-only mode
-      console.debug('[NetworkBridge] MAIN-world interceptor NOT active after 500ms — webRequest-only mode');
-      this.readyTimeout = null;
-    }, 500);
+    // Set timeout for ready signal (500ms per spec §6.2) — only honest when
+    // the marker path did NOT already establish readiness (D8: covers the
+    // re-injection race where the bridge starts before the SW's synchronous
+    // ready re-dispatch).
+    if (!this.mainWorldActive) {
+      this.readyTimeout = setTimeout(() => {
+        // Ready signal not received — fall back to webRequest-only mode
+        console.debug('[NetworkBridge] MAIN-world interceptor NOT active after 500ms — webRequest-only mode');
+        this.readyTimeout = null;
+      }, 500);
+    }
 
     // Listen for webRequest messages forwarded from SW
     this.messageListener = (msg: unknown) => {

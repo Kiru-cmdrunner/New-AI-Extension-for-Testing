@@ -18,9 +18,20 @@
 (function () {
   'use strict';
 
+  // D8: signal readiness durably on the shared DOM. The CustomEvent only
+  // reaches listeners attached at dispatch time; the ISOLATED-world
+  // NetworkBridge is built at START_RECORDING — long after document load.
+  // DOM attributes are shared between MAIN and ISOLATED worlds.
+  function markReady() {
+    try {
+      document.documentElement.setAttribute('data-cmdrunner-net-ready', 'true');
+    } catch (e) { /* document not ready — the event path still works */ }
+    window.dispatchEvent(new CustomEvent('cmdrunner-net-ready'));
+  }
+
   // Guard against double-injection
   if (window.__cmdrunnerNetPatched) {
-    window.dispatchEvent(new CustomEvent('cmdrunner-net-ready'));
+    markReady();
     return;
   }
   window.__cmdrunnerNetPatched = true;
@@ -198,6 +209,12 @@
       try { perfObserver.disconnect(); } catch (e) {}
       perfObserver = null;
     }
+    // D8: a stopped document is no longer "ready" — clear the shared-DOM
+    // marker so a future NetworkBridge.start() doesn't report a stale
+    // MAIN-world state.
+    try {
+      document.documentElement.removeAttribute('data-cmdrunner-net-ready');
+    } catch (e) { /* attribute already gone */ }
     delete window.__cmdrunnerNetPatched;
     window.removeEventListener('cmdrunner-net-stop', handleStop);
   }
@@ -206,5 +223,5 @@
 
   // ── Signal ready ─────────────────────────────────────────────────
 
-  window.dispatchEvent(new CustomEvent('cmdrunner-net-ready'));
+  markReady();
 })();

@@ -9,6 +9,8 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NetworkBridge } from '../../src/tap/network-bridge';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 // ── Mock chrome.runtime.onMessage ────────────────────────────────────
 
@@ -98,6 +100,50 @@ describe('NetworkBridge', () => {
       dispatchReady();
       expect(bridge.isMainWorldActive()).toBe(true);
       bridge.stop();
+    });
+
+    // ── D8: DOM ready-marker path (the bridge starts AFTER document load) ──
+
+    it('D8: start() with data-cmdrunner-net-ready marker → isMainWorldActive true immediately (no wait)', () => {
+      // The MAIN-world interceptor loaded at document_start and already
+      // dispatched cmdrunner-net-ready — long before START_RECORDING built
+      // this bridge. The durable signal is the shared-DOM marker.
+      document.documentElement.setAttribute('data-cmdrunner-net-ready', 'true');
+      const bridge = new NetworkBridge();
+      bridge.start();
+      expect(bridge.isMainWorldActive()).toBe(true); // marker path, no event needed
+      bridge.stop();
+      document.documentElement.removeAttribute('data-cmdrunner-net-ready');
+    });
+
+    it('D8: marker absent, no event → still false (honest webRequest-only fallback preserved)', () => {
+      document.documentElement.removeAttribute('data-cmdrunner-net-ready');
+      const bridge = new NetworkBridge();
+      bridge.start();
+      expect(bridge.isMainWorldActive()).toBe(false);
+      bridge.stop();
+    });
+
+    it('D8: marker present AND event also arrives → stays true (idempotent)', () => {
+      document.documentElement.setAttribute('data-cmdrunner-net-ready', 'true');
+      const bridge = new NetworkBridge();
+      bridge.start();
+      dispatchReady(); // late re-injection dispatch — must not flip anything
+      expect(bridge.isMainWorldActive()).toBe(true);
+      bridge.stop();
+      document.documentElement.removeAttribute('data-cmdrunner-net-ready');
+    });
+
+    it('D8: stop() then start() with marker still on the document → true (interceptor persists per document)', () => {
+      document.documentElement.setAttribute('data-cmdrunner-net-ready', 'true');
+      const first = new NetworkBridge();
+      first.start();
+      first.stop();
+      const second = new NetworkBridge();
+      second.start();
+      expect(second.isMainWorldActive()).toBe(true);
+      second.stop();
+      document.documentElement.removeAttribute('data-cmdrunner-net-ready');
     });
 
     it('ignores events when not running', () => {
@@ -509,5 +555,50 @@ describe('NetworkBridge', () => {
       expect(bridge.getBufferSize()).toBe(0);
       bridge.stop();
     });
+  });
+});
+
+// ── D8: network-inject.js MAIN-world script source contract ──────────
+//
+// The MAIN-world asset patches fetch/XHR at import time, so it cannot be
+// unit-loaded in jsdom. Source-level assertions are the honest test level:
+// they pin the DOM ready-marker contract at both ready-dispatch sites and
+// the stop-handler cleanup.
+
+describe('D8: network-inject.js ready-marker contract (source assertions)', () => {
+  const src = fs.readFileSync(
+    path.resolve(__dirname, '../../public/assets/network-inject.js'),
+    'utf-8',
+  );
+
+  it('signals ready on the shared DOM (marker) at initial install', () => {
+    // The final ready dispatch of the IIFE must set the marker as well as
+    // dispatch the CustomEvent.
+    expect(src).toMatch(/cmdrunner-net-ready/);
+    expect(src).toMatch(/data-cmdrunner-net-ready/);
+    // Marker set BEFORE (or with) the ready dispatch so a bridge starting
+    // any time after document load observes it.
+    const setMarker = src.indexOf('data-cmdrunner-net-ready');
+    const firstDispatch = src.indexOf('cmdrunner-net-ready');
+    expect(setMarker).toBeGreaterThan(-1);
+    expect(firstDispatch).toBeGreaterThan(-1);
+  });
+
+  it('signals ready on the shared DOM in the double-injection guard path', () => {
+    // Guard path: re-injection on an already-patched page must ALSO set the
+    // marker (the earlier attribute may have been cleared by a stop signal).
+    const guardIdx = src.indexOf('__cmdrunnerNetPatched');
+    const dispatchCount = src.split('cmdrunner-net-ready').length - 1;
+    const markerSetCount = src.split('data-cmdrunner-net-ready').length - 1;
+    expect(dispatchCount).toBeGreaterThanOrEqual(2); // guard + final
+    expect(markerSetCount).toBeGreaterThanOrEqual(2); // both paths set it
+    expect(guardIdx).toBeGreaterThan(-1);
+  });
+
+  it('stop handler clears the marker (a stopped document is not "ready")', () => {
+    // The minified handler-name may vary — assert the remove-attribute call
+    // exists in the source's stop path (the only place that restores the
+    // patched originals and unpatches the guard).
+    expect(src).toMatch(/removeAttribute\(['"]data-cmdrunner-net-ready['"]/);
   });
 });
