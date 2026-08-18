@@ -113,7 +113,8 @@ export const DEFAULT_UI_STATE: UIState = {
 
 /**
  * Raw element identity data captured by the content script at click time.
- * Sent to the background SW, which assigns an `elementId` before storing.
+ * Sent to the background SW; the session-scoped elementId is assigned later,
+ * at harvest time (harvestSessionElements) when the recording stops.
  */
 export interface RawElementIdentity {
   /** Computed accessible name (best-effort). */
@@ -157,10 +158,14 @@ export interface RawElementIdentity {
 }
 
 /**
- * Full element identity — RawElementIdentity + elementId assigned by background.
+ * Full element identity — RawElementIdentity + session-scoped elementId.
  */
 export interface ElementIdentity extends RawElementIdentity {
-  /** Unique sequential element ID, e.g. "elem-0001". Assigned by background. */
+  /**
+   * Session-scoped element ID, e.g. "elem-0001". Assigned at harvest time
+   * by harvestSessionElements() in the background (service worker) when a
+   * recording stops; empty at capture time (content script).
+   */
   elementId: string;
 }
 
@@ -203,7 +208,8 @@ export interface NavigationEvent {
  *
  * Recorded when the user intentionally performs a click — the content
  * script resolves the target, extracts identity, and sends CLICK_CAPTURED.
- * The background SW assigns elementId and persists this event.
+ * The element's session-scoped ID is assigned later, at harvest time
+ * (harvestSessionElements in the background when the recording stops).
  *
  * Architecture Principle 6: Identity is immutable after classification.
  */
@@ -536,7 +542,7 @@ export type AppMessage =
   | { type: 'CONTENT_SCRIPT_STATUS'; tabId: number; alive: boolean; recording: boolean; url: string }
   | { type: 'STATE_UPDATE'; payload: UIState }
   | { type: 'RUN_TEST' }
-  | { type: 'EXECUTION_RESULT'; status: 'passed' | 'failed' | 'error'; stepCount: number; passedSteps: number; durationMs: number; healedElements: number }
+  | { type: 'EXECUTION_RESULT'; status: 'passed' | 'failed' | 'error'; stepCount: number; passedSteps: number; durationMs: number; healedElements: number; irStale?: boolean }
   | {
       type: 'RECORDED_EVENT';
       eventType: 'click' | 'dblclick' | 'contextmenu' | 'focus' | 'blur' | 'change' | 'input' | 'scroll' | 'mouseenter' | 'dragstart' | 'drop' | 'dateSelect';

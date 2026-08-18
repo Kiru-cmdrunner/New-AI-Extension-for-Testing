@@ -71,12 +71,20 @@ export async function persistSession(
     // ── 1. Ensure project exists ──
     let projectId = input.projectId;
     if (!projectId) {
-      // Create a default project
-      const project = await repos.projects.create({
-        name: 'Default Project',
-        createdBy: 'recorder',
-      });
-      projectId = project.id;
+      // D3: reuse the existing default project when the draft doesn't pin
+      // one — creating a NEW project per session meant every recording
+      // healed against an empty elements table (duplicates instead of
+      // matches across sessions).
+      const existing = await repos.projects.getAll();
+      if (existing.length > 0) {
+        projectId = existing[0].id;
+      } else {
+        const project = await repos.projects.create({
+          name: 'Default Project',
+          createdBy: 'recorder',
+        });
+        projectId = project.id;
+      }
     }
 
     // ── 2. Create RecordingSession ──

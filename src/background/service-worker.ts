@@ -529,6 +529,13 @@ async function handleStopRecording(): Promise<void> {
     schemaVersion: 1,
   };
 
+  // D3: harvest output hoisted so both the generation and persistence
+  // blocks below can consume it (steps need session element ids; the
+  // healing wiring needs the fresh UiElements).
+  let harvestedFreshElements: readonly import('../domain/entities/ui-element').UiElement[] = [];
+  let harvestedIdByKey = new Map<string, string>();
+  let recordedStartUrl = 'about:blank';
+
   try {
     if (productionInteractions.length > 0) {
       const { runUnderstandingPipeline } = await import('../understanding/pipeline/understanding-pipeline');
@@ -582,21 +589,36 @@ async function handleStopRecording(): Promise<void> {
   try {
     const { build: buildIRPlan } = await import('../generation/ir-bridge');
     const { PlaywrightCodeGenerator } = await import('../adapters/playwright/project-generator');
+    const { harvestSessionElements } = await import('../repository/services/session-element-harvest');
 
     const tab = await getActiveTab();
+
+    // D3: harvest session-scoped element IDs so steps reference real
+    // elements (repository linkage, runtime healing, correct OR-1 merge).
+    const startUrl = recordingStartUrl || tab?.url || 'about:blank';
+    recordedStartUrl = startUrl;
+    const harvest = harvestSessionElements(productionInteractions, startUrl);
+    harvestedFreshElements = harvest.freshElements;
+    harvestedIdByKey = harvest.idByKey as Map<string, string>;
 
     const irPlan = buildIRPlan({
       interactions: productionInteractions,
       recordingContext: {
-        startUrl: recordingStartUrl || tab?.url || 'about:blank',
+        startUrl,
         title: recordingStartTitle || tab?.title || null,
         // D9: honest viewport from the tab's content box at recording start
         ...(recordingViewport ? { viewport: recordingViewport } : {}),
       },
       testCaseName: (await StorageService.getTestCaseDraft())?.name ?? 'Recorded Test',
+      ...(harvestedIdByKey.size > 0 ? { elementIdByKey: harvestedIdByKey } : {}),
     });
 
     await StorageService.setRaw(StorageKeys.EXECUTION_IR_PLAN, irPlan);
+    // D2: truthful generation timestamp, written at generation time (was
+    // only written inside `if (irWasStale)` — circular dead logic).
+    await chrome.storage.local.set({
+      [StorageKeys.EXECUTION_IR_PLAN + '_generated_at']: new Date().toISOString(),
+    });
 
     // Render the plan to Playwright code files
     const codeGen = new PlaywrightCodeGenerator();
@@ -632,6 +654,73 @@ async function handleStopRecording(): Promise<void> {
       });
 
       await StorageService.setRaw(StorageKeys.REPOSITORY_SESSION_ID, persistenceResult.sessionId);
+
+      // ── D3: healing wiring — populate/update Repository Elements ──
+      // healFromRecording() is the single writer of the elements table; it
+      // had NO production caller, so the table stayed empty forever. Runs
+      // AFTER persistSession (needs projectId + sessionId). Non-fatal:
+      // healing failure must never break the recording session.
+      try {
+        const { healFromRecording } = await import('../repository/services/healing-service');
+        const { elementIdentityKey } = await import('../repository/services/session-element-harvest');
+
+        const healing = await healFromRecording(
+          persistenceResult.projectId,
+          harvestedFreshElements,
+          persistenceResult.sessionId,
+          uowFactory,
+        );
+
+        // Map identity-key → repository element id so the stored IR plan's
+        // steps reference the DURABLE repository ids (the session elem-NNNN
+        // ids are only labels; details come back one per fresh element in
+        // harvest order — matched by logicalName fallback is unreliable, so
+        // we re-read the project's elements and join via locator values).
+        if (healing.details.length > 0) {
+          const mapUow = uowFactory.create();
+          const storedElements = await mapUow.execute(async (repos) =>
+            repos.elements.getByProject(persistenceResult.projectId),
+          );
+          const repoIdByKey = new Map<string, string>();
+          for (const fresh of harvestedFreshElements) {
+            const key = elementIdentityKey(fresh.identity);
+            // Join: stored element whose locator set contains the fresh
+            // cssSelector (category-5 structural locator, always written
+            // from the identity by resolveFreshLocators via healing).
+            const match = storedElements.find((el) =>
+              el.locatorStrategies.some((ls) => ls.value === fresh.identity.cssSelector),
+            );
+            if (match) repoIdByKey.set(key, match.id);
+          }
+          if (repoIdByKey.size > 0) {
+            // Rewrite the plan with repository ids and refresh generated_at.
+            const { build: buildIRPlan } = await import('../generation/ir-bridge');
+            const mappedPlan = buildIRPlan({
+              interactions: productionInteractions,
+              recordingContext: {
+                // Same fallback tier as the first build above.
+                startUrl: recordedStartUrl,
+                title: recordingStartTitle || null,
+                ...(recordingViewport ? { viewport: recordingViewport } : {}),
+              },
+              testCaseName: (await StorageService.getTestCaseDraft())?.name ?? 'Recorded Test',
+              elementIdByKey: repoIdByKey,
+            });
+            await StorageService.setRaw(StorageKeys.EXECUTION_IR_PLAN, mappedPlan);
+            await chrome.storage.local.set({
+              [StorageKeys.EXECUTION_IR_PLAN + '_generated_at']: new Date().toISOString(),
+            });
+          }
+        }
+
+        console.info(
+          '[D3] session element healing:', JSON.stringify({
+            examined: healing.examined, healed: healing.healed, created: healing.created,
+          }),
+        );
+      } catch (healErr) {
+        console.warn('[D3] element healing failed (non-fatal):', healErr);
+      }
 
       // M8.2: Persist behavioral evidence to the dedicated table.
       // Runs after persistSession returns sessionId. Non-fatal — wrapped in
@@ -787,7 +876,13 @@ async function handleRunTest(): Promise<void> {
   const startTime = performance.now();
 
   // 1. Read the IR plan from storage
-  const irPlanResult = await chrome.storage.local.get(StorageKeys.EXECUTION_IR_PLAN);
+  // D2: fetch the plan AND its `_generated_at` companion in one get —
+  // a single-key get leaves the companion undefined and staleness
+  // degenerates to always-true (epoch fallback).
+  const irPlanResult = await chrome.storage.local.get([
+    StorageKeys.EXECUTION_IR_PLAN,
+    StorageKeys.EXECUTION_IR_PLAN + '_generated_at',
+  ]);
   const irPlan = irPlanResult[StorageKeys.EXECUTION_IR_PLAN];
 
   if (!irPlan) {
@@ -831,9 +926,9 @@ async function handleRunTest(): Promise<void> {
       referencedElements.push(...elements);
     }
 
-    // Build a minimal artifact-like object for staleness check
-    // (The IR plan in storage doesn't have generatedAt, so we use
-    // a synthetic timestamp from the plan's steps or the storage time)
+    // D2: the `_generated_at` companion is written at generation time
+    // (handleStopRecording). Pre-D2 plans have no companion — epoch fallback
+    // keeps the conservative "older than every element" semantics.
     const irGeneratedAt = irPlanResult[StorageKeys.EXECUTION_IR_PLAN + '_generated_at'] as string
       ?? new Date(0).toISOString(); // epoch if unknown
 
@@ -846,9 +941,10 @@ async function handleRunTest(): Promise<void> {
     if (stalenessReport.status === 'stale') {
       irWasStale = true;
       console.warn('[Execution] IR is stale:', stalenessReport.reasons);
-      // In a full implementation, we would regenerate the IR here via the IR Bridge.
-      // For now, proceed with the stale IR — the runtime healing in the executor
-      // will compensate by healing locators during execution.
+      // Proceed with the stale IR — runtime healing in the executor
+      // compensates by healing locators during execution. D2 makes this
+      // honest: the EXECUTION_RESULT broadcast carries irStale so the side
+      // panel can say so instead of implying a fresh verified run.
     }
   } catch (stalenessErr) {
     // Non-fatal — staleness check is an optimization, not a requirement
@@ -871,23 +967,12 @@ async function handleRunTest(): Promise<void> {
     },
   });
 
-  // 2b. Post-execution: If healing occurred during execution, the Repository
-  // Elements now have updated locators with bumped updatedAt. The cached IR
-  // plan in chrome.storage.local is now stale. We mark it as stale so the
-  // next run knows to regenerate (or at least re-check staleness).
-  // For now, we store a _generated_at timestamp alongside the IR plan so
-  // the pre-execution staleness check can detect drift on subsequent runs.
-  if (irWasStale) {
-    // Update the stored timestamp so the staleness check on next run
-    // compares against the latest Repository Element updates
-    try {
-      await chrome.storage.local.set({
-        [StorageKeys.EXECUTION_IR_PLAN + '_generated_at']: new Date().toISOString(),
-      });
-    } catch {
-      // Non-fatal
-    }
-  }
+  // 2b. D2: the _generated_at companion is now written at GENERATION time
+  // (handleStopRecording + post-healing rewrite). The old write-here-only-
+  // when-stale logic was circular dead code (it could never fire first).
+  // Post-run bump REMOVED: rewriting the timestamp after execution would
+  // falsely mark a stale plan as fresh — staleness must compare against the
+  // plan's true generation time.
 
   // 3. Persist the result as an ExecutionRun to Repository V2
   let executionRunId: string | null = null;
@@ -935,6 +1020,9 @@ async function handleRunTest(): Promise<void> {
     completedAt: result.completedAt,
     stepResults: result.stepResults,
     executionRunId,
+    // D2: honest staleness flag — the plan was stale when this run started
+    // (an element changed after generation; runtime healing compensated).
+    irStale: irWasStale,
   };
 
   await StorageService.setRaw(StorageKeys.EXECUTION_RESULT, executionSummary);
@@ -947,6 +1035,7 @@ async function handleRunTest(): Promise<void> {
     result.stepResults.filter((s: { status: string }) => s.status === 'passed').length,
     durationMs,
     healedCount,
+    irWasStale,
   );
 }
 
@@ -959,6 +1048,7 @@ function broadcastExecutionResult(
   passedSteps: number,
   durationMs: number,
   healedElements: number,
+  irStale = false,
 ): void {
   const message: AppMessage = {
     type: 'EXECUTION_RESULT',
@@ -967,6 +1057,7 @@ function broadcastExecutionResult(
     passedSteps,
     durationMs,
     healedElements,
+    ...(irStale ? { irStale: true } : {}),
   };
   chrome.runtime.sendMessage(message).catch(() => {
     // Side panel may not be open — ignore

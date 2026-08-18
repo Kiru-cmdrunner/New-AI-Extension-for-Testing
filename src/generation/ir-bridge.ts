@@ -168,16 +168,29 @@ function resolveLocatorsForIR(identity: ElementIdentity): ResolvedLocator[] {
 
 // ── Target Resolution (ElementIdentity → ResolvedTarget) ───
 
-function resolveElementTarget(identity: ElementIdentity): ElementTarget {
+function resolveElementTarget(
+  identity: ElementIdentity,
+  elementIdByKey?: ReadonlyMap<string, string>,
+): ElementTarget {
   const locators = resolveLocatorsForIR(identity);
+  // D3: prefer the session-assigned element ID (elem-NNNN) when the caller
+  // harvested one for this identity. Falls back to the captured value —
+  // pre-D3 callers (and unharvested identities) keep the old behavior.
+  const key = elementIdentityKeyOf(identity);
+  const harvestedId = elementIdByKey?.get(key) ?? '';
   return {
     kind: 'element',
-    elementId: identity.elementId,
+    elementId: harvestedId || identity.elementId,
     elementName: identity.accessibleName || identity.ariaLabel || identity.tag,
     pageOrComponent: 'main',
     resolvedLocators: locators,
   };
 }
+
+// D3: import the shared harvest key — the single canonical join key between
+// harvested session ids (service worker) and IR targets (this module).
+// A duplicated local copy would silently drift and break linkage.
+import { elementIdentityKey as elementIdentityKeyOf } from '../repository/services/session-element-harvest';
 
 function resolveUrlTarget(url: string): ResolvedTarget {
   return { kind: 'url', url };
@@ -443,7 +456,7 @@ function deriveTags(
  * @returns ExecutionIRPlan — the unified execution representation
  */
 export function build(input: GenerationInput): ExecutionIRPlan {
-  const { interactions, recordingContext, testCaseName, enrichment } = input;
+  const { interactions, recordingContext, testCaseName, enrichment, elementIdByKey } = input;
 
   const steps: IRStep[] = [];
   let stepCounter = 0;
@@ -464,7 +477,7 @@ export function build(input: GenerationInput): ExecutionIRPlan {
       const url = (interaction.metadata['pageUrl'] as string) ?? recordingContext.startUrl;
       target = resolveUrlTarget(url);
     } else {
-      target = resolveElementTarget(interaction.trigger);
+      target = resolveElementTarget(interaction.trigger, elementIdByKey);
     }
 
     // Extract input value

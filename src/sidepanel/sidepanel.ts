@@ -730,6 +730,8 @@ interface ExecutionSummaryData {
   completedAt: string;
   stepResults: ExecutionStepDisplay[];
   executionRunId?: string | null;
+  /** D2: true when the run executed against an IR plan whose referenced repository elements changed since generation. */
+  irStale?: boolean;
 }
 
 async function loadExecutionResult(): Promise<ExecutionSummaryData | null> {
@@ -775,6 +777,22 @@ export function renderExecutionResult(data: ExecutionSummaryData): void {
     assertionsValue.textContent = 'none evaluated — replay-only run (0 checks)';
     assertionsRow.append(assertionsLabel, assertionsValue);
     executionBody.appendChild(assertionsRow);
+  }
+
+  // D2: when the IR plan was stale (a referenced repository element changed
+  // after the plan was generated), say so — the run replayed against an
+  // outdated plan and runtime healing attempted to bridge the gap.
+  if (data.irStale === true) {
+    const staleRow = document.createElement('div');
+    staleRow.className = 'repo-status__row repo-status__unavailable';
+    const staleLabel = document.createElement('span');
+    staleLabel.className = 'repo-status__label';
+    staleLabel.textContent = 'IR stale:';
+    const staleValue = document.createElement('span');
+    staleValue.className = 'repo-status__value';
+    staleValue.textContent = 'stale — a tracked element changed since this plan was generated; runtime healing attempted';
+    staleRow.append(staleLabel, staleValue);
+    executionBody.appendChild(staleRow);
   }
 
   // Step counts

@@ -123,4 +123,13 @@ export interface GenerationInput {
    * When absent, the compiler produces a valid but unenriched plan.
    */
   readonly enrichment?: GenerationEnrichment;
+
+  /**
+   * D3: identity-key → session element ID (elem-NNNN), from
+   * harvestSessionElements(). When present, element steps carry real IDs —
+   * enabling repository linkage, runtime healing, and correct OR-1 merging.
+   * When absent, behavior is identical to pre-D3 (captured elementId, i.e.
+   * ''). Keys are elementIdentityKey(identity) values.
+   */
+  readonly elementIdByKey?: ReadonlyMap<string, string>;
 }

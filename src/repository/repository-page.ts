@@ -692,10 +692,11 @@ async function renderElementDetail(el: Element): Promise<void> {
     elementDetailBody.appendChild(lastHealRow);
   }
 
-  // IR staleness note (Phase 11.4): healing updates element locators and
-  // bumps updatedAt. Any cached IR artifact referencing this element will
-  // be detected as stale by checkStaleness() when next served by the
-  // Execution Engine (Phase 12). The IR is derived and regenerable.
+  // IR staleness note: healing updates element locators and bumps
+  // updatedAt. Any cached IR artifact referencing this element will be
+  // detected as stale by checkStaleness() on the next Run Test — the Side
+  // Panel then reports the run as executed against a stale plan (D2).
+  // Regenerating the plan is NOT automatic: it requires a fresh recording.
   if (el.healHistory.length > 0) {
     const staleNote = document.createElement('div');
     staleNote.className = 'detail-section';
@@ -705,7 +706,7 @@ async function renderElementDetail(el: Element): Promise<void> {
     const staleIcon = document.createElement('span');
     staleIcon.textContent = '⚠️ ';
     const staleText = document.createElement('span');
-    staleText.textContent = 'Cached IR artifacts referencing this element will be detected as stale on next access. They are automatically regenerated.';
+    staleText.textContent = 'Cached IR artifacts referencing this element are detected as stale on the next run; the Side Panel flags the run accordingly. Re-record to regenerate the plan with fresh locators.';
     staleNote.append(staleIcon, staleText);
     elementDetailBody.appendChild(staleNote);
   }
