@@ -13,6 +13,7 @@
 
 import type { KnowledgeRepository } from '../persistence/knowledge-repository';
 import type { KnowledgeLoader } from '../consolidation/knowledge-loader';
+import { MAX_SAFE_SESSIONS } from '../consolidation/knowledge-loader';
 import type {
   KnowledgeActionSignatureRow,
   KnowledgeEdgeRow,
@@ -544,6 +545,22 @@ export async function getGapReport(
 }
 
 // ── LLM grounding block ───────────────────────────────────────────────
+
+/**
+ * CP8 v1.1 — retained behavior-session ids for an app (seq asc), bounded
+ * by the loader's MAX_SAFE_SESSIONS. Additive query used by the knowledge
+ * snapshot (M-EXEC E1) to enumerate reconstructable workflow traces.
+ * Read-only; deterministic ordering.
+ */
+export async function listBehaviorSessions(
+  repo: KnowledgeRepository,
+  appId: string,
+): Promise<string[]> {
+  const rows = await repo.getRecentBehaviorSessions(appId, MAX_SAFE_SESSIONS);
+  return rows
+    .sort((a, b) => a.seq - b.seq)
+    .map((r) => r.sessionId);
+}
 
 export async function describeActionAsContext(
   repo: KnowledgeRepository,

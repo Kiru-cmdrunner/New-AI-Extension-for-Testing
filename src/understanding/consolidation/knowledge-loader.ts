@@ -37,8 +37,9 @@ import type {
 } from './behavior-knowledge';
 import { STALE_AFTER_SESSIONS } from '../persistence/knowledge-types';
 
-/** Sessions fetched for the read model — bounded read, matches retention. */
-const MAX_SAFE_SESSIONS = 50;
+/** Sessions fetched for the read model — bounded read, matches retention.
+ * Exported for the CP8 contract snapshot (deterministic enumeration). */
+export const MAX_SAFE_SESSIONS = 50;
 
 // ── Confidence scoring (deterministic, configurable) ───────────────────
 

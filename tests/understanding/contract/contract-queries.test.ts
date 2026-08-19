@@ -23,6 +23,7 @@ import {
   getStateGraph,
   listActions,
   listApplications,
+  listBehaviorSessions,
   reconstructWorkflow,
   describeApplication,
   describeActionAsContext,
@@ -480,5 +481,67 @@ describe('CP8 contract queries', () => {
     const unlinked = await getActionDescriptor(repo, loader, `${APP}:sig:unlinked`);
     expect(unlinked!.workflowPatternIds).toEqual([]);
     expect(unlinked!.workflowPatternAbsence).toBe('linkage-pending');
+  });
+});
+
+// ── CP8 v1.1 — listBehaviorSessions (M-EXEC E1 snapshot enumeration) ──
+
+describe('CP8 v1.1 — listBehaviorSessions', () => {
+  let db: KnowledgeDatabase;
+  let repo: KnowledgeRepository;
+
+  beforeEach(async () => {
+    db = new KnowledgeDatabase();
+    await db.open();
+    repo = new KnowledgeRepository(db);
+    const mapped = mapBehaviorModel({ appId: APP, sessionId: 'session-1', model: makeModel(), transitions: transitionsFor() });
+    await repo.upsertBehaviorKnowledge(mapped, 1000);
+  });
+
+  afterEach(async () => {
+    await db.delete();
+  });
+
+  it('returns retained session ids in seq-ascending order', async () => {
+    // Seed two more sessions AFTER session-1 (upsertBehaviorKnowledge assigns
+    // monotonic seq inside the write tx; the second upsert lands at seq 2,
+    // the third at seq 3).
+    const m2 = mapBehaviorModel({ appId: APP, sessionId: 'session-2', model: makeModel(), transitions: transitionsFor() });
+    await repo.upsertBehaviorKnowledge(m2, 2000);
+    const m3 = mapBehaviorModel({ appId: APP, sessionId: 'session-3', model: makeModel(), transitions: transitionsFor() });
+    await repo.upsertBehaviorKnowledge(m3, 3000);
+
+    const ids = await listBehaviorSessions(repo, APP);
+
+    expect(ids).toEqual(['session-1', 'session-2', 'session-3']);
+  });
+
+  it('bounds the enumeration at MAX_SAFE_SESSIONS (50)', async () => {
+    // 50 sessions exist (session-1 + 49 more); the query must return at
+    // most 50 ids — the loader's bounded read, matching retention.
+    for (let i = 2; i <= 50; i++) {
+      const m = mapBehaviorModel({ appId: APP, sessionId: `session-${i}`, model: makeModel(), transitions: transitionsFor() });
+      await repo.upsertBehaviorKnowledge(m, 1000 + i);
+    }
+
+    const ids = await listBehaviorSessions(repo, APP);
+
+    expect(ids.length).toBe(50);
+    // Ascending: first is the oldest retained (session-1), last is newest.
+    expect(ids[0]).toBe('session-1');
+    expect(ids[49]).toBe('session-50');
+  });
+
+  it('returns [] for an app with no sessions', async () => {
+    const ids = await listBehaviorSessions(repo, 'app-unknown');
+    expect(ids).toEqual([]);
+  });
+
+  it('KnowledgeContract.listBehaviorSessions wraps the ids in an envelope', async () => {
+    const { KnowledgeContract } = await import('../../../src/understanding/contract/knowledge-contract');
+    const contract = new KnowledgeContract(repo, new KnowledgeLoader(repo));
+    const env = await contract.listBehaviorSessions(APP);
+    expect(env.contractVersion).toBe(1);
+    expect(env.data).toEqual(['session-1']);
   });
 });

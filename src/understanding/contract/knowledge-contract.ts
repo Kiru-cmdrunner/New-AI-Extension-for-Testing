@@ -36,6 +36,7 @@ import {
   getStateGraph,
   listActions,
   listApplications,
+  listBehaviorSessions,
   reconstructWorkflow,
 } from './contract-queries';
 
@@ -57,6 +58,11 @@ export class KnowledgeContract {
 
   async listApplications(): Promise<ContractEnvelope<ApplicationDescriptor[]>> {
     return this.envelope(await listApplications(this.repo, this.loader));
+  }
+
+  /** CP8 v1.1 — retained behavior-session ids (seq asc), for snapshots. */
+  async listBehaviorSessions(appId: string): Promise<ContractEnvelope<string[]>> {
+    return this.envelope(await listBehaviorSessions(this.repo, appId));
   }
 
   async listActions(
