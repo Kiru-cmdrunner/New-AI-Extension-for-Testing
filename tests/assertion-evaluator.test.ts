@@ -517,6 +517,114 @@ describe('Assertion Evaluator', () => {
       expect(result.passed).toBe(false);
       expect(result.actualValue).toBe(1);
     });
+
+    // ── 4c-iii-a: true multi-match counts via allMatches ──
+
+    it('counts allMatches.length when provided (multi-element)', () => {
+      setupDom(
+        '<ul><li class="item">A</li><li class="item">B</li><li class="item">C</li></ul>',
+      );
+      const els = Array.from(document.querySelectorAll('.item'));
+      const result = evaluateAssertion(
+        elementAssertion(els[0], {
+          type: 'count',
+          comparison: 'equals',
+          expectedValue: 3,
+          target: { kind: 'element', element: els[0], allMatches: els },
+        }),
+      );
+      expect(result.passed).toBe(true);
+      expect(result.actualValue).toBe(3);
+    });
+
+    it('counts 0 for an empty allMatches array with a null element', () => {
+      setupDom('<div>no items</div>');
+      const result = evaluateAssertion(
+        elementAssertion(null, {
+          type: 'count',
+          comparison: 'equals',
+          expectedValue: 0,
+          target: { kind: 'element', element: null, allMatches: [] },
+        }),
+      );
+      expect(result.passed).toBe(true);
+      expect(result.actualValue).toBe(0);
+      // Must NOT short-circuit into the generic not-found branch.
+      expect(result.message).not.toContain('not found');
+    });
+
+    it('supports greaterThan over allMatches', () => {
+      setupDom('<ul><li class="item">A</li><li class="item">B</li></ul>');
+      const els = Array.from(document.querySelectorAll('.item'));
+      const result = evaluateAssertion(
+        elementAssertion(els[0], {
+          type: 'count',
+          comparison: 'greaterThan',
+          expectedValue: 1,
+          target: { kind: 'element', element: els[0], allMatches: els },
+        }),
+      );
+      expect(result.passed).toBe(true);
+      expect(result.actualValue).toBe(2);
+    });
+
+    it('supports lessThan over allMatches', () => {
+      setupDom('<ul><li class="item">A</li><li class="item">B</li></ul>');
+      const els = Array.from(document.querySelectorAll('.item'));
+      const result = evaluateAssertion(
+        elementAssertion(els[0], {
+          type: 'count',
+          comparison: 'lessThan',
+          expectedValue: 5,
+          target: { kind: 'element', element: els[0], allMatches: els },
+        }),
+      );
+      expect(result.passed).toBe(true);
+    });
+
+    it('allMatches takes precedence over the representative element (D2 parity)', () => {
+      // A representative element that IS present must not override a
+      // provided allMatches set — the caller's selector result is the
+      // count, exactly like Playwright's locator().count().
+      setupDom('<button>Click</button>');
+      const el = document.querySelector('button');
+      const result = evaluateAssertion(
+        elementAssertion(el, {
+          type: 'count',
+          comparison: 'equals',
+          expectedValue: 0,
+          target: { kind: 'element', element: el, allMatches: [] },
+        }),
+      );
+      expect(result.passed).toBe(true);
+      expect(result.actualValue).toBe(0);
+    });
+
+    it('preserves historical element?1:0 when allMatches is absent and element is null', () => {
+      setupDom('<div>empty</div>');
+      const result = evaluateAssertion(
+        elementAssertion(null, {
+          type: 'count',
+          comparison: 'equals',
+          expectedValue: 0,
+        }),
+      );
+      expect(result.passed).toBe(true);
+      expect(result.actualValue).toBe(0);
+    });
+
+    it('non-count assertion types still hit the null-element not-found guard', () => {
+      setupDom('<div>empty</div>');
+      const result = evaluateAssertion(
+        elementAssertion(null, {
+          type: 'textMatch',
+          comparison: 'equals',
+          expectedValue: 'x',
+        }),
+      );
+      expect(result.passed).toBe(false);
+      expect(result.message).toContain('Element not found');
+    });
   });
 
   // ── evaluateAssertion — URL_MATCH ──

@@ -13,10 +13,10 @@
  *   TEXT_MATCH     EQUALS       → toHaveText('val')
  *   TEXT_MATCH     CONTAINS     → toContainText('val')
  *   TEXT_MATCH     STARTS_WITH  → toContainText(/^val/)
- *   TEXT_MATCH     MATCHES      → toHaveText(/val/)
+ *   TEXT_MATCH     MATCHES      → toHaveText(/val/)     ← val is a REGEX pattern, embedded verbatim (D6)
  *   ATTRIBUTE_MATCH EQUALS      → toHaveAttribute('prop', 'val')
- *   ATTRIBUTE_MATCH CONTAINS    → toHaveAttribute('prop', /val/)
- *   ATTRIBUTE_MATCH MATCHES     → toHaveAttribute('prop', /val/)
+ *   ATTRIBUTE_MATCH CONTAINS    → toHaveAttribute('prop', /val/)  ← escaped (literal semantics)
+ *   ATTRIBUTE_MATCH MATCHES     → toHaveAttribute('prop', /val/)  ← verbatim regex (D6)
  *   COUNT          EQUALS       → toHaveCount(n)
  *   COUNT          GREATER_THAN → const count = await loc.count(); expect(count).toBeGreaterThan(n)
  *   COUNT          LESS_THAN    → const count = await loc.count(); expect(count).toBeLessThan(n)
@@ -196,8 +196,13 @@ function renderTextMatch(assertion: IRAssertion, pageVar: string, resolveTarget:
       return { lines: [`await ${expectCall(target, assertion)}.toContainText(/^${escapeRegex(value)}/)`] };
 
     case ValidationComparison.MATCHES:
-      // expectedValue is treated as a regex pattern.
-      return { lines: [`await ${expectCall(target, assertion)}.toHaveText(/${escapeRegex(value)}/)`] };
+      // 4c-iii-c (D6): expectedValue IS a regex pattern — embed it
+      // VERBATIM so the exported Playwright regex has the same semantics
+      // as the in-extension evaluators (new RegExp(expected)). Historical
+      // behavior escaped metacharacters, silently turning e.g. 'Order
+      // #\d+' into a literal match. Only syntax-level escaping
+      // (regexLiteral) applies; see its comment.
+      return { lines: [`await ${expectCall(target, assertion)}.toHaveText(/${regexLiteral(value)}/)`] };
 
     default:
       throw new Error(
@@ -210,8 +215,8 @@ function renderTextMatch(assertion: IRAssertion, pageVar: string, resolveTarget:
 /**
  * ATTRIBUTE_MATCH:
  *   EQUALS   → toHaveAttribute('prop', 'val')
- *   CONTAINS → toHaveAttribute('prop', /val/)
- *   MATCHES  → toHaveAttribute('prop', /val/)
+ *   CONTAINS → toHaveAttribute('prop', /val/)  ← escaped, literal semantics
+ *   MATCHES  → toHaveAttribute('prop', /val/)  ← verbatim regex (D6)
  *
  * The assertion.property field holds the attribute name.
  */
@@ -225,8 +230,14 @@ function renderAttributeMatch(assertion: IRAssertion, pageVar: string, resolveTa
       return { lines: [`await ${expectCall(target, assertion)}.toHaveAttribute('${escapeString(attr)}', '${escapeString(value)}')`] };
 
     case ValidationComparison.CONTAINS:
-    case ValidationComparison.MATCHES:
+      // CONTAINS stays literal on BOTH backends (evaluators do
+      // actual.includes(expected)), so escapeRegex is correct here.
       return { lines: [`await ${expectCall(target, assertion)}.toHaveAttribute('${escapeString(attr)}', /${escapeRegex(value)}/)`] };
+
+    case ValidationComparison.MATCHES:
+      // 4c-iii-c (D6): verbatim regex pattern — same semantics as the
+      // in-extension evaluators' new RegExp(expected).
+      return { lines: [`await ${expectCall(target, assertion)}.toHaveAttribute('${escapeString(attr)}', /${regexLiteral(value)}/)`] };
 
     default:
       throw new Error(
@@ -345,7 +356,9 @@ function renderUrlMatch(assertion: IRAssertion, pageVar: string, _resolveTarget:
       return { lines: [`await ${expectCall(target, assertion)}.toHaveURL(/^${escapeRegex(value)}/)`] };
 
     case ValidationComparison.MATCHES:
-      return { lines: [`await ${expectCall(target, assertion)}.toHaveURL(/${escapeRegex(value)}/)`] };
+      // 4c-iii-c (D6): verbatim regex — evaluators treat URL_MATCH
+      // expectedValue as a real regex too.
+      return { lines: [`await ${expectCall(target, assertion)}.toHaveURL(/${regexLiteral(value)}/)`] };
 
     default:
       throw new Error(
@@ -393,6 +406,34 @@ function escapeString(str: string): string {
  */
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+}
+
+/**
+ * 4c-iii-c (D6): embed a REGEX PATTERN in a JS regex literal without
+ * changing its semantics. Unlike escapeRegex (which neutralizes
+ * metacharacters for literal matching), this preserves the pattern's
+ * regex semantics and only:
+ *
+ *   1. escapes '/' — the regex-literal delimiter (escaping '/' inside a
+ *      character class or before/after it is a no-op for the regex
+ *      engine; '\/' is defined by spec as identical to '/'), and
+ *   2. escapes raw line terminators — ILLEGAL inside a regex literal,
+ *      which would make the generated spec a syntax error. '\n' etc. are
+ *      valid regex tokens with the same meaning.
+ *
+ * Fallback: when the pattern is not a valid RegExp, render it as an
+ * escaped literal (via escapeRegex) so the generated code still parses.
+ * The evaluators return false for invalid regexes; a literal that
+ * (almost certainly) fails to match is the closest exportable behavior
+ * — better than emitting invalid JS.
+ */
+function regexLiteral(pattern: string): string {
+  try {
+    void new RegExp(pattern);
+    return pattern.replace(/\//g, '\\/').replace(/\r\n/g, '\\n').replace(/[\n\r\u2028\u2029]/g, '\\n');
+  } catch {
+    return escapeRegex(pattern);
+  }
 }
 
 /**

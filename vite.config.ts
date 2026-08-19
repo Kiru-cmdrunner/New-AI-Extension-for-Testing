@@ -31,6 +31,39 @@ import manifest from './src/manifest.json';
  */
 export default defineConfig(({ mode }) => {
   const swOnly = process.env.SW_INLINE_ONLY === '1';
+  const executorOnly = process.env.EXECUTOR_ONLY === '1';
+
+  if (executorOnly) {
+    // EXECUTOR pass: build the RUN_TEST executor content script as a
+    // self-contained IIFE at dist/src/execution/executor-content-script.js —
+    // the EXACT path src/execution/ir-executor-impl.ts defaultInjectScript()
+    // injects via chrome.scripting.executeScript({ files: [...] }).
+    //
+    // IIFE (not ES): executeScript-injected files run as CLASSIC scripts —
+    // a module marker (even a bare `export {}`) is a syntax error there.
+    // The source is intentionally self-contained (content scripts cannot
+    // import modules), so the bundle has zero imports/exports.
+    // Pinned by tests/execution/executor-content-script-build.test.ts.
+    return {
+      resolve: {
+        alias: { '@': resolve(__dirname, 'src') },
+      },
+      build: {
+        outDir: 'dist',
+        emptyOutDir: false,
+        modulePreload: false,
+        minify: true,
+        lib: {
+          entry: resolve(__dirname, 'src/execution/executor-content-script.ts'),
+          formats: ['iife'],
+          name: 'CmdRunnerExecutor',
+          fileName: () => 'src/execution/executor-content-script.js',
+        },
+        appType: 'custom',
+        test: undefined,
+      },
+    };
+  }
 
   if (swOnly) {
     return {

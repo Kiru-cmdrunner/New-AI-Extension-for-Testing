@@ -213,3 +213,102 @@ describe('build() — OR-1 merge keeps the freshest resulting state', () => {
     expect(merged.assertions[0].expectedValue).toBe('2 items');
   });
 });
+
+// ── 4c-iii-b: collection COUNT through the bridge ─────────
+
+describe('build() — collection COUNT assertion (4c-iii-b)', () => {
+  it('maps a derived collection COUNT to a soft count/equals IRAssertion on #id > *', async () => {
+    const items: WireObservedItem[] = [
+      {
+        kind: 'collection',
+        matchedSelector: 'ul[data-testid], ul.list',
+        text: '',
+        numericValue: 3,
+        entityId: null,
+        entityType: null,
+        domPath: 'UL#cart-items',
+        attributes: {},
+        visible: true,
+      },
+    ];
+    const rs: WirePageContentSnapshot = {
+      url: 'https://shop.example.com/cart',
+      viewId: null,
+      items,
+      itemsOverflow: 0,
+      scannedAt: 1,
+      scanDurationMs: 1,
+    };
+    const interaction: ComponentInteraction = {
+      ...clickInteraction('evt-7-1'),
+      behavioralEvidence: {
+        applicationEvidence: { resultingState: rs },
+      } as never,
+    };
+
+    const { deriveStepAssertions } = await import('../../src/generation/assertion-derivation');
+    const enrichment: GenerationEnrichment = {
+      stepAssertions: deriveStepAssertions([interaction]),
+    };
+    const plan = build({
+      interactions: [interaction],
+      recordingContext: { startUrl: 'https://shop.example.com/', title: null },
+      testCaseName: 'Cart',
+      enrichment,
+    });
+
+    expect(plan.steps[0].assertions).toHaveLength(1);
+    const a = plan.steps[0].assertions[0];
+    expect(a.type).toBe('count');
+    expect(a.comparison).toBe('equals');
+    expect(a.severity).toBe('soft');
+    expect(a.expectedValue).toBe(3);
+    expect(a.target.kind).toBe('element');
+    if (a.target.kind === 'element') {
+      expect(a.target.resolvedLocators[0].value).toBe('#cart-items > *');
+    }
+  });
+
+  it('collection without #id yields NO assertions through the bridge (skip preserved)', async () => {
+    const items: WireObservedItem[] = [
+      {
+        kind: 'collection',
+        matchedSelector: 'ul[data-testid], ul.list',
+        text: '',
+        numericValue: 3,
+        entityId: null,
+        entityType: null,
+        domPath: 'UL',
+        attributes: {},
+        visible: true,
+      },
+    ];
+    const rs: WirePageContentSnapshot = {
+      url: 'https://shop.example.com/cart',
+      viewId: null,
+      items,
+      itemsOverflow: 0,
+      scannedAt: 1,
+      scanDurationMs: 1,
+    };
+    const interaction: ComponentInteraction = {
+      ...clickInteraction('evt-7-2'),
+      behavioralEvidence: {
+        applicationEvidence: { resultingState: rs },
+      } as never,
+    };
+
+    const { deriveStepAssertions } = await import('../../src/generation/assertion-derivation');
+    const enrichment: GenerationEnrichment = {
+      stepAssertions: deriveStepAssertions([interaction]),
+    };
+    const plan = build({
+      interactions: [interaction],
+      recordingContext: { startUrl: 'https://shop.example.com/', title: null },
+      testCaseName: 'Cart',
+      enrichment,
+    });
+
+    expect(plan.steps[0].assertions).toHaveLength(0);
+  });
+});

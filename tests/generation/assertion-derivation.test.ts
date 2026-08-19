@@ -137,10 +137,35 @@ describe('deriveStepAssertions — kind coverage (4c-i slice)', () => {
     expect(a.derivedFrom).toBe('entity');
   });
 
-  it('skips collection items entirely (deferred to 4c-iii/S3)', () => {
+  it('derives a soft COUNT equals assertion for a collection with #id + numericValue (4c-iii-b)', () => {
     const map = deriveStepAssertions([
       interaction('evt-1-5', snapshot([
         item({ kind: 'collection', matchedSelector: 'ul[data-testid]', text: '', numericValue: 2, domPath: 'UL#cart-items' }),
+      ])),
+    ]);
+    expect(map.size).toBe(1);
+    const a = map.get('evt-1-5')![0];
+    expect(a.type).toBe('count');
+    expect(a.comparison).toBe('equals');
+    expect(a.severity).toBe('soft');
+    expect(a.expectedValue).toBe(2);
+    expect(a.targetCss).toBe('#cart-items > *');
+    expect(a.derivedFrom).toBe('collection');
+  });
+
+  it('skips a collection without a high-confidence #id (no fragile locator)', () => {
+    const map = deriveStepAssertions([
+      interaction('evt-1-5b', snapshot([
+        item({ kind: 'collection', matchedSelector: 'ul[data-testid]', text: '', numericValue: 2, domPath: 'UL' }),
+      ])),
+    ]);
+    expect(map.size).toBe(0);
+  });
+
+  it('skips a collection with null numericValue (no trustworthy count)', () => {
+    const map = deriveStepAssertions([
+      interaction('evt-1-5c', snapshot([
+        item({ kind: 'collection', matchedSelector: 'ul[data-testid]', text: '', numericValue: null, domPath: 'UL#cart-items' }),
       ])),
     ]);
     expect(map.size).toBe(0);
@@ -225,6 +250,7 @@ describe('deriveStepAssertions — caps and priority', () => {
       item({ kind: 'entity', entityId: 'E1', domPath: 'UL > LI', attributes: { 'data-asin': 'E1' }, numericValue: null, text: '' }),
       item({ kind: 'notification', numericValue: null, text: 'added', domPath: 'DIV#toast' }),
       item({ kind: 'status-badge', text: 'In Stock', numericValue: null, domPath: 'SPAN#badge' }),
+      item({ kind: 'collection', numericValue: 2, text: '', domPath: 'UL#cart-items' }),
       item({ kind: 'counter', domPath: 'DIV#cart-count' }),
       item({ kind: 'counter', domPath: 'DIV#cart-count-2' }),
     ];
@@ -234,7 +260,7 @@ describe('deriveStepAssertions — caps and priority', () => {
     expect(list.map((a) => a.derivedFrom)).toEqual([
       'counter',
       'counter',
-      'status-badge',
+      'collection',
     ]);
   });
 

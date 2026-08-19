@@ -6,11 +6,12 @@
  * src/shared) into StepScopedAssertion[] keyed by the CAUSING step's
  * sourceEventId.
  *
- * Architecture (Phase 4c-i, Option A — approved):
- *   - Assertions ON by default for the four kinds: counter, status-badge,
- *     notification, entity. (collection COUNT is deferred to 4c-iii — the
- *     in-extension evaluator counts element-or-0, so a COUNT assertion
- *     would silently evaluate wrong until S3 lands.)
+ * Architecture (Phase 4c-i, Option A — approved; extended 4c-iii-b):
+ *   - Assertions ON by default for five kinds: counter, collection,
+ *     status-badge, notification, entity. Collection asserts COUNT equals
+ *     the observed child count (4c-iii-b) — enabled by the 4c-iii-a count
+ *     fidelity fix in both evaluator twins. entity-title stays excluded
+ *     (provenance carrier, never user-visible text).
  *   - ALL derived assertions are SOFT ('expect.soft') — they record
  *     without failing the replay. Promotion to hard is a later,
  *     execution-feedback-gated decision.
@@ -53,12 +54,16 @@ const MAX_ASSERTIONS_PER_STEP = 3;
 const MAX_ASSERT_TEXT_LENGTH = 60;
 
 /**
- * Kinds eligible for derivation in 4c-i. `collection` (needs COUNT — S3)
- * and `entity-title` (provenance carrier, never user-visible text) are
- * deliberately excluded.
+ * Kinds eligible for derivation. 4c-iii-b adds `collection` (COUNT equals
+ * the observed child count — the S3 count-fidelity fix landed in 4c-iii-a,
+ * so a COUNT assertion now evaluates correctly on BOTH backends: the
+ * in-extension evaluators (resolveAllMatches / allMatches) and the
+ * Playwright export (locator().count())). `entity-title` (provenance
+ * carrier, never user-visible text) remains excluded.
  */
 const DERIVABLE_KINDS = new Set<WireObservedItem['kind']>([
   'counter',
+  'collection',
   'status-badge',
   'notification',
   'entity',
@@ -180,13 +185,15 @@ function counterTokenAssertionValue(item: WireObservedItem): string | null {
 /**
  * Derive StepScopedAssertions from one interaction's resulting state.
  * Returns at most MAX_ASSERTIONS_PER_STEP, ordered
- * counter → status-badge → notification → entity (the approved priority).
+ * counter → collection → status-badge → notification → entity (the
+ * approved priority).
  */
 function deriveForSnapshot(snapshot: WirePageContentSnapshot): StepScopedAssertion[] {
   const out: StepScopedAssertion[] = [];
   // Priority bucketing, then stable order within each bucket (capture order).
   const byPriority: Record<string, WireObservedItem[]> = {
     counter: [],
+    collection: [],
     'status-badge': [],
     notification: [],
     entity: [],
@@ -205,12 +212,12 @@ function deriveForSnapshot(snapshot: WirePageContentSnapshot): StepScopedAsserti
 
   // 1. Counters — TEXT_MATCH contains on the captured counter text (the
   //    exact string the app rendered for N, e.g. "4 items"). The captured
-  //    text IS the honest expectation; rendering it via contains avoids
-  //    the pre-existing MATCHES double-escape mismatch between the
-  //    Playwright renderer (escapeRegex → literal) and the in-extension
-  //    evaluators (treat expectedValue as a REAL regex). numericValue is
-  //    still required — a counter we could not parse at capture is too
-  //    unstable to assert.
+  //    text IS the honest expectation; contains on the verbatim text is
+  //    also deliberately conservative: a counter token like "4 items"
+  //    contains no regex metacharacters anyway, and literal-contains is
+  //    the most robust comparison across both backends regardless of the
+  //    4c-iii-c MATCHES alignment. numericValue is still required — a
+  //    counter we could not parse at capture is too unstable to assert.
   for (const item of byPriority.counter) {
     if (item.numericValue === null || !Number.isFinite(item.numericValue)) continue;
     const text = counterTokenAssertionValue(item);
@@ -229,7 +236,35 @@ function deriveForSnapshot(snapshot: WirePageContentSnapshot): StepScopedAsserti
     });
   }
 
-  // 2. Status badges — TEXT_MATCH contains on distinctive non-numeric text.
+  // 2. Collections — COUNT equals the observed child count. The item's
+  //    numericValue IS the semantic result (extractCollectionCount =
+  //    el.children.length); asserting it as `#container > *` count captures
+  //    "cart now holds N items" without naming individual rows. Emitted
+  //    only when BOTH coordinates are trustworthy:
+  //      a high-confidence locator (the container's #id — matchedSelector
+  //        is a comma-separated multi-selector and unusable as a replay
+  //        locator), and a finite numericValue.
+  //    `#id > *` matches exactly children.length in both querySelectorAll
+  //    (extension replay, via resolveAllMatches from 4c-iii-a) and
+  //    locator('#id > *').count() (Playwright export) — semantic parity
+  //    with what the observer counted.
+  for (const item of byPriority.collection) {
+    if (item.numericValue === null || !Number.isFinite(item.numericValue)) continue;
+    const containerId = idFromDomPath(item.domPath);
+    if (!containerId) continue; // no high-confidence coordinate → skip
+    emit({
+      type: 'count',
+      comparison: 'equals',
+      severity: 'soft',
+      expectedValue: item.numericValue,
+      property: null,
+      targetCss: `#${containerId} > *`,
+      targetName: item.attributes?.['aria-label']?.slice(0, 60) || 'collection',
+      derivedFrom: 'collection',
+    });
+  }
+
+  // 3. Status badges — TEXT_MATCH contains on distinctive non-numeric text.
   for (const item of byPriority['status-badge']) {
     const text = badgeText(item);
     if (!text) continue;
@@ -247,7 +282,7 @@ function deriveForSnapshot(snapshot: WirePageContentSnapshot): StepScopedAsserti
     });
   }
 
-  // 3. Notifications — PRESENCE only. Text is volatile (order numbers,
+  // 4. Notifications — PRESENCE only. Text is volatile (order numbers,
   //    names); presence of the alert/toast region is the stable fact.
   for (const item of byPriority.notification) {
     const locator = decideLocator(item);
@@ -264,7 +299,7 @@ function deriveForSnapshot(snapshot: WirePageContentSnapshot): StepScopedAsserti
     });
   }
 
-  // 4. Entities — PRESENCE of the identified entity (data-asin="B0VAL1").
+  // 5. Entities — PRESENCE of the identified entity (data-asin="B0VAL1").
   for (const item of byPriority.entity) {
     const locator = decideLocator(item);
     // Entities without an identity-attribute locator are skipped: the #id

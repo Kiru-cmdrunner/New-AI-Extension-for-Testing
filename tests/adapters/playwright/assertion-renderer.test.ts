@@ -101,17 +101,35 @@ describe('TEXT_MATCH', () => {
     expect(result).toContain('/^Hello/');
   });
 
-  it('MATCHES → toHaveText(/val/)', () => {
+  it('MATCHES → toHaveText(/val/) with the pattern embedded VERBATIM (D6)', () => {
     const a = makeAssertion(ValidationType.TEXT_MATCH, ValidationComparison.MATCHES, { expectedValue: 'Order #\\d+' });
     const result = lines(a)[0];
-    expect(result).toContain('/Order');
-    expect(result).toContain('\\\\d');
+    expect(result).toContain('/Order #');
+    // '\d' must survive as a REAL regex token — NOT double-escaped to '\\d'.
+    expect(result).toContain('#\\d+/');
+    expect(result).not.toContain('\\\\d');
   });
 
-  it('escapes regex metacharacters in MATCHES', () => {
-    const a = makeAssertion(ValidationType.TEXT_MATCH, ValidationComparison.MATCHES, { expectedValue: '$100' });
+  it('MATCHES keeps regex semantics identical to the in-extension evaluator (D6 parity)', () => {
+    // The exported pattern and new RegExp(expected) must be the SAME regex.
+    const pattern = 'Order #\\d+';
+    const a = makeAssertion(ValidationType.TEXT_MATCH, ValidationComparison.MATCHES, { expectedValue: pattern });
     const result = lines(a)[0];
-    expect(result).toContain('/\\$100/');
+    const m = result.match(/toHaveText\(\/(.*)\/\)$/);
+    expect(m).not.toBeNull();
+    const renderedPattern = m![1];
+    // '/' delimiters are escaped for the literal — semantically a no-op.
+    const equivalent = renderedPattern.replace(/\\\//g, '/');
+    expect(new RegExp(equivalent).test('Order #12345')).toBe(true);
+    expect(new RegExp(equivalent).test('Order #abc')).toBe(false);
+  });
+
+  it('MATCHES escapes only the regex-literal delimiters — alternation stays functional', () => {
+    const a = makeAssertion(ValidationType.TEXT_MATCH, ValidationComparison.MATCHES, { expectedValue: 'save|saved' });
+    const result = lines(a)[0];
+    expect(result).toContain('/save|saved/');
+    // '|' must NOT be escaped (that was the old literal behavior).
+    expect(result).not.toContain('\\|');
   });
 });
 
@@ -135,13 +153,29 @@ describe('ATTRIBUTE_MATCH', () => {
     expect(result).toContain("toHaveAttribute('class', /active/)");
   });
 
-  it('MATCHES → toHaveAttribute(prop, /val/)', () => {
+  it('MATCHES → toHaveAttribute(prop, /val/) with the pattern VERBATIM (D6)', () => {
     const a = makeAssertion(ValidationType.ATTRIBUTE_MATCH, ValidationComparison.MATCHES, {
       expectedValue: 'btn-\\w+',
       property: 'class',
     });
     const result = lines(a)[0];
     expect(result).toContain("toHaveAttribute('class', /btn");
+    // '\\w' must survive as a real regex token — not double-escaped.
+    expect(result).toContain('-\\w+/');
+    expect(result).not.toContain('\\\\w');
+  });
+
+  it('MATCHES with an INVALID pattern falls back to an escaped literal (valid JS)', () => {
+    // The evaluators return false for invalid regexes; the export must at
+    // least remain parseable — escapeRegex keeps the spec syntactically
+    // valid.
+    const a = makeAssertion(ValidationType.ATTRIBUTE_MATCH, ValidationComparison.MATCHES, {
+      expectedValue: '(',
+      property: 'class',
+    });
+    const result = lines(a)[0];
+    expect(result).toContain("toHaveAttribute('class', /\\(/)");
+    expect(result).toMatch(/toHaveAttribute\('class', \/.*\/\)$/);
   });
 });
 
@@ -245,7 +279,7 @@ describe('URL_MATCH', () => {
     expect(result).toContain('/app/');
   });
 
-  it('MATCHES → toHaveURL(/url/)', () => {
+  it('MATCHES → toHaveURL(/url/) with the pattern VERBATIM (D6)', () => {
     const a = makeAssertion(ValidationType.URL_MATCH, ValidationComparison.MATCHES, {
       expectedValue: 'dashboard|home',
       targetKind: 'none',
@@ -253,6 +287,8 @@ describe('URL_MATCH', () => {
     const result = lines(a)[0];
     expect(result).toContain('/dashboard');
     expect(result).toContain('home/');
+    // '|' stays functional — same regex the evaluator compiles.
+    expect(result).not.toContain('\\|');
   });
 
   it('escapes forward slashes in regex — produces valid JS', () => {

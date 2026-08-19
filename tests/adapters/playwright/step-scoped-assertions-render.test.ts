@@ -190,4 +190,51 @@ describe('build() → renderer end-to-end', () => {
     expect(out).toContain("toContainText('4 items')");
     expect(out).not.toContain(BANNER);
   });
+
+  it('collection COUNT renders as expect.soft(page.locator(\'#id > *\')).toHaveCount(n) (4c-iii-b)', async () => {
+    const { deriveStepAssertions } = await import('../../../src/generation/assertion-derivation');
+    const interactions = [
+      {
+        ...click('evt-10-1'),
+        behavioralEvidence: {
+          applicationEvidence: {
+            resultingState: {
+              url: 'https://shop.example.com/cart',
+              viewId: null,
+              items: [
+                {
+                  kind: 'collection',
+                  matchedSelector: 'ul[data-testid], ul.list',
+                  text: '',
+                  numericValue: 3,
+                  entityId: null,
+                  entityType: null,
+                  domPath: 'UL#cart-items',
+                  attributes: {},
+                  visible: true,
+                },
+              ],
+              itemsOverflow: 0,
+              scannedAt: 1,
+              scanDurationMs: 1,
+            },
+          },
+        } as never,
+      },
+    ];
+    const enrichment: GenerationEnrichment = {
+      stepAssertions: deriveStepAssertions(interactions as ComponentInteraction[]),
+    };
+    const ir = build({
+      interactions: interactions as ComponentInteraction[],
+      recordingContext: { startUrl: 'https://shop.example.com/', title: null },
+      testCaseName: 'Purchase Flow',
+      enrichment,
+    });
+    const out = renderTestFile(ir);
+    // EQUALS + SOFT → expect.soft(loc).toHaveCount(n)
+    expect(out).toContain("expect.soft(page.locator('#cart-items > *'))");
+    expect(out).toContain('.toHaveCount(3)');
+    expect(out).not.toContain(BANNER);
+  });
 });

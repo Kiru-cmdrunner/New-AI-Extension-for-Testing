@@ -21,7 +21,7 @@
 // ── Types (inlined for content script compatibility) ───────
 
 export type AssertionTarget =
-  | { kind: 'element'; element: Element | null }
+  | { kind: 'element'; element: Element | null; allMatches?: readonly Element[] }
   | { kind: 'url'; url: string }
   | { kind: 'none' };
 
@@ -266,7 +266,29 @@ export function evaluateAssertion(
       };
     }
 
-    // ── Element is null for non-presence/non-visibility checks ──
+    // ── COUNT: check number of elements ──
+    // 4c-iii-a (D2): counts ALL matches of the best-priority locator when
+    // the caller provides allMatches (the querySelectorAll result — the SAME
+    // selector the Playwright export renders via locator().count()). Runs
+    // BEFORE the null-element guard so an empty match set yields count 0
+    // rather than "Element not found". When allMatches is absent
+    // (single-element callers), the historical element?1:0 semantics apply.
+    if (type === 'count') {
+      const matches = target.allMatches;
+      const actualCount = matches !== undefined ? matches.length : element ? 1 : 0;
+      const result = compareValues(actualCount, expectedValue, comparison);
+      return {
+        type,
+        passed: result,
+        actualValue: actualCount,
+        expectedValue,
+        message: result
+          ? `Element count ${actualCount} matched "${expectedValue}"`
+          : `Element count ${actualCount} did not match "${expectedValue}"`,
+      };
+    }
+
+    // ── Element is null for non-presence/non-visibility/count checks ──
     if (!element) {
       return {
         type,
@@ -321,24 +343,6 @@ export function evaluateAssertion(
         message: result
           ? `Property "${property}" value "${actualVal}" matched "${expectedValue}"`
           : `Property "${property}" value "${actualVal}" did not match "${expectedValue}"`,
-      };
-    }
-
-    // ── COUNT: check number of elements ──
-    if (type === 'count') {
-      // Count assertions use a querySelectorAll result provided externally.
-      // For now, treat the element as a single match (count = 1).
-      // Full count support requires the executor to pass the element count.
-      const actualCount = element ? 1 : 0;
-      const result = compareValues(actualCount, expectedValue, comparison);
-      return {
-        type,
-        passed: result,
-        actualValue: actualCount,
-        expectedValue,
-        message: result
-          ? `Element count ${actualCount} matched "${expectedValue}"`
-          : `Element count ${actualCount} did not match "${expectedValue}"`,
       };
     }
 

@@ -202,6 +202,103 @@ function resolveElement(
   return null;
 }
 
+/**
+ * 4c-iii-a (D2): resolve ALL elements matching the best-priority locator
+ * that yields at least one match — the SAME strategy the Playwright export
+ * uses when rendering locator().count(). The best-priority locator is the
+ * first (lowest priority number) whose type supports multi-match
+ * resolution. Text/accessibleName resolvers walk every element, so they
+ * can return full match lists too. Returns null when no locator type
+ * supports all-match resolution or nothing matches.
+ */
+function resolveAllMatches(
+  locators: LocatorInput[],
+  doc: Document = document,
+): Element[] | null {
+  if (!locators || locators.length === 0) return null;
+  const sorted = [...locators].sort((a, b) => a.priority - b.priority);
+  for (const locator of sorted) {
+    const matches = resolveAllByType(doc, locator);
+    if (matches && matches.length > 0) return matches;
+    // Empty match set from a supported type is authoritative: stop — do
+    // not fall through to a lower-priority locator and inflate the count.
+    if (matches) return [];
+  }
+  return null;
+}
+
+function resolveAllByType(doc: Document, locator: LocatorInput): Element[] | null {
+  try {
+    switch (locator.type) {
+      case 'css': return Array.from(doc.querySelectorAll(locator.value));
+      case 'testId': {
+        // Union of the three test-id attribute namespaces, deduped — an
+        // element carrying more than one of them must not double-count.
+        const seen = new Set<Element>();
+        for (const sel of [
+          `[data-testid="${cssEscape(locator.value)}"]`,
+          `[data-cy="${cssEscape(locator.value)}"]`,
+          `[data-qa="${cssEscape(locator.value)}"]`,
+        ]) {
+          for (const el of doc.querySelectorAll(sel)) seen.add(el);
+        }
+        return Array.from(seen);
+      }
+      case 'role': return Array.from(doc.querySelectorAll(`[role="${cssEscape(locator.value)}"]`));
+      case 'text': {
+        const out: Element[] = [];
+        for (const el of doc.querySelectorAll('*')) {
+          if (el.textContent?.trim() === locator.value) out.push(el);
+        }
+        return out;
+      }
+      case 'accessibleName': {
+        const out: Element[] = [];
+        for (const el of doc.querySelectorAll('*')) {
+          if ((el as HTMLElement).getAttribute?.('aria-label') === locator.value) out.push(el);
+        }
+        return out;
+      }
+      case 'label': {
+        // Mirrors resolveByLabel's fallback chain: label[for] → [name] →
+        // [aria-label] → [placeholder]. First non-empty set wins.
+        const out: Element[] = [];
+        const labels = doc.querySelectorAll(`label[for="${cssEscape(locator.value)}"]`);
+        for (const label of labels) {
+          const forId = label.getAttribute('for');
+          if (!forId) continue;
+          const target = doc.getElementById(forId);
+          if (target) out.push(target);
+        }
+        if (out.length > 0) return out;
+        const byName = Array.from(doc.querySelectorAll(`[name="${cssEscape(locator.value)}"]`));
+        if (byName.length > 0) return byName;
+        const byAriaLabel = Array.from(doc.querySelectorAll(`[aria-label="${cssEscape(locator.value)}"]`));
+        if (byAriaLabel.length > 0) return byAriaLabel;
+        return Array.from(doc.querySelectorAll(`[placeholder="${cssEscape(locator.value)}"]`));
+      }
+      case 'xpath': {
+        const result = doc.evaluate(
+          locator.value,
+          doc,
+          null,
+          XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+          null,
+        );
+        const out: Element[] = [];
+        for (let i = 0; i < result.snapshotLength; i++) {
+          const node = result.snapshotItem(i);
+          if (node && node.nodeType === Node.ELEMENT_NODE) out.push(node as Element);
+        }
+        return out;
+      }
+      default: return null; // unsupported type → skip to next locator
+    }
+  } catch {
+    return null; // invalid selector → skip to next locator
+  }
+}
+
 function extractElementIdentity(element: Element): Record<string, string | null> {
   const el = element as HTMLElement;
   return {
@@ -405,6 +502,19 @@ function evaluateAssertionInner(
       return { type, passed: result, actualValue: visible, expectedValue, message: result ? 'Element is visible' : 'Element is not visible' };
     }
 
+    // COUNT — 4c-iii-a (D2): true multi-match count via querySelectorAll
+    // against the best-priority locator, matching the Playwright export's
+    // locator().count(). Runs BEFORE the element-not-found guard so an
+    // empty match set yields 0 rather than "Element not found".
+    if (type === 'count') {
+      const allMatches = target.resolvedLocators
+        ? resolveAllMatches(target.resolvedLocators)
+        : null;
+      const actualCount = allMatches !== null ? allMatches.length : element ? 1 : 0;
+      const passed = compareValues(actualCount, expectedValue, comparison);
+      return { type, passed, actualValue: actualCount, expectedValue, message: passed ? 'Count matched' : `Count ${actualCount} did not match "${expectedValue}"` };
+    }
+
     if (!element) {
       return { type, passed: false, actualValue: null, expectedValue, message: `Element not found — cannot evaluate ${type}` };
     }
@@ -429,13 +539,6 @@ function evaluateAssertionInner(
       const actual = extractPropertyValue(element, property, url);
       const passed = compareValues(actual, expectedValue, comparison);
       return { type, passed, actualValue: actual, expectedValue, message: passed ? `Property matched` : `Property "${property}" value "${actual}" did not match "${expectedValue}"` };
-    }
-
-    // COUNT
-    if (type === 'count') {
-      const actualCount = element ? 1 : 0;
-      const passed = compareValues(actualCount, expectedValue, comparison);
-      return { type, passed, actualValue: actualCount, expectedValue, message: passed ? `Count matched` : `Count ${actualCount} did not match "${expectedValue}"` };
     }
 
     // CUSTOM
@@ -533,3 +636,4 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       return;
   }
 });
+export {};
