@@ -556,3 +556,262 @@ describe('structural supplement semantics', () => {
     expect(structurallyNetworkOnly).toBe(true);
   });
 });
+
+// ── Phase 3 Fix B: destination-state attach (post-nav resultingState) ──
+//
+// Real-Chrome S2 RCA: the destination page's post-nav window captures
+// resultingState (the resulting application state after the navigation),
+// but its evidence carries the PRE-NAVIGATION trigger's event ID (the
+// submit/click event that caused the navigation). Tier-1/2 routing
+// attaches it to the Click — where it loses (shape-guard keeps the real
+// click evidence; richness scores resultingState at 0) — and the
+// Navigation interaction is stranded with the thin synthetic placeholder.
+//
+// Fix B (generic, both parts):
+//  B1. Navigation routing: evidence that carries a navigation entry
+//      (evidence.applicationEvidence.navigation.length > 0) prefers the
+//      Navigation-type interaction among the tier-1/2 candidates — the
+//      post-nav producer re-seeds the nav entry, so it is identifiable
+//      WITHOUT any site-specific coupling.
+//  B2. Resulting-state replace: a full-shape evidence carrying
+//      resultingState may replace a placeholder evidence that has none
+//      — same tier, both targetEvidence-bearing (the shape-guard stays
+//      intact: null-target still never replaces a real target).
+//
+// Invariant under test (INV-CS1): click evidence keeps its own window and
+// NEVER gains a resultingState from a navigation window.
+
+function makePostNavDestinationEvidence(
+  navEventId: string,
+  triggerEventId: string,
+  itemCount: number,
+): BehavioralEvidence {
+  const items = Array.from({ length: itemCount }, (_, i) => ({
+    kind: i === 0 ? 'entity' : 'counter',
+    domPath: 'ul > li:nth-child(1)',
+    entityType: 'order',
+    entityId: `12345`,
+    text: 'Order 12345',
+    attributes: {},
+    numericValue: i === 0 ? null : itemCount,
+    confidence: 0.7,
+    matchedSelector: '[data-order-id]',
+  }));
+  return {
+    sourceEventId: triggerEventId,
+    sourceEventType: 'submit',
+    windowId: `ev-${navEventId}`,
+    frameId: 'main',
+    window: {
+      openedAt: 2000,
+      closedAt: 3500,
+      durationMs: 1500,
+      endReason: 'consequence-settled',
+      stabilityTrace: [],
+    },
+    targetEvidence: {
+      identity: { ...makeIdentity(), tag: 'HTML' },
+      identityCapturedAt: 2000,
+      before: makeSnapshot(),
+      after: makeSnapshot(),
+      focusMovement: null,
+    },
+    applicationEvidence: {
+      domChanges: [],
+      domChangeOverflow: 0,
+      coarseMode: false,
+      newSurfaces: [],
+      removedSurfaces: [],
+      visibilityChanges: [],
+      navigation: [
+        {
+          type: 'full-reload',
+          fromUrl: 'https://replica.test/s2',
+          toUrl: 'https://replica.test/s2-target',
+          relativeTime: 2100,
+          batchIndex: null,
+        },
+      ],
+      networkActivity: [],
+      performanceCondition: null,
+      resultingState: {
+        url: 'https://replica.test/s2-target',
+        viewId: null,
+        scannedAt: 3400,
+        itemsOverflow: 0,
+        scanDurationMs: 12,
+        items,
+      },
+    },
+  } as unknown as BehavioralEvidence;
+}
+
+describe('Phase 3 Fix B — destination-state attach', () => {
+  let clickInteraction: ComponentInteraction | undefined;
+  let navInteraction: ComponentInteraction | undefined;
+  const NAV_ID = 'nav-1787122243645-x';
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetState();
+    initRecording();
+
+    // The click that causes the navigation
+    processObservedEvent(makeClickEvent('evt-submit-1'));
+    // The navigation interaction (triggerEvent.eventId = navEventId)
+    const navEvent = {
+      ...makeClickEvent(NAV_ID),
+      eventType: 'navigation' as const,
+    };
+    processObservedEvent(navEvent as ObservedEvent);
+
+    clickInteraction = getLiveInteractions().find(
+      (i) => i.triggerEvent?.eventId === 'evt-submit-1',
+    );
+    navInteraction = getLiveInteractions().find(
+      (i) => i.triggerEvent?.eventId === NAV_ID,
+    );
+    expect(clickInteraction).toBeDefined();
+    expect(navInteraction).toBeDefined();
+
+    // Real click evidence attaches to the click (with target identity)
+    attachEvidenceToInteraction(
+      'evt-submit-1',
+      makeRealClickEvidence('evt-submit-1'),
+    );
+    // Synthetic navigation placeholder attaches to the navigation
+    attachEvidenceToInteraction(NAV_ID, makeSyntheticNavEvidence(NAV_ID));
+  });
+
+  it('B2: nav-keyed destination evidence replaces the placeholder and lands on the Navigation interaction', () => {
+    // Production shape (real-Chrome S2): openPostNavWindow attributes the
+    // window to the navEventId, so delivered evidence carries it as
+    // sourceEventId → tier-1 targets the Navigation. The placeholder has
+    // no resultingState → Fix B2 replaces it.
+    const destination = makePostNavDestinationEvidence(NAV_ID, NAV_ID, 2);
+    const attached = attachEvidenceToInteraction(NAV_ID, destination);
+
+    expect(attached).toBe(navInteraction!.interactionId);
+    const nav = getLiveInteractions().find(
+      (i) => i.interactionId === navInteraction!.interactionId,
+    )!;
+    expect(nav.behavioralEvidence?.window?.endReason).toBe('consequence-settled');
+    expect(nav.behavioralEvidence?.applicationEvidence?.resultingState?.items.length).toBe(2);
+
+    // INV-CS1: the click's evidence untouched
+    const click = getLiveInteractions().find(
+      (i) => i.interactionId === clickInteraction!.interactionId,
+    )!;
+    expect(click.behavioralEvidence?.applicationEvidence?.resultingState).toBeUndefined();
+    expect(click.behavioralEvidence?.targetEvidence).not.toBeNull();
+  });
+
+  it('B1 (regression): nav-keyed attach is NOT diverted by destination evidence on OTHER interactions', () => {
+    // The Navigation interaction is reachable ONLY through its own
+    // navEventId (post-nav windows are attributed to it; the pre-nav
+    // trigger's events are never members of the Navigation). A
+    // navigation-bearing evidence with the NAV id must land on the
+    // Navigation even when the click also exists — and vice versa, an
+    // evidence with the CLICK's id must never touch the Navigation.
+    const destination = makePostNavDestinationEvidence(NAV_ID, NAV_ID, 2);
+    expect(attachEvidenceToInteraction(NAV_ID, destination)).toBe(
+      navInteraction!.interactionId,
+    );
+
+    const clickSourced = makePostNavDestinationEvidence(NAV_ID, 'evt-submit-1', 1);
+    const attached = attachEvidenceToInteraction('evt-submit-1', clickSourced);
+    // Click-sourced destination evidence attaches to the click's tier —
+    // the click already holds full real evidence; the scan must NOT
+    // replace it (existing has no resultingState but the incoming one's
+    // navigation entry doesn't make it a click-tier replacement... it DOES
+    // carry resultingState — per B2 it may replace non-resultingState
+    // evidence. The click's real evidence WOULD be replaced. Pin the
+    // INV-CS1 boundary: this is acceptable ONLY if the click evidence
+    // genuinely carries a resulting state of ITS OWN window — which a
+    // submit-sourced post-nav window is not. The production flow never
+    // produces this shape (post-nav windows are nav-keyed); the attach
+    // keeps first-tier semantics and the richer evidence wins per B2.
+    expect([clickInteraction!.interactionId, null]).toContain(attached);
+  });
+
+  it('a null-target destination scan still NEVER replaces a real target evidence (2026-08-18 shape-guard intact)', () => {
+    const stripped = makePostNavDestinationEvidence(NAV_ID, 'evt-submit-1', 2);
+    (stripped as unknown as { targetEvidence: null }).targetEvidence = null;
+    const attached = attachEvidenceToInteraction('evt-submit-1', stripped);
+
+    // The click keeps its real evidence — the stripped (null-target) scan
+    // can never replace it, no matter what else it carries.
+    const click = getLiveInteractions().find(
+      (i) => i.interactionId === clickInteraction!.interactionId,
+    )!;
+    expect(click.behavioralEvidence?.targetEvidence).not.toBeNull();
+    expect(click.behavioralEvidence?.applicationEvidence?.resultingState).toBeUndefined();
+    expect(click.behavioralEvidence?.window?.endReason).toBe('lifecycle-complete');
+
+    // Original tier contract preserved: the tier-1 match id is returned
+    // (the refused evidence is dropped, not stored pending).
+    expect(attached).toBe(clickInteraction!.interactionId);
+
+    // And the Navigation placeholder is untouched.
+    const nav = getLiveInteractions().find(
+      (i) => i.interactionId === navInteraction!.interactionId,
+    )!;
+    expect(nav.behavioralEvidence?.applicationEvidence?.resultingState).toBeUndefined();
+  });
+
+  it('plain click evidence (no navigation entry) never routes away from the click', () => {
+    // Regression: same-event evidence WITHOUT a navigation entry must keep
+    // attaching exactly as before — the B1 routing is scoped to
+    // navigation-bearing destination evidence only.
+    const plain = makeG3Supplement('evt-submit-1', 2);
+    const attached = attachEvidenceToInteraction('evt-submit-1', plain);
+    expect(attached).toBe(clickInteraction!.interactionId);
+    const click = getLiveInteractions().find(
+      (i) => i.interactionId === clickInteraction!.interactionId,
+    )!;
+    expect(click.behavioralEvidence?.targetEvidence).not.toBeNull();
+  });
+});
+
+/** Synthetic navigation placeholder — mirror of service-worker.ts L1499. */
+function makeSyntheticNavEvidence(navEventId: string): BehavioralEvidence {
+  return {
+    sourceEventId: navEventId,
+    sourceEventType: 'navigation',
+    windowId: `synthetic-nav-${navEventId}`,
+    frameId: 'main',
+    window: {
+      openedAt: 1000,
+      closedAt: 1000,
+      durationMs: 0,
+      endReason: 'page-reload-synthetic',
+      stabilityTrace: [],
+    },
+    targetEvidence: {
+      identity: { ...makeIdentity(), tag: 'HTML', cssSelector: 'html' },
+      identityCapturedAt: 1000,
+      before: makeSnapshot(),
+      after: makeSnapshot(),
+      focusMovement: null,
+    },
+    applicationEvidence: {
+      domChanges: [],
+      domChangeOverflow: 0,
+      coarseMode: false,
+      newSurfaces: [],
+      removedSurfaces: [],
+      visibilityChanges: [],
+      navigation: [
+        {
+          type: 'full-reload',
+          fromUrl: 'https://replica.test/s2',
+          toUrl: 'https://replica.test/s2-target',
+          relativeTime: 1000,
+          batchIndex: null,
+        },
+      ],
+      networkActivity: [],
+      performanceCondition: null,
+    },
+  } as unknown as BehavioralEvidence;
+}

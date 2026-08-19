@@ -1475,8 +1475,12 @@ export class EvidenceCollector {
     win.settleMode = true;
     win.settleMetadata = { ...metadata };
 
-    win.adaptiveWindow.setHoldOpen(false);
-    win.adaptiveWindow.setCanClose(() => this.causalNetworkIdle(win));
+    // Phase 3 Fix A: settleEntry() completes the transition — releases the
+    // lifecycle hold (TD-8 cap re-arm), installs the causal close gate, and
+    // re-arms the stabilization loop so quiescence is measured from settle
+    // ENTRY (on an already-quiet DOM no timer was running; the window would
+    // otherwise park until the 10s cap and scan a stale DOM).
+    win.adaptiveWindow.settleEntry(() => this.causalNetworkIdle(win));
   }
 
   /**

@@ -508,3 +508,108 @@ describe('AdaptiveWindow', () => {
     expect(result).not.toBeNull();
   });
 });
+
+// ── Phase 3 Fix A: stabilization re-arm at settle entry ───────────────
+// Real-Chrome S1/S4 RCA: enterSettleMode releases holdOpen, but if the DOM
+// is already quiescent no stabilization timer is running (the last one fired
+// long before FINALIZE arrived). Without a re-arm, checkStabilized() never
+// runs again — the window parks until the 10s cap or a later mutation.
+// settleEntry() must (re)arm the quiescence loop so quiescence is measured
+// from SETTLE ENTRY, not from open.
+describe('AdaptiveWindow — settle entry (Phase 3 Fix A)', () => {
+  let mockNow = 0;
+
+  beforeEach(() => {
+    mockNow = 0;
+    vi.spyOn(performance, 'now').mockImplementation(() => mockNow);
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  function advance(ms: number): void {
+    mockNow += ms;
+    vi.advanceTimersByTime(ms);
+  }
+
+  it('re-arms stabilization at settle entry when DOM is already quiet (closes at entry+quiescence)', () => {
+    const ends: string[] = [];
+    const win = new AdaptiveWindow({
+      onClose: (w) => ends.push(w.endReason),
+    });
+    win.setHoldOpen(true);
+    win.arm();
+    advance(150); // FINALIZE arrives; DOM quiet since open
+
+    win.settleEntry(); // settle-mode transition (Fix A)
+
+    advance(250);
+    expect(ends).toEqual([]); // quiescence not yet elapsed from settle entry
+    advance(100); // entry+300 + minDuration → stabilized
+    expect(ends).toEqual(['stabilized']);
+  });
+
+  it('a mutation after settle entry resets quiescence — close is delayed until it settles', () => {
+    const ends: string[] = [];
+    const win = new AdaptiveWindow({
+      onClose: (w) => ends.push(w.endReason),
+    });
+    win.setHoldOpen(true);
+    win.arm();
+    advance(150);
+    win.settleEntry();
+
+    advance(250);
+    win.recordMutation(); // delayed consequence at entry+250
+    advance(200);
+    expect(ends).toEqual([]); // still within re-armed quiescence
+    advance(150); // mutation+300
+    expect(ends).toEqual(['stabilized']);
+  });
+
+  it('settleEntry keeps the causal close gate: canClose=false defers the close and re-arms', () => {
+    const ends: string[] = [];
+    const win = new AdaptiveWindow({
+      onClose: (w) => ends.push(w.endReason),
+    });
+    win.setHoldOpen(true);
+    win.arm();
+    advance(150);
+    let gate = false;
+    win.settleEntry(() => gate); // gate consulted after entry+300
+    advance(400); // quiescence elapsed; gate false → defer + re-arm
+    expect(ends).toEqual([]);
+    gate = true;
+    advance(300); // next cadence consult → close
+    expect(ends).toEqual(['stabilized']);
+  });
+
+  it('settleEntry is a no-op on an already-closed window', () => {
+    const ends: string[] = [];
+    const win = new AdaptiveWindow({
+      onClose: (w) => ends.push(w.endReason),
+    });
+    win.arm();
+    advance(400); // plain quiescence close
+    expect(ends).toEqual(['stabilized']);
+    win.settleEntry(() => true);
+    expect(ends).toEqual(['stabilized']); // no double close
+  });
+
+  it('max-duration cap measured from OPEN still bounds a settle-mode window', () => {
+    const ends: string[] = [];
+    const win = new AdaptiveWindow({
+      onClose: (w) => ends.push(w.endReason),
+      maxDuration: 500,
+    });
+    win.setHoldOpen(true);
+    win.arm();
+    advance(150);
+    win.settleEntry(() => false); // never network-idle
+    advance(1000);
+    expect(ends).toEqual(['max-duration']);
+  });
+});

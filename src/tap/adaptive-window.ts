@@ -210,12 +210,13 @@ export class AdaptiveWindow {
    * TD-8 fix: When holdOpen is enabled after arm() has already scheduled the
    * max-duration timer, clear it so lifecycle-bound windows aren't force-closed.
    *
-   * Consequence-settling (§5, §6): setHoldOpen(false) is the settle-mode
-   * transition. Because arm() never schedules the max-duration timer for
-   * holdOpen windows, entering settle mode must (re)arm it with the
-   * REMAINING time measured from OPEN — so the window can never outlive
-   * open+maxDuration regardless of when the lifecycle finalized. If the
-   * cap has already elapsed, close immediately.
+   * Consequence-settling (§5, §6): setHoldOpen(false) alone is an
+   * INCOMPLETE settle-mode transition — it re-arms the max-duration cap
+   * (remaining time measured from OPEN) but leaves the quiescence loop in
+   * whatever state it was in. Callers entering settle mode should use
+   * settleEntry(), which completes the transition (hold release + causal
+   * gate + stabilization re-arm). Direct setHoldOpen(false) callers keep
+   * the legacy behavior for compatibility.
    */
   setHoldOpen(value: boolean): void {
     this.holdOpen = value;
@@ -233,6 +234,48 @@ export class AdaptiveWindow {
         this.close('max-duration');
       }, remaining);
     }
+  }
+
+  /**
+   * Phase 3 Fix A — settle-mode entry point.
+   *
+   * The COMPLETE settle-mode transition (replaces the two-call
+   * setHoldOpen(false) + setCanClose sequence):
+   *   1. releases the lifecycle hold (TD-8: re-arms the max-duration cap
+   *      measured from OPEN),
+   *   2. installs the causal close gate (§6.1 contract — consulted only
+   *      after entry+quiescence+minDuration; false defers and re-arms),
+   *   3. RE-ARMS the stabilization loop.
+   *
+   * Step 3 is the Fix A addition: when the lifecycle finalized on an
+   * already-quiescent DOM, the last stabilization check fired long before
+   * FINALIZE arrived and NO timer is running (checkStabilized() is
+   * otherwise re-armed only by recordMutation or by a canClose=false
+   * deferral). Without the re-arm the window parks until the 10s cap —
+   * and the resulting-state scan at the settle close could run on a DOM
+   * that predates a delayed consequence (real-Chrome S1/S4 RCA: dialog at
+   * +500ms, badge at +600ms).
+   *
+   * Quiescence is therefore measured FROM SETTLE ENTRY, using the existing
+   * mechanism on existing parameters (minQuiescence) — not a new timing
+   * mechanism. A mutation after entry resets the loop as usual, so a
+   * consequence arriving after entry still delays the close and is
+   * present in the settled DOM at scan time.
+   */
+  settleEntry(canClose?: () => boolean): void {
+    if (!this.isOpen) return;
+    // 1. Release the lifecycle hold (TD-8 settle transition). May close
+    //    immediately if the open+maxDuration cap already elapsed.
+    this.setHoldOpen(false);
+    if (!this.isOpen) return;
+    // 2. Install the causal close gate (§6.1).
+    if (canClose) this.canClose = canClose;
+    // 3. Re-arm the quiescence loop from settle entry.
+    if (this.stabilizationTimer) {
+      clearTimeout(this.stabilizationTimer);
+      this.stabilizationTimer = null;
+    }
+    this.scheduleStabilization();
   }
 
   /**

@@ -407,6 +407,40 @@ export function attachEvidenceToInteraction(
       persistLiveInteractions();
       return true;
     }
+    // Phase 3 Fix B2 — resulting-state replace: a full-shape evidence
+    // carrying a resulting application state may replace a synthetic/
+    // placeholder evidence that has none. This is how the destination
+    // page's scan lands on the Navigation interaction: the placeholder
+    // (page-reload-synthetic, no resultingState) is strictly less
+    // informative than the real destination scan. Scoped tightly:
+    //   - incoming MUST carry resultingState with ≥1 item AND a real
+    //     targetEvidence (full-shape evidence only);
+    //   - existing MUST carry none;
+    //   - the 2026-08-18 shape-guard below is untouched and still holds
+    //     absolutely — a null-target evidence never replaces a real
+    //     target, in this clause or any other.
+    const incomingRS = evidence.applicationEvidence?.resultingState;
+    const existingRS = interaction.behavioralEvidence.applicationEvidence?.resultingState;
+    if (
+      !existingRS &&
+      incomingRS != null &&
+      (incomingRS.items?.length ?? 0) > 0 &&
+      evidence.targetEvidence != null
+    ) {
+      interaction.behavioralEvidence = {
+        ...evidence,
+        applicationEvidence: {
+          ...evidence.applicationEvidence,
+          // G5-E: carry over any network rows the placeholder had
+          networkActivity: mergeNetworkActivity(
+            interaction.behavioralEvidence.applicationEvidence?.networkActivity ?? [],
+            evidence.applicationEvidence?.networkActivity ?? [],
+          ),
+        },
+      };
+      persistLiveInteractions();
+      return true;
+    }
     // Fix Round 5: Replace if the new evidence is richer
     // Shape-guard (2026-08-18 RCA): an incoming evidence with NO target
     // evidence must never replace an existing evidence that HAS one — no
@@ -442,20 +476,62 @@ export function attachEvidenceToInteraction(
     return false;
   };
 
+  // Phase 3 Fix B1 — destination-evidence navigation routing.
+  //
+  // Real-Chrome S2 RCA: the destination page's post-nav window delivers
+  // evidence whose sourceEventId is the PRE-NAVIGATION trigger (the
+  // submit/click that caused the navigation — the destination content
+  // script receives the capture record keyed to the source event). Tier-1
+  // routing therefore targets the CLICK interaction, where the evidence
+  // loses (shape-guard correctly protects the click's real evidence) and
+  // the Navigation interaction strands with the thin synthetic
+  // placeholder — the resulting application state of the destination page
+  // is recorded but never consumed.
+  //
+  // Routing rule (generic, INV-CS1-safe): when the incoming evidence
+  // carries a navigation entry (the post-nav producer re-seeds it from
+  // the capture record) AND a Navigation-type interaction is among the
+  // tier-1/2 candidates, attach there instead. The click keeps its own
+  // evidence and its own window — Click and Navigation stay separate.
+  const isDestinationEvidence =
+    (evidence.applicationEvidence?.navigation?.length ?? 0) > 0;
+  const isNavigationInteraction = (i: ComponentInteraction): boolean =>
+    i.type === 'Navigation';
+
   // Tier 1: trigger match
-  for (const interaction of liveInteractions) {
-    if (interaction.triggerEvent?.eventId === sourceEventId) {
-      tryAttach(interaction);
-      return interaction.interactionId;
+  const tier1 = liveInteractions.filter(
+    (i) => i.triggerEvent?.eventId === sourceEventId,
+  );
+  if (tier1.length > 0) {
+    // Destination-evidence nav preference: try the Navigation candidate
+    // first, but keep the original return contract — the first tier match's
+    // interactionId is returned regardless of tryAttach's outcome (callers
+    // treat null as "no matching interaction → store pending").
+    if (isDestinationEvidence) {
+      const nav = tier1.find(isNavigationInteraction);
+      if (nav) {
+        tryAttach(nav);
+        return nav.interactionId;
+      }
     }
+    tryAttach(tier1[0]);
+    return tier1[0].interactionId;
   }
 
   // Tier 2: member event match
-  for (const interaction of liveInteractions) {
-    if (interaction.memberEvents?.some((e) => e.eventId === sourceEventId)) {
-      tryAttach(interaction);
-      return interaction.interactionId;
+  const tier2 = liveInteractions.filter((i) =>
+    i.memberEvents?.some((e) => e.eventId === sourceEventId),
+  );
+  if (tier2.length > 0) {
+    if (isDestinationEvidence) {
+      const nav = tier2.find(isNavigationInteraction);
+      if (nav) {
+        tryAttach(nav);
+        return nav.interactionId;
+      }
     }
+    tryAttach(tier2[0]);
+    return tier2[0].interactionId;
   }
 
   return null;
