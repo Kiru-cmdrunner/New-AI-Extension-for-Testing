@@ -41,7 +41,8 @@ import {
   extractCandidatesFromIdentity,
   rankLocatorCandidates,
 } from '../domain/locator-ranking';
-import type { GenerationInput, GenerationEnrichment } from './generation-types';
+import { LocatorStrategyType, ValidationType, ValidationComparison, ValidationSeverity } from '../domain/enums';
+import type { GenerationInput, GenerationEnrichment, StepScopedAssertion } from './generation-types';
 
 // ── Interaction Type → IRAction Mapping (14 types) ────────
 
@@ -347,22 +348,83 @@ function extractInputValue(interaction: ComponentInteraction): IRInput {
 // ── Assertion Derivation (from Enrichment) ─────────────────
 
 /**
- * Derive IRAssertion[] from enrichment.elementAssertions.
+ * Map a StepScopedAssertion (generation-layer vocabulary, plain-string
+ * grammar values) to an IRAssertion (domain enums + resolved target).
  *
- * Replaces the old fragment-based deriveAssertions/constraintsToAssertions
- * pipeline. When enrichment is absent, returns empty array (INV-GEN-7).
+ * The assertion's target is the OBSERVED element (its own locator), not
+ * the step's target — that is the entire point of step-scoped assertions.
+ * Casting the string grammar values to the enum types is safe because the
+ * StepScopedAssertion contract documents them as ValidationType /
+ * ValidationComparison / ValidationSeverity values.
+ */
+function toStepScopedIRAssertion(
+  sa: StepScopedAssertion,
+  stepIndex: number,
+  assertionIndex: number,
+): IRAssertion {
+  return {
+    type: sa.type as ValidationType,
+    comparison: sa.comparison as ValidationComparison,
+    severity: sa.severity as ValidationSeverity,
+    expectedValue: sa.expectedValue,
+    property: sa.property,
+    target: {
+      kind: 'element',
+      // Observed elements are not repository-tracked. A stable synthetic id
+      // (unique per step+slot) is REQUIRED, not cosmetic: POM registration
+      // keys locator getters by elementId, and a shared '' would collide
+      // when one step asserts multiple observed elements (first-wins
+      // substitution would point later assertions at the WRONG getter).
+      elementId: `obs-${stepIndex}-${assertionIndex}`,
+      elementName: sa.targetName,
+      pageOrComponent: 'main',
+      resolvedLocators: [
+        {
+          type: LocatorStrategyType.CSS,
+          value: sa.targetCss,
+          priority: 1,
+          confidence: 0.7, // generic-selector confidence (no per-locator ranking ran)
+        },
+      ],
+    },
+  };
+}
+
+/**
+ * Derive IRAssertion[] for one step.
+ *
+ * Track 3 (step-scoped): joined by sourceEventId from
+ * enrichment.stepAssertions — resulting-state evidence for elements that
+ * CHANGED because of this step. All Track-3 v1 assertions are soft.
+ *
+ * elementAssertions (keyed by the step's own target elementId) remains
+ * the future slot for element-targeted constraints; when it is populated,
+ * its assertions follow the step-scoped ones.
+ *
+ * When enrichment is absent, returns empty array (INV-GEN-7).
  */
 function deriveAssertions(
   elementId: string,
+  sourceEventId: string | undefined,
+  stepIndex: number,
   enrichment?: GenerationEnrichment,
 ): IRAssertion[] {
-  // Track 3: When enrichment.elementAssertions is populated, map
-  // GenerationAssertion[] → IRAssertion[] via an adapter at the
-  // service-worker call site. For now, enrichment is always absent
-  // (INV-GEN-7: graceful degradation).
+  const out: IRAssertion[] = [];
+
+  const stepScoped = sourceEventId
+    ? enrichment?.stepAssertions?.get(sourceEventId)
+    : undefined;
+  if (stepScoped) {
+    for (let i = 0; i < stepScoped.length; i++) {
+      out.push(toStepScopedIRAssertion(stepScoped[i], stepIndex, i));
+    }
+  }
+
+  // Track 3 (element-targeted, keyed by element ID): not yet produced by
+  // any adapter. Kept for the documented future slot.
   void elementId;
-  void enrichment;
-  return [];
+
+  return out;
 }
 
 // ── Readability Rules ──────────────────────────────────────
@@ -394,8 +456,13 @@ function applyReadabilityRules(steps: IRStep[]): IRStep[] {
       next.target.kind === 'element' &&
       current.target.elementId === next.target.elementId
     ) {
-      // Skip the duplicate — keep only the first
-      result.push(current);
+      // Keep the single step, but carry the LATEST resulting state's
+      // assertions: the merged interaction represents one user action whose
+      // final consequence is the second click's. Dropping them would assert
+      // the stale pre-merge count (cart=1 instead of cart=2).
+      result.push(
+        next.assertions.length > 0 ? { ...current, assertions: next.assertions } : current,
+      );
       i += 2;
     } else {
       result.push(current);
@@ -490,9 +557,9 @@ export function build(input: GenerationInput): ExecutionIRPlan {
     // Source event ID
     const sourceEventId = interaction.triggerEvent.eventId;
 
-    // Derive assertions from enrichment
+    // Derive assertions from enrichment (step-scoped by sourceEventId)
     const elementId = target.kind === 'element' ? target.elementId : '';
-    const assertions = deriveAssertions(elementId, enrichment);
+    const assertions = deriveAssertions(elementId, sourceEventId, stepCounter, enrichment);
 
     steps.push({
       id: `step-${String(stepCounter + 1).padStart(4, '0')}`,

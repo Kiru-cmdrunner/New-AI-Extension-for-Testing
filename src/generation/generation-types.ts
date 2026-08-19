@@ -57,6 +57,49 @@ export interface GenerationAssertion {
 }
 
 /**
+ * Track 3 — a step-scoped assertion derived from resulting-state evidence.
+ *
+ * Unlike elementAssertions (keyed by the step's OWN target element),
+ * step-scoped assertions verify OTHER elements that changed as a
+ * consequence of the step: the cart counter, the status badge, the
+ * notification that appeared. They attach to the step by sourceEventId,
+ * not by element ID, because the observed element is (usually) not the
+ * element the step interacted with.
+ *
+ * The target is carried inline in generation-layer vocabulary. The
+ * derivation (adapter side) must only emit locators it is confident are
+ * re-findable at replay time (INV-GEN-4: generic selectors, never
+ * synthesized nth-child chains).
+ */
+export interface StepScopedAssertion {
+  /**
+   * ValidationType grammar value as a plain string ('textMatch',
+   * 'presence', …). Plain strings (not the domain enum) keep this file
+   * free of domain imports (INV-GEN-8).
+   */
+  readonly type: string;
+  /** ValidationComparison grammar value ('matches', 'isTrue', …). */
+  readonly comparison: string;
+  /** ValidationSeverity grammar value. Track 3 v1: always 'soft'. */
+  readonly severity: 'hard' | 'soft';
+  readonly expectedValue: unknown;
+  /** Property to extract when type is attribute-based ('text' → null). */
+  readonly property: string | null;
+  /** CSS locator for the observed element (generic, per INV-GEN-4). */
+  readonly targetCss: string;
+  /**
+   * Human-readable name of the observed element for descriptions and
+   * POM naming (e.g. 'Cart counter', 'Order confirmation').
+   */
+  readonly targetName: string;
+  /**
+   * Why this assertion was derived — provenance for review tooling.
+   * E.g. 'counter' | 'status-badge' | 'notification' | 'entity'.
+   */
+  readonly derivedFrom: string;
+}
+
+/**
  * Semantic enrichment for test generation.
  *
  * OWNED BY the Generation Layer. External systems (Understanding Layer,
@@ -75,6 +118,17 @@ export interface GenerationEnrichment {
    * steps that target the corresponding element.
    */
   readonly elementAssertions?: ReadonlyMap<string, GenerationAssertion[]>;
+
+  /**
+   * Track 3: assertions keyed by SOURCE EVENT ID (evt-…) — the join key
+   * every IR step already carries (step.sourceEventId). Each value
+   * verifies elements that CHANGED as a consequence of that step
+   * (resulting-state evidence), not the step's own target.
+   *
+   * Attached by the compiler in deriveAssertions(); all assertions are
+   * SOFT in v1 (Option A) — they record without failing the replay.
+   */
+  readonly stepAssertions?: ReadonlyMap<string, StepScopedAssertion[]>;
 
   /**
    * Business-meaning labels keyed by interaction ID.

@@ -588,6 +588,9 @@ async function handleStopRecording(): Promise<void> {
   // ── Generation Layer: compile interactions → ExecutionIRPlan ──
   try {
     const { build: buildIRPlan } = await import('../generation/ir-bridge');
+    const { buildResultingStateEnrichment } = await import(
+      '../generation/assertion-derivation'
+    );
     const { PlaywrightCodeGenerator } = await import('../adapters/playwright/project-generator');
     const { harvestSessionElements } = await import('../repository/services/session-element-harvest');
 
@@ -611,6 +614,10 @@ async function handleStopRecording(): Promise<void> {
       },
       testCaseName: (await StorageService.getTestCaseDraft())?.name ?? 'Recorded Test',
       ...(harvestedIdByKey.size > 0 ? { elementIdByKey: harvestedIdByKey } : {}),
+      // Track 3 (INV-GEN-9: the service worker is the sole adapter site):
+      // step-scoped SOFT assertions derived from each interaction's OWN
+      // resulting-state evidence (Phase 4c-i, Option A — on by default).
+      enrichment: buildResultingStateEnrichment(productionInteractions),
     });
 
     await StorageService.setRaw(StorageKeys.EXECUTION_IR_PLAN, irPlan);
@@ -694,18 +701,24 @@ async function handleStopRecording(): Promise<void> {
           }
           if (repoIdByKey.size > 0) {
             // Rewrite the plan with repository ids and refresh generated_at.
-            const { build: buildIRPlan } = await import('../generation/ir-bridge');
-            const mappedPlan = buildIRPlan({
-              interactions: productionInteractions,
-              recordingContext: {
-                // Same fallback tier as the first build above.
-                startUrl: recordedStartUrl,
-                title: recordingStartTitle || null,
-                ...(recordingViewport ? { viewport: recordingViewport } : {}),
-              },
-              testCaseName: (await StorageService.getTestCaseDraft())?.name ?? 'Recorded Test',
-              elementIdByKey: repoIdByKey,
-            });
+    const { build: buildIRPlan } = await import('../generation/ir-bridge');
+    const { buildResultingStateEnrichment } = await import(
+      '../generation/assertion-derivation'
+    );
+    const mappedPlan = buildIRPlan({
+      interactions: productionInteractions,
+      recordingContext: {
+        // Same fallback tier as the first build above.
+        startUrl: recordedStartUrl,
+        title: recordingStartTitle || null,
+        ...(recordingViewport ? { viewport: recordingViewport } : {}),
+      },
+      testCaseName: (await StorageService.getTestCaseDraft())?.name ?? 'Recorded Test',
+      elementIdByKey: repoIdByKey,
+      // Track 3 rebuild parity: the SAME enrichment derivation as the first
+      // build, so repository-id mapping never drops derived assertions.
+      enrichment: buildResultingStateEnrichment(productionInteractions),
+    });
             await StorageService.setRaw(StorageKeys.EXECUTION_IR_PLAN, mappedPlan);
             await chrome.storage.local.set({
               [StorageKeys.EXECUTION_IR_PLAN + '_generated_at']: new Date().toISOString(),
