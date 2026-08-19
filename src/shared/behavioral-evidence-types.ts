@@ -19,6 +19,7 @@
  */
 
 import type { ElementIdentity } from './types';
+import type { WirePageContentSnapshot } from './page-content-wire';
 
 // ── Top-Level Envelope ──────────────────────────────────────────────────
 
@@ -253,6 +254,22 @@ export interface ApplicationEvidence {
 
   /** Network activity observed during the window. */
   networkActivity: NetworkActivity[];
+
+  /**
+   * Resulting Application State (Phase 1): bounded semantic snapshot of the
+   * rendered page content, scanned once at consequence settlement (Click
+   * windows, endReason 'consequence-settled' / cap) or destination-page
+   * stabilization (post-nav windows). ABSENT when no scan ran or the scan
+   * found no semantic content (INV-CS2: unloading paths never scan, so their
+   * evidence keeps the exact pre-Phase-1 shape).
+   *
+   * INV-CS1: belongs to THIS window's evidence only — the Click window scans
+   * the origin document before unload, the post-nav window scans the
+   * destination document. Never merged across interactions.
+   *
+   * INV-APP-2: bounded — items ≤ 50, text ≤ 200 chars, attributes ≤ 30.
+   */
+  resultingState?: WirePageContentSnapshot;
 
   /** Performance condition: was the main thread congested? */
   performanceCondition: PerformanceCondition | null;

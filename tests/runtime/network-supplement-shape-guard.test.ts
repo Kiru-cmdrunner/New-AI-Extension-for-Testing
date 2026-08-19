@@ -493,4 +493,66 @@ describe('structural supplement semantics', () => {
       app.networkActivity.length > 0;
     expect(structurallyNetworkOnly).toBe(false);
   });
+
+  // ── Resulting Application State (Phase 1) ──────────────────────────
+  // The production guard now also requires resultingState.items to be empty;
+  // an evidence carrying page content is never a network-only supplement.
+
+  it('evidence with resultingState items is NOT structurally network-only', () => {
+    const evidence = makeG3Supplement('evt-rs', 5);
+    evidence.applicationEvidence!.resultingState = {
+      url: 'https://example.test/cart',
+      viewId: null,
+      items: [
+        {
+          kind: 'counter',
+          matchedSelector: '[aria-label*="cart" i][class*="count" i]',
+          text: '4',
+          numericValue: 4,
+          entityId: null,
+          entityType: null,
+          domPath: 'div#nav-cart',
+          attributes: {},
+          visible: true,
+        },
+      ],
+      itemsOverflow: 0,
+      scannedAt: 1,
+      scanDurationMs: 1,
+    };
+    const app = evidence.applicationEvidence!;
+    const structurallyNetworkOnly =
+      evidence.targetEvidence == null &&
+      app.domChanges.length === 0 &&
+      app.newSurfaces.length === 0 &&
+      app.removedSurfaces.length === 0 &&
+      app.visibilityChanges.length === 0 &&
+      app.navigation.length === 0 &&
+      (app.resultingState?.items?.length ?? 0) === 0 &&
+      app.networkActivity.length > 0;
+    expect(structurallyNetworkOnly).toBe(false);
+  });
+
+  it('G3 supplement with EMPTY resultingState items remains a supplement', () => {
+    const evidence = makeG3Supplement('evt-rs-empty', 34);
+    evidence.applicationEvidence!.resultingState = {
+      url: 'u',
+      viewId: null,
+      items: [],
+      itemsOverflow: 0,
+      scannedAt: 1,
+      scanDurationMs: 1,
+    };
+    const app = evidence.applicationEvidence!;
+    const structurallyNetworkOnly =
+      evidence.targetEvidence == null &&
+      app.domChanges.length === 0 &&
+      app.newSurfaces.length === 0 &&
+      app.removedSurfaces.length === 0 &&
+      app.visibilityChanges.length === 0 &&
+      app.navigation.length === 0 &&
+      (app.resultingState?.items?.length ?? 0) === 0 &&
+      app.networkActivity.length > 0;
+    expect(structurallyNetworkOnly).toBe(true);
+  });
 });

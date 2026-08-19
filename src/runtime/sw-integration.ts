@@ -363,7 +363,8 @@ export function attachEvidenceToInteraction(
       (app.newSurfaces?.length ?? 0) === 0 &&
       (app.removedSurfaces?.length ?? 0) === 0 &&
       (app.visibilityChanges?.length ?? 0) === 0 &&
-      (app.navigation?.length ?? 0) === 0;
+      (app.navigation?.length ?? 0) === 0 &&
+      (app.resultingState?.items?.length ?? 0) === 0;
   };
 
   // Helper: merge network entries into existing evidence (G5-E dedup)

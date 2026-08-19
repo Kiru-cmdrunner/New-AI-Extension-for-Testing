@@ -47,6 +47,10 @@ import type { NetworkActivity } from '../shared/behavioral-evidence-types';
 import type { NetworkBridge } from './network-bridge';
 import type { PostNavCaptureRecord } from '../shared/post-nav-types';
 import { captureValue, extractIdentity } from './identity-extractor';
+import type { WirePageContentSnapshot } from '../shared/page-content-wire';
+import { PageContentObserver } from '../understanding/page-content/page-content-observer';
+import { createDefaultPageContentConfig } from '../understanding/page-content/page-content-config';
+import { BrowserPageContentAdapter, toWireSnapshot } from './page-content-dom-adapter';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
@@ -218,6 +222,19 @@ interface ObservationWindowState {
    * window↔network join (no timestamp overlap required).
    */
   requestIdsAtOpen: Set<string> | null;
+
+  /**
+   * Resulting Application State (Phase 1): resulting-state snapshot scanned
+   * for this window (set once, after consequence settlement). Undefined
+   * means no scan ran (unload path, no observer, failure, or nothing
+   * semantic found) — the evidence field stays ABSENT in that case.
+   */
+  resultingState?: WirePageContentSnapshot;
+
+  /**
+   * Resulting Application State (Phase 1): at-most-once scan guard.
+   */
+  resultingStateScanned?: boolean;
 }
 
 // ── EvidenceCollector ────────────────────────────────────────────────
@@ -261,6 +278,14 @@ export class EvidenceCollector {
   /** Network bridge for collecting network activity (M6). */
   private networkBridge: NetworkBridge | null = null;
 
+  /**
+   * Resulting Application State (Phase 1): bounded semantic scanner. Built
+   * lazily in start() when a live document exists; injectable via the ctor
+   * optional for tests (undefined → no scan → today's exact behavior).
+   * Stateless (no listeners) — safe to construct once and reuse.
+   */
+  private pageContentObserver?: PageContentObserver;
+
   // ── Lifecycle-Driven Evidence state ────────────────────────────────
 
   /** Active lifecycle bindings: lifecycleId → binding info. */
@@ -279,10 +304,12 @@ export class EvidenceCollector {
     targetStateCache: TargetStateCache;
     domObserver: DOMObserver;
     networkBridge?: NetworkBridge | null;
+    pageContentObserver?: PageContentObserver;
   }) {
     this.targetStateCache = config.targetStateCache;
     this.domObserver = config.domObserver;
     this.networkBridge = config.networkBridge ?? null;
+    this.pageContentObserver = config.pageContentObserver;
   }
 
   /**
@@ -296,6 +323,19 @@ export class EvidenceCollector {
     this.activeTypingWindow = null;
     this.lastScrollWindowTime = -Infinity;
     this.lastKnownUrl = typeof location !== 'undefined' ? location.href : '';
+    // Resulting Application State (Phase 1): build the scanner lazily here —
+    // never in the ctor — so pure-unit collectors without a live document
+    // keep today's no-scan behavior. Stateless; reused across sessions.
+    if (!this.pageContentObserver && typeof document !== 'undefined') {
+      try {
+        this.pageContentObserver = new PageContentObserver(
+          createDefaultPageContentConfig(),
+          new BrowserPageContentAdapter(document),
+        );
+      } catch {
+        this.pageContentObserver = undefined;
+      }
+    }
   }
 
   /**
@@ -619,6 +659,10 @@ export class EvidenceCollector {
       if (afterSnapshot) {
         afterSnapshot = this.enrichFromMetadata(afterSnapshot, metadata);
       }
+      // Resulting Application State (Phase 1) — Hook A: scan the settled DOM
+      // once, inside the single-delivery settle branch, BEFORE evidence is
+      // assembled. Event-driven (fires at window close, not on any timer).
+      this.captureResultingState(state);
       this.buildAndDeliverEvidence(state, afterSnapshot, reason);
       return;
     }
@@ -838,6 +882,15 @@ export class EvidenceCollector {
       }
     }
 
+    // Resulting Application State (Phase 1) — Hook B: destination-page scan
+    // for the dedicated post-navigation window ONLY (INV-CS1: Click and
+    // Navigation evidence stay strictly separate; non-post-nav windows that
+    // reach this regular path do not scan — the click-side scan already ran
+    // in the settle branch of THIS window or the window never settled).
+    if (state.isPostNavWindow) {
+      this.captureResultingState(state);
+    }
+
     // Build ApplicationEvidence
     const applicationEvidence: ApplicationEvidence = {
       domChanges,
@@ -855,6 +908,13 @@ export class EvidenceCollector {
         totalBatches: perfMetrics.totalBatches,
       },
     };
+
+    // Resulting Application State (Phase 1): attach only when a snapshot
+    // exists — ABSENT otherwise (INV-CS2: evidence with no scan is
+    // byte-identical to the pre-Phase-1 shape; JSON drops undefined keys).
+    if (state.resultingState) {
+      applicationEvidence.resultingState = state.resultingState;
+    }
 
     // Build BehavioralEvidence
     const evidence: BehavioralEvidence = {
@@ -1374,6 +1434,31 @@ export class EvidenceCollector {
   }
 
   /**
+   * Resulting Application State (Phase 1): scan the page's rendered content
+   * once per window, at consequence settlement (settle branch) or
+   * destination-page stabilization (post-nav close). Event-driven — no
+   * timers. Bounded by the observer (13 selectors, ≤50 items, ≤200 chars,
+   * ≤30 attributes). Every failure path degrades to "field absent":
+   * observer missing → return; already scanned → return; scan throws →
+   * undefined; no semantic items → observer returns null → undefined.
+   */
+  private captureResultingState(state: ObservationWindowState): void {
+    // At-most-once per window (double-close / re-entrant delivery guard).
+    if (state.resultingStateScanned) return;
+    state.resultingStateScanned = true;
+    if (!this.pageContentObserver || !this.isRunning) return;
+    try {
+      const snapshot = this.pageContentObserver.scan(null);
+      if (snapshot) {
+        state.resultingState = toWireSnapshot(snapshot);
+      }
+    } catch {
+      // Scan failure must never block evidence delivery.
+      state.resultingState = undefined;
+    }
+  }
+
+  /**
    * Consequence-settling (§5): transition a lifecycle-finalized window
    * into settle mode. Idempotent — a second FINALIZE_EVIDENCE (duplicate
    * or racing lifecycle) is a no-op. Releasing holdOpen (a) re-enables the
@@ -1599,6 +1684,13 @@ export class EvidenceCollector {
         totalBatches: perfMetrics.totalBatches,
       },
     };
+
+    // Resulting Application State (Phase 1): attach only when a snapshot
+    // exists — ABSENT otherwise (INV-CS2: evidence with no scan is
+    // byte-identical to the pre-Phase-1 shape; JSON drops undefined keys).
+    if (state.resultingState) {
+      applicationEvidence.resultingState = state.resultingState;
+    }
 
     // Build and deliver BehavioralEvidence
     const evidence: BehavioralEvidence = {

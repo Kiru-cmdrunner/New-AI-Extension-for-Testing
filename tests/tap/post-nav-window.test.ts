@@ -203,4 +203,40 @@ describe('EvidenceCollector.openPostNavWindow', () => {
     expect(evidence.targetEvidence).not.toBeNull();
     expect(evidence.targetEvidence!.identity).not.toBeNull();
   });
+
+  // ── Resulting Application State (Phase 1) ──────────────────────────
+  // INV-CS1: the destination-page scan attaches to THIS post-nav window's
+  // evidence (the Navigation interaction), not to any Click evidence.
+
+  it('delivers resultingState scanned from the destination page on the navigation window', async () => {
+    // Destination content that matches a default semantic selector.
+    const badge = document.createElement('span');
+    badge.setAttribute('aria-label', 'Shopping Cart, 2 items');
+    badge.setAttribute('class', 'nav-cart-count');
+    badge.textContent = '2'; // extractNumeric reads the rendered text
+    document.body.appendChild(badge);
+
+    collector.openPostNavWindow(makeRecord());
+    await vi.advanceTimersByTimeAsync(0);
+    advance(400); // quiescence close
+    expect(deliveredEvidence.length).toBe(1);
+
+    const evidence = lastDelivered()!;
+    const rs = evidence.applicationEvidence.resultingState;
+    expect(rs).toBeDefined();
+    expect(rs!.items.length).toBeGreaterThan(0);
+    const counter = rs!.items.find((i) => i.kind === 'counter');
+    expect(counter).toBeDefined();
+    expect(counter!.numericValue).toBe(2);
+    // The snapshot must belong to this window's own delivery.
+    expect(evidence.window.endReason).not.toBe('consequence-settled');
+  });
+
+  it('no observer → navigation window still delivers WITHOUT resultingState (field absent)', async () => {
+    collector.openPostNavWindow(makeRecord());
+    await vi.advanceTimersByTimeAsync(0);
+    advance(400);
+    expect(deliveredEvidence.length).toBe(1);
+    expect('resultingState' in lastDelivered()!.applicationEvidence).toBe(false);
+  });
 });

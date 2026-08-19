@@ -151,7 +151,7 @@ function buildShadowContextPath(host: Element, parentContext: string | null): st
  *
  * If shadowContext is provided, the path is prefixed with [shadowContext].
  */
-function getElementPath(el: Element, shadowContext?: string | null): string {
+export function getElementPath(el: Element, shadowContext?: string | null): string {
   const parts: string[] = [];
   let current: Element | null = el;
   let depth = 0;
