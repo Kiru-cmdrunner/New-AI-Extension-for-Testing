@@ -103,6 +103,50 @@ export interface ParameterInputDescriptor {
   value: string | null;
 }
 
+// ── Phase 4b — observed post-conditions (read-side projection) ────────
+
+/** Read-side vocabulary for observed state changes. */
+export type StateChangeKind =
+  | 'counter-delta'
+  | 'entity-created'
+  | 'notification'
+  | 'view-change'
+  | 'state-other';
+
+/**
+ * One recurring observed state change for an action signature — a
+ * READ-SIDE projection of consequenceProfile entries with kind
+ * 'state' | 'entity' | 'notification' (api/nav/ui consequences stay in
+ * `consequences`, the causal inventory; both derive from the same
+ * persisted source, so they can never disagree).
+ *
+ * Persisted counter identities are value-bearing (`cart=3→cart=4`), so
+ * `identity` is generalized at READ time (counter id before the first
+ * '=') while `valueChange` keeps the last-observed raw pair. Unknown
+ * formats degrade honestly to 'state-other' + the raw string. NOTE:
+ * notification edges persist window-level granularity ('anchor-window' /
+ * 'post-anchor' identities) — the notification TEXT is only in the edge
+ * detail, reachable via getConsequenceEvidence deep-link; the projection
+ * never reinterprets persisted identities.
+ */
+export interface StateChangeDescriptor {
+  changeKind: StateChangeKind;
+  /** Generalized identity: counter id, 'type:op', notification text (≤60), or 'a→b' view ids. */
+  identity: string;
+  /** Raw value pair from the persisted identity ('3→4') when present, else null. */
+  valueChange: string | null;
+  occurrenceCount: number;
+  hitCount: number;
+  missedObservations: number;
+  confidence: number;
+  lifecycle: ConsequenceLifecycle;
+  firstSeenAtSession: string;
+  lastSeenAtSession: string;
+  evidenceSamples: EvidenceSampleRef[];
+  /** How observed — e.g. 'behavior/dom-observer'. */
+  observedVia: string;
+}
+
 /** One action signature — the unit "what does this action do?" answers. */
 export interface ActionDescriptor {
   signatureKey: string;
@@ -132,6 +176,12 @@ export interface ActionDescriptor {
   workflowPatternAbsence: 'linked' | AbsenceReason;
   parameterInputs: ParameterInputDescriptor[];
   consequences: ConsequenceDescriptor[];
+  /**
+   * Phase 4b — read-side projection of state/entity/notification
+   * consequences into observed post-conditions (generalized identities,
+   * last-observed value pairs). Empty when no state consequences recorded.
+   */
+  observedStateChanges: StateChangeDescriptor[];
   divergenceFlags: string[];
 }
 
@@ -175,6 +225,23 @@ export interface WorkflowStep {
     detail: string;
     confidence: number;
   }>;
+  // ── Phase 4b — observed post-conditions per step (read-side join with
+  // persisted state-transition rows; IN-field when the row is retained) ──
+  /** Anchor interaction id — the join key for transition rows. */
+  interactionId: string;
+  /** Persisted state-change summary strings for this interaction. */
+  stateChanges: string[];
+  /** Entity ids recorded as new/updated at this interaction. */
+  affectedEntities: string[];
+  fromViewId: string | null;
+  toViewId: string | null;
+  /**
+   * Honest typing (workflowPatternAbsence pattern): 'observed' when the
+   * retained row carries change strings; 'observed-none' when a transition
+   * row exists with an empty changes list; 'rows-not-retained' when no row
+   * survives (cap eviction 500/session or never recorded).
+   */
+  stateChangeAbsence: 'observed' | 'observed-none' | 'rows-not-retained';
 }
 
 /** Full ordered causal trace of one recorded session. */
@@ -273,6 +340,12 @@ export interface ActionContextBlock {
     lifecycle: ConsequenceLifecycle;
     sessions: number;
   }>;
+  /**
+   * Phase 4b — observed post-conditions as bounded plain-text lines
+   * (≤ MAX_STATE_CHANGE_CONTEXT_LINES entries; '+N more' honesty row when
+   * truncated). Pure formatting of ActionDescriptor.observedStateChanges.
+   */
+  stateChanges: string[];
   provenance: {
     signatureKey: string;
     appId: string;

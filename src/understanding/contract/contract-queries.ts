@@ -18,6 +18,7 @@ import type {
   KnowledgeActionSignatureRow,
   KnowledgeEdgeRow,
   KnowledgeBehaviorSessionRow,
+  KnowledgeStateTransitionRow,
 } from '../persistence/knowledge-types';
 import {
   MAX_CONSEQUENCES_PER_SIGNATURE,
@@ -27,6 +28,8 @@ import {
 import type {
   ActionContextBlock,
   ActionDescriptor,
+  StateChangeDescriptor,
+  StateChangeKind,
   ApiSurfaceEntry,
   ApplicationDescriptor,
   ConsequenceDescriptor,
@@ -220,8 +223,134 @@ async function toActionDescriptor(
     workflowPatternAbsence,
     parameterInputs,
     consequences: consequences.sort(byIdentity),
+    observedStateChanges: projectStateChanges(row, retainedSessions),
     divergenceFlags: [...row.divergenceFlags],
   };
+}
+
+// ── Phase 4b — observed post-conditions (read-side projection) ────────
+
+/**
+ * Bounded lines in ActionContextBlock.stateChanges before the '+N more'
+ * honesty row. The block is LLM-facing; bounded by design.
+ */
+const MAX_STATE_CHANGE_CONTEXT_LINES = 8;
+
+/**
+ * Classify a persisted consequence into the read-side StateChangeKind
+ * vocabulary. Counter identities are value-bearing (`cart=3→cart=4`);
+ * view-change identities carry `→` between view ids. Notification edges
+ * persist window-level granularity ('anchor-window'/'post-anchor') —
+ * passed through unchanged (see StateChangeDescriptor doc).
+ *
+ * Format dependency (R1): these formats are pinned by tests; unknown
+ * formats degrade honestly to 'state-other' + the raw string — never
+ * dropped.
+ */
+function classifyStateChange(
+  kind: string,
+  targetIdentity: string,
+): { changeKind: StateChangeKind; identity: string; valueChange: string | null } {
+  if (kind === 'entity') {
+    return { changeKind: 'entity-created', identity: targetIdentity, valueChange: null };
+  }
+  if (kind === 'notification') {
+    return {
+      changeKind: 'notification',
+      identity: targetIdentity.length > 60 ? targetIdentity.slice(0, 60) : targetIdentity,
+      valueChange: null,
+    };
+  }
+  // kind === 'state' (or unrecognized) — parse the persisted identity.
+  const t = targetIdentity;
+  // Counter form: `counterId=from` / `counterId=to` segments joined by '→'.
+  // detail is `counter cart 3 → 4`; identity is `cart=3→cart=4`.
+  const counterMatch = /^([^=→]+?)=([^=→]*)→[^=→]*=([^=→]*)$/.exec(t);
+  if (counterMatch) {
+    return { changeKind: 'counter-delta', identity: counterMatch[1], valueChange: `${counterMatch[2]}→${counterMatch[3]}` };
+  }
+  // View-change form: `fromView → toView` (words separated by '→').
+  const viewMatch = /^(.+?)→(.+)$/.exec(t);
+  if (viewMatch && !t.includes('=')) {
+    return {
+      changeKind: 'view-change',
+      identity: t,
+      valueChange: `${viewMatch[1]}→${viewMatch[2]}`,
+    };
+  }
+  return { changeKind: 'state-other', identity: t, valueChange: null };
+}
+
+/**
+ * Project a signature row's consequenceProfile into observed
+ * post-conditions. Pure: no repo reads, no clock reads. Groups the
+ * value-bearing counter identities (0→1 and 3→4 share the counter id) by
+ * accumulating occurrence/hit counts; valueChange keeps the LAST profile
+ * entry's pair (profile order = merge order, newest last).
+ */
+function projectStateChanges(
+  row: KnowledgeActionSignatureRow,
+  retainedSessions: Set<string>,
+): StateChangeDescriptor[] {
+  const stateEntries = row.consequenceProfile.filter(
+    (c) => c.kind === 'state' || c.kind === 'entity' || c.kind === 'notification',
+  );
+  const grouped = new Map<string, StateChangeDescriptor>();
+  for (const c of stateEntries) {
+    const { changeKind, identity, valueChange } = classifyStateChange(c.kind, c.targetIdentity);
+    // Group key: changeKind + generalized identity — distinct counters,
+    // entity types, notifications, and views stay separate.
+    const key = `${changeKind}|${identity}`;
+    const existing = grouped.get(key);
+    if (existing) {
+      existing.occurrenceCount += c.occurrenceCount;
+      existing.hitCount += c.hitCount;
+      if (c.lastSeenAtSession > existing.lastSeenAtSession) {
+        existing.lastSeenAtSession = c.lastSeenAtSession;
+        existing.valueChange = valueChange;
+        existing.missedObservations = c.missedObservations;
+      }
+      // evidenceSamples: keep the union, bounded later.
+      existing.evidenceSamples.push(
+        ...c.evidenceSamples.slice(0, MAX_EVIDENCE_SAMPLES).map((s) => ({
+          sessionId: s.sessionId,
+          edgeKey: s.edgeKey,
+          resolvable: retainedSessions.has(s.sessionId),
+        })),
+      );
+    } else {
+      grouped.set(key, {
+        changeKind,
+        identity,
+        valueChange,
+        occurrenceCount: c.occurrenceCount,
+        hitCount: c.hitCount,
+        missedObservations: c.missedObservations,
+        confidence: c.confidence,
+        lifecycle: divergenceLifecycle(c.status, row.divergenceFlags, c.identity),
+        firstSeenAtSession: c.firstSeenAtSession,
+        lastSeenAtSession: c.lastSeenAtSession,
+        evidenceSamples: c.evidenceSamples
+          .slice(0, MAX_EVIDENCE_SAMPLES)
+          .map((s) => ({
+            sessionId: s.sessionId,
+            edgeKey: s.edgeKey,
+            resolvable: retainedSessions.has(s.sessionId),
+          })),
+        observedVia: c.observedVia,
+      });
+    }
+  }
+  return [...grouped.values()]
+    .map((d) => ({
+      ...d,
+      evidenceSamples: d.evidenceSamples.slice(0, MAX_EVIDENCE_SAMPLES),
+    }))
+    .sort(
+      (a, b) =>
+        (a.changeKind < b.changeKind ? -1 : a.changeKind > b.changeKind ? 1 : 0) ||
+        (a.identity < b.identity ? -1 : 1),
+    );
 }
 
 function divergenceLifecycle(
@@ -307,6 +436,13 @@ export async function reconstructWorkflow(
     edgesByEpisode.set(e.episodeId, list);
   }
 
+  // Phase 4b — persisted state-transition rows keyed by interactionId
+  // (one indexed read; join key = anchor interaction id).
+  const transitionsByInteraction = new Map<string, KnowledgeStateTransitionRow>();
+  for (const t of await repo.getStateTransitions(sessionId)) {
+    transitionsByInteraction.set(t.interactionId, t);
+  }
+
   // CER-5 episode order = anchor triggerTimestamp asc, episodeId asc.
   const ordered = [...episodes].sort(
     (a, b) =>
@@ -314,34 +450,49 @@ export async function reconstructWorkflow(
       (a.episodeId < b.episodeId ? -1 : 1),
   );
 
-  const steps: WorkflowStep[] = ordered.map((ep, i) => ({
-    order: i,
-    episodeId: ep.episodeId,
-    signatureKey: ep.signatureKey,
-    actionType: ep.anchor.actionType,
-    actionTarget: ep.anchor.actionTarget,
-    parameterInputs: ep.parameterInputs.map((p) => ({
-      interactionId: p.interactionId,
-      label: p.label,
-      value: p.value,
-    })),
-    episodeOutcome: ep.episodeOutcome
-      ? {
-          outcome: ep.episodeOutcome.outcome,
-          confidence: ep.episodeOutcome.confidence,
-          derivation: ep.episodeOutcome.derivation,
-        }
-      : null,
-    edges: (edgesByEpisode.get(ep.episodeId) ?? [])
-      .sort((a, b) => a.edgeSeq - b.edgeSeq)
-      .map((e) => ({
-        edgeId: e.edgeId,
-        tier: e.tier,
-        kind: e.kind,
-        detail: e.detail,
-        confidence: e.confidence,
+  const steps: WorkflowStep[] = ordered.map((ep, i) => {
+    // Phase 4b — read-side join with persisted transition rows.
+    const interactionId = ep.anchor.interactionId;
+    const transition = transitionsByInteraction.get(interactionId);
+    return {
+      order: i,
+      episodeId: ep.episodeId,
+      signatureKey: ep.signatureKey,
+      actionType: ep.anchor.actionType,
+      actionTarget: ep.anchor.actionTarget,
+      parameterInputs: ep.parameterInputs.map((p) => ({
+        interactionId: p.interactionId,
+        label: p.label,
+        value: p.value,
       })),
-  }));
+      episodeOutcome: ep.episodeOutcome
+        ? {
+            outcome: ep.episodeOutcome.outcome,
+            confidence: ep.episodeOutcome.confidence,
+            derivation: ep.episodeOutcome.derivation,
+          }
+        : null,
+      edges: (edgesByEpisode.get(ep.episodeId) ?? [])
+        .sort((a, b) => a.edgeSeq - b.edgeSeq)
+        .map((e) => ({
+          edgeId: e.edgeId,
+          tier: e.tier,
+          kind: e.kind,
+          detail: e.detail,
+          confidence: e.confidence,
+        })),
+      interactionId,
+      stateChanges: transition ? [...transition.changes] : [],
+      affectedEntities: transition ? [...transition.affectedEntities] : [],
+      fromViewId: transition?.fromViewId ?? null,
+      toViewId: transition?.toViewId ?? null,
+      stateChangeAbsence: transition
+        ? transition.changes.length > 0
+          ? ('observed' as const)
+          : ('observed-none' as const)
+        : ('rows-not-retained' as const),
+    };
+  });
 
   return {
     appId,
@@ -569,6 +720,19 @@ export async function describeActionAsContext(
 ): Promise<ActionContextBlock | null> {
   const d = await getActionDescriptor(repo, loader, signatureKey);
   if (!d) return null;
+  // Phase 4b — bounded plain-text lines from observedStateChanges
+  // (≤ MAX_STATE_CHANGE_CONTEXT_LINES; '+N more' honesty row).
+  const stateChangeLines = d.observedStateChanges.map((sc) => {
+    const valuePart = sc.valueChange ? ` (last ${sc.valueChange})` : '';
+    return `${sc.changeKind} ${sc.identity} changed${valuePart} · ${sc.hitCount} session(s)`;
+  });
+  const truncated =
+    stateChangeLines.length > MAX_STATE_CHANGE_CONTEXT_LINES
+      ? [
+          ...stateChangeLines.slice(0, MAX_STATE_CHANGE_CONTEXT_LINES),
+          `+${stateChangeLines.length - MAX_STATE_CHANGE_CONTEXT_LINES} more`,
+        ]
+      : stateChangeLines;
   return {
     action: `${d.actionType} "${d.normalizedTarget}"`,
     performed: `${d.occurrenceCount} time(s) across sessions; last seen session ${d.lastSeenAtSession} (seq ${d.lastSeenSeq}); effective status ${d.status}`,
@@ -578,6 +742,7 @@ export async function describeActionAsContext(
       lifecycle: c.lifecycle,
       sessions: c.hitCount,
     })),
+    stateChanges: truncated,
     provenance: {
       signatureKey: d.signatureKey,
       appId: d.appId,
