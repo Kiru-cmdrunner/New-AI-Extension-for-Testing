@@ -330,6 +330,122 @@ export interface ContractEnvelope<T> {
   data: T;
 }
 
+// ── Phase 5a — API test seeds (read-side, additive) ────────────────────
+
+/**
+ * Attribution of one network request to a user interaction.
+ * Only 'event-stamped' rows (DurableAttributionLedger CER stamps:
+ * sourceEventId + requestId present, webRequest-sourced) may carry causal
+ * expected-post-conditions. 'window-inferred' rows rode the same evidence
+ * window but were not stamped — their post-conditions are
+ * observed-alongside, never expected-of.
+ */
+export type ApiSeedAttribution = 'event-stamped' | 'window-inferred';
+
+/** One expected post-condition of an API seed, from observed UI state. */
+export type ApiPostCondition =
+  | {
+      kind: 'counter';
+      /** FROZEN identity grammar (e.g. 'DIV#cart-count'). */
+      identity: string;
+      value: number;
+      operator: 'equals';
+    }
+  | {
+      kind: 'collection';
+      identity: string;
+      count: number;
+    }
+  | {
+      kind: 'entity-present';
+      /** entityId (e.g. 'cart-item:B0VAL1'). Presence only — never values. */
+      identity: string;
+    }
+  | {
+      kind: 'ui-badge';
+      identity: string;
+      /** Distinctive non-numeric badge text, ≤200 chars, verbatim. */
+      text: string;
+    }
+  | {
+      kind: 'ui-notification';
+      identity: string;
+    };
+
+/**
+ * Phase 5a — one deterministic API test seed: a recorded request paired
+ * with the resulting application state observed in the same evidence
+ * window. Derived READ-ONLY from persisted evidence + knowledge rows.
+ *
+ * Honest-uncertainty fields never over-claim: bodies are 'unrecorded',
+ * response verification 'unverified', and the UI basis states whether any
+ * resulting-state snapshot backed the window. Phase 5b (response bodies)
+ * and 5c (DB oracle) remain gated and out of scope here.
+ */
+export interface ApiTestSeed {
+  /** `${sessionId}:${interactionId}:${requestId}` — deterministic. */
+  seedId: string;
+  appId: string;
+  sessionId: string;
+  /** The Click/Navigation interaction whose window carried the row. */
+  interactionId: string;
+  /**
+   * Evidence-row sourceEventId (the interaction's trigger/member event).
+   * Present when the interaction retained its event linkage.
+   */
+  sourceEventId: string | null;
+  request: {
+    /** HTTP method, verbatim from the network row. */
+    method: string;
+    /** Generalized query-free pathname (frozen grammar `METHOD /path`). */
+    path: string;
+    /** Observed status; null when unknown at capture time. */
+    status: number | null;
+    resourceType: 'xhr' | 'fetch' | 'unknown' | 'navigation' | 'resource';
+    /**
+     * KEYS ONLY of a parsed formData body (INV-5a-7: values are never
+     * emitted — they may contain secrets). Sensitive-looking keys are
+     * filtered by a small best-effort denylist.
+     */
+    bodyKeys: string[];
+  };
+  attribution: ApiSeedAttribution;
+  /**
+   * True when the seed's interaction carried MORE than one attributed
+   * request — single-request causality cannot be claimed (INV-5a-3).
+   */
+  shared: boolean;
+  /** True when identical (method,path) requests recur within the session
+   *  (polling) — the seed represents the recurring endpoint, not one poll. */
+  recurring: boolean;
+  /**
+   * Join to knowledge when the interaction's episode produced a signature;
+   * null when no signature was recorded for the action.
+   */
+  action: { signatureKey: string; actionType: string; normalizedTarget: string } | null;
+  /** Observed post-conditions, bounded (≤ MAX_POST_CONDITIONS_PER_SEED). */
+  expectedPostConditions: ApiPostCondition[];
+  honesty: {
+    /** Request/response bodies are never captured (CP1–CP7). */
+    payloadSchema: 'unrecorded';
+    /** Response content is not verified by 5a (5b is gated). */
+    responseBody: 'unverified';
+    /** Whether a resulting-state snapshot backed this window. */
+    uiBasis: 'content-observed' | 'none';
+  };
+  /** Mirrors the knowledge consequence confidence for this endpoint. */
+  confidence: number;
+  /** Citation; resolvable:false once the session is FIFO-evicted (R7). */
+  evidenceRef: EvidenceSampleRef;
+}
+
+/**
+ * Cap on expectedPostConditions per seed. Counters/collections/entities/
+ * badges/notifications in priority order — same ranking the 4c assertion
+ * derivation uses.
+ */
+export const MAX_POST_CONDITIONS_PER_SEED = 4;
+
 /** Compact LLM-grounding block: pure formatting of contract data. */
 export interface ActionContextBlock {
   action: string;

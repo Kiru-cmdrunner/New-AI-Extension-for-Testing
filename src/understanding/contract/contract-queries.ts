@@ -25,12 +25,19 @@ import {
   MAX_EVIDENCE_SAMPLES,
   STALE_AFTER_SESSIONS,
 } from '../persistence/knowledge-types';
+import {
+  deriveSessionSeeds,
+  type SeedEvidenceAccess,
+  type SeedEvidenceRow,
+  type SeedKnowledgeContext,
+} from './api-seed-derivation';
 import type {
   ActionContextBlock,
   ActionDescriptor,
   StateChangeDescriptor,
   StateChangeKind,
   ApiSurfaceEntry,
+  ApiTestSeed,
   ApplicationDescriptor,
   ConsequenceDescriptor,
   EntityDescriptor,
@@ -693,6 +700,109 @@ export async function getGapReport(
         observedAtMs: g.observedAtMs,
       })),
   };
+}
+
+// ── Phase 5a — API test seeds ──────────────────────────────────────────
+
+/**
+ * Phase 5a — API test seeds for an app, one seed per attributed request,
+ * derived read-side from persisted behavioral evidence + knowledge rows.
+ *
+ * The behavioral evidence lives in the SEPARATE cmdrunner Dexie database
+ * (`behavioralEvidence` table, PK windowId); this adapter reads it through
+ * the injected accessor so the contract layer stays repository-agnostic
+ * (INV-5a-2: the only database access is this bounded READ — the recorder
+ * itself never touches a DB).
+ */
+export async function listApiSeeds(
+  repo: KnowledgeRepository,
+  appId: string,
+  evidence: SeedEvidenceAccess,
+): Promise<ApiTestSeed[]> {
+  const sessionIds = await listBehaviorSessions(repo, appId);
+  const seeds: ApiTestSeed[] = [];
+  for (const sessionId of sessionIds) {
+    const sessionSeeds = await listApiSeedsForSession(repo, appId, sessionId, evidence);
+    seeds.push(...sessionSeeds);
+  }
+  return seeds;
+}
+
+/**
+ * Phase 5a — API test seeds for ONE session. Deterministic ordering and
+ * bounds are delegated to deriveSessionSeeds (pure); this function only
+ * gathers rows, resolves eviction honesty (R7), and joins knowledge context.
+ */
+export async function listApiSeedsForSession(
+  repo: KnowledgeRepository,
+  appId: string,
+  sessionId: string,
+  evidence: SeedEvidenceAccess,
+): Promise<ApiTestSeed[]> {
+  const rows = await evidence.getBySession(sessionId);
+  if (rows.length === 0) return [];
+
+  // Knowledge join — api edge confidences for the session, keyed by the
+  // frozen `METHOD /path` identity; per-interaction signature join.
+  const apiConfidence = new Map<string, number>();
+  const knowledgeByInteraction = new Map<string, SeedKnowledgeContext>();
+  const [episodes, edges] = await Promise.all([
+    repo.getEpisodesBySession(appId, sessionId),
+    repo.getEdgesBySession(appId, sessionId),
+  ]);
+  const confidenceByIdentity = new Map<string, { total: number; n: number }>();
+  for (const edge of edges) {
+    if (edge.kind !== 'api') continue;
+    const method = String(
+      (edge.to as Record<string, unknown>).requestMethod ??
+        edge.detail.split(' ')[0] ??
+        'GET',
+    );
+    const path = String(
+      (edge.to as Record<string, unknown>).requestPath ?? generalizedPath(edge.detail),
+    );
+    const identity = `${method} ${path}`;
+    const agg = confidenceByIdentity.get(identity) ?? { total: 0, n: 0 };
+    agg.total += edge.confidence;
+    agg.n += 1;
+    confidenceByIdentity.set(identity, agg);
+  }
+  for (const [identity, agg] of confidenceByIdentity) {
+    apiConfidence.set(identity, agg.n > 0 ? agg.total / agg.n : 0);
+  }
+  for (const ep of episodes) {
+    knowledgeByInteraction.set(ep.anchor.interactionId, {
+      signatureKey: ep.signatureKey,
+      actionType: ep.anchor.actionType,
+      normalizedTarget: ep.anchor.actionTarget,
+      apiConsequenceConfidence: null,
+    });
+  }
+
+  const eventIds = await evidence.getInteractionEventIds(appId, sessionId);
+  const evidenceRows: SeedEvidenceRow[] = [];
+
+  for (const row of rows) {
+    const ids = eventIds.get(row.interactionId) ?? [];
+    evidenceRows.push({ ...row, interactionEventIds: ids });
+  }
+
+  const result = deriveSessionSeeds({
+    appId,
+    sessionId,
+    evidenceRows,
+    knowledgeByInteraction,
+    apiConfidence,
+  });
+
+  // Eviction honesty (R7): a session no longer retained in the knowledge
+  // DB keeps its seeds but degrades the citation.
+  const retained = new Set(await listBehaviorSessions(repo, appId));
+  if (retained.has(sessionId)) return result.seeds;
+  return result.seeds.map((s) => ({
+    ...s,
+    evidenceRef: { ...s.evidenceRef, resolvable: false },
+  }));
 }
 
 // ── LLM grounding block ───────────────────────────────────────────────

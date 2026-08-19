@@ -16,6 +16,7 @@ import type {
   ActionContextBlock,
   ActionDescriptor,
   ApiSurfaceEntry,
+  ApiTestSeed,
   ApplicationDescriptor,
   ContractEnvelope,
   EntityDescriptor,
@@ -24,6 +25,7 @@ import type {
   GraphEdge,
   WorkflowTrace,
 } from './contract-types';
+import type { SeedEvidenceAccess } from './api-seed-derivation';
 import {
   describeActionAsContext,
   describeApplication,
@@ -35,6 +37,8 @@ import {
   getNavigationGraph,
   getStateGraph,
   listActions,
+  listApiSeeds,
+  listApiSeedsForSession,
   listApplications,
   listBehaviorSessions,
   reconstructWorkflow,
@@ -63,6 +67,29 @@ export class KnowledgeContract {
   /** CP8 v1.1 — retained behavior-session ids (seq asc), for snapshots. */
   async listBehaviorSessions(appId: string): Promise<ContractEnvelope<string[]>> {
     return this.envelope(await listBehaviorSessions(this.repo, appId));
+  }
+
+  /**
+   * Phase 5a — API test seeds for an app (all retained sessions).
+   * Read-side derivation over persisted evidence + knowledge rows; the
+   * evidence accessor is injected (repository-agnostic, INV-5a-2).
+   */
+  async listApiSeeds(
+    appId: string,
+    evidence: SeedEvidenceAccess,
+  ): Promise<ContractEnvelope<ApiTestSeed[]>> {
+    return this.envelope(await listApiSeeds(this.repo, appId, evidence));
+  }
+
+  /** Phase 5a — API test seeds for one session. */
+  async listApiSeedsForSession(
+    appId: string,
+    sessionId: string,
+    evidence: SeedEvidenceAccess,
+  ): Promise<ContractEnvelope<ApiTestSeed[]>> {
+    return this.envelope(
+      await listApiSeedsForSession(this.repo, appId, sessionId, evidence),
+    );
   }
 
   async listActions(
