@@ -166,6 +166,32 @@ describe('M9.4 PageContentObserver - scanning', () => {
     expect(entities[0].entityType).toBe('product');
   });
 
+  it('P1: sibling entities sharing a grouping path are EACH captured (entityId dedup)', () => {
+    // Three cart items share path 'ul > li' but carry distinct data-asin ids.
+    const items = [
+      mockEl({ tagName: 'LI', text: 'Widget A', attrs: { 'data-asin': 'B0VAL1' }, path: 'ul > li', match: '[data-asin]' }),
+      mockEl({ tagName: 'LI', text: 'Widget B', attrs: { 'data-asin': 'B0VAL2' }, path: 'ul > li', match: '[data-asin]' }),
+      mockEl({ tagName: 'LI', text: 'Widget C', attrs: { 'data-asin': 'B0VAL3' }, path: 'ul > li', match: '[data-asin]' }),
+    ];
+    const dom = new MockDOM(items);
+    const observer = new PageContentObserver(createDefaultPageContentConfig(), dom);
+    const snap = observer.scan(null);
+    const entities = snap!.items.filter((i) => i.kind === 'entity');
+    expect(entities.length).toBe(3);
+    expect(entities.map((e) => e.entityId).sort()).toEqual(['B0VAL1', 'B0VAL2', 'B0VAL3']);
+  });
+
+  it('P1: duplicate entityId across selectors is deduped (first match wins)', () => {
+    const a = mockEl({ tagName: 'LI', text: 'Widget A', attrs: { 'data-asin': 'B0DUP' }, path: 'ul > li', match: '[data-asin]' });
+    const b = mockEl({ tagName: 'LI', text: 'Widget A alt', attrs: { 'data-asin': 'B0DUP' }, path: 'div > div', match: '[data-asin]' });
+    const dom = new MockDOM([a, b]);
+    const observer = new PageContentObserver(createDefaultPageContentConfig(), dom);
+    const snap = observer.scan(null);
+    const entities = snap!.items.filter((i) => i.kind === 'entity');
+    expect(entities.length).toBe(1);
+    expect(entities[0].entityId).toBe('B0DUP');
+  });
+
   it('extracts collection count from child elements', () => {
     const collectionEl = mockEl({
       tagName: 'UL',

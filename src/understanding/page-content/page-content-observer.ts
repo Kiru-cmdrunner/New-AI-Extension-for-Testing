@@ -114,8 +114,19 @@ export class PageContentObserver {
         if (!el.isVisible()) continue;
 
         const path = el.getPath();
-        if (seenPaths.has(path)) continue; // dedup: first match wins
-        seenPaths.add(path);
+        // Dedup key: entityId for entity-kind items when present (sibling
+        // list items share the same grouping path — "ul > li" — but are
+        // distinct entities; entityId is identity). Path for everything
+        // else (region-level dedup, first match wins per element region).
+        const entityIdAttr = selConfig.idAttribute
+          ? el.getAttribute(selConfig.idAttribute)
+          : null;
+        const dedupKey =
+          selConfig.kind === 'entity' && entityIdAttr
+            ? `entity:${entityIdAttr}`
+            : path;
+        if (seenPaths.has(dedupKey)) continue; // dedup: first match wins
+        seenPaths.add(dedupKey);
 
         const text = this.extractText(el);
         if (!selConfig.extractNumeric && text.length < MIN_TEXT_LENGTH) continue;
