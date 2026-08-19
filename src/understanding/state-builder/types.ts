@@ -62,7 +62,7 @@ export interface Entity {
   viewIds?: string[];
 }
 
-export type EntitySource = 'view-derived' | 'target-derived' | 'counter-derived' | 'inferred';
+export type EntitySource = 'view-derived' | 'target-derived' | 'counter-derived' | 'inferred' | 'content-observed';
 
 // ── Collection ─────────────────────────────────────────────────────────
 

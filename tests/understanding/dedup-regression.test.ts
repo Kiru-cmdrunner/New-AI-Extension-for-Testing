@@ -343,3 +343,113 @@ describe('D2/D7/D8 Fix — Cross-Extractor Duplication', () => {
     });
   });
 });
+
+// ── Phase 2: real-snapshot dedup (AC6) ──────────────────────────────────
+
+describe('Phase 2 — snapshot items never double-record vs domChange signals', () => {
+  it('AC6: real-snapshot counter at a path ALSO in counterChanges records exactly once', () => {
+    const builder = new StateBuilder();
+    const domPath = 'span#cart-count';
+
+    // counterChanges (delta signal from domChanges) AND a page-content
+    // snapshot counter at the same path, with REAL snapshot metadata
+    // (url !== '') — the exact production shape after Phase 1+2.
+    const signals: SignalSet = {
+      interactionId: 'int-p2-ac6-c',
+      viewChanges: [],
+      apiOperations: [],
+      counterChanges: [
+        {
+          type: 'counter-change',
+          source: 'dom-mutation',
+          interactionId: 'int-p2-ac6-c',
+          confidence: 1,
+          elementPath: domPath,
+          oldValue: '2',
+          newValue: '3',
+          numericDelta: 1,
+          label: 'Cart',
+        },
+      ],
+      listChanges: [],
+      inputChanges: [],
+      notifications: [],
+      pageContent: makePageContentSignal({
+        observedCounters: [
+          {
+            kind: 'counter',
+            matchedSelector: '[data-count]',
+            text: '3',
+            numericValue: 3,
+            entityId: null,
+            entityType: null,
+            domPath: domPath, // SAME path as counterChanges
+            attributes: { 'data-count': '3' },
+            visible: true,
+          },
+        ],
+      }) as any,
+    };
+
+    // Real metadata on the synthetic helper's snapshot.
+    (signals.pageContent as any).snapshot.url = 'https://shop.example/cart';
+
+    const result = builder.processSignals(signals);
+
+    // Exactly ONE counter record, ONE value entry.
+    expect(result.after.counters.size).toBe(1);
+    const counter = result.after.counters.get(`counter:${domPath}`);
+    expect(counter).toBeDefined();
+    expect(counter!.values).toHaveLength(1);
+    expect(counter!.values[0].value).toBe('3');
+  });
+
+  it('AC6: real-snapshot collection at a path ALSO in listChanges records exactly once', () => {
+    const builder = new StateBuilder();
+    const containerPath = 'ul[data-testid="cart-items"]';
+
+    const signals: SignalSet = {
+      interactionId: 'int-p2-ac6-l',
+      viewChanges: [],
+      apiOperations: [],
+      counterChanges: [],
+      listChanges: [
+        {
+          type: 'list-change',
+          source: 'dom-mutation',
+          interactionId: 'int-p2-ac6-l',
+          confidence: 1,
+          containerPath: containerPath,
+          containerTag: 'ul',
+          addedCount: 1,
+          removedCount: 0,
+          netChange: 1,
+        },
+      ],
+      inputChanges: [],
+      notifications: [],
+      pageContent: makePageContentSignal({
+        observedCollections: [
+          {
+            kind: 'collection',
+            matchedSelector: '[data-testid="cart-items"]',
+            text: '3 items',
+            numericValue: 3,
+            entityId: null,
+            entityType: null,
+            domPath: containerPath, // SAME path as listChanges
+            attributes: {},
+            visible: true,
+          },
+        ],
+      }) as any,
+    };
+
+    (signals.pageContent as any).snapshot.url = 'https://shop.example/cart';
+
+    const result = builder.processSignals(signals);
+
+    // Exactly ONE collection record.
+    expect(result.after.collections.size).toBe(1);
+  });
+});

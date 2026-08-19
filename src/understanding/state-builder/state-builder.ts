@@ -428,6 +428,11 @@ export class StateBuilder {
       );
       const type = registryType ?? (obs.entityType ?? 'unknown');
       const viewId = this.currentView?.id ?? pc.snapshot.viewId ?? undefined;
+      // Phase 2: source stamp (first-creation only — upsert never flips an
+      // existing entity's source). Discriminator: a REAL snapshot carries a
+      // non-empty url (Phase 1 adapter returns location.href); D2's
+      // synthetic fallback uses url:'' (see page-content-evidence-extractor).
+      const observedFromContent = pc.snapshot.url !== '';
       this.entityTracker.upsert({
         id: `${type}:${obs.entityId}`,
         type,
@@ -436,7 +441,7 @@ export class StateBuilder {
           ...(obs.numericValue !== null ? { count: obs.numericValue } : {}),
           ...(textAsAttr(obs.text) ? { title: obs.text } : {}),
         },
-        source: 'view-derived',
+        source: observedFromContent ? 'content-observed' : 'view-derived',
         firstSeenAt: iid,
         lastUpdated: iid,
         viewIds: viewId ? [viewId] : undefined,

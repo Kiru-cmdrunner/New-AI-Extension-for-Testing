@@ -616,3 +616,244 @@ describe('M9.2 StateBuilder - Amazon workflow validation', () => {
     expect(t19.after.currentView?.id).toBe('product-detail');
   });
 });
+
+// ── Phase 2: resulting-state consumption ────────────────────────────────
+
+describe('Phase 2 — resulting-state entity/counter consumption', () => {
+  let builder: StateBuilder;
+
+  beforeEach(() => {
+    builder = new StateBuilder();
+  });
+
+  it('entities from a REAL snapshot are stamped content-observed', () => {
+    builder.processSignals(
+      makeSignalSet('int-p2-1', {
+        pageContent: {
+          type: 'page-content',
+          source: 'page-content',
+          interactionId: 'int-p2-1',
+          confidence: 0.7,
+          snapshot: {
+            url: 'https://shop.example/cart',
+            viewId: 'cart',
+            items: [],
+            itemsOverflow: 0,
+            scannedAt: 1234,
+            scanDurationMs: 5,
+          },
+          observedEntities: [
+            {
+              kind: 'entity',
+              matchedSelector: '[data-asin]',
+              text: 'Widget A',
+              numericValue: null,
+              entityId: 'B0VAL1',
+              entityType: 'product',
+              domPath: 'ul > li',
+              attributes: { 'data-asin': 'B0VAL1' },
+              visible: true,
+            },
+          ],
+          observedCounters: [],
+          observedCollections: [],
+          observedNotifications: [],
+          observedStatusBadges: [],
+        } as never,
+      }),
+    );
+
+    const entity = builder.getCurrentState().entities.get('product:B0VAL1');
+    expect(entity).toBeDefined();
+    expect(entity?.source).toBe('content-observed');
+    expect(entity?.attributes['data-asin']).toBe('B0VAL1');
+    expect(entity?.attributes.title).toBe('Widget A');
+  });
+
+  it('url:\'\' (synthetic snapshot) keeps view-derived stamp — discriminator pinned (§9.1)', () => {
+    builder.processSignals(
+      makeSignalSet('int-p2-2', {
+        pageContent: {
+          type: 'page-content',
+          source: 'page-content',
+          interactionId: 'int-p2-2',
+          confidence: 0.7,
+          snapshot: {
+            url: '',
+            viewId: null,
+            items: [],
+            itemsOverflow: 0,
+            scannedAt: 1234,
+            scanDurationMs: 0,
+          },
+          observedEntities: [
+            {
+              kind: 'entity',
+              matchedSelector: '[data-asin]',
+              text: 'Widget B',
+              numericValue: null,
+              entityId: 'B0VAL2',
+              entityType: 'product',
+              domPath: 'ul > li',
+              attributes: { 'data-asin': 'B0VAL2' },
+              visible: true,
+            },
+          ],
+          observedCounters: [],
+          observedCollections: [],
+          observedNotifications: [],
+          observedStatusBadges: [],
+        } as never,
+      }),
+    );
+
+    const entity = builder.getCurrentState().entities.get('product:B0VAL2');
+    expect(entity).toBeDefined();
+    expect(entity?.source).toBe('view-derived');
+  });
+
+  it('upsert never flips an existing entity\u2019s source (view-derived stays view-derived)', () => {
+    // First: entity created via view change → view-derived.
+    builder.processSignals(
+      makeSignalSet('int-p2-3', {
+        viewChanges: [
+          mkViewChange('int-p2-3', SEARCH_VIEW, PDP_VIEW, 'https://example.com/s?k=vivo', 'https://example.com/dp/B0XYZ12345'),
+        ],
+      }),
+    );
+    const before = builder.getCurrentState().entities.get('product:B0XYZ12345');
+    expect(before?.source).toBe('view-derived');
+
+    // Second: same entity observed by a REAL snapshot → attributes merge,
+    // source must NOT flip to content-observed.
+    builder.processSignals(
+      makeSignalSet('int-p2-4', {
+        pageContent: {
+          type: 'page-content',
+          source: 'page-content',
+          interactionId: 'int-p2-4',
+          confidence: 0.7,
+          snapshot: {
+            url: 'https://example.com/dp/B0XYZ12345',
+            viewId: 'product-detail',
+            items: [],
+            itemsOverflow: 0,
+            scannedAt: 1234,
+            scanDurationMs: 5,
+          },
+          observedEntities: [
+            {
+              kind: 'entity',
+              matchedSelector: '[data-asin]',
+              text: 'Vivo 160cm TV',
+              numericValue: null,
+              entityId: 'B0XYZ12345',
+              entityType: 'product',
+              domPath: 'div#dp',
+              attributes: { 'data-asin': 'B0XYZ12345' },
+              visible: true,
+            },
+          ],
+          observedCounters: [],
+          observedCollections: [],
+          observedNotifications: [],
+          observedStatusBadges: [],
+        } as never,
+      }),
+    );
+
+    const after = builder.getCurrentState().entities.get('product:B0XYZ12345');
+    expect(after?.source).toBe('view-derived'); // unchanged
+    expect(after?.attributes.title).toBe('Vivo 160cm TV'); // but enriched
+  });
+
+  it('AC4: absolute counter observed pre-click is recorded with delta null (first-render blind spot)', () => {
+    // A counter already showing 3 before the click that never mutates —
+    // previously invisible (no domChange); the snapshot records the
+    // absolute value with delta null (no prior history).
+    builder.processSignals(
+      makeSignalSet('int-p2-5', {
+        pageContent: {
+          type: 'page-content',
+          source: 'page-content',
+          interactionId: 'int-p2-5',
+          confidence: 0.7,
+          snapshot: {
+            url: 'https://shop.example/cart',
+            viewId: 'cart',
+            items: [],
+            itemsOverflow: 0,
+            scannedAt: 1234,
+            scanDurationMs: 5,
+          },
+          observedEntities: [],
+          observedCounters: [
+            {
+              kind: 'counter',
+              matchedSelector: '[data-count]',
+              text: '3',
+              numericValue: 3,
+              entityId: null,
+              entityType: null,
+              domPath: 'span#cart-count',
+              attributes: { 'aria-label': 'Cart' },
+              visible: true,
+            },
+          ],
+          observedCollections: [],
+          observedNotifications: [],
+          observedStatusBadges: [],
+        } as never,
+      }),
+    );
+
+    const counter = builder.getCurrentState().counters.get('counter:span#cart-count');
+    expect(counter).toBeDefined();
+    expect(counter!.values).toHaveLength(1);
+    expect(counter!.values[0].value).toBe('3');
+    expect(counter!.values[0].delta).toBeNull();
+
+    // Repeat observation of the SAME value: appends with delta 0 (pinned —
+    // counter history semantics unchanged by re-observation).
+    builder.processSignals(
+      makeSignalSet('int-p2-6', {
+        pageContent: {
+          type: 'page-content',
+          source: 'page-content',
+          interactionId: 'int-p2-6',
+          confidence: 0.7,
+          snapshot: {
+            url: 'https://shop.example/cart',
+            viewId: 'cart',
+            items: [],
+            itemsOverflow: 0,
+            scannedAt: 1235,
+            scanDurationMs: 4,
+          },
+          observedEntities: [],
+          observedCounters: [
+            {
+              kind: 'counter',
+              matchedSelector: '[data-count]',
+              text: '3',
+              numericValue: 3,
+              entityId: null,
+              entityType: null,
+              domPath: 'span#cart-count',
+              attributes: { 'aria-label': 'Cart' },
+              visible: true,
+            },
+          ],
+          observedCollections: [],
+          observedNotifications: [],
+          observedStatusBadges: [],
+        } as never,
+      }),
+    );
+
+    const counter2 = builder.getCurrentState().counters.get('counter:span#cart-count');
+    expect(counter2!.values).toHaveLength(2);
+    expect(counter2!.values[1].value).toBe('3');
+    expect(counter2!.values[1].delta).toBe(0);
+  });
+});
