@@ -23,6 +23,10 @@ import type {
   TargetStateSnapshot,
 } from '../../src/shared/behavioral-evidence-types';
 import type { ElementIdentity } from '../../src/shared/types';
+import type {
+  WireObservedItem,
+  WirePageContentSnapshot,
+} from '../../src/shared/page-content-wire';
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -591,5 +595,209 @@ describe('frame ID display', () => {
 
     const meta = container.querySelector('.evidence-window-meta');
     expect(meta?.textContent).not.toContain('frame');
+  });
+});
+
+// ── Phase 4a — Resulting State display ──────────────────────────────
+
+/** Wire-type factories (src/shared/page-content-wire.ts). */
+function makeItem(overrides: Partial<WireObservedItem> = {}): WireObservedItem {
+  return {
+    kind: 'counter',
+    matchedSelector: '[data-count]',
+    text: '',
+    numericValue: null,
+    entityId: null,
+    entityType: null,
+    domPath: 'DIV#cart-count',
+    attributes: {},
+    visible: true,
+    ...overrides,
+  };
+}
+
+function makeSnapshotWire(overrides: Partial<WirePageContentSnapshot> = {}): WirePageContentSnapshot {
+  return {
+    url: 'https://shop.example/cart',
+    viewId: null,
+    items: [makeItem({ kind: 'counter', numericValue: 4, domPath: 'DIV#cart-count' })],
+    itemsOverflow: 0,
+    scannedAt: 1234.5,
+    scanDurationMs: 12.4,
+    ...overrides,
+  };
+}
+
+describe('renderEvidence — resulting state (Phase 4a)', () => {
+  it('AC-R1: renders the block first with group order counter→collection→entity→badge→notification', () => {
+    const container = document.createElement('div');
+    renderEvidence(container, makeEvidence({
+      applicationEvidence: makeAppEvidence({
+        resultingState: makeSnapshotWire({
+          items: [
+            makeItem({ kind: 'notification', text: 'Added to cart', domPath: 'DIV[role=alert]' }),
+            makeItem({ kind: 'status-badge', text: 'Order confirmed', domPath: 'SPAN.badge' }),
+            makeItem({ kind: 'entity', entityId: 'B0VAL1', entityType: 'product', text: 'USB cable', domPath: 'LI[data-asin=B0VAL1]' }),
+            makeItem({ kind: 'collection', numericValue: 4, domPath: 'UL#cart-items' }),
+            makeItem({ kind: 'counter', numericValue: 4, domPath: 'DIV#cart-count' }),
+          ],
+        }),
+      }),
+    }));
+
+    const appSection = container.querySelector('[data-evidence-scope="application"]')!;
+    const body = appSection.querySelector('.evidence-section__body')!;
+    const subheaders = Array.from(body.querySelectorAll('.evidence-subheader'));
+    // Block is present and is the FIRST sub-block (document order)
+    expect(subheaders[0]?.textContent).toContain('Resulting State');
+
+    // Row order follows the fixed group order (input order shuffled)
+    const rows = Array.from(body.querySelectorAll('.evidence-row'))
+      .filter((el) => el.classList.contains('evidence-row--muted') === false)
+      .filter((el) => !el.textContent!.startsWith('scanned:'))
+      .map((el) => el.textContent ?? '');
+    expect(rows[0]).toBe('🔢 counter: 4 (DIV#cart-count)');
+    expect(rows[1]).toBe('📦 collection: 4 items (UL#cart-items)');
+    expect(rows[2]).toBe('🏷 product:B0VAL1 · USB cable');
+    expect(rows[3]).toBe('🚦 Order confirmed');
+    expect(rows[4]).toBe('💬 Added to cart');
+  });
+
+  it('AC-R2: field absent → block not rendered, existing sections unchanged', () => {
+    const container = document.createElement('div');
+    renderEvidence(container, makeEvidence()); // no resultingState
+
+    expect(container.textContent).not.toContain('Resulting State');
+    const appSection = container.querySelector('[data-evidence-scope="application"]')!;
+    // Only the pre-existing "No application-level changes detected" empty row
+    const bodyRows = appSection.querySelectorAll('.evidence-section__body .evidence-row');
+    expect(bodyRows.length).toBe(1);
+    expect(bodyRows[0].textContent).toContain('No application-level changes detected');
+  });
+
+  it('AC-R3: empty items array (defensive) → nothing rendered', () => {
+    const container = document.createElement('div');
+    renderEvidence(container, makeEvidence({
+      applicationEvidence: makeAppEvidence({ resultingState: makeSnapshotWire({ items: [] }) }),
+    }));
+
+    expect(container.textContent).not.toContain('Resulting State');
+  });
+
+  it('AC-R4: kind above display cap → muted … N more row', () => {
+    const container = document.createElement('div');
+    renderEvidence(container, makeEvidence({
+      applicationEvidence: makeAppEvidence({
+        resultingState: makeSnapshotWire({
+          items: [
+            makeItem({ kind: 'entity', entityId: 'B0VAL1', entityType: 'product', domPath: 'LI[data-asin=B0VAL1]' }),
+            makeItem({ kind: 'entity', entityId: 'B0VAL2', entityType: 'product', domPath: 'LI[data-asin=B0VAL2]' }),
+            makeItem({ kind: 'entity', entityId: 'B0VAL3', entityType: 'product', domPath: 'LI[data-asin=B0VAL3]' }),
+            makeItem({ kind: 'entity', entityId: 'B0VAL4', entityType: 'product', domPath: 'LI[data-asin=B0VAL4]' }),
+            makeItem({ kind: 'entity', entityId: 'B0VAL5', entityType: 'product', domPath: 'LI[data-asin=B0VAL5]' }),
+            makeItem({ kind: 'entity', entityId: 'B0VAL6', entityType: 'product', domPath: 'LI[data-asin=B0VAL6]' }),
+            makeItem({ kind: 'entity', entityId: 'B0VAL7', entityType: 'product', domPath: 'LI[data-asin=B0VAL7]' }),
+          ],
+        }),
+      }),
+    }));
+
+    const appSection = container.querySelector('[data-evidence-scope="application"]')!;
+    const entityRows = Array.from(appSection.querySelectorAll('.evidence-row'))
+      .filter((el) => el.textContent?.startsWith('🏷'));
+    expect(entityRows.length).toBe(6); // cap
+    const more = Array.from(appSection.querySelectorAll('.evidence-row--muted'))
+      .find((el) => el.textContent?.startsWith('…'));
+    expect(more?.textContent).toBe('… 1 more'); // 7 - 6
+    expect(appSection.textContent).not.toContain('B0VAL7'); // capped item not shown
+  });
+
+  it('AC-R5: capture-time overflow shown in header', () => {
+    const container = document.createElement('div');
+    renderEvidence(container, makeEvidence({
+      applicationEvidence: makeAppEvidence({
+        resultingState: makeSnapshotWire({ itemsOverflow: 4 }),
+      }),
+    }));
+
+    const header = Array.from(container.querySelectorAll('.evidence-subheader'))
+      .find((el) => el.textContent?.includes('Resulting State'))!;
+    expect(header.textContent).toContain('(1 observed · +4 dropped at capture)');
+  });
+
+  it('AC-R6: synthetic nav evidence shows destination snapshot alongside nav sections', () => {
+    const container = document.createElement('div');
+    renderEvidence(container, makeEvidence({
+      window: { openedAt: 100, closedAt: 900, durationMs: 800, endReason: 'page-reload-synthetic', stabilityTrace: [] },
+      applicationEvidence: makeAppEvidence({
+        navigation: [{
+          type: 'full-reload',
+          fromUrl: 'https://shop.example/checkout',
+          toUrl: 'https://shop.example/confirmation',
+          relativeTime: 10,
+          batchIndex: 0,
+        }],
+        resultingState: makeSnapshotWire({
+          url: 'https://shop.example/confirmation',
+          items: [makeItem({ kind: 'entity', entityId: '12345', entityType: 'order', domPath: 'DIV[data-order-id=12345]' })],
+        }),
+      }),
+    }));
+
+    // Synthetic notice, Navigation section, AND Resulting State all present
+    expect(container.textContent).toContain('📋 Navigation evidence (page reloaded — synthetic)');
+    expect(container.textContent).toContain('full-reload: https://shop.example/checkout');
+    expect(container.textContent).toContain('📸 Resulting State');
+    const meta = Array.from(container.querySelectorAll('.evidence-row--muted'))
+      .find((el) => el.textContent?.startsWith('scanned:'));
+    expect(meta?.textContent).toContain('https://shop.example/confirmation');
+  });
+
+  it('AC-R7: 200-char item text is truncated', () => {
+    const longText = 'x'.repeat(200);
+    const container = document.createElement('div');
+    renderEvidence(container, makeEvidence({
+      applicationEvidence: makeAppEvidence({
+        resultingState: makeSnapshotWire({
+          items: [makeItem({ kind: 'notification', text: longText })],
+        }),
+      }),
+    }));
+
+    const rows = container.querySelectorAll('.evidence-row');
+    const notif = Array.from(rows).find((r) => r.textContent?.startsWith('💬'));
+    // 💬 (2 UTF-16 units) + space + 60 truncated chars + 1-char ellipsis
+    expect(notif?.textContent?.length).toBeLessThanOrEqual(2 + 1 + 60 + 1);
+  });
+
+  it('AC-R8: entity-title items are never rendered', () => {
+    const container = document.createElement('div');
+    renderEvidence(container, makeEvidence({
+      applicationEvidence: makeAppEvidence({
+        resultingState: makeSnapshotWire({
+          items: [
+            makeItem({ kind: 'entity-title', text: 'Widget title', domPath: 'H2' }),
+            makeItem({ kind: 'entity', entityId: 'B0VAL1', entityType: 'product', domPath: 'LI[data-asin=B0VAL1]' }),
+          ],
+        }),
+      }),
+    }));
+
+    expect(container.textContent).toContain('🏷 product:B0VAL1');
+    expect(container.textContent).not.toContain('Widget title');
+  });
+
+  it('AC-R9: late-arriving evidence replace path renders the block', () => {
+    const interactionEl = document.createElement('div');
+    updateEvidenceOnInteraction(interactionEl, makeEvidence()); // no snapshot
+    expect(interactionEl.textContent).not.toContain('Resulting State');
+
+    updateEvidenceOnInteraction(interactionEl, makeEvidence({
+      applicationEvidence: makeAppEvidence({
+        resultingState: makeSnapshotWire(),
+      }),
+    }));
+    expect(interactionEl.textContent).toContain('📸 Resulting State');
+    expect(interactionEl.textContent).toContain('🔢 counter: 4');
   });
 });

@@ -10,6 +10,8 @@
  *     - Focus movement
  *
  *   🌐 Application Evidence
+ *     - Resulting state (semantic snapshot: counters, collections,
+ *       entities, status badges, notifications) — Phase 4a
  *     - DOM changes (summarized, collapsible, max 10 shown)
  *     - New/removed surfaces (dialogs, menus, overlays)
  *     - Visibility changes
@@ -38,6 +40,10 @@ import type {
   PerformanceCondition,
 } from '../shared/behavioral-evidence-types';
 import type { ElementIdentity } from '../shared/types';
+import type {
+  WirePageContentSnapshot,
+  WireObservedItem,
+} from '../shared/page-content-wire';
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -52,6 +58,15 @@ const MAX_SURFACES_DISPLAY = 5;
 
 /** Max visibility entries to show inline. */
 const MAX_VISIBILITY_DISPLAY = 10;
+
+// Phase 4a — Resulting State display bounds (per-kind; INV-CS4 stays a
+// capture-layer invariant — these are display-side caps only, same pattern
+// as MAX_DOM_CHANGES_DISPLAY etc.).
+const MAX_RESULTING_COUNTERS = 5;
+const MAX_RESULTING_COLLECTIONS = 3;
+const MAX_RESULTING_ENTITIES = 6;
+const MAX_RESULTING_STATUS_BADGES = 3;
+const MAX_RESULTING_NOTIFICATIONS = 3;
 
 // ── Utility ──────────────────────────────────────────────────────────
 
@@ -528,6 +543,100 @@ function renderPerformanceCondition(perf: PerformanceCondition | null): HTMLElem
 }
 
 /**
+ * Phase 4a — Render the resulting-state snapshot (semantic page content at
+ * consequence settlement / destination stabilization).
+ *
+ * Display-only read of applicationEvidence.resultingState (Phase 1 wire
+ * shape). Grouped by item kind in a fixed order (how many → what →
+ * feedback): counters, collections, entities, status badges, notifications.
+ *
+ * - Field absent or no items → returns null → NO DOM added: old recordings
+ *   and no-consequence actions render exactly as before (the observer emits
+ *   null for empty scans, so absent-not-empty is the real production shape).
+ * - entity-title items are NOT rendered — they are provenance carriers
+ *   (title text for an entity row), redundant in this display.
+ * - Entity attributes are not rendered in 4a (single-line rows).
+ * - scannedAt is NOT displayed — it is a performance.now()-domain value
+ *   (document-local); a raw number would be misleading to users.
+ * - INV-BEHAV-1: observed-state display only, no causal language.
+ * - INV-CS1: whatever snapshot THIS interaction's own evidence carries is
+ *   rendered — Click and Navigation snapshots never merge here.
+ */
+function renderResultingState(
+  rs: WirePageContentSnapshot | null | undefined,
+): HTMLElement | null {
+  const safeItems = rs?.items ?? [];
+  if (!rs || safeItems.length === 0) return null;
+
+  const container = document.createElement('div');
+
+  // Header — honest capture-level count + capture-time overflow indicator
+  const header = document.createElement('div');
+  header.className = 'evidence-subheader';
+  const overflowText = rs.itemsOverflow > 0 ? ` · +${rs.itemsOverflow} dropped at capture` : '';
+  header.textContent = `📸 Resulting State (${safeItems.length} observed${overflowText})`;
+  container.appendChild(header);
+
+  // Meta — provenance line. For Navigation cards this is the destination
+  // URL; for Click cards the action page. Not a timestamp (see docblock).
+  const meta = document.createElement('div');
+  meta.className = 'evidence-row evidence-row--muted';
+  const durText = rs.scanDurationMs != null ? `${Math.round(rs.scanDurationMs)}ms` : '';
+  meta.textContent = `scanned: ${truncate(rs.url, 60)}${durText ? ` · ${durText}` : ''}`;
+  container.appendChild(meta);
+
+  const counters = safeItems.filter((i) => i.kind === 'counter');
+  const collections = safeItems.filter((i) => i.kind === 'collection');
+  const entities = safeItems.filter((i) => i.kind === 'entity');
+  const badges = safeItems.filter((i) => i.kind === 'status-badge');
+  const notifications = safeItems.filter((i) => i.kind === 'notification');
+
+  const renderGroup = (items: WireObservedItem[], cap: number, rowText: (i: WireObservedItem) => string): void => {
+    if (items.length === 0) return;
+    for (const item of items.slice(0, cap)) {
+      const row = document.createElement('div');
+      row.className = 'evidence-row';
+      row.textContent = rowText(item);
+      container.appendChild(row);
+    }
+    if (items.length > cap) {
+      const more = document.createElement('div');
+      more.className = 'evidence-row evidence-row--muted';
+      more.textContent = `… ${items.length - cap} more`;
+      container.appendChild(more);
+    }
+  };
+
+  renderGroup(counters, MAX_RESULTING_COUNTERS, (item) => {
+    const value = item.numericValue != null ? `${item.numericValue}` : truncate(item.text, 30);
+    return `🔢 counter: ${value} (${truncate(item.domPath, 40)})`;
+  });
+
+  renderGroup(collections, MAX_RESULTING_COLLECTIONS, (item) => {
+    const count = item.numericValue != null ? `${item.numericValue}` : '—';
+    return `📦 collection: ${count} items (${truncate(item.domPath, 40)})`;
+  });
+
+  renderGroup(entities, MAX_RESULTING_ENTITIES, (item) => {
+    const ident = item.entityId != null
+      ? `${item.entityType ?? 'entity'}:${item.entityId}`
+      : truncate(item.text, 30);
+    const textPart = item.text ? ` · ${truncate(item.text, 30)}` : '';
+    return `🏷 ${ident}${textPart}`;
+  });
+
+  renderGroup(badges, MAX_RESULTING_STATUS_BADGES, (item) => {
+    return `🚦 ${truncate(item.text, 40)}`;
+  });
+
+  renderGroup(notifications, MAX_RESULTING_NOTIFICATIONS, (item) => {
+    return `💬 ${truncate(item.text, 60)}`;
+  });
+
+  return container;
+}
+
+/**
  * Render the full Application Evidence section.
  */
 function renderApplicationEvidence(app: ApplicationEvidence | null | undefined): HTMLElement {
@@ -564,6 +673,12 @@ function renderApplicationEvidence(app: ApplicationEvidence | null | undefined):
     });
     return section;
   }
+
+  // Phase 4a — Resulting State (semantic snapshot). First sub-block: it is
+  // the headline semantic answer ("cart = 4"); the blocks below are
+  // lower-level detail. Absent field → null → nothing rendered.
+  const rsEl = renderResultingState(app.resultingState);
+  if (rsEl) body.appendChild(rsEl);
 
   // DOM changes
   const domEl = renderDomChanges(app.domChanges, app.domChangeOverflow ?? 0, app.coarseMode ?? false);
