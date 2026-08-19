@@ -305,6 +305,21 @@ export class DOMObserver {
   private prevComputedStyles = new WeakMap<Element, { display: string; visibility: string; opacity: string }>();
 
   /**
+   * Surface-detection generification: element-identity dedup for surface
+   * records. First discovery wins per ELEMENT for the accumulation
+   * lifetime — siblings with identical paths remain distinct records.
+   * Recreated (not cleared) in clearAccumulated(): WeakSet has no clear().
+   */
+  private recordedSurfaceElements = new WeakSet<Element>();
+
+  /**
+   * Surface-detection generification: remaining descendant-scan budget for
+   * the current MutationObserver callback (reset per batch in onMutations).
+   * Bounds the cost of 5a on pathological batches.
+   */
+  private descendantScanBudget = 0;
+
+  /**
    * Start observing. Increments refcount. Creates the MutationObserver
    * on first call. Returns the reference time (performance.now() at observation start).
    *
@@ -399,6 +414,7 @@ export class DOMObserver {
     this.accumulated.clear();
     this.surfaceChanges = [];
     this.visibilityChanges = [];
+    this.recordedSurfaceElements = new WeakSet<Element>();
   }
 
   /**
@@ -504,6 +520,7 @@ export class DOMObserver {
     const batchStart = now;
 
     this.totalBatches++;
+    this.descendantScanBudget = MAX_DESCENDANT_SCANS_PER_BATCH;
 
     // Process each record
     for (const record of records) {
@@ -644,6 +661,20 @@ export class DOMObserver {
    * Detect surface changes from childList mutations.
    * A "surface" is a significant element added or removed (dialog, menu, panel,
    * tooltip, etc.) — identified by role or tag.
+   *
+   * Surface-detection generification (spec surface-detection-generification.md):
+   *  - 5a: every added/removed subtree gets ONE bounded
+   *    querySelector(SURFACE_SELECTOR) — finds wrapper-added dialogs (the
+   *    most common real-world insertion shape) AND nested significant
+   *    descendants (dialog-in-dialog). Budgeted at
+   *    MAX_DESCENDANT_SCANS_PER_BATCH per MutationObserver callback.
+   *  - Directly-significant nodes record the legacy shape (no emergence
+   *    field); descendant discoveries record emergence:'inserted'.
+   *  - All surface records (direct, descendant, revealed) go through
+   *    recordSurface(), which dedups by ELEMENT identity (WeakSet) for the
+   *    accumulation lifetime — wrapper+descendant and insert+reveal
+   *    discoveries yield exactly one record per element, while sibling
+   *    elements with identical paths remain distinct.
    */
   private detectSurfaceChanges(
     record: MutationRecord,
@@ -656,17 +687,18 @@ export class DOMObserver {
     for (const node of record.addedNodes) {
       if (!(node instanceof Element)) continue;
       if (this.isSignificantSurface(node)) {
-        this.surfaceChanges.push({
-          path: getElementPath(node, shadowContext),
-          tagName: node.tagName.toLowerCase(),
-          ariaRole: node.getAttribute('role'),
-          accessibleName: getAccessibleName(node),
-          shadowContext,
-          descendantCount: node.childElementCount,
-          relativeTime: now - this.referenceTime,
-          batchIndex,
-          kind: 'added',
-        });
+        // Direct discovery keeps the legacy record shape (no emergence field)
+        this.recordSurface(node, 'added', null, batchIndex, now, shadowContext);
+      }
+      // 5a: bounded descendant scan — applies to EVERY added subtree
+      // (significant or not) so nested significant surfaces (dialog in
+      // dialog) are also recorded. First match wins; budget-bounded.
+      if (this.descendantScanBudget > 0) {
+        this.descendantScanBudget--;
+        const matched = querySurfaceDescendant(node);
+        if (matched) {
+          this.recordSurface(matched, 'added', 'inserted', batchIndex, now, shadowContext);
+        }
       }
       // P0-2 Fix: Seed computed styles for newly added elements so
       // the first class/style change on them has a baseline.
@@ -677,19 +709,126 @@ export class DOMObserver {
     for (const node of record.removedNodes) {
       if (!(node instanceof Element)) continue;
       if (this.isSignificantSurface(node)) {
-        this.surfaceChanges.push({
-          path: getElementPath(node, shadowContext),
-          tagName: node.tagName.toLowerCase(),
-          ariaRole: node.getAttribute('role'),
-          accessibleName: getAccessibleName(node),
-          shadowContext,
-          descendantCount: 0,
-          relativeTime: now - this.referenceTime,
-          batchIndex,
-          kind: 'removed',
-        });
+        this.recordSurface(node, 'removed', null, batchIndex, now, shadowContext);
+      }
+      if (this.descendantScanBudget > 0) {
+        this.descendantScanBudget--;
+        const matched = querySurfaceDescendant(node);
+        if (matched) {
+          this.recordSurface(matched, 'removed', 'inserted', batchIndex, now, shadowContext);
+        }
       }
     }
+  }
+
+  /**
+   * Push a SurfaceChange with element-identity dedup. First discovery wins
+   * per element for the accumulation lifetime (WeakSet recreated in
+   * clearAccumulated()).
+   * `emergence` records how the surface came to be observed:
+   *  - 'inserted' — a new DOM node (direct or descendant discovery)
+   *  - 'revealed' — a pre-existing node became visible (5b)
+   * Omitted for the legacy direct-insertion shape (backward compatible).
+   */
+  private recordSurface(
+    el: Element,
+    kind: 'added' | 'removed',
+    emergence: 'inserted' | 'revealed' | null,
+    batchIndex: number,
+    now: number,
+    shadowContext: string | null,
+  ): boolean {
+    if (this.recordedSurfaceElements.has(el)) return false;
+    this.recordedSurfaceElements.add(el);
+    const path = getElementPath(el, shadowContext);
+    this.surfaceChanges.push({
+      path,
+      tagName: el.tagName.toLowerCase(),
+      ariaRole: el.getAttribute('role'),
+      accessibleName: getAccessibleName(el),
+      shadowContext,
+      descendantCount: kind === 'added' ? el.childElementCount : 0,
+      relativeTime: now - this.referenceTime,
+      batchIndex,
+      kind,
+      ...(emergence ? { emergence } : {}),
+    });
+    return true;
+  }
+
+  /**
+   * 5b: surface-on-reveal. Called from the three visibility detectors after
+   * their visibilityChanges.push. Emits a SurfaceChange ONLY when the
+   * transition is a reveal AND the element already satisfies the existing
+   * surface-role/tag definition (isSignificantSurface). No new roles, no
+   * heuristics — role=region intentionally NOT included (deferred product
+   * decision, spec §15).
+   *
+   * Reveal conditions per property:
+   *  - display:     old none/'' (unrendered) → new rendered value
+   *  - visibility:  hidden/collapse → visible
+   *  - opacity:     0 → non-zero
+   *  - hidden:      any value → removed/null (un-hidden)
+   *  - aria-hidden: 'true' → 'false'/removed
+   */
+  private maybeRecordRevealedSurface(
+    el: Element,
+    prop: 'display' | 'visibility' | 'opacity' | 'hidden' | 'aria-hidden',
+    oldValue: string | null,
+    newValue: string | null,
+    batchIndex: number,
+    now: number,
+    shadowContext: string | null,
+  ): void {
+    if (!this.isSignificantSurface(el)) return;
+
+    let isReveal = false;
+    switch (prop) {
+      case 'display': {
+        // Inline-style path: when the property was absent from the old inline
+        // style (null/''), the element may still have been hidden by CSS.
+        // Fall back to the seeded computed-style baseline as the effective
+        // old value (spec §6 "computed path") so CSS-hidden → inline-shown
+        // reveals (the real Amazon shape) are recognized.
+        let effOld = oldValue;
+        if (effOld === null || effOld === '') {
+          const cached = this.prevComputedStyles.get(el);
+          if (cached) effOld = cached.display;
+        }
+        isReveal = (effOld === 'none' || effOld === null || effOld === '')
+          && newValue !== null && newValue !== 'none' && newValue !== '';
+        break;
+      }
+      case 'visibility': {
+        let effOld = oldValue;
+        if (effOld === null || effOld === '') {
+          const cached = this.prevComputedStyles.get(el);
+          if (cached) effOld = cached.visibility;
+        }
+        isReveal = (effOld === 'hidden' || effOld === 'collapse') && newValue === 'visible';
+        break;
+      }
+      case 'opacity': {
+        let effOld = oldValue;
+        if (effOld === null || effOld === '') {
+          const cached = this.prevComputedStyles.get(el);
+          if (cached) effOld = cached.opacity;
+        }
+        isReveal = effOld === '0' && newValue !== null && newValue !== '0';
+        break;
+      }
+      case 'hidden':
+        // hidden attribute removed → element un-hidden
+        isReveal = newValue === null && oldValue !== null;
+        break;
+      case 'aria-hidden':
+        isReveal = oldValue === 'true' && (newValue === 'false' || newValue === null);
+        break;
+    }
+
+    if (!isReveal) return;
+
+    this.recordSurface(el, 'added', 'revealed', batchIndex, now, shadowContext);
   }
 
   /**
@@ -731,6 +870,17 @@ export class DOMObserver {
       relativeTime: now - this.referenceTime,
       batchIndex,
     });
+
+    // 5b: surface-on-reveal for recognized surfaces (hidden/aria-hidden path)
+    this.maybeRecordRevealedSurface(
+      el,
+      attrName === 'aria-hidden' ? 'aria-hidden' : 'hidden',
+      oldValue,
+      newValue,
+      batchIndex,
+      now,
+      shadowContext,
+    );
   }
 
   /**
@@ -768,6 +918,9 @@ export class DOMObserver {
           relativeTime: now - this.referenceTime,
           batchIndex,
         });
+
+        // 5b: surface-on-reveal for recognized surfaces (inline style path)
+        this.maybeRecordRevealedSurface(el, prop, oldVal, newVal, batchIndex, now, shadowContext);
       }
     }
   }
@@ -872,6 +1025,8 @@ export class DOMObserver {
           relativeTime: now - this.referenceTime,
           batchIndex,
         });
+        // 5b: surface-on-reveal (class-computed display path)
+        this.maybeRecordRevealedSurface(el, 'display', cached.display, currentDisplay, batchIndex, now, shadowContext);
       }
       if (cached.visibility !== currentVisibility) {
         this.visibilityChanges.push({
@@ -882,6 +1037,8 @@ export class DOMObserver {
           relativeTime: now - this.referenceTime,
           batchIndex,
         });
+        // 5b: surface-on-reveal (class-computed visibility path)
+        this.maybeRecordRevealedSurface(el, 'visibility', cached.visibility, currentVisibility, batchIndex, now, shadowContext);
       }
       if (cached.opacity !== currentOpacity) {
         this.visibilityChanges.push({
@@ -892,6 +1049,8 @@ export class DOMObserver {
           relativeTime: now - this.referenceTime,
           batchIndex,
         });
+        // 5b: surface-on-reveal (class-computed opacity path)
+        this.maybeRecordRevealedSurface(el, 'opacity', cached.opacity, currentOpacity, batchIndex, now, shadowContext);
       }
     }
 
@@ -953,3 +1112,34 @@ const SURFACE_ROLES = new Set([
 const SURFACE_TAGS = new Set([
   'dialog', 'details', 'summary',
 ]);
+
+/**
+ * Surface-detection generification (5a): selector matching the existing
+ * SURFACE_ROLES/SURFACE_TAGS — the sets remain the single source of truth;
+ * this selector is derived from them mechanically.
+ */
+const SURFACE_SELECTOR = [
+  ...Array.from(SURFACE_ROLES, (role) => `[role="${role}"]`),
+  ...Array.from(SURFACE_TAGS, (tag) => tag),
+].join(',');
+
+/**
+ * Surface-detection generification (5a): hard cap on descendant scans per
+ * MutationObserver callback. Bounds worst-case cost when a batch adds many
+ * non-significant wrapper subtrees.
+ */
+const MAX_DESCENDANT_SCANS_PER_BATCH = 32;
+
+/**
+ * 5a: run ONE querySelector over the (possibly detached) subtree and return
+ * the first element matching the surface selector. Returns null when the
+ * subtree contains no recognized surface.
+ */
+function querySurfaceDescendant(root: Element): Element | null {
+  try {
+    return root.querySelector(SURFACE_SELECTOR);
+  } catch {
+    // querySelector on a detached/odd subtree can throw in edge cases — degrade silently
+    return null;
+  }
+}

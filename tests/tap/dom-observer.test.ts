@@ -497,4 +497,297 @@ describe('DOMObserver', () => {
       expect(target.rawMutationCount).toBeGreaterThanOrEqual(3);
     }
   });
+
+  // ── SD: Surface Detection Generification (spec surface-detection-generification.md) ──
+
+  it('SD1: directly added role=dialog records one surface (regression)', async () => {
+    observer.start();
+
+    const dialog = document.createElement('div');
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-label', 'Direct');
+    document.body.appendChild(dialog);
+
+    await flushMutations();
+    observer.stop();
+
+    const surfaces = observer.getSurfaceChanges();
+    expect(surfaces.filter((s) => s.ariaRole === 'dialog')).toHaveLength(1);
+    expect(surfaces[0].kind).toBe('added');
+    // Spec §7: legacy direct-insertion shape records no emergence field
+    expect(surfaces[0].emergence).toBeUndefined();
+  });
+
+  it('SD2: wrapper containing descendant role=dialog records the descendant surface', async () => {
+    observer.start();
+
+    const wrapper = document.createElement('div');
+    wrapper.id = 'wrap';
+    const inner = document.createElement('div');
+    inner.setAttribute('role', 'dialog');
+    inner.setAttribute('aria-label', 'Nested');
+    inner.appendChild(document.createElement('p'));
+    wrapper.appendChild(inner);
+    document.body.appendChild(wrapper);
+
+    await flushMutations();
+    observer.stop();
+
+    const surfaces = observer.getSurfaceChanges();
+    expect(surfaces).toHaveLength(1);
+    expect(surfaces[0].ariaRole).toBe('dialog');
+    expect(surfaces[0].accessibleName).toBe('Nested');
+    expect(surfaces[0].path).toContain('#wrap');
+    expect(surfaces[0].emergence).toBe('inserted');
+  });
+
+  it('SD3: wrapper containing surface-tag descendant records it (dialog/details/summary)', async () => {
+    observer.start();
+
+    const wrapper = document.createElement('div');
+    wrapper.id = 'wrap3';
+    const dlg = document.createElement('dialog');
+    dlg.appendChild(document.createTextNode('Native'));
+    wrapper.appendChild(dlg);
+    document.body.appendChild(wrapper);
+
+    await flushMutations();
+    observer.stop();
+
+    const surfaces = observer.getSurfaceChanges();
+    expect(surfaces).toHaveLength(1);
+    expect(surfaces[0].tagName).toBe('dialog');
+    expect(surfaces[0].emergence).toBe('inserted');
+  });
+
+  it('SD4: hidden role=dialog revealed via display:none → block records revealed surface', async () => {
+    const dialog = document.createElement('div');
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-label', 'Reveal me');
+    dialog.setAttribute('style', 'display:none');
+    dialog.id = 'reveal-dialog';
+    document.body.appendChild(dialog);
+
+    observer.start();
+
+    dialog.setAttribute('style', 'display:block');
+
+    await flushMutations();
+    observer.stop();
+
+    const vis = observer.getVisibilityChanges().filter((v) => v.path.includes('#reveal-dialog'));
+    const surfaces = observer.getSurfaceChanges();
+    expect(vis.length).toBeGreaterThanOrEqual(1);
+    expect(vis[0].property).toBe('display');
+    expect(surfaces.filter((s) => s.ariaRole === 'dialog')).toHaveLength(1);
+    expect(surfaces[0].emergence).toBe('revealed');
+    expect(surfaces[0].kind).toBe('added');
+  });
+
+  it('SD5: aria-hidden=true → false on role=alert records revealed surface', async () => {
+    const alert = document.createElement('div');
+    alert.setAttribute('role', 'alert');
+    alert.setAttribute('aria-hidden', 'true');
+    alert.id = 'reveal-alert';
+    document.body.appendChild(alert);
+
+    observer.start();
+
+    alert.setAttribute('aria-hidden', 'false');
+
+    await flushMutations();
+    observer.stop();
+
+    const vis = observer.getVisibilityChanges();
+    const surfaces = observer.getSurfaceChanges();
+    expect(vis.some((v) => v.path.includes('#reveal-alert') && v.oldValue === 'true' && v.newValue === 'false')).toBe(true);
+    expect(surfaces.filter((s) => s.ariaRole === 'alert')).toHaveLength(1);
+    expect(surfaces[0].emergence).toBe('revealed');
+  });
+
+  it('SD6: class reveal on role=menu (computed display none → block) records revealed surface', async () => {
+    const style = document.createElement('style');
+    style.textContent = '.hidden-menu { display: none; }';
+    document.head.appendChild(style);
+
+    const menu = document.createElement('div');
+    menu.setAttribute('role', 'menu');
+    menu.className = 'hidden-menu';
+    menu.id = 'reveal-menu';
+    document.body.appendChild(menu);
+
+    observer.start(); // seeds prevComputedStyles (display:none baseline)
+
+    menu.className = ''; // computed display becomes block
+
+    await flushMutations();
+    observer.stop();
+
+    const vis = observer.getVisibilityChanges().filter((v) => v.path.includes('#reveal-menu'));
+    const surfaces = observer.getSurfaceChanges();
+    expect(vis.length).toBeGreaterThanOrEqual(1);
+    expect(vis.some((v) => v.property === 'display' && v.oldValue === 'none')).toBe(true);
+    expect(surfaces.filter((s) => s.ariaRole === 'menu')).toHaveLength(1);
+    expect(surfaces[0].emergence).toBe('revealed');
+  });
+
+  it('SD7a: nested dialogs (outer + inner) record two distinct surfaces', async () => {
+    observer.start();
+
+    const outer = document.createElement('div');
+    outer.setAttribute('role', 'dialog');
+    outer.setAttribute('aria-label', 'Outer');
+    outer.id = 'outer-dlg';
+    const inner = document.createElement('div');
+    inner.setAttribute('role', 'dialog');
+    inner.setAttribute('aria-label', 'Inner');
+    inner.id = 'inner-dlg';
+    outer.appendChild(inner);
+    document.body.appendChild(outer);
+
+    await flushMutations();
+    observer.stop();
+
+    const surfaces = observer.getSurfaceChanges();
+    expect(surfaces).toHaveLength(2);
+    expect(new Set(surfaces.map((s) => s.path)).size).toBe(2);
+  });
+
+  it('SD7b: insert + reveal of same element in one window records exactly one surface (inserted)', async () => {
+    observer.start();
+
+    const dialog = document.createElement('div');
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-label', 'Dup');
+    dialog.setAttribute('style', 'display:none');
+    document.body.appendChild(dialog);
+
+    await flushMutations();
+    dialog.setAttribute('style', 'display:block');
+    await flushMutations();
+    observer.stop();
+
+    const surfaces = observer.getSurfaceChanges();
+    expect(surfaces).toHaveLength(1);
+    // First discovery wins: direct insertion records the legacy shape
+    // (no emergence field); the later reveal is deduped by element identity
+    expect(surfaces[0].emergence).toBeUndefined();
+  });
+
+  it('SD8: descendant-scan budget bounds scans per batch; clearAccumulated resets dedup', async () => {
+    observer.start();
+
+    const fragment = document.createDocumentFragment();
+    for (let i = 0; i < 100; i++) {
+      const wrapper = document.createElement('div');
+      const inner = document.createElement('div');
+      inner.setAttribute('role', 'dialog');
+      inner.setAttribute('aria-label', 'D' + i);
+      wrapper.appendChild(inner);
+      fragment.appendChild(wrapper);
+    }
+    // Single append of the fragment (one childList batch on body)
+    document.body.appendChild(fragment);
+
+    await flushMutations();
+    observer.stop();
+
+    const surfaces = observer.getSurfaceChanges();
+    // Budget is 32 scans per batch → at most 32 descendant-discovered surfaces
+    expect(surfaces.length).toBeLessThanOrEqual(32);
+    expect(surfaces.length).toBeGreaterThan(0);
+
+    // clearAccumulated() resets the dedup set — re-adding records again
+    observer.clearAccumulated();
+    observer.start();
+    const w2 = document.createElement('div');
+    const d2 = document.createElement('div');
+    d2.setAttribute('role', 'dialog');
+    d2.setAttribute('aria-label', 'Again');
+    w2.appendChild(d2);
+    document.body.appendChild(w2);
+    await flushMutations();
+    observer.stop();
+    expect(observer.getSurfaceChanges()).toHaveLength(1);
+  });
+
+  it('SD9: removing a wrapper containing role=dialog records descendant removed surface', async () => {
+    const wrapper = document.createElement('div');
+    wrapper.id = 'removewrap';
+    const inner = document.createElement('div');
+    inner.setAttribute('role', 'dialog');
+    inner.setAttribute('aria-label', 'Bye');
+    wrapper.appendChild(inner);
+    document.body.appendChild(wrapper);
+
+    observer.start();
+
+    document.body.removeChild(wrapper);
+
+    await flushMutations();
+    observer.stop();
+
+    const surfaces = observer.getSurfaceChanges();
+    expect(surfaces).toHaveLength(1);
+    expect(surfaces[0].kind).toBe('removed');
+    expect(surfaces[0].ariaRole).toBe('dialog');
+  });
+
+  it('SD10: reveal of role=region produces visibility row only, no surface record', async () => {
+    const region = document.createElement('div');
+    region.setAttribute('role', 'region');
+    region.setAttribute('aria-hidden', 'true');
+    region.id = 'reveal-region';
+    document.body.appendChild(region);
+
+    observer.start();
+
+    region.setAttribute('aria-hidden', 'false');
+
+    await flushMutations();
+    observer.stop();
+
+    expect(observer.getSurfaceChanges()).toHaveLength(0);
+    expect(observer.getVisibilityChanges().some((v) => v.path.includes('#reveal-region'))).toBe(true);
+  });
+
+  it('SD12: CSS-hidden role=dialog revealed via inline style (no old inline value) records revealed surface', async () => {
+    const style = document.createElement('style');
+    style.textContent = '.css-hidden { display: none; }';
+    document.head.appendChild(style);
+
+    const dialog = document.createElement('div');
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-label', 'Css hidden');
+    dialog.className = 'css-hidden';
+    document.body.appendChild(dialog);
+
+    observer.start(); // seeds computed baseline (display:none via CSS)
+
+    dialog.setAttribute('style', 'display:block'); // inline reveal, old inline value absent
+
+    await flushMutations();
+    observer.stop();
+
+    const surfaces = observer.getSurfaceChanges();
+    expect(surfaces.filter((s) => s.ariaRole === 'dialog')).toHaveLength(1);
+    expect(surfaces[0].emergence).toBe('revealed');
+  });
+
+  it('SD11: hide transitions produce no surface records', async () => {
+    const dialog = document.createElement('div');
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('style', 'display:block');
+    document.body.appendChild(dialog);
+
+    observer.start();
+
+    dialog.setAttribute('style', 'display:none');
+
+    await flushMutations();
+    observer.stop();
+
+    expect(observer.getSurfaceChanges()).toHaveLength(0);
+    expect(observer.getVisibilityChanges().some((v) => v.property === 'display')).toBe(true);
+  });
 });

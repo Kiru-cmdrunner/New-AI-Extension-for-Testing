@@ -319,6 +319,14 @@ export interface SurfaceChange {
    * 'removed' — element disappeared during the observation window.
    */
   kind: 'added' | 'removed';
+  /**
+   * How the surface emerged (surface-detection generification).
+   * 'inserted' — a new DOM node carrying the surface identity appeared.
+   * 'revealed' — a pre-existing node became visible (hidden → shown).
+   * Optional for backward compatibility: legacy/omitted records are
+   * semantically 'inserted'.
+   */
+  emergence?: 'inserted' | 'revealed';
 }
 
 /**

@@ -394,6 +394,7 @@ function renderSurfaces(
       `<${surface.tagName ?? 'unknown'}>`,
       surface.ariaRole ? `[role=${surface.ariaRole}]` : '',
       surface.accessibleName ? `"${truncate(surface.accessibleName, 40)}"` : '',
+      surface.emergence === 'revealed' ? '· revealed' : '',
     ].filter(Boolean);
     row.textContent = parts.join(' ');
     container.appendChild(row);
