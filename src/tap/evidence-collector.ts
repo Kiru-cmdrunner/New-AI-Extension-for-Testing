@@ -144,6 +144,15 @@ export function finalizeAtPagehide(
 /** Event types that use extend-on-input typing model. */
 const TYPING_EVENTS = new Set(['input']);
 
+/**
+ * A-Slice fix 1: companion window (ms). Events firing within this interval
+ * of an interaction's window open are companions of the SAME physical
+ * action (native form 'submit' after the submit-button 'click', 'change'
+ * during typing). Mirrors the 300ms companionSuppressUntil threshold used
+ * for companion window suppression.
+ */
+const COMPANION_WINDOW_MS = 300;
+
 /** Event types that are throttled. */
 const THROTTLED_EVENTS = new Set(['scroll']);
 
@@ -213,6 +222,16 @@ interface ObservationWindowState {
    * 10s cap; the closeWindow settle branch then delivers once.
    */
   settleMode: boolean;
+  /**
+   * A-Slice fix 1 (resulting-state consequence ownership): set when a NEWER
+   * interaction's window opens while this window is in settle mode. A
+   * superseded settling window must not claim later DOM consequences — the
+   * mutations that re-armed its quiescence belong to the newer interaction,
+   * and Hook A scans the LIVE DOM at close, which would photograph the newer
+   * interaction's consequence into this window's evidence (audit 1703e43:
+   * the fill step's resultingState carried the subsequent click's results).
+   */
+  settleSuperseded: boolean;
   /** Metadata captured at finalize for the settle-close enrichment. */
   settleMetadata: Record<string, unknown> | null;
   /**
@@ -519,6 +538,7 @@ export class EvidenceCollector {
       isLifecycleBound: false,
       settleMode: false,
       settleMetadata: null,
+      settleSuperseded: false,
       requestIdsAtOpen,
     };
 
@@ -530,6 +550,16 @@ export class EvidenceCollector {
     }
 
     this.activeWindows.push(state);
+
+    // A-Slice fix 1: a new interaction window supersedes any OPEN window
+    // already in settle mode — later DOM mutations (this new interaction's
+    // consequence) must not be claimed by the older settling window's
+    // settlement scan. The new window itself is excluded (not yet settling).
+    for (const w of this.activeWindows) {
+      if (w !== state && !w.isClosed && w.settleMode) {
+        w.settleSuperseded = true;
+      }
+    }
 
     // Arm the adaptive window (starts stabilization timer)
     adaptiveWindow.arm();
@@ -1445,6 +1475,10 @@ export class EvidenceCollector {
   private captureResultingState(state: ObservationWindowState): void {
     // At-most-once per window (double-close / re-entrant delivery guard).
     if (state.resultingStateScanned) return;
+    // A-Slice fix 1: a superseded settling window must not claim later DOM
+    // consequences — the mutations after a newer window opened belong to the
+    // newer interaction (settle scan would photograph them here otherwise).
+    if (state.settleSuperseded) return;
     state.resultingStateScanned = true;
     if (!this.pageContentObserver || !this.isRunning) return;
     try {
@@ -1471,6 +1505,34 @@ export class EvidenceCollector {
   ): void {
     if (win.isClosed) return;
     if (win.settleMode) return; // idempotent
+
+    // A-Slice fix 1 (symmetric half): settle entry is a LATE arrival for a
+    // lifecycle whose finalization raced a newer interaction — the SW's
+    // FINALIZE_EVIDENCE for the older interaction (e.g. a TextEntry
+    // finalized by blur) can arrive AFTER a newer interaction's window has
+    // already opened (the click event fires synchronously in the page while
+    // the finalize is still in the async SW round-trip). In that order the
+    // openWindow-side marking never ran: at click-open time this window was
+    // not yet settling. Any DOM mutations from here on belong to the newer
+    // interaction — the settle scan must not photograph them here.
+    //
+    // Claimant rule: only a DISTINCT later interaction disqualifies this
+    // window. Windows opened within the companion window (300ms, the same
+    // threshold as companionSuppressUntil) of this window's open are
+    // companions of the SAME physical action (e.g. the native form 'submit'
+    // firing ~0.4ms after the submit-button 'click') — they never own later
+    // consequences and must not suppress this window's scan. Companion
+    // windows are also excluded when themselves superseded (chain safety).
+    const newerLiveClaimant = this.activeWindows.some(
+      (w) =>
+        w !== win &&
+        !w.isClosed &&
+        !w.settleSuperseded &&
+        w.openedAt - win.openedAt >= COMPANION_WINDOW_MS,
+    );
+    if (newerLiveClaimant) {
+      win.settleSuperseded = true;
+    }
 
     win.settleMode = true;
     win.settleMetadata = { ...metadata };

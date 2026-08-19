@@ -93,6 +93,8 @@ export interface IRExecutorImplOptions {
   readonly sendTabMessage?: <T>(tabId: number, message: unknown) => Promise<T>;
   /** Function to get the current URL of a tab. */
   readonly getTabUrl?: (tabId: number) => Promise<string>;
+  /** Function to navigate an existing tab to a URL (IR navigate steps). */
+  readonly updateTabUrl?: (tabId: number, url: string) => Promise<void>;
   /** Function to close a tab. */
   readonly closeTab?: (tabId: number) => Promise<void>;
 }
@@ -121,6 +123,10 @@ async function defaultGetTabUrl(tabId: number): Promise<string> {
   return tab.url ?? '';
 }
 
+async function defaultUpdateTabUrl(tabId: number, url: string): Promise<void> {
+  await chrome.tabs.update(tabId, { url });
+}
+
 async function defaultCloseTab(tabId: number): Promise<void> {
   await chrome.tabs.remove(tabId);
 }
@@ -138,6 +144,7 @@ export class IRExecutorImpl implements IRExecutor {
   private readonly injectScript: (tabId: number) => Promise<void>;
   private readonly sendTabMessage: <T>(tabId: number, message: unknown) => Promise<T>;
   private readonly getTabUrl: (tabId: number) => Promise<string>;
+  private readonly updateTabUrl: (tabId: number, url: string) => Promise<void>;
   private readonly closeTab: (tabId: number) => Promise<void>;
 
   constructor(options?: IRExecutorImplOptions) {
@@ -145,6 +152,7 @@ export class IRExecutorImpl implements IRExecutor {
     this.injectScript = options?.injectScript ?? defaultInjectScript;
     this.sendTabMessage = options?.sendTabMessage ?? defaultSendTabMessage;
     this.getTabUrl = options?.getTabUrl ?? defaultGetTabUrl;
+    this.updateTabUrl = options?.updateTabUrl ?? defaultUpdateTabUrl;
     this.closeTab = options?.closeTab ?? defaultCloseTab;
   }
 
@@ -256,6 +264,59 @@ export class IRExecutorImpl implements IRExecutor {
     options?: IRExecutionOptions,
   ): Promise<IRStepResult> {
     const stepStartTime = performance.now();
+
+    // NAVIGATE steps are handled by the SERVICE WORKER (chrome.tabs.update):
+    // the content script's document is destroyed by the navigation, so an
+    // in-page action is impossible. Navigate, wait for the new document to
+    // load, and re-inject the executor content script — subsequent steps
+    // resolve elements and evaluate assertions on the NEW page.
+    // (Audit 1703e43: previously a silent no-op — the run stayed on the
+    // start URL and every destination-page element reported ElementNotFound.)
+    if (step.action === 'navigate' && step.target.kind === 'url' && step.target.url) {
+      try {
+        await this.updateTabUrl(tabId, step.target.url);
+        await this.waitForPageLoad(tabId);
+        await this.injectScript(tabId);
+
+        // Step-scoped assertions on a navigate step describe the DESTINATION
+        // page (e.g. "cart count shows 0 items" recorded post-navigation) —
+        // evaluate them here against the newly loaded document, using the
+        // same soft/hard severity semantics as the normal action path.
+        let assertionResults: IRAssertionResult[] = [];
+        if (step.assertions && step.assertions.length > 0) {
+          const currentUrl = await this.getTabUrl(tabId);
+          const evalResponse = await this.sendTabMessage<EvaluateAssertionsResponse>(tabId, {
+            type: 'EVALUATE_ASSERTIONS',
+            assertions: step.assertions,
+            url: currentUrl,
+          });
+          assertionResults = evalResponse?.results ?? [];
+        }
+        const hardAssertionFailed = assertionResults.some(
+          (a) => !a.passed && (a.severity === 'hard' || a.severity === undefined),
+        );
+        return {
+          stepId: step.id,
+          status: hardAssertionFailed ? 'failed' : 'passed',
+          durationMs: performance.now() - stepStartTime,
+          assertionResults,
+          error: hardAssertionFailed
+            ? { message: 'One or more assertions failed', type: 'AssertionFailure' }
+            : undefined,
+        };
+      } catch (e) {
+        return {
+          stepId: step.id,
+          status: 'error',
+          durationMs: performance.now() - stepStartTime,
+          assertionResults: [],
+          error: {
+            message: `Navigation to "${step.target.url}" failed: ${(e as Error).message}`,
+            type: 'NavigationError',
+          },
+        };
+      }
+    }
 
     // Resolve target
     if (step.target.kind === 'element') {

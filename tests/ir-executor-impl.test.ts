@@ -37,6 +37,7 @@ function createMockOptions(overrides: Partial<{
   injectScript: IRExecutorImplOptions['injectScript'];
   sendTabMessage: IRExecutorImplOptions['sendTabMessage'];
   getTabUrl: IRExecutorImplOptions['getTabUrl'];
+  updateTabUrl: IRExecutorImplOptions['updateTabUrl'];
   closeTab: IRExecutorImplOptions['closeTab'];
 }> = {}): IRExecutorImplOptions & {
   createTabMock: ReturnType<typeof vi.fn>;
@@ -48,6 +49,7 @@ function createMockOptions(overrides: Partial<{
   const injectScriptMock = vi.fn(overrides.injectScript ?? (async () => {}));
   const sendTabMessageMock = vi.fn(overrides.sendTabMessage ?? (async () => ({ status: 'passed' })));
   const getTabUrlMock = vi.fn(overrides.getTabUrl ?? (async () => 'https://example.com/page'));
+  const updateTabUrlMock = vi.fn(overrides.updateTabUrl ?? (async () => {}));
   const closeTabMock = vi.fn(overrides.closeTab ?? (async () => {}));
 
   return {
@@ -55,6 +57,7 @@ function createMockOptions(overrides: Partial<{
     injectScript: injectScriptMock,
     sendTabMessage: sendTabMessageMock as any,
     getTabUrl: getTabUrlMock,
+    updateTabUrl: updateTabUrlMock,
     closeTab: closeTabMock,
     createTabMock,
     injectScriptMock,

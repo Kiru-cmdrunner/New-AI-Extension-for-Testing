@@ -156,7 +156,7 @@ describe('build() — stepAssertions joined by sourceEventId', () => {
 
 // ── OR-1 merge ────────────────────────────────────────────
 
-describe('build() — OR-1 merge keeps the freshest resulting state', () => {
+describe('build() — OR-1 keeps repeated stateful clicks separate', () => {
   function clickWithCounter(
     eventId: string,
     count: number,
@@ -191,8 +191,11 @@ describe('build() — OR-1 merge keeps the freshest resulting state', () => {
     };
   }
 
-  it('merged duplicate clicks carry the SECOND click\u2019s assertions', async () => {
-    // Same element id → OR-1 merge triggers.
+  it('repeated stateful clicks stay TWO steps, each with its OWN assertions (OR-1 correction)', async () => {
+    // Same element id, but each click observed a DIFFERENT resulting state
+    // (cart 1 → 2). These are DISTINCT user actions: merging them produced
+    // a single-click step asserting "2 items" — unreachable on replay
+    // (A-Slice audit finding). Corrected semantics: keep both steps.
     const interactions = [clickWithCounter('evt-6-1', 1), clickWithCounter('evt-6-2', 2)];
     const { deriveStepAssertions } = await import('../../src/generation/assertion-derivation');
     const enrichment: GenerationEnrichment = {
@@ -205,12 +208,15 @@ describe('build() — OR-1 merge keeps the freshest resulting state', () => {
       enrichment,
     });
 
-    // Two clicks on the same element merge to ONE step.
-    expect(plan.steps.filter((s) => s.action === IRAction.CLICK)).toHaveLength(1);
-    const merged = plan.steps.find((s) => s.action === IRAction.CLICK)!;
-    expect(merged.assertions).toHaveLength(1);
-    // Freshest state: cart=2, not the stale cart=1.
-    expect(merged.assertions[0].expectedValue).toBe('2 items');
+    const clicks = plan.steps.filter((s) => s.action === IRAction.CLICK);
+    expect(clicks).toHaveLength(2);
+    expect(clicks[0].sourceEventId).toBe('evt-6-1');
+    expect(clicks[1].sourceEventId).toBe('evt-6-2');
+    expect(clicks[0].assertions).toHaveLength(1);
+    expect(clicks[1].assertions).toHaveLength(1);
+    // Each step asserts the state IT observed.
+    expect(clicks[0].assertions[0].expectedValue).toBe('1 items');
+    expect(clicks[1].assertions[0].expectedValue).toBe('2 items');
   });
 });
 

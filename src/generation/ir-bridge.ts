@@ -432,10 +432,24 @@ function deriveAssertions(
 /**
  * Apply readability rules to IRStep[].
  *
- * OR-1: Merge consecutive CLICK on the same element into a single step.
- * (In the recording pipeline, a click + click on the same element within
- * a short window are captured as separate interactions but represent a
- * single user action.)
+ * OR-1: Merge GENUINELY REDUNDANT consecutive CLICKs on the same element.
+ * (.drytis/specs/or1-repeated-clicks.md)
+ *
+ * Merge rule: a following same-element click is merged into the current
+ * step ONLY when it carries no new resulting-state assertions — the
+ * structurally provable duplicate case (double-fire, focus+click residue).
+ * The duplicate asserts nothing, so collapsing it loses nothing.
+ *
+ * A following click WITH resulting-state assertions is a DISTINCT user
+ * action whose observed consequence must survive: keeping it merged would
+ * assert a state ("2 items") the remaining single click can never reach on
+ * replay (A-Slice audit: 2 deliberate ATC clicks merged to one step, then
+ * soft-failed permanently). Both steps keep their own sourceEventId and
+ * assertions.
+ *
+ * Run-length correct: maximal runs of no-new-state duplicates collapse into
+ * the first step (a, a*, a* → one step) — the old pairwise `i += 2` turned
+ * three clicks into two steps.
  */
 function applyReadabilityRules(steps: IRStep[]): IRStep[] {
   if (steps.length <= 1) return steps;
@@ -447,7 +461,7 @@ function applyReadabilityRules(steps: IRStep[]): IRStep[] {
     const current = steps[i];
     const next = steps[i + 1];
 
-    // OR-1: Merge consecutive CLICK on same element
+    // OR-1: same-element consecutive clicks
     if (
       next &&
       current.action === IRAction.CLICK &&
@@ -456,14 +470,23 @@ function applyReadabilityRules(steps: IRStep[]): IRStep[] {
       next.target.kind === 'element' &&
       current.target.elementId === next.target.elementId
     ) {
-      // Keep the single step, but carry the LATEST resulting state's
-      // assertions: the merged interaction represents one user action whose
-      // final consequence is the second click's. Dropping them would assert
-      // the stale pre-merge count (cart=1 instead of cart=2).
-      result.push(
-        next.assertions.length > 0 ? { ...current, assertions: next.assertions } : current,
-      );
-      i += 2;
+      // Collapse the maximal run of GENUINELY REDUNDANT duplicates that
+      // follow: same element, no new resulting-state assertions. The FIRST
+      // step of the run is kept (its identity, sourceEventId, and — when
+      // present — its own assertions are the truthful record).
+      result.push(current);
+      i++;
+      while (i < steps.length) {
+        const dup = steps[i];
+        const isRedundantDuplicate =
+          dup.action === IRAction.CLICK &&
+          dup.target.kind === 'element' &&
+          current.target.kind === 'element' &&
+          dup.target.elementId === current.target.elementId &&
+          dup.assertions.length === 0; // no new state to preserve
+        if (!isRedundantDuplicate) break;
+        i++; // skip the redundant duplicate
+      }
     } else {
       result.push(current);
       i++;
