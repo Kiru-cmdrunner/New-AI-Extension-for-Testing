@@ -38,6 +38,13 @@
       "all_frames": true,
       "run_at": "document_start",
       "world": "MAIN"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["public/assets/dialog-inject.js"],
+      "all_frames": true,
+      "run_at": "document_start",
+      "world": "MAIN"
     }
   ],
   "icons": {

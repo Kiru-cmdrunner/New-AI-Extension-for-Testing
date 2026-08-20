@@ -371,3 +371,50 @@ describe('OR-1 — repeated interactions keep separate per-step assertions', () 
     expect(map.get('evt-click-2')?.[0].targetCss).toBe('[data-sku="F1"]');
   });
 });
+
+describe('G2 — single-attribute entity conventions derive presence (2026-08-20)', () => {
+  it('data-sku-ONLY entity (the RCA G2 case) derives [data-sku="X"] presence', () => {
+    // The pre-fix capture produced entityId:null here (merged entry trusted
+    // only data-product-id) and the entity branch conservatively skipped it.
+    const items = [
+      item({ entityId: 'SKU-WAR', matchedSelector: '[data-sku]:not([data-product-id]):not([data-item-id])', attributes: { 'data-sku': 'SKU-WAR' } }),
+    ];
+    const map = deriveStepAssertions([interactionOf('evt-1', items)]);
+    const asr = map.get('evt-1') ?? [];
+    const ent = asr.filter((a) => a.derivedFrom === 'entity');
+    expect(ent.length).toBe(1);
+    expect(ent[0].targetCss).toBe('[data-sku="SKU-WAR"]');
+    expect(ent[0].type).toBe('presence');
+    expect(ent[0].severity).toBe('soft');
+  });
+
+  it('data-item-id-ONLY entity derives [data-item-id="X"] presence', () => {
+    const items = [
+      item({ entityId: 'ITM-9', attributes: { 'data-item-id': 'ITM-9' } }),
+    ];
+    const map = deriveStepAssertions([interactionOf('evt-1', items)]);
+    const ent = (map.get('evt-1') ?? []).filter((a) => a.derivedFrom === 'entity');
+    expect(ent.length).toBe(1);
+    expect(ent[0].targetCss).toBe('[data-item-id="ITM-9"]');
+  });
+
+  it('no vacuous ancestor-#id fallback for identity-bearing entities (kept from 2c)', () => {
+    const items = [
+      item({ entityId: 'S1', attributes: { 'data-sku': 'S1' }, domPath: 'body > main#app-root > div#cart-root > div' }),
+    ];
+    const map = deriveStepAssertions([interactionOf('evt-1', items)]);
+    const asr = map.get('evt-1') ?? [];
+    expect(asr.some((a) => a.targetCss === '#cart-root')).toBe(false);
+    expect(asr.some((a) => a.targetCss === '[data-sku="S1"]')).toBe(true);
+  });
+
+  it('Amazon-style data-asin single-attribute entity unchanged', () => {
+    const items = [
+      item({ entityId: 'B0VAL1', matchedSelector: '[data-asin]', attributes: { 'data-asin': 'B0VAL1' } }),
+    ];
+    const map = deriveStepAssertions([interactionOf('evt-1', items)]);
+    const ent = (map.get('evt-1') ?? []).filter((a) => a.derivedFrom === 'entity');
+    expect(ent.length).toBe(1);
+    expect(ent[0].targetCss).toBe('[data-asin="B0VAL1"]');
+  });
+});

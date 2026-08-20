@@ -85,11 +85,63 @@ export const DEFAULT_SEMANTIC_SELECTORS: SemanticSelector[] = [
     extractAttributes: ['data-asin', 'aria-label'],
   },
   {
-    selector: '[data-product-id], [data-item-id], [data-sku]',
+    // Alternate test-ID conventions — only when a value-bearing identity
+    // attribute co-occurs, so decorative data-auto-id attrs are NOT
+    // classified as entities (noise guard, mirrors the data-asin pattern).
+    // G2 generic fix (2026-08-20): each co-occurrence variant now demands
+    // its OWN identity attribute (was: idAttribute always data-sku, so
+    // [data-auto-id][data-item-id] rows captured entityId:null). Order:
+    // these run BEFORE the generic single-attribute entries below, so
+    // co-occurrence elements keep their richer attribute capture and
+    // byte-identical prior output.
+    selector: '[data-auto-id][data-sku]:not([data-product-id]):not([data-item-id]), [data-test-id][data-sku]:not([data-product-id]):not([data-item-id])',
+    kind: 'entity',
+    entityType: 'product',
+    idAttribute: 'data-sku',
+    extractAttributes: ['data-sku', 'data-item-id', 'data-product-id', 'data-auto-id', 'data-test-id'],
+  },
+  {
+    selector: '[data-auto-id][data-item-id]:not([data-product-id]):not([data-sku]), [data-test-id][data-item-id]:not([data-product-id]):not([data-sku])',
+    kind: 'entity',
+    entityType: 'product',
+    idAttribute: 'data-item-id',
+    extractAttributes: ['data-item-id', 'data-sku', 'data-product-id', 'data-auto-id', 'data-test-id'],
+  },
+  {
+    selector: '[data-auto-id][data-product-id]:not([data-item-id]):not([data-sku]), [data-test-id][data-product-id]:not([data-item-id]):not([data-sku])',
+    kind: 'entity',
+    entityType: 'product',
+    idAttribute: 'data-product-id',
+    extractAttributes: ['data-product-id', 'data-item-id', 'data-sku', 'data-auto-id', 'data-test-id'],
+  },
+  {
+    // Generic single-attribute entries: each identity attribute demands
+    // itself, so data-sku-only and data-item-id-only elements derive
+    // entityId + [data-sku="X"] / [data-item-id="X"] presence assertions
+    // (G2: the previous merged entry trusted only data-product-id, so rows
+    // carrying just data-sku or data-item-id were captured with
+    // entityId:null and conservatively skipped by the entity assertion
+    // branch — Defect 2c's safe behavior). The :not() guards enforce
+    // product-id > item-id > sku identity precedence with no overlap.
+    selector: '[data-product-id]',
     kind: 'entity',
     entityType: 'product',
     idAttribute: 'data-product-id',
     extractAttributes: ['data-product-id', 'data-item-id', 'data-sku'],
+  },
+  {
+    selector: '[data-item-id]:not([data-product-id])',
+    kind: 'entity',
+    entityType: 'product',
+    idAttribute: 'data-item-id',
+    extractAttributes: ['data-item-id', 'data-sku'],
+  },
+  {
+    selector: '[data-sku]:not([data-product-id]):not([data-item-id])',
+    kind: 'entity',
+    entityType: 'product',
+    idAttribute: 'data-sku',
+    extractAttributes: ['data-sku'],
   },
   {
     selector: '[data-order-id], [data-order-number]',
@@ -97,16 +149,6 @@ export const DEFAULT_SEMANTIC_SELECTORS: SemanticSelector[] = [
     entityType: 'order',
     idAttribute: 'data-order-id',
     extractAttributes: ['data-order-id', 'data-order-number'],
-  },
-  {
-    // Alternate test-ID conventions — only when a value-bearing identity
-    // attribute co-occurs, so decorative data-auto-id attrs are NOT
-    // classified as entities (noise guard, mirrors the data-asin pattern).
-    selector: '[data-auto-id][data-sku], [data-auto-id][data-item-id], [data-auto-id][data-product-id], [data-test-id][data-sku], [data-test-id][data-item-id], [data-test-id][data-product-id]',
-    kind: 'entity',
-    entityType: 'product',
-    idAttribute: 'data-sku',
-    extractAttributes: ['data-sku', 'data-item-id', 'data-product-id', 'data-auto-id', 'data-test-id'],
   },
 
   // -- Status badges --

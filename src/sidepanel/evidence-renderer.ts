@@ -34,6 +34,8 @@ import type {
   ApplicationEvidence,
   DomChangeSummary,
   SurfaceChange,
+  DialogSignal,
+  WindowOpenSignal,
   VisibilityChange,
   NavigationEvidence,
   NetworkActivity,
@@ -637,6 +639,52 @@ function renderResultingState(
 }
 
 /**
+ * G1 (2026-08-20) — JS dialog + window.open evidence card.
+ *
+ * Renders the native dialog (alert/confirm/prompt) and/or window.open
+ * observed during this interaction's evidence window, as captured by the
+ * MAIN-world dialog-inject.js content script. Display only (INV-BEHAV-1):
+ * states WHAT was observed — type, message, dismissal result — never a
+ * causal label.
+ *
+ * Returns null when neither signal is present, so dialog-free interactions
+ * keep the exact pre-G1 layout.
+ */
+function renderDialogEvidence(
+  dialog: DialogSignal | null | undefined,
+  windowOpen: WindowOpenSignal | null | undefined,
+): HTMLElement | null {
+  if (!dialog && !windowOpen) return null;
+
+  const container = document.createElement('div');
+
+  const header = document.createElement('div');
+  header.className = 'evidence-subheader';
+  const parts: string[] = [];
+  if (dialog) parts.push(dialog.type);
+  if (windowOpen) parts.push(windowOpen.isWindow ? 'window.open (popup)' : 'window.open (tab)');
+  header.textContent = `🔔 JS Dialog (${parts.join(' + ')})`;
+  container.appendChild(header);
+
+  if (dialog) {
+    const row = document.createElement('div');
+    row.className = 'evidence-row';
+    const resultText = dialog.result != null ? ` → ${truncate(dialog.result, 40)}` : '';
+    row.textContent = `${dialog.type}("${truncate(dialog.message, 60)}")${resultText}`;
+    container.appendChild(row);
+  }
+
+  if (windowOpen) {
+    const row = document.createElement('div');
+    row.className = 'evidence-row';
+    row.textContent = `opened ${truncate(windowOpen.url, 60)}${windowOpen.target ? ` (target: ${truncate(windowOpen.target, 20)})` : ''}`;
+    container.appendChild(row);
+  }
+
+  return container;
+}
+
+/**
  * Render the full Application Evidence section.
  */
 function renderApplicationEvidence(app: ApplicationEvidence | null | undefined): HTMLElement {
@@ -679,6 +727,14 @@ function renderApplicationEvidence(app: ApplicationEvidence | null | undefined):
   // lower-level detail. Absent field → null → nothing rendered.
   const rsEl = renderResultingState(app.resultingState);
   if (rsEl) body.appendChild(rsEl);
+
+  // G1 (2026-08-20) — JS dialog / window.open evidence (alert/confirm/
+  // prompt/window.open captured by the MAIN-world dialog-inject.js).
+  // Second sub-block: a native dialog is a high-signal, user-visible
+  // consequence of the interaction. Absent → nothing rendered (dialog-free
+  // interactions keep the exact pre-G1 layout).
+  const dlgEl = renderDialogEvidence(app.triggeredDialog, app.openedWindow);
+  if (dlgEl) body.appendChild(dlgEl);
 
   // DOM changes
   const domEl = renderDomChanges(app.domChanges, app.domChangeOverflow ?? 0, app.coarseMode ?? false);

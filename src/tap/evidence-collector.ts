@@ -51,6 +51,8 @@ import type { WirePageContentSnapshot } from '../shared/page-content-wire';
 import { PageContentObserver } from '../understanding/page-content/page-content-observer';
 import { createDefaultPageContentConfig } from '../understanding/page-content/page-content-config';
 import { BrowserPageContentAdapter, toWireSnapshot } from './page-content-dom-adapter';
+import { readPageWorldSignals } from './page-world-signals';
+import type { DialogSignal, WindowOpenSignal } from '../shared/behavioral-evidence-types';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
@@ -254,6 +256,18 @@ interface ObservationWindowState {
    * Resulting Application State (Phase 1): at-most-once scan guard.
    */
   resultingStateScanned?: boolean;
+
+  /**
+   * G1 fix (2026-08-20): JS dialog / window.open stamps read from the
+   * MAIN-world dialog-inject.js (destructive attribute read). Read at
+   * window OPEN (synchronous in-handler dialogs stamp before the native
+   * blocking call returns) and again at delivery (dialogs fired during the
+   * window lifetime, e.g. from a setTimeout). Null/undefined = none seen.
+   * The window that READS the signal owns it — never shared, mirroring
+   * INV-CS1's per-window ownership for resultingState.
+   */
+  pageWorldDialog?: DialogSignal | null;
+  pageWorldWindowOpen?: WindowOpenSignal | null;
 }
 
 // ── EvidenceCollector ────────────────────────────────────────────────
@@ -505,6 +519,13 @@ export class EvidenceCollector {
     const windowId = `ev-${eventId}`;
     const openedAt = performance.now();
 
+    // G1 (2026-08-20): drain page-world dialog/window.open stamps BEFORE
+    // creating the window state — the click handler that triggered this
+    // window may have called alert/confirm/prompt/window.open synchronously
+    // (alert stamps the attribute BEFORE the native call blocks, so the
+    // stamp is already present here).
+    const openSignals = readPageWorldSignals();
+
     // CER-3: snapshot the requestIds the bridge already knows about, so the
     // window↔network join at close is membership-based, not timestamp-based.
     const requestIdsAtOpen = this.networkBridge
@@ -540,6 +561,11 @@ export class EvidenceCollector {
       settleMetadata: null,
       settleSuperseded: false,
       requestIdsAtOpen,
+      // G1: drain any dialog/window.open stamp the click handler already
+      // wrote synchronously (alert() stamps BEFORE blocking) — this window
+      // owns it from birth.
+      pageWorldDialog: openSignals.dialog,
+      pageWorldWindowOpen: openSignals.windowOpen,
     };
 
     // Lifecycle-Driven Evidence: if any lifecycle bindings exist, hold this
@@ -945,6 +971,20 @@ export class EvidenceCollector {
     if (state.resultingState) {
       applicationEvidence.resultingState = state.resultingState;
     }
+
+    // G1 (2026-08-20): attach JS dialog / window.open signals owned by THIS
+    // window (open-time drain captured synchronous in-handler dialogs;
+    // this close-time re-read captures dialogs fired later inside the
+    // window's lifetime, e.g. a setTimeout after the click). Destructive
+    // read = a signal can never be attributed to two windows. Attached
+    // only when present — wire shape stays byte-identical for dialog-free
+    // interactions (JSON drops undefined keys), same convention as
+    // resultingState.
+    const closeSignals = readPageWorldSignals();
+    const dialog = state.pageWorldDialog ?? closeSignals.dialog;
+    const windowOpen = state.pageWorldWindowOpen ?? closeSignals.windowOpen;
+    if (dialog) applicationEvidence.triggeredDialog = dialog;
+    if (windowOpen) applicationEvidence.openedWindow = windowOpen;
 
     // Build BehavioralEvidence
     const evidence: BehavioralEvidence = {
@@ -1758,6 +1798,15 @@ export class EvidenceCollector {
       applicationEvidence.resultingState = state.resultingState;
     }
 
+    // G1 (2026-08-20): same dialog/window.open attachment as closeWindow —
+    // this is the settle-mode delivery path (consequence-settled windows
+    // deliver HERE, not via the regular branch).
+    const closeSignals = readPageWorldSignals();
+    const dialog = state.pageWorldDialog ?? closeSignals.dialog;
+    const windowOpen = state.pageWorldWindowOpen ?? closeSignals.windowOpen;
+    if (dialog) applicationEvidence.triggeredDialog = dialog;
+    if (windowOpen) applicationEvidence.openedWindow = windowOpen;
+
     // Build and deliver BehavioralEvidence
     const evidence: BehavioralEvidence = {
       sourceEventId: state.sourceEventId,
@@ -1853,6 +1902,17 @@ export class EvidenceCollector {
             longestBatchMs: 0,
             totalBatches: 0,
           },
+          // G1 (2026-08-20): lifecycle-finalized evidence also drains any
+          // dialog/window.open stamp still pending on the document — a
+          // dialog fired by the lifecycle's trigger (e.g. a date-picker's
+          // confirm) would otherwise be orphaned on <html>.
+          ...((): Pick<ApplicationEvidence, 'triggeredDialog' | 'openedWindow'> => {
+            const sig = readPageWorldSignals();
+            return {
+              ...(sig.dialog ? { triggeredDialog: sig.dialog } : {}),
+              ...(sig.windowOpen ? { openedWindow: sig.windowOpen } : {}),
+            };
+          })(),
         },
       };
 

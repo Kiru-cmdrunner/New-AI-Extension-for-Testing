@@ -80,17 +80,59 @@ describe('Defect 2a — alternate test-ID semantic capture', () => {
       '<div id="cart-root"><div data-auto-id="cart-item-F1" data-sku="F1">Flight 1</div></div>',
     );
     const entities = (snap?.items ?? []).filter((i) => i.kind === 'entity');
-    // The row ALSO matches the legacy [data-sku] entry (entityId null) — the
-    // observer keeps both (capture stays lossy-free); derivation collapses
-    // them (dedupeEntities, pinned in assertion-derivation-alt-testid.test.ts).
+    // G2 fix (2026-08-20): the generic [data-sku] entry now demands
+    // :not([data-product-id]):not([data-item-id]) and carries its own
+    // idAttribute, so the same physical element matches the co-occurrence
+    // entry FIRST (richer attributes) and the generic entry NEVER captures
+    // it (seenPaths first-match-wins). The entityId:null "legacy twin" no
+    // longer exists at capture time — derivation-side dedupeEntities
+    // remains as defense-in-depth for historical shapes.
     // Capture-level pin: an identity-bearing entity item EXISTS.
     const identified = entities.filter((i) => i.entityId === 'F1');
     expect(identified.length).toBe(1);
     expect(identified[0].entityType).toBe('product');
-    // …and the legacy twin exists with a NULL entityId (documents the
-    // double-capture that derivation-side dedup must handle).
-    const legacy = entities.filter((i) => i.entityId === null && i.attributes['data-sku'] === 'F1');
-    expect(legacy.length).toBe(1);
+    // …and NO null-identity twin: exactly ONE entity item for the row.
+    expect(entities.filter((i) => i.attributes['data-sku'] === 'F1').length).toBe(1);
+  });
+
+  it('G2 — data-sku-only element captures entityId (single-attribute convention)', () => {
+    const snap = scanHtml('<ul id="results"><li data-sku="SKU-42">Widget</li></ul>');
+    const entities = (snap?.items ?? []).filter((i) => i.kind === 'entity');
+    expect(entities.length).toBe(1);
+    expect(entities[0].entityId).toBe('SKU-42');
+    expect(entities[0].entityType).toBe('product');
+    expect(entities[0].attributes['data-sku']).toBe('SKU-42');
+  });
+
+  it('G2 — data-item-id-only element captures entityId', () => {
+    const snap = scanHtml('<ul id="results"><li data-item-id="ITM-7">Gadget</li></ul>');
+    const entities = (snap?.items ?? []).filter((i) => i.kind === 'entity');
+    expect(entities.length).toBe(1);
+    expect(entities[0].entityId).toBe('ITM-7');
+  });
+
+  it('G2 — identity precedence: data-product-id > data-item-id > data-sku (single capture, no overlap)', () => {
+    const snap = scanHtml(
+      '<div><span data-product-id="P1" data-item-id="I1" data-sku="S1">full</span>' +
+      '<span data-item-id="I2" data-sku="S2">item+sku</span>' +
+      '<span data-sku="S3">sku only</span></div>',
+    );
+    const entities = (snap?.items ?? []).filter((i) => i.kind === 'entity');
+    expect(entities.length).toBe(3);
+    const byId = new Map(entities.map((e) => [e.entityId, e]));
+    expect(byId.get('P1')).toBeTruthy();       // product-id wins over co-present item-id/sku
+    expect(byId.get('I2')).toBeTruthy();       // item-id wins over co-present sku
+    expect(byId.get('S3')).toBeTruthy();
+    // no null-identity rows anywhere
+    expect(entities.every((e) => e.entityId !== null)).toBe(true);
+  });
+
+  it('G2 — co-occurrence [data-auto-id][data-item-id] now captures identity (was null-id gap)', () => {
+    const snap = scanHtml('<div data-auto-id="row-9" data-item-id="I-99">Item</div>');
+    const entities = (snap?.items ?? []).filter((i) => i.kind === 'entity');
+    expect(entities.length).toBe(1);
+    expect(entities[0].entityId).toBe('I-99');
+    expect(entities[0].attributes['data-auto-id']).toBe('row-9'); // richer capture retained
   });
 
   it('does NOT classify decorative-only data-auto-id as entity (noise guard)', () => {

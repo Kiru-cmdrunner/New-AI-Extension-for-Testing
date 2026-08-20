@@ -271,8 +271,60 @@ export interface ApplicationEvidence {
    */
   resultingState?: WirePageContentSnapshot;
 
+  /**
+   * JS dialog (alert/confirm/prompt) observed during THIS evidence window,
+   * ported from the legacy page-world interception (pre-b4222a6) — the
+   * 2026-08-20 full-audit gap G1. Set by the MAIN-world dialog-inject.js
+   * content script on <html data-cmdrunner-dialog> and read by the
+   * EvidenceCollector at window open AND window close (blocking dialogs
+   * stamp BEFORE opening, so both read points are reliable; the double
+   * read covers non-blocking re-entrancy edge cases). ABSENT when no
+   * dialog fired — keeps the pre-G1 wire shape byte-identical otherwise.
+   * Last-write-wins: a window sees at most one dialog record (a second
+   * dialog in the same window replaces the first — dialogs are modal, so
+   * two-in-one-window implies the handler chain, and the latest is the
+   * user-visible outcome).
+   */
+  triggeredDialog?: DialogSignal;
+
+  /**
+   * window.open observed during THIS evidence window: the opened URL and
+   * whether it looked like a popup window (width/height features) vs a
+   * new tab. Same source/read points as triggeredDialog.
+   */
+  openedWindow?: WindowOpenSignal;
+
   /** Performance condition: was the main thread congested? */
   performanceCondition: PerformanceCondition | null;
+}
+
+/**
+ * A native JS dialog (alert/confirm/prompt) observed in the page world.
+ * Mirrors the legacy DomContext dialog fields (recorded-event.ts) for the
+ * evidence model; generic across applications — no selectors involved.
+ */
+export interface DialogSignal {
+  /** Which native dialog API fired. */
+  type: 'alert' | 'confirm' | 'prompt';
+  /** The message string passed to the dialog API. */
+  message: string;
+  /**
+   * Dismissal outcome. 'OK'/'Cancel' for confirm, entered text or
+   * 'Cancelled' for prompt, null for alert (no choice).
+   */
+  result: string | null;
+}
+
+/**
+ * A window.open call observed in the page world.
+ */
+export interface WindowOpenSignal {
+  /** Absolute-or-as-given URL argument. */
+  url: string;
+  /** target argument ('' when omitted → '_blank' default). */
+  target: string;
+  /** True when popup window features (width/height) were supplied. */
+  isWindow: boolean;
 }
 
 /**
