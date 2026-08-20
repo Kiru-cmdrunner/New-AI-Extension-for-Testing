@@ -59,6 +59,8 @@ interface ResolveMessage {
   type: 'RESOLVE_LOCATOR';
   locators: LocatorInput[];
   requireVisible?: boolean;
+  /** Max ms to poll for late-rendered elements; <=0/absent = single-shot (legacy). */
+  timeoutMs?: number;
 }
 
 interface ExtractDomContextMessage {
@@ -553,6 +555,34 @@ function evaluateAssertionInner(
 }
 
 // ════════════════════════════════════════════════════════════════════════
+// RESOLVE WITH WAIT (inlined — content scripts cannot import modules)
+// ════════════════════════════════════════════════════════════════════════
+// Mirrors locator-resolver.ts resolveElementWithWait() semantics, capped at
+// 10s: polls resolveElement every 100ms until timeoutMs. timeoutMs <= 0
+// (or absent) degrades to today's single-shot behavior — the wire contract
+// is backwards compatible for all existing senders.
+// Classic-script safe: performance.now / setTimeout / Promise only.
+const RESOLVE_WAIT_POLL_MS = 100;
+const RESOLVE_WAIT_CAP_MS = 10_000;
+
+function resolveWithWait(
+  locators: LocatorInput[],
+  requireVisible: boolean,
+  timeoutMs: number,
+): Promise<Element | null> {
+  if (!(timeoutMs > 0)) return Promise.resolve(resolveElement(locators, document, requireVisible)?.element ?? null);
+  const capped = Math.min(timeoutMs, RESOLVE_WAIT_CAP_MS);
+  const startedAt = performance.now();
+  const poll = (resolve: (el: Element | null) => void): void => {
+    const resolved = resolveElement(locators, document, requireVisible);
+    if (resolved) { resolve(resolved.element); return; }
+    if (performance.now() - startedAt >= capped) { resolve(null); return; }
+    setTimeout(() => poll(resolve), RESOLVE_WAIT_POLL_MS);
+  };
+  return new Promise((resolve) => poll(resolve));
+}
+
+// ════════════════════════════════════════════════════════════════════════
 // MESSAGE HANDLERS
 // ════════════════════════════════════════════════════════════════════════
 
@@ -561,6 +591,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   switch (message.type) {
     case 'EXECUTE_STEP': {
+      void (async () => {
       const msg = message as StepMessage;
       const step = msg.step;
       const startTime = performance.now();
@@ -569,8 +600,19 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       let element: Element | null = null;
       if (step.target.kind === 'element' && step.target.resolvedLocators) {
         const requireVisible = (step.executionParameters?.waitStrategy ?? 'visible') !== 'none';
-        const resolved = resolveElement(step.target.resolvedLocators, document, requireVisible);
-        element = resolved?.element ?? null;
+        // Honor the step's timeoutMs for late-rendered targets (capped 10s).
+        // Absent timeoutMs → single-shot, identical to pre-wait behavior.
+        // waitStrategy 'none' NEVER waits (resolveElementWithWait parity:
+        // 'none' = try once immediately, no polling).
+        const timeoutMs =
+          (step.executionParameters?.waitStrategy ?? 'visible') === 'none'
+            ? 0
+            : (step.executionParameters?.timeoutMs ?? 0);
+        element = await resolveWithWait(
+          step.target.resolvedLocators,
+          requireVisible,
+          timeoutMs,
+        );
       }
 
       // Execute action
@@ -586,12 +628,34 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       };
 
       sendResponse(stepResult);
+      })().catch((e: unknown) => {
+        // Channel must ALWAYS answer — an unhandled rejection would hang the
+        // executor's awaited sendTabMessage until its own timeout.
+        sendResponse({
+          stepId: (message as StepMessage).step?.id ?? 'unknown',
+          action: (message as StepMessage).step?.action ?? 'unknown',
+          status: 'error',
+          actualValue: null,
+          error: { message: `Content-script execution error: ${(e as Error)?.message ?? String(e)}` },
+          durationMs: 0,
+        });
+      }); // async EXECUTE_STEP body
       return true; // Keep channel open for async response
     }
 
     case 'RESOLVE_LOCATOR': {
       const msg = message as ResolveMessage;
       const requireVisible = msg.requireVisible ?? true;
+      if ((msg.timeoutMs ?? 0) > 0) {
+        // Late-rendered element: poll up to min(timeoutMs, 10s).
+        resolveWithWait(msg.locators, requireVisible, msg.timeoutMs ?? 0).then((el) =>
+          sendResponse({
+            found: !!el,
+            identity: el ? extractElementIdentity(el) : null,
+          }),
+        );
+        return true; // async response
+      }
       const resolved = resolveElement(msg.locators, document, requireVisible);
       sendResponse({
         found: !!resolved,

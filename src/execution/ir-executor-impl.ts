@@ -328,6 +328,13 @@ export class IRExecutorImpl implements IRExecutor {
         type: 'RESOLVE_LOCATOR',
         locators,
         requireVisible: step.executionParameters.waitStrategy !== 'none',
+        // Late-rendered targets: poll up to timeoutMs (content script caps
+        // at 10s). waitStrategy 'none' NEVER waits — resolveElementWithWait
+        // parity ('none' = one immediate attempt).
+        timeoutMs:
+          step.executionParameters.waitStrategy === 'none'
+            ? 0
+            : (step.executionParameters.timeoutMs ?? 0),
       });
 
       if (!resolveResponse.found) {
@@ -345,6 +352,10 @@ export class IRExecutorImpl implements IRExecutor {
             type: 'RESOLVE_LOCATOR',
             locators: overrideMap.get(elementId) ?? step.target.resolvedLocators,
             requireVisible: step.executionParameters.waitStrategy !== 'none',
+            timeoutMs:
+              step.executionParameters.waitStrategy === 'none'
+                ? 0
+                : (step.executionParameters.timeoutMs ?? 0),
           });
 
           if (!retryResponse.found) {

@@ -264,3 +264,53 @@ describe('IRExecutorImpl navigate steps (A-Slice 2)', () => {
     expect(result.status).toBe('passed');
   });
 });
+
+describe('RESOLVE_LOCATOR wait wiring (Defect 1)', () => {
+  it('element steps pass executionParameters.timeoutMs through to RESOLVE_LOCATOR', async () => {
+    const b = makeBindings();
+    const step = {
+      ...makeElementStep(),
+      executionParameters: { timeoutMs: 7500, waitStrategy: 'visible' },
+    } as unknown as IRStep;
+    const exec = new IRExecutorImpl({
+      sendTabMessage: b.sendTabMessage as never,
+      injectScript: b.injectScript as never,
+      getTabUrl: b.getTabUrl as never,
+      updateTabUrl: b.tabsUpdate as never,
+      createTab: b.createTab as never,
+      closeTab: b.closeTab as never,
+    });
+    await exec.execute(makePlan([step]));
+    const resolveCalls = b.sendTabMessage.mock.calls.filter(
+      (c) => (c[1] as { type: string }).type === 'RESOLVE_LOCATOR',
+    );
+    expect(resolveCalls.length).toBeGreaterThan(0);
+    for (const c of resolveCalls) {
+      expect((c[1] as { timeoutMs?: number }).timeoutMs).toBe(7500);
+    }
+  });
+
+  it("waitStrategy 'none' sends timeoutMs 0 (no wait) — resolveElementWithWait parity", async () => {
+    const b = makeBindings();
+    const step = {
+      ...makeElementStep(),
+      executionParameters: { timeoutMs: 7500, waitStrategy: 'none' },
+    } as unknown as IRStep;
+    const exec = new IRExecutorImpl({
+      sendTabMessage: b.sendTabMessage as never,
+      injectScript: b.injectScript as never,
+      getTabUrl: b.getTabUrl as never,
+      updateTabUrl: b.tabsUpdate as never,
+      createTab: b.createTab as never,
+      closeTab: b.closeTab as never,
+    });
+    await exec.execute(makePlan([step]));
+    const resolveCalls = b.sendTabMessage.mock.calls.filter(
+      (c) => (c[1] as { type: string }).type === 'RESOLVE_LOCATOR',
+    );
+    expect(resolveCalls.length).toBeGreaterThan(0);
+    for (const c of resolveCalls) {
+      expect((c[1] as { timeoutMs?: number }).timeoutMs).toBe(0);
+    }
+  });
+});

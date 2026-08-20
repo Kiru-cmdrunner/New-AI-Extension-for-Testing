@@ -125,6 +125,70 @@ function identityAttributeSelector(item: WireObservedItem): string | null {
 }
 
 /**
+ * Identity attributes used as selector `idAttribute` across the semantic
+ * configs (data-asin, data-product-id, data-item-id, data-sku,
+ * data-order-id, data-order-number). Kept in sync with
+ * page-content-config.ts — the derivation-side mirror of which attribute
+ * names denote entity identity.
+ */
+const IDENTITY_ATTR_NAMES = [
+  'data-asin',
+  'data-product-id',
+  'data-item-id',
+  'data-sku',
+  'data-order-id',
+  'data-order-number',
+];
+
+/**
+ * Identity VALUE of an entity item: entityId when the capturing selector
+ * had a matching idAttribute, otherwise the value of any captured identity
+ * attribute. Two snapshot items describing the same physical entity (the
+ * double-capture case: legacy entry with a different idAttribute →
+ * entityId null, plus the co-occurrence entry → entityId set) share this
+ * value.
+ */
+function identityValue(item: WireObservedItem): string | null {
+  if (item.entityId) return item.entityId;
+  const attrs = item.attributes ?? {};
+  for (const name of IDENTITY_ATTR_NAMES) {
+    const v = attrs[name];
+    if (v) return v;
+  }
+  return null;
+}
+
+/**
+ * Collapse entity double-captures (Defect 2c): the same physical entity
+ * can be captured by two selector entries — e.g. the legacy
+ * `[data-product-id], [data-item-id], [data-sku]` entry (idAttribute
+ * data-product-id → entityId null on data-sku-only rows) AND the
+ * `data-auto-id`-co-occurrence entry (idAttribute data-sku → entityId
+ * set). Grouped by identity value, one representative survives — the one
+ * carrying the strongest identity (entityId set first). Without this,
+ * the null-identity twin derives the vacuous ancestor-`#id` presence the
+ * entity branch would otherwise have replaced.
+ */
+function dedupeEntities(items: WireObservedItem[]): WireObservedItem[] {
+  const groups = new Map<string, WireObservedItem>();
+  const unordered: WireObservedItem[] = [];
+  for (const item of items) {
+    const key = identityValue(item);
+    if (!key) {
+      unordered.push(item);
+      continue;
+    }
+    const existing = groups.get(key);
+    if (!existing) {
+      groups.set(key, item);
+    } else if (!existing.entityId && item.entityId) {
+      groups.set(key, item); // prefer the representative WITH its identity
+    }
+  }
+  return [...groups.values(), ...unordered];
+}
+
+/**
  * Decide the replay locator for one observed item.
  *
  * Priority: #id from domPath → identity attribute for entities → skip.
@@ -134,6 +198,19 @@ function identityAttributeSelector(item: WireObservedItem): string | null {
  * classifies as unverifiable at generation time.
  */
 function decideLocator(item: WireObservedItem): LocatorDecision {
+  // Entities: their OWN identity attribute is the most precise coordinate —
+  // strictly better than an #id parsed from the domPath, which may belong to
+  // an ANCESTOR (e.g. … > div#cart-root > div[data-sku="X"] derived the
+  // container #cart-root, a vacuous presence target). AdaniOne-clone audit
+  // 2026-08-20: entity presence assertions must point at the entity itself.
+  if (item.kind === 'entity') {
+    const identityAttr = identityAttributeSelector(item);
+    if (identityAttr) return { css: identityAttr, tier: 'identity-attribute' };
+    const id = idFromDomPath(item.domPath);
+    if (id) return { css: `#${id}`, tier: 'id' };
+    return { css: null, tier: 'none' };
+  }
+
   const id = idFromDomPath(item.domPath);
   if (id) return { css: `#${id}`, tier: 'id' };
 
@@ -300,7 +377,10 @@ function deriveForSnapshot(snapshot: WirePageContentSnapshot): StepScopedAsserti
   }
 
   // 5. Entities — PRESENCE of the identified entity (data-asin="B0VAL1").
-  for (const item of byPriority.entity) {
+  //     Double-captures collapsed first (see dedupeEntities): each physical
+  //     entity derives AT MOST one presence, on its own identity attribute.
+  const entities = dedupeEntities(byPriority.entity);
+  for (const item of entities) {
     const locator = decideLocator(item);
     // Entities without an identity-attribute locator are skipped: the #id
     // fallback is acceptable too (decideLocator already tried it).

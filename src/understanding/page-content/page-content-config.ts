@@ -33,6 +33,17 @@ export const DEFAULT_SEMANTIC_SELECTORS: SemanticSelector[] = [
     extractNumeric: true,
     extractAttributes: ['aria-label'],
   },
+  {
+    // Alternate test-ID conventions (AdaniOne uses data-auto-id; data-test-id
+    // and data-test are widespread). Same generic-substring class as the
+    // data-testid entries above — conventions, not site hacks. "total" joins
+    // "count" as counter semantics ("cart-total", "grand-total", …).
+    selector:
+      '[data-auto-id*="count" i], [data-auto-id*="total" i], [data-test-id*="count" i], [data-test-id*="total" i], [data-test*="count" i], [data-test*="total" i]',
+    kind: 'counter',
+    extractNumeric: true,
+    extractAttributes: ['aria-label', 'data-auto-id', 'data-test-id', 'data-test'],
+  },
 
   // -- Notifications --
   {
@@ -57,6 +68,13 @@ export const DEFAULT_SEMANTIC_SELECTORS: SemanticSelector[] = [
     kind: 'collection',
     extractNumeric: true,
   },
+  {
+    // Alternate test-ID conventions (data-auto-id / data-test-id / data-test).
+    selector: '[data-auto-id*="items" i], [data-auto-id*="results" i], [data-test-id*="items" i], [data-test-id*="results" i], [data-test*="items" i], [data-test*="results" i]',
+    kind: 'collection',
+    extractNumeric: true,
+    extractAttributes: ['data-auto-id', 'data-test-id', 'data-test'],
+  },
 
   // -- Entities --
   {
@@ -79,6 +97,16 @@ export const DEFAULT_SEMANTIC_SELECTORS: SemanticSelector[] = [
     entityType: 'order',
     idAttribute: 'data-order-id',
     extractAttributes: ['data-order-id', 'data-order-number'],
+  },
+  {
+    // Alternate test-ID conventions — only when a value-bearing identity
+    // attribute co-occurs, so decorative data-auto-id attrs are NOT
+    // classified as entities (noise guard, mirrors the data-asin pattern).
+    selector: '[data-auto-id][data-sku], [data-auto-id][data-item-id], [data-auto-id][data-product-id], [data-test-id][data-sku], [data-test-id][data-item-id], [data-test-id][data-product-id]',
+    kind: 'entity',
+    entityType: 'product',
+    idAttribute: 'data-sku',
+    extractAttributes: ['data-sku', 'data-item-id', 'data-product-id', 'data-auto-id', 'data-test-id'],
   },
 
   // -- Status badges --
