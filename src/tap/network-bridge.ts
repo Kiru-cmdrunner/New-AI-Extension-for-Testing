@@ -69,16 +69,11 @@ const MAX_NETWORK_PER_WINDOW = 50;
 
 /**
  * Consequence-settling noise filter (§8): analytics/telemetry/static URLs
- * that must never block a window from settling. Mirrors the SW-side drain
- * filters (src/background/network-drain.ts) — same patterns, kept local to
- * avoid pulling the SW module into the content-script bundle.
+ * that must never block a window from settling. Sourced from the SHARED
+ * module (src/shared/network-noise.ts) so the recorder's causal-idle gate
+ * and the executor's SW-side network drain can never drift.
  */
-const NOISE_URL_RE_CAUSAL =
-  /\.(png|jpg|jpeg|gif|webp|svg|ico|css|js|mjs|woff2?|ttf)(\?|$)/i;
-
-/** Telemetry/beacon URLs — also never block settling (§8). */
-const TELEMETRY_URL_RE_CAUSAL =
-  /\/unagi|\/events\/|\/beacon|\/pixel|\/csm|\/aax2|\/impression|fls-|\/1\/batch\/|uedata/i;
+import { NOISE_URL_RE_CAUSAL, TELEMETRY_URL_RE_CAUSAL } from '../shared/network-noise';
 
 // ── NetworkBridge ────────────────────────────────────────────────────
 

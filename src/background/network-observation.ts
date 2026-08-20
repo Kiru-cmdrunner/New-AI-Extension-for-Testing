@@ -19,6 +19,7 @@
 // ── Types ────────────────────────────────────────────────────────────
 
 import { StorageKeys } from '../shared/types';
+import { isCausalNoiseUrl } from '../shared/network-noise';
 
 /**
  * Persisted FORWARDING hint (MV3 lifecycle fix + G4-A demotion).
@@ -872,6 +873,187 @@ export function snapshotInFlightForTab(
   return snapped;
 }
 
+// ── Executor inter-step causal network drain (Option D) ─────────────
+//
+// Replay pacing sync: after a step's action completes, the executor waits
+// for the replay tab's CAUSAL in-flight requests to finish before evaluating
+// assertions / starting the next step. This mirrors the recorder's
+// causalNetworkIdle() settling gate (evidence-collector.ts) at execution
+// time, with the SAME noise filters (src/shared/network-noise.ts).
+//
+// Scope: per-SESSION (one per RUN_TEST) + per-TAB (executor-created replay
+// tabs only). Requests from other tabs — human tabs, other sessions — are
+// invisible. Capture hooks run BEFORE the recorder's recordingActiveFlag
+// gate: RUN_TEST executes with recording STOPPED, so the recorder gate is
+// closed; the drain must not depend on recorder state.
+
+/** Public drain-session surface (executor consumes this; type-only import). */
+export interface ExecutionNetworkDrain {
+  /** Register an executor-created replay tab with the session. */
+  beginTab(tabId: number): void;
+  /** Deregister a tab — its requests stop counting and are forgotten. */
+  endTab(tabId: number): void;
+  /**
+   * Wait until the tab has no causal in-flight requests. Two consecutive
+   * zero samples required (closes the response-dispatch vs onBeforeRequest
+   * race without a settle constant). Poll cadence 100ms (RESOLVE_WAIT_POLL_MS
+   * parity). Bounded by timeoutMs (the step's existing executionParameters
+   * timeout — never a new constant); 0/undefined → no wait at all.
+   * Never rejects: on timeout it proceeds with timedOut=true.
+   */
+  drainForTab(tabId: number, timeoutMs: number): Promise<{ drained: boolean; timedOut: boolean; waitedMs: number }>;
+  /** Tear down the whole session (all tabs). */
+  dispose(): void;
+}
+
+/** Drain poll cadence — mirrors executor RESOLVE_WAIT_POLL_MS. */
+const EXECUTION_DRAIN_POLL_MS = 100;
+
+/** Zero in-flight must hold for TWO consecutive samples. */
+const EXECUTION_DRAIN_STABLE_SAMPLES = 2;
+
+/** Internal per-session state (kept out of the public interface). */
+interface DrainInternals {
+  noteStart(tabId: number, requestId: string): void;
+  noteFinish(tabId: number, requestId: string): void;
+  countInFlight(tabId: number): number;
+}
+
+/** Active drain session (one RUN_TEST at a time; SW instance-local). */
+let activeDrainSession: { drain: ExecutionNetworkDrain; internals: DrainInternals } | null = null;
+
+/**
+ * Resource kinds that can carry an action's consequence. Mirrors the recorder
+ * causal scope + snapshotInFlightForTab's predicate: XHR/fetch data requests,
+ * and top-frame data requests Chrome types as 'other' (rare; covered by the
+ * frameId===0 arm). EXCLUDED: main_frame/sub_frame document loads, scripts,
+ * styles, images, fonts, media, websockets (never complete anyway), pings,
+ * CSP reports — and every request from a NON-registered tab.
+ */
+function drainCausalKind(resourceKind: string, frameId: number): boolean {
+  if (resourceKind === 'xmlhttprequest' || resourceKind === 'fetch') return true;
+  return (
+    frameId === 0 &&
+    resourceKind !== 'main_frame' &&
+    resourceKind !== 'websocket' &&
+    resourceKind !== 'ping' &&
+    resourceKind !== 'csp_report'
+  );
+}
+
+/**
+ * Notify the active drain session that a request started (onBeforeRequest).
+ * Called BEFORE the recorder gate. No-op when no session / tab not registered.
+ */
+function drainNoteRequestStart(
+  tabId: number,
+  frameId: number,
+  requestId: string,
+  url: string,
+  resourceKind: string,
+): void {
+  const s = activeDrainSession;
+  if (!s) return;
+  if (!drainCausalKind(resourceKind, frameId)) return;
+  if (isCausalNoiseUrl(url)) return;
+  s.internals.noteStart(tabId, requestId);
+}
+
+/**
+ * Notify the active drain session that a request finished (onCompleted /
+ * onErrorOccurred). No-op when no session is active.
+ */
+function drainNoteRequestFinish(tabId: number, requestId: string): void {
+  const s = activeDrainSession;
+  if (!s) return;
+  s.internals.noteFinish(tabId, requestId);
+}
+
+/**
+ * Create an execution drain session (one per RUN_TEST). Registers no tabs —
+ * the executor calls beginTab() for each replay tab it creates. Replaces any
+ * previous session (executor runs are serialized by the SW router).
+ */
+export function createExecutionDrain(): ExecutionNetworkDrain {
+  // Idempotent teardown of a previous (crashed / abandoned) session.
+  activeDrainSession?.drain.dispose();
+
+  const tabs = new Set<number>();
+  const inFlightByTab = new Map<number, Set<string>>();
+  let disposed = false;
+
+  const internals: DrainInternals = {
+    noteStart(tabId, requestId) {
+      if (disposed || !tabs.has(tabId)) return;
+      let set = inFlightByTab.get(tabId);
+      if (!set) {
+        set = new Set();
+        inFlightByTab.set(tabId, set);
+      }
+      set.add(requestId);
+    },
+    noteFinish(tabId, requestId) {
+      const set = inFlightByTab.get(tabId);
+      if (set?.delete(requestId) && set.size === 0) inFlightByTab.delete(tabId);
+    },
+    countInFlight(tabId) {
+      return inFlightByTab.get(tabId)?.size ?? 0;
+    },
+  };
+
+  const drain: ExecutionNetworkDrain = {
+    beginTab(tabId) {
+      if (!disposed) tabs.add(tabId);
+    },
+    endTab(tabId) {
+      tabs.delete(tabId);
+      // Requests from a deregistered tab are forgotten wholesale — a stale
+      // entry must never pin inFlight > 0 for a tab that is gone.
+      inFlightByTab.delete(tabId);
+    },
+    async drainForTab(tabId, timeoutMs) {
+      const started = performance.now();
+      if (timeoutMs <= 0 || disposed || !tabs.has(tabId)) {
+        return { drained: true, timedOut: false, waitedMs: 0 };
+      }
+      let stableZero = 0;
+      while (performance.now() - started < timeoutMs) {
+        if (internals.countInFlight(tabId) === 0) {
+          stableZero++;
+          if (stableZero >= EXECUTION_DRAIN_STABLE_SAMPLES) {
+            return { drained: true, timedOut: false, waitedMs: performance.now() - started };
+          }
+        } else {
+          stableZero = 0;
+        }
+        await new Promise((r) => setTimeout(r, EXECUTION_DRAIN_POLL_MS));
+      }
+      const remaining = internals.countInFlight(tabId);
+      return { drained: remaining === 0, timedOut: remaining > 0, waitedMs: performance.now() - started };
+    },
+    dispose() {
+      disposed = true;
+      tabs.clear();
+      inFlightByTab.clear();
+      if (activeDrainSession?.drain === drain) activeDrainSession = null;
+    },
+  };
+
+  activeDrainSession = { drain, internals };
+  return drain;
+}
+
+/**
+ * Number of causal in-flight requests the active session tracks for a tab
+ * (diagnostics + tests). 0 when no session is active or the tab is not
+ * registered.
+ */
+export function getExecutionDrainInFlightForTab(tabId: number): number {
+  const s = activeDrainSession;
+  if (!s) return 0;
+  return s.internals.countInFlight(tabId);
+}
+
 /**
  * CER-2: Exact-ID lookup of network evidence for a navigation.
  * Returns ring entries (completed) AND in-flight entries tagged with the
@@ -924,6 +1106,16 @@ function registerWebRequestListeners(): void {
   // Async: the awaited durable-ledger write inside extends SW lifetime
   // (MV3 keeps the worker alive while the handler's promise is pending).
   onBeforeRequestCallback = async (details) => {
+    // Option D: execution drain sees requests BEFORE the recorder gate —
+    // RUN_TEST runs with recording stopped, so the recorder gate is closed.
+    drainNoteRequestStart(
+      details.tabId,
+      details.frameId,
+      details.requestId,
+      details.url,
+      details.type ?? 'other',
+    );
+
     // MV3 lifecycle fix: membership in the persisted observing set is the
     // gate — not which SW instance is alive. Unknown-state (gate not yet
     // seeded from storage) captures conservatively into the ring.
@@ -1034,6 +1226,11 @@ function registerWebRequestListeners(): void {
   // Async: the awaited durable-ledger enrichment write inside extends SW
   // lifetime until the storage write settles.
   onCompletedCallback = async (details) => {
+    // Option D: execution drain clears before the recorder gate (parity
+    // with the start hook — a finish must be visible even when the
+    // recorder gate would return early).
+    drainNoteRequestFinish(details.tabId, details.requestId);
+
     if (!shouldProcessRequest(details.tabId)) return;
 
     const inFlight = inFlightRequests.get(details.requestId);
@@ -1107,6 +1304,10 @@ function registerWebRequestListeners(): void {
   };
 
   onErrorCallback = (details) => {
+    // Option D: execution drain clears on error too — a failed request is
+    // finished (never blocks the drain indefinitely).
+    drainNoteRequestFinish(details.tabId, details.requestId);
+
     if (!shouldProcessRequest(details.tabId)) return;
 
     const inFlight = inFlightRequests.get(details.requestId);

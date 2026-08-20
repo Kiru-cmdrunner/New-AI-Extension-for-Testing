@@ -41,6 +41,7 @@ import type {
   IRAssertionResult,
 } from '../domain/execution-ir/adapters/ir-executor';
 import type { ElementIdentity } from '../shared/types';
+import type { ExecutionNetworkDrain } from '../background/network-observation';
 
 // ── Types ───────────────────────────────────────────────────
 
@@ -97,6 +98,15 @@ export interface IRExecutorImplOptions {
   readonly updateTabUrl?: (tabId: number, url: string) => Promise<void>;
   /** Function to close a tab. */
   readonly closeTab?: (tabId: number) => Promise<void>;
+  /**
+   * Optional inter-step causal network drain (Option D). When provided, the
+   * replay tab is registered with it and — after each passed action, and
+   * after navigate-step page load — the executor waits for the tab's causal
+   * in-flight requests to finish (bounded by the step's existing timeoutMs)
+   * before evaluating assertions / starting the next step. Type-only import:
+   * keeps the executor decoupled (tests inject a stub).
+   */
+  readonly networkDrain?: ExecutionNetworkDrain;
 }
 
 // ── Default Chrome API bindings ─────────────────────────────
@@ -146,6 +156,7 @@ export class IRExecutorImpl implements IRExecutor {
   private readonly getTabUrl: (tabId: number) => Promise<string>;
   private readonly updateTabUrl: (tabId: number, url: string) => Promise<void>;
   private readonly closeTab: (tabId: number) => Promise<void>;
+  private readonly networkDrain: ExecutionNetworkDrain | null;
 
   constructor(options?: IRExecutorImplOptions) {
     this.createTab = options?.createTab ?? defaultCreateTab;
@@ -154,6 +165,7 @@ export class IRExecutorImpl implements IRExecutor {
     this.getTabUrl = options?.getTabUrl ?? defaultGetTabUrl;
     this.updateTabUrl = options?.updateTabUrl ?? defaultUpdateTabUrl;
     this.closeTab = options?.closeTab ?? defaultCloseTab;
+    this.networkDrain = options?.networkDrain ?? null;
   }
 
   async execute(
@@ -176,6 +188,9 @@ export class IRExecutorImpl implements IRExecutor {
     let tabId: number;
     try {
       tabId = await this.createTab(startUrl);
+      // Option D: register the replay tab with the drain session so its
+      // causal in-flight requests pace the run (scoped: this tab only).
+      this.networkDrain?.beginTab(tabId);
       // Wait for page to load
       await this.waitForPageLoad(tabId);
     } catch (e) {
@@ -236,6 +251,10 @@ export class IRExecutorImpl implements IRExecutor {
 
     // 4. Clean up: close the tab
     await this.closeTab(tabId).catch(() => {});
+    // Option D: deregister the replay tab from the drain session — its
+    // requests stop counting immediately (a late close-time request can
+    // never pin a future drain).
+    this.networkDrain?.endTab(tabId);
 
     // 5. Determine overall status
     const hasError = stepResults.some((r) => r.status === 'error');
@@ -277,6 +296,17 @@ export class IRExecutorImpl implements IRExecutor {
         await this.updateTabUrl(tabId, step.target.url);
         await this.waitForPageLoad(tabId);
         await this.injectScript(tabId);
+
+        // Option D — the destination document's data fetches (fired at/after
+        // commit, e.g. the cart document's initial /api/cart) are still in
+        // flight when tab.status hits 'complete'. Drain before evaluating
+        // the navigate step's destination-page assertions, same bound.
+        if (this.networkDrain) {
+          await this.networkDrain.drainForTab(
+            tabId,
+            step.executionParameters.timeoutMs ?? 0,
+          );
+        }
 
         // Step-scoped assertions on a navigate step describe the DESTINATION
         // page (e.g. "cart count shows 0 items" recorded post-navigation) —
@@ -419,6 +449,19 @@ export class IRExecutorImpl implements IRExecutor {
         error: actionResponse.error,
         actualValue: actionResponse.actualValue,
       };
+    }
+
+    // Option D — inter-step causal network drain: the action's consequence
+    // may ride on a fetch still in flight (e.g. add-to-cart POST → server
+    // commit → next render). Wait for the replay tab's causal in-flight
+    // requests to finish BEFORE evaluating this step's assertions — bounded
+    // by the step's existing timeoutMs (0 → no wait, behavior preserved).
+    // Never fails the step: on timeout it proceeds with the state as-is.
+    if (this.networkDrain) {
+      await this.networkDrain.drainForTab(
+        tabId,
+        step.executionParameters.timeoutMs ?? 0,
+      );
     }
 
     // Evaluate assertions (only if action succeeded)

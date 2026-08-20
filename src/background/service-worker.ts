@@ -966,19 +966,32 @@ async function handleRunTest(): Promise<void> {
 
   // 2. Create executor and execute the plan
   const { IRExecutorImpl } = await import('../execution/ir-executor-impl');
-  const executor = new IRExecutorImpl();
+
+  // Option D: inter-step causal network drain session for this run. The
+  // executor registers its replay tab(s) and paces steps on the tab's
+  // causal in-flight requests (webRequest hooks in network-observation.ts —
+  // captured before the recorder gate, so RUN_TEST works with recording
+  // stopped). Disposed in the finally below — never leaks across runs.
+  const { createExecutionDrain } = await import('./network-observation');
+  const networkDrain = createExecutionDrain();
+
+  const executor = new IRExecutorImpl({ networkDrain });
 
   // Track healed elements via a counter (the override map is internal to the executor)
   let healedCount = 0;
-  const result = await executor.execute(irPlan, {
-    onStepComplete: (step, stepResult) => {
-      // Track healed elements for post-execution invalidation
-      if (step.target.kind === 'element' && stepResult.status === 'passed') {
-        // The executor's healing is internal — we detect healed elements
-        // by checking if the step that initially failed now passes
-      }
-    },
-  });
+  // Option D: dispose the drain session however the run ends (result,
+  // rejection, or exception) — its webRequest hooks stop firing immediately.
+  const result = await executor
+    .execute(irPlan, {
+      onStepComplete: (step, stepResult) => {
+        // Track healed elements for post-execution invalidation
+        if (step.target.kind === 'element' && stepResult.status === 'passed') {
+          // The executor's healing is internal — we detect healed elements
+          // by checking if the step that initially failed now passes
+        }
+      },
+    })
+    .finally(() => networkDrain.dispose());
 
   // 2b. D2: the _generated_at companion is now written at GENERATION time
   // (handleStopRecording + post-healing rewrite). The old write-here-only-
