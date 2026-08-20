@@ -33,6 +33,15 @@ export interface WireObservedItem {
   /** ≤30 entries; only attributes named by the matching selector config. */
   attributes: Record<string, string>;
   visible: boolean;
+  /**
+   * Phase 2b: observer-verified DOM uniqueness of the item's allowlisted
+   * attribute selector at capture time. TRUE only when the observer ran
+   * querySelectorAll(`[attr="value"]`) over the settled snapshot DOM and
+   * found EXACTLY one match. Optional for legacy-snapshot compatibility
+   * (snapshots recorded before Phase 2b lack the flag → treated as
+   * UNVERIFIED → id-less items stay skipped exactly as before).
+   */
+  uniqueInSnapshot?: boolean;
 }
 
 /**
@@ -51,4 +60,39 @@ export interface WirePageContentSnapshot {
   itemsOverflow: number;
   scannedAt: number;
   scanDurationMs: number;
+}
+
+// ── Phase 2b: verified counter-locator allowlist ──────────────────────────
+
+/**
+ * Attribute names whose value may serve as a replay locator for id-less
+ * items when the observer has VERIFIED the resulting selector is unique in
+ * the snapshot DOM (Phase 2b). Deliberately narrow:
+ *   - aria-label / data-count are user- or app-stable identity surfaces;
+ *   - the alternate test-ID family (data-auto-id / data-test-id / data-test)
+ *     is the same family Phase 2a capture and the 2c entity locator trust;
+ *   - data-testid stays out (the default configs never extract it for
+ *     counter entries — only the a-slice collection entry does, and
+ *     collections derive via the container's #id, not attributes).
+ * Entity identity attributes (data-sku, data-asin, …) are NOT here — they
+ * are entity-identity, handled by the entity locator branch (2c), and
+ * value-bearing entity attrs must not become counter coordinates.
+ * Excluded on purpose: class fragments, matchedSelector, synthesized
+ * nth-child chains (INV-GEN-4), text content, bare role.
+ */
+export const VERIFIED_ATTR_ALLOWLIST: readonly string[] = [
+  'aria-label',
+  'data-count',
+  'data-auto-id',
+  'data-test-id',
+  'data-test',
+];
+
+/**
+ * Whether `name` is a Phase-2b verifiable attribute. Shared by the
+ * observer (stamps uniqueInSnapshot) and the derivation (emits locators
+ * only for verified + allowlisted attributes).
+ */
+export function isVerifiedAttrAllowed(name: string): boolean {
+  return VERIFIED_ATTR_ALLOWLIST.includes(name);
 }

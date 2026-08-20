@@ -7,7 +7,10 @@
  *    #ancestor assertion (double-capture dedup)
  *  - entity without any identity attr but with ancestor #id → #id preserved (tier id)
  *  - entity without identity attr and without ancestor #id → skipped
- *  - 2b HELD: id-less counter → no assertion; counter w/ ancestor #id → #ancestor (no attr locator)
+ *  - Phase 2b: id-less counters derive attribute locators ONLY when the
+ *    observer stamped uniqueInSnapshot=true and the attribute is allowlisted;
+ *    verified attribute outranks an ANCESTOR #id; own #id always wins;
+ *    unverified items keep the exact legacy policy (skip / #ancestor)
  *  - collection COUNT still requires #id container (unchanged)
  *  - OR-1: repeated interactions keep separate assertions per sourceEventId
  */
@@ -116,8 +119,26 @@ describe('Defect 2c — entity locator priority', () => {
   });
 });
 
-describe('2b HELD — id-less counter locator policy unchanged', () => {
-  it('id-less counter (no id anywhere) → no assertion', () => {
+describe('Phase 2b — verified id-less counter locators', () => {
+  it('id-less counter with a verified allowlisted attribute → textMatch targets the attribute selector', () => {
+    const items = [
+      item({
+        kind: 'counter',
+        text: '2',
+        numericValue: 2,
+        domPath: 'body > header > span > span',
+        attributes: { 'data-auto-id': 'cart-count' },
+        uniqueInSnapshot: true,
+      }),
+    ];
+    const map = deriveStepAssertions([interactionOf('evt-1', items)]);
+    const asr = map.get('evt-1') ?? [];
+    expect(asr.length).toBe(1);
+    expect(asr[0].type).toBe('textMatch');
+    expect(asr[0].targetCss).toBe('[data-auto-id="cart-count"]');
+  });
+
+  it('id-less counter WITHOUT verification → no assertion (legacy policy unchanged)', () => {
     const items = [
       item({
         kind: 'counter',
@@ -131,7 +152,7 @@ describe('2b HELD — id-less counter locator policy unchanged', () => {
     expect(map.size).toBe(0);
   });
 
-  it('counter with ancestor #id → textMatch targets #ancestor-id (no attribute locator)', () => {
+  it('verified attribute outranks ANCESTOR #id (wrong-element fix, mirrors 2c)', () => {
     const items = [
       item({
         kind: 'counter',
@@ -139,6 +160,42 @@ describe('2b HELD — id-less counter locator policy unchanged', () => {
         numericValue: 3,
         domPath: 'body > main#app-root > div#cart-root > div.total > span',
         attributes: { 'data-auto-id': 'cart-total' },
+        uniqueInSnapshot: true,
+      }),
+    ];
+    const map = deriveStepAssertions([interactionOf('evt-1', items)]);
+    const asr = map.get('evt-1') ?? [];
+    expect(asr.length).toBe(1);
+    expect(asr[0].targetCss).toBe('[data-auto-id="cart-total"]');
+    expect(asr[0].targetCss).not.toBe('#cart-root');
+  });
+
+  it('OWN #id still outranks a verified attribute (tier id preserved)', () => {
+    const items = [
+      item({
+        kind: 'counter',
+        text: '0 items',
+        numericValue: 0,
+        domPath: 'body > main#app-root > p > span#cart-count',
+        attributes: { 'data-count': '0', 'aria-label': 'Cart' },
+        uniqueInSnapshot: true,
+      }),
+    ];
+    const map = deriveStepAssertions([interactionOf('evt-1', items)]);
+    const asr = map.get('evt-1') ?? [];
+    expect(asr.length).toBe(1);
+    expect(asr[0].targetCss).toBe('#cart-count');
+  });
+
+  it('unverified id-less counter with an ancestor #id keeps the legacy #ancestor fallback', () => {
+    const items = [
+      item({
+        kind: 'counter',
+        text: '3',
+        numericValue: 3,
+        domPath: 'body > main#app-root > div#cart-root > div.total > span',
+        attributes: { 'data-auto-id': 'cart-total' },
+        // uniqueInSnapshot absent — legacy snapshot / observer-not-verified
       }),
     ];
     const map = deriveStepAssertions([interactionOf('evt-1', items)]);
@@ -148,7 +205,39 @@ describe('2b HELD — id-less counter locator policy unchanged', () => {
     expect(asr[0].type).toBe('textMatch');
   });
 
-  it('no counter assertion uses a data-auto-id/data-testid attribute locator', () => {
+  it('verified attribute must be allowlisted: non-allowlisted attrs never become locators', () => {
+    const items = [
+      item({
+        kind: 'counter',
+        text: '2',
+        numericValue: 2,
+        domPath: 'body > header > span > span',
+        attributes: { 'data-sku': 'X1', 'data-tracking-token': 'abc123' },
+        uniqueInSnapshot: true, // stamp true even though attrs are not allowlisted
+      }),
+    ];
+    const map = deriveStepAssertions([interactionOf('evt-1', items)]);
+    expect(map.size).toBe(0);
+  });
+
+  it('aria-label verified attribute derives [aria-label="…"] locator', () => {
+    const items = [
+      item({
+        kind: 'counter',
+        text: '2',
+        numericValue: 2,
+        domPath: 'body > header > button > span',
+        attributes: { 'aria-label': 'Cart items' },
+        uniqueInSnapshot: true,
+      }),
+    ];
+    const map = deriveStepAssertions([interactionOf('evt-1', items)]);
+    const asr = map.get('evt-1') ?? [];
+    expect(asr.length).toBe(1);
+    expect(asr[0].targetCss).toBe('[aria-label="Cart items"]');
+  });
+
+  it('uniqueInSnapshot:false is treated as unverified (no locator)', () => {
     const items = [
       item({
         kind: 'counter',
@@ -156,22 +245,115 @@ describe('2b HELD — id-less counter locator policy unchanged', () => {
         numericValue: 2,
         domPath: 'body > header > span > span',
         attributes: { 'data-auto-id': 'cart-count' },
-      }),
-      item({
-        kind: 'counter',
-        text: '3',
-        numericValue: 3,
-        domPath: 'body > main#app-root > div#cart-root > div.total > span',
-        attributes: { 'data-auto-id': 'cart-total' },
+        uniqueInSnapshot: false,
       }),
     ];
     const map = deriveStepAssertions([interactionOf('evt-1', items)]);
-    const all = [...map.values()].flat();
-    for (const a of all) {
-      expect(a.targetCss.includes('data-auto-id')).toBe(false);
-      expect(a.targetCss.includes('data-testid')).toBe(false);
-      expect(a.targetCss.includes('data-test-id')).toBe(false);
-    }
+    expect(map.size).toBe(0);
+  });
+
+  it('verified counter with NO parseable numericValue is skipped (numeric gate unchanged)', () => {
+    const items = [
+      item({
+        kind: 'counter',
+        text: '—',
+        numericValue: null,
+        domPath: 'body > header > span > span',
+        attributes: { 'data-auto-id': 'cart-count' },
+        uniqueInSnapshot: true,
+      }),
+    ];
+    const map = deriveStepAssertions([interactionOf('evt-1', items)]);
+    expect(map.size).toBe(0);
+  });
+
+  it('escaped attribute values survive selector quoting (2b locators)', () => {
+    const items = [
+      item({
+        kind: 'counter',
+        text: '2',
+        numericValue: 2,
+        domPath: 'body > header > span > span',
+        attributes: { 'data-auto-id': 'cart "count"' },
+        uniqueInSnapshot: true,
+      }),
+    ];
+    const map = deriveStepAssertions([interactionOf('evt-1', items)]);
+    const asr = map.get('evt-1') ?? [];
+    expect(asr.length).toBe(1);
+    expect(asr[0].targetCss).toBe('[data-auto-id="cart \\"count\\""]');
+  });
+
+  it('nested counters (badge wrapper + leaf span) dedupe to the LEAF — cap not exhausted, entity presence survives (2b crowding fix)', () => {
+    // Clone reality: the badge element (aria-label) WRAPS the count span
+    // (data-auto-id). Both derive textMatch → the redundant ancestor twin
+    // consumed the MAX_ASSERTIONS_PER_STEP=3 cap and crowded out entity
+    // presence. Dedup keeps the leaf; the ancestor wrapper is dropped.
+    const items: WireObservedItem[] = [
+      item({
+        kind: 'counter',
+        text: '1',
+        numericValue: 1,
+        domPath: 'body > header > span',
+        attributes: { 'aria-label': 'Cart items' },
+        uniqueInSnapshot: true,
+      }),
+      item({
+        kind: 'counter',
+        text: '1',
+        numericValue: 1,
+        domPath: 'body > header > span > span',
+        attributes: { 'data-auto-id': 'cart-count' },
+        uniqueInSnapshot: true,
+      }),
+      item({
+        kind: 'counter',
+        text: '1',
+        numericValue: 1,
+        domPath: 'body > main > div#cart-root > div > span',
+        attributes: { 'data-auto-id': 'cart-total' },
+        uniqueInSnapshot: true,
+      }),
+      item({ kind: 'entity', entityId: 'MEAL', attributes: { 'data-sku': 'MEAL' } }),
+    ];
+    const map = deriveStepAssertions([interactionOf('evt-1', items)]);
+    const asr = map.get('evt-1') ?? [];
+    // Three assertions: leaf cart-count + cart-total + entity presence
+    expect(asr.length).toBe(3);
+    const locs = asr.map((a) => a.targetCss);
+    expect(locs).toContain('[data-auto-id="cart-count"]');
+    expect(locs).toContain('[data-auto-id="cart-total"]');
+    expect(locs).toContain('[data-sku="MEAL"]');
+    // The badge wrapper twin is GONE (redundant ancestor dropped)
+    expect(locs).not.toContain('[aria-label="Cart items"]');
+  });
+
+  it('nested-counter dedup is path-prefix based: siblings with a shared ancestor prefix are NOT deduped', () => {
+    const items = [
+      item({
+        kind: 'counter',
+        text: '1',
+        numericValue: 1,
+        domPath: 'body > header > span',
+        attributes: { 'aria-label': 'Cart items' },
+        uniqueInSnapshot: true,
+      }),
+      item({
+        kind: 'counter',
+        text: '2',
+        numericValue: 2,
+        domPath: 'body > header > nav > span',
+        attributes: { 'data-auto-id': 'wish-count' },
+        uniqueInSnapshot: true,
+      }),
+    ];
+    const map = deriveStepAssertions([interactionOf('evt-1', items)]);
+    const asr = map.get('evt-1') ?? [];
+    // 'body > header > span' is NOT a prefix of 'body > header > nav > span'
+    // (segment boundary) — both are distinct widgets, both derive.
+    expect(asr.length).toBe(2);
+    expect(asr.map((a) => a.targetCss)).toContain('[aria-label="Cart items"]');
+    expect(asr.map((a) => a.targetCss)).toContain('[data-auto-id="wish-count"]');
   });
 });
 

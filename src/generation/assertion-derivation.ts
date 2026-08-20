@@ -43,6 +43,7 @@ import type {
   WireObservedItem,
   WirePageContentSnapshot,
 } from '../shared/page-content-wire';
+import { isVerifiedAttrAllowed } from '../shared/page-content-wire';
 import type { GenerationEnrichment, StepScopedAssertion } from './generation-types';
 
 // ── Bounds ───────────────────────────────────────────────────────────────
@@ -125,6 +126,29 @@ function identityAttributeSelector(item: WireObservedItem): string | null {
 }
 
 /**
+ * Phase 2b: locator for id-less items via an observer-VERIFIED attribute.
+ * Requires BOTH the allowlist AND the capture-time uniqueness stamp
+ * (uniqueInSnapshot === true). The stamp is computed over the settled
+ * snapshot DOM — the same settled DOM state the recorder's evidence window
+ * guarantees — so a true stamp means querySelectorAll matched exactly one
+ * element at capture. Anything else (no stamp, stamp false, attribute not
+ * allowlisted) keeps the existing skip policy unchanged.
+ */
+function verifiedAttributeSelector(item: WireObservedItem): string | null {
+  if (item.kind === 'entity') return null; // entities use their own identity
+  if (item.uniqueInSnapshot !== true) return null; // unverified → legacy policy
+  const attrs = item.attributes ?? {};
+  for (const [name, value] of Object.entries(attrs)) {
+    if (!isVerifiedAttrAllowed(name)) continue;
+    if (!value || value.length === 0) continue;
+    // The observer verified THIS attribute (first allowlisted in capture
+    // order — same iteration order, same candidate).
+    return `[${name}="${attrValueForSelector(value)}"]`;
+  }
+  return null;
+}
+
+/**
  * Identity attributes used as selector `idAttribute` across the semantic
  * configs (data-asin, data-product-id, data-item-id, data-sku,
  * data-order-id, data-order-number). Kept in sync with
@@ -189,6 +213,20 @@ function dedupeEntities(items: WireObservedItem[]): WireObservedItem[] {
 }
 
 /**
+ * Phase 2b: parse the #id from the item's OWN path segment (the LAST
+ * segment of the domPath). Distinguishes the element's own id from an
+ * ancestor's — the wrong-element risk 2c fixed for entities also exists
+ * for id-less counters (e.g. cart-total under #cart-root derived the
+ * CONTAINER's text, not the counter's).
+ */
+function ownIdFromDomPath(domPath: string): string | null {
+  const segments = domPath.split('>');
+  const last = (segments[segments.length - 1] ?? '').trim();
+  const m = last.match(/^([a-zA-Z][\w-]*)#([\w-]+)$/);
+  return m ? m[2] : null;
+}
+
+/**
  * Decide the replay locator for one observed item.
  *
  * Priority: #id from domPath → identity attribute for entities → skip.
@@ -196,6 +234,14 @@ function dedupeEntities(items: WireObservedItem[]): WireObservedItem[] {
  * are typically multi-match (collections of siblings share them), which
  * Playwright strict mode would reject and which LOCATOR_CONFIDENCE
  * classifies as unverifiable at generation time.
+ *
+ * Phase 2b extends the non-entity branch, mirroring 2c's priority shape:
+ *   own #id (last domPath segment) → verified allowlisted attribute →
+ *   ancestor #id (legacy fallback, unchanged) → skip.
+ * A VERIFIED attribute points at the element itself and therefore
+ * outranks an ancestor #id, which may belong to a container whose text
+ * differs from the counter's (wrong-element risk). Unverified items
+ * (uniqueInSnapshot !== true) keep the pre-2b behavior exactly.
  */
 function decideLocator(item: WireObservedItem): LocatorDecision {
   // Entities: their OWN identity attribute is the most precise coordinate —
@@ -211,13 +257,21 @@ function decideLocator(item: WireObservedItem): LocatorDecision {
     return { css: null, tier: 'none' };
   }
 
+  // Own #id: the highest-confidence coordinate, exactly as before.
+  const ownId = ownIdFromDomPath(item.domPath);
+  if (ownId) return { css: `#${ownId}`, tier: 'id' };
+
+  // Phase 2b: observer-VERIFIED, allowlisted attribute — points at the
+  // element itself, so it outranks an ancestor #id.
+  const verifiedAttr = verifiedAttributeSelector(item);
+  if (verifiedAttr) {
+    return { css: verifiedAttr, tier: 'identity-attribute' };
+  }
+
+  // Ancestor #id fallback (legacy behavior, unchanged): better than no
+  // coordinate, but only reached when no verified attribute exists.
   const id = idFromDomPath(item.domPath);
   if (id) return { css: `#${id}`, tier: 'id' };
-
-  const identityAttr = identityAttributeSelector(item);
-  if (identityAttr) {
-    return { css: identityAttr, tier: 'identity-attribute' };
-  }
 
   return { css: null, tier: 'none' };
 }
@@ -246,6 +300,25 @@ function isCounterToken(text: string, numericValue: number): boolean {
   return tokens.some((t) => Number(t.replace(',', '.')) === numericValue);
 }
 void isCounterToken;
+
+/**
+ * Phase 2b: collapse nested-counter double-derivation. The same counter
+ * widget can be captured twice — the badge element AND its inner count
+ * span (ancestor domPath is a path-prefix of the leaf's). Keep the LEAF
+ * (more precise text and locator), drop the ancestor wrapper. Without
+ * this, the redundant twin consumes the per-step assertion cap and crowds
+ * out lower-priority kinds (e.g. entity presence) that the counters 2b
+ * newly enables would otherwise displace. Pre-2b both nested captures
+ * were id-less and derived nothing, so this dedupe only REMOVES
+ * redundancy introduced by 2b — it cannot remove a pre-2b assertion.
+ */
+function dropAncestorCounters(counters: WireObservedItem[]): WireObservedItem[] {
+  return counters.filter(
+    (a) => !counters.some(
+      (b) => b !== a && b.domPath.startsWith(a.domPath + ' > '),
+    ),
+  );
+}
 
 /**
  * Counter semantics WITHOUT a regex: a standalone number token. The
@@ -295,7 +368,9 @@ function deriveForSnapshot(snapshot: WirePageContentSnapshot): StepScopedAsserti
   //    the most robust comparison across both backends regardless of the
   //    4c-iii-c MATCHES alignment. numericValue is still required — a
   //    counter we could not parse at capture is too unstable to assert.
-  for (const item of byPriority.counter) {
+  //    Nested-counter dedup first (Phase 2b): the badge wrapper and its
+  //    leaf span are the same widget; only the leaf derives.
+  for (const item of dropAncestorCounters(byPriority.counter)) {
     if (item.numericValue === null || !Number.isFinite(item.numericValue)) continue;
     const text = counterTokenAssertionValue(item);
     if (!text) continue;

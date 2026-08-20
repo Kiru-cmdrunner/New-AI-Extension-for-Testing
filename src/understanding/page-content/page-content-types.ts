@@ -47,6 +47,13 @@ export interface ObservedItem {
   attributes: Record<string, string>;
   /** Whether the element was visible at scan time. */
   visible: boolean;
+  /**
+   * Phase 2b: capture-time verification that the item's allowlisted
+   * attribute selector matches EXACTLY one element in the snapshot DOM
+   * (querySelectorAll count === 1). Optional: absent on snapshots from
+   * older builds (treated as unverified downstream).
+   */
+  uniqueInSnapshot?: boolean;
 }
 
 // -- Page Content Snapshot --

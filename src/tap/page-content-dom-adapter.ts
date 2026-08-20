@@ -142,5 +142,6 @@ function toWireItem(item: ObservedItem): WireObservedItem {
     domPath: item.domPath,
     attributes: { ...item.attributes },
     visible: item.visible,
+    uniqueInSnapshot: item.uniqueInSnapshot,
   };
 }

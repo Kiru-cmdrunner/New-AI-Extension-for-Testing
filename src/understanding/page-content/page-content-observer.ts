@@ -17,6 +17,7 @@ import type {
   SemanticItemKind,
 } from './page-content-types';
 import type { PageContentConfig, SemanticSelector } from './page-content-types';
+import { isVerifiedAttrAllowed } from '../../shared/page-content-wire';
 
 // -- Bounds --
 
@@ -244,7 +245,66 @@ export class PageContentObserver {
       domPath: path,
       attributes,
       visible: true,
+      // Phase 2b: capture-time uniqueness stamp for id-less replay
+      // locators. Only allowlisted attributes are candidates; entities are
+      // excluded (their identity attribute is already a precise coordinate
+      // via the 2c entity locator branch). Stamped ONLY when the selector
+      // verifiably matched exactly one element in the snapshot DOM.
+      uniqueInSnapshot: this.uniqueAttrSelector(selConfig, el, attributes),
     };
+  }
+
+  /**
+   * Phase 2b: verify that the item's FIRST allowlisted attribute (in
+   * capture order) yields a single-element replay selector in the CURRENT
+   * snapshot DOM.
+   *
+   * Returns true only when ALL hold:
+   *   1. the kind is counter / status-badge / notification (id-less kinds);
+   *   2. the item carries at least one allowlisted attribute with a
+   *      non-empty value — only the FIRST such attribute (attribute
+   *      insertion order, i.e. the selector config's extractAttributes
+   *      order) is the verification candidate;
+   *   3. querySelectorAll('[attr="value"]') returns EXACTLY one element,
+   *      and that element is the item itself.
+   *
+   * The single-candidate rule keeps the observer and the derivation
+   * byte-identical in WHICH attribute they choose (the derivation re-derives
+   * the same first-allowlisted attribute from the captured attributes map —
+   * it has no DOM to re-verify against). A shared first attribute never
+   * falls through to a later, possibly-unique one: conservative by design.
+   *
+   * Absent/undefined ⇒ no allowlisted candidate existed. false ⇒ the
+   * candidate selector is NOT unique. Either way the derivation keeps the
+   * id-less skip policy (tier 'none') — this stamp can only ENABLE
+   * locators, never weaken the default.
+   */
+  private uniqueAttrSelector(
+    selConfig: SemanticSelector,
+    el: ElementLike,
+    attributes: Record<string, string>,
+  ): boolean | undefined {
+    if (selConfig.kind === 'entity' || selConfig.kind === 'collection') return undefined;
+    let candidate: [string, string] | null = null;
+    for (const [name, value] of Object.entries(attributes)) {
+      if (isVerifiedAttrAllowed(name) && value && value.length > 0) {
+        candidate = [name, value];
+        break; // first allowlisted candidate only — see docblock
+      }
+    }
+    if (!candidate) return undefined;
+    const [name, value] = candidate;
+    const selector = `[${name}="${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"]`;
+    let matches: ElementLike[];
+    try {
+      matches = this.dom.querySelectorAll(selector);
+    } catch {
+      return undefined;
+    }
+    if (matches.length !== 1) return false;
+    // Identity check: the single match must BE this element (path equality;
+    // ElementLike has no cross-adapter element identity).
+    return matches[0].getPath() === el.getPath();
   }
 
   /**
