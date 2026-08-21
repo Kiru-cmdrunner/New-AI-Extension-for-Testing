@@ -1906,7 +1906,39 @@ export class EvidenceCollector {
           // dialog/window.open stamp still pending on the document — a
           // dialog fired by the lifecycle's trigger (e.g. a date-picker's
           // confirm) would otherwise be orphaned on <html>.
+          //
+          // Fix A (dialog-attribution RCA 2026-08-21): LAST-RESORT only.
+          // mouseenter is CAPTURE_ONLY (no window ever opens for a Hover),
+          // so this path is how an abandoned Hover lifecycle could steal a
+          // stamp before the CAUSAL click window's settle-close read — the
+          // stamp landed on a Hover card the production filter hides
+          // (endState !== 'completed' && meaningful !== true), making the
+          // dialog invisible while the Click showed dlg:null. EventTap
+          // listens in the CAPTURE phase, so the page handler stamps the
+          // attribute AFTER openWindow's at-birth drain — the stamp is
+          // always claimed by a LATER reader. Destructive read + first
+          // reader wins ⇒ wrong owner.
+          //
+          // Membership-based fix (no timing): when an ACTIVE, non-closed
+          // dialog-capable window exists (WINDOW_OPEN_EVENTS + submit),
+          // defer the drain — that window's close-time readPageWorldSignals
+          // is the designed claimant (open-time birth drain + close-time
+          // re-read in buildAndDeliverEvidence / closeWindow settle branch).
+          // Stop-force-close and pagehide finalize all such windows, so the
+          // stamp is still claimed exactly once in every terminal path —
+          // nothing is orphaned. Only when NO candidate owner remains does
+          // this drain run (previous last-resort behaviour, unchanged).
           ...((): Pick<ApplicationEvidence, 'triggeredDialog' | 'openedWindow'> => {
+            const candidateOwnerExists = this.activeWindows.some(
+              (w) =>
+                !w.isClosed &&
+                (WINDOW_OPEN_EVENTS.has(w.sourceEventType) ||
+                  w.sourceEventType === 'submit'),
+            );
+            if (candidateOwnerExists) {
+              // Defer — leave the stamp for the causal window's close read.
+              return {};
+            }
             const sig = readPageWorldSignals();
             return {
               ...(sig.dialog ? { triggeredDialog: sig.dialog } : {}),

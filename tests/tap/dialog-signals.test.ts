@@ -224,4 +224,95 @@ describe('G1 — EvidenceCollector dialog ownership (jsdom lifecycle)', () => {
     expect(evA?.applicationEvidence.triggeredDialog?.message).toBe('belongs to first');
     expect(Object.prototype.hasOwnProperty.call(evB?.applicationEvidence ?? {}, 'triggeredDialog')).toBe(false);
   });
+
+  // ── Fix A (dialog-attribution RCA 2026-08-21) ────────────────────────
+  // finalizeWithoutWindow (the ONLY evidence source for an abandoned Hover:
+  // mouseenter is CAPTURE_ONLY, no window ever opens) must defer its G1
+  // stamp drain while a dialog-capable window is still live — the causal
+  // click window's close-time read is the designed claimant. Membership
+  // check on activeWindows, no clocks.
+
+  it('Fix A: abandons defer the stamp while the causal click window is live (stamp survives for the click)', () => {
+    const el = document.getElementById('b')!;
+    // Causal action opens its window (a click on the page).
+    collector.onAfterEvent(el, 'evt-fa-1', 'click', '#b');
+
+    // The page handler stamped the dialog AFTER the capture-phase
+    // at-birth drain ran (real-world ordering — EventTap is capture-phase).
+    stampDialog({ type: 'alert', message: 'causal click owns me' });
+
+    // An ambient Hover lifecycle now finalizes WITHOUT a window
+    // (mouseenter → CAPTURE_ONLY → finalizeWithoutWindow path).
+    collector.finalizeForInteraction({
+      lifecycleId: 'lc-fa-1',
+      interactionId: 'int-fa-1',
+      interactionType: 'Hover',
+      eventIds: ['evt-fa-hover-1'],
+      metadata: {},
+      endState: 'abandoned',
+    });
+    vi.advanceTimersByTime(200); // settle delay
+
+    // DEFERRED: the abandoned-Hover evidence carries NO dialog…
+    const hoverEv = deliveredEvidence.find(
+      (e) => e.sourceEventId === 'evt-fa-hover-1' || e.windowId === 'lc-evt-fa-hover-1',
+    );
+    expect(hoverEv).toBeTruthy();
+    expect(Object.prototype.hasOwnProperty.call(hoverEv!.applicationEvidence, 'triggeredDialog')).toBe(false);
+    // …and the stamp is STILL on <html> awaiting the click window's close.
+    expect(document.documentElement.getAttribute('data-cmdrunner-dialog')).toContain('causal click owns me');
+
+    // The click window then closes (stabilization) and claims the stamp.
+    mockNow = 10_000;
+    vi.advanceTimersByTime(10_000);
+    const clickEv = deliveredEvidence.find((e) => e.sourceEventId === 'evt-fa-1');
+    expect(clickEv?.applicationEvidence.triggeredDialog?.message).toBe('causal click owns me');
+  });
+
+  it('Fix A: no candidate owner → last-resort claim preserved (stamp not orphaned)', () => {
+    // NO window is open (e.g. a DatePicker whose focus+mousedown are
+    // capture-only, no click window anywhere).
+    stampDialog({ type: 'confirm', message: 'Discard?', result: 'OK' });
+
+    collector.finalizeForInteraction({
+      lifecycleId: 'lc-fa-2',
+      interactionId: 'int-fa-2',
+      interactionType: 'DatePicker',
+      eventIds: ['evt-fa-2'],
+      metadata: { selectedDate: '2026-08-21' },
+      endState: 'completed',
+      triggerIdentity: undefined,
+    });
+    vi.advanceTimersByTime(200);
+
+    // Claimed by the lifecycle evidence (previous behaviour, unchanged).
+    const lcEv = deliveredEvidence.find((e) => e.sourceEventId === 'evt-fa-2');
+    expect(lcEv).toBeTruthy();
+    expect(lcEv!.applicationEvidence.triggeredDialog).toEqual({
+      type: 'confirm', message: 'Discard?', result: 'OK',
+    });
+    expect(document.documentElement.hasAttribute('data-cmdrunner-dialog')).toBe(false);
+  });
+
+  it('Fix A: a non-dialog-capable live window (typing/input) does NOT block the last-resort claim', () => {
+    const input = document.createElement('input');
+    input.type = 'text';
+    document.body.appendChild(input);
+    // A typing window is live — but typing cannot fire a native dialog.
+    collector.onAfterEvent(input, 'evt-fa-3', 'input', 'input');
+
+    stampDialog({ type: 'alert', message: 'orphan rescue' });
+    collector.finalizeForInteraction({
+      lifecycleId: 'lc-fa-3',
+      interactionId: 'int-fa-3',
+      interactionType: 'Hover',
+      eventIds: ['evt-fa-3-hover'],
+      metadata: {},
+      endState: 'abandoned',
+    });
+    vi.advanceTimersByTime(200);
+
+    const lcEv = deliveredEvidence.find((e) => e.sourceEventId === 'evt-fa-3-hover');
+    expect(lcEv?.applicationEvidence.triggeredDialog?.message).toBe('orphan rescue');
+  });
 });
