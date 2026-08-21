@@ -162,13 +162,49 @@ const OPEN_SELECTION_SURFACE_ROLES = new Set([
 ]);
 
 /**
+ * Phase 6D.0: extract the semantic ARIA role tokens from an ancestorRoles
+ * chain. Capture (dom-context-extractor / deterministic-recorder) stores
+ * entries as `tag[role=x]` (e.g. `div[role=dialog]`) — bare entries are
+ * native tags and are preserved as-is. Deterministic, case-sensitive parse
+ * (ARIA roles are lowercase); no DOM, no mutation of the input.
+ *
+ * Why parse at the comparison boundary instead of changing the producer
+ * format: the chain is persisted on ledger entries (LP3) and feeds
+ * knowledge-repo signatures — changing the stored format would make
+ * `'dialog'` ambiguous (native <dialog> tag vs role) and drift persisted
+ * knowledge. Consumers compare against bare tokens; this is the single
+ * canonical bridge.
+ */
+export function extractSemanticRoles(ancestorRoles: readonly string[]): string[] {
+  const out: string[] = [];
+  for (const entry of ancestorRoles) {
+    const m = /^(\S+)\[role=(.+)\]$/.exec(entry);
+    if (m) {
+      // Multi-token roles ("div[role=button menuitem]") contribute each token;
+      // quoted variants ("div[role=\"dialog\"]") are unwrapped too.
+      const tokens = m[2].replace(/["']/g, '').split(/\s+/).filter(Boolean);
+      out.push(...tokens);
+    } else {
+      out.push(entry);
+    }
+  }
+  return out;
+}
+
+/**
  * S6/LP1: class tokens for open selection surfaces. Deliberately mirrors the
  * surface/menu/dialog conventions already used across the codebase
  * (DROPDOWN_SURFACE_CLASS_RE surface classes + DIALOG_RE's dialog tokens +
  * flyout/menu conventions) — one shared vocabulary, no site-specific tokens.
+ *
+ * Phase 6D.0: `popup` added so the vocabulary is a superset of DIALOG_RE
+ * (component-detector.ts) — a surface class that enriches a card as Dialog
+ * must also qualify a deliberate selection Click (int-47 RCA: the Dialog tag
+ * fired but LP1 didn't). Framework families (MuiDialog/ant-modal/p-dialog)
+ * are substring-covered by dialog/modal.
  */
 const OPEN_SELECTION_SURFACE_CLASS_RE =
-  /(listbox|dropdown|popover|overlay|modal|dialog|flyout|menu)/i;
+  /(listbox|dropdown|popover|overlay|modal|dialog|flyout|menu|popup|MuiDialog|ant-modal|p-dialog)/i;
 
 /**
  * S6/LP1: Is this click target inside an open selection surface?
@@ -182,7 +218,10 @@ export function isInsideOpenSelectionSurface(
   ancestorRoles: readonly string[],
   ancestorClasses: readonly string[],
 ): boolean {
-  if (ancestorRoles.some((r) => OPEN_SELECTION_SURFACE_ROLES.has(r))) return true;
+  // Phase 6D.0: compare the SEMANTIC role tokens, not the raw chain entries —
+  // capture emits `div[role=dialog]`, the set holds bare 'dialog'.
+  const semanticRoles = extractSemanticRoles(ancestorRoles);
+  if (semanticRoles.some((r) => OPEN_SELECTION_SURFACE_ROLES.has(r))) return true;
   return ancestorClasses.some((c) => OPEN_SELECTION_SURFACE_CLASS_RE.test(c));
 }
 

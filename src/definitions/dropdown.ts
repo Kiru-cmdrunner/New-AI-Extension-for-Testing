@@ -33,6 +33,7 @@ import {
   normalizeDisplayValue,
   bestName,
   elementKey,
+  extractSemanticRoles,
 } from './patterns';
 import { DISCRETE_ACTION_TYPES } from '../runtime/evidence-ledger';
 
@@ -168,7 +169,11 @@ export const dropdownDefinition: ComponentDefinition = {
       const hasContainmentProof =
         (surfaceClassContainsDropdown && !surfaceIsCalendar) ||
         ((ctx.data.surfaceRole as string | null) != null &&
-          event.domContext.ancestorRoles.includes(ctx.data.surfaceRole as string));
+          // Phase 6D.0: semantic-role parse — capture stores `div[role=listbox]`,
+          // surfaceRole is the bare token 'listbox'.
+          extractSemanticRoles(event.domContext.ancestorRoles).includes(
+            ctx.data.surfaceRole as string,
+          ));
 
       if (hasContainmentProof) {
         ctx.data.selectedValue = optionName;

@@ -25,7 +25,7 @@ import type {
   InteractionType,
 } from '../shared/component-types';
 import { DEDUP_WINDOW_MS } from '../shared/component-types';
-import { elementKey } from '../definitions/patterns';
+import { elementKey, extractSemanticRoles } from '../definitions/patterns';
 import type { EvidenceLedger } from './evidence-ledger';
 
 // ── Types ─────────────────────────────────────────────────────────────
@@ -98,8 +98,10 @@ import { DISCRETE_ACTION_TYPES } from './evidence-ledger';
  *
  * No framework heuristics. No isInteractiveElement(). No CSS selectors.
  * If either test fails → false → event falls through to discovery/Unclassified.
+ *
+ * Exported for Phase 6D.0 regression pins (pure function of its arguments).
  */
-function lifecycleOwnsTarget(
+export function lifecycleOwnsTarget(
   event: ObservedEvent,
   ctx: ComponentContext,
   def: ComponentDefinition,
@@ -123,7 +125,11 @@ function lifecycleOwnsTarget(
 
   // ancestorRoles was populated by walking el.parentElement in the content
   // script — this is actual DOM ancestry, not selector matching.
-  if (!event.domContext.ancestorRoles.includes(surfaceRole)) {
+  // Phase 6D.0: compare the semantic role token — capture stores entries as
+  // `div[role=grid]`, surfaceRole is the bare token 'grid'.
+  if (
+    !extractSemanticRoles(event.domContext.ancestorRoles).includes(surfaceRole)
+  ) {
     return false;
   }
 

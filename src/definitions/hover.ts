@@ -43,6 +43,7 @@ import {
   isInteractiveElement,
   bestName,
   elementKey,
+  extractSemanticRoles,
 } from './patterns';
 
 // ── Confidence Weights ────────────────────────────────────────────────
@@ -249,9 +250,11 @@ function accumulateEvidence(event: ObservedEvent, ctx: ComponentContext): void {
   if (ctx.data.evidenceOverlayRole !== true && dwell >= HOVER_TRANSIT_THRESHOLD_MS) {
     const triggerRole = ctx.triggerEvent.target.ariaRole;
     const ancestorRoles = ctx.triggerEvent.domContext.ancestorRoles ?? [];
+    // Phase 6D.0: semantic-role parse — capture stores `div[role=tooltip]`,
+    // the overlay set holds bare tokens ('menuitem', 'tooltip', 'tab').
     const hasOverlayRole =
       (triggerRole && OVERLAY_TRIGGER_ROLES.has(triggerRole)) ||
-      ancestorRoles.some((r) => OVERLAY_TRIGGER_ROLES.has(r));
+      extractSemanticRoles(ancestorRoles).some((r) => OVERLAY_TRIGGER_ROLES.has(r));
     if (hasOverlayRole) {
       ctx.data.confidence = ((ctx.data.confidence as number) ?? 0) + CONFIDENCE_OVERLAY_ROLE;
       ctx.data.evidenceOverlayRole = true;
