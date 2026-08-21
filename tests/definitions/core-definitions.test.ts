@@ -234,9 +234,13 @@ describe('Dropdown Definition', () => {
     // Click trigger to open dropdown
     runtime.process(makeEvent('c1', 'click', trigger, ctx, { valueBefore: '-- Admin --' }));
 
-    // Click on an option with same display value
+    // Click on an option with same display value.
+    // S3' (RCA2): options complete the lifecycle only with containment proof —
+    // real OXD renders options inside .oxd-select-dropdown, so the fixture
+    // models that ancestry (the old bare-role=option completion is the RC4
+    // wrong-attribution defect this now guards against).
     const option = { tag: 'DIV', ariaRole: 'option', className: 'oxd-select-option', accessibleName: 'Admin' };
-    runtime.process(makeEvent('c2', 'click', option));
+    runtime.process(makeEvent('c2', 'click', option, { ancestorClasses: ['oxd-select-dropdown'] }));
 
     const dropdown = emitted.find((e) => e.type === 'Dropdown');
     expect(dropdown).toBeDefined();
@@ -251,7 +255,7 @@ describe('Dropdown Definition', () => {
     runtime.process(makeEvent('c1', 'click', trigger, ctx, { valueBefore: '-- Admin --' }));
 
     const option = { tag: 'DIV', ariaRole: 'option', className: 'oxd-select-option', accessibleName: 'ESS' };
-    runtime.process(makeEvent('c2', 'click', option));
+    runtime.process(makeEvent('c2', 'click', option, { ancestorClasses: ['oxd-select-dropdown'] }));
 
     const dropdown = emitted.find((e) => e.type === 'Dropdown');
     expect(dropdown).toBeDefined();

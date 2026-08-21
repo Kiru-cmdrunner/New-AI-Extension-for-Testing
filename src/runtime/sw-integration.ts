@@ -49,6 +49,21 @@ export const PENDING_EVIDENCE_KEY = 'cmdrunner_pending_evidence';
 
 let runtime: ComponentRuntime | null = null;
 let liveInteractions: ComponentInteraction[] = [];
+
+/**
+ * RCA2 (2026-08-20): true between stopRecording() and the next
+ * initRecording()/resetState(). While stopped, late evidence deliveries
+ * (form-submit recovery, destination windows) may still attach to
+ * interactions — but persistLiveInteractions must NOT overwrite
+ * StorageKeys.LIVE_INTERACTIONS, which handleStopRecording has replaced
+ * with the authoritative PROJECTED production list. Before this guard, a
+ * post-stop BEHAVIORAL_EVIDENCE delivery re-persisted the RAW array and
+ * silently erased the projected Unclassified cards (Round Trip /
+ * Premium Economy vanishing from the panel). Attach still mutates the
+ * interaction objects in place (same object identity as the production
+ * list when possible); only the storage overwrite is suppressed.
+ */
+let recordingStopped = false;
 let isRecording = false;
 let evidenceLedger: EvidenceLedger | null = null;
 let lastVerificationResult: VerificationResult | null = null;
@@ -640,6 +655,8 @@ function scoreEvidenceRichness(evidence: BehavioralEvidence): number {
 export function initRecording(): void {
   liveInteractions = [];
   isRecording = true;
+  // RCA2: a new recording session re-arms raw-list persistence.
+  recordingStopped = false;
   evidenceLedger = new EvidenceLedger();
   lastVerificationResult = null;
 
@@ -709,9 +726,20 @@ export function initRecording(): void {
  * entries. The runtime no longer emits Unclassified interactions directly.
  */
 export function stopRecording(): ComponentInteraction[] {
+  // RCA2: mark stopped FIRST — the flush below emits through onEmit, and any
+  // persistLiveInteractions call from that path (or from late evidence
+  // deliveries afterwards) must not clobber the projected production list
+  // that handleStopRecording writes to storage.
+  recordingStopped = true;
   if (runtime) {
-    const flushed = runtime.flush();
-    liveInteractions.push(...flushed);
+    // Flush active lifecycles. NOTE (S1'/RCA2 2026-08-20): flush() emits each
+    // interaction through config.onEmit, and onEmit already pushes into
+    // liveInteractions — the previous `liveInteractions.push(...flushed)`
+    // here was a second push of the SAME objects (exact-once violation)
+    // that duplicated interrupted lifecycles in the persisted raw list.
+    // flush()'s return value remains the authoritative emitted list for
+    // callers that want it; we deliberately do NOT push it again.
+    runtime.flush();
     persistLiveInteractions();
 
     // ── M5: Projection Engine is now authoritative ──────────────────
@@ -829,6 +857,9 @@ export function resetState(): void {
   liveInteractions = [];
   runtime = null;
   isRecording = false;
+  // RCA2: cleared state is the same as stopped state — raw persistence
+  // stays suppressed until the next initRecording().
+  recordingStopped = true;
   evidenceLedger = null;
   lastVerificationResult = null;
   // M8.5: Clear the evidence persistence dedup guard.
@@ -880,6 +911,10 @@ export async function restoreFromStorage(): Promise<boolean> {
 
     const wasRecording = result[RECORDING_ACTIVE_KEY] === true;
     if (!wasRecording) return false;
+
+    // RCA2: a restored ACTIVE recording means we are mid-recording again —
+    // re-arm raw-list persistence.
+    recordingStopped = false;
 
     // Restore live interactions
     liveInteractions = result[LIVE_INTERACTIONS_KEY] ?? [];
@@ -971,6 +1006,11 @@ export async function restoreFromStorage(): Promise<boolean> {
  * A failed persist resolves to false, never rejects.
  */
 export function persistLiveInteractions(): Promise<boolean> {
+  // RCA2: after stop, LIVE_INTERACTIONS in storage is the projected
+  // production list owned by handleStopRecording — never clobber it with
+  // the raw recording array. (No-throw: callers treat false as "not
+  // persisted", which is the honest outcome here.)
+  if (recordingStopped) return Promise.resolve(false);
   return chrome.storage.local
     .set({ [LIVE_INTERACTIONS_KEY]: liveInteractions })
     .then(

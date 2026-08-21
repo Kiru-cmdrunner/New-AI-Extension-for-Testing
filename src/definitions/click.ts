@@ -60,10 +60,13 @@ export const clickDefinition: ComponentDefinition = {
   buildResult(ctx: ComponentContext, _completion: ComponentCompletion) {
     return {
       metadata: {
+        // S2: pass the icon class tokens so icon-only targets (<i class="icon-plus">)
+        // get a derived name instead of the vacuous 'element'.
         targetName: bestName(
           ctx.trigger.accessibleName,
           ctx.trigger.ariaLabel,
           ctx.trigger.placeholder,
+          ctx.trigger.className,
         ),
         targetTag: ctx.trigger.tag,
         targetRole: ctx.trigger.ariaRole,

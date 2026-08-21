@@ -27,10 +27,14 @@ import {
   isDropdownTrigger,
   isDropdownOption,
   isInsideDropdownSurface,
+  isInsideCalendarSurface,
+  isCalendarCell,
+  hasDateCellName,
   normalizeDisplayValue,
   bestName,
   elementKey,
 } from './patterns';
+import { DISCRETE_ACTION_TYPES } from '../runtime/evidence-ledger';
 
 export const dropdownDefinition: ComponentDefinition = {
   type: 'Dropdown',
@@ -119,20 +123,68 @@ export const dropdownDefinition: ComponentDefinition = {
         ctx.triggerEvent.domContext.ariaHasPopup === 'listbox' ? 'listbox' : null;
     }
 
-    // Option click/mousedown → complete
+    // ── S3' (RCA2 2026-08-20): structural completion gating. ───────────
+    // Calendar cells belong to the DatePicker definition — a calendar cell
+    // click can NEVER complete a Dropdown lifecycle. Two structural signals:
+    //   1. date-like CSS classes (DATEPICKER_CELL_CLASS_RE), and
+    //   2. the W3C date-cell naming shape on the accessible name
+    //      ("Choose Saturday, September 5th, 2026") — framework-agnostic.
+    // This was the root cause of the AdaniOne Economy dropdown describing
+    // "Choose Saturday, September 5th" (a role=option date-cell completing
+    // a 12s-old passenger/cabin select). Structural exclusion — no timing.
+    if (
+      (event.eventType === 'click' || event.eventType === 'mousedown') &&
+      (isCalendarCell(event.target.ariaRole, event.target.className) ||
+        hasDateCellName(event.target.accessibleName, event.target.ariaLabel))
+    ) {
+      return null; // not a dropdown selection — never completes here
+    }
+
+    // Option click/mousedown → complete ONLY with positive containment proof
     if (
       (event.eventType === 'click' || event.eventType === 'mousedown') &&
       isDropdownOption(event.target.ariaRole, event.target.className)
     ) {
-      ctx.data.selectedValue = event.target.accessibleName
-        || event.target.ariaLabel
-        || '';
-      return { endState: 'completed' };
+      // Containment proof (structural, mirrors the lifecycleOwnsTarget contract):
+      //   (a) the option sits inside a dropdown surface class that is NOT a
+      //       calendar surface, or
+      //   (b) the lifecycle has a captured surfaceRole (aria-haspopup) and the
+      //       option's DOM ancestry includes it.
+      // Without proof (e.g., a bare role=option anywhere on the page), the
+      // click is parked as a provisional selection; the lifecycle ends
+      // abandoned (displaced) at the next different-target discrete event —
+      // an event-sequence boundary, not a clock.
+      const optionName =
+        event.target.accessibleName || event.target.ariaLabel || '';
+
+      const surfaceClassContainsDropdown =
+        isInsideDropdownSurface(event.target.className) ||
+        isInsideDropdownSurface(event.domContext.ancestorClasses.join(' '));
+
+      const surfaceIsCalendar =
+        isInsideCalendarSurface(event.target.className) ||
+        isInsideCalendarSurface(event.domContext.ancestorClasses.join(' '));
+
+      const hasContainmentProof =
+        (surfaceClassContainsDropdown && !surfaceIsCalendar) ||
+        ((ctx.data.surfaceRole as string | null) != null &&
+          event.domContext.ancestorRoles.includes(ctx.data.surfaceRole as string));
+
+      if (hasContainmentProof) {
+        ctx.data.selectedValue = optionName;
+        ctx.data.selectionConfirmed = true;
+        return { endState: 'completed' };
+      }
+
+      // No proof — park the provisional selection; lifecycle continues.
+      ctx.data.pendingOptionClick = { eventId: event.eventId, name: optionName };
+      return null;
     }
 
     // Native SELECT change → complete
     if (event.eventType === 'change' && ctx.trigger.tag === 'SELECT') {
       ctx.data.selectedValue = event.valueAfter ?? '';
+      ctx.data.selectionConfirmed = true;
       return { endState: 'completed' };
     }
 
@@ -146,12 +198,23 @@ export const dropdownDefinition: ComponentDefinition = {
     return null;
   },
 
-  shouldCancelOnOutside(_event: ObservedEvent, _ctx: ComponentContext): boolean {
-    // Architecture: lifecycle abandonment is timeout-based (MAX_LIFECYCLE_DURATION_MS).
-    // We do NOT abandon on DOM boundary heuristics — portal-rendered overlays
-    // break those checks. The definition waits passively for completion evidence
-    // (option click or change event) or the runtime timeout.
-    return false;
+  shouldCancelOnOutside(event: ObservedEvent, ctx: ComponentContext): boolean {
+    // S3' structural displaced-end: a parked (unproven) option click means the
+    // user has interacted outside our controllable surface. The next discrete
+    // action on a DIFFERENT element (event-sequence fact) ends the lifecycle
+    // as abandoned (rendered displaced) instead of leaving it open for a
+    // future stray option-role click to mis-attribute a selection.
+    if (ctx.data.pendingOptionClick == null) return false;
+
+    if (!DISCRETE_ACTION_TYPES.has(event.eventType)) return false;
+
+    const eventKey = elementKey(event.target);
+    const triggerKey = elementKey(ctx.trigger);
+    if (eventKey === triggerKey) return false; // same element — keep waiting
+
+    // A pending option click already parked the provisional selection; any
+    // further different-target discrete event confirms the user moved on.
+    return true;
   },
 
   buildResult(ctx: ComponentContext, _completion: ComponentCompletion) {
@@ -161,6 +224,7 @@ export const dropdownDefinition: ComponentDefinition = {
       ctx.trigger.accessibleName,
       ctx.trigger.ariaLabel,
       ctx.trigger.placeholder,
+      ctx.trigger.className,
     );
 
     // No-op detection: selected value matches current display value
@@ -169,13 +233,24 @@ export const dropdownDefinition: ComponentDefinition = {
     const normalizedDisplay = normalizeDisplayValue(triggerDisplay);
     const noOpSelection = normalizedSelected === normalizedDisplay && normalizedSelected !== '';
 
-    return {
-      metadata: {
-        targetName: triggerName,
-        selectedValue,
-        noOpSelection,
-      },
+    // S3': a lifecycle that ended without containment-proven selection carries
+    // honest metadata — the provisional (parked) option click name and an
+    // explicit selectionConfirmed:false. Never fabricates a confirmed
+    // "Select X from Y" when the selection evidence was not ours.
+    const pending = ctx.data.pendingOptionClick as { eventId: string; name: string } | undefined;
+    const selectionConfirmed = ctx.data.selectionConfirmed === true;
+
+    const metadata: Record<string, unknown> = {
+      targetName: triggerName,
+      selectedValue,
+      noOpSelection,
     };
+    if (!selectionConfirmed && pending) {
+      metadata.provisionalSelection = pending.name;
+      metadata.selectionConfirmed = false;
+    }
+
+    return { metadata };
   },
 
   // W3C-standard semantic children for ownership testing.

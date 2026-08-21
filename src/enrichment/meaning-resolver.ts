@@ -27,7 +27,16 @@ export function resolveMeaning(
 ): string {
   const { type, metadata } = interaction;
   const { componentType, componentData } = detection;
-  const targetName = String(metadata.targetName ?? 'element');
+  // S2: icon-only targets may name themselves via the icon-class tier
+  // (targetName "plus icon") — but the enrichment layer's extracted icon
+  // name (componentData.iconName) is richer when present. Prefer it when
+  // the targetName is vacuous or icon-derived.
+  const rawTargetName = String(metadata.targetName ?? 'element');
+  const iconDerived = componentData.iconName != null && componentData.iconName !== '';
+  const targetName =
+    iconDerived && (rawTargetName === 'element' || rawTargetName.endsWith(' icon'))
+      ? String(componentData.iconName)
+      : rawTargetName;
 
   // ── Component-type-specific meaning ──────────────────────────────
 

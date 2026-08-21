@@ -20,6 +20,7 @@
 
 import type { EvidenceLedger, LedgerEntry } from './evidence-ledger';
 import type { ComponentInteraction, InteractionType } from '../shared/component-types';
+import { elementKey } from '../definitions/patterns';
 
 /**
  * Create an Unclassified interaction from a ledger entry.
@@ -64,53 +65,78 @@ function createUnclassifiedFromLedger(
     elementId: '',
   };
 
+  // S1': when this card collapsed an adjacent mousedown→click pair, the
+  // consumed mousedown becomes a memberEvent so the M4 capture-guarantee
+  // check (which counts memberEvents eventIds) sees both physical events
+  // represented. The synthetic memberEvent mirrors the triggerEvent shape.
+  const pairedMarker = (entry as LedgerEntry & { pairedAtProjection?: boolean })
+    .pairedAtProjection === true;
+  const pairedMousedownEntry = pairedMarker
+    ? [...pairSourceByEventId.entries()].find(
+        ([, e]) =>
+          entryElementKey(e) === entryElementKey(entry) && e.eventType === 'mousedown',
+      )?.[1]
+    : undefined;
+
+  const triggerEvt = {
+    eventId: entry.eventId,
+    eventType: entry.eventType as any,
+    timestamp: entry.timestamp,
+    captureSeq: entry.captureSeq,
+    isTrusted: true,
+    target: identity,
+    domContext: {
+      inputType: null,
+      ariaExpanded: null,
+      ariaHasPopup: null,
+      isContentEditable: false,
+      disabled: false,
+      readOnly: false,
+      required: false,
+      ancestorRoles: [],
+      ancestorClasses: [],
+      tabIndex: null,
+    },
+    valueBefore: null,
+    valueAfter: null,
+    checkedBefore: null,
+    checkedAfter: null,
+    clientX: null,
+    clientY: null,
+    key: null,
+    code: null,
+    shiftKey: false,
+    ctrlKey: false,
+    altKey: false,
+    metaKey: false,
+    scrollDeltaY: null,
+    scrollDeltaX: null,
+    pageUrl: '',
+    pageTitle: '',
+    // D1: carry the capture origin so downstream consumers (episode
+    // builder tab scoping, workflow subsumption) see the same tab as the
+    // recognized interaction.
+    captureOrigin: entry.captureOrigin
+      ? { ...entry.captureOrigin }
+      : undefined,
+  };
+
   return {
     interactionId: `int-${interactionCounter.value}`,
     type: 'Unclassified' as InteractionType,
     trigger: identity,
-    triggerEvent: {
-      eventId: entry.eventId,
-      eventType: entry.eventType as any,
-      timestamp: entry.timestamp,
-      captureSeq: entry.captureSeq,
-      isTrusted: true,
-      target: identity,
-      domContext: {
-        inputType: null,
-        ariaExpanded: null,
-        ariaHasPopup: null,
-        isContentEditable: false,
-        disabled: false,
-        readOnly: false,
-        required: false,
-        ancestorRoles: [],
-        ancestorClasses: [],
-        tabIndex: null,
-      },
-      valueBefore: null,
-      valueAfter: null,
-      checkedBefore: null,
-      checkedAfter: null,
-      clientX: null,
-      clientY: null,
-      key: null,
-      code: null,
-      shiftKey: false,
-      ctrlKey: false,
-      altKey: false,
-      metaKey: false,
-      scrollDeltaY: null,
-      scrollDeltaX: null,
-      pageUrl: '',
-      pageTitle: '',
-      // D1: carry the capture origin so downstream consumers (episode
-      // builder tab scoping, workflow subsumption) see the same tab as the
-      // recognized interaction.
-      captureOrigin: entry.captureOrigin
-        ? { ...entry.captureOrigin }
-        : undefined,
-    },
-    memberEvents: [],
+    triggerEvent: triggerEvt,
+    memberEvents: pairedMousedownEntry
+      ? [
+          {
+            ...triggerEvt,
+            eventId: pairedMousedownEntry.eventId,
+            eventType: 'mousedown' as any,
+            timestamp: pairedMousedownEntry.timestamp,
+            captureSeq: pairedMousedownEntry.captureSeq,
+          },
+        ]
+      : [],
     startTime: entry.timestamp,
     endTime: entry.timestamp,
     endState: 'completed',
@@ -121,6 +147,12 @@ function createUnclassifiedFromLedger(
       targetName: entry.targetName,
       targetTag: entry.targetTag,
       targetRole: entry.targetRole,
+      // S1': when this card collapsed an adjacent mousedown→click pair,
+      // record BOTH physical events for evidence completeness.
+      pairedAtProjection: pairedMarker || undefined,
+      physicalEvents: pairedMarker
+          ? ['mousedown', 'click']
+          : undefined,
       // D1: propagate the origin into metadata as well — sw-integration
       // stamps interaction.metadata.captureOrigin for recognized
       // interactions, and affinity comparisons read both places.
@@ -129,6 +161,74 @@ function createUnclassifiedFromLedger(
         : undefined,
     },
   };
+}
+
+/**
+ * S1' (RCA2 2026-08-20): Pair adjacent mousedown→click entries on the same
+ * element into ONE projected Unclassified card.
+ *
+ * Structural rule — NO timing constants:
+ *   • same pageId
+ *   • mousedown entry IMMEDIATELY followed by a click entry in captureSeq
+ *     order (no intervening projected entry — adjacency is exact)
+ *   • identical elementKey (D1 targetIdentity when present, else diagnostic
+ *     identity: tag+name+role)
+ *
+ * mousedown and click on the same element are one physical press-and-release;
+ * when neither is claimed by a definition, projecting two cards is timeline
+ * noise. contextmenu/keydown/dragstart/drop never pair (different acts).
+ * Ledger dispositions are NOT rewritten — only projected output changes.
+ *
+ * The consumed mousedown entry is returned so the paired card can carry it in
+ * memberEvents — the M4 capture-guarantee check counts memberEvents eventIds,
+ * so the paired card must structurally represent BOTH physical events.
+ */
+function pairPhysicalPress(entries: LedgerEntry[]): {
+  collapsed: LedgerEntry[];
+  pairedEventIds: Set<string>;
+} {
+  const collapsed: LedgerEntry[] = [];
+  const pairedEventIds = new Set<string>();
+  for (let i = 0; i < entries.length; i++) {
+    const cur = entries[i];
+    const next = entries[i + 1];
+
+    if (
+      next &&
+      cur.eventType === 'mousedown' &&
+      next.eventType === 'click' &&
+      cur.pageId === next.pageId &&
+      entryElementKey(cur) === entryElementKey(next)
+    ) {
+      // Collapse both entries into the click entry (release wins — it's the
+      // semantic act). The consumed mousedown is recorded so the card can
+      // represent it in memberEvents (M4 capture guarantee).
+      collapsed.push({ ...next, pairedAtProjection: true } as LedgerEntry);
+      pairedEventIds.add(cur.eventId);
+      pairSourceByEventId.set(cur.eventId, cur);
+      i++; // skip the consumed click entry
+    } else {
+      collapsed.push(cur);
+    }
+  }
+  return { collapsed, pairedEventIds };
+}
+
+/**
+ * Map from a consumed (paired-away) mousedown eventId → its ledger entry, so
+ * the paired card's builder can attach it as a memberEvent. Cleared at the
+ * start of every projectInteractions call (no cross-run leakage).
+ */
+const pairSourceByEventId = new Map<string, LedgerEntry>();
+
+/** Element identity key for a ledger entry (D1 identity preferred). */
+function entryElementKey(entry: LedgerEntry): string {
+  if (entry.targetIdentity) {
+    return elementKey(entry.targetIdentity);
+  }
+  // Diagnostic-only entries: best available structural identity.
+  const name = entry.targetName ?? '';
+  return `tag:${entry.targetTag}|name:${name}|role:${entry.targetRole ?? ''}`;
 }
 
 /**
@@ -141,6 +241,13 @@ export interface ProjectionResult {
   projectedUnclassified: ComponentInteraction[];
   /** The ledger entries that were projected (unclaimed/pending). */
   projectedEntries: LedgerEntry[];
+  /**
+   * S1': eventIds whose physical press (mousedown) was collapsed into the
+   * following adjacent click's single projected card. These entries ARE
+   * represented — inside the card's metadata.physicalEvents — so the
+   * capture-guarantee (every discrete event represented) still holds.
+   */
+  pairedEventIds: Set<string>;
 }
 
 /**
@@ -197,6 +304,13 @@ export function projectInteractions(
     return true;
   });
 
+  // S1': collapse adjacent mousedown→click pairs on the same element into a
+  // single projected card (structural adjacency, no timing rule).
+  // pairSourceByEventId is module-scoped for builder access; clear it each
+  // run so no stale source entries leak across projections.
+  pairSourceByEventId.clear();
+  const { collapsed: pairedEntries, pairedEventIds } = pairPhysicalPress(uniqueEntries);
+
   // Determine the interaction counter starting point from completed interactions
   let maxCounter = 0;
   for (const interaction of completedOnly) {
@@ -209,7 +323,7 @@ export function projectInteractions(
   const counter = { value: maxCounter };
 
   // Create Unclassified interactions for each unclaimed/pending entry
-  const projectedUnclassified = uniqueEntries.map((entry) =>
+  const projectedUnclassified = pairedEntries.map((entry) =>
     createUnclassifiedFromLedger(entry, counter),
   );
 
@@ -220,5 +334,7 @@ export function projectInteractions(
     interactions,
     projectedUnclassified,
     projectedEntries: uniqueEntries,
+    /** S1': eventIds collapsed into another card's physicalEvents record. */
+    pairedEventIds,
   };
 }

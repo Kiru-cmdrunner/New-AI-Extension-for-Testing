@@ -20,24 +20,111 @@ import type { ElementIdentity } from '../shared/types';
 /**
  * Pick the best available human-readable name for an element.
  *
- * Priority: accessibleName > ariaLabel > placeholder > 'element'.
+ * Priority: accessibleName > ariaLabel > placeholder > icon-class > 'element'.
  *
  * IMPORTANT: callers that have a valueBefore should use `||` to combine:
  *   bestName(accessibleName || valueBefore, ariaLabel, placeholder)
  * The `??` operator does NOT fall through on empty string, which was the
  * root cause of Bug 2 (dropdown "from element" display).
  *
- * Architecture: §4.2 (Dropdown no-op fix)
+ * S2 (2026-08-20): icon-only elements (<i class="icon-plus">, fa-plus, mdi-*)
+ * carry their semantic in CSS class tokens. When all three textual tiers are
+ * empty, derive a name from the icon class family shared with
+ * enrichment/component-detector.ts extractIconName. Pure string function —
+ * structural, no timing, no DOM.
+ *
+ * Architecture: §4.2 (Dropdown no-op fix), RCA2 S2 (icon naming tier)
  */
 export function bestName(
   accessibleName: string,
   ariaLabel?: string | null,
   placeholder?: string | null,
+  iconClassName?: string | null,
 ): string {
   if (accessibleName && accessibleName.trim()) return accessibleName.trim();
   if (ariaLabel && ariaLabel.trim()) return ariaLabel.trim();
   if (placeholder && placeholder.trim()) return placeholder.trim();
+  const icon = iconNameFromClasses(iconClassName);
+  if (icon) return icon;
   return 'element';
+}
+
+/**
+ * Semantic icon names shared with the enrichment layer. Kept as a small local
+ * map (subset of ICON_SEMANTIC_NAMES in component-detector.ts) because
+ * patterns.ts must stay dependency-free from the enrichment layer.
+ */
+const ICON_NAME_OVERRIDES: Record<string, string> = {
+  plus: 'add',
+  add: 'add',
+  minus: 'remove',
+  remove: 'remove',
+  close: 'close',
+  cancel: 'close',
+  x: 'close',
+  delete: 'delete',
+  trash: 'delete',
+  search: 'search',
+  arrowdown: 'arrow-down',
+  arrowup: 'arrow-up',
+  arrowleft: 'arrow-left',
+  arrowright: 'arrow-right',
+  chevrondown: 'chevron-down',
+  chevronup: 'chevron-up',
+  chevronleft: 'chevron-left',
+  chevronright: 'chevron-right',
+  calendar: 'calendar',
+  menu: 'menu',
+  hamburger: 'menu',
+  edit: 'edit',
+  pencil: 'edit',
+};
+
+/**
+ * Derive a human-readable icon name from CSS class tokens.
+ * Families: fa-* / fa-solid-* (Font Awesome), mdi-* (Material Design Icons),
+ * bi-* (Bootstrap Icons), icon-* / *-icon (generic), material icons.
+ * Returns e.g. 'plus icon' for 'icon-plus', 'add icon' for 'fa-plus',
+ * or null when no icon token is present.
+ */
+export function iconNameFromClasses(className: string | null | undefined): string | null {
+  if (!className) return null;
+  const classes = className.toLowerCase();
+
+  // Font Awesome: fa-plus, fa-solid fa-plus, fa-regular fa-*, fa-brands fa-*
+  const fa = classes.match(/\bfa-(?:solid|regular|brands?-)?([a-z][-a-z0-9]+)\b/);
+  if (fa) {
+    const stem = fa[1].replace(/-/g, '');
+    return `${ICON_NAME_OVERRIDES[stem] ?? fa[1]} icon`;
+  }
+
+  // Material Design Icons: mdi-plus, mdi-chevron-down
+  const mdi = classes.match(/\bmdi-([a-z][-a-z0-9]+)\b/);
+  if (mdi) {
+    const stem = mdi[1].replace(/-/g, '');
+    return `${ICON_NAME_OVERRIDES[stem] ?? mdi[1]} icon`;
+  }
+
+  // Bootstrap Icons: bi-plus-lg, bi-x
+  const bi = classes.match(/\bbi-([a-z][-a-z0-9]*)\b/);
+  if (bi) {
+    const stem = bi[1].replace(/-/g, '');
+    return `${ICON_NAME_OVERRIDES[stem] ?? bi[1]} icon`;
+  }
+
+  // Generic: icon-plus / plus-icon (leading and trailing forms)
+  const generic = classes.match(/\bicon-([a-z][-a-z0-9]+)\b/);
+  if (generic) {
+    const stem = generic[1].replace(/-/g, '');
+    return `${ICON_NAME_OVERRIDES[stem] ?? generic[1]} icon`;
+  }
+  const trailing = classes.match(/\b([a-z][-a-z0-9]+)-icon\b/);
+  if (trailing) {
+    const stem = trailing[1].replace(/-/g, '');
+    return `${ICON_NAME_OVERRIDES[stem] ?? trailing[1]} icon`;
+  }
+
+  return null;
 }
 
 // ── Interactive Element Check ──────────────────────────────────────────
@@ -234,6 +321,30 @@ export function isCalendarCell(
   // Some calendars use buttons/cells without explicit roles
   if (className && DATEPICKER_CELL_CLASS_RE.test(className)) return true;
   return false;
+}
+
+/**
+ * W3C date-cell naming shape: "Choose Saturday, September 5th, 2026".
+ * The convention (ARIA APG date-picker pattern; used by AdaniOne,
+ * react-datepicker, Material UI, and Chrome's built-in date pickers) is a
+ * pure structural fact of the accessible name — no timing, no DOM probing.
+ */
+const DATE_CELL_NAME_RE =
+  /^(?:choose|select|pick)?\s+(?:sunday|monday|tuesday|wednesday|thursday|friday|saturday),\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}\b/i;
+
+/**
+ * Does this element's accessible name carry the date-cell naming shape?
+ * Used by the Dropdown definition to exclude calendar cells from completing
+ * a dropdown lifecycle even when the calendar's CSS classes are unknown
+ * (frameworks vary) — the name shape is the stable structural signal.
+ */
+export function hasDateCellName(
+  accessibleName: string | null | undefined,
+  ariaLabel: string | null | undefined,
+): boolean {
+  const name = accessibleName || ariaLabel || '';
+  if (!name) return false;
+  return DATE_CELL_NAME_RE.test(name.trim());
 }
 
 /**
