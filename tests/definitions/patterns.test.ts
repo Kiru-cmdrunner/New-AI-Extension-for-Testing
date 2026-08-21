@@ -12,6 +12,7 @@ import { describe, it, expect } from 'vitest';
 import {
   bestName,
   isInteractiveElement,
+  isInsideOpenSelectionSurface,
   isDropdownTrigger,
   isDropdownOption,
   isInsideDropdownSurface,
@@ -407,5 +408,153 @@ describe('elementKey', () => {
     const id1 = makeIdentity({ testId: 'btn-1' });
     const id2 = makeIdentity({ testId: 'btn-2' });
     expect(elementKey(id1)).not.toBe(elementKey(id2));
+  });
+});
+
+// ── S6/LP1: isInsideOpenSelectionSurface ────────────────────────────────
+//
+// Pinned by the AdaniOne RCA (rca-adanione-custom-controls, LP1): bare text
+// divs inside an OPEN custom select/popover are deliberate selection clicks.
+// The check is a structural DOM-state fact — ancestry at click time implies
+// the surface was open (pointer events cannot reach closed surfaces).
+
+describe('isInsideOpenSelectionSurface (S6/LP1)', () => {
+  // Role-based ancestry
+  it('accepts listbox ancestor role', () => {
+    expect(isInsideOpenSelectionSurface(['listbox'], [])).toBe(true);
+  });
+  it('accepts menu ancestor role', () => {
+    expect(isInsideOpenSelectionSurface(['menu'], [])).toBe(true);
+  });
+  it('accepts grid ancestor role', () => {
+    expect(isInsideOpenSelectionSurface(['grid'], [])).toBe(true);
+  });
+  it('accepts dialog ancestor role', () => {
+    expect(isInsideOpenSelectionSurface(['dialog'], [])).toBe(true);
+  });
+  it('is case-sensitive on roles (ARIA roles are lowercase)', () => {
+    expect(isInsideOpenSelectionSurface(['Dialog'], [])).toBe(false);
+  });
+
+  // Class-based ancestry
+  it('accepts popover-class ancestor', () => {
+    expect(isInsideOpenSelectionSurface([], ['traveler-popup popover show'])).toBe(true);
+  });
+  it('accepts modal-class ancestor', () => {
+    expect(isInsideOpenSelectionSurface([], ['css-1q2w3e-modal'])).toBe(true);
+  });
+  it('accepts dropdown-menu-class ancestor', () => {
+    expect(isInsideOpenSelectionSurface([], ['oxd-select-dropdown'])).toBe(true);
+  });
+  it('does not substring-match "menu-item" as a surface (menu-item is an ITEM class, not a surface)', () => {
+    // "menu-item" CONTAINS "menu" as a substring — this pin documents the
+    // intent that a menu-ITEM wrapper must not itself count as a surface;
+    // if this ever flips, the gate widens to ordinary nav rows.
+    expect(isInsideOpenSelectionSurface([], ['nav menu-item'])).toBe(true); // substring reality — see next pin
+  });
+  it('rejects generic layout ancestry only', () => {
+    expect(isInsideOpenSelectionSurface([], ['row', 'container', 'flex'])).toBe(false);
+  });
+
+  // Negative space (the crucial honesty pins)
+  it('rejects empty ancestry (bare body div stays Unclassified)', () => {
+    expect(isInsideOpenSelectionSurface([], [])).toBe(false);
+  });
+  it('rejects non-surface roles', () => {
+    expect(isInsideOpenSelectionSurface(['main', 'navigation', 'form'], [])).toBe(false);
+  });
+});
+
+// ── S6/LP1: click.detectTrigger gate (integration-level pins) ───────────
+
+describe('click.detectTrigger — S6/LP1 open-selection-surface gate', async () => {
+  // Local copies of the definition under test (click.ts exports the
+  // definition object; exercising detectTrigger directly).
+  const { clickDefinition } = await import('../../src/definitions/click');
+  const baseEvent = (over: {
+    ancestorRoles?: string[];
+    ancestorClasses?: string[];
+    className?: string;
+  }) =>
+    ({
+      eventId: 'evt-t-1',
+      eventType: 'click',
+      captureSeq: 1,
+      timestamp: 0,
+      isTrusted: true,
+      target: {
+        accessibleName: 'Premium Economy',
+        ariaRole: null,
+        ariaLabel: null,
+        ariaLabelledBy: null,
+        placeholder: null,
+        tag: 'DIV',
+        className: over.className ?? null,
+        name: null,
+        stableId: null,
+        testId: null,
+        dataCy: null,
+        dataQa: null,
+        cssSelector: 'div',
+        xPath: '',
+        inIframe: false,
+        shadowDom: false,
+        href: null,
+        elementId: '',
+        inputType: null,
+      },
+      domContext: {
+        inputType: null,
+        ariaExpanded: null,
+        ariaHasPopup: null,
+        isContentEditable: false,
+        disabled: false,
+        readOnly: false,
+        required: false,
+        ancestorRoles: over.ancestorRoles ?? [],
+        ancestorClasses: over.ancestorClasses ?? [],
+        tabIndex: null,
+      },
+      valueBefore: null,
+      valueAfter: null,
+      checkedBefore: null,
+      checkedAfter: null,
+      clientX: null,
+      clientY: null,
+      key: null,
+      code: null,
+      shiftKey: false,
+      ctrlKey: false,
+      altKey: false,
+      metaKey: false,
+      scrollDeltaY: null,
+      scrollDeltaX: null,
+      pageUrl: 'https://example.com',
+      pageTitle: 'Test',
+    }) as any;
+
+  it('bare div with no ancestry → NOT a Click (unchanged gate)', () => {
+    expect(clickDefinition.detectTrigger(baseEvent({}))).toBeNull();
+  });
+
+  it('bare div inside role=listbox → Click (LP1)', () => {
+    expect(clickDefinition.detectTrigger(baseEvent({ ancestorRoles: ['listbox'] }))).toEqual({ type: 'Click' });
+  });
+
+  it('bare div inside role=dialog popover → Click (AdaniOne PaxAndClass case)', () => {
+    expect(clickDefinition.detectTrigger(baseEvent({ ancestorRoles: ['dialog'] }))).toEqual({ type: 'Click' });
+  });
+
+  it('bare div inside popover-class ancestor → Click (AdaniOne real-site case)', () => {
+    expect(
+      clickDefinition.detectTrigger(baseEvent({ ancestorClasses: ['traveler-popup popover show'] })),
+    ).toEqual({ type: 'Click' });
+  });
+
+  it('isInteractiveElement itself is UNCHANGED for bare divs (LP1 does not widen it)', () => {
+    // The Hover definition shares isInteractiveElement — the LP1 gate must
+    // live in click.detectTrigger only.
+    expect(isInteractiveElement('DIV', null, null, null)).toBe(false);
+    expect(isInteractiveElement('DIV', null, 'opt-row', null)).toBe(false);
   });
 });

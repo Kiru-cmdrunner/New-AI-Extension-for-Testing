@@ -149,6 +149,43 @@ const INTERACTIVE_ROLES = new Set([
 const INTERACTIVE_CLASS_RE =
   /(btn|button|clickable|selectable|dropdown|menu-item|nav-item|tab-item|chip|toggle|action|stepper|counter|increment|decrement|qty|quantity|plus|minus|add-btn|remove-btn|arrow|chevron|expand|collapse)/i;
 
+// ── S6/LP1: Open Selection Surface Ancestry ─────────────────────────────
+
+/**
+ * S6/LP1: ARIA roles of "open selection surface" containers — when a click
+ * target has no interactive signal of its own but sits inside one of these,
+ * the surface must be open (pointer events cannot reach descendants of a
+ * hidden/closed surface), so the click is a deliberate selection action.
+ */
+const OPEN_SELECTION_SURFACE_ROLES = new Set([
+  'listbox', 'menu', 'grid', 'dialog',
+]);
+
+/**
+ * S6/LP1: class tokens for open selection surfaces. Deliberately mirrors the
+ * surface/menu/dialog conventions already used across the codebase
+ * (DROPDOWN_SURFACE_CLASS_RE surface classes + DIALOG_RE's dialog tokens +
+ * flyout/menu conventions) — one shared vocabulary, no site-specific tokens.
+ */
+const OPEN_SELECTION_SURFACE_CLASS_RE =
+  /(listbox|dropdown|popover|overlay|modal|dialog|flyout|menu)/i;
+
+/**
+ * S6/LP1: Is this click target inside an open selection surface?
+ *
+ * Structural DOM-state fact, no timing: ancestor roles/classes come from the
+ * captured DomContext at click time. Used ONLY by click.detectTrigger as a
+ * last-resort gate — it does NOT modify isInteractiveElement (Hover and any
+ * other callers keep their existing semantics).
+ */
+export function isInsideOpenSelectionSurface(
+  ancestorRoles: readonly string[],
+  ancestorClasses: readonly string[],
+): boolean {
+  if (ancestorRoles.some((r) => OPEN_SELECTION_SURFACE_ROLES.has(r))) return true;
+  return ancestorClasses.some((c) => OPEN_SELECTION_SURFACE_CLASS_RE.test(c));
+}
+
 /**
  * Is this element interactive (worth capturing as a Click)?
  *

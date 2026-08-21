@@ -16,7 +16,11 @@ import type {
   ComponentCompletion,
   ObservedEvent,
 } from '../shared/component-types';
-import { isInteractiveElement, bestName } from './patterns';
+import {
+  isInteractiveElement,
+  bestName,
+  isInsideOpenSelectionSurface,
+} from './patterns';
 
 export const clickDefinition: ComponentDefinition = {
   type: 'Click',
@@ -31,7 +35,19 @@ export const clickDefinition: ComponentDefinition = {
     const tabIndex = event.domContext.tabIndex ?? null;
 
     if (!isInteractiveElement(tag, ariaRole, className, tabIndex)) {
-      return null;
+      // S6/LP1: last-resort gate — a target with no interactive signal of
+      // its own is still a deliberate selection click when it sits inside an
+      // OPEN selection surface (listbox/menu/grid/dialog ancestor, or a
+      // popover/modal/flyout-class ancestor). Pointer events cannot reach
+      // descendants of a closed surface, so ancestry at click time is a
+      // structural DOM-state fact (no timing rule). This is scoped to the
+      // Click definition only — isInteractiveElement is untouched.
+      if (!isInsideOpenSelectionSurface(
+        event.domContext.ancestorRoles,
+        event.domContext.ancestorClasses,
+      )) {
+        return null;
+      }
     }
 
     return { type: 'Click' };
