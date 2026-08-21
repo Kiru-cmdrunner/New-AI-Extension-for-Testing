@@ -750,6 +750,25 @@ export function stopRecording(): ComponentInteraction[] {
         const ledger = evidenceLedger;
         const projection = projectInteractions(ledger, liveInteractions);
 
+        // ── LP2 (S6): enrich projected Unclassified cards ─────────────
+        // Runtime-emitted interactions are enriched in onEmit (above), but
+        // the projection path never called enrichInteraction — projected
+        // cards entered storage without Layer-2 componentType / Layer-3
+        // businessMeaning even when their persisted ancestor context (LP3)
+        // could support it. Enrich ONLY the projected Unclassified cards:
+        //   - recognized runtime interactions are already enriched there;
+        //   - re-running enrichment on them could overwrite computed fields.
+        // This changes presentation metadata only — type stays
+        // 'Unclassified', so NOISE_TYPES keeps excluding these cards from
+        // the IR (no fabricated steps; the honesty invariant holds).
+        // Legacy ledger rows restore ancestor context to null → [] via LP3,
+        // so detectComponent degrades to its no-ancestry behaviour.
+        for (const interaction of projection.interactions) {
+          if (interaction.type === 'Unclassified') {
+            enrichInteraction(interaction);
+          }
+        }
+
       // M5 self-consistency check: every discrete event in the ledger
       // must be represented in the projected output (either by a completed
       // interaction or an Unclassified projection). This replaces the M4

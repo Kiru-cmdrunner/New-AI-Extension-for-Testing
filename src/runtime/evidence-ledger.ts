@@ -95,6 +95,24 @@ export interface LedgerEntry {
   targetIdentity: ElementIdentity | null;
   /** Capture origin (tab/frame) of the event; null on legacy rows. */
   captureOrigin: { tabId: number; frameId: number } | null;
+
+  // ── LP3 (S6): minimal ancestor context for post-hoc enrichment ──────
+  //
+  // LP2 enriches projected Unclassified cards via the same
+  // detectComponent() path used at runtime. detectComponent() reads
+  // triggerEvent.domContext.ancestorRoles / .ancestorClasses to detect
+  // Dialog / open-selection-surface ancestry. The projection's synthetic
+  // triggerEvent used to hard-code both to [], so enrichment could never
+  // fire on a projected card even if it were called (LP3's data-loss half
+  // of that defect). We persist ONLY the two arrays detectComponent
+  // consumes — not the full DomContext (~90 bytes/entry vs ~400) — to
+  // keep ledger storage bounded. Null on legacy snapshots (restored to
+  // null explicitly, like the D1 optional fields).
+
+  /** Ancestor roles (up to 10 levels, index 0 = parent); null on legacy rows. */
+  ancestorRoles: string[] | null;
+  /** Ancestor classes (up to 10 levels, index 0 = parent); null on legacy rows. */
+  ancestorClasses: string[] | null;
 }
 
 /** Chrome storage key for the evidence ledger. */
@@ -145,6 +163,15 @@ export class EvidenceLedger {
             tabId: event.captureOrigin.tabId,
             frameId: event.captureOrigin.frameId,
           }
+        : null,
+      // LP3: shallow-copy the ancestor arrays out of domContext. Defensively
+      // handle events whose domContext is undefined (older senders / tests)
+      // by persisting null — the projection falls back to [] for those.
+      ancestorRoles: event.domContext
+        ? [...(event.domContext.ancestorRoles ?? [])]
+        : null,
+      ancestorClasses: event.domContext
+        ? [...(event.domContext.ancestorClasses ?? [])]
         : null,
     });
   }
@@ -225,10 +252,13 @@ export class EvidenceLedger {
       // D1: normalize legacy snapshots (pre-D1 rows have neither optional
       // field) to explicit nulls so downstream consumers never see
       // 'undefined' vs 'null' divergence in affinity comparisons.
+      // LP3: same normalization for the ancestor-context fields.
       this.entries.set(entry.eventId, {
         ...entry,
         targetIdentity: entry.targetIdentity ?? null,
         captureOrigin: entry.captureOrigin ?? null,
+        ancestorRoles: entry.ancestorRoles ?? null,
+        ancestorClasses: entry.ancestorClasses ?? null,
       });
     }
     this.resetAbsorbedToUnclaimed();

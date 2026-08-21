@@ -78,25 +78,34 @@ function createUnclassifiedFromLedger(
       )?.[1]
     : undefined;
 
-  const triggerEvt = {
-    eventId: entry.eventId,
-    eventType: entry.eventType as any,
-    timestamp: entry.timestamp,
-    captureSeq: entry.captureSeq,
-    isTrusted: true,
-    target: identity,
-    domContext: {
-      inputType: null,
-      ariaExpanded: null,
-      ariaHasPopup: null,
-      isContentEditable: false,
-      disabled: false,
-      readOnly: false,
-      required: false,
-      ancestorRoles: [],
-      ancestorClasses: [],
-      tabIndex: null,
-    },
+    // LP3: populate the synthetic triggerEvent's ancestor context from the
+    // ledger entry (captured at append() time) instead of hard-coding [].
+    // detectComponent() reads these arrays; LP2 calls it on projected cards,
+    // and Dialog / open-selection-surface ancestry is exactly what distinguishes
+    // "click inside the PaxAndClass widget" from "click on a random div".
+    // Legacy ledger rows (and events that arrived without domContext) restore
+    // to null — fall back to [] so the shape never diverges downstream.
+    const ancestorRoles = entry.ancestorRoles ?? [];
+    const ancestorClasses = entry.ancestorClasses ?? [];
+    const triggerEvt = {
+      eventId: entry.eventId,
+      eventType: entry.eventType as any,
+      timestamp: entry.timestamp,
+      captureSeq: entry.captureSeq,
+      isTrusted: true,
+      target: identity,
+      domContext: {
+        inputType: null,
+        ariaExpanded: null,
+        ariaHasPopup: null,
+        isContentEditable: false,
+        disabled: false,
+        readOnly: false,
+        required: false,
+        ancestorRoles,
+        ancestorClasses,
+        tabIndex: null,
+      },
     valueBefore: null,
     valueAfter: null,
     checkedBefore: null,
