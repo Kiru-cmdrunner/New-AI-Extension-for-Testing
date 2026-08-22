@@ -20,6 +20,13 @@
 import type { ComponentInteraction } from '../shared/component-types';
 import { renderEvidence, renderEvidencePlaceholder } from './evidence-renderer';
 import { quoteSafeTitle } from '../enrichment/quote-safe';
+import {
+  buildUnderstandingBadge,
+  buildProjectedChip,
+  buildWhyBlock,
+} from './understanding-badge';
+import { buildEvidenceFooter } from './evidence-footer';
+import { getAssertionCountFor } from './assertion-chip';
 
 // ── Layer 1: Type Display Config ──────────────────────────────────────
 
@@ -42,7 +49,11 @@ const TYPE_DISPLAY: Record<string, TypeDisplay> = {
   Link:         { icon: '🔗', label: 'Link',          color: '#06b6d4' },
   Tab:          { icon: '📂', label: 'Tab',           color: '#8b5cf6' },
   Scroll:       { icon: '📜', label: 'Scroll',        color: '#6b7280' },
-  Navigation:   { icon: '🧭', label: 'Navigation',    color: '#0ea5e9' },
+  Navigation:   { icon: '🧭', label: 'Navigation',   color: '#0ea5e9' },
+  ColorInput:   { icon: '🎨', label: 'Color Input',   color: '#a855f7' },
+  DragDrop:     { icon: '↔️', label: 'Drag & Drop',   color: '#0d9488' },
+  KeyboardShortcut: { icon: '⌨️', label: 'Key Shortcut', color: '#6366f1' },
+  CompoundInteraction: { icon: '🧩', label: 'Compound', color: '#64748b' },
   Unclassified: { icon: '❓', label: 'Unclassified',  color: '#f59e0b' },
 };
 
@@ -198,7 +209,64 @@ function formatMetadata(interaction: ComponentInteraction): string | null {
   return parts.length > 0 ? parts.join(' · ') : null;
 }
 
-// ── Renderers ────────────────────────────────────────────────────────
+// ── MS-U1 helpers (pure display, recorded facts only) ──────────────────
+
+const ENDSTATE_COLORS: Record<string, string> = {
+  completed: '#10b981',
+  abandoned: '#f59e0b',
+  interrupted: '#f97316',
+  discarded: '#9ca3af',
+};
+
+function memberChipText(interaction: ComponentInteraction): string | null {
+  const members = Array.isArray(interaction.memberEvents) ? interaction.memberEvents : [];
+  if (members.length === 0) return null;
+  const span = Math.max(0, (interaction.endTime ?? 0) - (interaction.startTime ?? 0));
+  const noun = members.length === 1 ? 'event' : 'events';
+  return `${members.length} ${noun} · ${span}ms`;
+}
+
+/** Suppression reason when an interaction is filtered by the production view. */
+function suppressionReason(interaction: ComponentInteraction): string | null {
+  if (interaction.endState !== 'completed') return interaction.endState;
+  switch (interaction.type) {
+    case 'TextEntry':
+      return !(interaction.metadata.userTyped === true
+        && String(interaction.metadata.textValue ?? '').trim() !== '')
+        ? 'no typing' : null;
+    case 'Dropdown':
+    case 'RadioButton':
+      return interaction.metadata.noOpSelection === true ? 'no-op' : null;
+    case 'DatePicker':
+      return String(interaction.metadata.selectedDate ?? '').trim() === '' ? 'no date' : null;
+    case 'Scroll':
+      return interaction.metadata.hasDelta !== true ? '0px scroll' : null;
+    case 'Hover':
+      return interaction.metadata.meaningful !== true ? 'not meaningful' : null;
+    default:
+      return null;
+  }
+}
+
+/**
+ * P10 — deterministic toggle-row summary. Null when nothing is suppressed
+ * (toggle row hidden).
+ */
+export function buildHiddenSummary(interactions: ComponentInteraction[]): string | null {
+  const reasons = interactions
+    .map((i) => suppressionReason(i))
+    .filter((r): r is string => r !== null);
+  if (reasons.length === 0) return null;
+  return `Show all ${interactions.length} (${reasons.length} hidden: ${reasons.join(' · ')})`;
+}
+
+function appendChip(el: HTMLElement, text: string, cls: string, color?: string): void {
+  const chip = document.createElement('span');
+  chip.className = cls;
+  chip.textContent = text;
+  if (color) chip.style.color = color;
+  el.appendChild(chip);
+}
 
 /**
  * Create a DOM element for a single ComponentInteraction.
@@ -250,13 +318,59 @@ export function createInteractionElement(interaction: ComponentInteraction): HTM
   idBadge.textContent = interaction.interactionId;
   el.appendChild(idBadge);
 
-  // End state badge (only show if not 'completed')
-  if (interaction.endState !== 'completed') {
-    const stateBadge = document.createElement('span');
-    stateBadge.className = 'timeline-event__id';
-    stateBadge.textContent = interaction.endState;
-    stateBadge.style.color = '#f59e0b';
-    el.appendChild(stateBadge);
+  // End state chip — MS-U1: rendered for EVERY state (completed = green,
+  // terminal non-completed = amber/gray). Previously only ≠completed.
+  const endColor = ENDSTATE_COLORS[interaction.endState] ?? '#9ca3af';
+  const stateBadge = document.createElement('span');
+  stateBadge.className = 'timeline-event__endstate';
+  stateBadge.textContent = interaction.endState;
+  stateBadge.style.color = endColor;
+  el.appendChild(stateBadge);
+
+  // ── MS-U1 chips row (between badges and title) ──
+  const memberText = memberChipText(interaction);
+  if (memberText) appendChip(el, memberText, 'interaction-chip interaction-chip--member');
+
+  const understanding = buildUnderstandingBadge(interaction);
+  if (understanding) {
+    appendChip(
+      el,
+      understanding.text,
+      'interaction-chip interaction-chip--understanding',
+      understanding.tone === 'recognized' ? '#10b981' : understanding.tone === 'unclassified' ? '#f59e0b' : '#94a3b8',
+    );
+  }
+
+  const projected = buildProjectedChip(interaction.metadata ?? {});
+  if (projected) {
+    appendChip(el, projected.text, 'interaction-chip interaction-chip--understanding', '#94a3b8');
+  }
+
+  const why = buildWhyBlock(interaction);
+  if (why) {
+    const whyEl = document.createElement('p');
+    whyEl.className = 'timeline-event__why';
+    whyEl.textContent = why;
+    el.appendChild(whyEl);
+  }
+
+  const footer = buildEvidenceFooter(interaction.behavioralEvidence);
+  if (footer) {
+    appendChip(el, footer, 'interaction-chip interaction-chip--footer', '#94a3b8');
+  }
+
+  // MS-U1 A8: assertion chip — count of IR assertions derived for this
+  // interaction's source event (join: triggerEvent.eventId →
+  // IRStep.sourceEventId; ir-bridge.ts:587 writes the same id on the step).
+  const assertionCount = getAssertionCountFor(interaction.triggerEvent?.eventId);
+  if (assertionCount !== null) {
+    const noun = assertionCount === 1 ? 'assertion' : 'assertions';
+    appendChip(
+      el,
+      `${assertionCount} ${noun}`,
+      'interaction-chip interaction-chip--assertions',
+      assertionCount > 0 ? '#0ea5e9' : '#94a3b8',
+    );
   }
 
   // ── Layer 3: Business Meaning (primary) or fallback description ──
@@ -366,34 +480,59 @@ export function renderInteractions(
 /**
  * Render only production interactions (filtered).
  * Uses the same filter logic as the presentation layer.
+ *
+ * MS-U1: optional `options.showHidden` renders ALL interactions with a
+ * suppression-reason chip on each suppressed card (show-and-mark, D3/D8).
+ * Default (no options) preserves pre-MS-U1 behavior exactly.
  */
+export interface RenderOptions {
+  showHidden?: boolean;
+}
+
 export function renderProductionInteractions(
   container: HTMLElement,
   interactions: ComponentInteraction[],
+  options?: RenderOptions,
 ): void {
-  const production = interactions.filter((i) => {
-    if (i.endState !== 'completed') return false;
-    switch (i.type) {
-      case 'TextEntry':
-        return i.metadata.userTyped === true && String(i.metadata.textValue ?? '').trim() !== '';
-      case 'Dropdown':
-        return i.metadata.noOpSelection !== true;
-      case 'RadioButton':
-        return i.metadata.noOpSelection !== true;
-      case 'DatePicker':
-        return String(i.metadata.selectedDate ?? '').trim() !== '';
-      case 'Scroll':
-        return i.metadata.hasDelta === true;
-      case 'Hover':
-        // Evidence-based hover: only meaningful hovers are shown
-        return i.metadata.meaningful === true;
-      case 'Unclassified':
-        // Capture-guarantee v2: always preserve deliberate physical actions
-        return true;
-      default:
-        return true;
+  if (options?.showHidden === true) {
+    renderInteractions(container, interactions);
+    for (const interaction of interactions) {
+      const reason = suppressionReason(interaction);
+      if (!reason) continue;
+      const card = findCardById(container, interaction.interactionId);
+      if (!card || card.querySelector('.interaction-chip--suppressed')) continue;
+      appendChip(card, reason, 'interaction-chip interaction-chip--suppressed', '#f59e0b');
     }
-  });
+    return;
+  }
+  renderInteractions(container, interactions.filter(isProductionInteraction));
+}
 
-  renderInteractions(container, production);
+function findCardById(container: HTMLElement, interactionId: string): HTMLElement | null {
+  for (const card of container.querySelectorAll<HTMLElement>('.interaction-event')) {
+    if (card.querySelector<HTMLElement>('.timeline-event__id')?.textContent === interactionId) {
+      return card;
+    }
+  }
+  return null;
+}
+
+/** Production filter — single source shared by default render + hidden count. */
+function isProductionInteraction(i: ComponentInteraction): boolean {  if (i.endState !== 'completed') return false;
+  switch (i.type) {
+    case 'TextEntry':
+      return i.metadata.userTyped === true && String(i.metadata.textValue ?? '').trim() !== '';
+    case 'Dropdown':
+      return i.metadata.noOpSelection !== true;
+    case 'RadioButton':
+      return i.metadata.noOpSelection !== true;
+    case 'DatePicker':
+      return String(i.metadata.selectedDate ?? '').trim() !== '';
+    case 'Scroll':
+      return i.metadata.hasDelta === true;
+    case 'Hover':
+      return i.metadata.meaningful === true;
+    default:
+      return true;
+  }
 }

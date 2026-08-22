@@ -21,7 +21,10 @@ import {
 import { StorageService } from '../storage/storage-service';
 import { sendMessage } from '../shared/messaging';
 import { RepositoryService } from '../repository/repository-service';
-import { renderProductionInteractions } from './interaction-renderer';
+import { renderProductionInteractions, buildHiddenSummary } from './interaction-renderer';
+import { attachKrChips, setKrLookup, joinSignatures } from './kr-chip';
+import type { KrLookup } from './kr-chip';
+import { setAssertionPlan } from './assertion-chip';
 import { updateEvidenceOnInteraction } from './evidence-renderer';
 import type { ComponentInteraction } from '../shared/component-types';
 import type { BehavioralEvidence } from '../shared/behavioral-evidence-types';
@@ -96,6 +99,7 @@ const stoppedRecordingContextUrl = document.getElementById('stopped-recording-co
 const detectedInteractionsSection = document.getElementById('detected-interactions-section')!;
 const detectedInteractionsList = document.getElementById('detected-interactions-list')!;
 const detectedInteractionsCount = document.getElementById('detected-interactions-count')!;
+const hiddenToggleRow = document.getElementById('hidden-interactions-toggle') as HTMLButtonElement;
 const recordAnotherBtn = document.getElementById('record-another-btn')!;
 
 // IR Plan sections (Phase 8)
@@ -343,6 +347,11 @@ async function openNewTestCase(): Promise<void> {
 }
 
 async function handleStartRecording(): Promise<void> {
+  // MS-U1: reset the stopped-view reveal state — each recording starts with
+  // the production filter (view-only carryover otherwise).
+  showHiddenInteractions = false;
+  setAssertionPlan(null);
+
   if (!validateForm()) {
     showFormError('Please fill in all required fields.');
     return;
@@ -466,11 +475,122 @@ async function handleStopRecording(): Promise<void> {
 
 /**
  * Render interactions and show the section.
+ *
+ * MS-U1: renders the show-hidden toggle row when any interaction is
+ * suppressed (stopped view only — the live timeline stays production-
+ * filtered by design D3), and kicks off the async KR-chip attach
+ * (read-only, honest absence on failure).
  */
 function showDetectedInteractions(interactions: ComponentInteraction[]): void {
   detectedInteractionsCount.textContent = String(interactions.length);
-  renderProductionInteractions(detectedInteractionsList, interactions);
+  renderProductionInteractions(detectedInteractionsList, interactions, {
+    showHidden: showHiddenInteractions,
+  });
+  renderHiddenToggleRow(interactions);
+  void attachKrChipsToCards();
   detectedInteractionsSection.hidden = false;
+}
+
+// ── MS-U1: show-hidden toggle (stopped view) ─────────────────────────────
+
+let showHiddenInteractions = false;
+/** Whether an assertion plan is installed (first install triggers refresh). */
+let assertionPlanInstalled = false;
+
+function renderHiddenToggleRow(interactions: ComponentInteraction[]): void {
+  const summary = buildHiddenSummary(interactions);
+  const row = hiddenToggleRow;
+  if (!summary) {
+    row.hidden = true;
+    row.textContent = '';
+    return;
+  }
+  row.hidden = false;
+  row.textContent = showHiddenInteractions ? 'Hide suppressed interactions' : summary;
+}
+
+async function onHiddenToggleClick(): Promise<void> {
+  showHiddenInteractions = !showHiddenInteractions;
+  await refreshInteractionCards();
+}
+
+/** Re-render the stopped-view cards from storage (preserves reveal state). */
+async function refreshInteractionCards(): Promise<void> {
+  const interactions = await loadDetectedInteractions();
+  if (interactions && interactions.length > 0 && !detectedInteractionsSection.hidden) {
+    showDetectedInteractions(interactions);
+  }
+}
+
+// ── MS-U1: KR chip attach (read-only) ────────────────────────────────────
+
+function collectCardMap(): Map<string, HTMLElement> {
+  const cards = detectedInteractionsList.querySelectorAll<HTMLElement>('.interaction-event');
+  const map = new Map<string, HTMLElement>();
+  for (const card of cards) {
+    const id = card.querySelector<HTMLElement>('.timeline-event__id')?.textContent;
+    if (id) map.set(id, card);
+  }
+  return map;
+}
+
+function attachKrChipsToCards(): void {
+  const cards = collectCardMap();
+  if (cards.size === 0) return;
+  // Display-paced async attach (honest absence on failure); never blocks render.
+  void attachKrChips(cards);
+}
+
+/**
+ * Real KR read (read-only, best-effort). Installed at panel load; if the
+ * knowledge DB cannot be opened/read in this context the lookup stays null
+ * and chips are honestly absent. One bulk read per attach, never per-card.
+ */
+async function installKrLookup(): Promise<void> {
+  try {
+    const { createKnowledgeDatabase } = await import(
+      '../understanding/persistence/knowledge-database'
+    );
+    const db = createKnowledgeDatabase();
+    type KnowledgeEpisodeRow = import('../understanding/persistence/knowledge-types').KnowledgeEpisodeRow;
+    const lookup: KrLookup = async (interactionIds) => {
+      const idSet = new Set(interactionIds);
+      // D5: session-scoped via the indexed compound [appId+sessionId]; falls
+      // back to a full read only if no session/app id is known (honest
+      // absence either way). Still 2 bulk reads total — never per-card.
+      const sessionId = (await StorageService.getRaw(StorageKeys.REPOSITORY_SESSION_ID)) as
+        | string
+        | undefined;
+      // D5: session-scoped via the indexed compound [appId+sessionId]. The
+      // schema indexes episodes by the compound (not sessionId alone), so
+      // resolve the session's appId from its behavior-session row first
+      // (same DB, one indexed read). Falls back to a full read (bounded,
+      // still 2–3 bulk reads total — never per-card).
+      let episodes: KnowledgeEpisodeRow[];
+      if (sessionId) {
+        const behaviorSession = await db.knowledgeBehaviorSessions
+          .where('sessionId').equals(sessionId).first().catch(() => undefined);
+        const appId = behaviorSession?.appId;
+        episodes = appId
+          ? await db.knowledgeEpisodes
+              .where('[appId+sessionId]').equals([appId, sessionId]).toArray()
+          : await db.knowledgeEpisodes.toArray();
+      } else {
+        episodes = await db.knowledgeEpisodes.toArray();
+      }
+      const memberEpisodes = episodes.filter((ep) =>
+        (ep.members ?? []).some((m) => idSet.has(m.interactionId)),
+      );
+      const sigKeys = [...new Set(memberEpisodes.map((e) => e.signatureKey))];
+      if (sigKeys.length === 0) return null;
+      const signatures = await db.knowledgeSignatures
+        .where('key').anyOf(sigKeys).toArray();
+      return joinSignatures(memberEpisodes, signatures);
+    };
+    setKrLookup(lookup);
+  } catch {
+    setKrLookup(null); // honest absence — panel works fully without chips
+  }
 }
 
 // ── IR Plan Rendering (Phase 8) ────────────────────────────
@@ -480,6 +600,17 @@ function showDetectedInteractions(interactions: ComponentInteraction[]): void {
  * Shows action, description, target locators, input, and assertions.
  */
 export function renderIRSteps(plan: ExecutionIRPlan): void {
+  // MS-U1 A8: expose assertion counts to the Observed Workflow cards
+  // (display-only join; the IR itself is untouched). Cards already rendered
+  // (stopped view renders interactions before the IR plan arrives) must be
+  // re-rendered so the assertion chips appear without waiting for an
+  // unrelated storage re-write.
+  const hadNoPlan = !assertionPlanInstalled;
+  setAssertionPlan(plan);
+  assertionPlanInstalled = true;
+  if (!hadNoPlan || !detectedInteractionsSection.hidden) {
+    void refreshInteractionCards();
+  }
   irStepsCount.textContent = String(plan.steps.length);
   irStepsList.innerHTML = '';
 
@@ -1068,6 +1199,9 @@ function setupLiveListeners(): void {
 // ── Event Listeners ────────────────────────────────────────
 
 newTcBtn.addEventListener('click', () => openNewTestCase());
+
+// MS-U1: show-hidden toggle (stopped view only, view-only — no persistence).
+hiddenToggleRow.addEventListener('click', () => void onHiddenToggleClick());
 browseRepoBtn.addEventListener('click', () => {
   chrome.tabs.create({ url: chrome.runtime.getURL('src/repository/index.html') });
 });
@@ -1269,3 +1403,5 @@ async function init(): Promise<void> {
 }
 
 init();
+// MS-U1: install the read-only KR lookup (best-effort; honest absence).
+void installKrLookup();

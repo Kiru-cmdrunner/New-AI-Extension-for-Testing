@@ -1,0 +1,53 @@
+
+/* ── MS-U1: Observed Workflow card upgrades ─────────────────────────── */
+
+.interaction-chip {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 1px 6px;
+  margin: 2px 4px 2px 0;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #475569;
+  vertical-align: middle;
+}
+
+.interaction-chip--member { background: #f8fafc; color: #64748b; }
+.interaction-chip--footer { background: #f8fafc; color: #94a3b8; font-size: 10px; }
+.interaction-chip--kr { background: #eef2ff; color: #4f46e5; }
+.interaction-chip--suppressed { background: #fef3c7; color: #b45309; }
+
+.timeline-event__endstate {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  margin-left: 4px;
+}
+
+.timeline-event__why {
+  font-size: 11px;
+  color: #64748b;
+  margin: 2px 0 0 0;
+}
+
+.hidden-interactions-toggle {
+  display: block;
+  width: 100%;
+  margin: 4px 0 6px 0;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.hidden-interactions-toggle:hover { background: #f1f5f9; color: #334155; }
+
+.interaction-chip--assertions { background: #f0f9ff; color: #0284c7; }
