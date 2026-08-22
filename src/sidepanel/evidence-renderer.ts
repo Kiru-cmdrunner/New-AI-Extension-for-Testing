@@ -46,6 +46,12 @@ import type {
   WirePageContentSnapshot,
   WireObservedItem,
 } from '../shared/page-content-wire';
+import {
+  networkSourceLabel,
+  stabilityBars,
+  truncateJson,
+  RAW_JSON_MAX_CHARS,
+} from './evidence-drilldown';
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -374,6 +380,28 @@ function renderDomChanges(
 
     row.textContent = truncate(parts.join(' · '), 150);
     container.appendChild(row);
+
+    // MS-U2 D4 — dom-change raw detail (collapsed; recorded timings display-only)
+    const rawParts: string[] = [];
+    if (change.rawMutationCount != null) rawParts.push(`${change.rawMutationCount} mutations`);
+    if (change.firstMutationAt != null && change.lastMutationAt != null) {
+      rawParts.push(`${Math.round(change.firstMutationAt)}ms → ${Math.round(change.lastMutationAt)}ms`);
+    }
+    if (change.characterDataDelta) {
+      rawParts.push(`text delta: ${truncate(safeText(change.characterDataDelta.old), 20)} → ${truncate(safeText(change.characterDataDelta.new), 20)}`);
+    }
+    if (rawParts.length > 0) {
+      const details = document.createElement('details');
+      details.className = 'evidence-drilldown evidence-drilldown--dom';
+      const summary = document.createElement('summary');
+      summary.textContent = 'raw detail';
+      details.appendChild(summary);
+      const body = document.createElement('div');
+      body.className = 'evidence-row evidence-row--muted';
+      body.textContent = rawParts.join(' · ');
+      details.appendChild(body);
+      container.appendChild(details);
+    }
   }
 
   // "Show more" indicator
@@ -415,6 +443,28 @@ function renderSurfaces(
     ].filter(Boolean);
     row.textContent = parts.join(' ');
     container.appendChild(row);
+
+    // MS-U2 D5 — surface structural detail (collapsed)
+    const detParts: string[] = [];
+    if (surface.descendantCount != null) detParts.push(`${surface.descendantCount} descendants`);
+    if (surface.ariaRole) detParts.push(`role: ${surface.ariaRole}`);
+    if (surface.accessibleName) detParts.push(`name: ${truncate(surface.accessibleName, 40)}`);
+    if (surface.batchIndex != null) detParts.push(`batch ${surface.batchIndex}`);
+    if (surface.relativeTime != null) detParts.push(`at ${Math.round(surface.relativeTime)}ms`);
+    if (surface.emergence) detParts.push(`emergence: ${surface.emergence}`);
+    if (surface.shadowContext) detParts.push(`[shadow: ${truncate(surface.shadowContext, 30)}]`);
+    if (detParts.length > 0) {
+      const details = document.createElement('details');
+      details.className = 'evidence-drilldown evidence-drilldown--surface';
+      const summary = document.createElement('summary');
+      summary.textContent = 'surface detail';
+      details.appendChild(summary);
+      const body = document.createElement('div');
+      body.className = 'evidence-row evidence-row--muted';
+      body.textContent = detParts.join(' · ');
+      details.appendChild(body);
+      container.appendChild(details);
+    }
   }
 
   if (safeSurfaces.length > MAX_SURFACES_DISPLAY) {
@@ -506,6 +556,10 @@ function renderNetworkActivity(network: NetworkActivity[]): HTMLElement | null {
 
     row.textContent = `${srcLabel} ${entry.method ?? '?'} ${statusText} ${truncate(entry.url, 60)} ${durationText}`;
     container.appendChild(row);
+
+    // MS-U2 D3 — network drill-down (collapsed; compact row above unchanged)
+    const netDetail = renderNetworkDetail(entry);
+    if (netDetail) container.appendChild(netDetail);
   }
 
   if (safeNetwork.length > MAX_NETWORK_DISPLAY) {
@@ -516,6 +570,35 @@ function renderNetworkActivity(network: NetworkActivity[]): HTMLElement | null {
   }
 
   return container;
+}
+
+/**
+ * MS-U2 D3 — network entry drill-down.
+ *
+ * Recorded facts only: source label, resourceType, requestId, causal-event
+ * join id, requestBody pairs (webRequest-captured POSTs). Absent fields →
+ * absent rows.
+ */
+function renderNetworkDetail(entry: NetworkActivity): HTMLElement | null {
+  const parts: string[] = [];
+  parts.push(`source: ${networkSourceLabel(entry.source ?? '')}`);
+  if (entry.resourceType) parts.push(`type: ${entry.resourceType}`);
+  if (entry.requestId) parts.push(`request: ${entry.requestId}`);
+  if (entry.sourceEventId) parts.push(`joined to causal event ${entry.sourceEventId}`);
+  const bodyEntries = Object.entries(entry.requestBody ?? {});
+  for (const [k, v] of bodyEntries.slice(0, 20)) parts.push(`${k}: ${v}`);
+  if (bodyEntries.length > 20) parts.push(`… ${bodyEntries.length - 20} more body fields`);
+
+  const details = document.createElement('details');
+  details.className = 'evidence-drilldown evidence-drilldown--network';
+  const summary = document.createElement('summary');
+  summary.textContent = 'network detail';
+  details.appendChild(summary);
+  const body = document.createElement('div');
+  body.className = 'evidence-row evidence-row--muted';
+  body.textContent = parts.join(' · ');
+  details.appendChild(body);
+  return details;
 }
 
 /**
@@ -600,6 +683,9 @@ function renderResultingState(
       row.className = 'evidence-row';
       row.textContent = rowText(item);
       container.appendChild(row);
+      // MS-U2 D2 — per-item drill-down (collapsed by default; compact row above unchanged)
+      const dd = renderObservedItemDetail(item);
+      if (dd) container.appendChild(dd);
     }
     if (items.length > cap) {
       const more = document.createElement('div');
@@ -636,6 +722,39 @@ function renderResultingState(
   });
 
   return container;
+}
+
+/**
+ * MS-U2 D2 — per-item drill-down for a Resulting-State row.
+ *
+ * Native <details> (collapsed by default): provenance (`via` selector or the
+ * changed-element-seed sentinel), attributes (≤30, k="v"), visibility, and
+ * observer-verified uniqueness. Recorded facts only. Returns null when the
+ * item has nothing drill-able (all sections absent → honest absence).
+ */
+function renderObservedItemDetail(item: WireObservedItem): HTMLElement | null {
+  const parts: string[] = [];
+  parts.push(`via ${item.matchedSelector || '(no selector)'}`);
+  const attrEntries = Object.entries(item.attributes ?? {});
+  for (const [k, v] of attrEntries.slice(0, 30)) parts.push(`${k}="${v}"`);
+  if (item.entityId != null) parts.push(`entity ${item.entityType ?? 'entity'}:${item.entityId}`);
+  if (!item.visible) parts.push('hidden at capture');
+  if (item.uniqueInSnapshot === true) parts.push('unique ✓');
+  else parts.push('unverified');
+
+  const details = document.createElement('details');
+  details.className = 'evidence-drilldown evidence-drilldown--item';
+  const summary = document.createElement('summary');
+  summary.textContent = `item detail · ${item.kind}`;
+  // MS-U4 placeholder note (D2): entityId carries a tooltip only — NO link until
+  // the Knowledge Repository browser exists (no dead UI).
+  if (item.entityId != null) summary.title = 'Knowledge browser arrives in MS-U4';
+  details.appendChild(summary);
+  const body = document.createElement('div');
+  body.className = 'evidence-row evidence-row--muted';
+  body.textContent = parts.join(' · ');
+  details.appendChild(body);
+  return details;
 }
 
 /**
@@ -850,6 +969,85 @@ export function renderEvidence(
 
   // Application evidence section
   container.appendChild(renderApplicationEvidence(evidence?.applicationEvidence));
+
+  // MS-U2 D6 — window internals disclosure (endReason context + stability trace)
+  const winDetails = renderWindowInternals(evidence);
+  if (winDetails) container.appendChild(winDetails);
+
+  // MS-U2 D7 — raw evidence JSON disclosure (collapsed, honest truncation)
+  container.appendChild(renderRawEvidenceJson(evidence));
+}
+
+/**
+ * MS-U2 D6 — window internals drill-down.
+ *
+ * endReason already appears on the meta line; this adds the recorded
+ * stability trace (sample count, last gap, ≤12 static bars from
+ * msSinceLastMutation — pure CSS heights, display only). No samples →
+ * no stability content (honest absence).
+ */
+function renderWindowInternals(evidence: BehavioralEvidence): HTMLElement | null {
+  const win = evidence?.window;
+  if (!win) return null;
+  const samples = win.stabilityTrace ?? [];
+  if (samples.length === 0) return null;
+
+  const details = document.createElement('details');
+  details.className = 'evidence-drilldown evidence-drilldown--window';
+  const summary = document.createElement('summary');
+  summary.textContent = 'window internals';
+  details.appendChild(summary);
+
+  const body = document.createElement('div');
+  body.className = 'evidence-row evidence-row--muted';
+  const lastGap = samples[samples.length - 1].msSinceLastMutation;
+  body.textContent = `endReason: ${win.endReason} · stability: ${samples.length} samples · last gap ${Math.round(lastGap)}ms`;
+  details.appendChild(body);
+
+  const bars = stabilityBars(samples);
+  if (bars.length > 0) {
+    const chart = document.createElement('div');
+    chart.className = 'stability-chart';
+    chart.setAttribute('role', 'img');
+    chart.setAttribute('aria-label', `stability trace, ${bars.length} bars, last gap ${Math.round(lastGap)}ms`);
+    for (const bar of bars) {
+      const b = document.createElement('div');
+      b.className = 'stability-bar';
+      b.style.height = `${Math.max(bar.heightPct, 4)}%`;
+      b.title = `+${Math.round(bar.msSinceLastMutation)}ms since last mutation (batch ${bar.globalBatchCount})`;
+      chart.appendChild(b);
+    }
+    details.appendChild(chart);
+  }
+
+  return details;
+}
+
+/**
+ * MS-U2 D7 — raw evidence JSON disclosure.
+ * textContent-set <pre>; honest truncation marker past RAW_JSON_MAX_CHARS.
+ */
+function renderRawEvidenceJson(evidence: BehavioralEvidence): HTMLElement {
+  const details = document.createElement('details');
+  details.className = 'evidence-drilldown raw-evidence';
+  const summary = document.createElement('summary');
+  summary.textContent = 'Raw evidence JSON';
+  details.appendChild(summary);
+
+  const { text, truncated } = truncateJson(evidence);
+  const pre = document.createElement('pre');
+  pre.className = 'raw-evidence-json';
+  pre.textContent = text;
+  details.appendChild(pre);
+
+  if (truncated) {
+    const note = document.createElement('div');
+    note.className = 'evidence-row evidence-row--muted';
+    note.textContent = `… truncated at ${RAW_JSON_MAX_CHARS.toLocaleString('en-US')} characters (full evidence in storage)`;
+    details.appendChild(note);
+  }
+
+  return details;
 }
 
 /**

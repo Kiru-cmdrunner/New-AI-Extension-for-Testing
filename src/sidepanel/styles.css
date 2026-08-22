@@ -51,3 +51,69 @@
 .hidden-interactions-toggle:hover { background: #f1f5f9; color: #334155; }
 
 .interaction-chip--assertions { background: #f0f9ff; color: #0284c7; }
+
+/* ── MS-U2: evidence drill-downs (native details/summary) ─────────────── */
+
+.evidence-drilldown {
+  margin: 2px 0 6px 0;
+  border-left: 2px solid #334155;
+  padding-left: 8px;
+}
+
+.evidence-drilldown > summary {
+  cursor: pointer;
+  font-size: 11px;
+  color: #94a3b8;
+  user-select: none;
+  list-style: none; /* custom caret below */
+}
+
+.evidence-drilldown > summary::before {
+  content: '▸ ';
+}
+
+.evidence-drilldown[open] > summary::before {
+  content: '▾ ';
+}
+
+.evidence-drilldown > .evidence-row {
+  margin-top: 4px;
+  word-break: break-all;
+}
+
+.evidence-drilldown.raw-evidence > pre.raw-evidence-json {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 10px;
+  line-height: 1.45;
+  color: #cbd5e1;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+  padding: 8px;
+  margin: 6px 0 2px 0;
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.stability-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 40px;
+  margin: 6px 0 2px 0;
+  padding: 2px 4px;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+}
+
+.stability-chart .stability-bar {
+  flex: 1 1 0;
+  min-width: 3px;
+  max-width: 12px;
+  background: #38bdf8;
+  opacity: 0.8;
+  border-radius: 1px 1px 0 0;
+}

@@ -770,7 +770,7 @@ describe('renderEvidence — resulting state (Phase 4a)', () => {
     expect(notif?.textContent?.length).toBeLessThanOrEqual(2 + 1 + 60 + 1);
   });
 
-  it('AC-R8: entity-title items are never rendered', () => {
+  it('AC-R8: entity-title items are never rendered as semantic rows (raw JSON disclosure exempt — MS-U2 D7)', () => {
     const container = document.createElement('div');
     renderEvidence(container, makeEvidence({
       applicationEvidence: makeAppEvidence({
@@ -784,6 +784,9 @@ describe('renderEvidence — resulting state (Phase 4a)', () => {
     }));
 
     expect(container.textContent).toContain('🏷 product:B0VAL1');
+    // Scope: SEMANTIC rendering only. The MS-U2 raw-JSON disclosure legitimately
+    // contains stored JSON (entity-title included) — remove it before asserting.
+    container.querySelector('details.raw-evidence')?.remove();
     expect(container.textContent).not.toContain('Widget title');
   });
 
