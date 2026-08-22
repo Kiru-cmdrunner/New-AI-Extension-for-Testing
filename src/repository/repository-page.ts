@@ -23,12 +23,19 @@ import type {
 // ── V2 imports (Elements View) ────────────────────────────────
 import { DexieUnitOfWorkFactory } from './v2';
 
+// ── MS-U4 imports (Knowledge View — KR browser, read-only) ────
+import { renderKrBrowser } from './kr-browser/kr-browser';
+
 // ── DOM References ────────────────────────────────────────────
 
 // View tabs
 const viewTabs = document.querySelectorAll<HTMLButtonElement>('.view-tab');
+const knowledgeView = document.getElementById('knowledge-view')!;
 const elementsView = document.getElementById('elements-view')!;
 const classicView = document.getElementById('classic-view')!;
+
+// Knowledge View (MS-U4 — KR browser)
+const krRoot = document.getElementById('kr-root')!;
 
 // Elements View (Phase 11.5)
 const elementList = document.getElementById('element-list')!;
@@ -59,7 +66,10 @@ const uowFactory = new DexieUnitOfWorkFactory();
 // ── State ─────────────────────────────────────────────────────
 
 /** Currently active view. */
-let activeView: 'elements' | 'classic' = 'elements';
+let activeView: 'knowledge' | 'elements' | 'classic' = 'knowledge';
+
+/** Selected app for the Knowledge view (appId — the KR's own scope key). */
+let selectedAppId: string | null = null;
 
 /** Currently displayed repository (classic view, may be filtered). */
 let displayRepo: TestRepository = { projects: [] };
@@ -71,9 +81,10 @@ viewTabs.forEach((tab) => {
     const view = tab.dataset.view;
     if (!view) return;
 
-    activeView = view as 'elements' | 'classic';
+    activeView = view as 'knowledge' | 'elements' | 'classic';
 
     viewTabs.forEach((t) => t.classList.toggle('view-tab--active', t === tab));
+    knowledgeView.hidden = activeView !== 'knowledge';
     elementsView.hidden = activeView !== 'elements';
     classicView.hidden = activeView !== 'classic';
 
@@ -718,10 +729,27 @@ elementDetailCloseBtn.addEventListener('click', () => {
   elementDetailPanel.hidden = true;
 });
 
+// ════════ KNOWLEDGE VIEW (MS-U4 — KR browser) ═════════════════
+// Read-only cross-session surface over cmdrunner_knowledge. All reads by
+// appId (NEVER repo_session_id — wrong key domain; see MS-U3 RCA). The
+// panel never writes the KR. Renderer delegating to kr-browser modules.
+
+async function refreshKnowledge(): Promise<void> {
+  await renderKrBrowser(krRoot, {
+    selectedAppId,
+    onAppSelected: (appId) => {
+      selectedAppId = appId;
+      void refreshKnowledge();
+    },
+  });
+}
+
 // ════════ REFRESH DISPATCHER ═══════════════════════════════════
 
 async function refresh(): Promise<void> {
-  if (activeView === 'elements') {
+  if (activeView === 'knowledge') {
+    await refreshKnowledge();
+  } else if (activeView === 'elements') {
     await refreshElements();
   } else {
     await refreshClassic();

@@ -702,3 +702,103 @@ body {
 .cap-project-header:first-child {
   margin-top: 0;
 }
+
+/* ════════ MS-U4: Knowledge Repository browser (.kr-* namespace) ════════ */
+
+.kr-root { display: flex; flex-direction: column; gap: 12px; }
+
+.kr-appselect {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; background: #f7f8fa; border: 1px solid #e2e5ea;
+  border-radius: 8px;
+}
+.kr-appselect__label { font-size: 13px; font-weight: 600; color: #3c4049; }
+.kr-appselect__select {
+  flex: 1; padding: 6px 10px; font-size: 13px; font-family: inherit;
+  border: 1px solid #cfd4dc; border-radius: 6px; background: #fff;
+}
+
+.kr-section {
+  border: 1px solid #e2e5ea; border-radius: 8px; background: #fff;
+  overflow: hidden;
+}
+.kr-section__header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; background: #fafbfc; border-bottom: 1px solid #e2e5ea;
+}
+.kr-section__title { font-size: 13px; font-weight: 700; color: #2d313a; }
+.kr-section__count {
+  font-size: 11px; font-weight: 600; color: #5f6672;
+  background: #eef1f5; border-radius: 10px; padding: 2px 8px;
+}
+.kr-section__list { padding: 8px 14px 12px; display: flex; flex-direction: column; gap: 8px; }
+
+.kr-row {
+  padding: 8px 10px; border: 1px solid #e8eaee; border-radius: 6px;
+  background: #fff;
+}
+.kr-row__head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.kr-row__type {
+  font-size: 11px; font-weight: 700; color: #1f6feb;
+  background: #e8f1fe; border-radius: 4px; padding: 2px 6px;
+}
+.kr-row__target {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px; color: #24292f; max-width: 340px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.kr-row__label { font-size: 13px; font-weight: 600; color: #24292f; }
+.kr-row__count { font-size: 12px; font-weight: 600; color: #57606a; }
+.kr-row__flags {
+  font-size: 11px; font-weight: 700; color: #9a6700;
+  background: #fff8c5; border-radius: 4px; padding: 2px 6px;
+}
+.kr-row__sub { font-size: 11.5px; color: #6e7781; margin-top: 4px; }
+.kr-row__kind, .kr-row__reason {
+  font-size: 11px; font-weight: 600; color: #57606a;
+  background: #f0f2f5; border-radius: 4px; padding: 2px 6px;
+}
+.kr-row__date { font-size: 11px; color: #8b949e; margin-left: auto; }
+
+.kr-chip {
+  font-size: 11px; font-weight: 700; border-radius: 10px; padding: 2px 8px;
+}
+.kr-chip--active { color: #1a7f37; background: #dafbe1; }
+.kr-chip--stale { color: #6e7781; background: #eff2f5; }
+.kr-chip--diverged { color: #cf222e; background: #ffebe9; }
+.kr-chip--linked { color: #1a7f37; background: #dafbe1; }
+.kr-chip--pending { color: #9a6700; background: #fff8c5; }
+.kr-chip--plain { color: #57606a; background: #f0f2f5; }
+
+.kr-consequences { margin-top: 6px; padding: 6px 8px; background: #fafbfc; border-radius: 6px; }
+.kr-consequences__title { font-size: 11px; font-weight: 700; color: #57606a; margin-bottom: 4px; }
+.kr-consequence { font-size: 11.5px; color: #3c4049; padding: 2px 0; }
+
+.kr-steps { margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
+.kr-step { font-size: 12px; color: #24292f; }
+.kr-view, .kr-edge { font-size: 12px; color: #24292f; padding: 2px 0; }
+.kr-edge { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; }
+.kr-views, .kr-edges { display: flex; flex-direction: column; gap: 2px; }
+
+.kr-gapsummary {
+  font-size: 11.5px; font-weight: 600; color: #57606a;
+  background: #f6f8fa; border-radius: 6px; padding: 6px 8px;
+}
+.kr-rollup { font-size: 12px; font-weight: 600; color: #24292f; padding: 2px 0; }
+
+.kr-attrs {
+  font-size: 11.5px; color: #57606a; margin-top: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.kr-state { font-size: 11.5px; color: #6e7781; padding: 1px 0 1px 10px; }
+
+.kr-episode {
+  font-size: 11.5px; color: #24292f; margin-top: 4px; padding: 3px 8px;
+  background: #f6f8fa; border-radius: 4px;
+}
+.kr-kedge { font-size: 11.5px; color: #3c4049; padding: 1px 0 1px 12px; }
+.kr-ref { font-size: 11px; color: #8b949e; padding: 0 0 0 24px; }
+
+.kr-empty { font-size: 12.5px; color: #6e7781; padding: 6px 0; }
+.kr-overflow { font-size: 11.5px; font-style: italic; color: #8b949e; padding: 4px 0; }

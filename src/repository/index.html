@@ -19,7 +19,7 @@
 
     <!-- View Tabs -->
     <div class="view-tabs">
-      <button class="view-tab view-tab--active" data-view="capabilities">Capabilities</button>
+      <button class="view-tab view-tab--active" data-view="knowledge">Knowledge</button>
       <button class="view-tab" data-view="elements">Elements</button>
       <button class="view-tab" data-view="classic">Classic Tree</button>
     </div>
@@ -30,19 +30,11 @@
       <button id="new-project-btn" class="btn btn--primary">+ New Project</button>
     </div>
 
-    <!-- ════════ CAPABILITIES VIEW ════════ -->
-    <main class="main" id="capabilities-view">
-      <div class="cap-list" id="capability-list">
-        <p class="cap-list__empty" id="cap-empty">No capabilities yet. Record a feature to build understanding.</p>
-      </div>
-
-      <!-- Capability Detail Panel -->
-      <div class="detail-panel" id="detail-panel" hidden>
-        <div class="detail-panel__header">
-          <h2 class="detail-panel__title" id="detail-title"></h2>
-          <button id="detail-close-btn" class="detail-panel__close">✕</button>
-        </div>
-        <div class="detail-panel__body" id="detail-body"></div>
+    <!-- ════════ KNOWLEDGE VIEW (MS-U4 — KR browser, replaces dead Capabilities) ════════ -->
+    <main class="main" id="knowledge-view">
+      <div class="kr-root" id="kr-root">
+        <!-- App selector + sections render here (read-only, Dexie joins) -->
+        <p class="cap-list__empty">Loading knowledge…</p>
       </div>
     </main>
 
