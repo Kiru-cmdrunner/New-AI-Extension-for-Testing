@@ -141,6 +141,13 @@ export interface RawElementIdentity {
   dataCy: string | null;
   /** Value of data-qa attribute, null if absent. */
   dataQa: string | null;
+  /**
+   * Value of the data-auto-id attribute, null if absent.
+   * Phase 6B (locator durability): industry-wide alternate test-ID convention
+   * (data-auto-id / data-test-id family). Optional field — pre-6B identities
+   * and fixtures without it remain type-valid.
+   */
+  dataAutoId?: string | null;
   /** Generated CSS selector (hidden fallback). */
   cssSelector: string;
   /** Generated XPath (hidden fallback). */

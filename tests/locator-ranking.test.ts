@@ -287,7 +287,11 @@ describe('extractCandidatesFromIdentity', () => {
 
 describe('Cross-path consistency', () => {
   it('produces same ranking for equivalent candidates from different sources', () => {
-    // Recording-time: candidates extracted from ElementIdentity
+    // Recording-time: candidates extracted from ElementIdentity.
+    // 6B: className 'btn btn-primary' now ALSO yields stable-class candidates,
+    // so the execution-time list must mirror the full recording-time candidate
+    // set (business → accessibility → stable-class → content) for the
+    // cross-path equivalence contract to hold.
     const identity = makeIdentity({ testId: 'submit', ariaLabel: 'Submit Form' });
     const recordingCandidates = extractCandidatesFromIdentity(identity);
     const recordingRanked = rankLocatorCandidates(recordingCandidates);
@@ -297,6 +301,8 @@ describe('Cross-path consistency', () => {
     const executionCandidates: LocatorCandidate[] = [
       { type: LocatorStrategyType.TEST_ID, value: 'submit', category: LocatorCategory.BUSINESS },
       { type: LocatorStrategyType.ACCESSIBLE_NAME, value: 'Submit Form', category: LocatorCategory.ACCESSIBILITY },
+      { type: LocatorStrategyType.CSS, value: '[class~="btn"]', category: LocatorCategory.STABLE_TECHNICAL },
+      { type: LocatorStrategyType.CSS, value: '[class~="btn-primary"]', category: LocatorCategory.STABLE_TECHNICAL },
       { type: LocatorStrategyType.ACCESSIBLE_NAME, value: 'Submit', category: LocatorCategory.CONTENT },
     ];
     const executionRanked = rankLocatorCandidates(executionCandidates);

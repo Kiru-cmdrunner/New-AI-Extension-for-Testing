@@ -112,7 +112,27 @@ function cssEscape(value: string): string {
   return value.replace(/"/g, '\\"');
 }
 
+/**
+ * FAMILY-TAGGED TEST_ID: 6B locator-durability values arrive as the exact
+ * attribute selector `[data-<family>="value"]` (families: cy, qa, auto-id,
+ * test, test-id). These resolve the named attribute ONLY — no cross-family
+ * fall-through — matching locator-resolver.ts resolveByTestId.
+ * Bare values keep the legacy three-family probe.
+ * Regex mirrors the shared TEST_ID_FAMILY_RE contract (kept in sync by
+ * tests/execution/executor-family-parity.test.ts). SAFE_VALUE charset — no
+ * quotes/brackets/commas/parens — blocks selector-list widening.
+ */
+const TEST_ID_FAMILY_RE = /^\[data-(cy|qa|auto-id|test|test-id)=["']([^\]"',()]+)["']\]$/;
+
+function familyAttrSelector(family: string, value: string): string {
+  return `[data-${family}="${cssEscape(value)}"]`;
+}
+
 function resolveByTestId(doc: Document, value: string): Element | null {
+  const tagged = TEST_ID_FAMILY_RE.exec(value);
+  if (tagged) {
+    return doc.querySelector(familyAttrSelector(tagged[1], tagged[2])) || null;
+  }
   return (
     doc.querySelector(`[data-testid="${cssEscape(value)}"]`) ||
     doc.querySelector(`[data-cy="${cssEscape(value)}"]`) ||
@@ -236,6 +256,11 @@ function resolveAllByType(doc: Document, locator: LocatorInput): Element[] | nul
       case 'testId': {
         // Union of the three test-id attribute namespaces, deduped — an
         // element carrying more than one of them must not double-count.
+        // FAMILY-TAGGED values (6B): resolve the named attribute only.
+        const tagged = TEST_ID_FAMILY_RE.exec(locator.value);
+        if (tagged) {
+          return Array.from(doc.querySelectorAll(familyAttrSelector(tagged[1], tagged[2])));
+        }
         const seen = new Set<Element>();
         for (const sel of [
           `[data-testid="${cssEscape(locator.value)}"]`,
@@ -310,6 +335,7 @@ function extractElementIdentity(element: Element): Record<string, string | null>
     testId: el.getAttribute('data-testid'),
     dataCy: el.getAttribute('data-cy'),
     dataQa: el.getAttribute('data-qa'),
+    dataAutoId: el.getAttribute('data-auto-id'),
     id: el.id || null,
     name: el.getAttribute('name'),
     placeholder: el.getAttribute('placeholder'),

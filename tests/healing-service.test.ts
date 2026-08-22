@@ -393,6 +393,112 @@ describe('Healing Service', () => {
       expect(result.healed).toBe(0);
       expect(result.details[0].action).toBe('unchanged');
     });
+
+    it('6B pin: dual CSS class candidates with identical sets are UNCHANGED (no re-heal churn)', async () => {
+      // 6B emits up to 2 [class~="token"] CSS candidates per element. The
+      // pre-6B detectLocatorChanges compared by TYPE with first-value match —
+      // two CSS rows with identical value sets were flagged as changed,
+      // healing EVERY element EVERY session. The (type,value) set-diff must
+      // treat identical sets (any order) as unchanged.
+      const cssA = { type: LocatorStrategyType.CSS, value: '[class~="btn"]', priority: 1, confidence: 0.72 };
+      const cssB = { type: LocatorStrategyType.CSS, value: '[class~="btn-primary"]', priority: 2, confidence: 0.72 };
+      await db.elements.add({
+        id: 'stored-icon',
+        projectId: 'proj-1',
+        logicalName: 'Add Icon',
+        description: '',
+        pageOrComponent: 'https://app.example.com/orders',
+        // Full 3-row ranked set as 6B ranking emits it (class tier 1-2, then
+        // accessibleName at 3) — ranking caps at 3 locators per element.
+        locatorStrategies: [
+          cssA,
+          cssB,
+          { type: LocatorStrategyType.ACCESSIBLE_NAME, value: 'Add Icon', priority: 3, confidence: 0.62 },
+        ],
+        status: ElementStatus.ACTIVE,
+        healHistory: [],
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
+        lastHealedAt: null,
+      });
+      const freshElements: UiElement[] = [
+        makeUiElement('el-icon', makeIdentity({
+          // Matchable identity (accessibleName/role/scope); the stored
+          // locators exercise the dual-CSS class tier set-diff.
+          accessibleName: 'Add Icon',
+          className: 'btn btn-primary',
+          cssSelector: 'button.btn.btn-primary',
+          xPath: '//button',
+          ariaRole: 'button',
+        })),
+      ];
+      const result = await healFromRecording('proj-1', freshElements, 'session-2', factory);
+      expect(result.details[0].action).toBe('unchanged');
+      expect(result.healed).toBe(0);
+    });
+
+    it('6B pin: family-tagged value replacing a bare value IS a change', async () => {
+      // Stored (pre-6B): bare data-cy value 'sign-in'. Fresh (6B): the same
+      // element's top locator is family-tagged '[data-cy="sign-in"]'. The
+      // (type,value) set-diff must detect this as a genuine change.
+      await db.elements.add({
+        id: 'stored-cy',
+        projectId: 'proj-1',
+        logicalName: 'Sign In',
+        description: '',
+        pageOrComponent: 'https://app.example.com/orders',
+        locatorStrategies: [
+          { type: LocatorStrategyType.TEST_ID, value: 'sign-in', priority: 1, confidence: 0.95 },
+        ],
+        status: ElementStatus.ACTIVE,
+        healHistory: [],
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
+        lastHealedAt: null,
+      });
+      const freshElements: UiElement[] = [
+        makeUiElement('el-cy', makeIdentity({
+          accessibleName: 'Sign In',
+          dataCy: 'sign-in',
+          cssSelector: 'button',
+          ariaRole: 'button',
+        })),
+      ];
+      const result = await healFromRecording('proj-1', freshElements, 'session-2', factory);
+      expect(result.details[0].action).toBe('healed');
+      expect(result.healed).toBe(1);
+    });
+
+    it('6B pin: locator present only in stored set is detected (stricter direction)', async () => {
+      // Fresh ranking dropped a locator the stored element has → the set-diff
+      // must flag it (the pre-6B algorithm silently missed this direction).
+      await db.elements.add({
+        id: 'stored-drop',
+        projectId: 'proj-1',
+        logicalName: 'Legacy Btn',
+        description: '',
+        pageOrComponent: 'https://app.example.com/orders',
+        locatorStrategies: [
+          { type: LocatorStrategyType.TEST_ID, value: 'legacy', priority: 1, confidence: 0.95 },
+          { type: LocatorStrategyType.CSS, value: '#legacy', priority: 2, confidence: 0.62 },
+        ],
+        status: ElementStatus.ACTIVE,
+        healHistory: [],
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
+        lastHealedAt: null,
+      });
+      const freshElements: UiElement[] = [
+        makeUiElement('el-drop', makeIdentity({
+          accessibleName: 'Legacy Btn',
+          testId: 'legacy',
+          cssSelector: 'button',
+          ariaRole: 'button',
+        })),
+      ];
+      const result = await healFromRecording('proj-1', freshElements, 'session-2', factory);
+      expect(result.details[0].action).toBe('healed');
+    });
   });
 
   describe('HealingResult shape', () => {

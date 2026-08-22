@@ -153,7 +153,20 @@ export function isElementVisible(element: Element): boolean {
  * Returns the matched element or null.
  */
 function resolveByTestId(doc: Document, value: string): Element | null {
-  // Try data-testid, data-cy, data-qa — all are "business ID" locators
+  // 6B provenance: family-tagged values ('[data-cy="X"]', '[data-auto-id="X"]')
+  // resolve against the EXACT attribute — no cross-family fall-through, so a
+  // tagged locator can never silently match a different attribute's decoy.
+  // SAFE_VALUE charset: no quotes/brackets/commas/parens — a crafted value can
+  // never widen the querySelector into a selector list.
+  const familyMatch = value.match(
+    /^\[data-(cy|qa|auto-id|test|test-id)=["']([^\]"',()]+)["']\]$/,
+  );
+  if (familyMatch) {
+    return doc.querySelector(`[data-${familyMatch[1]}="${cssEscape(familyMatch[2])}"]`);
+  }
+
+  // Bare values keep the legacy 3-family probe — try data-testid, data-cy,
+  // data-qa (pre-6B behavior, unchanged).
   return (
     doc.querySelector(`[data-testid="${cssEscape(value)}"]`) ||
     doc.querySelector(`[data-cy="${cssEscape(value)}"]`) ||

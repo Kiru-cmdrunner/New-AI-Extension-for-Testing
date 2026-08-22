@@ -226,6 +226,10 @@ describe('Generation Layer — build()', () => {
         ariaLabel: null, ariaLabelledBy: null,
         stableId: null, name: null,
         accessibleName: 'Submit',
+        // 6B: className null keeps the pre-6B fallback shape (no class tier);
+        // with classes present the stable-class CSS tier legitimately ranks
+        // above the CONTENT-tier accessibleName.
+        className: null,
         cssSelector: 'button.submit',
         xPath: '//button',
       });

@@ -255,19 +255,23 @@ function detectLocatorChanges(
   stored: Element['locatorStrategies'],
   fresh: readonly RankedLocator[],
 ): boolean {
-  // Check if any fresh locator type has a different value than the stored one
-  for (const freshLocator of fresh) {
-    const storedMatch = stored.find((s) => s.type === freshLocator.type);
-    if (storedMatch && storedMatch.value !== freshLocator.value) {
-      return true; // Same type, different value = changed
-    }
-  }
+  // 6B fix: compare by (type, value) SET membership, not type-only first-match.
+  // The old pairwise find-by-type assumed at most ONE locator per type — but a
+  // ranked set legitimately contains multiple same-type strategies (6B class
+  // tier: CSS '[class~="x"]' + CSS 'button.x'; pre-existing dual
+  // ACCESSIBLE_NAME ariaLabel/accessibleName). Type-only matching compared
+  // fresh's second CSS against stored's first and flagged identical sets as
+  // changed, healing every element on every session. A real change is a
+  // (type,value) present on one side and absent on the other.
+  const keyOf = (s: { type: string; value: string }): string => `${s.type}::${s.value}`;
+  const storedKeys = new Set(stored.map(keyOf));
+  const freshKeys = new Set(fresh.map(keyOf));
 
-  // Check if fresh has locator types that stored doesn't have
-  for (const freshLocator of fresh) {
-    if (!stored.find((s) => s.type === freshLocator.type)) {
-      return true; // New locator type added
-    }
+  for (const key of freshKeys) {
+    if (!storedKeys.has(key)) return true; // new or changed locator
+  }
+  for (const key of storedKeys) {
+    if (!freshKeys.has(key)) return true; // stored locator no longer fresh-ranked
   }
 
   return false;

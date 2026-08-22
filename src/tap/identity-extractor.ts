@@ -357,6 +357,11 @@ export function extractIdentity(el: Element): ElementIdentity {
     testId: el.getAttribute('data-testid'),
     dataCy: el.getAttribute('data-cy'),
     dataQa: el.getAttribute('data-qa'),
+    // 6B: alternate test-ID convention family. getAttribute returns '' for
+    // data-auto-id="" — normalize to null so absence is honest (matches the
+    // testId/dataCy/dataQa siblings' getAttribute behavior above for absent
+    // attrs, and keeps empty-string ids out of the BUSINESS tier).
+    dataAutoId: el.getAttribute('data-auto-id') || null,
     cssSelector: generateCssSelector(el),
     xPath: generateXPath(el),
     inIframe,

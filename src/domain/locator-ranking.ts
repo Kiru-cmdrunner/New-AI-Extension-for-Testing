@@ -229,6 +229,12 @@ export function extractCandidatesFromIdentity(identity: ElementIdentity): Locato
   const candidates: LocatorCandidate[] = [];
 
   // Category 1: Business Identifiers
+  //
+  // 6B provenance rule: the DEFAULT family (data-testid) stays BARE —
+  // byte-identical to pre-6B values, rendering, and stored rows — while
+  // NON-DEFAULT families (data-cy, data-qa, data-auto-id) carry the family
+  // in the value ('[data-cy="X"]') so renderer + executor resolve the exact
+  // attribute instead of blind-probing data-testid-only chains.
   if (identity.testId) {
     candidates.push({
       type: LocatorStrategyType.TEST_ID,
@@ -239,14 +245,23 @@ export function extractCandidatesFromIdentity(identity: ElementIdentity): Locato
   if (identity.dataCy) {
     candidates.push({
       type: LocatorStrategyType.TEST_ID,
-      value: identity.dataCy,
+      value: `[data-cy="${identity.dataCy}"]`,
       category: LocatorCategory.BUSINESS,
     });
   }
   if (identity.dataQa) {
     candidates.push({
       type: LocatorStrategyType.TEST_ID,
-      value: identity.dataQa,
+      value: `[data-qa="${identity.dataQa}"]`,
+      category: LocatorCategory.BUSINESS,
+    });
+  }
+  // 6B: alternate test-ID convention family (optional field; pre-6B
+  // identities lack it entirely).
+  if (identity.dataAutoId) {
+    candidates.push({
+      type: LocatorStrategyType.TEST_ID,
+      value: `[data-auto-id="${identity.dataAutoId}"]`,
       category: LocatorCategory.BUSINESS,
     });
   }
@@ -282,6 +297,14 @@ export function extractCandidatesFromIdentity(identity: ElementIdentity): Locato
       category: LocatorCategory.STABLE_TECHNICAL,
     });
   }
+  // 6B: stable class tokens — the O9 fix. Icon targets and custom DIVs
+  // frequently carry their ONLY durable signal in class tokens (icon-plus,
+  // flight-card). Emits at STABLE_TECHNICAL (below aria 0.80 / business
+  // 0.90) and above the structural walk (0.40). Bounded, filtered, purely
+  // structural — see stableClassCandidates().
+  for (const classCandidate of stableClassCandidates(identity.className)) {
+    candidates.push(classCandidate);
+  }
 
   // Category 4: Content-Based
   if (identity.accessibleName) {
@@ -316,4 +339,161 @@ export function extractCandidatesFromIdentity(identity: ElementIdentity): Locato
   }
 
   return candidates;
+}
+
+// ── 6B: Stable Class Token Candidates ──────────────────────────────────
+
+/**
+ * Maximum class-token candidates per element (6B): bounded so a class-heavy
+ * element can never flood the candidate list ahead of the structural tier.
+ */
+export const MAX_CLASS_CANDIDATES = 2;
+
+/**
+ * State/animation token stems — purely structural vocabulary of UI STATE or
+ * transient effect, never element identity. Exact matches and these
+ * prefixes are volatile across interactions/builds.
+ */
+const VOLATILE_CLASS_EXACT = new Set([
+  'selected',
+  'checked',
+  'active',
+  'disabled',
+  'open',
+  'closed',
+  'show',
+  'showing',
+  'shown',
+  'hidden',
+  'visible',
+  'collapse',
+  'collapsing',
+  'loading',
+  'loaded',
+  'focused',
+  'focus',
+  'hover',
+  'hovered',
+  'enter',
+  'entering',
+  'leave',
+  'leaving',
+  'aria-checked',
+  'true',
+  'false',
+]);
+
+/** Prefixes that mark state (is-/has-/was-), animation, or framework-private tokens. */
+const VOLATILE_CLASS_PREFIXES: readonly string[] = [
+  'is-',
+  'has-',
+  'was-',
+  'are-',
+  'not-',
+  'no-',
+  'fade',
+  'ripple',
+  'animate',
+  'anim',
+  'transition',
+  'spin',
+  'pulse',
+  'shake',
+  'slide',
+  'v-',
+  'ember',
+  'ng-',
+  'ngs-',
+  'svelte-',
+  'astro-',
+  'next-',
+  'nuxt-',
+  'gwt-',
+  'p-',
+  'm-',
+  'px',
+  'py',
+  'mx',
+  'my',
+  'mt',
+  'mb',
+  'ml',
+  'mr',
+  'w-',
+  'h-',
+  'sm:',
+  'md:',
+  'lg:',
+  'xl:',
+  '2xl:',
+  'hover:',
+  'focus:',
+  'active:',
+  'disabled:',
+  'group-',
+  'dark:',
+  'motion-',
+  'scroll-',
+];
+
+/**
+ * Whether a single class token is volatile (state/animation/utility/framework
+ * noise) rather than stable element identity. Purely structural rules —
+ * prefix/shape/length — no site-derived vocabulary (doctrine pin 153f5c2).
+ *
+ * 6B spec AC2.
+ */
+export function isVolatileClassToken(token: string): boolean {
+  const t = token.trim();
+  if (!t) return true;
+  if (t.length < 3) return true; // py, mx, x — utility/positional noise
+  if (VOLATILE_CLASS_EXACT.has(t)) return true;
+  for (const prefix of VOLATILE_CLASS_PREFIXES) {
+    if (t.startsWith(prefix)) return true;
+  }
+  // CSS-in-JS / hashed module tokens (css-1q2w3e4, sc-bdVaJa, __module_btn)
+  if (isCssInJsClass(`.${t}`)) return true;
+  if (/^css-/.test(t)) return true;
+  if (/^sc-[a-zA-Z]/.test(t)) return true;
+  if (/^__/.test(t)) return true;
+  if (/^_/.test(t)) return true; // single-underscore private/build tokens
+  if (/^e-/.test(t)) return true; // element-UI / short-ns build tokens
+  if (t.includes('!important')) return true; // stylesheet noise, never identity
+  if (/[0-9a-f]{6,}/i.test(t) && /[-_]/.test(t)) return true; // embedded hash
+  if (isAutoGeneratedId(t)) return true; // react-*, mui-*, radix-* families
+  // Tailwind variant separators anywhere (dark:bg-*, lg:flex) — utility, not identity
+  if (t.includes(':')) return true;
+  return false;
+}
+
+/**
+ * Extract up to MAX_CLASS_CANDIDATES stable class-token candidates from a
+ * space-joined className. Emits CSS attribute-substring selectors
+ * ('[class~="token"]') — the substring-match form survives additional class
+ * churn on the same element. Deterministic: input order preserved (the
+ * author's own token ordering is the only signal available and is stable
+ * per build), first MAX_CLASS_CANDIDATES stable tokens win.
+ *
+ * 6B spec AC2: category STABLE_TECHNICAL — NEVER above accessibility or
+ * business identifiers, always above the structural walk.
+ */
+export function stableClassCandidates(
+  className: string | null | undefined,
+): LocatorCandidate[] {
+  if (!className || typeof className !== 'string') return [];
+  const tokens = className.split(/\s+/).filter(Boolean);
+  const stable: LocatorCandidate[] = [];
+  for (const token of tokens) {
+    if (stable.length >= MAX_CLASS_CANDIDATES) break;
+    if (isVolatileClassToken(token)) continue;
+    // Malformed selectors fail soft at execution time (resolveByCss
+    // try/catch) — but never emit them as candidates at all.
+    if (/[^\w-]/.test(token)) continue;
+    stable.push({
+      type: LocatorStrategyType.CSS,
+      value: `[class~="${token}"]`,
+      category: LocatorCategory.STABLE_TECHNICAL,
+    });
+  }
+  return stable;
 }

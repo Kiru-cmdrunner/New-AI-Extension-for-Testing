@@ -193,6 +193,20 @@ function renderTestIdLocator(value: string): string {
     return `getByTestId('${escapeString(attrMatch[1])}')`;
   }
 
+  // 6B provenance: NON-DEFAULT test-ID families carry their attribute in the
+  // value ('[data-cy="X"]', '[data-qa="X"]', '[data-auto-id="X"]'). These
+  // cannot be getByTestId — Playwright's default testIdAttribute is
+  // data-testid — so render the CSS attribute locator, which resolves the
+  // EXACT attribute and fails loudly (strict mode) on ambiguity.
+  // SAFE_VALUE_RE: value charset excludes quotes/brackets/commas/parens, so a
+  // crafted "value" can never widen this into a selector LIST.
+  const familyMatch = value.match(
+    /^\[data-(cy|qa|auto-id|test|test-id)=["']([^\]"',()]+)["']\]$/,
+  );
+  if (familyMatch) {
+    return `locator('[data-${familyMatch[1]}="${escapeString(familyMatch[2])}"]')`;
+  }
+
   // Plain ID value: 'email-input'
   return `getByTestId('${escapeString(value)}')`;
 }

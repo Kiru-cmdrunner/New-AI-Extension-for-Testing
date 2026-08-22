@@ -33,7 +33,12 @@ import { ElementIdGenerator } from '../../recorder/element-id-generator';
  * ancestors with a 0.70 threshold — deliberately fuzzier).
  */
 export function elementIdentityKey(identity: ElementIdentity): string {
-  const business = identity.testId ?? identity.dataCy ?? identity.dataQa ?? identity.stableId;
+  // AC8 (6B): dataAutoId joins the business-ID chain as the lowest-priority
+  // fallback AFTER testId/dataCy/dataQa/stableId — keys that currently
+  // resolve via an existing business ID stay byte-identical; only elements
+  // whose sole business ID is data-auto-id move off the css|xPath key.
+  const business =
+    identity.testId ?? identity.dataCy ?? identity.dataQa ?? identity.stableId ?? identity.dataAutoId;
   if (business) return `id:${business}`;
   return `css:${identity.cssSelector}|xp:${identity.xPath}`;
 }
