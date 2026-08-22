@@ -113,6 +113,63 @@ export class BrowserPageContentAdapter implements DOMAdapter {
   get url(): string {
     return this.doc.defaultView?.location.href ?? '';
   }
+
+  /**
+   * Phase 6A seed resolution: resolve a DomChangeSummary targetPath
+   * STRUCTURALLY — a segment walk over children with tag + #id matching.
+   * NEVER querySelector(path): the path is not a selector and must not be
+   * executed as one. Paths with a shadow-context prefix are unresolvable
+   * here (document scope only) — return null.
+   *
+   * Path grammar (getElementPath): 'body > div#id > span' — segments from
+   * body downward; '#id' suffix when the element carries an id. A segment
+   * with no #id matches by tag alone; when multiple children share the tag,
+   * content anchoring at the caller disambiguates among candidates.
+   */
+  resolvePath(
+    path: string,
+  ): { element: ElementLike; siblings: ElementLike[] } | null {
+    if (!path || path.startsWith('[')) return null; // shadow-context paths
+    const segments = path.split(' > ').map((s) => s.trim()).filter(Boolean);
+    if (segments.length === 0) return null;
+
+    const first = parseSegment(segments[0]);
+    const root: Element | null =
+      first.tag === 'HTML' ? this.doc.documentElement : this.doc.body;
+    if (root == null || root.tagName.toUpperCase() !== first.tag) return null;
+
+    // BFS over structural matches; ambiguity at intermediate id-less
+    // segments is resolved by continuing through ALL matches — the final
+    // segment's candidates are disambiguated by content anchoring at the
+    // caller (multiple paths may legitimately produce one changed element).
+    let frontier: Element[] = [root];
+    for (let i = 1; i < segments.length; i++) {
+      const want = parseSegment(segments[i]);
+      const next: Element[] = [];
+      for (const parent of frontier) {
+        for (const child of Array.from(parent.children ?? [])) {
+          if (child.tagName.toUpperCase() !== want.tag) continue;
+          if (want.id != null && child.id !== want.id) continue;
+          next.push(child);
+        }
+      }
+      if (next.length === 0) return null;
+      frontier = next;
+    }
+
+    if (frontier.length === 0) return null;
+    const siblings = frontier.map((el) => new LiveElementLike(el));
+    return { element: siblings[0], siblings };
+  }
+}
+
+function parseSegment(segment: string): { tag: string; id: string | null } {
+  const hashIndex = segment.indexOf('#');
+  if (hashIndex === -1) return { tag: segment.toUpperCase(), id: null };
+  return {
+    tag: segment.slice(0, hashIndex).toUpperCase(),
+    id: segment.slice(hashIndex + 1),
+  };
 }
 
 /**

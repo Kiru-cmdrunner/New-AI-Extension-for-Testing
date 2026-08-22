@@ -186,10 +186,32 @@ export const dropdownDefinition: ComponentDefinition = {
       return null;
     }
 
-    // Native SELECT change → complete
+    // Native SELECT change → provisional sample; complete on structural end.
+    // P11 (spec §3b): a keyboard-driven native <select> fires a TRUSTED
+    // change after every ArrowDown. Completing on the FIRST change pins an
+    // intermediate option ("Low") while the user keeps driving to the final
+    // choice ("high"). Same typed/committed family as 6C: record the sample,
+    // keep the lifecycle open, and complete at the structural end — blur of
+    // the same select (or the outside-action path). No timing.
     if (event.eventType === 'change' && ctx.trigger.tag === 'SELECT') {
       ctx.data.selectedValue = event.valueAfter ?? '';
       ctx.data.selectionConfirmed = true;
+      ctx.data.nativeSelectActive = true;
+      return null; // still active — the user may keep driving the select
+    }
+
+    // P11: blur of the same native select = the structural end of the
+    // selection interaction. Complete with the LAST recorded change value;
+    // blur valueAfter is identical by definition for native selects and
+    // serves as a fallback when no change was observed (autofill-style flows).
+    if (
+      event.eventType === 'blur' &&
+      ctx.trigger.tag === 'SELECT' &&
+      ctx.data.nativeSelectActive === true
+    ) {
+      if (event.valueAfter != null && event.valueAfter !== '') {
+        ctx.data.selectedValue = event.valueAfter;
+      }
       return { endState: 'completed' };
     }
 

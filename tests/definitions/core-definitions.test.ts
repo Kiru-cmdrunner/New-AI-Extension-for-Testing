@@ -215,8 +215,14 @@ describe('Dropdown Definition', () => {
     const target = { tag: 'SELECT', ariaRole: 'listbox', stableId: 'country', accessibleName: 'Country' };
 
     runtime.process(makeEvent('c1', 'mousedown', target));
+    // P11 (spec §3b): native-SELECT change is a PROVISIONAL sample — the
+    // lifecycle completes at the structural end (blur of the same select),
+    // because keyboard-driven selects fire a trusted change per ArrowDown.
     runtime.process(
       makeEvent('ch1', 'change', target, {}, { valueAfter: 'USA' }),
+    );
+    runtime.process(
+      makeEvent('b1', 'blur', target, {}, { valueAfter: 'USA' }),
     );
 
     expect(emitted.length).toBeGreaterThanOrEqual(1);
@@ -366,10 +372,13 @@ describe('Priority Ordering', () => {
     // M5: click triggered Dropdown lifecycle, no fallback emission
     expect(emitted.length).toBe(0);
 
-    // Complete with a change event
+    // Complete with a change event, then the structural end (P11: blur)
     const changeEvent = makeEvent('ch1', 'change', target, {}, { valueAfter: 'Active' });
     ledger.append(changeEvent);
     runtime.process(changeEvent);
+    const blurEvent = makeEvent('b1', 'blur', target, {}, { valueAfter: 'Active' });
+    ledger.append(blurEvent);
+    runtime.process(blurEvent);
     runtime.flush();
 
     const result = projectInteractions(ledger, emitted).interactions;

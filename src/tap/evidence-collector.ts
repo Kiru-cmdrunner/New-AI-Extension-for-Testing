@@ -245,6 +245,16 @@ interface ObservationWindowState {
   requestIdsAtOpen: Set<string> | null;
 
   /**
+   * Phase 6A: DOMObserver batch counter at window OPEN. captureResultingState
+   * seeds the scan with accumulated summaries whose lastBatchIndex >= this
+   * value — the window's own accumulation (the shared accumulation clears
+   * only at true boundaries, so a mid-recording window sees mutations from
+   * batch openBatch onward as its own). Recorded at open, used at scan —
+   * batch-identity attribution, no timestamps.
+   */
+  openedBatch: number;
+
+  /**
    * Resulting Application State (Phase 1): resulting-state snapshot scanned
    * for this window (set once, after consequence settlement). Undefined
    * means no scan ran (unload path, no observer, failure, or nothing
@@ -561,6 +571,7 @@ export class EvidenceCollector {
       settleMetadata: null,
       settleSuperseded: false,
       requestIdsAtOpen,
+      openedBatch: this.domObserver.getBatchCounter(),
       // G1: drain any dialog/window.open stamp the click handler already
       // wrote synchronously (alert() stamps BEFORE blocking) — this window
       // owns it from birth.
@@ -1522,7 +1533,16 @@ export class EvidenceCollector {
     state.resultingStateScanned = true;
     if (!this.pageContentObserver || !this.isRunning) return;
     try {
-      const snapshot = this.pageContentObserver.scan(null);
+      // Phase 6A: seed the scan with this window's own accumulated change
+      // summaries (batch-identity: lastBatchIndex >= the batch counter at
+      // window OPEN). The observer's selector pass runs first, byte-identical;
+      // the seed pass only adds items for paths it did not cover. Guards
+      // above (at-most-once, settle-superseded) apply unchanged — the seed
+      // list is read-only here, no accumulation mutation (ownership O6).
+      const seeds = this.domObserver
+        .getAccumulatedSummaries()
+        .filter((s) => s.lastBatchIndex >= state.openedBatch);
+      const snapshot = this.pageContentObserver.scan(null, seeds);
       if (snapshot) {
         state.resultingState = toWireSnapshot(snapshot);
       }

@@ -50,6 +50,11 @@ export const textEntryDefinition: ComponentDefinition = {
       // User typed something
       ctx.data.userTyped = true;
       ctx.data.textValue = event.valueAfter ?? '';
+      // 6C dual-sample contract (spec §3): typedValue = user INTENT, sampled
+      // on every input/change, NEVER overwritten by the committed blur value.
+      // textValue keeps its committed semantics (blur-wins) so all existing
+      // consumers are unchanged; IR fill reads typedValue ?? textValue.
+      ctx.data.typedValue = event.valueAfter ?? '';
       return null; // still active, wait for blur
     }
 
@@ -61,6 +66,13 @@ export const textEntryDefinition: ComponentDefinition = {
         ctx.data.textValue = event.valueAfter;
         if (ctx.data.userTyped !== true) {
           ctx.data.userTyped = true;
+        }
+        // Autofill/paste-without-input: no input/change ever fired, so no
+        // typed intent existed to preserve — backfill typed := committed so
+        // consumers reading typedValue ?? textValue behave exactly as before
+        // (typedValue ??= blurValueAfter).
+        if (ctx.data.typedValue == null) {
+          ctx.data.typedValue = event.valueAfter;
         }
       }
       return { endState: 'completed' };
@@ -83,6 +95,10 @@ export const textEntryDefinition: ComponentDefinition = {
   buildResult(ctx: ComponentContext, _completion: ComponentCompletion) {
     const userTyped = ctx.data.userTyped === true;
     const textValue = (ctx.data.textValue as string) ?? '';
+    // 6C: typedValue = user intent (last input/change sample). Falls back to
+    // committed textValue when the field was autofilled/pasted without input
+    // events (backfilled at blur) — never null when textValue exists.
+    const typedValue = (ctx.data.typedValue as string) ?? textValue;
     const name = bestName(
       ctx.trigger.accessibleName,
       ctx.trigger.ariaLabel,
@@ -93,6 +109,7 @@ export const textEntryDefinition: ComponentDefinition = {
       metadata: {
         targetName: name,
         textValue,
+        typedValue,
         userTyped,
       },
     };

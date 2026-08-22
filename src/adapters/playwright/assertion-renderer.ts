@@ -321,6 +321,24 @@ function renderEquality(assertion: IRAssertion, pageVar: string, resolveTarget: 
         `await ${expectCall(target, assertion)}.${isTrue ? 'toBeEditable()' : 'not.toBeEditable()'}`,
       ] };
 
+    case 'value': {
+      // Phase 6C (P10): committed-value fill assertions. EQUALS asserts the
+      // input's committed value verbatim; isTrue-style comparisons don't
+      // exist for value (value is a string equality property) — anything
+      // else on 'value' falls through to the attribute fallback below.
+      if (assertion.comparison === ValidationComparison.EQUALS) {
+        const value = String(assertion.expectedValue ?? '');
+        return { lines: [
+          `await ${expectCall(target, assertion)}.toHaveValue('${escapeString(value)}')`,
+        ] };
+      }
+      const attr = assertion.property ?? 'value';
+      const matcher = isTrue
+        ? `toHaveAttribute('${escapeString(attr)}', 'true')`
+        : `not.toHaveAttribute('${escapeString(attr)}', 'true')`;
+      return { lines: [`await ${expectCall(target, assertion)}.${matcher}`] };
+    }
+
     default: {
       // Unknown property: fall back to attribute check
       const attr = assertion.property ?? 'value';

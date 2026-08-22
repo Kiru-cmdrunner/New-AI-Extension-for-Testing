@@ -215,7 +215,8 @@ function generateDescription(
 
   switch (interaction.type) {
     case 'TextEntry': {
-      const value = (md['textValue'] as string) ?? '';
+      // 6C: description reads typed intent (matches the fill input).
+      const value = (md['typedValue'] as string) || (md['textValue'] as string) || '';
       return `Fill "${value}" in the ${name}`;
     }
     case 'Checkbox': {
@@ -307,7 +308,12 @@ function extractInputValue(interaction: ComponentInteraction): IRInput {
 
   switch (interaction.type) {
     case 'TextEntry':
-      return (md['textValue'] as string) ?? null;
+      // 6C dual-sample contract (spec §3): IR fill input = user INTENT
+      // (typedValue), falling back to committed textValue for
+      // autofill/paste-without-input flows (backfilled typed := committed)
+      // and for empty-string typed samples (user cleared the field —
+      // intent degenerates to the committed state).
+      return (md['typedValue'] as string) || (md['textValue'] as string) || null;
 
     case 'Checkbox':
       return (md['checked'] as boolean) ?? null;

@@ -496,19 +496,85 @@ export function deriveStepAssertions(
 ): ReadonlyMap<string, StepScopedAssertion[]> {
   const map = new Map<string, StepScopedAssertion[]>();
   for (const interaction of interactions) {
-    const snapshot =
-      interaction.behavioralEvidence?.applicationEvidence?.resultingState;
-    if (!snapshot || !snapshot.items || snapshot.items.length === 0) continue;
-
-    const assertions = deriveForSnapshot(snapshot);
-    if (assertions.length === 0) continue;
-
     const eventId = interaction.triggerEvent?.eventId;
     if (!eventId) continue;
+
+    // Phase 6C (P2): a typed fill's committed value comes from the
+    // interaction's OWN metadata — controlled-input commits produce no DOM
+    // mutations, so this must NOT require a resulting-state snapshot.
+    // Snapshot-derived kinds still do (INV-CS1: per-window evidence).
+    const fillAssertion = deriveFillCommittedValue(interaction);
+    const snapshot =
+      interaction.behavioralEvidence?.applicationEvidence?.resultingState;
+
+    let assertions: StepScopedAssertion[] = [];
+    if (snapshot && snapshot.items && snapshot.items.length > 0) {
+      assertions = deriveForSnapshot(snapshot);
+    }
+    if (fillAssertion) {
+      // Fill committed-value FIRST, then snapshot kinds, shared 3-cap.
+      assertions.unshift(fillAssertion);
+      if (assertions.length > MAX_ASSERTIONS_PER_STEP) {
+        assertions.length = MAX_ASSERTIONS_PER_STEP;
+      }
+    }
+    if (assertions.length === 0) continue;
 
     map.set(eventId, assertions);
   }
   return map;
+}
+
+/**
+ * Phase 6C (P2): committed-value assertion for typed fills.
+ *
+ * A TextEntry whose user typed an intent the app REWROTE at blur (typed
+ * "Sat, 22 Aug" → committed "Sat, 05 Sep") carries its committed value in
+ * metadata.textValue. The assertion contract (spec §2.5): fills assert the
+ * COMMITTED application state, never the typed intent.
+ *
+ * Locator honesty: the only trustworthy coordinate is the interaction's own
+ * trigger element. trigger.stableId is the element's own #id (the #id tier)
+ * — when it is absent there is NO honest locator, so we emit nothing (an
+ * assertion on a guessed locator would be worse than none). Never widens
+ * selectors (INV-GEN-4): no class chains, no synthesized nth.
+ *
+ * Emission: runs BEFORE the snapshot-kind derivation and consumes the first
+ * slot of the shared 3-per-step cap — a fill's own committed outcome is the
+ * most valuable assertion for that step.
+ */
+function deriveFillCommittedValue(interaction: ComponentInteraction): StepScopedAssertion | null {
+  if (interaction.type !== 'TextEntry') return null;
+  // Non-completed fills (abandoned/interrupted/discarded) carry no honest
+  // committed state to assert.
+  if (interaction.endState !== 'completed') return null;
+
+  const metadata = interaction.metadata as Record<string, unknown> | undefined;
+  if (!metadata) return null;
+  const userTyped = metadata.userTyped === true;
+  if (!userTyped) return null; // autofill/paste — nothing semantic to assert
+
+  const committed = metadata.textValue;
+  if (typeof committed !== 'string' || committed.trim() === '') return null;
+
+  const stableId = interaction.trigger?.stableId;
+  if (typeof stableId !== 'string' || stableId === '') return null;
+
+  const targetName =
+    typeof metadata.targetName === 'string' && metadata.targetName.trim() !== ''
+      ? metadata.targetName.slice(0, 60)
+      : 'input field';
+
+  return {
+    type: 'equality',
+    comparison: 'equals',
+    severity: 'soft',
+    expectedValue: committed.trim().slice(0, MAX_ASSERT_TEXT_LENGTH),
+    property: 'value',
+    targetCss: `#${stableId}`,
+    targetName,
+    derivedFrom: 'fill-committed-value',
+  };
 }
 
 /**

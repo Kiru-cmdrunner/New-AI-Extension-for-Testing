@@ -403,7 +403,17 @@ describe("S3' — containment-proven completion still works", () => {
       target: { tag: 'SELECT', accessibleName: 'Country' },
     });
 
-    const completion = dropdownDefinition.handleEvent(change, ctx);
+    // P11: a native-SELECT change is now PROVISIONAL (keyboard driving fires
+    // a trusted change per ArrowDown); completion is the structural end —
+    // blur of the select. Without the blur the lifecycle stays open.
+    const blur = makeObservedEvent({
+      eventId: 'evt-p1-bl', eventType: 'blur', captureSeq: 30,
+      target: { tag: 'SELECT', accessibleName: 'Country' },
+    });
+
+    const provisional = dropdownDefinition.handleEvent(change, ctx);
+    expect(provisional).toBeNull();
+    const completion = dropdownDefinition.handleEvent(blur, ctx);
     expect(completion).toEqual({ endState: 'completed' });
     expect(ctx.data.selectedValue).toBe('IN');
   });
