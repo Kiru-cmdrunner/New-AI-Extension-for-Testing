@@ -21,6 +21,22 @@
 - Use typed helper functions from `shared/messaging.ts`
 - Never send raw `{}` messages
 
+## Evidence semantics (Phase 6A/6C)
+- **typedValue vs textValue contract**: `metadata.typedValue` = user intent
+  (set on input/change, NEVER overwritten by blur); `metadata.textValue` =
+  committed application state (blur-wins). IR fills/descriptions read
+  `typedValue || textValue`; assertions read the COMMITTED state only.
+- **Seed sentinel**: scan items derived from changed-element seeds carry
+  `matchedSelector: 'changed-element-seed'` (not a selector string). The
+  seed pass runs AFTER the selector pass and only adds uncovered paths —
+  selector-matched snapshots stay byte-identical.
+- **Identity attribute vocabulary**: entity seeds recognize exactly the
+  config's entity idAttribute family (data-asin, data-product-id,
+  data-item-id, data-sku, data-order-id, data-order-number). No new
+  attribute names in classifiers/probes.
+- **Dedup key**: sibling entities dedup on `entity:<id>` (id is identity);
+  everything else on domPath. The seed pass uses the SAME keys.
+
 ## Testing
 - Vitest with `jsdom` environment for DOM tests
 - Mock `chrome.storage.local` and `chrome.runtime` in tests
