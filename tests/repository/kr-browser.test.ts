@@ -403,3 +403,72 @@ describe('A3 — app selector', () => {
     expect(empty).toMatch(/no applications recorded yet/i);
   });
 });
+
+// ── MS-U5 F3: locator durability (heals) ────────────────────────────────
+
+describe('MS-U5 healSummaryLine / F3 in signatures section', () => {
+  const el = (healHistory: unknown[], lastHealedAt: string | null = null) =>
+    ({ logicalName: 'el', healHistory, lastHealedAt }) as never;
+
+  it('F3-1: null elements → no heal line in signatures section', () => {
+    const t = renderSignaturesSection([sig()], null).textContent ?? '';
+    expect(t).not.toContain('Locator healing');
+  });
+
+  it('F3-2: elements exist, none healed → honest never-observed line', () => {
+    const t = renderSignaturesSection([sig()], [el([]), el([])] as never).textContent ?? '';
+    expect(t).toContain('Locator healing: not yet observed — elements recorded, no heals on record.');
+  });
+
+  it('F3-3: healed elements → counts + last date from recorded fields', () => {
+    const t = renderSignaturesSection(
+      [sig()],
+      [el([{ healedAt: '2026-08-01T10:00:00Z' }, { healedAt: '2026-08-02T10:00:00Z' }], '2026-08-02T10:00:00Z'), el([])] as never,
+    ).textContent ?? '';
+    expect(t).toContain('Locator healing: 2 heal(s) across 1/2 element(s) · last 2026-08-02');
+  });
+
+  it('F3-4: absent optional param (back-compat) → no heal line, no throw', () => {
+    const t = renderSignaturesSection([sig()]).textContent ?? '';
+    expect(t).not.toContain('Locator healing');
+  });
+});
+
+describe('MS-U5 F3b — per-element heal lines (W2 resolution)', () => {
+  const el = (name: string, heals: unknown[], last?: string) =>
+    ({ logicalName: name, healHistory: heals, lastHealedAt: last ?? null }) as never;
+
+  it('renders per-element lines ranked by heal count, capped at 4 with overflow', () => {
+    const els = [
+      el('zeta-btn', [{ healedAt: '2026-08-01T00:00:00Z' }], '2026-08-01T00:00:00Z'),
+      el('alpha-input', []),
+      el('mid-card', [{ healedAt: '2026-07-30T00:00:00Z' }, { healedAt: '2026-07-31T00:00:00Z' }], '2026-07-31T00:00:00Z'),
+      ...Array.from({ length: 4 }, (_, i) => el(`extra-${i}`, [])),
+    ];
+    const t = renderSignaturesSection([sig()], els).textContent ?? '';
+    expect(t).toContain('mid-card: 2 heals · last healed 2026-07-31');
+    expect(t).toContain('zeta-btn: 1 heals · last healed 2026-08-01');
+    // 7 elements, cap 4 → healed-first ranking fills 4 slots (mid, zeta,
+    // then name-asc unhealed: alpha-input, extra-0); 3 beyond cap.
+    expect(t).toContain('alpha-input: recorded, no heals on record');
+    expect(t).toContain('extra-0: recorded, no heals on record');
+    expect(t).toContain('… 3 more elements');
+    expect(t).not.toContain('extra-3:'); // beyond cap
+  });
+
+  it('per-element lines rank heals-first deterministically (count desc, name asc)', () => {
+    const els = [
+      el('b-x', []),
+      el('a-y', [{ healedAt: '2026-08-01T00:00:00Z' }], '2026-08-01T00:00:00Z'),
+      el('a-x', [{ healedAt: '2026-08-01T00:00:00Z' }], '2026-08-01T00:00:00Z'),
+    ];
+    const t = renderSignaturesSection([sig()], els).textContent ?? '';
+    const ax = t.indexOf('a-x:');
+    const ay = t.indexOf('a-y:');
+    const bx = t.indexOf('b-x:');
+    expect(ax).toBeGreaterThan(-1);
+    expect(ay).toBeGreaterThan(-1);
+    expect(ax).toBeLessThan(ay); // name asc tie-break
+    expect(bx).toBeGreaterThan(ay); // unhealed last
+  });
+});

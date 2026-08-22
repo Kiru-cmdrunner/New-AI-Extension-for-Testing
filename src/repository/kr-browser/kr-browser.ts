@@ -36,10 +36,15 @@ import {
   sortGaps,
   reasonSummary,
 } from './kr-sort';
-import type { SessionDetail } from './kr-data';
+import type { SessionDetail, HealElementLike } from './kr-data';
+import { healLine } from '../../sidepanel/forward-links';
+
+/** MS-U5 F3 — bounded per-element heal lines under the aggregate summary. */
+const KR_HEAL_LINES = 4;
 import {
   loadApplications,
   loadAppKnowledge,
+  loadHealElements,
   loadBehaviorSessions,
   loadSessionDetail,
   loadApiSeeds,
@@ -88,6 +93,12 @@ function attachOverflow(list: HTMLElement, total: number, cap: number): void {
 export interface KrBrowserOptions {
   selectedAppId: string | null;
   onAppSelected: (appId: string) => void;
+  /**
+   * MS-U5 F3: repository project scope for the Elements/heals read. Null →
+   * unscoped bulk read (bounded). Kept optional so existing callers/tests
+   * are unaffected.
+   */
+  projectId?: string | null;
 }
 
 /**
@@ -112,9 +123,10 @@ export async function renderKrBrowser(
   if (!appId) return; // empty state already rendered by the selector
 
   const knowledge = await loadAppKnowledge(appId);
-  const [sessions, apiSeeds] = await Promise.all([
+  const [sessions, apiSeeds, healElements] = await Promise.all([
     loadBehaviorSessions(appId),
     loadApiSeeds(appId),
+    loadHealElements(options.projectId ?? null),
   ]);
   const details: Record<string, SessionDetail> = {};
   for (const s of sessions) {
@@ -122,7 +134,7 @@ export async function renderKrBrowser(
   }
 
   const sections = [
-    renderSignaturesSection(knowledge.signatures),
+    renderSignaturesSection(knowledge.signatures, healElements),
     renderWorkflowsSection(knowledge.workflows),
     renderViewsSection(knowledge.views, knowledge.viewEdges),
     renderSessionsSection(sessions, details),
@@ -164,7 +176,29 @@ export function renderAppSelector(
 
 // ── A5: action signatures ───────────────────────────────────────────────
 
-export function renderSignaturesSection(rows: KnowledgeActionSignatureRow[]): HTMLElement {
+/**
+ * MS-U5 F3 — locator durability summary line for the signatures section.
+ * Deterministic counts of RECORDED healHistory entries only. Null (absent
+ * line) when no Elements rows exist at all — absence rather than a
+ * fabricated empty state (spec A7/P9).
+ */
+export function healSummaryLine(els: HealElementLike[] | null): string | null {
+  if (!els) return null; // no elements recorded — line absent entirely
+  const healed = els.filter((e) => e.healHistory.length > 0);
+  if (healed.length === 0) return 'Locator healing: not yet observed — elements recorded, no heals on record.';
+  const lastDate = healed
+    .map((e) => e.lastHealedAt)
+    .filter((d): d is string => !!d)
+    .sort()
+    .pop();
+  const totalHeals = healed.reduce((n, e) => n + e.healHistory.length, 0);
+  return `Locator healing: ${totalHeals} heal(s) across ${healed.length}/${els.length} element(s)${lastDate ? ` · last ${lastDate.slice(0, 10)}` : ''}`;
+}
+
+export function renderSignaturesSection(
+  rows: KnowledgeActionSignatureRow[],
+  healElements?: HealElementLike[] | null,
+): HTMLElement {
   const { root, list } = section('Action signatures', rows.length);
   if (rows.length === 0) {
     list.appendChild(empty('No action signatures yet.'));
@@ -201,6 +235,28 @@ export function renderSignaturesSection(rows: KnowledgeActionSignatureRow[]): HT
     list.appendChild(r);
   }
   attachOverflow(list, rows.length, KR_CAPS.signatures);
+  // MS-U5 F3 — forward link: locator durability (honest absence when null).
+  // Aggregate summary + bounded per-ELEMENT lines. Per-signature attribution
+  // is deliberately NOT attempted: no recorded join key exists between
+  // knowledgeSignatures.normalizedTarget (action vocabulary) and
+  // Element.logicalName (repository vocabulary) — inventing one would
+  // fabricate attribution. Elements are listed in their own vocabulary.
+  if (healElements && healElements.length > 0) {
+    const summary = healSummaryLine(healElements);
+    if (summary) list.appendChild(div('kr-heal-line', summary));
+    const ranked = [...healElements]
+      .sort((a, b) =>
+        (b.healHistory.length - a.healHistory.length) ||
+        (a.logicalName < b.logicalName ? -1 : a.logicalName > b.logicalName ? 1 : 0))
+      .slice(0, KR_HEAL_LINES);
+    for (const el of ranked) {
+      const line = healLine(el);
+      if (line) list.appendChild(div('kr-heal-el', `${el.logicalName}: ${line}`));
+    }
+    if (healElements.length > KR_HEAL_LINES) {
+      list.appendChild(div('kr-heal-el kr-heal-el--more', `… ${healElements.length - KR_HEAL_LINES} more elements`));
+    }
+  }
   return root;
 }
 

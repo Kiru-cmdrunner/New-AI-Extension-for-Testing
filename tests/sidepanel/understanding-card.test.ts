@@ -18,6 +18,7 @@ import {
   entitySplit,
   coverageRows,
   gapsRows,
+  type ForwardSigLike,
 } from '../../src/sidepanel/understanding-card';
 
 /** Realistic full fixture — all optional fields present. Deep-copied per call
@@ -315,5 +316,65 @@ describe('renderUnderstandingCard — P11 caps + overflow', () => {
     expect(t).toContain('… 5 more warnings');
     expect(t).toContain('… 5 more gaps');
     expect(t.match(/E\d+/g)!.length).toBe(8);
+  });
+});
+
+// ── MS-U5 P10: forward-links block wiring (F1/F2) ───────────────────────
+
+describe('renderUnderstandingCard — MS-U5 forward links (P10)', () => {
+  const fwdSig = (o: Partial<ForwardSigLike> = {}) => ({
+    actionType: 'Click',
+    normalizedTarget: 'search',
+    occurrenceCount: 1,
+    status: 'active' as const,
+    firstSeenAtSession: 'session-1',
+    ...o,
+  });
+
+  it('P10a: block absent when no signatures and no gaps (honest absence)', () => {
+    const el = renderUnderstandingCard(fullResult());
+    expect(el!.textContent).not.toContain('What this recording improves');
+  });
+
+  it('P10b: F1 lines render for signatures, with action/target label', () => {
+    const el = renderUnderstandingCard(fullResult(), {
+      forwardSignatures: [fwdSig(), fwdSig({ actionType: 'TextEntry', normalizedTarget: 'q', occurrenceCount: 3 })],
+    });
+    const t = el!.textContent ?? '';
+    expect(t).toContain('What this recording improves');
+    expect(t).toContain('Click "search" ◆ new signature');
+    expect(t).toContain('TextEntry "q" ◆ reinforced ×3');
+  });
+
+  it('P10c: F2 guidance appended after gaps rows when gaps exist', () => {
+    const el = renderUnderstandingCard(fullResult(), {
+      gaps: [
+        { observedKind: 'ui', reason: 'no-live-horizon', detail: 'w outside horizon' },
+        { observedKind: 'ui', reason: 'outside-horizon', detail: 'w2' },
+      ],
+    });
+    const t = el!.textContent ?? '';
+    expect(t).toContain('2 observation(s) could not be attributed (no-live-horizon ×1, outside-horizon ×1)');
+    // gaps rows still render in §8 AND guidance rides the forward block.
+    const gapIdx = t.indexOf('no-live-horizon — w outside horizon');
+    const guidanceIdx = t.indexOf('2 observation(s)');
+    expect(gapIdx).toBeGreaterThan(-1);
+    expect(guidanceIdx).toBeGreaterThan(gapIdx);
+  });
+
+  it('P10d: F1 caps at 6 lines with honest overflow marker', () => {
+    const sigs = Array.from({ length: 9 }, (_, i) => fwdSig({ normalizedTarget: `t${i}` }));
+    const el = renderUnderstandingCard(fullResult(), { forwardSignatures: sigs });
+    const t = el!.textContent ?? '';
+    expect((t.match(/◆ new signature/g) ?? []).length).toBe(6);
+    expect(t).toContain('… 3 more signatures');
+  });
+
+  it('P10e: XSS safety — actionType/target never injected as markup', () => {
+    const el = renderUnderstandingCard(fullResult(), {
+      forwardSignatures: [fwdSig({ actionType: '<img src=x onerror=1>', normalizedTarget: '<script>' })],
+    });
+    expect(el!.textContent).toContain('<img src=x onerror=1>');
+    expect(document.querySelectorAll('img,script').length).toBe(0);
   });
 });

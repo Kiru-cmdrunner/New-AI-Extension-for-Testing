@@ -42,6 +42,13 @@ export interface SessionDetail {
   edges: KnowledgeEdgeRow[];
 }
 
+/** Minimal recorded fields the F3 heals line reads (Element subset). */
+export interface HealElementLike {
+  logicalName: string;
+  healHistory: readonly unknown[];
+  lastHealedAt: string | null;
+}
+
 export interface AppKnowledge {
   signatures: KnowledgeActionSignatureRow[];
   workflows: KnowledgeRecordedWorkflowRow[];
@@ -115,6 +122,38 @@ export async function loadAppKnowledge(appId: string): Promise<AppKnowledge> {
 }
 
 // ── behavior sessions (lazy per-expand; bounded) ────────────────────────
+
+/**
+ * MS-U5 F3 — locator durability (read-only cross-DB join).
+ * Reads Elements rows (cmdrunner_repository, V2 Dexie) through the EXISTING
+ * repository — one bulk read, zero new methods, zero writes. Returns null
+ * when no Elements rows exist at all (distinct from [] = rows exist but
+ * none healed) so the renderer can be absent rather than fabricate an
+ * empty state (spec P9). Elements healing writes HealEvents the moment
+ * self-healing runs; until then healHistory is honestly empty.
+ */
+export async function loadHealElements(
+  projectId?: string | null,
+): Promise<HealElementLike[] | null> {
+  try {
+    const { createDatabase } = await import('../v2/dexie/dexie-database');
+    const db = createDatabase();
+    // Read through the table the existing repository wraps (same DB the
+    // Elements view reads). projectId scoping when known (indexed); bounded
+    // bulk read otherwise. Zero writes, zero new methods.
+    const rows = projectId
+      ? await db.elements.where('projectId').equals(projectId).toArray()
+      : await db.elements.toArray();
+    if (rows.length === 0) return null;
+    return rows.map((e) => ({
+      logicalName: e.logicalName,
+      healHistory: Array.isArray(e.healHistory) ? e.healHistory : [],
+      lastHealedAt: e.lastHealedAt ?? null,
+    }));
+  } catch {
+    return null; // honest absence — heals line absent
+  }
+}
 
 export async function loadBehaviorSessions(appId: string): Promise<KnowledgeBehaviorSessionRow[]> {
   try {

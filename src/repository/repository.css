@@ -802,3 +802,25 @@ body {
 
 .kr-empty { font-size: 12.5px; color: #6e7781; padding: 6px 0; }
 .kr-overflow { font-size: 11.5px; font-style: italic; color: #8b949e; padding: 4px 0; }
+
+/* ── MS-U5: locator durability line (KR browser, signatures) ───────────── */
+
+.kr-heal-line {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: rgba(74, 143, 212, 0.08);
+  color: #8fa8c0;
+  font-size: 12px;
+}
+
+.kr-heal-el {
+  padding-left: 16px;
+  font-size: 12px;
+  color: #7d94ac;
+}
+
+.kr-heal-el--more {
+  color: #5f7185;
+  font-style: italic;
+}

@@ -27,7 +27,7 @@ import type { KrLookup } from './kr-chip';
 import { setAssertionPlan } from './assertion-chip';
 import { updateEvidenceOnInteraction } from './evidence-renderer';
 import { renderUnderstandingCard } from './understanding-card';
-import type { GapLike } from './understanding-card';
+import type { GapLike, ForwardSigLike } from './understanding-card';
 import type { UnderstandingResult } from '../domain/entities/understanding-result';
 import type { ComponentInteraction } from '../shared/component-types';
 import type { BehavioralEvidence } from '../shared/behavioral-evidence-types';
@@ -824,6 +824,41 @@ async function lookupSessionGaps(sessionId: string): Promise<GapLike[]> {
   }
 }
 
+/**
+ * MS-U5 F1 — read-only signatures lookup for the forward-links block.
+ * Same join domain as lookupSessionGaps: the understanding sessionId (see
+ * that docblock). Resolves the session's appId via the behavior-session row
+ * (one indexed read), then reads the session's episodes' signatureKeys and
+ * fetches those signature rows. Returns [] on any failure — honest absence.
+ */
+async function lookupSessionSignatures(sessionId: string): Promise<ForwardSigLike[]> {
+  try {
+    const { createKnowledgeDatabase } = await import(
+      '../understanding/persistence/knowledge-database'
+    );
+    const db = createKnowledgeDatabase();
+    const behaviorSession = await db.knowledgeBehaviorSessions
+      .where('sessionId').equals(sessionId).first().catch(() => undefined);
+    if (!behaviorSession) return [];
+    const episodes = await db.knowledgeEpisodes
+      .where('[appId+sessionId]')
+      .equals([behaviorSession.appId, sessionId]).toArray();
+    const sigKeys = [...new Set(episodes.map((e) => e.signatureKey))];
+    if (sigKeys.length === 0) return [];
+    const sigByKey = await db.knowledgeSignatures
+      .where('key').anyOf(sigKeys).toArray();
+    return sigByKey.map((s) => ({
+      actionType: s.actionType,
+      normalizedTarget: s.normalizedTarget,
+      occurrenceCount: s.occurrenceCount,
+      status: s.status,
+      firstSeenAtSession: s.firstSeenAtSession,
+    }));
+  } catch {
+    return []; // honest absence — forward block renders without F1 lines
+  }
+}
+
 async function renderSessionUnderstanding(): Promise<void> {
   const result = await loadUnderstandingResult();
   if (!result) {
@@ -837,12 +872,15 @@ async function renderSessionUnderstanding(): Promise<void> {
   }
   understandingBody.replaceChildren(card);
   understandingSection.hidden = false;
-  // Async gaps attach (best-effort, never blocks the render — MS-U1 pattern).
-  // Join key = this result's own sessionId (see lookupSessionGaps docblock).
-  void lookupSessionGaps(result.sessionId).then((gaps) => {
-    if (gaps.length === 0) return; // honest absence, no row
-    const withGaps = renderUnderstandingCard(result, { gaps });
-    if (withGaps) understandingBody.replaceChildren(withGaps);
+  // Async gaps + forward links attach (best-effort, never blocks the render
+  // — MS-U1 pattern). Join key = this result's own sessionId (docblocks).
+  void Promise.all([
+    lookupSessionGaps(result.sessionId),
+    lookupSessionSignatures(result.sessionId),
+  ]).then(([gaps, forwardSignatures]) => {
+    if (gaps.length === 0 && forwardSignatures.length === 0) return; // honest absence
+    const enriched = renderUnderstandingCard(result, { gaps, forwardSignatures });
+    if (enriched) understandingBody.replaceChildren(enriched);
   });
 }
 

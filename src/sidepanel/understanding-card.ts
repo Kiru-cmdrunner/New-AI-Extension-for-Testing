@@ -21,6 +21,12 @@ import type {
   ApplicationKnowledge,
   ConsolidatedEntity,
 } from '../understanding/consolidation/application-knowledge';
+import {
+  forwardLinkLine,
+  forwardSummaryLine,
+  gapGuidanceLine,
+  type ForwardLine,
+} from './forward-links';
 
 // ── Caps (spec §0) ─────────────────────────────────────────────────────
 
@@ -30,6 +36,7 @@ export const MAX_TRANSITIONS = 8;
 export const MAX_GAPS = 10;
 export const MAX_WARNINGS = 8;
 export const MAX_SIGNALS = 4;
+export const MAX_FORWARD_LINES = 6;
 
 /** Subset of KnowledgeGapRow the renderer needs (Dexie rows carry more). */
 export interface GapLike {
@@ -39,9 +46,20 @@ export interface GapLike {
   detail: string;
 }
 
+/** Minimal recorded fields the F1 forward-link line templates read. */
+export interface ForwardSigLike {
+  actionType: string;
+  normalizedTarget: string;
+  occurrenceCount: number;
+  status: 'active' | 'stale';
+  firstSeenAtSession: string;
+}
+
 /** Optional async-attached gaps payload for the initial render call. */
 export interface UnderstandingCardOptions {
   gaps?: GapLike[];
+  /** MS-U5 F1: signatures the session touched (episode join, MS-U3 key). */
+  forwardSignatures?: ForwardSigLike[];
 }
 
 // ── DOM-free rollup helpers (unit-pinned) ─────────────────────────────
@@ -286,5 +304,61 @@ export function renderUnderstandingCard(
     }
   }
 
+  // 9. Forward links (MS-U5 F1/F2) — how this knowledge improves future
+  // recordings. Deterministic templates of recorded fields only; F1 lines
+  // when signatures exist, F2 guidance when gaps exist, honest absence
+  // otherwise. Never alters capture — explains only (7.3 boundary).
+  const forward = forwardLinksBlock(options);
+  if (forward) card.appendChild(forward);
+
   return card;
+}
+
+/**
+ * MS-U5 — forward-links block. Pure DOM assembly over the shared
+ * formatters (forward-links.ts, pinned P1–P6). Returns null when there is
+ * nothing forward-looking to say (no signatures AND no gaps) — absence is
+ * honest, matching the card's absent-section convention.
+ */
+export function forwardLinksBlock(
+  options?: UnderstandingCardOptions,
+): HTMLElement | null {
+  const sigs = options?.forwardSignatures ?? [];
+  const gaps = options?.gaps ?? [];
+  if (sigs.length === 0 && gaps.length === 0) return null;
+
+  const block = document.createElement('div');
+  block.className = 'understanding-card__forward';
+
+  const head = document.createElement('strong');
+  head.textContent = 'What this recording improves';
+  block.appendChild(head);
+
+  if (sigs.length > 0) {
+    const lines = sigs.map((s) => forwardLinkLine(s));
+    const anyReinforced = lines.some((l) => l?.tone !== 'new');
+    const summary = forwardSummaryLine(lines, { anyReinforced });
+    if (summary) block.appendChild(row(summary, 'understanding-card__forward-summary'));
+    const built = sigs.map((s, i) => ({ sig: s, line: lines[i] }))
+      .filter((x): x is { sig: ForwardSigLike; line: ForwardLine } => x.line !== null);
+    const shown = built.slice(0, MAX_FORWARD_LINES);
+    for (const { sig, line: l } of shown) {
+      const r = row(`${sig.actionType} "${sig.normalizedTarget}" ${l.text}`);
+      r.classList.add(`forward-tone--${l.tone}`);
+      block.appendChild(r);
+    }
+    // Overflow counts EVERY unrendered signature (reviewer W4 hardening):
+    // built-length base, not raw sigs.length, so null-line rows can never
+    // skew the marker (unreachable today — rows are never null — but the
+    // arithmetic is now correct by construction).
+    if (built.length > MAX_FORWARD_LINES) {
+      block.appendChild(mutedRow(`… ${built.length - MAX_FORWARD_LINES} more signatures`));
+    }
+  }
+
+  // F2 — deterministic gap guidance appended after signature lines.
+  const guidance = gapGuidanceLine(gaps);
+  if (guidance) block.appendChild(mutedRow(guidance));
+
+  return block;
 }
