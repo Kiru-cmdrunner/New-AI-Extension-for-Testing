@@ -26,6 +26,9 @@ import { attachKrChips, setKrLookup, joinSignatures } from './kr-chip';
 import type { KrLookup } from './kr-chip';
 import { setAssertionPlan } from './assertion-chip';
 import { updateEvidenceOnInteraction } from './evidence-renderer';
+import { renderUnderstandingCard } from './understanding-card';
+import type { GapLike } from './understanding-card';
+import type { UnderstandingResult } from '../domain/entities/understanding-result';
 import type { ComponentInteraction } from '../shared/component-types';
 import type { BehavioralEvidence } from '../shared/behavioral-evidence-types';
 import type { ExecutionIRPlan, IRAssertion } from '../domain/execution-ir/types';
@@ -113,6 +116,10 @@ const irFilesCount = document.getElementById('ir-files-count')!;
 // Repository status section (Phase 10.4)
 const repoStatusSection = document.getElementById('repo-status-section')!;
 const repoStatusBody = document.getElementById('repo-status-body')!;
+
+// Session Understanding section (MS-U3)
+const understandingSection = document.getElementById('understanding-section')!;
+const understandingBody = document.getElementById('understanding-body')!;
 
 // Execution section (Phase 12.6)
 const executionSection = document.getElementById('execution-section')!;
@@ -463,6 +470,14 @@ async function handleStopRecording(): Promise<void> {
     irPlaywrightSection.hidden = true;
   }
 
+  // MS-U3 — Session Understanding card (renders from understanding_result;
+  // late SW write re-triggers via the storage listener below).
+  try {
+    await renderSessionUnderstanding();
+  } catch {
+    understandingSection.hidden = true;
+  }
+
   // Show TC badge
   const draft = await StorageService.getTestCaseDraft();
   if (draft) {
@@ -770,6 +785,67 @@ async function loadIRPlan(): Promise<ExecutionIRPlan | null> {
   }
 }
 
+// ── Session Understanding Card (MS-U3) ──────────────────────
+
+async function loadUnderstandingResult(): Promise<UnderstandingResult | null> {
+  try {
+    const result = await chrome.storage.local.get(StorageKeys.UNDERSTANDING_RESULT);
+    return (result[StorageKeys.UNDERSTANDING_RESULT] as UnderstandingResult) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Read-only gaps lookup. Joins on the JUST-RENDERED UnderstandingResult's
+ * sessionId — the exact key the understanding pipeline persists its
+ * knowledge rows under (knowledge-repository row keys are
+ * `${appId}:${understanding sessionId}`; repo_session_id is a DIFFERENT
+ * repository-v2 UUID and never matches). Probed live: joining on the
+ * understanding sessionId finds the session + gaps; joining on
+ * repo_session_id finds neither. Read-only, session-scoped, best-effort.
+ */
+async function lookupSessionGaps(sessionId: string): Promise<GapLike[]> {
+  try {
+    const { createKnowledgeDatabase } = await import(
+      '../understanding/persistence/knowledge-database'
+    );
+    const db = createKnowledgeDatabase();
+    const behaviorSession = await db.knowledgeBehaviorSessions
+      .where('sessionId').equals(sessionId).first().catch(() => undefined);
+    if (!behaviorSession) return [];
+    const rows = await db.knowledgeGaps
+      .where('[appId+sessionId]').equals([behaviorSession.appId, sessionId]).toArray();
+    // Newest first — gaps are a backlog; the most recent head the list.
+    rows.sort((a, b) => b.observedAtMs - a.observedAtMs);
+    return rows;
+  } catch {
+    return []; // honest absence — card renders without the gaps row
+  }
+}
+
+async function renderSessionUnderstanding(): Promise<void> {
+  const result = await loadUnderstandingResult();
+  if (!result) {
+    understandingSection.hidden = true;
+    return;
+  }
+  const card = renderUnderstandingCard(result);
+  if (!card) {
+    understandingSection.hidden = true;
+    return;
+  }
+  understandingBody.replaceChildren(card);
+  understandingSection.hidden = false;
+  // Async gaps attach (best-effort, never blocks the render — MS-U1 pattern).
+  // Join key = this result's own sessionId (see lookupSessionGaps docblock).
+  void lookupSessionGaps(result.sessionId).then((gaps) => {
+    if (gaps.length === 0) return; // honest absence, no row
+    const withGaps = renderUnderstandingCard(result, { gaps });
+    if (withGaps) understandingBody.replaceChildren(withGaps);
+  });
+}
+
 async function loadIRFiles(): Promise<GeneratedFile[] | null> {
   try {
     const result = await chrome.storage.local.get(StorageKeys.GENERATED_FILES);
@@ -1062,6 +1138,7 @@ async function handleRecordAnother(): Promise<void> {
   try { await chrome.storage.local.remove(StorageKeys.EXECUTION_RESULT); } catch {}
   irStepsSection.hidden = true;
   irPlaywrightSection.hidden = true;
+  understandingSection.hidden = true; // MS-U3 — cleared with the session
   repoStatusSection.hidden = true;
   executionSection.hidden = true;
   executionRunningSection.hidden = true;
@@ -1162,6 +1239,15 @@ function setupLiveListeners(): void {
       if (files && files.length > 0 && !views['stopped'].hidden) {
         renderIRFiles(files);
       }
+    }
+  });
+
+  // MS-U3 — understanding_result arrives after the understanding pipeline
+  // (written by the SW before the IR plan in the same STOP handler); the
+  // listener re-renders the card if the stopped view is visible.
+  StorageService.onKeyChanged(StorageKeys.UNDERSTANDING_RESULT, () => {
+    if (!views['stopped'].hidden) {
+      void renderSessionUnderstanding();
     }
   });
 
@@ -1371,6 +1457,15 @@ async function init(): Promise<void> {
       renderIRFiles(irFiles);
     } else {
       irPlaywrightSection.hidden = true;
+    }
+
+    // MS-U3 — restore the Session Understanding card on panel reopen /
+    // MV3 revival (same render path as the stop button; idempotent with
+    // the storage listener).
+    try {
+      await renderSessionUnderstanding();
+    } catch {
+      understandingSection.hidden = true;
     }
 
     // Load repository persistence status (Phase 10.4)

@@ -117,3 +117,46 @@
   opacity: 0.8;
   border-radius: 1px 1px 0 0;
 }
+
+/* ══════ MS-U3 — Session Understanding Card ══════ */
+
+.understanding-section__header h2 {
+  margin: 0;
+}
+
+.understanding-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.understanding-card__header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.understanding-card__meta {
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #778);
+}
+
+.understanding-subheader {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8ca0c3;
+  margin: 8px 0 2px 0;
+}
+
+.understanding-row {
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.understanding-row--muted {
+  color: var(--color-text-muted, #99a);
+  font-size: 0.75rem;
+}
