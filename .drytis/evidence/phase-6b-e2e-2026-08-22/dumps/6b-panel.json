@@ -1,0 +1,31 @@
+{
+  "cards": [
+    {
+      "id": "int-2",
+      "type": "⌨️ Text Entry"
+    },
+    {
+      "id": "int-4",
+      "type": "🖱️ Click"
+    },
+    {
+      "id": "int-6",
+      "type": "🖱️ Click"
+    },
+    {
+      "id": "int-8",
+      "type": "🖱️ Click"
+    }
+  ],
+  "irSteps": [
+    "1. fill — Fill \"invoice\" in the SearchTarget: Search (testId: [data-auto-id=\"search-input\"])Input: invoiceAssertions: equality equals invoice (Search)▶ IR Step ",
+    "2. click — Click the SearchTarget: Search (testId: [data-cy=\"search-btn\"])Assertions: none — not derived for this recording▶ IR Step JSON{ \"action\": \"click\", ",
+    "3. click — Click the ClearTarget: Clear (testId: clear-btn)Assertions: none — not derived for this recording▶ IR Step JSON{ \"action\": \"click\", \"assertions\":",
+    "4. click — Click the ITarget: I (css: [class~=\"icon-plus\"])Assertions: none — not derived for this recording▶ IR Step JSON{ \"action\": \"click\", \"assertions\":",
+    "📄 package.json▶ Show CodeCopy{ \"name\": \"recorded-test\", \"version\": \"1.0.0\", \"private\": true, \"description\": \"Playwright tests for Recorded Test\", \"sc",
+    "📄 playwright.config.ts▶ Show CodeCopyimport { defineConfig, devices } from '@playwright/test'; /** * Playwright configuration for Recorded Test. * Generated",
+    "📄 tsconfig.json▶ Show CodeCopy{ \"compilerOptions\": { \"target\": \"ES2020\", \"module\": \"commonjs\", \"moduleResolution\": \"node\", \"strict\": true, ",
+    "📄 .gitignore▶ Show CodeCopynode_modules/ test-results/ playwright-report/ playwright/.cache/ ",
+    "📋 tests/recorded-test.spec.ts▼ Hide CodeCopyimport { test, expect } from '@playwright/test'; test.describe('Recorded Test', () => { test('should complete re"
+  ]
+}

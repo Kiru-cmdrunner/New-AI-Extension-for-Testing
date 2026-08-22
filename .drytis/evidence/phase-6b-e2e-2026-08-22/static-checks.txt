@@ -1,0 +1,10 @@
+PASS — dist/assets exists
+PASS — dist/assets non-empty :: 29 files
+PASS — recorder bundle found :: recorder-entry.ts-QsMiPsJp.js
+PASS — 6B: data-auto-id identity capture in recorder bundle
+PASS — service-worker bundle found :: service-worker-inline.js
+PASS — 6B: data-auto-id in service-worker bundle
+PASS — 6B: family-tagged selector form in service-worker bundle :: CSS family-attr form
+note: executor-named assets in dist: 0 (pre-existing Phase 12.4 defect — see DEFECT-executor-content-script-missing-from-dist.md; not a 6B regression)
+
+════ 6B static checks — ALL PASS ════

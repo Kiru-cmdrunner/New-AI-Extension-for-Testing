@@ -1,0 +1,13 @@
+ ✓ tests/storage-service.test.ts (6 tests) 7ms
+ ✓ tests/domain/execution-ir/types.test.ts (7 tests) 6ms
+ ✓ tests/action-id.test.ts (12 tests) 17ms
+ ✓ tests/messaging.test.ts (6 tests) 6ms
+ ✓ tests/enrichment/quote-safe.test.ts (10 tests) 4ms
+ ✓ tests/tap/identity-extractor-6b.test.ts (4 tests) 17ms
+
+ Test Files  250 passed (250)
+      Tests  4405 passed (4405)
+   Start at  22:46:59
+   Duration  98.76s (transform 12.07s, setup 0ms, collect 36.68s, tests 54.48s, environment 117.06s, prepare 17.24s)
+
+EXIT=0
