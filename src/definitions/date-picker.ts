@@ -44,11 +44,11 @@ export const datePickerDefinition: ComponentDefinition = {
   ]),
 
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
-    const { tag, className, name } = event.target;
+    const { tag, className, name, placeholder } = event.target;
     const { inputType, ariaHasPopup } = event.domContext;
 
     if (
-      isDatePickerTrigger(tag, inputType, className, ariaHasPopup, name)
+      isDatePickerTrigger(tag, inputType, className, ariaHasPopup, name, placeholder)
     ) {
       return { type: 'DatePicker' };
     }

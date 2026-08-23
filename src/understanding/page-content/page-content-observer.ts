@@ -21,6 +21,7 @@ import { isVerifiedAttrAllowed } from '../../shared/page-content-wire';
 import type { DomChangeSummary } from '../../shared/behavioral-evidence-types';
 import {
   classifyChangedSummaries,
+  isNonCounterShapedText,
   type SeedCandidate,
   type SeedCandidateKind,
 } from './changed-element-seed';
@@ -37,6 +38,24 @@ const SKIP_TAGS = new Set([
   'SCRIPT', 'STYLE', 'TEMPLATE', 'LINK', 'META',
   'HEAD', 'TITLE', 'BASE', 'NOSCRIPT', 'BR', 'HR',
 ]);
+
+// Phase 6D.1 W2: mirrors of the classifier's noise vocabulary for the
+// text-swap resolution path (single source of truth stays the classifier;
+// these local twins exist so the observer does not import private helpers).
+const EDITABLE_SEED_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
+
+function isPunctuationOnlySeedText(text: string): boolean {
+  return text.replace(/[\s\p{P}\p{S}]/gu, '').length === 0;
+}
+
+function isTransientSeedText(text: string): boolean {
+  const trimmed = text.trim();
+  if (trimmed.length === 0) return true;
+  if (trimmed.length > 24) return false;
+  return /^(loading|loadin|spinner|skeleton|placeholder|please wait|fetching|updating|processing)[.…]*$/i.test(trimmed)
+    || /^(loading|loadin|spinner|skeleton|placeholder|fetching|updating|processing)\b/i.test(trimmed)
+    || /^please wait/i.test(trimmed);
+}
 
 /**
  * Phase 6A: matchedSelector sentinel for seed-derived items. Downstream
@@ -88,15 +107,29 @@ function extractSeedNumeric(text: string): number | null {
  */
 function pickSeedKind(
   candidates: SeedCandidateKind[],
-  facts: { role: string | null; ariaLabel: string | null; numeric: number | null; hasIdentityCoordinate: boolean },
+  facts: {
+    role: string | null;
+    ariaLabel: string | null;
+    numeric: number | null;
+    hasIdentityCoordinate: boolean;
+    counterShapeVerified: boolean;
+  },
 ): SemanticItemKind | null {
   if (facts.role === 'alert' || facts.role === 'status') return 'notification';
   // Counter wins when classification verified the counter SHAPE (isNumericDelta:
   // "5", "5 items", "$5.00"; never dates/durations) AND the element's own text
   // parses a number, or the element is unlabeled (bare counters). A display
   // string WITH an aria-label stays a badge (dates/fare strings).
+  // 6D.1 W2: for TEXT-SWAP candidates classification could NOT verify the
+  // shape (the classifier never read the text — purity), so a counter claim
+  // requires digit verification on the live text (numeric != null). The
+  // unlabeled bare-counter arm stays reserved for shape-verified candidates.
   if (candidates.includes('counter')) {
-    if (facts.numeric != null || facts.ariaLabel == null) {
+    if (
+      facts.counterShapeVerified
+        ? (facts.numeric != null || facts.ariaLabel == null)
+        : facts.numeric != null
+    ) {
       return 'counter';
     }
   }
@@ -588,6 +621,33 @@ export class PageContentObserver {
     const resolved = resolver.resolvePath(candidate.summary.targetPath);
     if (!resolved) return null;
 
+    // Phase 6D.1 W2: text-swap candidates (1/1 childList on the parent,
+    // from `parent.textContent = …`) have NO characterDataDelta to anchor
+    // on. The structural proof that the swap was TEXT-only: the element
+    // has no element children at scan time (a parent that still carries
+    // element children was element churn, not a text swap — honest skip).
+    // Editable controls are excluded exactly as the characterData path
+    // does (their values belong to the tap, not page-content), and the
+    // transient/punctuation noise vocabulary applies to the live text.
+    if (candidate.resolveViaTextSwap) {
+      const el = resolved.element;
+      if (el.children && el.children.length > 0) return null;
+      const tag = el.tagName.toUpperCase();
+      if (EDITABLE_SEED_TAGS.has(tag)) return null;
+      const text = (el.textContent ?? '').trim();
+      if (text.length === 0) return null;
+      if (isPunctuationOnlySeedText(text)) return null;
+      if (isTransientSeedText(text)) return null;
+      // Date/duration exclusion parity (reviewer WARN): classification-side
+      // counter verification runs isNumericDelta, which rejects "22 Aug" /
+      // "02h 30m" shapes. The counterShapeVerified arm below then requires
+      // a digit on the live text — apply the SAME shape exclusion here so a
+      // text-swap to a date-shaped string cannot claim the counter kind.
+      if (isNonCounterShapedText(text)) {
+        return null;
+      }
+    }
+
     // Content anchor: the resolved element must actually show the change's
     // NEW text at scan time (settlement). Among structurally identical
     // siblings this picks the changed one; for a single candidate it
@@ -641,6 +701,7 @@ export class PageContentObserver {
       ariaLabel,
       numeric,
       hasIdentityCoordinate,
+      counterShapeVerified: !candidate.resolveViaTextSwap,
     });
     if (!kind) return null;
 

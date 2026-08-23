@@ -56,6 +56,34 @@ export const DEFAULT_SEMANTIC_SELECTORS: SemanticSelector[] = [
     kind: 'notification',
     extractAttributes: ['aria-label', 'data-testid'],
   },
+  {
+    // 6D.1 W1: W3C live-region announcement channel (polite/assertive/off).
+    // Structural convention, not a site token.
+    selector: '[aria-live]',
+    kind: 'notification',
+    extractAttributes: ['aria-label'],
+  },
+  {
+    // 6D.1 W1: W3C live log region (append-only feeds/logs).
+    selector: '[role="log"]',
+    kind: 'notification',
+    extractAttributes: ['aria-label'],
+  },
+  {
+    // 6D.1 W1: Material snackbar convention. Matched on the message-bearing
+    // class token (not the container) — snackbar-* naming carries the text.
+    selector: '[class*="snackbar" i]:not([class*="snackbar-container" i])',
+    kind: 'notification',
+    extractAttributes: ['aria-label'],
+  },
+  {
+    // 6D.1 W1: toast message-bearing variants beyond the compound
+    // toast-message above. Container-only classes (toast, toast-holder,
+    // toast-container) intentionally stay UNMATCHED — breadth without noise.
+    selector: '[class*="toast-body" i], [class*="toast-content" i]',
+    kind: 'notification',
+    extractAttributes: ['aria-label'],
+  },
 
   // -- Collections --
   {
@@ -159,6 +187,22 @@ export const DEFAULT_SEMANTIC_SELECTORS: SemanticSelector[] = [
   },
   {
     selector: '[class*="pill" i], [class*="chip" i]',
+    kind: 'status-badge',
+    extractAttributes: ['aria-label'],
+  },
+  {
+    // 6D.1 W1: generic state-attribute convention (Vue/Alpine/htmx data-state;
+    // the shape the audit app uses for its idle→planned state badge).
+    selector: '[data-state]',
+    kind: 'status-badge',
+    extractAttributes: ['data-state', 'aria-label'],
+  },
+  {
+    // 6D.1 W1: ARIA state-attribute conventions — pressed toggles, current
+    // nav items, selected tabs/options. The STATE is the observable fact;
+    // text-bearing requirement is enforced by the observer scan gates
+    // (MIN_TEXT_LENGTH), so empty state holders stay unmatched.
+    selector: '[aria-pressed], [aria-current], [aria-selected="true"]',
     kind: 'status-badge',
     extractAttributes: ['aria-label'],
   },

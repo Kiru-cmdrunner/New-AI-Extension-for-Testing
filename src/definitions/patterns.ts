@@ -202,9 +202,15 @@ export function extractSemanticRoles(ancestorRoles: readonly string[]): string[]
  * must also qualify a deliberate selection Click (int-47 RCA: the Dialog tag
  * fired but LP1 didn't). Framework families (MuiDialog/ant-modal/p-dialog)
  * are substring-covered by dialog/modal.
+ *
+ * Phase 6D.1: suggestion-family tokens added (options-list, suggestion,
+ * autocomplete, typeahead) — generic typeahead/autocomplete naming
+ * conventions. Root cause: the audit's ul.options-list typeahead matched no
+ * token, so li.opt clicks fell unclaimed-at-projection. Substring anchoring
+ * is the pre-existing family style (menu matches menu-item, etc.).
  */
 const OPEN_SELECTION_SURFACE_CLASS_RE =
-  /(listbox|dropdown|popover|overlay|modal|dialog|flyout|menu|popup|MuiDialog|ant-modal|p-dialog)/i;
+  /(listbox|dropdown|popover|overlay|modal|dialog|flyout|menu|popup|suggestion|autocomplete|typeahead|options-list|MuiDialog|ant-modal|p-dialog)/i;
 
 /**
  * S6/LP1: Is this click target inside an open selection surface?
@@ -341,6 +347,12 @@ const DATEPICKER_TRIGGER_CLASS_RE =
   /(oxd-date-input|datepicker|date-picker|date-input|calendar-input)/i;
 
 /**
+ * Date-vocabulary hint for trigger naming (name attribute or placeholder).
+ * Shared by both paths so placeholder parity is exact (6D.1).
+ */
+const DATE_NAME_HINT_RE = /(?:date|birth|dob|expire|expiry|calendar)/i;
+
+/**
  * CSS class patterns for calendar cells (actual selectable dates).
  */
 const DATEPICKER_CELL_CLASS_RE =
@@ -370,6 +382,7 @@ export function isDatePickerTrigger(
   className: string | null,
   ariaHasPopup: string | null,
   name: string | null,
+  placeholder: string | null = null,
 ): boolean {
   // Native date/time inputs
   if (tag === 'INPUT' && inputType && DATE_INPUT_TYPES.has(inputType)) return true;
@@ -378,7 +391,13 @@ export function isDatePickerTrigger(
   // ARIA hasPopup on a text input near a calendar
   if (ariaHasPopup === 'dialog' && tag === 'INPUT') return true;
   // Name attribute hints (date, birth, dob, etc.)
-  if (name && /(?:date|birth|dob|expire|expiry|calendar)/i.test(name)) return true;
+  if (name && DATE_NAME_HINT_RE.test(name)) return true;
+  // Phase 6D.1: placeholder hints — real apps put the date vocabulary in the
+  // placeholder ("Choose a date") or aria-label (capture folds both into
+  // target.placeholder). Same vocabulary, same substring rule as `name`
+  // (parity). Scoped to INPUT elements (spec §4.3): placeholder on other
+  // tag shapes is decoration, not a control hint.
+  if (placeholder && tag === 'INPUT' && DATE_NAME_HINT_RE.test(placeholder)) return true;
   return false;
 }
 

@@ -46,6 +46,15 @@ export interface SeedCandidate {
    * children carry the semantics). Resolution must inspect added children.
    */
   resolveViaChildren: boolean;
+  /**
+   * Phase 6D.1: true for the 1/1 text-swap shape (parent.textContent
+   * assignment — a net-zero childList swap of exactly one TEXT node for
+   * another, no characterDataDelta on the parent summary). The classifier
+   * cannot read the text (purity), so resolution applies the same noise and
+   * kind gates it applies to characterData candidates, after proving the
+   * swap was text-only (element has NO element children at scan time).
+   */
+  resolveViaTextSwap: boolean;
 }
 
 // ── Noise vocabulary (generic words, NOT site tokens) ──────────────────
@@ -114,6 +123,17 @@ function isNumericDelta(_oldText: string | null, newText: string | null): boolea
 }
 
 /**
+ * True when the text carries a NON-counter shape (dates, times, durations,
+ * ordinal codes) — the same exclusion isNumericDelta applies to counter
+ * classification. Exported so the observer's Phase 6D.1 text-swap resolution
+ * path (which cannot verify shape at classification time) applies the
+ * identical guard at scan time — parity, not a second vocabulary.
+ */
+export function isNonCounterShapedText(text: string): boolean {
+  return NON_COUNTER_NUMERAL_RE.test(text);
+}
+
+/**
  * Classify accumulated change summaries into seed candidates.
  *
  * Pure function: summaries in, candidates out. No DOM access, no timing, no
@@ -174,7 +194,7 @@ function classifyOne(summary: DomChangeSummary): SeedCandidate | null {
       kinds.push('notification', 'status-badge');
     }
     if (kinds.length === 0) return null;
-    return { summary, candidateKinds: kinds, resolveViaChildren };
+    return { summary, candidateKinds: kinds, resolveViaChildren, resolveViaTextSwap: false };
   }
 
   // ── attribute shape ─────────────────────────────────────────────────
@@ -239,6 +259,21 @@ function classifyOne(summary: DomChangeSummary): SeedCandidate | null {
       if (kinds.length === 0) return null;
     } else if (added === removed) {
       // Net-zero churn (mount/unmount swap) with no other signal — drop.
+      // Phase 6D.1 W2: the 1/1 exception — a single-text-node swap is the
+      // exact capture shape of `parent.textContent = "2 tickets"` (the audit
+      // miss: #id-only counters). The classifier stays pure (it cannot read
+      // the new text), so the candidate carries the text kinds and
+      // resolution proves text-onlyness structurally (no element children at
+      // scan time) before applying the standard noise/kind gates. Element
+      // churn (2/2, 4/4, mount/unmount) stays dropped.
+      if (added === 1 && kinds.length === 0) {
+        return {
+          summary,
+          candidateKinds: ['counter', 'notification', 'status-badge'],
+          resolveViaChildren: false,
+          resolveViaTextSwap: true,
+        };
+      }
       if (kinds.length === 0) return null;
     }
     // Net removals (added === 0, removed > 0): nothing to observe — drop
@@ -247,7 +282,7 @@ function classifyOne(summary: DomChangeSummary): SeedCandidate | null {
   }
 
   if (kinds.length === 0) return null;
-  return { summary, candidateKinds: dedupe(kinds), resolveViaChildren };
+  return { summary, candidateKinds: dedupe(kinds), resolveViaChildren, resolveViaTextSwap: false };
 }
 
 function dedupe(kinds: SeedCandidateKind[]): SeedCandidateKind[] {
