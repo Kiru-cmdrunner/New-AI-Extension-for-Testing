@@ -544,6 +544,9 @@ export function buildEpisodes(input: EpisodeBuilderInput): EpisodeBuilderResult 
         label: (m.raw.metadata?.targetName as string | undefined) ?? null,
         value:
           (m.raw.metadata?.textValue as string | undefined) ??
+          // 6F-M1 B: DatePicker writes dateValue (never textValue — its
+          // focus-triggered shape has no text); params were rendering null.
+          (m.raw.metadata?.dateValue as string | undefined) ??
           (m.raw.triggerEvent?.valueAfter as string | null) ??
           null,
         link: m.parameterLink ?? 'form-overlap',

@@ -1838,7 +1838,17 @@ export class EvidenceCollector {
         closedAt: performance.now(),
         durationMs: performance.now() - state.openedAt,
         endReason,
-        stabilityTrace: [],
+        // 6F-M1 C: deliver the AdaptiveWindow's recorded stability trace
+        // (capped at MAX_TRACE by adaptive-window.ts). Previously hardcoded
+        // [] — the settle branch is the ONLY delivery path for
+        // consequence-settled windows, so their traces were lost and the
+        // D6 drill-down never rendered for exactly the most evidence-rich
+        // window class. closeWindow stores the finalized EvidenceWindow on
+        // state.adaptiveWindow before calling this method; its trace is the
+        // recorded sample array ([...this.stabilityTrace] at finalize).
+        // Windows that never armed an AdaptiveWindow honestly deliver [].
+        stabilityTrace:
+          (state.adaptiveWindow as unknown as EvidenceWindow | undefined)?.stabilityTrace ?? [],
       },
       targetEvidence,
       applicationEvidence,

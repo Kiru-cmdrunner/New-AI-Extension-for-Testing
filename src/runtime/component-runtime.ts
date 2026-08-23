@@ -60,6 +60,16 @@ export interface RuntimeSnapshot {
 const SEEN_EVENTS_CAP = 500;
 
 /**
+ * 6F-M1 A: pageId from an eventId of the form `evt-{pageId}-{counter}` —
+ * the EvidenceLedger's documented event-ID contract (evidence-ledger.ts).
+ * 'unknown' fallback matches the ledger's own defensive behavior.
+ */
+function pageIdOf(eventId: string): string {
+  const match = eventId.match(/^evt-(.+)-\d+$/);
+  return match ? match[1] : 'unknown';
+}
+
+/**
  * Maximum idle time (ms) an active component can remain on the stack without
  * receiving any in-scope events. Prevents zombie components from blocking
  * discovery indefinitely after the user has moved on to something else.
@@ -186,6 +196,45 @@ class ComponentRuntimeImpl implements ComponentRuntime {
   private dedupByType: Map<InteractionType, DedupRecord> = new Map();
   private errorLog: string[] = [];
 
+  // ── 6F-M1 A: gesture ownership ───────────────────────────────────────
+  //
+  // A lifecycle that completes on MOUSEDOWN forgets its gesture: the paired
+  // click of the same physical gesture arrives immediately after the
+  // mousedown in the DISCRETE-event ledger order, finds no active lifecycle
+  // (it was spliced at completion), and falls through to discovery → twin
+  // Click card + duplicate IR step (6E-M2 E2E Finding 2; 6F-M1 run-1
+  // grounded the real stream: the pair is consecutive in ledger-entry order
+  // with ~90ms raw captureSeq gap — browser-monotonic captureSeq is NOT
+  // +1-adjacent across a gesture because non-discrete events share the
+  // counter).
+  //
+  // The pairing predicate is the runtime analog of the shipped S1' projection
+  // rule (projection-engine.ts pairPhysicalPress) — same structural family,
+  // owner-corrected doctrine (2026-08-20): same pageId, same elementKey, and
+  // the click is the NEXT discrete event after the completing mousedown —
+  // no intervening DISCRETE event on that page (interleaved non-discrete
+  // events — focus/mousemove/input — never break a physical press-release
+  // gesture). NO TIMING FIELDS participate (no Date.now, no timestamp
+  // deltas, no captureSeq arithmetic) — timing rules are doctrinally
+  // forbidden.
+  //
+  // The bound below is memory hygiene only (most-recent-first eviction),
+  // not a timing rule: entries are never expired by time.
+  private readonly MAX_GESTURE_RECORDS = 16;
+  private completedGestures: Array<{
+    pageId: string;
+    elementKey: string;
+    /** Ledger captureSeq of the completing mousedown — ordering anchor. */
+    mousedownCaptureSeq: number;
+    /** Set true once any later DISCRETE event landed on this page. */
+    superseded: boolean;
+    lifecycleId: string;
+    interactionId: string;
+    interactionType: InteractionType;
+    /** Emitted interaction object — the click may append to memberEvents. */
+    interaction: ComponentInteraction;
+  }> = [];
+
   constructor(definitions: ComponentDefinition[], config: RuntimeConfig) {
     // Sort by priority ascending (lower number = higher priority = checked first).
     // Click (180) is the universal fallback — always checked last.
@@ -232,6 +281,19 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     //     Prevents zombie components (e.g., Dropdown, DatePicker that never
     //     received their completion event) from blocking discovery.
     this.cleanupStaleComponents(event, emitted);
+
+    // 2c. 6F-M1 A: gesture-record supersession — any discrete event other
+    //     than a click (mousedown/contextmenu/keydown/dragstart/drop) that
+    //     arrives after a recorded completing mousedown breaks the exact
+    //     ledger adjacency for every gesture on the same page. Clicks are
+    //     excluded here: step 3b below decides whether a click is the
+    //     absorbing half of a gesture or an adjacency-breaking event.
+    if (DISCRETE_ACTION_TYPES.has(event.eventType) && event.eventType !== 'click') {
+      const pageId = pageIdOf(event.eventId);
+      for (const g of this.completedGestures) {
+        if (g.pageId === pageId) g.superseded = true;
+      }
+    }
 
     // 3. Offer to active stack (top → bottom)
     let handled = false;
@@ -346,6 +408,48 @@ class ComponentRuntimeImpl implements ComponentRuntime {
             if (interaction) emitted.push(interaction);
             this.activeStack.splice(i, 1);
           }
+        }
+      }
+    }
+
+    // 3b. 6F-M1 A: gesture ownership — a click that is the NEXT discrete
+    //     event after a mousedown that COMPLETED a lifecycle, on the same
+    //     element and page, is the second half of that same gesture. It is
+    //     absorbed (claimed for the completed interaction, appended to its
+    //     memberEvents) instead of falling through to discovery, where the
+    //     Click fallback would emit a twin card + duplicate IR step.
+    //     Strictly structural (S1' family): pageId + elementKey + exact
+    //     discrete-event adjacency. No timing fields, no captureSeq math.
+    if (!handled && event.eventType === 'click' && this.completedGestures.length > 0) {
+      const clickPageId = pageIdOf(event.eventId);
+      const clickKey = elementKey(event.target);
+      const owner = this.completedGestures.find(
+        (g) =>
+          !g.superseded &&
+          g.pageId === clickPageId &&
+          g.elementKey === clickKey &&
+          event.captureSeq > g.mousedownCaptureSeq,
+      );
+      if (owner) {
+        handled = true;
+        this.ledger?.setDisposition(
+          event.eventId,
+          'claimed',
+          owner.interactionId,
+          owner.interactionType,
+        );
+        // Append-only memberEvents extension (eventId-guarded) — the emitted
+        // interaction keeps the full gesture evidence for drill-downs.
+        if (!owner.interaction.memberEvents.some((ev) => ev.eventId === event.eventId)) {
+          owner.interaction.memberEvents.push(event);
+        }
+        // One gesture record absorbs at most one click (the release half).
+        this.completedGestures = this.completedGestures.filter((g) => g !== owner);
+      } else {
+        // A click that matched NO gesture record is itself an
+        // adjacency-breaking event for this page's records.
+        for (const g of this.completedGestures) {
+          if (g.pageId === clickPageId) g.superseded = true;
         }
       }
     }
@@ -616,6 +720,34 @@ class ComponentRuntimeImpl implements ComponentRuntime {
       } else {
         // Abandoned/interrupted — release all absorbed events for this lifecycle
         this.ledger.releaseClaims(ctx.lifecycleId ?? '');
+      }
+    }
+
+    // 6F-M1 A: record mousedown-completed gestures for twin absorption.
+    // The completing mousedown is the last member event (pushed before
+    // handleEvent returned the completion). Type-generic: any definition
+    // completing on mousedown participates — never DatePicker-specific.
+    if (completion.endState === 'completed') {
+      const completing = ctx.memberEvents[ctx.memberEvents.length - 1];
+      if (completing && completing.eventType === 'mousedown') {
+        // Any gesture record from an earlier mousedown on this page is now
+        // superseded: a newer discrete event (this mousedown) intervened.
+        for (const g of this.completedGestures) {
+          if (g.pageId === pageIdOf(completing.eventId)) g.superseded = true;
+        }
+        this.completedGestures.push({
+          pageId: pageIdOf(completing.eventId),
+          elementKey: elementKey(completing.target),
+          mousedownCaptureSeq: completing.captureSeq,
+          superseded: false,
+          lifecycleId: ctx.lifecycleId ?? '',
+          interactionId: interaction.interactionId,
+          interactionType: ctx.type,
+          interaction,
+        });
+        if (this.completedGestures.length > this.MAX_GESTURE_RECORDS) {
+          this.completedGestures.shift();
+        }
       }
     }
 
