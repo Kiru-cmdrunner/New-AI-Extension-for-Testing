@@ -60,8 +60,14 @@ vi.stubGlobal('chrome', {
 const E_CLICK = 'evt-atc-click';
 const NAV_EVENT = 'evt-nav-synth';
 const REQ_ID = 'webreq-77';
+// Domain-agnostic fixture host (6F-M1 follow-up micro-fix, 2026-08-23): the
+// host part is arbitrary to every consumer in this test (no fetch, no host
+// parse — the URL is compared against itself and used as a dedup key). It
+// previously carried the environment's preview subdomain, which was
+// environment identity in tracked source (DEFECT note, 2026-08-18). The
+// m9 validation page itself keeps a relative action — this now matches it.
 const CART_URL =
-  'https://semantic-test-intell-wvxv6e.drytis.dev/public/m9-cart-landed.html?ASIN=B08KGRVW2S&quantity=1&submit.addToCart=1';
+  'https://validation.local/public/m9-cart-landed.html?ASIN=B08KGRVW2S&quantity=1&submit.addToCart=1';
 
 function emptyAppEvidence(): BehavioralEvidence['applicationEvidence'] {
   return {
