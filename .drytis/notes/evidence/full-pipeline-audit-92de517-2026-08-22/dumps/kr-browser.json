@@ -1,0 +1,17 @@
+{
+  "tabActive": "knowledge",
+  "krRootChildren": 11,
+  "applications": 4,
+  "multiSession": false,
+  "hasSessions": true,
+  "hasSignatures": true,
+  "hasRecordedWorkflows": true,
+  "hasViewsTransitions": true,
+  "hasEntities": true,
+  "hasOutcomes": true,
+  "hasEpisodes": true,
+  "hasGaps": true,
+  "hasApiSeeds": true,
+  "healLine": true,
+  "text2500": " Test Repository ✕ Knowledge Elements Classic Tree + New Project Applicationhttp://127.0.0.1:8177/reactish — app-67t4q (1 session)chrome-extension://gndjidfncanlhlonpcabokbdhnikglpn/src/sidepanel/index.html — app-b24aev (1 session)http://127.0.0.1:8177/ — app-eketi1 (1 session)http://127.0.0.1:8177/shop — app-mvg95v (1 session)Action signatures2Clickplan trip×1activesession-1787444817232 → session-1787444817232 (seq 1–1) · anchor —Consequence profile (1)T4-window · ui · anchor-window — ×1 (hits 1, missed 0) · 60% · active · via behavior/dom-windowUnclassifiedbengaluru×1activesession-1787444817232 → session-1787444817232 (seq 1–1) · anchor —Consequence profile (1)T4-window · ui · post-anchor — ×1 (hits 1, missed 0) · 60% · active · via behavior/dom-windowLocator healing: not yet observed — elements recorded, no heals on record.Bengaluru: recorded, no heals on recordChoose a date: recorded, no heals on recordIncrease quantity of Notebook: recorded, no heals on recordKeyword: recorded, no heals on record… 6 more elementsRecorded workflows1Choose a date×1linked1. choose a date2. plan trip3. type a city4. bengaluruviews: — · 1 sessions · 2 signatures · 1 instances · last 2026-08-23 00:26Views & transitions0No views yet.Behavior sessions1#1 session-17874448172322026-08-23 00:262 episodes · 2 edges · 1 gap · 2/4 anchored · 2/3 observations attributed · 1 unattributedUnclassified Bengaluru · 1 members · outcome — · sig 268e20ddClick Plan trip · 2 members · incomplete (inconclusive) · sig 0dda4d5eT4-window · ui · UI observations on int-6: 1 DOM changes, 2 visibility changes · 50% · 0ms · carrier int-6↳ dom ev-evt-pmt52hm31-37T4-window · ui · UI observations on int-2: 1 DOM changes · 60% · 0ms · carrier int-2↳ dom ev-evt-pmt52hm31-8Gaps backlog1no-live-horizon ×1uino-live-horizon2026-08-23 00:26evidence window ev-evt-pmt52hm31-30 lies outside every uiOwnership horizon · session-1787444817232 · unattr-ui-int-4API seeds0No attributed API requests yet.Outcomes32 incomplete · 1 successDatePickerChoose a dateincomplete0%inconclusive · int-2 · session-1787444817232ClickPlan tripincomplete0%inconclusive · int-4 · session-1787444817232TextEntryType a citysuccess15%inconclusive · int-6 · session-1787444817232Entities0No entities yet.Collections & counters1collection:body > main#app > div > ulunknown1 · max 1Notifications0No notifications yet. No projects yet. Click \"+ New Project\" to get started. ✕ No elements yet. Record a feature to discover elements. ✕ "
+}

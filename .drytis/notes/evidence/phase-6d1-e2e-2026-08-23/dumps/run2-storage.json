@@ -1,0 +1,559 @@
+{
+ "interactions": [
+  {
+   "id": "int-1",
+   "type": "Dropdown",
+   "hasBE": true,
+   "win": {
+    "endReason": "displaced"
+   },
+   "target": {
+    "accessibleName": "Priority",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "listbox",
+    "className": null,
+    "cssSelector": "#prio",
+    "dataAutoId": null,
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": "select-one",
+    "name": "prio",
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": "prio",
+    "tag": "SELECT",
+    "testId": null,
+    "xPath": "//select[@id='prio']"
+   },
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 1858141957
+    },
+    "noOpSelection": false,
+    "selectedValue": "High",
+    "targetName": "Priority"
+   },
+   "resultingState": []
+  },
+  {
+   "id": "int-2",
+   "type": "Hover",
+   "hasBE": true,
+   "win": {
+    "endReason": "lifecycle-abandoned"
+   },
+   "target": {
+    "accessibleName": "Keyword",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "textbox",
+    "className": null,
+    "cssSelector": "#q",
+    "dataAutoId": "search-input",
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": "text",
+    "name": "q",
+    "placeholder": "e.g. invoice",
+    "shadowDom": false,
+    "stableId": "q",
+    "tag": "INPUT",
+    "testId": null,
+    "xPath": "//input[@id='q']"
+   },
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 1858141957
+    },
+    "confidence": 0,
+    "dwellMs": 0,
+    "evidenceReason": null,
+    "meaningful": false,
+    "targetName": "Keyword"
+   },
+   "resultingState": []
+  },
+  {
+   "id": "int-3",
+   "type": "TextEntry",
+   "hasBE": true,
+   "win": {
+    "endReason": "consequence-settled"
+   },
+   "target": {
+    "accessibleName": "Keyword",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "textbox",
+    "className": null,
+    "cssSelector": "#q",
+    "dataAutoId": "search-input",
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": "text",
+    "name": "q",
+    "placeholder": "e.g. invoice",
+    "shadowDom": false,
+    "stableId": "q",
+    "tag": "INPUT",
+    "testId": null,
+    "xPath": "//input[@id='q']"
+   },
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 1858141957
+    },
+    "targetName": "Keyword",
+    "textValue": "invoice",
+    "typedValue": "invoice",
+    "userTyped": true
+   },
+   "resultingState": []
+  },
+  {
+   "id": "int-4",
+   "type": "Hover",
+   "hasBE": true,
+   "win": {
+    "endReason": "lifecycle-abandoned"
+   },
+   "target": {
+    "accessibleName": "Search",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "button",
+    "className": "primary",
+    "cssSelector": "#btn-search",
+    "dataAutoId": null,
+    "dataCy": "search-btn",
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": null,
+    "name": null,
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": "btn-search",
+    "tag": "BUTTON",
+    "testId": null,
+    "xPath": "//button[@id='btn-search']"
+   },
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 1858141957
+    },
+    "confidence": 0,
+    "dwellMs": 0,
+    "evidenceReason": null,
+    "meaningful": false,
+    "targetName": "Search"
+   },
+   "resultingState": []
+  },
+  {
+   "id": "int-5",
+   "type": "Click",
+   "hasBE": true,
+   "win": {
+    "endReason": "consequence-settled"
+   },
+   "target": {
+    "accessibleName": "Search",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "button",
+    "className": "primary",
+    "cssSelector": "#btn-search",
+    "dataAutoId": null,
+    "dataCy": "search-btn",
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": null,
+    "name": null,
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": "btn-search",
+    "tag": "BUTTON",
+    "testId": null,
+    "xPath": "//button[@id='btn-search']"
+   },
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 1858141957
+    },
+    "clientX": 57,
+    "clientY": 245,
+    "targetName": "Search",
+    "targetRole": "button",
+    "targetTag": "BUTTON"
+   },
+   "resultingState": [
+    {
+     "kind": "notification",
+     "text": "Showing 2 results",
+     "domPath": "body > main > div#toast-slot > div#live-toast",
+     "numericValue": null,
+     "matchedSelector": "[aria-live]"
+    },
+    {
+     "kind": "notification",
+     "text": "Search returned 2 tickets",
+     "domPath": "body > main > aside#log-slot > div#act-log",
+     "numericValue": null,
+     "matchedSelector": "[role=\"log\"]"
+    },
+    {
+     "kind": "notification",
+     "text": "Filters applied",
+     "domPath": "body > main > div#snack-slot > div#live-snack",
+     "numericValue": null,
+     "matchedSelector": "[class*=\"snackbar\" i]:not([class*=\"snackbar-container\" i])"
+    },
+    {
+     "kind": "collection",
+     "text": "T-101Invoice not generatedopenT-104Invoice mismatc",
+     "domPath": "body > main > table#results > tbody",
+     "numericValue": 2,
+     "matchedSelector": "changed-element-seed"
+    },
+    {
+     "kind": "counter",
+     "text": "2 tickets",
+     "domPath": "body > main > p#result-count",
+     "numericValue": 2,
+     "matchedSelector": "changed-element-seed"
+    }
+   ]
+  },
+  {
+   "id": "int-6",
+   "type": "Navigation",
+   "hasBE": true,
+   "win": {
+    "endReason": "stabilized"
+   },
+   "target": {
+    "accessibleName": "http://127.0.0.1:8177/reactish",
+    "ariaLabel": "Navigation to http://127.0.0.1:8177/reactish",
+    "ariaLabelledBy": null,
+    "ariaRole": "document",
+    "className": null,
+    "cssSelector": "html",
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": "http://127.0.0.1:8177/reactish",
+    "inIframe": false,
+    "inputType": null,
+    "name": null,
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": null,
+    "tag": "HTML",
+    "testId": null,
+    "xPath": "/html"
+   },
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 1858141957
+    },
+    "pageTitle": "Modern Portal",
+    "pageUrl": "http://127.0.0.1:8177/reactish"
+   },
+   "resultingState": [
+    {
+     "kind": "status-badge",
+     "text": "Idle",
+     "domPath": "body > main#app > p#plan-badge",
+     "numericValue": null,
+     "matchedSelector": "[data-state]"
+    }
+   ]
+  },
+  {
+   "id": "int-7",
+   "type": "Hover",
+   "hasBE": true,
+   "win": {
+    "endReason": "lifecycle-abandoned"
+   },
+   "target": {
+    "accessibleName": "Choose a date",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "textbox",
+    "className": "field-input",
+    "cssSelector": "body > main > div:nth-of-type(1) > input",
+    "dataAutoId": null,
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": "text",
+    "name": null,
+    "placeholder": "Choose a date",
+    "shadowDom": false,
+    "stableId": null,
+    "tag": "INPUT",
+    "testId": null,
+    "xPath": "//body/main/div[1]/input"
+   },
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 1858141957
+    },
+    "confidence": 0,
+    "dwellMs": 0,
+    "evidenceReason": null,
+    "meaningful": false,
+    "targetName": "Choose a date"
+   },
+   "resultingState": []
+  },
+  {
+   "id": "int-8",
+   "type": "DatePicker",
+   "hasBE": true,
+   "win": {
+    "endReason": "stabilized"
+   },
+   "target": {
+    "accessibleName": "Choose a date",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "textbox",
+    "className": "field-input",
+    "cssSelector": "body > main > div:nth-of-type(1) > input",
+    "dataAutoId": null,
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": "text",
+    "name": null,
+    "placeholder": "Choose a date",
+    "shadowDom": false,
+    "stableId": null,
+    "tag": "INPUT",
+    "testId": null,
+    "xPath": "//body/main/div[1]/input"
+   },
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 1858141957
+    },
+    "dateValue": "05092026",
+    "selectedDate": "05092026",
+    "targetName": "Choose a date"
+   },
+   "resultingState": []
+  },
+  {
+   "id": "int-9",
+   "type": "TextEntry",
+   "hasBE": true,
+   "win": {
+    "endReason": "consequence-settled"
+   },
+   "target": {
+    "accessibleName": "Type a city",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "textbox",
+    "className": "field-input origin-input",
+    "cssSelector": "body > main > div:nth-of-type(2) > input",
+    "dataAutoId": null,
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": "text",
+    "name": null,
+    "placeholder": "Type a city",
+    "shadowDom": false,
+    "stableId": null,
+    "tag": "INPUT",
+    "testId": null,
+    "xPath": "//body/main/div[2]/input"
+   },
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 1858141957
+    },
+    "targetName": "Type a city",
+    "textValue": "Bengaluru",
+    "typedValue": "Bengaluru",
+    "userTyped": true
+   },
+   "resultingState": []
+  },
+  {
+   "id": "int-10",
+   "type": "Click",
+   "hasBE": true,
+   "win": {
+    "endReason": "consequence-settled"
+   },
+   "target": {
+    "accessibleName": "Bengaluru",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "listitem",
+    "className": "opt",
+    "cssSelector": "body > main > div:nth-of-type(2) > ul > li",
+    "dataAutoId": null,
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": null,
+    "name": null,
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": null,
+    "tag": "LI",
+    "testId": null,
+    "xPath": "//body/main/div[2]/ul/li"
+   },
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 1858141957
+    },
+    "clientX": 410,
+    "clientY": 253,
+    "targetName": "Bengaluru",
+    "targetRole": "listitem",
+    "targetTag": "LI"
+   },
+   "resultingState": [
+    {
+     "kind": "status-badge",
+     "text": "Idle",
+     "domPath": "body > main#app > p#plan-badge",
+     "numericValue": null,
+     "matchedSelector": "[data-state]"
+    }
+   ]
+  },
+  {
+   "id": "int-11",
+   "type": "Hover",
+   "hasBE": true,
+   "win": {
+    "endReason": "lifecycle-abandoned"
+   },
+   "target": {
+    "accessibleName": "Plan trip",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "button",
+    "className": "btn btn-primary commit-btn",
+    "cssSelector": "body > main > button",
+    "dataAutoId": null,
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": null,
+    "name": null,
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": null,
+    "tag": "BUTTON",
+    "testId": null,
+    "xPath": "//body/main/button"
+   },
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 1858141957
+    },
+    "confidence": 0,
+    "dwellMs": 0,
+    "evidenceReason": null,
+    "meaningful": false,
+    "targetName": "Plan trip"
+   },
+   "resultingState": []
+  },
+  {
+   "id": "int-12",
+   "type": "Click",
+   "hasBE": true,
+   "win": {
+    "endReason": "consequence-settled"
+   },
+   "target": {
+    "accessibleName": "Plan trip",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "button",
+    "className": "btn btn-primary commit-btn",
+    "cssSelector": "body > main > button",
+    "dataAutoId": null,
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": null,
+    "name": null,
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": null,
+    "tag": "BUTTON",
+    "testId": null,
+    "xPath": "//body/main/button"
+   },
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 1858141957
+    },
+    "clientX": 60,
+    "clientY": 244,
+    "targetName": "Plan trip",
+    "targetRole": "button",
+    "targetTag": "BUTTON"
+   },
+   "resultingState": [
+    {
+     "kind": "status-badge",
+     "text": "Planningâ€¦",
+     "domPath": "body > main#app > p#plan-badge",
+     "numericValue": null,
+     "matchedSelector": "[data-state]"
+    }
+   ]
+  }
+ ],
+ "ledgerLen": 35
+}

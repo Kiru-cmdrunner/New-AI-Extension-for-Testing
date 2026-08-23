@@ -1,0 +1,35 @@
+{
+  "viewHidden": false,
+  "cards": [
+    {
+      "id": "int-2",
+      "type": "🖱️ Click",
+      "endState": "completed",
+      "memberChip": "1 event · 0ms",
+      "understanding": "✓ Click (prio 180)",
+      "footerChip": "4 dom changes",
+      "assertionChip": "3 assertions",
+      "krChip": "◆ new signature"
+    },
+    {
+      "id": "int-4",
+      "type": "🖱️ Click",
+      "endState": "completed",
+      "memberChip": "1 event · 0ms",
+      "understanding": "✓ Click (prio 180)",
+      "footerChip": null,
+      "assertionChip": "3 assertions",
+      "krChip": "◆ new signature"
+    },
+    {
+      "id": "int-6",
+      "type": "🖱️ Click",
+      "endState": "completed",
+      "memberChip": "1 event · 0ms",
+      "understanding": "✓ Click (prio 180)",
+      "footerChip": "4 dom changes",
+      "assertionChip": "3 assertions",
+      "krChip": "◆ new signature"
+    }
+  ]
+}

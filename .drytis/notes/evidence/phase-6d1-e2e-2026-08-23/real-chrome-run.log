@@ -1,0 +1,34 @@
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+
+── RUN 1: classic (W1 + W2 + regression) ──
+  clicked Search
+  types: Dropdown,Hover,TextEntry,Hover,Click
+PASS — R1-6C-DROPDOWN :: {"captureOrigin":{"frameId":0,"tabId":1858141957},"noOpSelection":false,"selectedValue":"High","targetName":"Priority"}
+PASS — R1-6C-TEXTENTRY :: {"captureOrigin":{"frameId":0,"tabId":1858141957},"targetName":"Keyword","textValue":"invoice","typedValue":"invoice","userTyped":true}
+PASS — R1-W2-COUNTER-#id-only :: path=body > main > p#result-count num=2 sel=changed-element-seed text="2 tickets"
+PASS — R1-6A-COLLECTION-REGRESSION :: text="T-101Invoice not generatedopenT-104Invoice mismatc"
+PASS — R1-W1-ARIA-LIVE :: path=body > main > div#toast-slot > div#live-toast text="Showing 2 results"
+PASS — R1-W1-SNACKBAR :: text="Filters applied"
+PASS — R1-W1-ROLE-LOG :: text="Search returned 2 tickets"
+
+── RUN 2: reactish (W3 + W4 + W1 badge) ──
+  hydration done: Modern Portal commit: true
+  clicked Bengaluru option
+  clicked Plan trip
+  types: Click,Navigation,Hover,DatePicker,TextEntry,Click,Hover,Click
+PASS — R2-W4-DATEPICKER-PLACEHOLDER-ONLY :: meta={"captureOrigin":{"frameId":0,"tabId":1858141957},"dateValue":"05092026","selectedDate":"05092026","targetName":"Choose a date"}
+PASS — R2-W3-OPTIONS-LIST-CLICK :: trigger={"accessibleName":"Bengaluru","ariaLabel":null,"ariaLabelledBy":null,"ariaRole":"listitem","className":"opt","cssSelector":"body > main > div:nth-of-type(2) > ul > li","dataAutoId"
+PASS — R2-W3-NO-UNCLASSIFIED-OPTION :: none
+PASS — R2-W1-DATA-STATE-BADGE :: badges: [{"kind":"status-badge","text":"Planningâ€¦","domPath":"body > main#app > p#plan-badge","numericValue":null,"matchedSelector":"[data-state]"}]
+
+── RUN 3: shop (6B regression) ──
+  shop loaded: Corner Shop qty: true
+  clicked qty up
+  clicked filters icon
+PASS — R3-6B-TESTID-CAPTURE :: {"accessibleName":"Increase quantity of Notebook","ariaLabel":"Increase quantity of Notebook","ariaLabelledBy":null,"ari
+PASS — R3-ARIA-ICON-CAPTURE :: {"accessibleName":"Open filters","ariaLabel":"Open filters","ariaLabelledBy":null,"ariaRole":"button","className":"icon-
+PASS — R3-COUNTER-REGRESSION :: num=3 text="3"
+PASS — HARNESS-STORAGE-OK :: total interactions captured: 17
+PASS — CONSOLE-CLEAN :: no console errors
+
+=== TOTAL: 16 PASS / 0 FAIL ===

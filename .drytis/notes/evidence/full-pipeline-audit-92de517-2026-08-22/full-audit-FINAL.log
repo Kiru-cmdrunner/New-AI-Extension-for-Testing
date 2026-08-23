@@ -1,0 +1,113 @@
+multi-pattern app on :8177
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+
+═══ RUN 1 — P-CLASSIC pass 1 ═══
+  clicked Search (data-cy)
+after R1 knowledge store: {"keys":[],"bytes":2}
+interactions: 3
+  {"id":"int-2","type":"TextEntry","hasBE":true,"win":{"endReason":"stabilized","durMs":300.29999999981374},"domChanges":0,"newSurfaces":0,"netActivity":0,"visChanges":0,"targetEv":5,"resultingState":[]}
+  {"id":"int-3","type":"Dropdown","hasBE":true,"win":{"endReason":"consequence-settled","durMs":1080.7999999998137},"domChanges":3,"newSurfaces":0,"netActivity":0,"visChanges":0,"targetEv":5,"resultingState":[]}
+  {"id":"int-5","type":"Click","hasBE":true,"win":{"endReason":"consequence-settled","durMs":453.09999999962747},"domChanges":3,"newSurfaces":0,"netActivity":0,"visChanges":0,"targetEv":5,"resultingState":[{"kind":"collection","text":"T-101In
+PASS — CAPTURE: ≥3 interactions (TextEntry+Dropdown+Click) :: TextEntry, Dropdown, Click
+PASS — LEDGER: evidence ledger populated :: entries=15
+PASS — BEV: every interaction carries BehavioralEvidence :: TextEntry:true Dropdown:true Click:true
+PASS — BEV-WIN: settle lifecycle endReason on all :: ["stabilized","consequence-settled","consequence-settled"]
+PASS — BEV-DOM: dropdown+click carry domChanges :: ["TextEntry:dom=0","Dropdown:dom=3","Click:dom=3"]
+PASS — 6A: click resultingState seeded (collection kind) :: [{"kind":"collection","text":"T-101Invoice not generatedopenT-104Invoi"}]
+note: #id-only result-count counter absent — matches archived baseline (O8, no selector family); not a regression
+panel cards: 3
+  {"id":"int-2","type":"⌨️ Text Entry","endState":"completed","memberChip":"18 events · 554ms","understanding":"✓ TextEntry (prio 50)","footerChip":null,"assertionChip":"1 assertion","krChip":"◆ new signature"}
+  {"id":"int-3","type":"📋 Dropdown","endState":"completed","memberChip":"10 events · 1375ms","understanding":"✓ Dropdown (prio 20)","footerChip":"3 dom changes","assertionChip":"0 assertions","krChip":"◆ new signature"}
+  {"id":"int-5","type":"🖱️ Click","endState":"completed","memberChip":"1 event · 0ms","understanding":"✓ Click (prio 180)","footerChip":"3 dom changes","assertionChip":"1 assertion","krChip":"◆ new signature"}
+PASS — PANEL: cards render with recognized types :: ["⌨️ Text Entry","📋 Dropdown","🖱️ Click"]
+PASS — PANEL: endState chip on every card :: ["completed","completed","completed"]
+PASS — PANEL: understanding badge on every card :: ["✓ TextEntry (prio 50)","✓ Dropdown (prio 20)","✓ Click (prio 180)"]
+PASS — PANEL: member chip event counts :: ["18 events · 554ms","10 events · 1375ms","1 event · 0ms"]
+PASS — PANEL: ≥1 assertion chip :: ["1 assertion","0 assertions","1 assertion"]
+PASS — PANEL: KR chip on cards (new signature) :: ["◆ new signature","◆ new signature","◆ new signature"]
+PASS — PANEL: footer chip with dom-change counts :: [null,"3 dom changes","3 dom changes"]
+drill census: {"cards":3,"drills":11,"itemDrills":1,"netDrills":0,"domDrills":6,"surfDrills":0,"winDrills":1,"hasRaw":true,"rawSummary":"Raw evidence JSON"}
+PASS — MS-U2: evidence drill-downs render on cards :: {"cards":3,"drills":11,"itemDrills":1,"netDrills":0,"domDrills":6,"surfDrills":0,"winDrills":1,"hasRaw":true,"rawSummary":"Raw evidence JSON"}
+PASS — MS-U2: dom-change drill-down present :: domDrills=6
+PASS — MS-U2: window drill-down present :: winDrills=1
+
+═══ RUN 2 — P-REACTISH ═══
+  clicked Plan trip
+  clicked Bengaluru option
+interactions: 4
+  {"id":"int-2","type":"DatePicker","hasBE":true,"win":{"endReason":"consequence-settled","durMs":1033.7000000001863},"domChanges":1,"newSurfaces":0,"netActivity":0,"visChanges":0,"targetEv":5,"resultingState":[]}
+  {"id":"int-4","type":"Click","hasBE":true,"win":{"endReason":"consequence-settled","durMs":317.3999999994412},"domChanges":1,"newSurfaces":0,"netActivity":0,"visChanges":0,"targetEv":5,"resultingState":[{"kind":"status-badge","text":"Planni
+  {"id":"int-6","type":"TextEntry","hasBE":true,"win":{"endReason":"consequence-settled","durMs":1584},"domChanges":1,"newSurfaces":0,"netActivity":4,"visChanges":2,"targetEv":5,"resultingState":[]}
+  {"id":"int-10","type":"Unclassified","hasBE":false,"win":null,"domChanges":0,"newSurfaces":0,"netActivity":0,"visChanges":0,"targetEv":0,"resultingState":[]}
+panel cards: 4
+  {"id":"int-2","type":"📅 Date Picker","endState":"completed","memberChip":"20 events · 973ms","understanding":"✓ DatePicker (prio 10)","footerChip":"1 dom change","assertionChip":"0 assertions","krChip":"◆ new signature"}
+  {"id":"int-4","type":"🖱️ Click","endState":"completed","memberChip":"1 event · 0ms","understanding":"✓ Click (prio 180)","footerChip":"1 dom change","assertionChip":"1 assertion","krChip":"◆ new signature"}
+  {"id":"int-6","type":"⌨️ Text Entry","endState":"completed","memberChip":"11 events · 1284ms","understanding":"✓ TextEntry (prio 50)","footerChip":"1 dom change · 4 network","assertionChip":"0 assertions","krChip":null}
+  {"id":"int-10","type":"❓ Unclassified","endState":"completed","memberChip":"1 event · 0ms","understanding":"❓ Unclassified — unclaimed-at-projection","footerChip":null,"assertionChip":null,"krChip":"◆ new signature"}
+PASS — RECOGNITION: DatePicker card (prio 10) :: ✓ DatePicker (prio 10)
+PASS — RECOGNITION: options-list click unclassified — matches archived MS-U1 baseline (known gap, 6D.1 scope) :: ["📅 Date Picker","🖱️ Click","⌨️ Text Entry","❓ Unclassified"]
+PASS — BEV-NET: networkActivity captured on TextEntry typeahead (real fetch) :: ["DatePicker:net=0","Click:net=0","TextEntry:net=4","Unclassified:net=0"]
+PASS — 6A: status-badge transient captured on plan-trip click :: [{"kind":"status-badge","text":"Planningâ€¦"}]
+
+═══ RUN 3 — P-SHOP ═══
+  clicked step-up SKU-A (data-testid)
+  clicked icon-filter (class-only icon)
+  clicked step-up SKU-A again
+interactions: 3
+  {"id":"int-2","type":"Click","hasBE":true,"win":{"endReason":"consequence-settled","durMs":382.3999999994412},"domChanges":4,"newSurfaces":0,"netActivity":0,"visChanges":0,"targetEv":5,"resultingState":[{"kind":"counter","text":"3"},{"kind"
+  {"id":"int-4","type":"Click","hasBE":true,"win":{"endReason":"consequence-settled","durMs":310.20000000018626},"domChanges":0,"newSurfaces":0,"netActivity":0,"visChanges":0,"targetEv":5,"resultingState":[{"kind":"counter","text":"3"},{"kind
+  {"id":"int-6","type":"Click","hasBE":true,"win":{"endReason":"consequence-settled","durMs":457.8999999994412},"domChanges":4,"newSurfaces":0,"netActivity":0,"visChanges":0,"targetEv":5,"resultingState":[{"kind":"counter","text":"4"},{"kind"
+panel cards: 3
+  {"id":"int-2","type":"🖱️ Click","endState":"completed","memberChip":"1 event · 0ms","understanding":"✓ Click (prio 180)","footerChip":"4 dom changes","assertionChip":"3 assertions","krChip":"◆ new signature"}
+  {"id":"int-4","type":"🖱️ Click","endState":"completed","memberChip":"1 event · 0ms","understanding":"✓ Click (prio 180)","footerChip":null,"assertionChip":"3 assertions","krChip":"◆ new signature"}
+  {"id":"int-6","type":"🖱️ Click","endState":"completed","memberChip":"1 event · 0ms","understanding":"✓ Click (prio 180)","footerChip":"4 dom changes","assertionChip":"3 assertions","krChip":"◆ new signature"}
+PASS — SHOP: ≥3 click interactions :: ["Click","Click","Click"]
+PASS — SHOP: cart counter in resultingState (6A seeded counter — text "3"/"4") :: [{"kind":"counter","text":"3"},{"kind":"entity","text":"NotebookSKU-A âˆ’ 2 +"},{"kind":"entity","text":"Pen setSKU-B âˆ’ 1 +"},{"kind":"counter","text":"3"},{"kind":"entity","text":"NotebookSKU-A âˆ’ 2 +"},{"kind":"entity","text":"Pen setSKU-B âˆ’ 1 +"},{"kind":"counter","text":"4"},{"kind":"entity","text":"NotebookSKU-A âˆ’ 3 +"},{"kind":"entity","text":"Pen setSKU-B âˆ’ 1 +"}]
+
+── generated spec (RUN 3) ──
+    await page.getByTestId('qty-up-notebook').click()
+    await expect.soft(page.locator('[aria-label="Cart items"]')).toContainText('3')
+    await expect.soft(page.locator('[data-sku="SKU-A"]')).toBeAttached()
+    await expect.soft(page.locator('[data-sku="SKU-B"]')).toBeAttached()
+    await page.getByLabel('Open filters').click()
+    await expect.soft(page.locator('[aria-label="Cart items"]')).toContainText('3')
+    await expect.soft(page.locator('[data-sku="SKU-A"]')).toBeAttached()
+    await expect.soft(page.locator('[data-sku="SKU-B"]')).toBeAttached()
+    await page.getByTestId('qty-up-notebook').click()
+    await expect.soft(page.locator('[aria-label="Cart items"]')).toContainText('4')
+    await expect.soft(page.locator('[data-sku="SKU-A"]')).toBeAttached()
+    await expect.soft(page.locator('[data-sku="SKU-B"]')).toBeAttached()
+PASS — IR-CODEGEN: spec generated :: {
+  "name": "recorded-test",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright t
+PASS — 6B: data-testid stays getByTestId (bare) :: qty-up-notebook
+PASS — 6B: aria-label outranks class tier for icon (getByLabel) — architectural precedence :: icon-filter resolved via aria, not class — correct tiering
+PASS — 6B: no nth-of-type anywhere
+
+═══ RUN 4 — P-CLASSIC pass 2 (reinforcement) ═══
+  clicked Search again
+panel cards: 3
+  {"id":"int-2","type":"⌨️ Text Entry","endState":"completed","memberChip":"16 events · 508ms","understanding":"✓ TextEntry (prio 50)","footerChip":null,"assertionChip":"1 assertion","krChip":"◆ new signature"}
+  {"id":"int-3","type":"📋 Dropdown","endState":"completed","memberChip":"13 events · 1535ms","understanding":"✓ Dropdown (prio 20)","footerChip":"3 dom changes","assertionChip":"0 assertions","krChip":"◆ new signature"}
+  {"id":"int-5","type":"🖱️ Click","endState":"completed","memberChip":"1 event · 0ms","understanding":"✓ Click (prio 180)","footerChip":"3 dom changes","assertionChip":"1 assertion","krChip":"◆ new signature"}
+FAIL — KR-REINFORCE: pass-2 cards show reinforced chip (×2) :: ["◆ new signature","◆ new signature","◆ new signature"]
+forward links: {"found":false,"viaBody":true,"text":"What this recording improvesNo signatures existed before this session — every action learned is new.Click \"search\" ◆ new signature — first observation; next recording reinforces it2 observation(s) could not be attributed
+PASS — MS-U5: forward-links block present :: {"found":false,"viaBody":true,"text":"What this recording improvesNo signatures existed before this session — every action learned is new.Click \"sear
+KR store: {"applications":4,"knowledgeBehaviorSessions":4,"knowledgeCollections":5,"knowledgeCounters":1,"knowledgeEdges":6,"knowledgeEntities":1,"knowledgeEpisodes":7,"knowledgeGaps":8,"knowledgeNotifications":0,"knowledgeOutcomes":12,"knowledgeRecordedWorkflows":4,"knowledgeSignatures":6,"knowledgeStateTransitions":12,"knowledgeViewTransitions":0,"knowledgeViews":0}
+FAIL — KR-STORE: cmdrunner_knowledge populated :: {"applications":4,"knowledgeBehaviorSessions":4,"knowledgeCollections":5,"knowledgeCounters":1,"knowledgeEdges":6,"knowledgeEntities":1,"knowledgeEpisodes":7,"knowledgeGaps":8,"knowledgeNotifications":0,"knowledgeOutcomes":12,"knowledgeRecordedWorkflows":4,"knowledgeSignatures":6,"knowledgeStateTransitions":12,"knowledgeViewTransitions":0,"knowledgeViews":0}
+KR tab: knowledge | apps: 4 | multi-session: false
+PASS — KR: Knowledge tab active + rendered :: tab=knowledge children=11
+PASS — KR: applications listed (3 apps incl. classic ×2) :: 4
+FAIL — KR: classic app shows 2 sessions (reinforcement visible) :: (2 sessions)
+PASS — KR: action signatures + recorded workflows render :: {"sig":true,"wf":true}
+PASS — KR: views+transitions / entities / outcomes render :: {"vt":true,"e":true,"o":true}
+PASS — KR: episodes + gaps backlog render :: {"e":true,"g":true}
+PASS — KR: locator-heal line renders (honest never-observed state)
+PASS — MS-U3: Session Understanding card rendered :: {"found":true,"text":"Session Understandingsession session-1787444… · generated 2026-08-23T00:27:23.420ZAppapp-eketi1Dom
+
+console errors — panel: 0 app: 0 sw: 0
+PASS — CONSOLE: zero errors across panel/app/SW :: panel=0 app=0 sw=0
+
+════ PIPELINE AUDIT v2 — 35 PASS / 3 FAIL ════

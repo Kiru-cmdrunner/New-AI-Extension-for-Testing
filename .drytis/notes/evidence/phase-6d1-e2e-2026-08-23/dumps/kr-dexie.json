@@ -1,0 +1,461 @@
+{
+ "applications": [
+  {
+   "appId": "app-b24aev",
+   "origin": "chrome-extension://gndjidfncanlhlonpcabokbdhnikglpn/src/sidepanel/index.html",
+   "label": "chrome-extension:",
+   "firstSeenAt": 1787456052169,
+   "lastActiveAt": 1787456052229,
+   "sessionCount": 1,
+   "lastSessionId": "session-1787456052150"
+  }
+ ],
+ "knowledgeBehaviorSessions": [
+  {
+   "key": "app-b24aev:session-1787456052150",
+   "appId": "app-b24aev",
+   "sessionId": "session-1787456052150",
+   "seq": 1,
+   "generatedAtMs": 1787456052169,
+   "episodeCount": 1,
+   "edgeCount": 4,
+   "gapCount": 1,
+   "coverage": {
+    "totalInteractions": 2,
+    "anchoredInteractions": 1,
+    "memberInteractions": 1,
+    "malformedInteractions": 0,
+    "totalNetworkRows": 0,
+    "attributedNetworkRows": 0,
+    "totalObservations": 2,
+    "attributedObservations": 1,
+    "unattributedConsequences": 1,
+    "provenanceLinks": 0
+   },
+   "viewSetHash": "811c9dc5",
+   "signatureSetHash": "63c3bad9",
+   "warnings": []
+  }
+ ],
+ "knowledgeCollections": [
+  {
+   "key": "app-b24aev:collection:body > main > p#result-count",
+   "appId": "app-b24aev",
+   "collectionId": "collection:body > main > p#result-count",
+   "entityType": "unknown",
+   "currentCount": 0,
+   "maxCount": 0,
+   "lastUpdated": 1787456052229,
+   "lastSessionId": "session-1787456052150"
+  },
+  {
+   "key": "app-b24aev:collection:body > main > table#results > tbody",
+   "appId": "app-b24aev",
+   "collectionId": "collection:body > main > table#results > tbody",
+   "entityType": "unknown",
+   "currentCount": 10,
+   "maxCount": 10,
+   "lastUpdated": 1787456052229,
+   "lastSessionId": "session-1787456052150"
+  }
+ ],
+ "knowledgeCounters": [
+  {
+   "key": "app-b24aev:counter:body > main > p#result-count",
+   "appId": "app-b24aev",
+   "counterId": "counter:body > main > p#result-count",
+   "label": "body > main > p#result-count",
+   "elementPath": "body > main > p#result-count",
+   "currentValue": "5",
+   "history": [
+    {
+     "value": "5",
+     "observedAt": 1787456052169,
+     "sessionId": "session-1787456052150",
+     "delta": null
+    }
+   ],
+   "lastUpdated": 1787456052169,
+   "lastSessionId": "session-1787456052150"
+  }
+ ],
+ "knowledgeEdges": [
+  {
+   "key": "app-b24aev:session-1787456052150:edge-ep-int-4-000",
+   "appId": "app-b24aev",
+   "sessionId": "session-1787456052150",
+   "episodeId": "ep-int-4",
+   "edgeId": "edge-ep-int-4-000",
+   "edgeSeq": 0,
+   "tier": "T3-transition",
+   "kind": "notification",
+   "detail": "notification \"Showing 5 results\" (info) appeared",
+   "confidence": 0.7,
+   "latencyMs": null,
+   "fromEpisodeId": "ep-int-4",
+   "fromInteractionId": "int-4",
+   "to": {
+    "type": "ui",
+    "summary": "notification: Showing 5 results"
+   },
+   "refJson": "[{\"kind\":\"event\",\"eventId\":\"notification-0\"}]",
+   "signatureKey": "app-b24aev:sig:eca2b05e"
+  },
+  {
+   "key": "app-b24aev:session-1787456052150:edge-ep-int-4-001",
+   "appId": "app-b24aev",
+   "sessionId": "session-1787456052150",
+   "episodeId": "ep-int-4",
+   "edgeId": "edge-ep-int-4-001",
+   "edgeSeq": 1,
+   "tier": "T3-transition",
+   "kind": "notification",
+   "detail": "notification \"Search returned 5 tickets\" (info) appeared",
+   "confidence": 0.7,
+   "latencyMs": null,
+   "fromEpisodeId": "ep-int-4",
+   "fromInteractionId": "int-4",
+   "to": {
+    "type": "ui",
+    "summary": "notification: Search returned 5 tickets"
+   },
+   "refJson": "[{\"kind\":\"event\",\"eventId\":\"notification-1\"}]",
+   "signatureKey": "app-b24aev:sig:eca2b05e"
+  },
+  {
+   "key": "app-b24aev:session-1787456052150:edge-ep-int-4-002",
+   "appId": "app-b24aev",
+   "sessionId": "session-1787456052150",
+   "episodeId": "ep-int-4",
+   "edgeId": "edge-ep-int-4-002",
+   "edgeSeq": 2,
+   "tier": "T3-transition",
+   "kind": "notification",
+   "detail": "notification \"Filters applied\" (info) appeared",
+   "confidence": 0.7,
+   "latencyMs": null,
+   "fromEpisodeId": "ep-int-4",
+   "fromInteractionId": "int-4",
+   "to": {
+    "type": "ui",
+    "summary": "notification: Filters applied"
+   },
+   "refJson": "[{\"kind\":\"event\",\"eventId\":\"notification-2\"}]",
+   "signatureKey": "app-b24aev:sig:eca2b05e"
+  },
+  {
+   "key": "app-b24aev:session-1787456052150:edge-ep-int-4-003",
+   "appId": "app-b24aev",
+   "sessionId": "session-1787456052150",
+   "episodeId": "ep-int-4",
+   "edgeId": "edge-ep-int-4-003",
+   "edgeSeq": 3,
+   "tier": "T4-window",
+   "kind": "ui",
+   "detail": "UI observations on int-2: 6 DOM changes, 2 visibility changes",
+   "confidence": 0.6,
+   "latencyMs": 0,
+   "fromEpisodeId": "ep-int-4",
+   "fromInteractionId": "int-2",
+   "to": {
+    "type": "ui",
+    "summary": "6 DOM changes, 2 visibility changes"
+   },
+   "refJson": "[{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt596hgr-5\",\"sequence\":0}]",
+   "signatureKey": "app-b24aev:sig:eca2b05e"
+  }
+ ],
+ "knowledgeEntities": [],
+ "knowledgeEpisodes": [
+  {
+   "key": "app-b24aev:session-1787456052150:ep-int-4",
+   "appId": "app-b24aev",
+   "sessionId": "session-1787456052150",
+   "episodeId": "ep-int-4",
+   "anchor": {
+    "interactionId": "int-4",
+    "actionType": "Click",
+    "actionTarget": "Search",
+    "triggerTimestamp": 1787456049126
+   },
+   "members": [
+    {
+     "interactionId": "int-4",
+     "role": "anchor"
+    },
+    {
+     "interactionId": "int-2",
+     "role": "parameter"
+    }
+   ],
+   "horizonAttribution": {
+    "openedAtMs": 1787456049126,
+    "closedAtMs": 1787456049126,
+    "closeReason": "all-stamped-settled"
+   },
+   "horizonUiOwnership": {
+    "openedAtMs": 1787456049126,
+    "closedAtMs": 1787456049126,
+    "closeReason": "stabilized"
+   },
+   "parameterInputs": [
+    {
+     "interactionId": "int-2",
+     "label": "Keyword",
+     "value": "invoice",
+     "link": "form-overlap"
+    }
+   ],
+   "episodeOutcome": {
+    "outcome": "success",
+    "confidence": 1,
+    "confidenceLevel": "confirmed",
+    "derivation": "derived-episode-outcome"
+   },
+   "tabId": 789701619,
+   "signatureKey": "app-b24aev:sig:eca2b05e"
+  }
+ ],
+ "knowledgeGaps": [
+  {
+   "key": "app-b24aev:session-1787456052150:unattr-ui-int-4",
+   "appId": "app-b24aev",
+   "sessionId": "session-1787456052150",
+   "gapId": "unattr-ui-int-4",
+   "observedKind": "ui",
+   "reason": "no-live-horizon",
+   "detail": "evidence window ev-evt-pmt596hgr-26 lies outside every uiOwnership horizon",
+   "observedAtMs": 1787456049126,
+   "tabId": 789701619,
+   "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt596hgr-26\",\"sequence\":0}"
+  }
+ ],
+ "knowledgeNotifications": [
+  {
+   "key": "app-b24aev:notification-0",
+   "appId": "app-b24aev",
+   "text": "Showing 5 results",
+   "severity": "info",
+   "elementPath": "body > main > div#toast-slot > div#live-toast",
+   "appearedAt": 1787456052169,
+   "sessionId": "session-1787456052150"
+  },
+  {
+   "key": "app-b24aev:notification-1",
+   "appId": "app-b24aev",
+   "text": "Search returned 5 tickets",
+   "severity": "info",
+   "elementPath": "body > main > aside#log-slot > div#act-log",
+   "appearedAt": 1787456052169,
+   "sessionId": "session-1787456052150"
+  },
+  {
+   "key": "app-b24aev:notification-2",
+   "appId": "app-b24aev",
+   "text": "Filters applied",
+   "severity": "info",
+   "elementPath": "body > main > div#snack-slot > div#live-snack",
+   "appearedAt": 1787456052169,
+   "sessionId": "session-1787456052150"
+  }
+ ],
+ "knowledgeOutcomes": [
+  {
+   "key": "session-1787456052150:int-2",
+   "appId": "app-b24aev",
+   "sessionId": "session-1787456052150",
+   "interactionId": "int-2",
+   "actionType": "TextEntry",
+   "actionTarget": "Keyword",
+   "outcome": "success",
+   "confidence": 0.15,
+   "confidenceLevel": "inconclusive",
+   "evidence": [
+    {
+     "kind": "list-change",
+     "result": "success",
+     "weight": 0.15,
+     "detail": "List body > main > table#results > tbody: +5 items"
+    }
+   ],
+   "resultingEntities": [],
+   "persistedAt": 1787456052229
+  },
+  {
+   "key": "session-1787456052150:int-4",
+   "appId": "app-b24aev",
+   "sessionId": "session-1787456052150",
+   "interactionId": "int-4",
+   "actionType": "Click",
+   "actionTarget": "Search",
+   "outcome": "success",
+   "confidence": 0.95,
+   "confidenceLevel": "confirmed",
+   "evidence": [
+    {
+     "kind": "list-change",
+     "result": "success",
+     "weight": 0.15,
+     "detail": "List body > main > table#results > tbody: +5 items"
+    },
+    {
+     "kind": "page-content",
+     "result": "success",
+     "weight": 0.2,
+     "detail": "Page content counter: body > main > p#result-count = 5"
+    },
+    {
+     "kind": "page-content",
+     "result": "success",
+     "weight": 0.2,
+     "detail": "Page content notification: \"Showing 5 results\""
+    },
+    {
+     "kind": "page-content",
+     "result": "success",
+     "weight": 0.2,
+     "detail": "Page content notification: \"Search returned 5 tickets\""
+    },
+    {
+     "kind": "page-content",
+     "result": "success",
+     "weight": 0.2,
+     "detail": "Page content notification: \"Filters applied\""
+    }
+   ],
+   "resultingEntities": [],
+   "persistedAt": 1787456052229
+  }
+ ],
+ "knowledgeRecordedWorkflows": [
+  {
+   "key": "app-b24aev:wf-pattern-42e59aa6",
+   "appId": "app-b24aev",
+   "patternId": "wf-pattern-42e59aa6",
+   "label": "Keyword",
+   "canonicalSteps": [
+    "keyword",
+    "search products"
+   ],
+   "viewSequence": [],
+   "sessionIds": [
+    "session-1787456052150"
+   ],
+   "occurrenceCount": 1,
+   "instances": [
+    "wf-session-1787456052150-0"
+   ],
+   "signatureIds": [
+    "app-b24aev:sig:eca2b05e"
+   ],
+   "linkageState": "linked",
+   "instanceSignatureIds": {
+    "wf-session-1787456052150-0": [
+     "app-b24aev:sig:eca2b05e"
+    ]
+   },
+   "firstSeenAt": 1787456052229,
+   "lastSeenAt": 1787456052229
+  }
+ ],
+ "knowledgeSignatures": [
+  {
+   "key": "app-b24aev:sig:eca2b05e",
+   "appId": "app-b24aev",
+   "actionType": "Click",
+   "normalizedTarget": "search",
+   "anchorViewId": null,
+   "firstSeenAtSession": "session-1787456052150",
+   "lastSeenAtSession": "session-1787456052150",
+   "firstSeenSeq": 1,
+   "lastSeenSeq": 1,
+   "firstSeenAtMs": 1787456052169,
+   "lastSeenAtMs": 1787456052169,
+   "occurrenceCount": 1,
+   "sessionsSinceSeen": 0,
+   "status": "active",
+   "source": "behavior",
+   "consequenceProfile": [
+    {
+     "identity": "T3-transition|notification|anchor-window",
+     "tier": "T3-transition",
+     "kind": "notification",
+     "targetIdentity": "anchor-window",
+     "occurrenceCount": 1,
+     "hitCount": 1,
+     "missedObservations": 0,
+     "firstSeenAtSession": "session-1787456052150",
+     "lastSeenAtSession": "session-1787456052150",
+     "lastSeenSeq": 1,
+     "confidence": 0.6,
+     "status": "active",
+     "evidenceSamples": [
+      {
+       "sessionId": "session-1787456052150",
+       "edgeKey": "app-b24aev:session-1787456052150:edge-ep-int-4-000"
+      }
+     ],
+     "observedVia": "behavior/observed-event"
+    },
+    {
+     "identity": "T4-window|ui|anchor-window",
+     "tier": "T4-window",
+     "kind": "ui",
+     "targetIdentity": "anchor-window",
+     "occurrenceCount": 1,
+     "hitCount": 1,
+     "missedObservations": 0,
+     "firstSeenAtSession": "session-1787456052150",
+     "lastSeenAtSession": "session-1787456052150",
+     "lastSeenSeq": 1,
+     "confidence": 0.6,
+     "status": "active",
+     "evidenceSamples": [
+      {
+       "sessionId": "session-1787456052150",
+       "edgeKey": "app-b24aev:session-1787456052150:edge-ep-int-4-003"
+      }
+     ],
+     "observedVia": "behavior/dom-window"
+    }
+   ],
+   "divergenceFlags": []
+  }
+ ],
+ "knowledgeStateTransitions": [
+  {
+   "key": "session-1787456052150:int-2",
+   "appId": "app-b24aev",
+   "sessionId": "session-1787456052150",
+   "interactionId": "int-2",
+   "changes": [
+    "list: body > main > table#results > tbody (+5 items)",
+    "list: body > main > p#result-count (+0 items)"
+   ],
+   "fromViewId": null,
+   "toViewId": null,
+   "affectedEntities": [],
+   "timestamp": 1787456052229
+  },
+  {
+   "key": "session-1787456052150:int-4",
+   "appId": "app-b24aev",
+   "sessionId": "session-1787456052150",
+   "interactionId": "int-4",
+   "changes": [
+    "page-content counter: body > main > p#result-count = 5",
+    "page-content notification: \"Showing 5 results\"",
+    "page-content notification: \"Search returned 5 tickets\"",
+    "page-content notification: \"Filters applied\"",
+    "list: body > main > table#results > tbody (+5 items)",
+    "list: body > main > p#result-count (+0 items)"
+   ],
+   "fromViewId": null,
+   "toViewId": null,
+   "affectedEntities": [],
+   "timestamp": 1787456052229
+  }
+ ],
+ "knowledgeViewTransitions": [],
+ "knowledgeViews": []
+}

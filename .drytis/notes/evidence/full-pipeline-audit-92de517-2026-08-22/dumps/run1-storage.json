@@ -1,0 +1,55 @@
+{
+  "interactions": [
+    {
+      "id": "int-2",
+      "type": "TextEntry",
+      "hasBE": true,
+      "win": {
+        "endReason": "stabilized",
+        "durMs": 300.29999999981374
+      },
+      "domChanges": 0,
+      "newSurfaces": 0,
+      "netActivity": 0,
+      "visChanges": 0,
+      "targetEv": 5,
+      "resultingState": []
+    },
+    {
+      "id": "int-3",
+      "type": "Dropdown",
+      "hasBE": true,
+      "win": {
+        "endReason": "consequence-settled",
+        "durMs": 1080.7999999998137
+      },
+      "domChanges": 3,
+      "newSurfaces": 0,
+      "netActivity": 0,
+      "visChanges": 0,
+      "targetEv": 5,
+      "resultingState": []
+    },
+    {
+      "id": "int-5",
+      "type": "Click",
+      "hasBE": true,
+      "win": {
+        "endReason": "consequence-settled",
+        "durMs": 453.09999999962747
+      },
+      "domChanges": 3,
+      "newSurfaces": 0,
+      "netActivity": 0,
+      "visChanges": 0,
+      "targetEv": 5,
+      "resultingState": [
+        {
+          "kind": "collection",
+          "text": "T-101Invoice not generatedopenT-104Invoi"
+        }
+      ]
+    }
+  ],
+  "ledgerLen": 15
+}

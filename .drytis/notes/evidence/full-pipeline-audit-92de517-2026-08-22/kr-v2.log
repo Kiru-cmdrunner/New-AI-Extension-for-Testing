@@ -1,0 +1,39 @@
+multi-pattern app on :8177
+
+── RECORDING 1 ── chips: [{"t":"⌨️ Text Entry","kr":"◆ new signature"},{"t":"🖱️ Click","kr":"◆ new signature"}]
+counts: {"applications":1,"knowledgeBehaviorSessions":1,"knowledgeSignatures":1}
+
+── RECORDING 2 (same tab, no navigation) ── chips: [{"t":"⌨️ Text Entry","kr":"◆ new signature"},{"t":"🖱️ Click","kr":"◆ new signature"}]
+counts: {"applications":2,"knowledgeBehaviorSessions":2,"knowledgeSignatures":2}
+
+── ROW DUMP ──
+{
+ "applications": [
+  {
+   "appId": "app-b24aev",
+   "origin": "chrome-extension://gndjidfncanlhlonpcabokbdhnikglpn/src/sidepanel/index.html"
+  },
+  {
+   "appId": "app-eketi1",
+   "origin": "http://127.0.0.1:8177/"
+  }
+ ],
+ "signatures": [
+  {
+   "key": "app-b24aev:sig:eca2b05e",
+   "appId": "app-b24aev",
+   "actionType": "Click",
+   "status": "active",
+   "occ": 1,
+   "sess": "session-1787445935812"
+  },
+  {
+   "key": "app-eketi1:sig:411e3c77",
+   "appId": "app-eketi1",
+   "actionType": "Click",
+   "status": "active",
+   "occ": 1,
+   "sess": "session-1787445948133"
+  }
+ ]
+}

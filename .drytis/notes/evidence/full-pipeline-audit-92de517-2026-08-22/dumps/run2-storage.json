@@ -1,0 +1,67 @@
+{
+  "interactions": [
+    {
+      "id": "int-2",
+      "type": "DatePicker",
+      "hasBE": true,
+      "win": {
+        "endReason": "consequence-settled",
+        "durMs": 1033.7000000001863
+      },
+      "domChanges": 1,
+      "newSurfaces": 0,
+      "netActivity": 0,
+      "visChanges": 0,
+      "targetEv": 5,
+      "resultingState": []
+    },
+    {
+      "id": "int-4",
+      "type": "Click",
+      "hasBE": true,
+      "win": {
+        "endReason": "consequence-settled",
+        "durMs": 317.3999999994412
+      },
+      "domChanges": 1,
+      "newSurfaces": 0,
+      "netActivity": 0,
+      "visChanges": 0,
+      "targetEv": 5,
+      "resultingState": [
+        {
+          "kind": "status-badge",
+          "text": "Planningâ€¦"
+        }
+      ]
+    },
+    {
+      "id": "int-6",
+      "type": "TextEntry",
+      "hasBE": true,
+      "win": {
+        "endReason": "consequence-settled",
+        "durMs": 1584
+      },
+      "domChanges": 1,
+      "newSurfaces": 0,
+      "netActivity": 4,
+      "visChanges": 2,
+      "targetEv": 5,
+      "resultingState": []
+    },
+    {
+      "id": "int-10",
+      "type": "Unclassified",
+      "hasBE": false,
+      "win": null,
+      "domChanges": 0,
+      "newSurfaces": 0,
+      "netActivity": 0,
+      "visChanges": 0,
+      "targetEv": 0,
+      "resultingState": []
+    }
+  ],
+  "ledgerLen": 19
+}

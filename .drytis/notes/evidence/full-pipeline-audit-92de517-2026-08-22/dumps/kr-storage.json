@@ -1,0 +1,17 @@
+{
+  "applications": 4,
+  "knowledgeBehaviorSessions": 4,
+  "knowledgeCollections": 5,
+  "knowledgeCounters": 1,
+  "knowledgeEdges": 6,
+  "knowledgeEntities": 1,
+  "knowledgeEpisodes": 7,
+  "knowledgeGaps": 8,
+  "knowledgeNotifications": 0,
+  "knowledgeOutcomes": 12,
+  "knowledgeRecordedWorkflows": 4,
+  "knowledgeSignatures": 6,
+  "knowledgeStateTransitions": 12,
+  "knowledgeViewTransitions": 0,
+  "knowledgeViews": 0
+}

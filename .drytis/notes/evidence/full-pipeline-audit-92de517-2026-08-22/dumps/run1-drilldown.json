@@ -1,0 +1,11 @@
+{
+  "cards": 3,
+  "drills": 11,
+  "itemDrills": 1,
+  "netDrills": 0,
+  "domDrills": 6,
+  "surfDrills": 0,
+  "winDrills": 1,
+  "hasRaw": true,
+  "rawSummary": "Raw evidence JSON"
+}

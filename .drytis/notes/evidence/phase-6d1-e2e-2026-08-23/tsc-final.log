@@ -1,0 +1,18 @@
+npx tsc --noEmit — final 6D.1 tree (git write-tree d5906ebf, HEAD 92de517)
+Run at 2026-08-23 03:53 UTC. Exactly the 8 pre-existing baseline errors (5x ir-executor-navigate, 1x ir-bridge-repeated-clicks, 1x resulting-state-seeded-display, 1x changed-element-seed-honesty); zero 6D.1-introduced errors.
+
+tests/execution/ir-executor-navigate.test.ts(164,7): error TS2322: Type 'Mock<(_tabId: number, message: { type: string; locators?: { value: string; }[] | undefined; }) => Promise<{ found: boolean; identity: null; stepId?: undefined; status?: undefined; durationMs?: undefined; results?: undefined; } | { ...; } | { ...; } | { ...; }>>' is not assignable to type '<T>(tabId: number, message: unknown) => Promise<T>'.
+  Types of parameters 'message' and 'message' are incompatible.
+    Type 'unknown' is not assignable to type '{ type: string; locators?: { value: string; }[] | undefined; }'.
+tests/execution/ir-executor-navigate.test.ts(170,13): error TS2540: Cannot assign to 'assertions' because it is a read-only property.
+tests/execution/ir-executor-navigate.test.ts(215,7): error TS2322: Type 'Mock<(_tabId: number, message: { type: string; locators?: { value: string; }[] | undefined; }) => Promise<{ found: boolean; identity: null; stepId?: undefined; status?: undefined; durationMs?: undefined; results?: undefined; } | { ...; } | { ...; } | { ...; }>>' is not assignable to type '<T>(tabId: number, message: unknown) => Promise<T>'.
+  Types of parameters 'message' and 'message' are incompatible.
+    Type 'unknown' is not assignable to type '{ type: string; locators?: { value: string; }[] | undefined; }'.
+tests/execution/ir-executor-navigate.test.ts(250,7): error TS2322: Type 'Mock<(_tabId: number, message: { type: string; locators?: { value: string; }[] | undefined; }) => Promise<{ found: boolean; identity: null; stepId?: undefined; status?: undefined; durationMs?: undefined; results?: undefined; } | { ...; } | { ...; } | { ...; }>>' is not assignable to type '<T>(tabId: number, message: unknown) => Promise<T>'.
+  Types of parameters 'message' and 'message' are incompatible.
+    Type 'unknown' is not assignable to type '{ type: string; locators?: { value: string; }[] | undefined; }'.
+tests/execution/ir-executor-navigate.test.ts(259,22): error TS2540: Cannot assign to 'startUrl' because it is a read-only property.
+tests/generation/ir-bridge-repeated-clicks.test.ts(46,10): error TS6133: 'makeEventId' is declared but its value is never read.
+tests/sidepanel/resulting-state-seeded-display.test.ts(61,5): error TS2322: Type 'WirePageContentSnapshot | null' is not assignable to type 'WirePageContentSnapshot | undefined'.
+  Type 'null' is not assignable to type 'WirePageContentSnapshot | undefined'.
+tests/understanding/changed-element-seed-honesty.test.ts(17,8): error TS6133: 'SeedCandidate' is declared but its value is never read.

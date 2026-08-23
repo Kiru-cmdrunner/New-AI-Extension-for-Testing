@@ -1,0 +1,248 @@
+{
+ "interactions": [
+  {
+   "id": "int-1",
+   "type": "Dropdown",
+   "hasBE": true,
+   "win": {
+    "endReason": "displaced"
+   },
+   "target": {
+    "accessibleName": "Priority",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "listbox",
+    "className": null,
+    "cssSelector": "#prio",
+    "dataAutoId": null,
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": "select-one",
+    "name": "prio",
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": "prio",
+    "tag": "SELECT",
+    "testId": null,
+    "xPath": "//select[@id='prio']"
+   },
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 1858141957
+    },
+    "noOpSelection": false,
+    "selectedValue": "High",
+    "targetName": "Priority"
+   },
+   "resultingState": []
+  },
+  {
+   "id": "int-2",
+   "type": "Hover",
+   "hasBE": true,
+   "win": {
+    "endReason": "lifecycle-abandoned"
+   },
+   "target": {
+    "accessibleName": "Keyword",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "textbox",
+    "className": null,
+    "cssSelector": "#q",
+    "dataAutoId": "search-input",
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": "text",
+    "name": "q",
+    "placeholder": "e.g. invoice",
+    "shadowDom": false,
+    "stableId": "q",
+    "tag": "INPUT",
+    "testId": null,
+    "xPath": "//input[@id='q']"
+   },
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 1858141957
+    },
+    "confidence": 0,
+    "dwellMs": 0,
+    "evidenceReason": null,
+    "meaningful": false,
+    "targetName": "Keyword"
+   },
+   "resultingState": []
+  },
+  {
+   "id": "int-3",
+   "type": "TextEntry",
+   "hasBE": true,
+   "win": {
+    "endReason": "consequence-settled"
+   },
+   "target": {
+    "accessibleName": "Keyword",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "textbox",
+    "className": null,
+    "cssSelector": "#q",
+    "dataAutoId": "search-input",
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": "text",
+    "name": "q",
+    "placeholder": "e.g. invoice",
+    "shadowDom": false,
+    "stableId": "q",
+    "tag": "INPUT",
+    "testId": null,
+    "xPath": "//input[@id='q']"
+   },
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 1858141957
+    },
+    "targetName": "Keyword",
+    "textValue": "invoice",
+    "typedValue": "invoice",
+    "userTyped": true
+   },
+   "resultingState": []
+  },
+  {
+   "id": "int-4",
+   "type": "Hover",
+   "hasBE": true,
+   "win": {
+    "endReason": "lifecycle-abandoned"
+   },
+   "target": {
+    "accessibleName": "Search",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "button",
+    "className": "primary",
+    "cssSelector": "#btn-search",
+    "dataAutoId": null,
+    "dataCy": "search-btn",
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": null,
+    "name": null,
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": "btn-search",
+    "tag": "BUTTON",
+    "testId": null,
+    "xPath": "//button[@id='btn-search']"
+   },
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 1858141957
+    },
+    "confidence": 0,
+    "dwellMs": 0,
+    "evidenceReason": null,
+    "meaningful": false,
+    "targetName": "Search"
+   },
+   "resultingState": []
+  },
+  {
+   "id": "int-5",
+   "type": "Click",
+   "hasBE": true,
+   "win": {
+    "endReason": "consequence-settled"
+   },
+   "target": {
+    "accessibleName": "Search",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "button",
+    "className": "primary",
+    "cssSelector": "#btn-search",
+    "dataAutoId": null,
+    "dataCy": "search-btn",
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": null,
+    "name": null,
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": "btn-search",
+    "tag": "BUTTON",
+    "testId": null,
+    "xPath": "//button[@id='btn-search']"
+   },
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 1858141957
+    },
+    "clientX": 57,
+    "clientY": 245,
+    "targetName": "Search",
+    "targetRole": "button",
+    "targetTag": "BUTTON"
+   },
+   "resultingState": [
+    {
+     "kind": "notification",
+     "text": "Showing 2 results",
+     "domPath": "body > main > div#toast-slot > div#live-toast",
+     "numericValue": null,
+     "matchedSelector": "[aria-live]"
+    },
+    {
+     "kind": "notification",
+     "text": "Search returned 2 tickets",
+     "domPath": "body > main > aside#log-slot > div#act-log",
+     "numericValue": null,
+     "matchedSelector": "[role=\"log\"]"
+    },
+    {
+     "kind": "notification",
+     "text": "Filters applied",
+     "domPath": "body > main > div#snack-slot > div#live-snack",
+     "numericValue": null,
+     "matchedSelector": "[class*=\"snackbar\" i]:not([class*=\"snackbar-container\" i])"
+    },
+    {
+     "kind": "collection",
+     "text": "T-101Invoice not generatedopenT-104Invoice mismatc",
+     "domPath": "body > main > table#results > tbody",
+     "numericValue": 2,
+     "matchedSelector": "changed-element-seed"
+    },
+    {
+     "kind": "counter",
+     "text": "2 tickets",
+     "domPath": "body > main > p#result-count",
+     "numericValue": 2,
+     "matchedSelector": "changed-element-seed"
+    }
+   ]
+  }
+ ],
+ "ledgerLen": 15
+}

@@ -1,0 +1,6 @@
+npx vitest run (full suite)
+Run at 2026-08-23 03:53 UTC — final 6D.1 tree (git write-tree d5906ebf, HEAD 92de517)
+
+ Test Files  254 passed (254)
+      Tests  4464 passed (4464)
+   Duration  89.15s

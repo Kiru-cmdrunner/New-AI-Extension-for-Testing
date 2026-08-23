@@ -1,0 +1,89 @@
+{
+  "interactions": [
+    {
+      "id": "int-2",
+      "type": "Click",
+      "hasBE": true,
+      "win": {
+        "endReason": "consequence-settled",
+        "durMs": 382.3999999994412
+      },
+      "domChanges": 4,
+      "newSurfaces": 0,
+      "netActivity": 0,
+      "visChanges": 0,
+      "targetEv": 5,
+      "resultingState": [
+        {
+          "kind": "counter",
+          "text": "3"
+        },
+        {
+          "kind": "entity",
+          "text": "NotebookSKU-A âˆ’ 2 +"
+        },
+        {
+          "kind": "entity",
+          "text": "Pen setSKU-B âˆ’ 1 +"
+        }
+      ]
+    },
+    {
+      "id": "int-4",
+      "type": "Click",
+      "hasBE": true,
+      "win": {
+        "endReason": "consequence-settled",
+        "durMs": 310.20000000018626
+      },
+      "domChanges": 0,
+      "newSurfaces": 0,
+      "netActivity": 0,
+      "visChanges": 0,
+      "targetEv": 5,
+      "resultingState": [
+        {
+          "kind": "counter",
+          "text": "3"
+        },
+        {
+          "kind": "entity",
+          "text": "NotebookSKU-A âˆ’ 2 +"
+        },
+        {
+          "kind": "entity",
+          "text": "Pen setSKU-B âˆ’ 1 +"
+        }
+      ]
+    },
+    {
+      "id": "int-6",
+      "type": "Click",
+      "hasBE": true,
+      "win": {
+        "endReason": "consequence-settled",
+        "durMs": 457.8999999994412
+      },
+      "domChanges": 4,
+      "newSurfaces": 0,
+      "netActivity": 0,
+      "visChanges": 0,
+      "targetEv": 5,
+      "resultingState": [
+        {
+          "kind": "counter",
+          "text": "4"
+        },
+        {
+          "kind": "entity",
+          "text": "NotebookSKU-A âˆ’ 3 +"
+        },
+        {
+          "kind": "entity",
+          "text": "Pen setSKU-B âˆ’ 1 +"
+        }
+      ]
+    }
+  ],
+  "ledgerLen": 6
+}

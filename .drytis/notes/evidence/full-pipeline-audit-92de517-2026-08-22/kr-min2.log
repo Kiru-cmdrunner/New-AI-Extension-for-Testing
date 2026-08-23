@@ -1,0 +1,11 @@
+multi-pattern app on :8177
+
+── RECORDING 1 (fresh) ──
+chips: [{"t":"⌨️ Text Entry","kr":"◆ new signature"},{"t":"🖱️ Click","kr":"◆ new signature"}]
+counts: {"applications":1,"knowledgeBehaviorSessions":1,"knowledgeSignatures":1}
+forward: What this recording improvesNo signatures existed before this session — every action learned is new.Click "search" ◆ new signature — first observation; next recording reinforces it1 observation(s) cou
+
+── RECORDING 2 (same flow, same page — NO navigation) ──
+chips: [{"t":"⌨️ Text Entry","kr":"◆ new signature"},{"t":"🖱️ Click","kr":"◆ new signature"}]
+counts: {"applications":2,"knowledgeBehaviorSessions":2,"knowledgeSignatures":2}
+forward: What this recording improvesNo signatures existed before this session — every action learned is new.Click "search" ◆ new signature — first observation; next recording reinforces it1 observation(s) cou
