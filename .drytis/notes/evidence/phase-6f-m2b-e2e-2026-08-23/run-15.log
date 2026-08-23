@@ -1,0 +1,131 @@
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+START → started
+— attempt 1/8: stamp-triggered crash —
+   conjunction NOT observed after 2 s — crashing
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"}]
+— attempt 2/8: stamp-triggered crash —
+   conjunction NOT observed after 2 s — crashing
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"}]
+— attempt 3/8: stamp-triggered crash —
+   conjunction NOT observed after 2 s — crashing
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"}]
+— attempt 4/8: stamp-triggered crash —
+   conjunction NOT observed after 2 s — crashing
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"}]
+— attempt 5/8: stamp-triggered crash —
+   conjunction NOT observed after 2 s — crashing
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"}]
+— attempt 6/8: stamp-triggered crash —
+   conjunction observed at +106 ms — crashing
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"}]
+   ✓ conjunction met (durable stamp + evidence-less click) — proceeding to STOP drain
+STOP → stopped
+final cards: [
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": "page-reload-synthetic",
+  "id": null,
+  "ident": {
+   "tag": "HTML",
+   "id": null,
+   "name": "http://127.0.0.1:8191/m9-cart-landed.html?ASIN=B08KGRVW2S&quantity=1&submit.addToCart=1"
+  }
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": "page-reload-synthetic",
+  "id": null,
+  "ident": {
+   "tag": "HTML",
+   "id": null,
+   "name": "http://127.0.0.1:8191/m9-cart-landed.html?ASIN=B08KGRVW2S&quantity=1&submit.addToCart=1"
+  }
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": "page-reload-synthetic",
+  "id": null,
+  "ident": {
+   "tag": "HTML",
+   "id": null,
+   "name": "http://127.0.0.1:8191/m9-cart-landed.html?ASIN=B08KGRVW2S&quantity=1&submit.addToCart=1"
+  }
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": "page-reload-synthetic",
+  "id": null,
+  "ident": {
+   "tag": "HTML",
+   "id": null,
+   "name": "http://127.0.0.1:8191/m9-cart-landed.html?ASIN=B08KGRVW2S&quantity=1&submit.addToCart=1"
+  }
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": "page-reload-synthetic",
+  "id": null,
+  "ident": {
+   "tag": "HTML",
+   "id": null,
+   "name": "http://127.0.0.1:8191/m9-cart-landed.html?ASIN=B08KGRVW2S&quantity=1&submit.addToCart=1"
+  }
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Click",
+  "er": "sw-recovered-form-submit",
+  "id": "add-to-cart-button",
+  "ident": {
+   "tag": "BUTTON",
+   "id": "add-to-cart-button",
+   "name": "Add to cart"
+  }
+ }
+]
+PASS — E0 recovery precondition exercised (durable stamp + bare click, renderer killed) :: [{"a":1,"conj":false,"shapes":[{"t":"Navigation","er":null},{"t":"Navigation","er":"page-reload-synthetic"}]},{"a":2,"conj":false,"shapes":[{"t":"Navigation","er":null},{"t":"Navigation","er":"page-reload-synthetic"},{"t":"Navigation","er":null},{"t":"Navigation","er":"page-reload-synthetic"}]},{"a":3,"conj":false,"shapes":[{"t":"Navigation","er":null},{"t":"Navigation","er":"page-reload-synthetic"},{"t":"Navigation","er":null},{"t":"Navigation","er":"page-reload-synthetic"},{"t":"Navigation","er":null},{"t":"Navigation","er":"page-reload-synthetic"}]},{"a":4,"conj":false,"shapes":[{"t":"Navigation","er":null},{"t":"Navigation","er":"page-reload-synthetic"},{"t":"Navigation","er":null},{"t":
+PASS — C1 recovered Click card on #add-to-cart-button exists :: [{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":"page-reload-synthetic","id":null},{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":"page-reload-synthetic","id":null},{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":"page-reload-synthetic","id":null},{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":"page-reload-synthetic","id":null},{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":"page-reload-synthetic","id":null},{"t":"Navigation","er":null,"id":null},{"t":"Click","er":"sw-recovered-form-submit","id":"add-to-cart-button"}]
+PASS — C2 endReason is 'sw-recovered-form-submit' :: sw-recovered-form-submit
+PASS — C3 targetEvidence.identity is SEEDED (not null) — THE FIX :: identity={"accessibleName":"Add to cart","ariaLabel":null,"ariaLabelledBy":null,"ariaRole":"button","className":"btn","cssSelector":"#add-to-cart-but
+PASS — C4 identity names the REAL element :: stableId=add-to-cart-button name="Add to cart"
+PASS — C5 identity.tag is the real captured tag (BUTTON) :: BUTTON
+PASS — C6 before/after remain null (no fabricated state) :: targetEvidence=true before=null after=null
+PASS — C7 network evidence attached (ledger recovery worked) :: netRows=1
+PASS — C8 zero sw-recovered element cards with null identity ("Unknown element" gone on this path) :: []
+
+════ 6F-M2b E2E — 9 PASS / 0 FAIL ════

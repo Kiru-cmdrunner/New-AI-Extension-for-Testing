@@ -1,0 +1,86 @@
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+START → started
+— attempt 1/6: stamp-triggered crash —
+   stamp observed after 1788 ms — crashing now
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"}]
+— attempt 2/6: stamp-triggered crash —
+   stamp observed after 87 ms — crashing now
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"}]
+— attempt 3/6: stamp-triggered crash —
+   stamp observed after 42 ms — crashing now
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"}]
+— attempt 4/6: stamp-triggered crash —
+   stamp observed after 35 ms — crashing now
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"}]
+— attempt 5/6: stamp-triggered crash —
+   stamp observed after 90 ms — crashing now
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"}]
+— attempt 6/6: stamp-triggered crash —
+   stamp observed after 42 ms — crashing now
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"}]
+STOP → stopped
+final cards: [
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": "page-reload-synthetic",
+  "id": null,
+  "ident": {
+   "tag": "HTML",
+   "id": null,
+   "name": "http://127.0.0.1:8191/m9-cart-landed.html?ASIN=B08KGRVW2S&quantity=1&submit.addToCart=1"
+  }
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Click",
+  "er": null,
+  "id": "add-to-cart-button",
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Click",
+  "er": null,
+  "id": "add-to-cart-button",
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ }
+]
+FAIL — E0 recovery path exercised in real Chrome (at least one sw-recovered card) :: [{"a":1,"shapes":[{"t":"Navigation","er":null},{"t":"Navigation","er":"page-reload-synthetic"}]},{"a":2,"shapes":[{"t":"Navigation","er":null},{"t":"Navigation","er":"page-reload-synthetic"},{"t":"Navigation","er":null},{"t":"Hover","er":null},{"t":"Click","er":null}]},{"a":3,"shapes":[{"t":"Navigation","er":null},{"t":"Navigation","er":"page-reload-synthetic"},{"t":"Navigation","er":null},{"t":"Hover","er":null},{"t":"Click","er":null},{"t":"Navigation","er":null}]},{"a":4,"shapes":[{"t":"Navigation","er":null},{"t":"Navigation","er":"page-reload-synthetic"},{"t":"Navigation","er":null},{"t":"Hover","er":null},{"t":"Click","er":null},{"t":"Navigation","er":null},{"t":"Navigation","er":null}
+FAIL — C1 recovered Click card on #add-to-cart-button exists :: [{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":"page-reload-synthetic","id":null},{"t":"Navigation","er":null,"id":null},{"t":"Click","er":null,"id":"add-to-cart-button"},{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":null,"id":null},{"t":"Click","er":null,"id":"add-to-cart-button"},{"t":"Navigation","er":null,"id":null}]
+PASS — C8 zero sw-recovered element cards with null identity ("Unknown element" gone on this path) :: []
+
+════ 6F-M2b E2E — 1 PASS / 2 FAIL ════

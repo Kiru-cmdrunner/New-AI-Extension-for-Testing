@@ -1,0 +1,45 @@
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+START → started
+— attempt 1/8: stamp-triggered crash —
+   stamp NOT observed after 1252 ms — crashing
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"}]
+— attempt 2/8: stamp-triggered crash —
+   stamp observed after 56 ms — crashing
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"}]
+   ✓ precondition met (durable stamp + evidence-less click) — stopping for STOP drain
+STOP → stopped
+final cards: [
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": "page-reload-synthetic",
+  "id": null,
+  "ident": {
+   "tag": "HTML",
+   "id": null,
+   "name": "http://127.0.0.1:8191/m9-cart-landed.html?ASIN=B08KGRVW2S&quantity=1&submit.addToCart=1"
+  }
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Click",
+  "er": null,
+  "id": "add-to-cart-button",
+  "ident": null
+ }
+]
+PASS — E0 recovery path exercised in real Chrome (at least one sw-recovered card) :: [{"a":1,"shapes":[{"t":"Navigation","er":null},{"t":"Navigation","er":"page-reload-synthetic"}]},{"a":2,"shapes":[{"t":"Navigation","er":null},{"t":"Navigation","er":"page-reload-synthetic"},{"t":"Navigation","er":null},{"t":"Hover","er":null},{"t":"Click","er":null}]}]
+FAIL — C1 recovered Click card on #add-to-cart-button exists :: [{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":"page-reload-synthetic","id":null},{"t":"Navigation","er":null,"id":null},{"t":"Click","er":null,"id":"add-to-cart-button"}]
+PASS — C8 zero sw-recovered element cards with null identity ("Unknown element" gone on this path) :: []
+
+════ 6F-M2b E2E — 2 PASS / 1 FAIL ════

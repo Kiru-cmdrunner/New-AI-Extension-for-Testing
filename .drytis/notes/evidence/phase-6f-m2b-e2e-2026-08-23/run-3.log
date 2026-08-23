@@ -1,0 +1,18 @@
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+START → started
+button rect = {"x":23,"y":256,"w":135,"h":48}
+/workspace/node_modules/chrome-remote-interface/node_modules/ws/lib/websocket.js:1008
+    const err = new Error(
+                ^
+
+Error: WebSocket is not open: readyState 3 (CLOSED)
+    at sendAfterClose (/workspace/node_modules/chrome-remote-interface/node_modules/ws/lib/websocket.js:1008:17)
+    at WebSocket.send (/workspace/node_modules/chrome-remote-interface/node_modules/ws/lib/websocket.js:411:7)
+    at Chrome._enqueueCommand (/workspace/node_modules/chrome-remote-interface/lib/chrome.js:289:18)
+    at /workspace/node_modules/chrome-remote-interface/lib/chrome.js:76:22
+    at new Promise (<anonymous>)
+    at Chrome.send (/workspace/node_modules/chrome-remote-interface/lib/chrome.js:75:20)
+    at evalApp (file:///workspace/.drytis/notes/evidence/phase-6f-m2b-e2e-2026-08-23/harness-m2b.mjs:85:44)
+    at file:///workspace/.drytis/notes/evidence/phase-6f-m2b-e2e-2026-08-23/harness-m2b.mjs:116:3
+
+Node.js v20.20.2

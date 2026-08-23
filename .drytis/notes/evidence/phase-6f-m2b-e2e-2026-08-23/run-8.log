@@ -1,0 +1,122 @@
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+START → started
+— attempt 1: crash at +140 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"}]
+— attempt 2: crash at +100 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"}]
+— attempt 3: crash at +180 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":"page-reload","ident":"SEEDED"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"}]
+— attempt 4: crash at +120 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":"page-reload","ident":"SEEDED"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"}]
+— attempt 5: crash at +200 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":"page-reload","ident":"SEEDED"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"}]
+— attempt 6: crash at +80 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":"page-reload","ident":"SEEDED"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"}]
+— attempt 7: crash at +160 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":"page-reload","ident":"SEEDED"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"}]
+STOP → stopped
+final cards: [
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": "page-reload-synthetic",
+  "id": null,
+  "ident": {
+   "tag": "HTML",
+   "id": null,
+   "name": "http://127.0.0.1:8191/m9-cart-landed.html?ASIN=B08KGRVW2S&quantity=1&submit.addToCart=1"
+  }
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Click",
+  "er": "page-reload",
+  "id": "add-to-cart-button",
+  "ident": {
+   "tag": "BUTTON",
+   "id": "add-to-cart-button",
+   "name": "Add to cart"
+  }
+ },
+ {
+  "t": "Navigation",
+  "er": "page-reload-synthetic",
+  "id": null,
+  "ident": {
+   "tag": "HTML",
+   "id": null,
+   "name": "http://127.0.0.1:8191/m9-cart-landed.html?ASIN=B08KGRVW2S&quantity=1&submit.addToCart=1"
+  }
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Click",
+  "er": "sw-recovered-form-submit",
+  "id": "add-to-cart-button",
+  "ident": {
+   "tag": "BUTTON",
+   "id": "add-to-cart-button",
+   "name": "Add to cart"
+  }
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": "page-reload-synthetic",
+  "id": null,
+  "ident": {
+   "tag": "HTML",
+   "id": null,
+   "name": "http://127.0.0.1:8191/m9-cart-landed.html?ASIN=B08KGRVW2S&quantity=1&submit.addToCart=1"
+  }
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ }
+]
+FAIL — E0 recovery path exercised in real Chrome (at least one sw-recovered card) :: [{"a":1,"off":140,"shapes":[{"t":"Navigation","er":null}]},{"a":2,"off":100,"shapes":[{"t":"Navigation","er":null},{"t":"Navigation","er":null},{"t":"Navigation","er":"page-reload-synthetic"}]},{"a":3,"off":180,"shapes":[{"t":"Navigation","er":null},{"t":"Navigation","er":null},{"t":"Navigation","er":"page-reload-synthetic"},{"t":"Navigation","er":null},{"t":"Hover","er":null},{"t":"Click","er":"page-reload"},{"t":"Navigation","er":"page-reload-synthetic"}]},{"a":4,"off":120,"shapes":[{"t":"Navigation","er":null},{"t":"Navigation","er":null},{"t":"Navigation","er":"page-reload-synthetic"},{"t":"Navigation","er":null},{"t":"Hover","er":null},{"t":"Click","er":"page-reload"},{"t":"Navigation",
+PASS — C1 recovered Click card on #add-to-cart-button exists :: [{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":"page-reload-synthetic","id":null},{"t":"Navigation","er":null,"id":null},{"t":"Click","er":"page-reload","id":"add-to-cart-button"},{"t":"Navigation","er":"page-reload-synthetic","id":null},{"t":"Navigation","er":null,"id":null},{"t":"Click","er":"sw-recovered-form-submit","id":"add-to-cart-button"},{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":"page-reload-synthetic","id":null},{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":null,"id":null}]
+PASS — C2 endReason is 'sw-recovered-form-submit' :: sw-recovered-form-submit
+PASS — C3 targetEvidence.identity is SEEDED (not null) — THE FIX :: identity={"accessibleName":"Add to cart","ariaLabel":null,"ariaLabelledBy":null,"ariaRole":"button","className":"btn","cssSelector":"#add-to-cart-but
+PASS — C4 identity names the REAL element :: stableId=add-to-cart-button name="Add to cart"
+PASS — C5 identity.tag is the real captured tag (BUTTON) :: BUTTON
+FAIL — C6 before/after remain null (no fabricated state) :: before="absent" after="absent"
+PASS — C7 network evidence attached (ledger recovery worked) :: netRows=1
+PASS — C8 zero sw-recovered element cards with null identity ("Unknown element" gone on this path) :: []
+
+════ 6F-M2b E2E — 7 PASS / 2 FAIL ════

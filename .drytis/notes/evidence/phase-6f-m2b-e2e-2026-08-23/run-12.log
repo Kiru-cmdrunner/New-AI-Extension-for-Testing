@@ -1,0 +1,154 @@
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+START → started
+— attempt 1/12: crash at +120 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"}]
+— attempt 2/12: crash at +150 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"}]
+— attempt 3/12: crash at +180 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"}]
+— attempt 4/12: crash at +100 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"}]
+— attempt 5/12: crash at +200 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"}]
+— attempt 6/12: crash at +220 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"}]
+— attempt 7/12: crash at +140 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"}]
+— attempt 8/12: crash at +160 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"}]
+— attempt 9/12: crash at +240 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"}]
+— attempt 10/12: crash at +90 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"}]
+— attempt 11/12: crash at +260 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":"lifecycle-abandoned","ident":"SEEDED"},{"t":"Click","er":"page-reload","ident":"SEEDED"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"}]
+— attempt 12/12: crash at +130 ms —
+   cards: [{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":null,"ident":"null"},{"t":"Click","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Hover","er":"lifecycle-abandoned","ident":"SEEDED"},{"t":"Click","er":"page-reload","ident":"SEEDED"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"},{"t":"Navigation","er":null,"ident":"null"},{"t":"Navigation","er":"page-reload-synthetic","ident":"SEEDED"}]
+STOP → stopped
+final cards: [
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Click",
+  "er": null,
+  "id": "add-to-cart-button",
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Click",
+  "er": null,
+  "id": "add-to-cart-button",
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Click",
+  "er": null,
+  "id": "add-to-cart-button",
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Click",
+  "er": "page-reload",
+  "id": "add-to-cart-button",
+  "ident": {
+   "tag": "BUTTON",
+   "id": "add-to-cart-button",
+   "name": "Add to cart"
+  }
+ },
+ {
+  "t": "Navigation",
+  "er": "page-reload-synthetic",
+  "id": null,
+  "ident": {
+   "tag": "HTML",
+   "id": null,
+   "name": "http://127.0.0.1:8191/m9-cart-landed.html?ASIN=B08KGRVW2S&quantity=1&submit.addToCart=1"
+  }
+ },
+ {
+  "t": "Navigation",
+  "er": null,
+  "id": null,
+  "ident": null
+ },
+ {
+  "t": "Navigation",
+  "er": "page-reload-synthetic",
+  "id": null,
+  "ident": {
+   "tag": "HTML",
+   "id": null,
+   "name": "http://127.0.0.1:8191/m9-cart-landed.html?ASIN=B08KGRVW2S&quantity=1&submit.addToCart=1"
+  }
+ }
+]
+FAIL — E0 recovery path exercised in real Chrome (at least one sw-recovered card) :: [{"a":1,"off":120,"shapes":[{"t":"Navigation","er":null}]},{"a":2,"off":150,"shapes":[{"t":"Navigation","er":null},{"t":"Navigation","er":null}]},{"a":3,"off":180,"shapes":[{"t":"Navigation","er":null},{"t":"Navigation","er":null},{"t":"Navigation","er":null}]},{"a":4,"off":100,"shapes":[{"t":"Navigation","er":null},{"t":"Navigation","er":null},{"t":"Navigation","er":null},{"t":"Navigation","er":null},{"t":"Hover","er":null},{"t":"Click","er":null}]},{"a":5,"off":200,"shapes":[{"t":"Navigation","er":null},{"t":"Navigation","er":null},{"t":"Navigation","er":null},{"t":"Navigation","er":null},{"t":"Hover","er":null},{"t":"Click","er":null},{"t":"Navigation","er":null}]},{"a":6,"off":220,"shape
+FAIL — C1 recovered Click card on #add-to-cart-button exists :: [{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":null,"id":null},{"t":"Click","er":null,"id":"add-to-cart-button"},{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":null,"id":null},{"t":"Click","er":null,"id":"add-to-cart-button"},{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":null,"id":null},{"t":"Click","er":null,"id":"add-to-cart-button"},{"t":"Navigation","er":null,"id":null},{"t":"Navigation","er":null,"id":null},{"t":"Click","er":"page-reload","id":"add-to-cart-button"},{"t":"Navigation","er":"page-reload-synthetic","id":null},{"t
+PASS — C8 zero sw-recovered element cards with null identity ("Unknown element" gone on this path) :: []
+
+════ 6F-M2b E2E — 1 PASS / 2 FAIL ════

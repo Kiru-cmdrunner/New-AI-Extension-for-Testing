@@ -1,0 +1,52 @@
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+START → started
+button rect = {"x":23,"y":256,"w":135,"h":48}
+… clicking submit
+… click dispatched, committing
+… injecting renderer crash
+landed url = (tab closed — crash-point hit)
+STOP → stopped
+cards: [
+ {
+  "t": "Click",
+  "er": "page-reload",
+  "tag": "BUTTON",
+  "id": "add-to-cart-button",
+  "name": "Add to cart",
+  "ident": {
+   "tag": "BUTTON",
+   "id": "add-to-cart-button",
+   "name": "Add to cart"
+  }
+ },
+ {
+  "t": "Navigation",
+  "er": "page-reload-synthetic",
+  "tag": "HTML",
+  "id": null,
+  "name": "http://127.0.0.1:8191/m9-cart-landed.html?ASIN=B08KGRVW2S&quantity=1&submit.addToCart=1",
+  "ident": {
+   "tag": "HTML",
+   "id": null,
+   "name": "http://127.0.0.1:8191/m9-cart-landed.html?ASIN=B08KGRVW2S&quantity=1&submit.addToCart=1"
+  }
+ },
+ {
+  "t": "Unclassified",
+  "er": null,
+  "tag": "BUTTON",
+  "id": "add-to-cart-button",
+  "name": "Add to cart",
+  "ident": null
+ }
+]
+PASS — C1 recovered Click card on #add-to-cart-button exists :: [{"t":"Click","id":"add-to-cart-button"},{"t":"Navigation","id":null},{"t":"Unclassified","id":"add-to-cart-button"}]
+FAIL — C2 endReason is 'sw-recovered-form-submit' (SW recovery path exercised) :: page-reload
+PASS — C3 targetEvidence.identity is SEEDED (not null) — THE FIX :: identity={"accessibleName":"Add to cart","ariaLabel":null,"ariaLabelledBy":null,"ariaRole":"button","className":"btn","cssSelector":"#add-to-cart-but
+PASS — C4 identity names the REAL element :: stableId=add-to-cart-button name="Add to cart"
+PASS — C5 identity.tag is the real captured tag (BUTTON) :: BUTTON
+FAIL — C6 before/after remain null (no fabricated state) :: before={"ariaChecked":null,"ariaExpanded":null, after={"ariaChecked":null,"ariaExpanded":null,
+PASS — C7 network evidence attached (ledger recovery worked) :: netRows=1
+PASS — C8 zero sw-recovered element cards with null identity ("Unknown element" gone on this path) :: []
+
+════ 6F-M2b E2E — 6 PASS / 2 FAIL ════

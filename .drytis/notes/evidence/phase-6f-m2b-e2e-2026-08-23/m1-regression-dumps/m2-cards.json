@@ -1,0 +1,42 @@
+[
+ {
+  "type": "DatePicker",
+  "name": "Depart on",
+  "dateValue": "Choose Sunday, September 6th, 2026",
+  "sel": "#onward",
+  "dataAutoId": null,
+  "testId": null
+ },
+ {
+  "type": "DatePicker",
+  "name": "Return on",
+  "dateValue": "Choose Tuesday, September 8th, 2026",
+  "sel": "#return",
+  "dataAutoId": null,
+  "testId": null
+ },
+ {
+  "type": "Click",
+  "name": "Search Flights",
+  "dateValue": null,
+  "sel": "#go",
+  "dataAutoId": "search-flights",
+  "testId": null
+ },
+ {
+  "type": "Click",
+  "name": "Bengaluru",
+  "dateValue": null,
+  "sel": "body > main > div:nth-of-type(2) > ul > li:nth-of-type(1)",
+  "dataAutoId": null,
+  "testId": "airport-opt-1"
+ },
+ {
+  "type": "Click",
+  "name": "Notify",
+  "dateValue": null,
+  "sel": "#toast-btn",
+  "dataAutoId": null,
+  "testId": null
+ }
+]
