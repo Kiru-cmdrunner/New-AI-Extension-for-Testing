@@ -1,0 +1,68 @@
+[
+ {
+  "type": "TextEntry",
+  "endReason": null,
+  "name": "Depart on",
+  "phys": null,
+  "paired": null,
+  "dateValue": "Sat, 05 Sep",
+  "sel": "#depart",
+  "dataAutoId": "depart-on",
+  "assertions": null
+ },
+ {
+  "type": "Click",
+  "endReason": null,
+  "name": "Choose Saturday, September 5th, 2026",
+  "phys": null,
+  "paired": null,
+  "dateValue": null,
+  "sel": "body > main > div:nth-of-type(1) > div:nth-of-type(5)",
+  "dataAutoId": "date-cell-2026-09-05",
+  "assertions": null
+ },
+ {
+  "type": "Click",
+  "endReason": null,
+  "name": "02h 30m",
+  "phys": null,
+  "paired": null,
+  "dateValue": null,
+  "sel": "body > main > div:nth-of-type(2) > div:nth-of-type(1)",
+  "dataAutoId": "duration-under-2h",
+  "assertions": null
+ },
+ {
+  "type": "Click",
+  "endReason": null,
+  "name": "Select flight QP-1478",
+  "phys": null,
+  "paired": null,
+  "dateValue": null,
+  "sel": "body > main > div:nth-of-type(3) > div:nth-of-type(3)",
+  "dataAutoId": "flight-F3",
+  "assertions": null
+ },
+ {
+  "type": "Unclassified",
+  "endReason": null,
+  "name": "12h 10m",
+  "phys": "click",
+  "paired": true,
+  "dateValue": null,
+  "sel": "body > main > div:nth-of-type(2) > div:nth-of-type(2)",
+  "dataAutoId": "duration-12h",
+  "assertions": null
+ },
+ {
+  "type": "Unclassified",
+  "endReason": null,
+  "name": "AI-887\n10:15 – 12:30\n₹5380",
+  "phys": "click",
+  "paired": true,
+  "dateValue": null,
+  "sel": "body > main > div:nth-of-type(3) > div:nth-of-type(2)",
+  "dataAutoId": "flight-F2",
+  "assertions": null
+ }
+]
