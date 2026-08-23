@@ -93,8 +93,9 @@ function safeText(text: unknown): string {
 
 /**
  * Render the element identity section as a compact summary line.
+ * Exported for unit tests (6F-M2b renderer pin) — no behavior change.
  */
-function renderIdentity(identity: ElementIdentity | null | undefined): HTMLElement {
+export function renderIdentity(identity: ElementIdentity | null | undefined): HTMLElement {
   const container = document.createElement('div');
   container.className = 'evidence-identity';
 

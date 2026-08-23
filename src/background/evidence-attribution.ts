@@ -32,6 +32,7 @@ import type { ComponentInteraction } from '../shared/component-types';
 // a fallback when the enum import would create a cycle; asserted equal in
 // tests to prevent drift.
 import { StorageKeys } from '../shared/types';
+import type { ElementIdentity } from '../shared/types';
 
 const UNATTACHED_REQUESTS_KEY: string = StorageKeys.UNATTACHED_REQUESTS;
 
@@ -188,6 +189,18 @@ function isSyntheticNavigation(i: ComponentInteraction): boolean {
   return i.behavioralEvidence?.window?.endReason === 'page-reload-synthetic';
 }
 
+// 6F-M2b: a trigger with a truthy tag carries a real captured element
+// shape (every genuine capture has one). Anything else is not an element
+// identity to copy — synthesizeMinimalEvidence then keeps identity null.
+function hasElementShape(trigger: unknown): trigger is ElementIdentity {
+  return (
+    typeof trigger === 'object' &&
+    trigger !== null &&
+    typeof (trigger as ElementIdentity).tag === 'string' &&
+    (trigger as ElementIdentity).tag.length > 0
+  );
+}
+
 // ── Thin evidence synthesis (INV-4/INV-7) ──────────────────────────────
 
 /**
@@ -227,7 +240,17 @@ export function synthesizeMinimalEvidence(
       stabilityTrace: [],
     },
     targetEvidence: {
-      identity: null,
+      // 6F-M2b (F4-D display honesty): seed the identity from the owning
+      // interaction's trigger — the SAME captured element that produced the
+      // click (trigger IS an ElementIdentity, component-types.ts:287). The
+      // identity was never lost by the SW lifecycle; it simply wasn't copied
+      // into the thin shape, so the panel rendered "Unknown element" for
+      // exactly the cards whose ownership resolution had succeeded.
+      // Clone (never share the reference) + guard: a shape-less trigger
+      // (no tag) keeps null — honesty over fabrication.
+      identity: hasElementShape(interaction.trigger)
+        ? { ...(interaction.trigger as ElementIdentity) }
+        : null,
       identityCapturedAt: 0,
       before: null,
       after: null,
