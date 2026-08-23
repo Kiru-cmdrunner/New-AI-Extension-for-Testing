@@ -1,0 +1,20 @@
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+START → started
+nested press: down at child { cx: 47, cy: 89.21875 } → up at parent { px: 78.8984375, py: 89.71875 }
+app feedback m-nested = pressed 1
+PASS — nested press produced a click on the app :: m-nested="pressed 1"
+PASS — flat press produced a click on the app :: m-flat="pressed 1"
+FAIL — sibling presses produced clicks on the app :: m-sib="pressed 1"
+STOP → stopped
+interactions: 0, ledger entries: 0
+[]
+nested-fixture cards: []
+FAIL — CASE-1 nested press: twin Unclassified cards observed (orphan present) :: 0 Unclassified, 0 paired :: []
+FAIL — CASE-1 nested press: card set includes BOTH physical mousedown and click entries :: []
+flat-fixture cards: []
+FAIL — CASE-2 flat press: exactly ONE card for the press (claimed Click or S1'-paired Unclassified) :: 0 cards :: []
+sibling-fixture cards: []
+FAIL — CASE-3 siblings: exactly TWO cards (unrelated presses never collapse) :: 0 cards :: []
+FAIL — IR plan present in storage :: cmdrunner_ir_plan missing — see dump for actual keys: 
+
+════ M1-A O11 REPRO — 2 PASS / 6 FAIL ════

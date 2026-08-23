@@ -1,0 +1,75 @@
+M1-C: shipped RE extracted from dist — /(listbox|dropdown|popover|overlay|modal|dialog|flyout|menu|popup|suggestion|autocomplete|typeahead|options-list|MuiDialog|ant-modal|p-dialog)/i
+ARCHIVED adani-popup-banner (promo banner, non-modal)
+   shipped=true(OVER-MATCH)  anchored=false(ok)  anchored+popup=true(MISS)
+ARCHIVED promo-popup
+   shipped=true(OVER-MATCH)  anchored=false(ok)  anchored+popup=true(MISS)
+ARCHIVED popup-blocked-notice
+   shipped=true(OVER-MATCH)  anchored=false(ok)  anchored+popup=true(MISS)
+ARCHIVED newsletter-popup__container
+   shipped=true(OVER-MATCH)  anchored=false(ok)  anchored+popup=true(MISS)
+ARCHIVED cookie-popup-wrapper
+   shipped=true(OVER-MATCH)  anchored=false(ok)  anchored+popup=true(MISS)
+ARCHIVED chat-bubble (floating widget)
+   shipped=false(ok)  anchored=false(ok)  anchored+popup=false(ok)
+ARCHIVED plain main
+   shipped=false(ok)  anchored=false(ok)  anchored+popup=false(ok)
+ARCHIVED utility nav
+   shipped=false(ok)  anchored=false(ok)  anchored+popup=false(ok)
+ARCHIVED top nav bar
+   shipped=false(ok)  anchored=false(ok)  anchored+popup=false(ok)
+ARCHIVED footer
+   shipped=false(ok)  anchored=false(ok)  anchored+popup=false(ok)
+ARCHIVED POSITIVE traveler-popup
+   shipped=true(ok)  anchored=false(MISS)  anchored+popup=true(ok)
+ARCHIVED POSITIVE generic popup container
+   shipped=true(ok)  anchored=false(MISS)  anchored+popup=true(ok)
+ARCHIVED POSITIVE modal-overlay
+   shipped=true(ok)  anchored=true(ok)  anchored+popup=true(ok)
+EXT cookie-consent popup--dark
+   shipped=true(OVER-MATCH)  anchored=false(ok)  anchored+popup=false(ok)
+EXT newsletter-signup popup_open
+   shipped=true(OVER-MATCH)  anchored=false(ok)  anchored+popup=false(ok)
+EXT age-verification popup-container
+   shipped=true(OVER-MATCH)  anchored=false(ok)  anchored+popup=false(ok)
+EXT chat-popup launcher
+   shipped=true(OVER-MATCH)  anchored=false(ok)  anchored+popup=false(ok)
+EXT notification popup-holder
+   shipped=true(OVER-MATCH)  anchored=false(ok)  anchored+popup=false(ok)
+EXT popup-banner topbar
+   shipped=true(OVER-MATCH)  anchored=false(ok)  anchored+popup=true(MISS)
+EXT app-install popup
+   shipped=true(OVER-MATCH)  anchored=false(ok)  anchored+popup=false(ok)
+EXT popup-footer (footer contains popup prefix)
+   shipped=true(OVER-MATCH)  anchored=false(ok)  anchored+popup=true(MISS)
+EXT popup-menu-toggle (nav toggle, menu token present)
+   shipped=true(OVER-MATCH)  anchored=true(MISS)  anchored+popup=true(MISS)
+EXT POSITIVE react-select dropdown-menu
+   shipped=true(ok)  anchored=true(ok)  anchored+popup=true(ok)
+EXT POSITIVE popover-content (anchored suffix)
+   shipped=true(ok)  anchored=true(ok)  anchored+popup=true(ok)
+EXT POSITIVE flyout-panel
+   shipped=true(ok)  anchored=true(ok)  anchored+popup=true(ok)
+EXT POSITIVE suggestion-list
+   shipped=true(ok)  anchored=false(MISS)  anchored+popup=false(MISS)
+EXT POSITIVE autocomplete-listbox
+   shipped=true(ok)  anchored=true(ok)  anchored+popup=true(ok)
+EXT POSITIVE options-list
+   shipped=true(ok)  anchored=false(MISS)  anchored+popup=false(MISS)
+EXT POSITIVE ModalDialog MUI root
+   shipped=true(ok)  anchored=false(MISS)  anchored+popup=false(MISS)
+EXT POSITIVE menu popup (generic menu)
+   shipped=true(ok)  anchored=false(MISS)  anchored+popup=false(MISS)
+EXT POSITIVE native select menu surface
+   shipped=true(ok)  anchored=true(ok)  anchored+popup=true(ok)
+EXT POSITIVE overlay-panel (generic overlay)
+   shipped=true(ok)  anchored=true(ok)  anchored+popup=true(ok)
+
+════ M1-C EXTENDED P3 RE-PROBE ════
+shipped (unanchored, current)   : 18/32 correct — 14 over-matches
+anchored ([-_]|$), no popup    : 25/32 correct — 7 misses
+anchored + popup w/ boundary   : 20/32 correct — 12 misses
+
+R2 over-match inventory (shipped): adani-popup-banner | promo-popup | popup-blocked-notice | newsletter-popup__container | cookie-popup-wrapper | cookie-consent popup--dark | newsletter-signup popup_open | age-verification popup-container | chat-popup launcher | notification popup-holder | popup-banner topbar | app-install popup | popup-footer | popup-menu-toggle
+Anchored no-popup misses        : traveler-popup | popup | popup-menu-toggle | suggestion-list | options-list | MuiDialog-root ModalDialog | menu popup
+Anchored+popup misses           : adani-popup-banner | promo-popup | popup-blocked-notice | newsletter-popup__container | cookie-popup-wrapper | popup-banner topbar | popup-footer | popup-menu-toggle | suggestion-list | options-list | MuiDialog-root ModalDialog | menu popup
+table → dumps/p3-extended-table.json

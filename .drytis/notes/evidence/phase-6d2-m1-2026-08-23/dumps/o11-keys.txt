@@ -1,0 +1,18 @@
+[
+ "cmdrunner_evidence_ledger",
+ "cmdrunner_live_interactions",
+ "cmdrunner_net_last_action",
+ "cmdrunner_net_observing_tabs",
+ "cmdrunner_pending_evidence",
+ "cmdrunner_pending_nav_docs",
+ "cmdrunner_recording_active",
+ "cmdrunner_runtime_snapshot",
+ "cmdrunner_verification_result",
+ "execution_ir_plan",
+ "execution_ir_plan_generated_at",
+ "generated_files",
+ "repo_session_id",
+ "session_context",
+ "ui_state",
+ "understanding_result"
+]

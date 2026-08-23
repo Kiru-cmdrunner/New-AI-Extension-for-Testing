@@ -1,0 +1,89 @@
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+START → undefined
+case0 non-interactive-nested press: down at child { cx: 37, cy: 150.21875 } → up at parent { px: 79.15625, py: 150.21875 }
+PASS — case0 non-interactive nested press produced a click on the app :: m-wrap="pressed 1"
+case0b asymmetry press: down at inner-star { cx: 44.171875, cy: 238.21875 } → up at parent { px: 90.4375, py: 238.21875 }
+FAIL — case0b asymmetry press produced a click on the app :: m-swap=""
+case0c cross press: down at pill-a → up at pill-b
+PASS — case0c cross press registered both halves on the app :: m-cross="down+up"
+nested press: down at child { cx: 47, cy: 89.21875 } → up at parent { px: 78.8984375, py: 89.71875 }
+app feedback m-nested = pressed 1
+PASS — nested press produced a click on the app :: m-nested="pressed 1"
+PASS — flat press produced a click on the app :: m-flat="pressed 1"
+FAIL — sibling presses produced clicks on the app :: m-sib=""
+STOP → stopped
+interactions: 6, ledger entries: 9
+[
+ {
+  "type": "Click",
+  "endReason": null,
+  "name": "Favorite",
+  "tag": "BUTTON",
+  "phys": null,
+  "paired": null,
+  "sel": "#btn-nested"
+ },
+ {
+  "type": "Click",
+  "endReason": null,
+  "name": "Plain button",
+  "tag": "BUTTON",
+  "phys": null,
+  "paired": null,
+  "sel": "#btn-flat"
+ },
+ {
+  "type": "Unclassified",
+  "endReason": null,
+  "name": "Round Trip",
+  "tag": "LI",
+  "phys": "click",
+  "paired": true,
+  "sel": "#wrap-nested"
+ },
+ {
+  "type": "Unclassified",
+  "endReason": null,
+  "name": "Star",
+  "tag": "SPAN",
+  "phys": "mousedown",
+  "paired": null,
+  "sel": "#inner-star"
+ },
+ {
+  "type": "Unclassified",
+  "endReason": null,
+  "name": "Source pill",
+  "tag": "SPAN",
+  "phys": "mousedown",
+  "paired": null,
+  "sel": "#pill-a"
+ },
+ {
+  "type": "Unclassified",
+  "endReason": null,
+  "name": "Source Target",
+  "tag": "P",
+  "phys": "click",
+  "paired": null,
+  "sel": "#cross-row"
+ }
+]
+case0 wrap-fixture cards: [{"type":"Unclassified","endReason":null,"name":"Round Trip","tag":"LI","phys":"click","paired":true,"sel":"#wrap-nested"}]
+PASS — CASE-0 nameless-child shape: press collapses to ONE card (S1' pairs via resolveTarget) :: 1 cards :: [{"type":"Unclassified","phys":"click","paired":true,"sel":"#wrap-nested"}]
+FAIL — CASE-0b asymmetry shape: twin Unclassified cards observed (O11 orphan) :: 1 cards, 1 Unclassified, 0 paired :: [{"type":"Unclassified","phys":"mousedown","name":"Star","sel":"#inner-star","paired":null}]
+FAIL — O11 FINAL VERDICT: orphan CONFIRMED only via asymmetry shape; nameless-child & button-wrap shapes already collapse :: asymmetry: 1 unpaired twins; nameless: 1 card; button: 1 card
+case0c cross-fixture cards: [{"type":"Unclassified","endReason":null,"name":"Source pill","tag":"SPAN","phys":"mousedown","paired":null,"sel":"#pill-a"}]
+PASS — CASE-0c cross-target press: different-element cards present (no click to pair) :: 1 cards :: [{"type":"Unclassified","phys":"mousedown","name":"Source pill","sel":"#pill-a"}]
+FAIL — CASE-0 OR CASE-0b: orphan pattern observed in at least one shape (twin Unclassified, none paired) :: case0(nameless-child): 1 unc / 1 paired; case0b(asymmetry): 1 unc / 0 paired; case1(button): 0 unc
+case0b swap-fixture cards: [{"type":"Unclassified","endReason":null,"name":"Star","tag":"SPAN","phys":"mousedown","paired":null,"sel":"#inner-star"}]
+PASS — CASE-0b: physical event kinds recorded on swap-fixture cards :: ["mousedown"]
+PASS — CASE-0b: mousemove/scroll/drag entries did NOT leak as cards (no timing artifacts) :: [{"t":"Unclassified","phys":"mousedown"}]
+PASS — CASE-1 button-nested press resolves to ONE claimed Click (resolveTarget promotion) :: 1 cards :: [{"type":"Click"}]
+flat-fixture cards: [{"type":"Click","endReason":null,"name":"Plain button","tag":"BUTTON","phys":null,"paired":null,"sel":"#btn-flat"}]
+PASS — CASE-2 flat press: exactly ONE card for the press (claimed Click or S1'-paired Unclassified) :: 1 cards :: [{"type":"Click","phys":null,"paired":null}]
+sibling-fixture cards: []
+FAIL — CASE-3 siblings: exactly TWO cards (unrelated presses never collapse) :: 0 cards :: []
+PASS — IR plan: steps generated, no Unclassified leak (NOISE_TYPES filter intact) :: 2 steps
+
+════ M1-A O11 REPRO — 11 PASS / 6 FAIL ════

@@ -1,0 +1,74 @@
+[
+ {
+  "type": "Click",
+  "endReason": null,
+  "name": "Favorite",
+  "tag": "BUTTON",
+  "phys": null,
+  "paired": null,
+  "sel": "#btn-nested"
+ },
+ {
+  "type": "Click",
+  "endReason": null,
+  "name": "Plain button",
+  "tag": "BUTTON",
+  "phys": null,
+  "paired": null,
+  "sel": "#btn-flat"
+ },
+ {
+  "type": "Click",
+  "endReason": null,
+  "name": "Sibling A",
+  "tag": "BUTTON",
+  "phys": null,
+  "paired": null,
+  "sel": "#sib-a"
+ },
+ {
+  "type": "Click",
+  "endReason": null,
+  "name": "Sibling B",
+  "tag": "BUTTON",
+  "phys": null,
+  "paired": null,
+  "sel": "#sib-b"
+ },
+ {
+  "type": "Unclassified",
+  "endReason": null,
+  "name": "Round Trip",
+  "tag": "LI",
+  "phys": "click",
+  "paired": true,
+  "sel": "#wrap-nested"
+ },
+ {
+  "type": "Unclassified",
+  "endReason": null,
+  "name": "Star",
+  "tag": "SPAN",
+  "phys": "mousedown",
+  "paired": null,
+  "sel": "#inner-star"
+ },
+ {
+  "type": "Unclassified",
+  "endReason": null,
+  "name": "Source pill",
+  "tag": "SPAN",
+  "phys": "mousedown",
+  "paired": null,
+  "sel": "#pill-a"
+ },
+ {
+  "type": "Unclassified",
+  "endReason": null,
+  "name": "Source Target",
+  "tag": "P",
+  "phys": "click",
+  "paired": null,
+  "sel": "#cross-row"
+ }
+]

@@ -1,0 +1,57 @@
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+START → undefined
+nested press: down at child { cx: 47, cy: 89.21875 } → up at parent { px: 78.8984375, py: 89.71875 }
+app feedback m-nested = pressed 1
+PASS — nested press produced a click on the app :: m-nested="pressed 1"
+PASS — flat press produced a click on the app :: m-flat="pressed 1"
+FAIL — sibling presses produced clicks on the app :: m-sib="pressed 1"
+STOP → stopped
+interactions: 4, ledger entries: 8
+[
+ {
+  "type": "Click",
+  "endReason": null,
+  "name": "Favorite",
+  "tag": "BUTTON",
+  "phys": null,
+  "paired": null,
+  "sel": "#btn-nested"
+ },
+ {
+  "type": "Click",
+  "endReason": null,
+  "name": "Plain button",
+  "tag": "BUTTON",
+  "phys": null,
+  "paired": null,
+  "sel": "#btn-flat"
+ },
+ {
+  "type": "Click",
+  "endReason": null,
+  "name": "Sibling A",
+  "tag": "BUTTON",
+  "phys": null,
+  "paired": null,
+  "sel": "#sib-a"
+ },
+ {
+  "type": "Click",
+  "endReason": null,
+  "name": "Sibling B",
+  "tag": "BUTTON",
+  "phys": null,
+  "paired": null,
+  "sel": "#sib-b"
+ }
+]
+nested-fixture cards: [{"type":"Click","endReason":null,"name":"Favorite","tag":"BUTTON","phys":null,"paired":null,"sel":"#btn-nested"}]
+FAIL — CASE-1 nested press: twin Unclassified cards observed (orphan present) :: 0 Unclassified, 0 paired :: []
+FAIL — CASE-1 nested press: card set includes BOTH physical mousedown and click entries :: []
+flat-fixture cards: [{"type":"Click","endReason":null,"name":"Plain button","tag":"BUTTON","phys":null,"paired":null,"sel":"#btn-flat"}]
+PASS — CASE-2 flat press: exactly ONE card for the press (claimed Click or S1'-paired Unclassified) :: 1 cards :: [{"type":"Click","phys":null,"paired":null}]
+sibling-fixture cards: [{"type":"Click","endReason":null,"name":"Sibling A","tag":"BUTTON","phys":null,"paired":null,"sel":"#sib-a"},{"type":"Click","endReason":null,"name":"Sibling B","tag":"BUTTON","phys":null,"paired":null,"sel":"#sib-b"}]
+PASS — CASE-3 siblings: exactly TWO cards (unrelated presses never collapse) :: 2 cards :: [{"type":"Click","phys":null},{"type":"Click","phys":null}]
+FAIL — IR plan present in storage :: cmdrunner_ir_plan missing — see dump for actual keys: execution_ir_plan,execution_ir_plan_generated_at
+
+════ M1-A O11 REPRO — 4 PASS / 4 FAIL ════

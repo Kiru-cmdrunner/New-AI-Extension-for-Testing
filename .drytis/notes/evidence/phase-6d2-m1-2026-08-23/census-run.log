@@ -1,0 +1,66 @@
+CLONE: {
+ "url": "http://127.0.0.1:8166/",
+ "interactiveTotal": 9,
+ "visibleInteractive": 9,
+ "ariaPressed": {
+  "total": 0,
+  "true": 0,
+  "false": 0
+ },
+ "roleSwitch": 0,
+ "roleCheckbox": 0,
+ "dataStateNonForm": 0,
+ "chipClassFamily": 1,
+ "byClassification": {
+  "Link": 3,
+  "Click": 2,
+  "other": 4
+ },
+ "uncoveredToggleShaped": 0,
+ "uncoveredExamples": []
+}
+D1APP: {
+ "url": "http://127.0.0.1:8177/",
+ "interactiveTotal": 5,
+ "visibleInteractive": 5,
+ "ariaPressed": {
+  "total": 0,
+  "true": 0,
+  "false": 0
+ },
+ "roleSwitch": 0,
+ "roleCheckbox": 0,
+ "dataStateNonForm": 0,
+ "chipClassFamily": 0,
+ "byClassification": {
+  "other": 3,
+  "Dropdown": 1,
+  "Click": 1
+ },
+ "uncoveredToggleShaped": 0,
+ "uncoveredExamples": []
+}
+AVIS: {
+ "url": "https://www.avisford.com/",
+ "interactiveTotal": 249,
+ "visibleInteractive": 76,
+ "ariaPressed": {
+  "total": 0,
+  "true": 0,
+  "false": 0
+ },
+ "roleSwitch": 0,
+ "roleCheckbox": 0,
+ "dataStateNonForm": 0,
+ "chipClassFamily": 11,
+ "byClassification": {
+  "Link": 196,
+  "Click": 36,
+  "other": 11,
+  "Dropdown": 4,
+  "TextEntry": 2
+ },
+ "uncoveredToggleShaped": 0,
+ "uncoveredExamples": []
+}
+→ dumps/census.json

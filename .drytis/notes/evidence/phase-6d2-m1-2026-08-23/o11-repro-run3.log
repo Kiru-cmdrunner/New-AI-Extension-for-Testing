@@ -1,0 +1,11 @@
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+START → undefined
+file:///workspace/.drytis/notes/evidence/phase-6d2-m1-2026-08-23/harness-o11.mjs:66
+  const cx = child.x + child.w / 2, cy = child.y + child.h / 2;
+                   ^
+
+TypeError: Cannot read properties of null (reading 'x')
+    at file:///workspace/.drytis/notes/evidence/phase-6d2-m1-2026-08-23/harness-o11.mjs:66:20
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+
+Node.js v20.20.2

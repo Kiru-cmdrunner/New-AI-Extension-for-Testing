@@ -1,0 +1,258 @@
+[
+ {
+  "label": "ARCHIVED adani-popup-banner (promo banner, non-modal)",
+  "cls": "adani-popup-banner",
+  "expect": false,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": true
+ },
+ {
+  "label": "ARCHIVED promo-popup",
+  "cls": "promo-popup",
+  "expect": false,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": true
+ },
+ {
+  "label": "ARCHIVED popup-blocked-notice",
+  "cls": "popup-blocked-notice",
+  "expect": false,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": true
+ },
+ {
+  "label": "ARCHIVED newsletter-popup__container",
+  "cls": "newsletter-popup__container",
+  "expect": false,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": true
+ },
+ {
+  "label": "ARCHIVED cookie-popup-wrapper",
+  "cls": "cookie-popup-wrapper",
+  "expect": false,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": true
+ },
+ {
+  "label": "ARCHIVED chat-bubble (floating widget)",
+  "cls": "chat-bubble",
+  "expect": false,
+  "shipped": false,
+  "anchored": false,
+  "anchoredPopup": false
+ },
+ {
+  "label": "ARCHIVED plain main",
+  "cls": "main-content",
+  "expect": false,
+  "shipped": false,
+  "anchored": false,
+  "anchoredPopup": false
+ },
+ {
+  "label": "ARCHIVED utility nav",
+  "cls": "utility-nav",
+  "expect": false,
+  "shipped": false,
+  "anchored": false,
+  "anchoredPopup": false
+ },
+ {
+  "label": "ARCHIVED top nav bar",
+  "cls": "top-nav",
+  "expect": false,
+  "shipped": false,
+  "anchored": false,
+  "anchoredPopup": false
+ },
+ {
+  "label": "ARCHIVED footer",
+  "cls": "site-footer",
+  "expect": false,
+  "shipped": false,
+  "anchored": false,
+  "anchoredPopup": false
+ },
+ {
+  "label": "ARCHIVED POSITIVE traveler-popup",
+  "cls": "traveler-popup",
+  "expect": true,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": true
+ },
+ {
+  "label": "ARCHIVED POSITIVE generic popup container",
+  "cls": "popup",
+  "expect": true,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": true
+ },
+ {
+  "label": "ARCHIVED POSITIVE modal-overlay",
+  "cls": "modal-overlay",
+  "expect": true,
+  "shipped": true,
+  "anchored": true,
+  "anchoredPopup": true
+ },
+ {
+  "label": "EXT cookie-consent popup--dark",
+  "cls": "cookie-consent popup--dark",
+  "expect": false,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": false
+ },
+ {
+  "label": "EXT newsletter-signup popup_open",
+  "cls": "newsletter-signup popup_open",
+  "expect": false,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": false
+ },
+ {
+  "label": "EXT age-verification popup-container",
+  "cls": "age-verification popup-container",
+  "expect": false,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": false
+ },
+ {
+  "label": "EXT chat-popup launcher",
+  "cls": "chat-popup launcher",
+  "expect": false,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": false
+ },
+ {
+  "label": "EXT notification popup-holder",
+  "cls": "notification popup-holder",
+  "expect": false,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": false
+ },
+ {
+  "label": "EXT popup-banner topbar",
+  "cls": "popup-banner topbar",
+  "expect": false,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": true
+ },
+ {
+  "label": "EXT app-install popup",
+  "cls": "app-install popup",
+  "expect": false,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": false
+ },
+ {
+  "label": "EXT popup-footer (footer contains popup prefix)",
+  "cls": "popup-footer",
+  "expect": false,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": true
+ },
+ {
+  "label": "EXT popup-menu-toggle (nav toggle, menu token present)",
+  "cls": "popup-menu-toggle",
+  "expect": false,
+  "shipped": true,
+  "anchored": true,
+  "anchoredPopup": true
+ },
+ {
+  "label": "EXT POSITIVE react-select dropdown-menu",
+  "cls": "react-select__dropdown-menu",
+  "expect": true,
+  "shipped": true,
+  "anchored": true,
+  "anchoredPopup": true
+ },
+ {
+  "label": "EXT POSITIVE popover-content (anchored suffix)",
+  "cls": "popover-content",
+  "expect": true,
+  "shipped": true,
+  "anchored": true,
+  "anchoredPopup": true
+ },
+ {
+  "label": "EXT POSITIVE flyout-panel",
+  "cls": "flyout-panel",
+  "expect": true,
+  "shipped": true,
+  "anchored": true,
+  "anchoredPopup": true
+ },
+ {
+  "label": "EXT POSITIVE suggestion-list",
+  "cls": "suggestion-list",
+  "expect": true,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": false
+ },
+ {
+  "label": "EXT POSITIVE autocomplete-listbox",
+  "cls": "autocomplete-listbox",
+  "expect": true,
+  "shipped": true,
+  "anchored": true,
+  "anchoredPopup": true
+ },
+ {
+  "label": "EXT POSITIVE options-list",
+  "cls": "options-list",
+  "expect": true,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": false
+ },
+ {
+  "label": "EXT POSITIVE ModalDialog MUI root",
+  "cls": "MuiDialog-root ModalDialog",
+  "expect": true,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": false
+ },
+ {
+  "label": "EXT POSITIVE menu popup (generic menu)",
+  "cls": "menu popup",
+  "expect": true,
+  "shipped": true,
+  "anchored": false,
+  "anchoredPopup": false
+ },
+ {
+  "label": "EXT POSITIVE native select menu surface",
+  "cls": "dropdown-menu",
+  "expect": true,
+  "shipped": true,
+  "anchored": true,
+  "anchoredPopup": true
+ },
+ {
+  "label": "EXT POSITIVE overlay-panel (generic overlay)",
+  "cls": "overlay-panel",
+  "expect": true,
+  "shipped": true,
+  "anchored": true,
+  "anchoredPopup": true
+ }
+]
