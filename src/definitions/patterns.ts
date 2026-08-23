@@ -343,20 +343,42 @@ const DATE_INPUT_TYPES = new Set([
  * CSS class patterns for date picker triggers.
  * Covers OXD, MUI DatePicker, Ant Design DatePicker, React-DatePicker.
  */
+/**
+ * CSS class patterns for date-picker trigger wrappers/inputs.
+ *
+ * 6E-M2: separator-tolerant `date[_-]?picker` — the real site's wrapper is
+ * `date_picker undefined` (underscore; batch 2 RC-A) while shipped tokens
+ * cover `datepicker`/`date-picker`. Not a broadened substring: the
+ * separator is optional between the two words only.
+ */
 const DATEPICKER_TRIGGER_CLASS_RE =
-  /(oxd-date-input|datepicker|date-picker|date-input|calendar-input)/i;
+  /(^|[^a-z])(?:oxd-date-input|date[_-]?picker|date-input|calendar-input)/i;
 
 /**
  * Date-vocabulary hint for trigger naming (name attribute or placeholder).
  * Shared by both paths so placeholder parity is exact (6D.1).
+ *
+ * 6E-M2: travel-date tokens (depart|return|onward|arrival) added from real
+ * AdaniOne markup — the 'Depart on'/'Return on' fields carry no other date
+ * signal (batch 2, RC-A). The four NEW tokens are separator/word-bounded
+ * (exactly the frozen §2.3.2 vocabulary; 'Department store' stays out)
+ * while the LEGACY tokens keep their shipped substring semantics
+ * ('emp_birthday' matches 'birth' — pinned by patterns.test.ts) so no
+ * shipped behavior changes.
  */
-const DATE_NAME_HINT_RE = /(?:date|birth|dob|expire|expiry|calendar)/i;
+const DATE_NAME_HINT_RE =
+  /(?:(?:^|[^a-z0-9])(?:depart|return|onward|arrival)(?=$|[^a-z0-9]|[_-])|date|birth|dob|expire|expiry|calendar)/i;
 
 /**
  * CSS class patterns for calendar cells (actual selectable dates).
+ *
+ * 6E-M2: `datepicker__day` (react-datepicker's BEM family — double
+ * underscore; the real site's cells are
+ * `react-datepicker__day react-datepicker__day--selected …`, batch 2 RC-B).
+ * Distinct from the inner `datepicker-date-holder` (not a cell).
  */
 const DATEPICKER_CELL_CLASS_RE =
-  /(oxd-date-day|calendar-day|datepicker-day|day-cell|flatpickr-day)/i;
+  /(oxd-date-day|calendar-day|datepicker-day|datepicker__day|day-cell|flatpickr-day)/i;
 
 /**
  * CSS class patterns for the calendar surface (the open calendar container).
@@ -384,6 +406,11 @@ export function isDatePickerTrigger(
   name: string | null,
   placeholder: string | null = null,
 ): boolean {
+  // 6E-M2 W-A.3: a calendar CELL is never a trigger. Checked FIRST
+  // because the cell class family (`react-datepicker__day`) contains the
+  // `datepicker` substring that the trigger token `date[_-]?picker` would
+  // otherwise match — cells must complete lifecycles, not start them.
+  if (className && DATEPICKER_CELL_CLASS_RE.test(className)) return false;
   // Native date/time inputs
   if (tag === 'INPUT' && inputType && DATE_INPUT_TYPES.has(inputType)) return true;
   // CSS class patterns
@@ -404,11 +431,27 @@ export function isDatePickerTrigger(
 /**
  * Is this element a calendar cell (an actual selectable date)?
  * Checks both ARIA role and CSS class.
+ *
+ * 6E-M2: optional `accessibleName` third argument — the W3C date-cell
+ * name shape ("Choose Saturday, September 5th, 2026", the 6D.0
+ * hasDateCellName machinery) is accepted as an additional sufficient cell
+ * signal ONLY when the role is interactive (option|gridcell|button).
+ * Belt = name shape; braces = role. Two-arg call sites behave exactly as
+ * before (name path requires the third argument).
  */
 export function isCalendarCell(
   ariaRole: string | null,
   className: string | null,
+  accessibleName?: string | null,
 ): boolean {
+  if (accessibleName != null && hasDateCellName(accessibleName, null)) {
+    // W3C date-cell name + interactive role ⇒ cell even with unknown
+    // classes (frameworks vary). Non-interactive roles (headings etc.)
+    // must not become cells from a decorative name.
+    if (ariaRole === 'option' || ariaRole === 'gridcell' || ariaRole === 'button') {
+      return true;
+    }
+  }
   if (ariaRole === 'gridcell' || ariaRole === 'option') {
     // Must also have a date-like class to avoid matching listbox options
     if (className && DATEPICKER_CELL_CLASS_RE.test(className)) return true;

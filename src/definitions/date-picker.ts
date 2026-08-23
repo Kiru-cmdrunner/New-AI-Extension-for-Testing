@@ -56,6 +56,23 @@ export const datePickerDefinition: ComponentDefinition = {
     // Also detect focus/click on date input wrapper (OXD: div.oxd-date-input)
     // The date-triggering class is on the parent wrapper, not the input.
     // Check ancestor classes for ALL trigger events (focus AND click).
+    //
+    // 6E-M2 round 2 (E2E finding): the real react-datepicker markup nests
+    // the calendar INSIDE the wrapper (travel_date > div.date_picker >
+    // react-datepicker > … > __day cells). On a cell click the ancestors
+    // legitimately carry `date_picker`/`react-datepicker`, and the ancestor
+    // token match below would otherwise start a lifecycle with the CELL as
+    // its own trigger — the cell then completes both lifecycles, emitting a
+    // duplicate DatePicker card named after the cell's aria-label.
+    // W-A.3 (cells never trigger) therefore applies to the EVENT TARGET
+    // here, not just the class string being tested: a cell-shaped target
+    // (cell class family OR W3C date-cell name shape) may complete a
+    // lifecycle but never start one via the ancestor path.
+    const isCellShapedTarget =
+      isCalendarCell(event.target.ariaRole, event.target.className) ||
+      isCalendarCell(event.target.ariaRole, event.target.className, event.target.accessibleName);
+    if (isCellShapedTarget) return null;
+
     const ancestorClasses = event.domContext.ancestorClasses.join(' ');
     if (isDatePickerTrigger(tag, inputType, ancestorClasses, null, name)) {
       return { type: 'DatePicker' };
@@ -82,7 +99,8 @@ export const datePickerDefinition: ComponentDefinition = {
     if (isInsideCalendarSurface(ancestorClasses)) return true;
 
     // Calendar cell (may not have surface ancestor classes in all frameworks)
-    if (isCalendarCell(event.target.ariaRole, event.target.className)) return true;
+    // 6E-M2: name-aware cell check (W3C name shape + interactive role).
+    if (isCalendarCell(event.target.ariaRole, event.target.className, event.target.accessibleName)) return true;
 
     return false;
   },
@@ -123,9 +141,13 @@ export const datePickerDefinition: ComponentDefinition = {
     }
 
     // Calendar cell click → complete
+    // 6E-M2: pass the accessible name so the W3C date-cell name shape
+    // ("Choose Saturday, September 5th, 2026") recognizes cells whose class
+    // family is unknown — belt (name shape) + braces (role option/gridcell/
+    // button) per spec §3 W-A.2b. Existing 2-arg behavior unchanged.
     if (
       (event.eventType === 'click' || event.eventType === 'mousedown') &&
-      isCalendarCell(event.target.ariaRole, event.target.className)
+      isCalendarCell(event.target.ariaRole, event.target.className, event.target.accessibleName)
     ) {
       // Bug 7 check: make sure this isn't a navigation button
       if (isCalendarNavigationButton(event.target.ariaRole, event.target.accessibleName, event.target.className)) {

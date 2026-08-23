@@ -135,7 +135,7 @@ export const dropdownDefinition: ComponentDefinition = {
     // a 12s-old passenger/cabin select). Structural exclusion — no timing.
     if (
       (event.eventType === 'click' || event.eventType === 'mousedown') &&
-      (isCalendarCell(event.target.ariaRole, event.target.className) ||
+      (isCalendarCell(event.target.ariaRole, event.target.className, event.target.accessibleName) ||
         hasDateCellName(event.target.accessibleName, event.target.ariaLabel))
     ) {
       return null; // not a dropdown selection — never completes here
