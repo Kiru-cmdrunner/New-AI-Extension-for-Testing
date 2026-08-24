@@ -1,0 +1,49 @@
+<!doctype html>
+<!--
+  7.1-W2 fixture: full-reload ENTRY form (URL deliberately matches NO
+  default view pattern — it is a form, not a view).
+
+  Flow (spec .drytis/specs/phase-7-1-w2-full-reload-views.md §3):
+    1. Start recording on this page.
+    2. Type in #search-form-input, click #search-form-submit.
+    3. The form GET-submits to /search-results.html?q=… — a REAL document
+       navigation (no preventDefault): content script destroyed,
+       webNavigation.onCommit transitionType 'form_submit' → synthetic
+       full-reload evidence → search-results view row.
+
+  Self-contained static file; served from /public/ by the file server.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Search form — 7.1-W2 full-reload entry</title>
+  <style>
+    body { font: 15px/1.5 system-ui, sans-serif; max-width: 560px; margin: 3rem auto; padding: 0 1rem; }
+    form { display: flex; gap: .5rem; margin-top: 1.5rem; }
+    input { flex: 1; padding: .5rem .75rem; }
+    button { padding: .5rem 1.25rem; }
+    p.note { color: #555; }
+  </style>
+</head>
+<body>
+  <h1>Flight search</h1>
+  <p class="note">7.1-W2 full-reload fixture — submitting performs a real
+  document navigation (form GET). No SPA routing on this page.</p>
+
+  <form id="search-form" action="search-results.html" method="GET">
+    <input
+      id="search-form-input"
+      data-auto-id="search-form-input"
+      name="q"
+      value="flights to chennai"
+      aria-label="Search flights"
+    />
+    <button
+      id="search-form-submit"
+      data-auto-id="search-form-submit"
+      type="submit"
+    >Search</button>
+  </form>
+</body>
+</html>

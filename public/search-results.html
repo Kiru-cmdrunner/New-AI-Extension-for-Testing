@@ -1,0 +1,55 @@
+<!doctype html>
+<!--
+  7.1-W2 fixture: first full-reload DESTINATION. Filename deliberately
+  matches DEFAULT_VIEW_PATTERNS entry '/search' → viewId 'search-results'
+  (confidence 0.85).
+
+  Landed on via GET /search-results.html?q=… (form_submit transition):
+  webNavigation.onCommitted fires, the SW synthesizes full-reload
+  NavigationEvidence (real DDC-2 fromUrl = the form page), and the view
+  layer must persist a 'search-results' view row.
+
+  The add-to-cart form on this page GET-submits to /cart.html?ASIN=… —
+  the second matched destination ('/cart' → viewId 'cart'), producing the
+  search-results → cart view transition.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Search results — 7.1-W2 destination</title>
+  <style>
+    body { font: 15px/1.5 system-ui, sans-serif; max-width: 560px; margin: 3rem auto; padding: 0 1rem; }
+    .result { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-top: 1rem; }
+    form { margin-top: 1.5rem; }
+    button { padding: .5rem 1.25rem; }
+    a { display: inline-block; margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Search results</h1>
+  <p id="query-echo" data-auto-id="query-echo"></p>
+
+  <div class="result" data-auto-id="flight-result">
+    <strong>FL-6E-231</strong> · 06:40 → 08:05 · ₹4,850
+    <form action="cart.html" method="GET" style="display:inline">
+      <input type="hidden" name="ASIN" value="B08KGRVW2S" />
+      <button
+        id="add-to-cart-button"
+        data-auto-id="add-to-cart-button"
+        type="submit"
+      >Add to cart</button>
+    </form>
+  </div>
+
+  <a href="search-form.html">← back to the search form</a>
+
+  <script>
+    // Echo the query so a human (and the harness) can confirm the GET
+    // parameters survived the real navigation.
+    const params = new URLSearchParams(location.search);
+    const q = params.get('q') ?? '(no q)';
+    document.getElementById('query-echo').textContent = 'Results for: ' + q;
+  </script>
+</body>
+</html>
