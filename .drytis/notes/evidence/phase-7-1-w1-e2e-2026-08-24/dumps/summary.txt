@@ -1,0 +1,66 @@
+{
+ "s1": {
+  "apps": [
+   {
+    "o": "http://127.0.0.1:8223",
+    "s": 1
+   }
+  ],
+  "views": [
+   "home",
+   "search-results"
+  ],
+  "viewTransitions": [
+   "search-results->home(x1)"
+  ],
+  "gaps": 0,
+  "entities": [
+   "product:FL-6E-231",
+   "search-query:flights to chennai"
+  ],
+  "signatures": [
+   {
+    "t": "Click",
+    "n": "search flights",
+    "occ": 1
+   },
+   {
+    "t": "Click",
+    "n": "add to cart",
+    "occ": 1
+   }
+  ]
+ },
+ "s2": {
+  "apps": [
+   {
+    "o": "http://127.0.0.1:8223",
+    "s": 2
+   }
+  ],
+  "views": [
+   "home",
+   "search-results"
+  ],
+  "viewTransitions": [
+   "search-results->home(x2)"
+  ],
+  "gaps": 0,
+  "entities": [
+   "product:FL-6E-231",
+   "search-query:flights to chennai"
+  ],
+  "signatures": [
+   {
+    "t": "Click",
+    "n": "search flights",
+    "occ": 2
+   },
+   {
+    "t": "Click",
+    "n": "add to cart",
+    "occ": 2
+   }
+  ]
+ }
+}
