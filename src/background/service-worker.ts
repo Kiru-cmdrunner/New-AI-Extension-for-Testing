@@ -56,6 +56,11 @@ import {
   recordPendingNavCapture,
   consumePendingNavCapture,
 } from '../background/post-nav-capture';
+import {
+  normalizeWebOrigin,
+  resolveRecordingOrigin,
+} from '../understanding/persistence/recording-origin';
+import { isRecordingScopeTab } from '../background/network-observation';
 import type { NavigationEvidence, NetworkActivity } from '../shared/behavioral-evidence-types';
 
 // ── Singletons ──────────────────────────────────────────────────────────
@@ -63,6 +68,22 @@ import type { NavigationEvidence, NetworkActivity } from '../shared/behavioral-e
 let sessionRestored = false;
 let recordingStartUrl = '';
 let recordingStartTitle = '';
+/**
+ * 7.0-KR: web origin (scheme+host+port) the session's KR writes key on.
+ * Resolved at START from the raw start URL (normalized); null when the
+ * start tab is not a web origin (panel-active start) — then the
+ * onCommitted fallback (lastCommittedWebUrl) may fill it during the
+ * session. IR generation keeps consuming the RAW recordingStartUrl (AC-9).
+ */
+let recordingOrigin: string | null = null;
+/**
+ * 7.0-KR fallback input: last main-frame webNavigation.onCommitted URL for
+ * a recording-scope tab. Panel-active starts (every E2E harness + real user
+ * edge) stamp the extension URL, so the recovery path re-keys KR writes to
+ * the app actually being recorded. Only http(s) URLs enter this slot
+ * (normalizeWebOrigin gate) — an extension/about URL never leaks in (AC-4).
+ */
+let lastCommittedWebUrl: string | null = null;
 /** D9: content viewport of the tab at recording start (tab.width/height). */
 let recordingViewport: { width: number; height: number } | undefined;
 
@@ -315,6 +336,11 @@ async function handleStartRecording(): Promise<void> {
   const startTitle = tab?.title ?? '';
   recordingStartUrl = startUrl;
   recordingStartTitle = startTitle;
+  // 7.0-KR: resolve the KR identity key from the start stamp (normalized,
+  // never the raw full URL). Null when the panel is the active surface —
+  // the onCommitted fallback may fill it once recording-scope traffic lands.
+  recordingOrigin = resolveRecordingOrigin({ startUrl, lastCommittedWebUrl: null });
+  lastCommittedWebUrl = null;
   // D9: chrome.tabs.Tab width/height are the tab's content box (the actual
   // viewport the user recorded at). Absent on some platforms → undefined,
   // and the IR bridge falls back to the documented 1280×720 default.
@@ -353,11 +379,13 @@ async function handleStartRecording(): Promise<void> {
   // M9.12: Preload prior application knowledge for this origin so the
   // understanding pipeline can recognize cross-session entities/views.
   // Non-fatal — a preload failure never blocks recording start.
+  // 7.0-KR: key on the NORMALIZED origin (null ⇒ skip — no web app to
+  // preload for; read-side and write-side now share one key domain).
   understandingSeed = null;
   try {
-    if (startUrl) {
+    if (recordingOrigin) {
       const { preloadPriorKnowledge } = await import('../understanding/pipeline/understanding-pipeline');
-      understandingSeed = await preloadPriorKnowledge(startUrl);
+      understandingSeed = await preloadPriorKnowledge(recordingOrigin);
     }
   } catch (e) {
     console.warn('[M9] prior-knowledge preload failed:', e);
@@ -540,13 +568,28 @@ async function handleStopRecording(): Promise<void> {
     if (productionInteractions.length > 0) {
       const { runUnderstandingPipeline } = await import('../understanding/pipeline/understanding-pipeline');
       const { serializeStateTransitions } = await import('../understanding/state-builder/serialize');
-      const origin = recordingStartUrl || (await getActiveTab())?.url || '';
+      // 7.0-KR: KR persistence keys on the NORMALIZED web origin. The raw
+      // full URL is NEVER hashed into an appId anymore (panel-origin apps +
+      // per-path fragmentation proven by the 6E-M2 / 6F-M2b Dexie dumps).
+      // Unresolvable (null) ⇒ skip KR persistence honestly — IR generation
+      // below is unaffected (it consumes recordedStartUrl, the raw form).
+      const krOrigin = resolveRecordingOrigin({
+        startUrl: recordingStartUrl,
+        lastCommittedWebUrl,
+      }) ?? recordingOrigin;
+      const origin = krOrigin ?? '';
+      if (!origin) {
+        console.warn('[7.0-KR] no web origin resolvable for this session — KR persistence skipped');
+      }
       const sessionId = `session-${Date.now()}`;
 
       const pipelineOutcome = await runUnderstandingPipeline({
         interactions: productionInteractions,
         origin,
         sessionId,
+        // 7.0-KR AC-6: honest skip — pipeline must not mint app rows under a
+        // garbage key when no web origin is resolvable.
+        skipKnowledgePersistence: !origin,
         seed: understandingSeed,
         // CP5: composition-root clock + session capture artifacts for the
         // behavior model (Stage 3.5). stampedRequests were snapshotted
@@ -788,6 +831,11 @@ async function handleStopRecording(): Promise<void> {
   stopNetworkObservation(-1);
   const stopTab = await getActiveTab().catch(() => null);
   void stopTab;
+
+  // 7.0-KR: session-scoped origin state — a stale committed URL from this
+  // session must never key the NEXT session's KR writes (INV session
+  // scoping, mirrors sessionNavRecords cleanup above).
+  lastCommittedWebUrl = null;
 }
 
 // ── OBSERVED_EVENT handler (Component Runtime) ──────────────────────────
@@ -1133,6 +1181,23 @@ chrome.webNavigation.onCommitted.addListener(async (details: chrome.webNavigatio
       navType: details.transitionType,
       committedAt: Date.now(),
     });
+  }
+
+  // 7.0-KR (synchronous, pre-await like the NAV pull above): record the
+  // last main-frame WEB URL committed by a RECORDING-SCOPE tab as the
+  // recording-origin fallback input. The scope gate is deterministic G4-A
+  // membership (isRecordingScopeTab — the tab sent the SW a recording-scope
+  // message): an unrelated tab's commit can never key this session's KR
+  // writes (AC-4). Only http(s) URLs enter the slot (normalizeWebOrigin
+  // gate) — an extension or about: URL can never leak in. A non-web or
+  // out-of-scope commit does not clear a previously recorded web URL.
+  if (isRecordingScopeTab(details.tabId) && normalizeWebOrigin(details.url)) {
+    lastCommittedWebUrl = details.url;
+    // Panel-active start recovery: the start stamp was the extension URL,
+    // so the first recording-scope web commit fills the KR identity key.
+    if (recordingOrigin === null) {
+      recordingOrigin = normalizeWebOrigin(details.url);
+    }
   }
 
   await ensureSessionRestored();
@@ -1704,6 +1769,20 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
       // recording-scope traffic proves the tab is recording. Deterministic
       // membership growth; forwarding-only (never gates capture).
       if (_sender?.tab?.id != null) noteRecordingScopeTab(_sender.tab.id);
+      // 7.0-KR recovery backfill: this tab JUST proved recording scope by
+      // sending an observed event — ask Chrome for ITS OWN URL and adopt it
+      // as the KR identity key when still unresolved (panel-active start).
+      // Covers SPAs whose last commit predates START (no in-session
+      // onCommitted would ever fire): the 6E fixture family. Deterministic
+      // event-order, no timing rule; first scope-proving web tab wins (same
+      // "start-tab wins" semantics as the START stamp).
+      if (_sender?.tab?.id != null && recordingOrigin === null) {
+        const tabId = _sender.tab.id;
+        void chrome.tabs.get(tabId).then((t) => {
+          const o = t?.url ? normalizeWebOrigin(t.url) : null;
+          if (o && recordingOrigin === null) recordingOrigin = o;
+        }).catch(() => {});
+      }
       handleObservedEvent(msg.payload);
       sendResponse({ ok: true });
       return true;

@@ -110,6 +110,14 @@ export interface PipelineInput {
   interactions: ComponentInteraction[];
   /** Origin URL of the recording (for appId derivation). */
   origin: string;
+  /**
+   * 7.0-KR: honest skip. When true (caller could not resolve a web origin),
+   * Stage 5/7 KR persistence is skipped with a warning instead of writing
+   * under a garbage `deriveAppId('')` = `app-0` row. Non-KR stages
+   * (understanding result, enrichment fed back to the panel, IR) run
+   * unchanged.
+   */
+  skipKnowledgePersistence?: boolean;
   /** Recording session ID. */
   sessionId: string;
   /** Prior-knowledge seed loaded at startRecording (or empty). */
@@ -389,7 +397,10 @@ export class UnderstandingPipeline {
     }
 
     // ── Stage 5: Knowledge Persistence (M9.5) ──
-    if (this.persistenceService && finalState) {
+    // 7.0-KR: honest skip — unresolvable origin must not mint an app row.
+    if (input.skipKnowledgePersistence) {
+      warnings.push('knowledge-persistence: skipped — no web origin resolvable for this session (7.0-KR)');
+    } else if (this.persistenceService && finalState) {
       try {
         // DDC-3: enriched outcomes (click-attribution pass) are persisted.
         // CP6: Stage 3.5 behavior model persists here (step 11) — passed
@@ -437,7 +448,9 @@ export class UnderstandingPipeline {
     // KnowledgePersistenceService.persist → persistViews would dereference
     // null (state.currentView) after a partial write. Skip instead — the
     // session's recorded workflows are only meaningful with a built state.
-    if (this.persistenceService && semanticKnowledge && finalState) {
+    if (input.skipKnowledgePersistence) {
+      warnings.push('recorded-workflow-persistence: skipped — no web origin resolvable for this session (7.0-KR)');
+    } else if (this.persistenceService && semanticKnowledge && finalState) {
       try {
         await this.persistenceService.persist({
           origin: input.origin,

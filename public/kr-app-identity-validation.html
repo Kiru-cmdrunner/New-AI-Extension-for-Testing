@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>7.0-KR App Identity — Validation Page</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+    .btn { padding: 14px 28px; font-size: 16px; background: #146eb4; color: #fff; border: 1px solid #0b4f8a; border-radius: 8px; cursor: pointer; }
+    .btn:hover { background: #2f8ad4; }
+    .results { margin-top: 1.5rem; }
+    .result { padding: 10px 14px; border: 1px solid #d0d7de; border-radius: 6px; margin-bottom: 8px; }
+    .badge { background: #f6f8fa; border-radius: 10px; padding: 2px 10px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>7.0-KR — App Identity Validation</h1>
+  <p>SPA search flow: click <strong>Search flights</strong> → <code>history.pushState</code> to <code>/search?q=flights+to+chennai</code>
+     (search-results view + search-query entity) → click first result (Add to cart) → back to /.
+     Two recording sessions on this page must land under ONE app (origin-only appId) and reinforce.</p>
+
+  <button id="search-flights-button" class="btn" type="button">Search flights</button>
+  <button id="add-to-cart-button" class="btn" type="button">Add to cart</button>
+
+  <div class="results" id="results"></div>
+  <p class="badge" id="page-badge">view: home</p>
+
+  <script>
+    // Minimal SPA: pushState route changes drive the view registry
+    // (/search?q=… → search-results view → search-query entity).
+    const badge = () => document.getElementById('page-badge');
+    function render(view, items) {
+      badge().textContent = 'view: ' + view;
+      const r = document.getElementById('results');
+      r.innerHTML = '';
+      for (const it of items) {
+        const d = document.createElement('div');
+        d.className = 'result';
+        d.setAttribute('data-auto-id', it.autoId);
+        d.setAttribute('data-sku', it.sku);
+        d.textContent = it.label;
+        r.appendChild(d);
+      }
+    }
+    document.getElementById('search-flights-button').addEventListener('click', () => {
+      history.pushState({}, '', '/search?q=flights+to+chennai&k=FL123');
+      render('search-results', [
+        { autoId: 'result-1', sku: 'FL-6E-231', label: 'Flight 6E 231 · MAA→BLR · 07:40' },
+        { autoId: 'result-2', sku: 'FL-6E-545', label: 'Flight 6E 545 · MAA→BLR · 13:15' },
+      ]);
+    });
+    document.getElementById('add-to-cart-button').addEventListener('click', () => {
+      render('search-results', [
+        { autoId: 'result-1', sku: 'FL-6E-231', label: 'Flight 6E 231 · MAA→BLR · 07:40 ✓ added' },
+        { autoId: 'result-2', sku: 'FL-6E-545', label: 'Flight 6E 545 · MAA→BLR · 13:15' },
+      ]);
+    });
+    window.addEventListener('popstate', () => {
+      render('home', []);
+    });
+  </script>
+</body>
+</html>

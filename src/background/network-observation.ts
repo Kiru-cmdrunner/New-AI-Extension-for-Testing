@@ -306,6 +306,17 @@ let onErrorCallback:
 // ── MV3 Lifecycle: persisted gate + top-level registration ───────────
 
 /**
+ * 7.0-KR: recording-scope membership read — onCommitted uses this to gate
+ * the recording-origin fallback slot. Same set `tabIsObserving` reads
+ * (deterministic G4-A growth: a tab enters when the SW receives a
+ * recording-scope message from it). Exported read-only; membership changes
+ * stay exclusively on `noteRecordingScopeTab` / session cleanup.
+ */
+export function isRecordingScopeTab(tabId: number): boolean {
+  return observingTabIds.has(tabId);
+}
+
+/**
  * Whether captured requests from this tab should be FORWARDED to the page's
  * NetworkBridge. G4-A demotion: this is a forwarding hint, NOT the capture
  * gate — capture is gated by `recordingActiveFlag` (recording-scoped, any

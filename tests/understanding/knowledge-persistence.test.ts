@@ -26,6 +26,8 @@ import {
   deriveAppId,
   type KnowledgePersistenceInput,
 } from '../../src/understanding/persistence/knowledge-persistence-service';
+import { resolveRecordingOrigin } from '../../src/understanding/persistence/recording-origin';
+import type { AppBehaviorModel } from '../../src/understanding/behavior-model/model-types';
 import type { ApplicationState, StateTransition } from '../../src/understanding/state-builder/types';
 import type { ViewDescriptor } from '../../src/understanding/types';
 import type { ActionOutcome } from '../../src/understanding/outcome/outcome-types';
@@ -711,3 +713,109 @@ async function home_to_product_flow(repo: KnowledgeRepository, svc: KnowledgePer
   expect(transitions[0].fromViewId).toBe('home');
   expect(transitions[0].toViewId).toBe('product-detail');
 }
+
+// ── 7.0-KR: App Identity Gate (spec §6 tests 6–7) ─────────────────────
+// The extension-side caller now passes a NORMALIZED origin (see
+// recording-origin.ts). These pins prove the repository reinforces when the
+// two sessions present path-differing full URLs through the normalizer —
+// the pre-7.0 behavior hashed the full string and fragmented per path.
+describe('KnowledgePersistenceService app identity (7.0-KR)', () => {
+  let db: KnowledgeDatabase;
+  let repo: KnowledgeRepository;
+  let svc: KnowledgePersistenceService;
+
+  beforeEach(async () => {
+    db = createKnowledgeDatabase();
+    await db.open();
+    repo = new KnowledgeRepository(db);
+    svc = new KnowledgePersistenceService(repo);
+  });
+
+  afterEach(async () => {
+    await db.delete();
+  });
+
+  it('test 6 — two sessions on ONE normalized origin reinforce (one app row, sessionCount 2, occurrenceCount 2)', async () => {
+    // Session 1: /products?sort=1 · Session 2: /checkout — both normalize
+    // to https://shop.example via resolveRecordingOrigin.
+    const origin1 = resolveRecordingOrigin({ startUrl: 'https://shop.example/products?sort=1', lastCommittedWebUrl: null });
+    const origin2 = resolveRecordingOrigin({ startUrl: 'https://shop.example/checkout', lastCommittedWebUrl: null });
+    expect(origin1).toBe('https://shop.example');
+    expect(origin2).toBe('https://shop.example');
+
+    const entityId = 'sku-42';
+    const mkState = (seq: number): ApplicationState => makeState({
+      entities: new Map([[entityId, {
+        id: entityId, type: 'product', attributes: { sku: '42' },
+        source: 'view-derived', firstSeenAt: `i-${seq}`, lastUpdated: `i-${seq}`,
+      }]]),
+    });
+
+    // Signatures come from the Stage-3.5 behavior model (CP6) — the SAME
+    // Click anchor episode in both sessions → same signatureKey →
+    // reinforcement (anchorViewId resolves identically: same default
+    // transition in both persist inputs). Minimal CP5-fixture shape
+    // (behavior-knowledge-mapper.test.ts).
+    const mkModel = (sessionId: string): AppBehaviorModel => ({
+      id: `abm-${sessionId}`,
+      sessionId,
+      generatedAtMs: 1786898629484,
+      coverage: {
+        totalInteractions: 1, anchoredInteractions: 1, memberInteractions: 0,
+        attributedNetworkRows: 0, attributedObservations: 0, totalNetworkRows: 0,
+        totalObservations: 0, malformedInteractions: 0, provenanceLinks: 0,
+        unattributedConsequences: 0,
+      },
+      warnings: [],
+      provenanceLinks: [],
+      episodes: [{
+        id: 'ep-i-1',
+        anchor: {
+          interactionId: 'i-1',
+          actionType: 'Click',
+          actionTarget: 'Add to cart',
+          triggerTimestamp: 1786898624437,
+        },
+        members: [{ interactionId: 'i-1', role: 'anchor' }],
+        parameterInputs: [],
+        horizon: {
+          attribution: { openedAtMs: 0, closedAtMs: 1, closeReason: 'all-stamped-settled', pendingRequestIds: [] },
+          uiOwnership: { openedAtMs: 0, closedAtMs: 1, closeReason: 'stabilized' },
+        },
+        edges: [],
+        episodeOutcome: null,
+        tabId: 1,
+        unattributed: [],
+      }],
+      unattributed: [],
+    } as unknown as AppBehaviorModel);
+
+    await svc.persist(makeInput({ origin: origin1!, recordingSessionId: 's1', applicationState: mkState(1), behaviorModel: mkModel('s1') }));
+    await svc.persist(makeInput({ origin: origin2!, recordingSessionId: 's2', applicationState: mkState(2), behaviorModel: mkModel('s2') }));
+
+    // ONE application row, reinforced
+    const apps = await db.applications.toArray();
+    expect(apps.length).toBe(1);
+    expect(apps[0].sessionCount).toBe(2);
+
+    // Entity shared, not duplicated — session 2 owns lastSessionId
+    const entities = await repo.getEntities(apps[0].appId);
+    expect(entities.length).toBe(1);
+    expect(entities[0].lastSessionId).toBe('s2');
+
+    // Signature reinforced: outcome 'Click' observed in both sessions
+    const signatures = await db.knowledgeSignatures.toArray();
+    const clickSigs = signatures.filter((s) => s.appId === apps[0].appId && s.actionType === 'Click');
+    expect(clickSigs.length).toBe(1);
+    expect(clickSigs[0].occurrenceCount).toBe(2);
+  });
+
+  it('test 7 — path-fragmentation regression pin: path-differing full URLs still hash to the SAME appId via the normalizer', async () => {
+    const a = deriveAppId(resolveRecordingOrigin({ startUrl: 'https://a.test/deep/path/one', lastCommittedWebUrl: null })!);
+    const b = deriveAppId(resolveRecordingOrigin({ startUrl: 'https://a.test/other/path?x=2', lastCommittedWebUrl: null })!);
+    expect(a).toBe(b);
+    // And the OLD behavior (full URL hashed directly) would NOT match — the
+    // pin asserts the normalizer is what makes them equal.
+    expect(a).not.toBe(deriveAppId('https://a.test/deep/path/one'));
+  });
+});
