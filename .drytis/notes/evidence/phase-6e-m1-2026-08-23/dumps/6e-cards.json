@@ -1,24 +1,13 @@
 [
  {
-  "type": "TextEntry",
+  "type": "DatePicker",
   "endReason": null,
   "name": "Depart on",
   "phys": null,
   "paired": null,
-  "dateValue": "Sat, 05 Sep",
+  "dateValue": "Choose Saturday, September 5th, 2026",
   "sel": "#depart",
   "dataAutoId": "depart-on",
-  "assertions": null
- },
- {
-  "type": "Click",
-  "endReason": null,
-  "name": "Choose Saturday, September 5th, 2026",
-  "phys": null,
-  "paired": null,
-  "dateValue": null,
-  "sel": "body > main > div:nth-of-type(1) > div:nth-of-type(5)",
-  "dataAutoId": "date-cell-2026-09-05",
   "assertions": null
  },
  {

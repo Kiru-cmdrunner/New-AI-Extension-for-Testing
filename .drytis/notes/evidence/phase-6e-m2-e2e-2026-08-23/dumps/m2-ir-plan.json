@@ -23,9 +23,9 @@
    "input": "Choose Sunday, September 6th, 2026",
    "order": 0,
    "plainEnglish": "Select Choose Sunday, September 6th, 2026 in the Depart on",
-   "sourceEventId": "evt-pmt5kgo56-8",
+   "sourceEventId": "evt-pmt73qg27-8",
    "target": {
-    "elementId": "896e2ba8-4dd1-4726-80ad-70095e3ab72b",
+    "elementId": "97b72733-edb8-44b5-b8b3-296b281186e0",
     "elementName": "Depart on",
     "kind": "element",
     "pageOrComponent": "main",
@@ -52,48 +52,6 @@
    }
   },
   {
-   "action": "click",
-   "assertions": [],
-   "description": "Click the Choose Sunday, September 6th, 2026",
-   "executionParameters": {
-    "retryCount": 0,
-    "retryDelayMs": 1000,
-    "timeoutMs": 30000,
-    "waitStrategy": "visible"
-   },
-   "id": "step-0002",
-   "input": null,
-   "order": 1,
-   "plainEnglish": "Click the Choose Sunday, September 6th, 2026",
-   "sourceEventId": "evt-pmt5kgo56-22",
-   "target": {
-    "elementId": "dacfdbe8-116c-47f7-97a0-f58999e1e8ef",
-    "elementName": "Choose Sunday, September 6th, 2026",
-    "kind": "element",
-    "pageOrComponent": "main",
-    "resolvedLocators": [
-     {
-      "confidence": 0.8,
-      "priority": 1,
-      "type": "accessibleName",
-      "value": "Choose Sunday, September 6th, 2026"
-     },
-     {
-      "confidence": 0.35,
-      "priority": 2,
-      "type": "css",
-      "value": "div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2)"
-     },
-     {
-      "confidence": 0.35,
-      "priority": 3,
-      "type": "xpath",
-      "value": "//main/div[1]/div/div[1]/div[2]/div/div[2]/div[2]/div/div[2]"
-     }
-    ]
-   }
-  },
-  {
    "action": "selectDate",
    "assertions": [],
    "description": "Select Choose Tuesday, September 8th, 2026 in the Return on",
@@ -103,13 +61,13 @@
     "timeoutMs": 30000,
     "waitStrategy": "visible"
    },
-   "id": "step-0003",
+   "id": "step-0002",
    "input": "Choose Tuesday, September 8th, 2026",
-   "order": 2,
+   "order": 1,
    "plainEnglish": "Select Choose Tuesday, September 8th, 2026 in the Return on",
-   "sourceEventId": "evt-pmt5kgo56-44",
+   "sourceEventId": "evt-pmt73qg27-44",
    "target": {
-    "elementId": "b3976069-64d1-4d81-82cc-c97f8dfb6d26",
+    "elementId": "05fa4987-e6db-4c12-82e9-152568c0a3fd",
     "elementName": "Return on",
     "kind": "element",
     "pageOrComponent": "main",
@@ -137,48 +95,6 @@
   },
   {
    "action": "click",
-   "assertions": [],
-   "description": "Click the Choose Tuesday, September 8th, 2026",
-   "executionParameters": {
-    "retryCount": 0,
-    "retryDelayMs": 1000,
-    "timeoutMs": 30000,
-    "waitStrategy": "visible"
-   },
-   "id": "step-0004",
-   "input": null,
-   "order": 3,
-   "plainEnglish": "Click the Choose Tuesday, September 8th, 2026",
-   "sourceEventId": "evt-pmt5kgo56-57",
-   "target": {
-    "elementId": "ccd372c0-0c00-4f5e-aae5-c930d6cd2553",
-    "elementName": "Choose Tuesday, September 8th, 2026",
-    "kind": "element",
-    "pageOrComponent": "main",
-    "resolvedLocators": [
-     {
-      "confidence": 0.8,
-      "priority": 1,
-      "type": "accessibleName",
-      "value": "Choose Tuesday, September 8th, 2026"
-     },
-     {
-      "confidence": 0.35,
-      "priority": 2,
-      "type": "css",
-      "value": "div:nth-of-type(2) > div > div > div > div:nth-of-type(4)"
-     },
-     {
-      "confidence": 0.35,
-      "priority": 3,
-      "type": "xpath",
-      "value": "//body/main/div[1]/div/div[2]/div[2]/div/div/div/div[4]"
-     }
-    ]
-   }
-  },
-  {
-   "action": "click",
    "assertions": [
     {
      "comparison": "contains",
@@ -186,7 +102,7 @@
      "property": null,
      "severity": "soft",
      "target": {
-      "elementId": "obs-4-0",
+      "elementId": "obs-2-0",
       "elementName": "counter",
       "kind": "element",
       "pageOrComponent": "main",
@@ -209,13 +125,13 @@
     "timeoutMs": 30000,
     "waitStrategy": "visible"
    },
-   "id": "step-0005",
+   "id": "step-0003",
    "input": null,
-   "order": 4,
+   "order": 2,
    "plainEnglish": "Click the Search Flights",
-   "sourceEventId": "evt-pmt5kgo56-72",
+   "sourceEventId": "evt-pmt73qg27-72",
    "target": {
-    "elementId": "2631f888-52f0-4407-b87f-4d2e874c5140",
+    "elementId": "47a1341e-ef01-455e-a5b2-acc9ffec6261",
     "elementName": "Search Flights",
     "kind": "element",
     "pageOrComponent": "main",
@@ -250,7 +166,7 @@
      "property": null,
      "severity": "soft",
      "target": {
-      "elementId": "obs-5-0",
+      "elementId": "obs-3-0",
       "elementName": "counter",
       "kind": "element",
       "pageOrComponent": "main",
@@ -273,11 +189,11 @@
     "timeoutMs": 30000,
     "waitStrategy": "visible"
    },
-   "id": "step-0006",
+   "id": "step-0004",
    "input": null,
-   "order": 5,
+   "order": 3,
    "plainEnglish": "Click the Bengaluru",
-   "sourceEventId": "evt-pmt5kgo56-78",
+   "sourceEventId": "evt-pmt73qg27-78",
    "target": {
     "elementId": "",
     "elementName": "Bengaluru",
@@ -314,7 +230,7 @@
      "property": null,
      "severity": "soft",
      "target": {
-      "elementId": "obs-6-0",
+      "elementId": "obs-4-0",
       "elementName": "notification",
       "kind": "element",
       "pageOrComponent": "main",
@@ -337,13 +253,13 @@
     "timeoutMs": 30000,
     "waitStrategy": "visible"
    },
-   "id": "step-0007",
+   "id": "step-0005",
    "input": null,
-   "order": 6,
+   "order": 4,
    "plainEnglish": "Click the Notify",
-   "sourceEventId": "evt-pmt5kgo56-84",
+   "sourceEventId": "evt-pmt73qg27-84",
    "target": {
-    "elementId": "6f9cd629-6249-4216-a21c-c6901edbc1f6",
+    "elementId": "7f8aec3a-78eb-4567-a5ee-46b2cccb29f1",
     "elementName": "Notify",
     "kind": "element",
     "pageOrComponent": "main",
@@ -373,8 +289,8 @@
  "tags": [
   "src"
  ],
- "testCaseId": "tc-2262fce0",
- "testCaseVersionId": "tcv-2262fce0",
+ "testCaseId": "tc-db968e6d",
+ "testCaseVersionId": "tcv-db968e6d",
  "testCaseVersionNumber": 1,
  "title": "Recorded Test"
 }

@@ -8,26 +8,10 @@
   "testId": null
  },
  {
-  "type": "Click",
-  "name": "Choose Sunday, September 6th, 2026",
-  "dateValue": null,
-  "sel": "div > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2)",
-  "dataAutoId": null,
-  "testId": null
- },
- {
   "type": "DatePicker",
   "name": "Return on",
   "dateValue": "Choose Tuesday, September 8th, 2026",
   "sel": "#return",
-  "dataAutoId": null,
-  "testId": null
- },
- {
-  "type": "Click",
-  "name": "Choose Tuesday, September 8th, 2026",
-  "dateValue": null,
-  "sel": "div:nth-of-type(2) > div > div > div > div:nth-of-type(4)",
   "dataAutoId": null,
   "testId": null
  },

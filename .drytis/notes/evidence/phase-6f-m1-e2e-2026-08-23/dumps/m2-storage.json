@@ -21,13 +21,13 @@
    ],
    "captureOrigin": {
     "frameId": 0,
-    "tabId": 1140612370
+    "tabId": 757894229
    },
-   "captureSeq": 5605,
+   "captureSeq": 5613.9000000003725,
    "disposition": "pending",
-   "eventId": "evt-pmt5selpq-7",
+   "eventId": "evt-pmt74awdl-7",
    "eventType": "mousedown",
-   "pageId": "pmt5selpq",
+   "pageId": "pmt74awdl",
    "targetIdentity": {
     "accessibleName": "Depart on",
     "ariaLabel": "Depart on",
@@ -53,7 +53,7 @@
    "targetName": "Depart on",
    "targetRole": "textbox",
    "targetTag": "INPUT",
-   "timestamp": 1787488341080
+   "timestamp": 1787568789885
   },
   {
    "ancestorClasses": [
@@ -76,15 +76,15 @@
    ],
    "captureOrigin": {
     "frameId": 0,
-    "tabId": 1140612370
+    "tabId": 757894229
    },
-   "captureSeq": 5694.700000000186,
+   "captureSeq": 5706.5,
    "claimType": "DatePicker",
    "claimedBy": "int-2",
    "disposition": "claimed",
-   "eventId": "evt-pmt5selpq-9",
+   "eventId": "evt-pmt74awdl-9",
    "eventType": "click",
-   "pageId": "pmt5selpq",
+   "pageId": "pmt74awdl",
    "targetIdentity": {
     "accessibleName": "Depart on",
     "ariaLabel": "Depart on",
@@ -110,7 +110,7 @@
    "targetName": "Depart on",
    "targetRole": "textbox",
    "targetTag": "INPUT",
-   "timestamp": 1787488341164
+   "timestamp": 1787568789969
   },
   {
    "ancestorClasses": [
@@ -139,15 +139,15 @@
    ],
    "captureOrigin": {
     "frameId": 0,
-    "tabId": 1140612370
+    "tabId": 757894229
    },
-   "captureSeq": 6911.9000000003725,
+   "captureSeq": 6921.9000000003725,
    "claimType": "DatePicker",
    "claimedBy": "int-2",
    "disposition": "claimed",
-   "eventId": "evt-pmt5selpq-19",
+   "eventId": "evt-pmt74awdl-19",
    "eventType": "mousedown",
-   "pageId": "pmt5selpq",
+   "pageId": "pmt74awdl",
    "targetIdentity": {
     "accessibleName": "Choose Sunday, September 6th, 2026",
     "ariaLabel": "Choose Sunday, September 6th, 2026",
@@ -173,7 +173,7 @@
    "targetName": "Choose Sunday, September 6th, 2026",
    "targetRole": "option",
    "targetTag": "DIV",
-   "timestamp": 1787488342384
+   "timestamp": 1787568791189
   },
   {
    "ancestorClasses": [
@@ -202,15 +202,15 @@
    ],
    "captureOrigin": {
     "frameId": 0,
-    "tabId": 1140612370
+    "tabId": 757894229
    },
-   "captureSeq": 7002,
+   "captureSeq": 7014.100000000559,
    "claimType": "DatePicker",
    "claimedBy": "int-2",
    "disposition": "claimed",
-   "eventId": "evt-pmt5selpq-22",
+   "eventId": "evt-pmt74awdl-22",
    "eventType": "click",
-   "pageId": "pmt5selpq",
+   "pageId": "pmt74awdl",
    "targetIdentity": {
     "accessibleName": "Choose Sunday, September 6th, 2026",
     "ariaLabel": "Choose Sunday, September 6th, 2026",
@@ -236,7 +236,7 @@
    "targetName": "Choose Sunday, September 6th, 2026",
    "targetRole": "option",
    "targetTag": "DIV",
-   "timestamp": 1787488342471
+   "timestamp": 1787568791276
   },
   {
    "ancestorClasses": [
@@ -259,13 +259,13 @@
    ],
    "captureOrigin": {
     "frameId": 0,
-    "tabId": 1140612370
+    "tabId": 757894229
    },
-   "captureSeq": 8607.600000000559,
+   "captureSeq": 8619.400000000373,
    "disposition": "pending",
-   "eventId": "evt-pmt5selpq-43",
+   "eventId": "evt-pmt74awdl-43",
    "eventType": "mousedown",
-   "pageId": "pmt5selpq",
+   "pageId": "pmt74awdl",
    "targetIdentity": {
     "accessibleName": "Return on",
     "ariaLabel": "Return on",
@@ -291,7 +291,7 @@
    "targetName": "Return on",
    "targetRole": "textbox",
    "targetTag": "INPUT",
-   "timestamp": 1787488344079
+   "timestamp": 1787568792884
   },
   {
    "ancestorClasses": [
@@ -314,15 +314,15 @@
    ],
    "captureOrigin": {
     "frameId": 0,
-    "tabId": 1140612370
+    "tabId": 757894229
    },
-   "captureSeq": 8692,
+   "captureSeq": 8708,
    "claimType": "DatePicker",
    "claimedBy": "int-5",
    "disposition": "claimed",
-   "eventId": "evt-pmt5selpq-45",
+   "eventId": "evt-pmt74awdl-45",
    "eventType": "click",
-   "pageId": "pmt5selpq",
+   "pageId": "pmt74awdl",
    "targetIdentity": {
     "accessibleName": "Return on",
     "ariaLabel": "Return on",
@@ -348,7 +348,7 @@
    "targetName": "Return on",
    "targetRole": "textbox",
    "targetTag": "INPUT",
-   "timestamp": 1787488344161
+   "timestamp": 1787568792970
   },
   {
    "ancestorClasses": [
@@ -377,15 +377,15 @@
    ],
    "captureOrigin": {
     "frameId": 0,
-    "tabId": 1140612370
+    "tabId": 757894229
    },
-   "captureSeq": 9898.100000000559,
+   "captureSeq": 9914.400000000373,
    "claimType": "DatePicker",
    "claimedBy": "int-5",
    "disposition": "claimed",
-   "eventId": "evt-pmt5selpq-54",
+   "eventId": "evt-pmt74awdl-54",
    "eventType": "mousedown",
-   "pageId": "pmt5selpq",
+   "pageId": "pmt74awdl",
    "targetIdentity": {
     "accessibleName": "Choose Tuesday, September 8th, 2026",
     "ariaLabel": "Choose Tuesday, September 8th, 2026",
@@ -411,7 +411,7 @@
    "targetName": "Choose Tuesday, September 8th, 2026",
    "targetRole": "option",
    "targetTag": "DIV",
-   "timestamp": 1787488345370
+   "timestamp": 1787568794182
   },
   {
    "ancestorClasses": [
@@ -440,15 +440,15 @@
    ],
    "captureOrigin": {
     "frameId": 0,
-    "tabId": 1140612370
+    "tabId": 757894229
    },
-   "captureSeq": 9987.200000000186,
+   "captureSeq": 10006.200000000186,
    "claimType": "DatePicker",
    "claimedBy": "int-5",
    "disposition": "claimed",
-   "eventId": "evt-pmt5selpq-57",
+   "eventId": "evt-pmt74awdl-57",
    "eventType": "click",
-   "pageId": "pmt5selpq",
+   "pageId": "pmt74awdl",
    "targetIdentity": {
     "accessibleName": "Choose Tuesday, September 8th, 2026",
     "ariaLabel": "Choose Tuesday, September 8th, 2026",
@@ -474,7 +474,7 @@
    "targetName": "Choose Tuesday, September 8th, 2026",
    "targetRole": "option",
    "targetTag": "DIV",
-   "timestamp": 1787488345456
+   "timestamp": 1787568794269
   },
   {
    "ancestorClasses": [
@@ -491,13 +491,13 @@
    ],
    "captureOrigin": {
     "frameId": 0,
-    "tabId": 1140612370
+    "tabId": 757894229
    },
-   "captureSeq": 11593.800000000745,
+   "captureSeq": 11613.600000000559,
    "disposition": "pending",
-   "eventId": "evt-pmt5selpq-70",
+   "eventId": "evt-pmt74awdl-70",
    "eventType": "mousedown",
-   "pageId": "pmt5selpq",
+   "pageId": "pmt74awdl",
    "targetIdentity": {
     "accessibleName": "Search Flights",
     "ariaLabel": null,
@@ -523,7 +523,7 @@
    "targetName": "Search Flights",
    "targetRole": "button",
    "targetTag": "BUTTON",
-   "timestamp": 1787488347065
+   "timestamp": 1787568795879
   },
   {
    "ancestorClasses": [
@@ -540,15 +540,15 @@
    ],
    "captureOrigin": {
     "frameId": 0,
-    "tabId": 1140612370
+    "tabId": 757894229
    },
-   "captureSeq": 11678.5,
+   "captureSeq": 11700.300000000745,
    "claimType": "Click",
    "claimedBy": "int-7",
    "disposition": "claimed",
-   "eventId": "evt-pmt5selpq-72",
+   "eventId": "evt-pmt74awdl-72",
    "eventType": "click",
-   "pageId": "pmt5selpq",
+   "pageId": "pmt74awdl",
    "targetIdentity": {
     "accessibleName": "Search Flights",
     "ariaLabel": null,
@@ -574,7 +574,7 @@
    "targetName": "Search Flights",
    "targetRole": "button",
    "targetTag": "BUTTON",
-   "timestamp": 1787488347148
+   "timestamp": 1787568795963
   },
   {
    "ancestorClasses": [
@@ -593,13 +593,13 @@
    ],
    "captureOrigin": {
     "frameId": 0,
-    "tabId": 1140612370
+    "tabId": 757894229
    },
-   "captureSeq": 12987,
+   "captureSeq": 13013.900000000373,
    "disposition": "pending",
-   "eventId": "evt-pmt5selpq-76",
+   "eventId": "evt-pmt74awdl-76",
    "eventType": "mousedown",
-   "pageId": "pmt5selpq",
+   "pageId": "pmt74awdl",
    "targetIdentity": {
     "accessibleName": "Bengaluru",
     "ariaLabel": null,
@@ -625,7 +625,7 @@
    "targetName": "Bengaluru",
    "targetRole": "listitem",
    "targetTag": "LI",
-   "timestamp": 1787488348457
+   "timestamp": 1787568797278
   },
   {
    "ancestorClasses": [
@@ -644,15 +644,15 @@
    ],
    "captureOrigin": {
     "frameId": 0,
-    "tabId": 1140612370
+    "tabId": 757894229
    },
-   "captureSeq": 13070.800000000745,
+   "captureSeq": 13102.100000000559,
    "claimType": "Click",
    "claimedBy": "int-8",
    "disposition": "claimed",
-   "eventId": "evt-pmt5selpq-78",
+   "eventId": "evt-pmt74awdl-78",
    "eventType": "click",
-   "pageId": "pmt5selpq",
+   "pageId": "pmt74awdl",
    "targetIdentity": {
     "accessibleName": "Bengaluru",
     "ariaLabel": null,
@@ -678,7 +678,7 @@
    "targetName": "Bengaluru",
    "targetRole": "listitem",
    "targetTag": "LI",
-   "timestamp": 1787488348540
+   "timestamp": 1787568797365
   },
   {
    "ancestorClasses": [
@@ -695,13 +695,13 @@
    ],
    "captureOrigin": {
     "frameId": 0,
-    "tabId": 1140612370
+    "tabId": 757894229
    },
-   "captureSeq": 14376.800000000745,
+   "captureSeq": 14410.100000000559,
    "disposition": "pending",
-   "eventId": "evt-pmt5selpq-82",
+   "eventId": "evt-pmt74awdl-82",
    "eventType": "mousedown",
-   "pageId": "pmt5selpq",
+   "pageId": "pmt74awdl",
    "targetIdentity": {
     "accessibleName": "Notify",
     "ariaLabel": null,
@@ -727,7 +727,7 @@
    "targetName": "Notify",
    "targetRole": "button",
    "targetTag": "BUTTON",
-   "timestamp": 1787488349847
+   "timestamp": 1787568798674
   },
   {
    "ancestorClasses": [
@@ -744,15 +744,15 @@
    ],
    "captureOrigin": {
     "frameId": 0,
-    "tabId": 1140612370
+    "tabId": 757894229
    },
-   "captureSeq": 14460.200000000186,
+   "captureSeq": 14494.600000000559,
    "claimType": "Click",
    "claimedBy": "int-10",
    "disposition": "claimed",
-   "eventId": "evt-pmt5selpq-84",
+   "eventId": "evt-pmt74awdl-84",
    "eventType": "click",
-   "pageId": "pmt5selpq",
+   "pageId": "pmt74awdl",
    "targetIdentity": {
     "accessibleName": "Notify",
     "ariaLabel": null,
@@ -778,7 +778,7 @@
    "targetName": "Notify",
    "targetRole": "button",
    "targetTag": "BUTTON",
-   "timestamp": 1787488349929
+   "timestamp": 1787568798757
   }
  ],
  "cmdrunner_live_interactions": [
@@ -803,7 +803,7 @@
        "firstBatchIndex": 0,
        "firstMutationAt": 1.7999999998137355,
        "lastBatchIndex": 1,
-       "lastMutationAt": 1307.2000000001863,
+       "lastMutationAt": 1307.4000000003725,
        "rawMutationCount": 2,
        "removedNodesCount": 0,
        "shadowContext": null,
@@ -819,7 +819,7 @@
      "newSurfaces": [],
      "performanceCondition": {
       "highChurnMode": false,
-      "longestBatchMs": 0.2999999998137355,
+      "longestBatchMs": 0.30000000074505806,
       "mainThreadBlocked": false,
       "totalBatches": 2
      },
@@ -856,8 +856,8 @@
        }
       ],
       "itemsOverflow": 0,
-      "scanDurationMs": 1,
-      "scannedAt": 7304.200000000186,
+      "scanDurationMs": 2,
+      "scannedAt": 7316.800000000745,
       "url": "http://127.0.0.1:8190/",
       "viewId": null
      },
@@ -876,19 +876,19 @@
        "oldValue": null,
        "path": "body > main > div > div > div#td-onward > div#cal-onward",
        "property": "hidden",
-       "relativeTime": 1307.2000000001863
+       "relativeTime": 1307.4000000003725
       }
      ]
     },
     "frameId": "main",
-    "sourceEventId": "evt-pmt5selpq-9",
+    "sourceEventId": "evt-pmt74awdl-9",
     "sourceEventType": "click",
     "targetEvidence": {
      "after": {
       "ariaChecked": null,
       "ariaExpanded": null,
       "ariaPressed": null,
-      "capturedAt": 7304,
+      "capturedAt": 7316.4000000003725,
       "checked": null,
       "childCount": 0,
       "className": "withIcon form-control",
@@ -904,7 +904,7 @@
       "ariaChecked": null,
       "ariaExpanded": null,
       "ariaPressed": null,
-      "capturedAt": 5612,
+      "capturedAt": 5624.4000000003725,
       "checked": null,
       "childCount": 0,
       "className": "withIcon form-control",
@@ -939,68 +939,68 @@
       "testId": null,
       "xPath": "//input[@id='onward']"
      },
-     "identityCapturedAt": 5697.300000000745
+     "identityCapturedAt": 5708.800000000745
     },
     "window": {
-     "closedAt": 7305.600000000559,
-     "durationMs": 1608.2999999998137,
+     "closedAt": 7319,
+     "durationMs": 1610.199999999255,
      "endReason": "consequence-settled",
-     "openedAt": 5697.300000000745,
+     "openedAt": 5708.800000000745,
      "stabilityTrace": [
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 300,
-       "timestamp": 5697.5
+       "timestamp": 5709.100000000559
       },
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 0,
-       "timestamp": 5698
+       "timestamp": 5709.9000000003725
       },
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 300,
-       "timestamp": 5998.4000000003725
+       "timestamp": 6010.100000000559
       },
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 300,
-       "timestamp": 6298.700000000186
+       "timestamp": 6310.4000000003725
       },
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 300,
-       "timestamp": 6599
+       "timestamp": 6610.700000000186
       },
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 300,
-       "timestamp": 6899.200000000186
+       "timestamp": 6911
       },
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 0,
-       "timestamp": 7003.200000000186
+       "timestamp": 7015.200000000186
       },
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 300,
-       "timestamp": 7303.5
+       "timestamp": 7315.4000000003725
       },
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 300,
-       "timestamp": 7303.600000000559
+       "timestamp": 7315.700000000186
       }
      ]
     },
-    "windowId": "ev-evt-pmt5selpq-9"
+    "windowId": "ev-evt-pmt74awdl-9"
    },
    "businessMeaning": "Select date \"Choose Sunday, September 6th, 2026\" (Depart on)",
    "componentFramework": "Generic",
    "componentType": "Generic",
    "endState": "completed",
-   "endTime": 1787488342384,
+   "endTime": 1787568791189,
    "interactionId": "int-2",
    "lifecycleId": "lc-2",
    "memberEvents": [
@@ -1008,9 +1008,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 5612,
+     "captureSeq": 5624.300000000745,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": null,
@@ -1045,7 +1045,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-8",
+     "eventId": "evt-pmt74awdl-8",
      "eventType": "focus",
      "isTrusted": true,
      "key": null,
@@ -1077,7 +1077,7 @@
       "testId": null,
       "xPath": "//input[@id='onward']"
      },
-     "timestamp": 1787488341081,
+     "timestamp": 1787568789886,
      "valueAfter": null,
      "valueBefore": ""
     },
@@ -1085,9 +1085,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 5694.700000000186,
+     "captureSeq": 5706.5,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 137,
@@ -1122,7 +1122,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-9",
+     "eventId": "evt-pmt74awdl-9",
      "eventType": "click",
      "isTrusted": true,
      "key": null,
@@ -1154,7 +1154,7 @@
       "testId": null,
       "xPath": "//input[@id='onward']"
      },
-     "timestamp": 1787488341164,
+     "timestamp": 1787568789969,
      "valueAfter": null,
      "valueBefore": ""
     },
@@ -1162,9 +1162,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 6911.9000000003725,
+     "captureSeq": 6921.9000000003725,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 113,
@@ -1199,7 +1199,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-10",
+     "eventId": "evt-pmt74awdl-10",
      "eventType": "mouseleave",
      "isTrusted": true,
      "key": null,
@@ -1231,7 +1231,7 @@
       "testId": null,
       "xPath": "//input[@id='onward']"
      },
-     "timestamp": 1787488342381,
+     "timestamp": 1787568791185,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -1239,9 +1239,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 6911.9000000003725,
+     "captureSeq": 6921.9000000003725,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 113,
@@ -1276,7 +1276,7 @@
       "required": false,
       "tabIndex": -1
      },
-     "eventId": "evt-pmt5selpq-13",
+     "eventId": "evt-pmt74awdl-13",
      "eventType": "mouseenter",
      "isTrusted": true,
      "key": null,
@@ -1308,7 +1308,7 @@
       "testId": null,
       "xPath": "//body/main/div[1]/div/div[1]/div[2]/div"
      },
-     "timestamp": 1787488342382,
+     "timestamp": 1787568791186,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -1316,9 +1316,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 6911.9000000003725,
+     "captureSeq": 6921.9000000003725,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 113,
@@ -1355,7 +1355,7 @@
       "required": false,
       "tabIndex": -1
      },
-     "eventId": "evt-pmt5selpq-14",
+     "eventId": "evt-pmt74awdl-14",
      "eventType": "mouseenter",
      "isTrusted": true,
      "key": null,
@@ -1387,7 +1387,7 @@
       "testId": null,
       "xPath": "//body/main/div[1]/div/div[1]/div[2]/div/div[2]"
      },
-     "timestamp": 1787488342382,
+     "timestamp": 1787568791186,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -1395,9 +1395,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 6911.9000000003725,
+     "captureSeq": 6921.9000000003725,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 113,
@@ -1436,7 +1436,7 @@
       "required": false,
       "tabIndex": -1
      },
-     "eventId": "evt-pmt5selpq-15",
+     "eventId": "evt-pmt74awdl-15",
      "eventType": "mouseenter",
      "isTrusted": true,
      "key": null,
@@ -1468,7 +1468,7 @@
       "testId": null,
       "xPath": "//div[@id='month-onward']"
      },
-     "timestamp": 1787488342383,
+     "timestamp": 1787568791187,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -1476,9 +1476,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 6911.9000000003725,
+     "captureSeq": 6921.9000000003725,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 113,
@@ -1519,7 +1519,7 @@
       "required": false,
       "tabIndex": -1
      },
-     "eventId": "evt-pmt5selpq-16",
+     "eventId": "evt-pmt74awdl-16",
      "eventType": "mouseenter",
      "isTrusted": true,
      "key": null,
@@ -1551,7 +1551,7 @@
       "testId": null,
       "xPath": "//body/main/div[1]/div/div[1]/div[2]/div/div[2]/div[2]/div"
      },
-     "timestamp": 1787488342383,
+     "timestamp": 1787568791187,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -1559,9 +1559,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 6911.9000000003725,
+     "captureSeq": 6921.9000000003725,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 113,
@@ -1602,7 +1602,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-17",
+     "eventId": "evt-pmt74awdl-17",
      "eventType": "mouseenter",
      "isTrusted": true,
      "key": null,
@@ -1634,7 +1634,7 @@
       "testId": null,
       "xPath": "//main/div[1]/div/div[1]/div[2]/div/div[2]/div[2]/div/div[2]"
      },
-     "timestamp": 1787488342383,
+     "timestamp": 1787568791187,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -1642,9 +1642,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 6911.9000000003725,
+     "captureSeq": 6921.9000000003725,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 113,
@@ -1685,7 +1685,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-18",
+     "eventId": "evt-pmt74awdl-18",
      "eventType": "mouseenter",
      "isTrusted": true,
      "key": null,
@@ -1717,7 +1717,7 @@
       "testId": null,
       "xPath": "//main/div[1]/div/div[1]/div[2]/div/div[2]/div[2]/div/div[2]"
      },
-     "timestamp": 1787488342384,
+     "timestamp": 1787568791188,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -1725,9 +1725,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 6911.9000000003725,
+     "captureSeq": 6921.9000000003725,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 113,
@@ -1768,7 +1768,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-19",
+     "eventId": "evt-pmt74awdl-19",
      "eventType": "mousedown",
      "isTrusted": true,
      "key": null,
@@ -1800,7 +1800,7 @@
       "testId": null,
       "xPath": "//main/div[1]/div/div[1]/div[2]/div/div[2]/div[2]/div/div[2]"
      },
-     "timestamp": 1787488342384,
+     "timestamp": 1787568791189,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -1808,9 +1808,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 7002,
+     "captureSeq": 7014.100000000559,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 113,
@@ -1851,7 +1851,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-22",
+     "eventId": "evt-pmt74awdl-22",
      "eventType": "click",
      "isTrusted": true,
      "key": null,
@@ -1883,7 +1883,7 @@
       "testId": null,
       "xPath": "//main/div[1]/div/div[1]/div[2]/div/div[2]/div[2]/div/div[2]"
      },
-     "timestamp": 1787488342471,
+     "timestamp": 1787568791276,
      "valueAfter": null,
      "valueBefore": null
     }
@@ -1891,13 +1891,13 @@
    "metadata": {
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
     "dateValue": "Choose Sunday, September 6th, 2026",
     "selectedDate": "Choose Sunday, September 6th, 2026",
     "targetName": "Depart on"
    },
-   "startTime": 1787488341081,
+   "startTime": 1787568789886,
    "trigger": {
     "accessibleName": "Depart on",
     "ariaLabel": "Depart on",
@@ -1924,9 +1924,9 @@
     "altKey": false,
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 5612,
+    "captureSeq": 5624.300000000745,
     "checkedAfter": null,
     "checkedBefore": null,
     "clientX": null,
@@ -1961,7 +1961,7 @@
      "required": false,
      "tabIndex": 0
     },
-    "eventId": "evt-pmt5selpq-8",
+    "eventId": "evt-pmt74awdl-8",
     "eventType": "focus",
     "isTrusted": true,
     "key": null,
@@ -1993,7 +1993,7 @@
      "testId": null,
      "xPath": "//input[@id='onward']"
     },
-    "timestamp": 1787488341081,
+    "timestamp": 1787568789886,
     "valueAfter": null,
     "valueBefore": ""
    },
@@ -2018,14 +2018,14 @@
      "visibilityChanges": []
     },
     "frameId": "main",
-    "sourceEventId": "evt-pmt5selpq-44",
+    "sourceEventId": "evt-pmt74awdl-44",
     "sourceEventType": "lifecycle",
     "targetEvidence": {
      "after": {
       "ariaChecked": null,
       "ariaExpanded": null,
       "ariaPressed": null,
-      "capturedAt": 10062.100000000559,
+      "capturedAt": 10088.5,
       "checked": null,
       "childCount": 0,
       "className": "",
@@ -2061,22 +2061,22 @@
       "testId": null,
       "xPath": "//input[@id='return']"
      },
-     "identityCapturedAt": 10062.100000000559
+     "identityCapturedAt": 10088.5
     },
     "window": {
-     "closedAt": 10062.100000000559,
+     "closedAt": 10088.5,
      "durationMs": 0,
      "endReason": "lifecycle-complete",
      "openedAt": 0,
      "stabilityTrace": []
     },
-    "windowId": "lc-evt-pmt5selpq-44"
+    "windowId": "lc-evt-pmt74awdl-44"
    },
    "businessMeaning": "Select date \"Choose Tuesday, September 8th, 2026\" (Return on)",
    "componentFramework": "Generic",
    "componentType": "Generic",
    "endState": "completed",
-   "endTime": 1787488345370,
+   "endTime": 1787568794182,
    "interactionId": "int-5",
    "lifecycleId": "lc-5",
    "memberEvents": [
@@ -2084,9 +2084,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 8610.100000000559,
+     "captureSeq": 8622.400000000373,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": null,
@@ -2121,7 +2121,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-44",
+     "eventId": "evt-pmt74awdl-44",
      "eventType": "focus",
      "isTrusted": true,
      "key": null,
@@ -2153,7 +2153,7 @@
       "testId": null,
       "xPath": "//input[@id='return']"
      },
-     "timestamp": 1787488344079,
+     "timestamp": 1787568792884,
      "valueAfter": null,
      "valueBefore": ""
     },
@@ -2161,9 +2161,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 8692,
+     "captureSeq": 8708,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 452,
@@ -2198,7 +2198,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-45",
+     "eventId": "evt-pmt74awdl-45",
      "eventType": "click",
      "isTrusted": true,
      "key": null,
@@ -2230,7 +2230,7 @@
       "testId": null,
       "xPath": "//input[@id='return']"
      },
-     "timestamp": 1787488344161,
+     "timestamp": 1787568792970,
      "valueAfter": null,
      "valueBefore": ""
     },
@@ -2238,9 +2238,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 9898.100000000559,
+     "captureSeq": 9914.400000000373,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 536,
@@ -2275,7 +2275,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-46",
+     "eventId": "evt-pmt74awdl-46",
      "eventType": "mouseleave",
      "isTrusted": true,
      "key": null,
@@ -2307,7 +2307,7 @@
       "testId": null,
       "xPath": "//input[@id='return']"
      },
-     "timestamp": 1787488345367,
+     "timestamp": 1787568794177,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -2315,9 +2315,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 9898.100000000559,
+     "captureSeq": 9914.400000000373,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 536,
@@ -2352,7 +2352,7 @@
       "required": false,
       "tabIndex": -1
      },
-     "eventId": "evt-pmt5selpq-49",
+     "eventId": "evt-pmt74awdl-49",
      "eventType": "mouseenter",
      "isTrusted": true,
      "key": null,
@@ -2384,7 +2384,7 @@
       "testId": null,
       "xPath": "//body/main/div[1]/div/div[2]/div[2]/div"
      },
-     "timestamp": 1787488345369,
+     "timestamp": 1787568794178,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -2392,9 +2392,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 9898.100000000559,
+     "captureSeq": 9914.400000000373,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 536,
@@ -2431,7 +2431,7 @@
       "required": false,
       "tabIndex": -1
      },
-     "eventId": "evt-pmt5selpq-50",
+     "eventId": "evt-pmt74awdl-50",
      "eventType": "mouseenter",
      "isTrusted": true,
      "key": null,
@@ -2463,7 +2463,7 @@
       "testId": null,
       "xPath": "//div[@id='month-return']"
      },
-     "timestamp": 1787488345369,
+     "timestamp": 1787568794178,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -2471,9 +2471,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 9898.100000000559,
+     "captureSeq": 9914.400000000373,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 536,
@@ -2512,7 +2512,7 @@
       "required": false,
       "tabIndex": -1
      },
-     "eventId": "evt-pmt5selpq-51",
+     "eventId": "evt-pmt74awdl-51",
      "eventType": "mouseenter",
      "isTrusted": true,
      "key": null,
@@ -2544,7 +2544,7 @@
       "testId": null,
       "xPath": "//body/main/div[1]/div/div[2]/div[2]/div/div/div"
      },
-     "timestamp": 1787488345369,
+     "timestamp": 1787568794179,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -2552,9 +2552,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 9898.100000000559,
+     "captureSeq": 9914.400000000373,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 536,
@@ -2595,7 +2595,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-52",
+     "eventId": "evt-pmt74awdl-52",
      "eventType": "mouseenter",
      "isTrusted": true,
      "key": null,
@@ -2627,7 +2627,7 @@
       "testId": null,
       "xPath": "//body/main/div[1]/div/div[2]/div[2]/div/div/div/div[4]"
      },
-     "timestamp": 1787488345369,
+     "timestamp": 1787568794181,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -2635,9 +2635,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 9898.100000000559,
+     "captureSeq": 9914.400000000373,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 536,
@@ -2678,7 +2678,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-53",
+     "eventId": "evt-pmt74awdl-53",
      "eventType": "mouseenter",
      "isTrusted": true,
      "key": null,
@@ -2710,7 +2710,7 @@
       "testId": null,
       "xPath": "//body/main/div[1]/div/div[2]/div[2]/div/div/div/div[4]"
      },
-     "timestamp": 1787488345370,
+     "timestamp": 1787568794181,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -2718,9 +2718,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 9898.100000000559,
+     "captureSeq": 9914.400000000373,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 536,
@@ -2761,7 +2761,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-54",
+     "eventId": "evt-pmt74awdl-54",
      "eventType": "mousedown",
      "isTrusted": true,
      "key": null,
@@ -2793,7 +2793,7 @@
       "testId": null,
       "xPath": "//body/main/div[1]/div/div[2]/div[2]/div/div/div/div[4]"
      },
-     "timestamp": 1787488345370,
+     "timestamp": 1787568794182,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -2801,9 +2801,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 9987.200000000186,
+     "captureSeq": 10006.200000000186,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 536,
@@ -2844,7 +2844,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-57",
+     "eventId": "evt-pmt74awdl-57",
      "eventType": "click",
      "isTrusted": true,
      "key": null,
@@ -2876,7 +2876,7 @@
       "testId": null,
       "xPath": "//body/main/div[1]/div/div[2]/div[2]/div/div/div/div[4]"
      },
-     "timestamp": 1787488345456,
+     "timestamp": 1787568794269,
      "valueAfter": null,
      "valueBefore": null
     }
@@ -2884,13 +2884,13 @@
    "metadata": {
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
     "dateValue": "Choose Tuesday, September 8th, 2026",
     "selectedDate": "Choose Tuesday, September 8th, 2026",
     "targetName": "Return on"
    },
-   "startTime": 1787488344079,
+   "startTime": 1787568792884,
    "trigger": {
     "accessibleName": "Return on",
     "ariaLabel": "Return on",
@@ -2917,9 +2917,9 @@
     "altKey": false,
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 8610.100000000559,
+    "captureSeq": 8622.400000000373,
     "checkedAfter": null,
     "checkedBefore": null,
     "clientX": null,
@@ -2954,7 +2954,7 @@
      "required": false,
      "tabIndex": 0
     },
-    "eventId": "evt-pmt5selpq-44",
+    "eventId": "evt-pmt74awdl-44",
     "eventType": "focus",
     "isTrusted": true,
     "key": null,
@@ -2986,7 +2986,7 @@
      "testId": null,
      "xPath": "//input[@id='return']"
     },
-    "timestamp": 1787488344079,
+    "timestamp": 1787568792884,
     "valueAfter": null,
     "valueBefore": ""
    },
@@ -3011,9 +3011,9 @@
        ],
        "characterDataDelta": null,
        "firstBatchIndex": 4,
-       "firstMutationAt": 5984.5,
+       "firstMutationAt": 5995.4000000003725,
        "lastBatchIndex": 4,
-       "lastMutationAt": 5984.5,
+       "lastMutationAt": 5995.4000000003725,
        "rawMutationCount": 1,
        "removedNodesCount": 0,
        "shadowContext": null,
@@ -3029,9 +3029,9 @@
        "changedAttributes": [],
        "characterDataDelta": null,
        "firstBatchIndex": 4,
-       "firstMutationAt": 5984.5,
+       "firstMutationAt": 5995.4000000003725,
        "lastBatchIndex": 4,
-       "lastMutationAt": 5984.5,
+       "lastMutationAt": 5995.4000000003725,
        "rawMutationCount": 1,
        "removedNodesCount": 1,
        "shadowContext": null,
@@ -3048,21 +3048,21 @@
        "durationMs": null,
        "endRelativeToEvent": null,
        "method": "GET",
-       "requestId": "26",
+       "requestId": "27",
        "resourceType": "unknown",
        "source": "webrequest",
-       "sourceEventId": "evt-pmt5selpq-72",
+       "sourceEventId": "evt-pmt74awdl-72",
        "startRelativeToEvent": 0,
        "status": 200,
        "url": "http://127.0.0.1:8190/collect?e=search"
       },
       {
-       "durationMs": 8.099999999627471,
-       "endRelativeToEvent": 8.299999999813735,
+       "durationMs": 8.299999999813735,
+       "endRelativeToEvent": 8.799999999813735,
        "method": "GET",
        "resourceType": "fetch",
        "source": "main-world",
-       "startRelativeToEvent": 0.20000000018626451,
+       "startRelativeToEvent": 0.5,
        "status": 200,
        "url": "/collect?e=search"
       }
@@ -3070,7 +3070,7 @@
      "newSurfaces": [],
      "performanceCondition": {
       "highChurnMode": false,
-      "longestBatchMs": 0.2999999998137355,
+      "longestBatchMs": 0.7000000001862645,
       "mainThreadBlocked": false,
       "totalBatches": 5
      },
@@ -3119,8 +3119,8 @@
        }
       ],
       "itemsOverflow": 0,
-      "scanDurationMs": 2,
-      "scannedAt": 11992.600000000559,
+      "scanDurationMs": 3,
+      "scannedAt": 12027.100000000559,
       "url": "http://127.0.0.1:8190/",
       "viewId": null
      },
@@ -3131,19 +3131,19 @@
        "oldValue": "",
        "path": "body > main > div > ul#opts",
        "property": "hidden",
-       "relativeTime": 5984.5
+       "relativeTime": 5995.4000000003725
       }
      ]
     },
     "frameId": "main",
-    "sourceEventId": "evt-pmt5selpq-72",
+    "sourceEventId": "evt-pmt74awdl-72",
     "sourceEventType": "click",
     "targetEvidence": {
      "after": {
       "ariaChecked": null,
       "ariaExpanded": null,
       "ariaPressed": null,
-      "capturedAt": 11992.5,
+      "capturedAt": 12026.900000000373,
       "checked": null,
       "childCount": 0,
       "className": "",
@@ -3159,7 +3159,7 @@
       "ariaChecked": null,
       "ariaExpanded": null,
       "ariaPressed": null,
-      "capturedAt": 11596.800000000745,
+      "capturedAt": 11617.300000000745,
       "checked": null,
       "childCount": 0,
       "className": "",
@@ -3178,7 +3178,7 @@
        "tagName": "BUTTON"
       },
       "before": null,
-      "detectedAt": 11994.300000000745
+      "detectedAt": 12029.900000000373
      },
      "identity": {
       "accessibleName": "Search Flights",
@@ -3202,43 +3202,43 @@
       "testId": null,
       "xPath": "//button[@id='go']"
      },
-     "identityCapturedAt": 11679.600000000559
+     "identityCapturedAt": 11701.800000000745
     },
     "window": {
-     "closedAt": 11994.300000000745,
-     "durationMs": 314.70000000018626,
+     "closedAt": 12029.900000000373,
+     "durationMs": 328.09999999962747,
      "endReason": "consequence-settled",
-     "openedAt": 11679.600000000559,
+     "openedAt": 11701.800000000745,
      "stabilityTrace": [
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 300,
-       "timestamp": 11679.600000000559
+       "timestamp": 11701.900000000373
       },
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 0,
-       "timestamp": 11680.600000000559
+       "timestamp": 11703.900000000373
       },
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 300,
-       "timestamp": 11992.300000000745
+       "timestamp": 12026.800000000745
       },
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 300,
-       "timestamp": 11992.300000000745
+       "timestamp": 12026.800000000745
       }
      ]
     },
-    "windowId": "ev-evt-pmt5selpq-72"
+    "windowId": "ev-evt-pmt74awdl-72"
    },
    "businessMeaning": "Click \"Search Flights\"",
    "componentFramework": "Generic",
    "componentType": "Generic",
    "endState": "completed",
-   "endTime": 1787488347148,
+   "endTime": 1787568795963,
    "interactionId": "int-7",
    "lifecycleId": "lc-7",
    "memberEvents": [
@@ -3246,9 +3246,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 11678.5,
+     "captureSeq": 11700.300000000745,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 87,
@@ -3277,7 +3277,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-72",
+     "eventId": "evt-pmt74awdl-72",
      "eventType": "click",
      "isTrusted": true,
      "key": null,
@@ -3309,7 +3309,7 @@
       "testId": null,
       "xPath": "//button[@id='go']"
      },
-     "timestamp": 1787488347148,
+     "timestamp": 1787568795963,
      "valueAfter": null,
      "valueBefore": null
     }
@@ -3317,7 +3317,7 @@
    "metadata": {
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
     "clientX": 87,
     "clientY": 109,
@@ -3325,7 +3325,7 @@
     "targetRole": "button",
     "targetTag": "BUTTON"
    },
-   "startTime": 1787488347148,
+   "startTime": 1787568795963,
    "trigger": {
     "accessibleName": "Search Flights",
     "ariaLabel": null,
@@ -3352,9 +3352,9 @@
     "altKey": false,
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 11678.5,
+    "captureSeq": 11700.300000000745,
     "checkedAfter": null,
     "checkedBefore": null,
     "clientX": 87,
@@ -3383,7 +3383,7 @@
      "required": false,
      "tabIndex": 0
     },
-    "eventId": "evt-pmt5selpq-72",
+    "eventId": "evt-pmt74awdl-72",
     "eventType": "click",
     "isTrusted": true,
     "key": null,
@@ -3415,7 +3415,7 @@
      "testId": null,
      "xPath": "//button[@id='go']"
     },
-    "timestamp": 1787488347148,
+    "timestamp": 1787568795963,
     "valueAfter": null,
     "valueBefore": null
    },
@@ -3433,9 +3433,9 @@
        "changedAttributes": [],
        "characterDataDelta": null,
        "firstBatchIndex": 5,
-       "firstMutationAt": 7376.0999999996275,
+       "firstMutationAt": 7395.9000000003725,
        "lastBatchIndex": 5,
-       "lastMutationAt": 7376.0999999996275,
+       "lastMutationAt": 7395.9000000003725,
        "rawMutationCount": 1,
        "removedNodesCount": 1,
        "shadowContext": null,
@@ -3447,24 +3447,11 @@
       }
      ],
      "navigation": [],
-     "networkActivity": [
-      {
-       "durationMs": null,
-       "endRelativeToEvent": null,
-       "method": "GET",
-       "requestId": "27",
-       "resourceType": "unknown",
-       "source": "webrequest",
-       "sourceEventId": "evt-pmt5selpq-78",
-       "startRelativeToEvent": 0,
-       "status": 200,
-       "url": "http://127.0.0.1:8190/collect?e=notify"
-      }
-     ],
+     "networkActivity": [],
      "newSurfaces": [],
      "performanceCondition": {
       "highChurnMode": false,
-      "longestBatchMs": 0.2999999998137355,
+      "longestBatchMs": 0.7000000001862645,
       "mainThreadBlocked": false,
       "totalBatches": 6
      },
@@ -3514,21 +3501,21 @@
       ],
       "itemsOverflow": 0,
       "scanDurationMs": 1,
-      "scannedAt": 13378.800000000745,
+      "scannedAt": 13410.800000000745,
       "url": "http://127.0.0.1:8190/",
       "viewId": null
      },
      "visibilityChanges": []
     },
     "frameId": "main",
-    "sourceEventId": "evt-pmt5selpq-78",
+    "sourceEventId": "evt-pmt74awdl-78",
     "sourceEventType": "click",
     "targetEvidence": {
      "after": {
       "ariaChecked": null,
       "ariaExpanded": null,
       "ariaPressed": null,
-      "capturedAt": 13378.800000000745,
+      "capturedAt": 13410.800000000745,
       "checked": null,
       "childCount": 0,
       "className": "opt",
@@ -3544,7 +3531,7 @@
       "ariaChecked": null,
       "ariaExpanded": null,
       "ariaPressed": null,
-      "capturedAt": 12988.400000000373,
+      "capturedAt": 13016.300000000745,
       "checked": null,
       "childCount": 0,
       "className": "opt",
@@ -3579,43 +3566,43 @@
       "testId": "airport-opt-1",
       "xPath": "//body/main/div[2]/ul/li[1]"
      },
-     "identityCapturedAt": 13071.800000000745
+     "identityCapturedAt": 13103.300000000745
     },
     "window": {
-     "closedAt": 13379.600000000559,
-     "durationMs": 307.79999999981374,
+     "closedAt": 13411.800000000745,
+     "durationMs": 308.5,
      "endReason": "consequence-settled",
-     "openedAt": 13071.800000000745,
+     "openedAt": 13103.300000000745,
      "stabilityTrace": [
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 300,
-       "timestamp": 13071.900000000373
+       "timestamp": 13103.300000000745
       },
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 0,
-       "timestamp": 13072
+       "timestamp": 13103.700000000186
       },
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 300,
-       "timestamp": 13378.600000000559
+       "timestamp": 13410.600000000559
       },
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 300,
-       "timestamp": 13378.700000000186
+       "timestamp": 13410.600000000559
       }
      ]
     },
-    "windowId": "ev-evt-pmt5selpq-78"
+    "windowId": "ev-evt-pmt74awdl-78"
    },
    "businessMeaning": "Click \"Bengaluru\"",
    "componentFramework": "Generic",
    "componentType": "Generic",
    "endState": "completed",
-   "endTime": 1787488348540,
+   "endTime": 1787568797365,
    "interactionId": "int-8",
    "lifecycleId": "lc-8",
    "memberEvents": [
@@ -3623,9 +3610,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 13070.800000000745,
+     "captureSeq": 13102.100000000559,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 247,
@@ -3656,7 +3643,7 @@
       "required": false,
       "tabIndex": -1
      },
-     "eventId": "evt-pmt5selpq-78",
+     "eventId": "evt-pmt74awdl-78",
      "eventType": "click",
      "isTrusted": true,
      "key": null,
@@ -3688,7 +3675,7 @@
       "testId": "airport-opt-1",
       "xPath": "//body/main/div[2]/ul/li[1]"
      },
-     "timestamp": 1787488348540,
+     "timestamp": 1787568797365,
      "valueAfter": null,
      "valueBefore": null
     }
@@ -3696,7 +3683,7 @@
    "metadata": {
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
     "clientX": 247,
     "clientY": 109,
@@ -3704,7 +3691,7 @@
     "targetRole": "listitem",
     "targetTag": "LI"
    },
-   "startTime": 1787488348540,
+   "startTime": 1787568797365,
    "trigger": {
     "accessibleName": "Bengaluru",
     "ariaLabel": null,
@@ -3731,9 +3718,9 @@
     "altKey": false,
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 13070.800000000745,
+    "captureSeq": 13102.100000000559,
     "checkedAfter": null,
     "checkedBefore": null,
     "clientX": 247,
@@ -3764,7 +3751,7 @@
      "required": false,
      "tabIndex": -1
     },
-    "eventId": "evt-pmt5selpq-78",
+    "eventId": "evt-pmt74awdl-78",
     "eventType": "click",
     "isTrusted": true,
     "key": null,
@@ -3796,7 +3783,7 @@
      "testId": "airport-opt-1",
      "xPath": "//body/main/div[2]/ul/li[1]"
     },
-    "timestamp": 1787488348540,
+    "timestamp": 1787568797365,
     "valueAfter": null,
     "valueBefore": null
    },
@@ -3821,9 +3808,9 @@
        ],
        "characterDataDelta": null,
        "firstBatchIndex": 6,
-       "firstMutationAt": 8765.900000000373,
+       "firstMutationAt": 8788.700000000186,
        "lastBatchIndex": 6,
-       "lastMutationAt": 8765.900000000373,
+       "lastMutationAt": 8788.700000000186,
        "rawMutationCount": 1,
        "removedNodesCount": 0,
        "shadowContext": null,
@@ -3837,40 +3824,32 @@
      "navigation": [],
      "networkActivity": [
       {
-       "durationMs": 7.6000000005587935,
-       "endRelativeToEvent": 7.7999999998137355,
+       "durationMs": null,
+       "endRelativeToEvent": null,
+       "method": "GET",
+       "requestId": "28",
+       "resourceType": "unknown",
+       "source": "webrequest",
+       "sourceEventId": "evt-pmt74awdl-84",
+       "startRelativeToEvent": 0,
+       "status": 200,
+       "url": "http://127.0.0.1:8190/collect?e=notify"
+      },
+      {
+       "durationMs": 5.7999999998137355,
+       "endRelativeToEvent": 6.099999999627471,
        "method": "GET",
        "resourceType": "fetch",
        "source": "main-world",
-       "startRelativeToEvent": 0.19999999925494194,
+       "startRelativeToEvent": 0.2999999998137355,
        "status": 200,
        "url": "/collect?e=notify"
-      },
-      {
-       "durationMs": 12.799999999813735,
-       "endRelativeToEvent": 20.799999999813735,
-       "method": "GET",
-       "resourceType": "unknown",
-       "source": "webrequest",
-       "startRelativeToEvent": 8,
-       "status": 200,
-       "url": "http://127.0.0.1:8190/collect?e=notify"
-      },
-      {
-       "durationMs": 0,
-       "endRelativeToEvent": 52.99999999906868,
-       "method": "GET",
-       "resourceType": "resource",
-       "source": "performance-observer",
-       "startRelativeToEvent": 52.99999999906868,
-       "status": null,
-       "url": "http://127.0.0.1:8190/collect?e=notify"
       }
      ],
      "newSurfaces": [],
      "performanceCondition": {
       "highChurnMode": false,
-      "longestBatchMs": 0.2999999998137355,
+      "longestBatchMs": 0.7000000001862645,
       "mainThreadBlocked": false,
       "totalBatches": 7
      },
@@ -3918,22 +3897,22 @@
        }
       ],
       "itemsOverflow": 0,
-      "scanDurationMs": 1,
-      "scannedAt": 14777.600000000559,
+      "scanDurationMs": 0,
+      "scannedAt": 14809.600000000559,
       "url": "http://127.0.0.1:8190/",
       "viewId": null
      },
      "visibilityChanges": []
     },
     "frameId": "main",
-    "sourceEventId": "evt-pmt5selpq-84",
+    "sourceEventId": "evt-pmt74awdl-84",
     "sourceEventType": "click",
     "targetEvidence": {
      "after": {
       "ariaChecked": null,
       "ariaExpanded": null,
       "ariaPressed": null,
-      "capturedAt": 14777.600000000559,
+      "capturedAt": 14809.5,
       "checked": null,
       "childCount": 0,
       "className": "",
@@ -3949,7 +3928,7 @@
       "ariaChecked": null,
       "ariaExpanded": null,
       "ariaPressed": null,
-      "capturedAt": 14378.600000000559,
+      "capturedAt": 14412,
       "checked": null,
       "childCount": 0,
       "className": "",
@@ -3968,7 +3947,7 @@
        "tagName": "BUTTON"
       },
       "before": null,
-      "detectedAt": 14778.100000000559
+      "detectedAt": 14810.100000000559
      },
      "identity": {
       "accessibleName": "Notify",
@@ -3992,43 +3971,43 @@
       "testId": null,
       "xPath": "//button[@id='toast-btn']"
      },
-     "identityCapturedAt": 14461.300000000745
+     "identityCapturedAt": 14495.600000000559
     },
     "window": {
-     "closedAt": 14778.100000000559,
-     "durationMs": 316.79999999981374,
+     "closedAt": 14810.100000000559,
+     "durationMs": 314.5,
      "endReason": "consequence-settled",
-     "openedAt": 14461.300000000745,
+     "openedAt": 14495.600000000559,
      "stabilityTrace": [
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 300,
-       "timestamp": 14461.300000000745
+       "timestamp": 14495.600000000559
       },
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 0,
-       "timestamp": 14462.200000000186
+       "timestamp": 14496.800000000745
       },
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 300,
-       "timestamp": 14777.400000000373
+       "timestamp": 14809.400000000373
       },
       {
        "globalBatchCount": 0,
        "msSinceLastMutation": 300,
-       "timestamp": 14777.5
+       "timestamp": 14809.400000000373
       }
      ]
     },
-    "windowId": "ev-evt-pmt5selpq-84"
+    "windowId": "ev-evt-pmt74awdl-84"
    },
    "businessMeaning": "Click \"Notify\"",
    "componentFramework": "Generic",
    "componentType": "Generic",
    "endState": "completed",
-   "endTime": 1787488349929,
+   "endTime": 1787568798757,
    "interactionId": "int-10",
    "lifecycleId": "lc-10",
    "memberEvents": [
@@ -4036,9 +4015,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 14460.200000000186,
+     "captureSeq": 14494.600000000559,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 433,
@@ -4067,7 +4046,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-84",
+     "eventId": "evt-pmt74awdl-84",
      "eventType": "click",
      "isTrusted": true,
      "key": null,
@@ -4099,7 +4078,7 @@
       "testId": null,
       "xPath": "//button[@id='toast-btn']"
      },
-     "timestamp": 1787488349929,
+     "timestamp": 1787568798757,
      "valueAfter": null,
      "valueBefore": null
     }
@@ -4107,7 +4086,7 @@
    "metadata": {
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
     "clientX": 433,
     "clientY": 118,
@@ -4115,7 +4094,7 @@
     "targetRole": "button",
     "targetTag": "BUTTON"
    },
-   "startTime": 1787488349929,
+   "startTime": 1787568798757,
    "trigger": {
     "accessibleName": "Notify",
     "ariaLabel": null,
@@ -4142,9 +4121,9 @@
     "altKey": false,
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 14460.200000000186,
+    "captureSeq": 14494.600000000559,
     "checkedAfter": null,
     "checkedBefore": null,
     "clientX": 433,
@@ -4173,7 +4152,7 @@
      "required": false,
      "tabIndex": 0
     },
-    "eventId": "evt-pmt5selpq-84",
+    "eventId": "evt-pmt74awdl-84",
     "eventType": "click",
     "isTrusted": true,
     "key": null,
@@ -4205,7 +4184,7 @@
      "testId": null,
      "xPath": "//button[@id='toast-btn']"
     },
-    "timestamp": 1787488349929,
+    "timestamp": 1787568798757,
     "valueAfter": null,
     "valueBefore": null
    },
@@ -4220,7 +4199,7 @@
   "dedupRecords": [
    {
     "elementKey": "id:toast-btn",
-    "endTime": 1787488349929,
+    "endTime": 1787568798757,
     "metadata": {
      "confidence": 0,
      "dwellMs": 0,
@@ -4232,7 +4211,7 @@
    },
    {
     "elementKey": "id:return",
-    "endTime": 1787488345370,
+    "endTime": 1787568794182,
     "metadata": {
      "dateValue": "Choose Tuesday, September 8th, 2026",
      "selectedDate": "Choose Tuesday, September 8th, 2026",
@@ -4242,7 +4221,7 @@
    },
    {
     "elementKey": "id:toast-btn",
-    "endTime": 1787488349929,
+    "endTime": 1787568798757,
     "metadata": {
      "clientX": 433,
      "clientY": 118,
@@ -4255,90 +4234,90 @@
   ],
   "interactionCounter": 10,
   "seenEventIds": [
-   "evt-pmt5selpq-1",
-   "evt-pmt5selpq-2",
-   "evt-pmt5selpq-3",
-   "evt-pmt5selpq-4",
-   "evt-pmt5selpq-5",
-   "evt-pmt5selpq-6",
-   "evt-pmt5selpq-7",
-   "evt-pmt5selpq-8",
-   "evt-pmt5selpq-9",
-   "evt-pmt5selpq-10",
-   "evt-pmt5selpq-11",
-   "evt-pmt5selpq-12",
-   "evt-pmt5selpq-13",
-   "evt-pmt5selpq-14",
-   "evt-pmt5selpq-15",
-   "evt-pmt5selpq-16",
-   "evt-pmt5selpq-17",
-   "evt-pmt5selpq-18",
-   "evt-pmt5selpq-19",
-   "evt-pmt5selpq-20",
-   "evt-pmt5selpq-21",
-   "evt-pmt5selpq-22",
-   "evt-pmt5selpq-23",
-   "evt-pmt5selpq-24",
-   "evt-pmt5selpq-25",
-   "evt-pmt5selpq-26",
-   "evt-pmt5selpq-27",
-   "evt-pmt5selpq-28",
-   "evt-pmt5selpq-29",
-   "evt-pmt5selpq-30",
-   "evt-pmt5selpq-31",
-   "evt-pmt5selpq-32",
-   "evt-pmt5selpq-33",
-   "evt-pmt5selpq-34",
-   "evt-pmt5selpq-35",
-   "evt-pmt5selpq-36",
-   "evt-pmt5selpq-37",
-   "evt-pmt5selpq-38",
-   "evt-pmt5selpq-39",
-   "evt-pmt5selpq-40",
-   "evt-pmt5selpq-41",
-   "evt-pmt5selpq-42",
-   "evt-pmt5selpq-43",
-   "evt-pmt5selpq-44",
-   "evt-pmt5selpq-45",
-   "evt-pmt5selpq-46",
-   "evt-pmt5selpq-47",
-   "evt-pmt5selpq-48",
-   "evt-pmt5selpq-49",
-   "evt-pmt5selpq-50",
-   "evt-pmt5selpq-51",
-   "evt-pmt5selpq-52",
-   "evt-pmt5selpq-53",
-   "evt-pmt5selpq-54",
-   "evt-pmt5selpq-55",
-   "evt-pmt5selpq-56",
-   "evt-pmt5selpq-57",
-   "evt-pmt5selpq-58",
-   "evt-pmt5selpq-59",
-   "evt-pmt5selpq-60",
-   "evt-pmt5selpq-61",
-   "evt-pmt5selpq-62",
-   "evt-pmt5selpq-63",
-   "evt-pmt5selpq-64",
-   "evt-pmt5selpq-65",
-   "evt-pmt5selpq-66",
-   "evt-pmt5selpq-67",
-   "evt-pmt5selpq-68",
-   "evt-pmt5selpq-69",
-   "evt-pmt5selpq-70",
-   "evt-pmt5selpq-71",
-   "evt-pmt5selpq-72",
-   "evt-pmt5selpq-73",
-   "evt-pmt5selpq-74",
-   "evt-pmt5selpq-75",
-   "evt-pmt5selpq-76",
-   "evt-pmt5selpq-77",
-   "evt-pmt5selpq-78",
-   "evt-pmt5selpq-79",
-   "evt-pmt5selpq-80",
-   "evt-pmt5selpq-81",
-   "evt-pmt5selpq-82",
-   "evt-pmt5selpq-83",
-   "evt-pmt5selpq-84"
+   "evt-pmt74awdl-1",
+   "evt-pmt74awdl-2",
+   "evt-pmt74awdl-3",
+   "evt-pmt74awdl-4",
+   "evt-pmt74awdl-5",
+   "evt-pmt74awdl-6",
+   "evt-pmt74awdl-7",
+   "evt-pmt74awdl-8",
+   "evt-pmt74awdl-9",
+   "evt-pmt74awdl-10",
+   "evt-pmt74awdl-11",
+   "evt-pmt74awdl-12",
+   "evt-pmt74awdl-13",
+   "evt-pmt74awdl-14",
+   "evt-pmt74awdl-15",
+   "evt-pmt74awdl-16",
+   "evt-pmt74awdl-17",
+   "evt-pmt74awdl-18",
+   "evt-pmt74awdl-19",
+   "evt-pmt74awdl-20",
+   "evt-pmt74awdl-21",
+   "evt-pmt74awdl-22",
+   "evt-pmt74awdl-23",
+   "evt-pmt74awdl-24",
+   "evt-pmt74awdl-25",
+   "evt-pmt74awdl-26",
+   "evt-pmt74awdl-27",
+   "evt-pmt74awdl-28",
+   "evt-pmt74awdl-29",
+   "evt-pmt74awdl-30",
+   "evt-pmt74awdl-31",
+   "evt-pmt74awdl-32",
+   "evt-pmt74awdl-33",
+   "evt-pmt74awdl-34",
+   "evt-pmt74awdl-35",
+   "evt-pmt74awdl-36",
+   "evt-pmt74awdl-37",
+   "evt-pmt74awdl-38",
+   "evt-pmt74awdl-39",
+   "evt-pmt74awdl-40",
+   "evt-pmt74awdl-41",
+   "evt-pmt74awdl-42",
+   "evt-pmt74awdl-43",
+   "evt-pmt74awdl-44",
+   "evt-pmt74awdl-45",
+   "evt-pmt74awdl-46",
+   "evt-pmt74awdl-47",
+   "evt-pmt74awdl-48",
+   "evt-pmt74awdl-49",
+   "evt-pmt74awdl-50",
+   "evt-pmt74awdl-51",
+   "evt-pmt74awdl-52",
+   "evt-pmt74awdl-53",
+   "evt-pmt74awdl-54",
+   "evt-pmt74awdl-55",
+   "evt-pmt74awdl-56",
+   "evt-pmt74awdl-57",
+   "evt-pmt74awdl-58",
+   "evt-pmt74awdl-59",
+   "evt-pmt74awdl-60",
+   "evt-pmt74awdl-61",
+   "evt-pmt74awdl-62",
+   "evt-pmt74awdl-63",
+   "evt-pmt74awdl-64",
+   "evt-pmt74awdl-65",
+   "evt-pmt74awdl-66",
+   "evt-pmt74awdl-67",
+   "evt-pmt74awdl-68",
+   "evt-pmt74awdl-69",
+   "evt-pmt74awdl-70",
+   "evt-pmt74awdl-71",
+   "evt-pmt74awdl-72",
+   "evt-pmt74awdl-73",
+   "evt-pmt74awdl-74",
+   "evt-pmt74awdl-75",
+   "evt-pmt74awdl-76",
+   "evt-pmt74awdl-77",
+   "evt-pmt74awdl-78",
+   "evt-pmt74awdl-79",
+   "evt-pmt74awdl-80",
+   "evt-pmt74awdl-81",
+   "evt-pmt74awdl-82",
+   "evt-pmt74awdl-83",
+   "evt-pmt74awdl-84"
   ]
  },
  "cmdrunner_verification_result": {
@@ -4365,13 +4344,13 @@
     ],
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 5605,
+    "captureSeq": 5613.9000000003725,
     "disposition": "pending",
-    "eventId": "evt-pmt5selpq-7",
+    "eventId": "evt-pmt74awdl-7",
     "eventType": "mousedown",
-    "pageId": "pmt5selpq",
+    "pageId": "pmt74awdl",
     "targetIdentity": {
      "accessibleName": "Depart on",
      "ariaLabel": "Depart on",
@@ -4397,7 +4376,7 @@
     "targetName": "Depart on",
     "targetRole": "textbox",
     "targetTag": "INPUT",
-    "timestamp": 1787488341080
+    "timestamp": 1787568789885
    },
    {
     "ancestorClasses": [
@@ -4420,15 +4399,15 @@
     ],
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 5694.700000000186,
+    "captureSeq": 5706.5,
     "claimType": "DatePicker",
     "claimedBy": "int-2",
     "disposition": "claimed",
-    "eventId": "evt-pmt5selpq-9",
+    "eventId": "evt-pmt74awdl-9",
     "eventType": "click",
-    "pageId": "pmt5selpq",
+    "pageId": "pmt74awdl",
     "targetIdentity": {
      "accessibleName": "Depart on",
      "ariaLabel": "Depart on",
@@ -4454,7 +4433,7 @@
     "targetName": "Depart on",
     "targetRole": "textbox",
     "targetTag": "INPUT",
-    "timestamp": 1787488341164
+    "timestamp": 1787568789969
    },
    {
     "ancestorClasses": [
@@ -4483,15 +4462,15 @@
     ],
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 6911.9000000003725,
+    "captureSeq": 6921.9000000003725,
     "claimType": "DatePicker",
     "claimedBy": "int-2",
     "disposition": "claimed",
-    "eventId": "evt-pmt5selpq-19",
+    "eventId": "evt-pmt74awdl-19",
     "eventType": "mousedown",
-    "pageId": "pmt5selpq",
+    "pageId": "pmt74awdl",
     "targetIdentity": {
      "accessibleName": "Choose Sunday, September 6th, 2026",
      "ariaLabel": "Choose Sunday, September 6th, 2026",
@@ -4517,7 +4496,7 @@
     "targetName": "Choose Sunday, September 6th, 2026",
     "targetRole": "option",
     "targetTag": "DIV",
-    "timestamp": 1787488342384
+    "timestamp": 1787568791189
    },
    {
     "ancestorClasses": [
@@ -4546,15 +4525,15 @@
     ],
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 7002,
+    "captureSeq": 7014.100000000559,
     "claimType": "DatePicker",
     "claimedBy": "int-2",
     "disposition": "claimed",
-    "eventId": "evt-pmt5selpq-22",
+    "eventId": "evt-pmt74awdl-22",
     "eventType": "click",
-    "pageId": "pmt5selpq",
+    "pageId": "pmt74awdl",
     "targetIdentity": {
      "accessibleName": "Choose Sunday, September 6th, 2026",
      "ariaLabel": "Choose Sunday, September 6th, 2026",
@@ -4580,7 +4559,7 @@
     "targetName": "Choose Sunday, September 6th, 2026",
     "targetRole": "option",
     "targetTag": "DIV",
-    "timestamp": 1787488342471
+    "timestamp": 1787568791276
    },
    {
     "ancestorClasses": [
@@ -4603,13 +4582,13 @@
     ],
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 8607.600000000559,
+    "captureSeq": 8619.400000000373,
     "disposition": "pending",
-    "eventId": "evt-pmt5selpq-43",
+    "eventId": "evt-pmt74awdl-43",
     "eventType": "mousedown",
-    "pageId": "pmt5selpq",
+    "pageId": "pmt74awdl",
     "targetIdentity": {
      "accessibleName": "Return on",
      "ariaLabel": "Return on",
@@ -4635,7 +4614,7 @@
     "targetName": "Return on",
     "targetRole": "textbox",
     "targetTag": "INPUT",
-    "timestamp": 1787488344079
+    "timestamp": 1787568792884
    },
    {
     "ancestorClasses": [
@@ -4658,15 +4637,15 @@
     ],
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 8692,
+    "captureSeq": 8708,
     "claimType": "DatePicker",
     "claimedBy": "int-5",
     "disposition": "claimed",
-    "eventId": "evt-pmt5selpq-45",
+    "eventId": "evt-pmt74awdl-45",
     "eventType": "click",
-    "pageId": "pmt5selpq",
+    "pageId": "pmt74awdl",
     "targetIdentity": {
      "accessibleName": "Return on",
      "ariaLabel": "Return on",
@@ -4692,7 +4671,7 @@
     "targetName": "Return on",
     "targetRole": "textbox",
     "targetTag": "INPUT",
-    "timestamp": 1787488344161
+    "timestamp": 1787568792970
    },
    {
     "ancestorClasses": [
@@ -4721,15 +4700,15 @@
     ],
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 9898.100000000559,
+    "captureSeq": 9914.400000000373,
     "claimType": "DatePicker",
     "claimedBy": "int-5",
     "disposition": "claimed",
-    "eventId": "evt-pmt5selpq-54",
+    "eventId": "evt-pmt74awdl-54",
     "eventType": "mousedown",
-    "pageId": "pmt5selpq",
+    "pageId": "pmt74awdl",
     "targetIdentity": {
      "accessibleName": "Choose Tuesday, September 8th, 2026",
      "ariaLabel": "Choose Tuesday, September 8th, 2026",
@@ -4755,7 +4734,7 @@
     "targetName": "Choose Tuesday, September 8th, 2026",
     "targetRole": "option",
     "targetTag": "DIV",
-    "timestamp": 1787488345370
+    "timestamp": 1787568794182
    },
    {
     "ancestorClasses": [
@@ -4784,15 +4763,15 @@
     ],
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 9987.200000000186,
+    "captureSeq": 10006.200000000186,
     "claimType": "DatePicker",
     "claimedBy": "int-5",
     "disposition": "claimed",
-    "eventId": "evt-pmt5selpq-57",
+    "eventId": "evt-pmt74awdl-57",
     "eventType": "click",
-    "pageId": "pmt5selpq",
+    "pageId": "pmt74awdl",
     "targetIdentity": {
      "accessibleName": "Choose Tuesday, September 8th, 2026",
      "ariaLabel": "Choose Tuesday, September 8th, 2026",
@@ -4818,7 +4797,7 @@
     "targetName": "Choose Tuesday, September 8th, 2026",
     "targetRole": "option",
     "targetTag": "DIV",
-    "timestamp": 1787488345456
+    "timestamp": 1787568794269
    },
    {
     "ancestorClasses": [
@@ -4835,13 +4814,13 @@
     ],
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 11593.800000000745,
+    "captureSeq": 11613.600000000559,
     "disposition": "pending",
-    "eventId": "evt-pmt5selpq-70",
+    "eventId": "evt-pmt74awdl-70",
     "eventType": "mousedown",
-    "pageId": "pmt5selpq",
+    "pageId": "pmt74awdl",
     "targetIdentity": {
      "accessibleName": "Search Flights",
      "ariaLabel": null,
@@ -4867,7 +4846,7 @@
     "targetName": "Search Flights",
     "targetRole": "button",
     "targetTag": "BUTTON",
-    "timestamp": 1787488347065
+    "timestamp": 1787568795879
    },
    {
     "ancestorClasses": [
@@ -4884,15 +4863,15 @@
     ],
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 11678.5,
+    "captureSeq": 11700.300000000745,
     "claimType": "Click",
     "claimedBy": "int-7",
     "disposition": "claimed",
-    "eventId": "evt-pmt5selpq-72",
+    "eventId": "evt-pmt74awdl-72",
     "eventType": "click",
-    "pageId": "pmt5selpq",
+    "pageId": "pmt74awdl",
     "targetIdentity": {
      "accessibleName": "Search Flights",
      "ariaLabel": null,
@@ -4918,7 +4897,7 @@
     "targetName": "Search Flights",
     "targetRole": "button",
     "targetTag": "BUTTON",
-    "timestamp": 1787488347148
+    "timestamp": 1787568795963
    },
    {
     "ancestorClasses": [
@@ -4937,13 +4916,13 @@
     ],
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 12987,
+    "captureSeq": 13013.900000000373,
     "disposition": "pending",
-    "eventId": "evt-pmt5selpq-76",
+    "eventId": "evt-pmt74awdl-76",
     "eventType": "mousedown",
-    "pageId": "pmt5selpq",
+    "pageId": "pmt74awdl",
     "targetIdentity": {
      "accessibleName": "Bengaluru",
      "ariaLabel": null,
@@ -4969,7 +4948,7 @@
     "targetName": "Bengaluru",
     "targetRole": "listitem",
     "targetTag": "LI",
-    "timestamp": 1787488348457
+    "timestamp": 1787568797278
    },
    {
     "ancestorClasses": [
@@ -4988,15 +4967,15 @@
     ],
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 13070.800000000745,
+    "captureSeq": 13102.100000000559,
     "claimType": "Click",
     "claimedBy": "int-8",
     "disposition": "claimed",
-    "eventId": "evt-pmt5selpq-78",
+    "eventId": "evt-pmt74awdl-78",
     "eventType": "click",
-    "pageId": "pmt5selpq",
+    "pageId": "pmt74awdl",
     "targetIdentity": {
      "accessibleName": "Bengaluru",
      "ariaLabel": null,
@@ -5022,7 +5001,7 @@
     "targetName": "Bengaluru",
     "targetRole": "listitem",
     "targetTag": "LI",
-    "timestamp": 1787488348540
+    "timestamp": 1787568797365
    },
    {
     "ancestorClasses": [
@@ -5039,13 +5018,13 @@
     ],
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 14376.800000000745,
+    "captureSeq": 14410.100000000559,
     "disposition": "pending",
-    "eventId": "evt-pmt5selpq-82",
+    "eventId": "evt-pmt74awdl-82",
     "eventType": "mousedown",
-    "pageId": "pmt5selpq",
+    "pageId": "pmt74awdl",
     "targetIdentity": {
      "accessibleName": "Notify",
      "ariaLabel": null,
@@ -5071,7 +5050,7 @@
     "targetName": "Notify",
     "targetRole": "button",
     "targetTag": "BUTTON",
-    "timestamp": 1787488349847
+    "timestamp": 1787568798674
    },
    {
     "ancestorClasses": [
@@ -5088,15 +5067,15 @@
     ],
     "captureOrigin": {
      "frameId": 0,
-     "tabId": 1140612370
+     "tabId": 757894229
     },
-    "captureSeq": 14460.200000000186,
+    "captureSeq": 14494.600000000559,
     "claimType": "Click",
     "claimedBy": "int-10",
     "disposition": "claimed",
-    "eventId": "evt-pmt5selpq-84",
+    "eventId": "evt-pmt74awdl-84",
     "eventType": "click",
-    "pageId": "pmt5selpq",
+    "pageId": "pmt74awdl",
     "targetIdentity": {
      "accessibleName": "Notify",
      "ariaLabel": null,
@@ -5122,7 +5101,7 @@
     "targetName": "Notify",
     "targetRole": "button",
     "targetTag": "BUTTON",
-    "timestamp": 1787488349929
+    "timestamp": 1787568798757
    }
   ],
   "match": true,
@@ -5148,7 +5127,7 @@
         "firstBatchIndex": 0,
         "firstMutationAt": 1.7999999998137355,
         "lastBatchIndex": 1,
-        "lastMutationAt": 1307.2000000001863,
+        "lastMutationAt": 1307.4000000003725,
         "rawMutationCount": 2,
         "removedNodesCount": 0,
         "shadowContext": null,
@@ -5164,7 +5143,7 @@
       "newSurfaces": [],
       "performanceCondition": {
        "highChurnMode": false,
-       "longestBatchMs": 0.2999999998137355,
+       "longestBatchMs": 0.30000000074505806,
        "mainThreadBlocked": false,
        "totalBatches": 2
       },
@@ -5201,8 +5180,8 @@
         }
        ],
        "itemsOverflow": 0,
-       "scanDurationMs": 1,
-       "scannedAt": 7304.200000000186,
+       "scanDurationMs": 2,
+       "scannedAt": 7316.800000000745,
        "url": "http://127.0.0.1:8190/",
        "viewId": null
       },
@@ -5221,19 +5200,19 @@
         "oldValue": null,
         "path": "body > main > div > div > div#td-onward > div#cal-onward",
         "property": "hidden",
-        "relativeTime": 1307.2000000001863
+        "relativeTime": 1307.4000000003725
        }
       ]
      },
      "frameId": "main",
-     "sourceEventId": "evt-pmt5selpq-9",
+     "sourceEventId": "evt-pmt74awdl-9",
      "sourceEventType": "click",
      "targetEvidence": {
       "after": {
        "ariaChecked": null,
        "ariaExpanded": null,
        "ariaPressed": null,
-       "capturedAt": 7304,
+       "capturedAt": 7316.4000000003725,
        "checked": null,
        "childCount": 0,
        "className": "withIcon form-control",
@@ -5249,7 +5228,7 @@
        "ariaChecked": null,
        "ariaExpanded": null,
        "ariaPressed": null,
-       "capturedAt": 5612,
+       "capturedAt": 5624.4000000003725,
        "checked": null,
        "childCount": 0,
        "className": "withIcon form-control",
@@ -5284,68 +5263,68 @@
        "testId": null,
        "xPath": "//input[@id='onward']"
       },
-      "identityCapturedAt": 5697.300000000745
+      "identityCapturedAt": 5708.800000000745
      },
      "window": {
-      "closedAt": 7305.600000000559,
-      "durationMs": 1608.2999999998137,
+      "closedAt": 7319,
+      "durationMs": 1610.199999999255,
       "endReason": "consequence-settled",
-      "openedAt": 5697.300000000745,
+      "openedAt": 5708.800000000745,
       "stabilityTrace": [
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 5697.5
+        "timestamp": 5709.100000000559
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 0,
-        "timestamp": 5698
+        "timestamp": 5709.9000000003725
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 5998.4000000003725
+        "timestamp": 6010.100000000559
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 6298.700000000186
+        "timestamp": 6310.4000000003725
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 6599
+        "timestamp": 6610.700000000186
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 6899.200000000186
+        "timestamp": 6911
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 0,
-        "timestamp": 7003.200000000186
+        "timestamp": 7015.200000000186
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 7303.5
+        "timestamp": 7315.4000000003725
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 7303.600000000559
+        "timestamp": 7315.700000000186
        }
       ]
      },
-     "windowId": "ev-evt-pmt5selpq-9"
+     "windowId": "ev-evt-pmt74awdl-9"
     },
     "businessMeaning": "Select date \"Choose Sunday, September 6th, 2026\" (Depart on)",
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "completed",
-    "endTime": 1787488342384,
+    "endTime": 1787568791189,
     "interactionId": "int-2",
     "lifecycleId": "lc-2",
     "memberEvents": [
@@ -5353,9 +5332,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 5612,
+      "captureSeq": 5624.300000000745,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": null,
@@ -5390,7 +5369,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-8",
+      "eventId": "evt-pmt74awdl-8",
       "eventType": "focus",
       "isTrusted": true,
       "key": null,
@@ -5422,7 +5401,7 @@
        "testId": null,
        "xPath": "//input[@id='onward']"
       },
-      "timestamp": 1787488341081,
+      "timestamp": 1787568789886,
       "valueAfter": null,
       "valueBefore": ""
      },
@@ -5430,9 +5409,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 5694.700000000186,
+      "captureSeq": 5706.5,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 137,
@@ -5467,7 +5446,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-9",
+      "eventId": "evt-pmt74awdl-9",
       "eventType": "click",
       "isTrusted": true,
       "key": null,
@@ -5499,7 +5478,7 @@
        "testId": null,
        "xPath": "//input[@id='onward']"
       },
-      "timestamp": 1787488341164,
+      "timestamp": 1787568789969,
       "valueAfter": null,
       "valueBefore": ""
      },
@@ -5507,9 +5486,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 6911.9000000003725,
+      "captureSeq": 6921.9000000003725,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -5544,7 +5523,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-10",
+      "eventId": "evt-pmt74awdl-10",
       "eventType": "mouseleave",
       "isTrusted": true,
       "key": null,
@@ -5576,7 +5555,7 @@
        "testId": null,
        "xPath": "//input[@id='onward']"
       },
-      "timestamp": 1787488342381,
+      "timestamp": 1787568791185,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -5584,9 +5563,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 6911.9000000003725,
+      "captureSeq": 6921.9000000003725,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -5621,7 +5600,7 @@
        "required": false,
        "tabIndex": -1
       },
-      "eventId": "evt-pmt5selpq-13",
+      "eventId": "evt-pmt74awdl-13",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -5653,7 +5632,7 @@
        "testId": null,
        "xPath": "//body/main/div[1]/div/div[1]/div[2]/div"
       },
-      "timestamp": 1787488342382,
+      "timestamp": 1787568791186,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -5661,9 +5640,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 6911.9000000003725,
+      "captureSeq": 6921.9000000003725,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -5700,7 +5679,7 @@
        "required": false,
        "tabIndex": -1
       },
-      "eventId": "evt-pmt5selpq-14",
+      "eventId": "evt-pmt74awdl-14",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -5732,7 +5711,7 @@
        "testId": null,
        "xPath": "//body/main/div[1]/div/div[1]/div[2]/div/div[2]"
       },
-      "timestamp": 1787488342382,
+      "timestamp": 1787568791186,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -5740,9 +5719,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 6911.9000000003725,
+      "captureSeq": 6921.9000000003725,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -5781,7 +5760,7 @@
        "required": false,
        "tabIndex": -1
       },
-      "eventId": "evt-pmt5selpq-15",
+      "eventId": "evt-pmt74awdl-15",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -5813,7 +5792,7 @@
        "testId": null,
        "xPath": "//div[@id='month-onward']"
       },
-      "timestamp": 1787488342383,
+      "timestamp": 1787568791187,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -5821,9 +5800,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 6911.9000000003725,
+      "captureSeq": 6921.9000000003725,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -5864,7 +5843,7 @@
        "required": false,
        "tabIndex": -1
       },
-      "eventId": "evt-pmt5selpq-16",
+      "eventId": "evt-pmt74awdl-16",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -5896,7 +5875,7 @@
        "testId": null,
        "xPath": "//body/main/div[1]/div/div[1]/div[2]/div/div[2]/div[2]/div"
       },
-      "timestamp": 1787488342383,
+      "timestamp": 1787568791187,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -5904,9 +5883,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 6911.9000000003725,
+      "captureSeq": 6921.9000000003725,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -5947,7 +5926,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-17",
+      "eventId": "evt-pmt74awdl-17",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -5979,7 +5958,7 @@
        "testId": null,
        "xPath": "//main/div[1]/div/div[1]/div[2]/div/div[2]/div[2]/div/div[2]"
       },
-      "timestamp": 1787488342383,
+      "timestamp": 1787568791187,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -5987,9 +5966,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 6911.9000000003725,
+      "captureSeq": 6921.9000000003725,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -6030,7 +6009,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-18",
+      "eventId": "evt-pmt74awdl-18",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -6062,7 +6041,7 @@
        "testId": null,
        "xPath": "//main/div[1]/div/div[1]/div[2]/div/div[2]/div[2]/div/div[2]"
       },
-      "timestamp": 1787488342384,
+      "timestamp": 1787568791188,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -6070,9 +6049,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 6911.9000000003725,
+      "captureSeq": 6921.9000000003725,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -6113,7 +6092,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-19",
+      "eventId": "evt-pmt74awdl-19",
       "eventType": "mousedown",
       "isTrusted": true,
       "key": null,
@@ -6145,7 +6124,7 @@
        "testId": null,
        "xPath": "//main/div[1]/div/div[1]/div[2]/div/div[2]/div[2]/div/div[2]"
       },
-      "timestamp": 1787488342384,
+      "timestamp": 1787568791189,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -6153,9 +6132,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 7002,
+      "captureSeq": 7014.100000000559,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -6196,7 +6175,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-22",
+      "eventId": "evt-pmt74awdl-22",
       "eventType": "click",
       "isTrusted": true,
       "key": null,
@@ -6228,7 +6207,7 @@
        "testId": null,
        "xPath": "//main/div[1]/div/div[1]/div[2]/div/div[2]/div[2]/div/div[2]"
       },
-      "timestamp": 1787488342471,
+      "timestamp": 1787568791276,
       "valueAfter": null,
       "valueBefore": null
      }
@@ -6236,13 +6215,13 @@
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "dateValue": "Choose Sunday, September 6th, 2026",
      "selectedDate": "Choose Sunday, September 6th, 2026",
      "targetName": "Depart on"
     },
-    "startTime": 1787488341081,
+    "startTime": 1787568789886,
     "trigger": {
      "accessibleName": "Depart on",
      "ariaLabel": "Depart on",
@@ -6269,9 +6248,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 5612,
+     "captureSeq": 5624.300000000745,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": null,
@@ -6306,7 +6285,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-8",
+     "eventId": "evt-pmt74awdl-8",
      "eventType": "focus",
      "isTrusted": true,
      "key": null,
@@ -6338,7 +6317,7 @@
       "testId": null,
       "xPath": "//input[@id='onward']"
      },
-     "timestamp": 1787488341081,
+     "timestamp": 1787568789886,
      "valueAfter": null,
      "valueBefore": ""
     },
@@ -6363,14 +6342,14 @@
       "visibilityChanges": []
      },
      "frameId": "main",
-     "sourceEventId": "evt-pmt5selpq-44",
+     "sourceEventId": "evt-pmt74awdl-44",
      "sourceEventType": "lifecycle",
      "targetEvidence": {
       "after": {
        "ariaChecked": null,
        "ariaExpanded": null,
        "ariaPressed": null,
-       "capturedAt": 10062.100000000559,
+       "capturedAt": 10088.5,
        "checked": null,
        "childCount": 0,
        "className": "",
@@ -6406,22 +6385,22 @@
        "testId": null,
        "xPath": "//input[@id='return']"
       },
-      "identityCapturedAt": 10062.100000000559
+      "identityCapturedAt": 10088.5
      },
      "window": {
-      "closedAt": 10062.100000000559,
+      "closedAt": 10088.5,
       "durationMs": 0,
       "endReason": "lifecycle-complete",
       "openedAt": 0,
       "stabilityTrace": []
      },
-     "windowId": "lc-evt-pmt5selpq-44"
+     "windowId": "lc-evt-pmt74awdl-44"
     },
     "businessMeaning": "Select date \"Choose Tuesday, September 8th, 2026\" (Return on)",
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "completed",
-    "endTime": 1787488345370,
+    "endTime": 1787568794182,
     "interactionId": "int-5",
     "lifecycleId": "lc-5",
     "memberEvents": [
@@ -6429,9 +6408,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 8610.100000000559,
+      "captureSeq": 8622.400000000373,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": null,
@@ -6466,7 +6445,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-44",
+      "eventId": "evt-pmt74awdl-44",
       "eventType": "focus",
       "isTrusted": true,
       "key": null,
@@ -6498,7 +6477,7 @@
        "testId": null,
        "xPath": "//input[@id='return']"
       },
-      "timestamp": 1787488344079,
+      "timestamp": 1787568792884,
       "valueAfter": null,
       "valueBefore": ""
      },
@@ -6506,9 +6485,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 8692,
+      "captureSeq": 8708,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 452,
@@ -6543,7 +6522,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-45",
+      "eventId": "evt-pmt74awdl-45",
       "eventType": "click",
       "isTrusted": true,
       "key": null,
@@ -6575,7 +6554,7 @@
        "testId": null,
        "xPath": "//input[@id='return']"
       },
-      "timestamp": 1787488344161,
+      "timestamp": 1787568792970,
       "valueAfter": null,
       "valueBefore": ""
      },
@@ -6583,9 +6562,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 9898.100000000559,
+      "captureSeq": 9914.400000000373,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 536,
@@ -6620,7 +6599,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-46",
+      "eventId": "evt-pmt74awdl-46",
       "eventType": "mouseleave",
       "isTrusted": true,
       "key": null,
@@ -6652,7 +6631,7 @@
        "testId": null,
        "xPath": "//input[@id='return']"
       },
-      "timestamp": 1787488345367,
+      "timestamp": 1787568794177,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -6660,9 +6639,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 9898.100000000559,
+      "captureSeq": 9914.400000000373,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 536,
@@ -6697,7 +6676,7 @@
        "required": false,
        "tabIndex": -1
       },
-      "eventId": "evt-pmt5selpq-49",
+      "eventId": "evt-pmt74awdl-49",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -6729,7 +6708,7 @@
        "testId": null,
        "xPath": "//body/main/div[1]/div/div[2]/div[2]/div"
       },
-      "timestamp": 1787488345369,
+      "timestamp": 1787568794178,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -6737,9 +6716,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 9898.100000000559,
+      "captureSeq": 9914.400000000373,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 536,
@@ -6776,7 +6755,7 @@
        "required": false,
        "tabIndex": -1
       },
-      "eventId": "evt-pmt5selpq-50",
+      "eventId": "evt-pmt74awdl-50",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -6808,7 +6787,7 @@
        "testId": null,
        "xPath": "//div[@id='month-return']"
       },
-      "timestamp": 1787488345369,
+      "timestamp": 1787568794178,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -6816,9 +6795,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 9898.100000000559,
+      "captureSeq": 9914.400000000373,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 536,
@@ -6857,7 +6836,7 @@
        "required": false,
        "tabIndex": -1
       },
-      "eventId": "evt-pmt5selpq-51",
+      "eventId": "evt-pmt74awdl-51",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -6889,7 +6868,7 @@
        "testId": null,
        "xPath": "//body/main/div[1]/div/div[2]/div[2]/div/div/div"
       },
-      "timestamp": 1787488345369,
+      "timestamp": 1787568794179,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -6897,9 +6876,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 9898.100000000559,
+      "captureSeq": 9914.400000000373,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 536,
@@ -6940,7 +6919,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-52",
+      "eventId": "evt-pmt74awdl-52",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -6972,7 +6951,7 @@
        "testId": null,
        "xPath": "//body/main/div[1]/div/div[2]/div[2]/div/div/div/div[4]"
       },
-      "timestamp": 1787488345369,
+      "timestamp": 1787568794181,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -6980,9 +6959,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 9898.100000000559,
+      "captureSeq": 9914.400000000373,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 536,
@@ -7023,7 +7002,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-53",
+      "eventId": "evt-pmt74awdl-53",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -7055,7 +7034,7 @@
        "testId": null,
        "xPath": "//body/main/div[1]/div/div[2]/div[2]/div/div/div/div[4]"
       },
-      "timestamp": 1787488345370,
+      "timestamp": 1787568794181,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -7063,9 +7042,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 9898.100000000559,
+      "captureSeq": 9914.400000000373,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 536,
@@ -7106,7 +7085,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-54",
+      "eventId": "evt-pmt74awdl-54",
       "eventType": "mousedown",
       "isTrusted": true,
       "key": null,
@@ -7138,7 +7117,7 @@
        "testId": null,
        "xPath": "//body/main/div[1]/div/div[2]/div[2]/div/div/div/div[4]"
       },
-      "timestamp": 1787488345370,
+      "timestamp": 1787568794182,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -7146,9 +7125,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 9987.200000000186,
+      "captureSeq": 10006.200000000186,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 536,
@@ -7189,7 +7168,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-57",
+      "eventId": "evt-pmt74awdl-57",
       "eventType": "click",
       "isTrusted": true,
       "key": null,
@@ -7221,7 +7200,7 @@
        "testId": null,
        "xPath": "//body/main/div[1]/div/div[2]/div[2]/div/div/div/div[4]"
       },
-      "timestamp": 1787488345456,
+      "timestamp": 1787568794269,
       "valueAfter": null,
       "valueBefore": null
      }
@@ -7229,13 +7208,13 @@
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "dateValue": "Choose Tuesday, September 8th, 2026",
      "selectedDate": "Choose Tuesday, September 8th, 2026",
      "targetName": "Return on"
     },
-    "startTime": 1787488344079,
+    "startTime": 1787568792884,
     "trigger": {
      "accessibleName": "Return on",
      "ariaLabel": "Return on",
@@ -7262,9 +7241,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 8610.100000000559,
+     "captureSeq": 8622.400000000373,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": null,
@@ -7299,7 +7278,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-44",
+     "eventId": "evt-pmt74awdl-44",
      "eventType": "focus",
      "isTrusted": true,
      "key": null,
@@ -7331,7 +7310,7 @@
       "testId": null,
       "xPath": "//input[@id='return']"
      },
-     "timestamp": 1787488344079,
+     "timestamp": 1787568792884,
      "valueAfter": null,
      "valueBefore": ""
     },
@@ -7356,9 +7335,9 @@
         ],
         "characterDataDelta": null,
         "firstBatchIndex": 4,
-        "firstMutationAt": 5984.5,
+        "firstMutationAt": 5995.4000000003725,
         "lastBatchIndex": 4,
-        "lastMutationAt": 5984.5,
+        "lastMutationAt": 5995.4000000003725,
         "rawMutationCount": 1,
         "removedNodesCount": 0,
         "shadowContext": null,
@@ -7374,9 +7353,9 @@
         "changedAttributes": [],
         "characterDataDelta": null,
         "firstBatchIndex": 4,
-        "firstMutationAt": 5984.5,
+        "firstMutationAt": 5995.4000000003725,
         "lastBatchIndex": 4,
-        "lastMutationAt": 5984.5,
+        "lastMutationAt": 5995.4000000003725,
         "rawMutationCount": 1,
         "removedNodesCount": 1,
         "shadowContext": null,
@@ -7393,21 +7372,21 @@
         "durationMs": null,
         "endRelativeToEvent": null,
         "method": "GET",
-        "requestId": "26",
+        "requestId": "27",
         "resourceType": "unknown",
         "source": "webrequest",
-        "sourceEventId": "evt-pmt5selpq-72",
+        "sourceEventId": "evt-pmt74awdl-72",
         "startRelativeToEvent": 0,
         "status": 200,
         "url": "http://127.0.0.1:8190/collect?e=search"
        },
        {
-        "durationMs": 8.099999999627471,
-        "endRelativeToEvent": 8.299999999813735,
+        "durationMs": 8.299999999813735,
+        "endRelativeToEvent": 8.799999999813735,
         "method": "GET",
         "resourceType": "fetch",
         "source": "main-world",
-        "startRelativeToEvent": 0.20000000018626451,
+        "startRelativeToEvent": 0.5,
         "status": 200,
         "url": "/collect?e=search"
        }
@@ -7415,7 +7394,7 @@
       "newSurfaces": [],
       "performanceCondition": {
        "highChurnMode": false,
-       "longestBatchMs": 0.2999999998137355,
+       "longestBatchMs": 0.7000000001862645,
        "mainThreadBlocked": false,
        "totalBatches": 5
       },
@@ -7464,8 +7443,8 @@
         }
        ],
        "itemsOverflow": 0,
-       "scanDurationMs": 2,
-       "scannedAt": 11992.600000000559,
+       "scanDurationMs": 3,
+       "scannedAt": 12027.100000000559,
        "url": "http://127.0.0.1:8190/",
        "viewId": null
       },
@@ -7476,19 +7455,19 @@
         "oldValue": "",
         "path": "body > main > div > ul#opts",
         "property": "hidden",
-        "relativeTime": 5984.5
+        "relativeTime": 5995.4000000003725
        }
       ]
      },
      "frameId": "main",
-     "sourceEventId": "evt-pmt5selpq-72",
+     "sourceEventId": "evt-pmt74awdl-72",
      "sourceEventType": "click",
      "targetEvidence": {
       "after": {
        "ariaChecked": null,
        "ariaExpanded": null,
        "ariaPressed": null,
-       "capturedAt": 11992.5,
+       "capturedAt": 12026.900000000373,
        "checked": null,
        "childCount": 0,
        "className": "",
@@ -7504,7 +7483,7 @@
        "ariaChecked": null,
        "ariaExpanded": null,
        "ariaPressed": null,
-       "capturedAt": 11596.800000000745,
+       "capturedAt": 11617.300000000745,
        "checked": null,
        "childCount": 0,
        "className": "",
@@ -7523,7 +7502,7 @@
         "tagName": "BUTTON"
        },
        "before": null,
-       "detectedAt": 11994.300000000745
+       "detectedAt": 12029.900000000373
       },
       "identity": {
        "accessibleName": "Search Flights",
@@ -7547,43 +7526,43 @@
        "testId": null,
        "xPath": "//button[@id='go']"
       },
-      "identityCapturedAt": 11679.600000000559
+      "identityCapturedAt": 11701.800000000745
      },
      "window": {
-      "closedAt": 11994.300000000745,
-      "durationMs": 314.70000000018626,
+      "closedAt": 12029.900000000373,
+      "durationMs": 328.09999999962747,
       "endReason": "consequence-settled",
-      "openedAt": 11679.600000000559,
+      "openedAt": 11701.800000000745,
       "stabilityTrace": [
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 11679.600000000559
+        "timestamp": 11701.900000000373
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 0,
-        "timestamp": 11680.600000000559
+        "timestamp": 11703.900000000373
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 11992.300000000745
+        "timestamp": 12026.800000000745
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 11992.300000000745
+        "timestamp": 12026.800000000745
        }
       ]
      },
-     "windowId": "ev-evt-pmt5selpq-72"
+     "windowId": "ev-evt-pmt74awdl-72"
     },
     "businessMeaning": "Click \"Search Flights\"",
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "completed",
-    "endTime": 1787488347148,
+    "endTime": 1787568795963,
     "interactionId": "int-7",
     "lifecycleId": "lc-7",
     "memberEvents": [
@@ -7591,9 +7570,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 11678.5,
+      "captureSeq": 11700.300000000745,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 87,
@@ -7622,7 +7601,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-72",
+      "eventId": "evt-pmt74awdl-72",
       "eventType": "click",
       "isTrusted": true,
       "key": null,
@@ -7654,7 +7633,7 @@
        "testId": null,
        "xPath": "//button[@id='go']"
       },
-      "timestamp": 1787488347148,
+      "timestamp": 1787568795963,
       "valueAfter": null,
       "valueBefore": null
      }
@@ -7662,7 +7641,7 @@
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "clientX": 87,
      "clientY": 109,
@@ -7670,7 +7649,7 @@
      "targetRole": "button",
      "targetTag": "BUTTON"
     },
-    "startTime": 1787488347148,
+    "startTime": 1787568795963,
     "trigger": {
      "accessibleName": "Search Flights",
      "ariaLabel": null,
@@ -7697,9 +7676,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 11678.5,
+     "captureSeq": 11700.300000000745,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 87,
@@ -7728,7 +7707,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-72",
+     "eventId": "evt-pmt74awdl-72",
      "eventType": "click",
      "isTrusted": true,
      "key": null,
@@ -7760,7 +7739,7 @@
       "testId": null,
       "xPath": "//button[@id='go']"
      },
-     "timestamp": 1787488347148,
+     "timestamp": 1787568795963,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -7778,9 +7757,9 @@
         "changedAttributes": [],
         "characterDataDelta": null,
         "firstBatchIndex": 5,
-        "firstMutationAt": 7376.0999999996275,
+        "firstMutationAt": 7395.9000000003725,
         "lastBatchIndex": 5,
-        "lastMutationAt": 7376.0999999996275,
+        "lastMutationAt": 7395.9000000003725,
         "rawMutationCount": 1,
         "removedNodesCount": 1,
         "shadowContext": null,
@@ -7792,24 +7771,11 @@
        }
       ],
       "navigation": [],
-      "networkActivity": [
-       {
-        "durationMs": null,
-        "endRelativeToEvent": null,
-        "method": "GET",
-        "requestId": "27",
-        "resourceType": "unknown",
-        "source": "webrequest",
-        "sourceEventId": "evt-pmt5selpq-78",
-        "startRelativeToEvent": 0,
-        "status": 200,
-        "url": "http://127.0.0.1:8190/collect?e=notify"
-       }
-      ],
+      "networkActivity": [],
       "newSurfaces": [],
       "performanceCondition": {
        "highChurnMode": false,
-       "longestBatchMs": 0.2999999998137355,
+       "longestBatchMs": 0.7000000001862645,
        "mainThreadBlocked": false,
        "totalBatches": 6
       },
@@ -7859,21 +7825,21 @@
        ],
        "itemsOverflow": 0,
        "scanDurationMs": 1,
-       "scannedAt": 13378.800000000745,
+       "scannedAt": 13410.800000000745,
        "url": "http://127.0.0.1:8190/",
        "viewId": null
       },
       "visibilityChanges": []
      },
      "frameId": "main",
-     "sourceEventId": "evt-pmt5selpq-78",
+     "sourceEventId": "evt-pmt74awdl-78",
      "sourceEventType": "click",
      "targetEvidence": {
       "after": {
        "ariaChecked": null,
        "ariaExpanded": null,
        "ariaPressed": null,
-       "capturedAt": 13378.800000000745,
+       "capturedAt": 13410.800000000745,
        "checked": null,
        "childCount": 0,
        "className": "opt",
@@ -7889,7 +7855,7 @@
        "ariaChecked": null,
        "ariaExpanded": null,
        "ariaPressed": null,
-       "capturedAt": 12988.400000000373,
+       "capturedAt": 13016.300000000745,
        "checked": null,
        "childCount": 0,
        "className": "opt",
@@ -7924,43 +7890,43 @@
        "testId": "airport-opt-1",
        "xPath": "//body/main/div[2]/ul/li[1]"
       },
-      "identityCapturedAt": 13071.800000000745
+      "identityCapturedAt": 13103.300000000745
      },
      "window": {
-      "closedAt": 13379.600000000559,
-      "durationMs": 307.79999999981374,
+      "closedAt": 13411.800000000745,
+      "durationMs": 308.5,
       "endReason": "consequence-settled",
-      "openedAt": 13071.800000000745,
+      "openedAt": 13103.300000000745,
       "stabilityTrace": [
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 13071.900000000373
+        "timestamp": 13103.300000000745
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 0,
-        "timestamp": 13072
+        "timestamp": 13103.700000000186
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 13378.600000000559
+        "timestamp": 13410.600000000559
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 13378.700000000186
+        "timestamp": 13410.600000000559
        }
       ]
      },
-     "windowId": "ev-evt-pmt5selpq-78"
+     "windowId": "ev-evt-pmt74awdl-78"
     },
     "businessMeaning": "Click \"Bengaluru\"",
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "completed",
-    "endTime": 1787488348540,
+    "endTime": 1787568797365,
     "interactionId": "int-8",
     "lifecycleId": "lc-8",
     "memberEvents": [
@@ -7968,9 +7934,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 13070.800000000745,
+      "captureSeq": 13102.100000000559,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 247,
@@ -8001,7 +7967,7 @@
        "required": false,
        "tabIndex": -1
       },
-      "eventId": "evt-pmt5selpq-78",
+      "eventId": "evt-pmt74awdl-78",
       "eventType": "click",
       "isTrusted": true,
       "key": null,
@@ -8033,7 +7999,7 @@
        "testId": "airport-opt-1",
        "xPath": "//body/main/div[2]/ul/li[1]"
       },
-      "timestamp": 1787488348540,
+      "timestamp": 1787568797365,
       "valueAfter": null,
       "valueBefore": null
      }
@@ -8041,7 +8007,7 @@
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "clientX": 247,
      "clientY": 109,
@@ -8049,7 +8015,7 @@
      "targetRole": "listitem",
      "targetTag": "LI"
     },
-    "startTime": 1787488348540,
+    "startTime": 1787568797365,
     "trigger": {
      "accessibleName": "Bengaluru",
      "ariaLabel": null,
@@ -8076,9 +8042,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 13070.800000000745,
+     "captureSeq": 13102.100000000559,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 247,
@@ -8109,7 +8075,7 @@
       "required": false,
       "tabIndex": -1
      },
-     "eventId": "evt-pmt5selpq-78",
+     "eventId": "evt-pmt74awdl-78",
      "eventType": "click",
      "isTrusted": true,
      "key": null,
@@ -8141,7 +8107,7 @@
       "testId": "airport-opt-1",
       "xPath": "//body/main/div[2]/ul/li[1]"
      },
-     "timestamp": 1787488348540,
+     "timestamp": 1787568797365,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -8166,9 +8132,9 @@
         ],
         "characterDataDelta": null,
         "firstBatchIndex": 6,
-        "firstMutationAt": 8765.900000000373,
+        "firstMutationAt": 8788.700000000186,
         "lastBatchIndex": 6,
-        "lastMutationAt": 8765.900000000373,
+        "lastMutationAt": 8788.700000000186,
         "rawMutationCount": 1,
         "removedNodesCount": 0,
         "shadowContext": null,
@@ -8182,40 +8148,32 @@
       "navigation": [],
       "networkActivity": [
        {
-        "durationMs": 7.6000000005587935,
-        "endRelativeToEvent": 7.7999999998137355,
+        "durationMs": null,
+        "endRelativeToEvent": null,
+        "method": "GET",
+        "requestId": "28",
+        "resourceType": "unknown",
+        "source": "webrequest",
+        "sourceEventId": "evt-pmt74awdl-84",
+        "startRelativeToEvent": 0,
+        "status": 200,
+        "url": "http://127.0.0.1:8190/collect?e=notify"
+       },
+       {
+        "durationMs": 5.7999999998137355,
+        "endRelativeToEvent": 6.099999999627471,
         "method": "GET",
         "resourceType": "fetch",
         "source": "main-world",
-        "startRelativeToEvent": 0.19999999925494194,
+        "startRelativeToEvent": 0.2999999998137355,
         "status": 200,
         "url": "/collect?e=notify"
-       },
-       {
-        "durationMs": 12.799999999813735,
-        "endRelativeToEvent": 20.799999999813735,
-        "method": "GET",
-        "resourceType": "unknown",
-        "source": "webrequest",
-        "startRelativeToEvent": 8,
-        "status": 200,
-        "url": "http://127.0.0.1:8190/collect?e=notify"
-       },
-       {
-        "durationMs": 0,
-        "endRelativeToEvent": 52.99999999906868,
-        "method": "GET",
-        "resourceType": "resource",
-        "source": "performance-observer",
-        "startRelativeToEvent": 52.99999999906868,
-        "status": null,
-        "url": "http://127.0.0.1:8190/collect?e=notify"
        }
       ],
       "newSurfaces": [],
       "performanceCondition": {
        "highChurnMode": false,
-       "longestBatchMs": 0.2999999998137355,
+       "longestBatchMs": 0.7000000001862645,
        "mainThreadBlocked": false,
        "totalBatches": 7
       },
@@ -8263,22 +8221,22 @@
         }
        ],
        "itemsOverflow": 0,
-       "scanDurationMs": 1,
-       "scannedAt": 14777.600000000559,
+       "scanDurationMs": 0,
+       "scannedAt": 14809.600000000559,
        "url": "http://127.0.0.1:8190/",
        "viewId": null
       },
       "visibilityChanges": []
      },
      "frameId": "main",
-     "sourceEventId": "evt-pmt5selpq-84",
+     "sourceEventId": "evt-pmt74awdl-84",
      "sourceEventType": "click",
      "targetEvidence": {
       "after": {
        "ariaChecked": null,
        "ariaExpanded": null,
        "ariaPressed": null,
-       "capturedAt": 14777.600000000559,
+       "capturedAt": 14809.5,
        "checked": null,
        "childCount": 0,
        "className": "",
@@ -8294,7 +8252,7 @@
        "ariaChecked": null,
        "ariaExpanded": null,
        "ariaPressed": null,
-       "capturedAt": 14378.600000000559,
+       "capturedAt": 14412,
        "checked": null,
        "childCount": 0,
        "className": "",
@@ -8313,7 +8271,7 @@
         "tagName": "BUTTON"
        },
        "before": null,
-       "detectedAt": 14778.100000000559
+       "detectedAt": 14810.100000000559
       },
       "identity": {
        "accessibleName": "Notify",
@@ -8337,43 +8295,43 @@
        "testId": null,
        "xPath": "//button[@id='toast-btn']"
       },
-      "identityCapturedAt": 14461.300000000745
+      "identityCapturedAt": 14495.600000000559
      },
      "window": {
-      "closedAt": 14778.100000000559,
-      "durationMs": 316.79999999981374,
+      "closedAt": 14810.100000000559,
+      "durationMs": 314.5,
       "endReason": "consequence-settled",
-      "openedAt": 14461.300000000745,
+      "openedAt": 14495.600000000559,
       "stabilityTrace": [
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 14461.300000000745
+        "timestamp": 14495.600000000559
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 0,
-        "timestamp": 14462.200000000186
+        "timestamp": 14496.800000000745
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 14777.400000000373
+        "timestamp": 14809.400000000373
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 14777.5
+        "timestamp": 14809.400000000373
        }
       ]
      },
-     "windowId": "ev-evt-pmt5selpq-84"
+     "windowId": "ev-evt-pmt74awdl-84"
     },
     "businessMeaning": "Click \"Notify\"",
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "completed",
-    "endTime": 1787488349929,
+    "endTime": 1787568798757,
     "interactionId": "int-10",
     "lifecycleId": "lc-10",
     "memberEvents": [
@@ -8381,9 +8339,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 14460.200000000186,
+      "captureSeq": 14494.600000000559,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 433,
@@ -8412,7 +8370,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-84",
+      "eventId": "evt-pmt74awdl-84",
       "eventType": "click",
       "isTrusted": true,
       "key": null,
@@ -8444,7 +8402,7 @@
        "testId": null,
        "xPath": "//button[@id='toast-btn']"
       },
-      "timestamp": 1787488349929,
+      "timestamp": 1787568798757,
       "valueAfter": null,
       "valueBefore": null
      }
@@ -8452,7 +8410,7 @@
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "clientX": 433,
      "clientY": 118,
@@ -8460,7 +8418,7 @@
      "targetRole": "button",
      "targetTag": "BUTTON"
     },
-    "startTime": 1787488349929,
+    "startTime": 1787568798757,
     "trigger": {
      "accessibleName": "Notify",
      "ariaLabel": null,
@@ -8487,9 +8445,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 14460.200000000186,
+     "captureSeq": 14494.600000000559,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 433,
@@ -8518,7 +8476,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-84",
+     "eventId": "evt-pmt74awdl-84",
      "eventType": "click",
      "isTrusted": true,
      "key": null,
@@ -8550,7 +8508,7 @@
       "testId": null,
       "xPath": "//button[@id='toast-btn']"
      },
-     "timestamp": 1787488349929,
+     "timestamp": 1787568798757,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -8561,13 +8519,13 @@
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "completed",
-    "endTime": 1787488341080,
+    "endTime": 1787568789885,
     "interactionId": "int-11",
     "memberEvents": [],
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "physicalEventType": "mousedown",
      "reason": "unclaimed-at-projection",
@@ -8576,7 +8534,7 @@
      "targetRole": "textbox",
      "targetTag": "INPUT"
     },
-    "startTime": 1787488341080,
+    "startTime": 1787568789885,
     "trigger": {
      "accessibleName": "Depart on",
      "ariaLabel": "Depart on",
@@ -8603,9 +8561,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 5605,
+     "captureSeq": 5613.9000000003725,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": null,
@@ -8640,7 +8598,7 @@
       "required": false,
       "tabIndex": null
      },
-     "eventId": "evt-pmt5selpq-7",
+     "eventId": "evt-pmt74awdl-7",
      "eventType": "mousedown",
      "isTrusted": true,
      "key": null,
@@ -8672,7 +8630,7 @@
       "testId": null,
       "xPath": "//input[@id='onward']"
      },
-     "timestamp": 1787488341080,
+     "timestamp": 1787568789885,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -8683,13 +8641,13 @@
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "completed",
-    "endTime": 1787488344079,
+    "endTime": 1787568792884,
     "interactionId": "int-12",
     "memberEvents": [],
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "physicalEventType": "mousedown",
      "reason": "unclaimed-at-projection",
@@ -8698,7 +8656,7 @@
      "targetRole": "textbox",
      "targetTag": "INPUT"
     },
-    "startTime": 1787488344079,
+    "startTime": 1787568792884,
     "trigger": {
      "accessibleName": "Return on",
      "ariaLabel": "Return on",
@@ -8725,9 +8683,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 8607.600000000559,
+     "captureSeq": 8619.400000000373,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": null,
@@ -8762,7 +8720,7 @@
       "required": false,
       "tabIndex": null
      },
-     "eventId": "evt-pmt5selpq-43",
+     "eventId": "evt-pmt74awdl-43",
      "eventType": "mousedown",
      "isTrusted": true,
      "key": null,
@@ -8794,7 +8752,7 @@
       "testId": null,
       "xPath": "//input[@id='return']"
      },
-     "timestamp": 1787488344079,
+     "timestamp": 1787568792884,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -8805,13 +8763,13 @@
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "completed",
-    "endTime": 1787488347065,
+    "endTime": 1787568795879,
     "interactionId": "int-13",
     "memberEvents": [],
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "physicalEventType": "mousedown",
      "reason": "unclaimed-at-projection",
@@ -8820,7 +8778,7 @@
      "targetRole": "button",
      "targetTag": "BUTTON"
     },
-    "startTime": 1787488347065,
+    "startTime": 1787568795879,
     "trigger": {
      "accessibleName": "Search Flights",
      "ariaLabel": null,
@@ -8847,9 +8805,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 11593.800000000745,
+     "captureSeq": 11613.600000000559,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": null,
@@ -8878,7 +8836,7 @@
       "required": false,
       "tabIndex": null
      },
-     "eventId": "evt-pmt5selpq-70",
+     "eventId": "evt-pmt74awdl-70",
      "eventType": "mousedown",
      "isTrusted": true,
      "key": null,
@@ -8910,7 +8868,7 @@
       "testId": null,
       "xPath": "//button[@id='go']"
      },
-     "timestamp": 1787488347065,
+     "timestamp": 1787568795879,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -8921,13 +8879,13 @@
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "completed",
-    "endTime": 1787488348457,
+    "endTime": 1787568797278,
     "interactionId": "int-14",
     "memberEvents": [],
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "physicalEventType": "mousedown",
      "reason": "unclaimed-at-projection",
@@ -8936,7 +8894,7 @@
      "targetRole": "listitem",
      "targetTag": "LI"
     },
-    "startTime": 1787488348457,
+    "startTime": 1787568797278,
     "trigger": {
      "accessibleName": "Bengaluru",
      "ariaLabel": null,
@@ -8963,9 +8921,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 12987,
+     "captureSeq": 13013.900000000373,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": null,
@@ -8996,7 +8954,7 @@
       "required": false,
       "tabIndex": null
      },
-     "eventId": "evt-pmt5selpq-76",
+     "eventId": "evt-pmt74awdl-76",
      "eventType": "mousedown",
      "isTrusted": true,
      "key": null,
@@ -9028,7 +8986,7 @@
       "testId": "airport-opt-1",
       "xPath": "//body/main/div[2]/ul/li[1]"
      },
-     "timestamp": 1787488348457,
+     "timestamp": 1787568797278,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -9039,13 +8997,13 @@
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "completed",
-    "endTime": 1787488349847,
+    "endTime": 1787568798674,
     "interactionId": "int-15",
     "memberEvents": [],
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "physicalEventType": "mousedown",
      "reason": "unclaimed-at-projection",
@@ -9054,7 +9012,7 @@
      "targetRole": "button",
      "targetTag": "BUTTON"
     },
-    "startTime": 1787488349847,
+    "startTime": 1787568798674,
     "trigger": {
      "accessibleName": "Notify",
      "ariaLabel": null,
@@ -9081,9 +9039,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 14376.800000000745,
+     "captureSeq": 14410.100000000559,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": null,
@@ -9112,7 +9070,7 @@
       "required": false,
       "tabIndex": null
      },
-     "eventId": "evt-pmt5selpq-82",
+     "eventId": "evt-pmt74awdl-82",
      "eventType": "mousedown",
      "isTrusted": true,
      "key": null,
@@ -9144,7 +9102,7 @@
       "testId": null,
       "xPath": "//button[@id='toast-btn']"
      },
-     "timestamp": 1787488349847,
+     "timestamp": 1787568798674,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -9171,7 +9129,7 @@
       "visibilityChanges": []
      },
      "frameId": "main",
-     "sourceEventId": "evt-pmt5selpq-6",
+     "sourceEventId": "evt-pmt74awdl-6",
      "sourceEventType": "lifecycle",
      "targetEvidence": {
       "after": null,
@@ -9199,22 +9157,22 @@
        "testId": null,
        "xPath": "//input[@id='onward']"
       },
-      "identityCapturedAt": 5858.800000000745
+      "identityCapturedAt": 5870
      },
      "window": {
-      "closedAt": 5858.800000000745,
+      "closedAt": 5870,
       "durationMs": 0,
       "endReason": "lifecycle-abandoned",
       "openedAt": 0,
       "stabilityTrace": []
      },
-     "windowId": "lc-evt-pmt5selpq-6"
+     "windowId": "lc-evt-pmt74awdl-6"
     },
     "businessMeaning": "Hover over \"Depart on\"",
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "abandoned",
-    "endTime": 1787488341164,
+    "endTime": 1787568789969,
     "interactionId": "int-1",
     "lifecycleId": "lc-1",
     "memberEvents": [
@@ -9222,9 +9180,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 5605,
+      "captureSeq": 5613.9000000003725,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 137,
@@ -9259,7 +9217,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-6",
+      "eventId": "evt-pmt74awdl-6",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -9291,7 +9249,7 @@
        "testId": null,
        "xPath": "//input[@id='onward']"
       },
-      "timestamp": 1787488341080,
+      "timestamp": 1787568789884,
       "valueAfter": null,
       "valueBefore": null
      }
@@ -9299,7 +9257,7 @@
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "confidence": 0,
      "dwellMs": 0,
@@ -9307,7 +9265,7 @@
      "meaningful": false,
      "targetName": "Depart on"
     },
-    "startTime": 1787488341080,
+    "startTime": 1787568789884,
     "trigger": {
      "accessibleName": "Depart on",
      "ariaLabel": "Depart on",
@@ -9334,9 +9292,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 5605,
+     "captureSeq": 5613.9000000003725,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 137,
@@ -9371,7 +9329,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-6",
+     "eventId": "evt-pmt74awdl-6",
      "eventType": "mouseenter",
      "isTrusted": true,
      "key": null,
@@ -9403,7 +9361,7 @@
       "testId": null,
       "xPath": "//input[@id='onward']"
      },
-     "timestamp": 1787488341080,
+     "timestamp": 1787568789884,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -9430,7 +9388,7 @@
         "firstBatchIndex": 0,
         "firstMutationAt": 1.7999999998137355,
         "lastBatchIndex": 1,
-        "lastMutationAt": 1307.2000000001863,
+        "lastMutationAt": 1307.4000000003725,
         "rawMutationCount": 2,
         "removedNodesCount": 0,
         "shadowContext": null,
@@ -9446,7 +9404,7 @@
       "newSurfaces": [],
       "performanceCondition": {
        "highChurnMode": false,
-       "longestBatchMs": 0.2999999998137355,
+       "longestBatchMs": 0.30000000074505806,
        "mainThreadBlocked": false,
        "totalBatches": 2
       },
@@ -9483,8 +9441,8 @@
         }
        ],
        "itemsOverflow": 0,
-       "scanDurationMs": 1,
-       "scannedAt": 7304.200000000186,
+       "scanDurationMs": 2,
+       "scannedAt": 7316.800000000745,
        "url": "http://127.0.0.1:8190/",
        "viewId": null
       },
@@ -9503,19 +9461,19 @@
         "oldValue": null,
         "path": "body > main > div > div > div#td-onward > div#cal-onward",
         "property": "hidden",
-        "relativeTime": 1307.2000000001863
+        "relativeTime": 1307.4000000003725
        }
       ]
      },
      "frameId": "main",
-     "sourceEventId": "evt-pmt5selpq-9",
+     "sourceEventId": "evt-pmt74awdl-9",
      "sourceEventType": "click",
      "targetEvidence": {
       "after": {
        "ariaChecked": null,
        "ariaExpanded": null,
        "ariaPressed": null,
-       "capturedAt": 7304,
+       "capturedAt": 7316.4000000003725,
        "checked": null,
        "childCount": 0,
        "className": "withIcon form-control",
@@ -9531,7 +9489,7 @@
        "ariaChecked": null,
        "ariaExpanded": null,
        "ariaPressed": null,
-       "capturedAt": 5612,
+       "capturedAt": 5624.4000000003725,
        "checked": null,
        "childCount": 0,
        "className": "withIcon form-control",
@@ -9566,68 +9524,68 @@
        "testId": null,
        "xPath": "//input[@id='onward']"
       },
-      "identityCapturedAt": 5697.300000000745
+      "identityCapturedAt": 5708.800000000745
      },
      "window": {
-      "closedAt": 7305.600000000559,
-      "durationMs": 1608.2999999998137,
+      "closedAt": 7319,
+      "durationMs": 1610.199999999255,
       "endReason": "consequence-settled",
-      "openedAt": 5697.300000000745,
+      "openedAt": 5708.800000000745,
       "stabilityTrace": [
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 5697.5
+        "timestamp": 5709.100000000559
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 0,
-        "timestamp": 5698
+        "timestamp": 5709.9000000003725
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 5998.4000000003725
+        "timestamp": 6010.100000000559
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 6298.700000000186
+        "timestamp": 6310.4000000003725
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 6599
+        "timestamp": 6610.700000000186
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 6899.200000000186
+        "timestamp": 6911
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 0,
-        "timestamp": 7003.200000000186
+        "timestamp": 7015.200000000186
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 7303.5
+        "timestamp": 7315.4000000003725
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 7303.600000000559
+        "timestamp": 7315.700000000186
        }
       ]
      },
-     "windowId": "ev-evt-pmt5selpq-9"
+     "windowId": "ev-evt-pmt74awdl-9"
     },
     "businessMeaning": "Select date \"Choose Sunday, September 6th, 2026\" (Depart on)",
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "completed",
-    "endTime": 1787488342384,
+    "endTime": 1787568791189,
     "interactionId": "int-2",
     "lifecycleId": "lc-2",
     "memberEvents": [
@@ -9635,9 +9593,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 5612,
+      "captureSeq": 5624.300000000745,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": null,
@@ -9672,7 +9630,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-8",
+      "eventId": "evt-pmt74awdl-8",
       "eventType": "focus",
       "isTrusted": true,
       "key": null,
@@ -9704,7 +9662,7 @@
        "testId": null,
        "xPath": "//input[@id='onward']"
       },
-      "timestamp": 1787488341081,
+      "timestamp": 1787568789886,
       "valueAfter": null,
       "valueBefore": ""
      },
@@ -9712,9 +9670,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 5694.700000000186,
+      "captureSeq": 5706.5,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 137,
@@ -9749,7 +9707,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-9",
+      "eventId": "evt-pmt74awdl-9",
       "eventType": "click",
       "isTrusted": true,
       "key": null,
@@ -9781,7 +9739,7 @@
        "testId": null,
        "xPath": "//input[@id='onward']"
       },
-      "timestamp": 1787488341164,
+      "timestamp": 1787568789969,
       "valueAfter": null,
       "valueBefore": ""
      },
@@ -9789,9 +9747,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 6911.9000000003725,
+      "captureSeq": 6921.9000000003725,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -9826,7 +9784,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-10",
+      "eventId": "evt-pmt74awdl-10",
       "eventType": "mouseleave",
       "isTrusted": true,
       "key": null,
@@ -9858,7 +9816,7 @@
        "testId": null,
        "xPath": "//input[@id='onward']"
       },
-      "timestamp": 1787488342381,
+      "timestamp": 1787568791185,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -9866,9 +9824,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 6911.9000000003725,
+      "captureSeq": 6921.9000000003725,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -9903,7 +9861,7 @@
        "required": false,
        "tabIndex": -1
       },
-      "eventId": "evt-pmt5selpq-13",
+      "eventId": "evt-pmt74awdl-13",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -9935,7 +9893,7 @@
        "testId": null,
        "xPath": "//body/main/div[1]/div/div[1]/div[2]/div"
       },
-      "timestamp": 1787488342382,
+      "timestamp": 1787568791186,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -9943,9 +9901,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 6911.9000000003725,
+      "captureSeq": 6921.9000000003725,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -9982,7 +9940,7 @@
        "required": false,
        "tabIndex": -1
       },
-      "eventId": "evt-pmt5selpq-14",
+      "eventId": "evt-pmt74awdl-14",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -10014,7 +9972,7 @@
        "testId": null,
        "xPath": "//body/main/div[1]/div/div[1]/div[2]/div/div[2]"
       },
-      "timestamp": 1787488342382,
+      "timestamp": 1787568791186,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -10022,9 +9980,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 6911.9000000003725,
+      "captureSeq": 6921.9000000003725,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -10063,7 +10021,7 @@
        "required": false,
        "tabIndex": -1
       },
-      "eventId": "evt-pmt5selpq-15",
+      "eventId": "evt-pmt74awdl-15",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -10095,7 +10053,7 @@
        "testId": null,
        "xPath": "//div[@id='month-onward']"
       },
-      "timestamp": 1787488342383,
+      "timestamp": 1787568791187,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -10103,9 +10061,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 6911.9000000003725,
+      "captureSeq": 6921.9000000003725,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -10146,7 +10104,7 @@
        "required": false,
        "tabIndex": -1
       },
-      "eventId": "evt-pmt5selpq-16",
+      "eventId": "evt-pmt74awdl-16",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -10178,7 +10136,7 @@
        "testId": null,
        "xPath": "//body/main/div[1]/div/div[1]/div[2]/div/div[2]/div[2]/div"
       },
-      "timestamp": 1787488342383,
+      "timestamp": 1787568791187,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -10186,9 +10144,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 6911.9000000003725,
+      "captureSeq": 6921.9000000003725,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -10229,7 +10187,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-17",
+      "eventId": "evt-pmt74awdl-17",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -10261,7 +10219,7 @@
        "testId": null,
        "xPath": "//main/div[1]/div/div[1]/div[2]/div/div[2]/div[2]/div/div[2]"
       },
-      "timestamp": 1787488342383,
+      "timestamp": 1787568791187,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -10269,9 +10227,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 6911.9000000003725,
+      "captureSeq": 6921.9000000003725,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -10312,7 +10270,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-18",
+      "eventId": "evt-pmt74awdl-18",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -10344,7 +10302,7 @@
        "testId": null,
        "xPath": "//main/div[1]/div/div[1]/div[2]/div/div[2]/div[2]/div/div[2]"
       },
-      "timestamp": 1787488342384,
+      "timestamp": 1787568791188,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -10352,9 +10310,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 6911.9000000003725,
+      "captureSeq": 6921.9000000003725,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -10395,7 +10353,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-19",
+      "eventId": "evt-pmt74awdl-19",
       "eventType": "mousedown",
       "isTrusted": true,
       "key": null,
@@ -10427,7 +10385,7 @@
        "testId": null,
        "xPath": "//main/div[1]/div/div[1]/div[2]/div/div[2]/div[2]/div/div[2]"
       },
-      "timestamp": 1787488342384,
+      "timestamp": 1787568791189,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -10435,9 +10393,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 7002,
+      "captureSeq": 7014.100000000559,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -10478,7 +10436,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-22",
+      "eventId": "evt-pmt74awdl-22",
       "eventType": "click",
       "isTrusted": true,
       "key": null,
@@ -10510,7 +10468,7 @@
        "testId": null,
        "xPath": "//main/div[1]/div/div[1]/div[2]/div/div[2]/div[2]/div/div[2]"
       },
-      "timestamp": 1787488342471,
+      "timestamp": 1787568791276,
       "valueAfter": null,
       "valueBefore": null
      }
@@ -10518,13 +10476,13 @@
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "dateValue": "Choose Sunday, September 6th, 2026",
      "selectedDate": "Choose Sunday, September 6th, 2026",
      "targetName": "Depart on"
     },
-    "startTime": 1787488341081,
+    "startTime": 1787568789886,
     "trigger": {
      "accessibleName": "Depart on",
      "ariaLabel": "Depart on",
@@ -10551,9 +10509,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 5612,
+     "captureSeq": 5624.300000000745,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": null,
@@ -10588,7 +10546,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-8",
+     "eventId": "evt-pmt74awdl-8",
      "eventType": "focus",
      "isTrusted": true,
      "key": null,
@@ -10620,7 +10578,7 @@
       "testId": null,
       "xPath": "//input[@id='onward']"
      },
-     "timestamp": 1787488341081,
+     "timestamp": 1787568789886,
      "valueAfter": null,
      "valueBefore": ""
     },
@@ -10645,7 +10603,7 @@
       "visibilityChanges": []
      },
      "frameId": "main",
-     "sourceEventId": "evt-pmt5selpq-34",
+     "sourceEventId": "evt-pmt74awdl-34",
      "sourceEventType": "lifecycle",
      "targetEvidence": {
       "after": null,
@@ -10673,22 +10631,22 @@
        "testId": null,
        "xPath": "//button[@id='go']"
       },
-      "identityCapturedAt": 8768.100000000559
+      "identityCapturedAt": 8784.900000000373
      },
      "window": {
-      "closedAt": 8768.100000000559,
+      "closedAt": 8784.800000000745,
       "durationMs": 0,
       "endReason": "lifecycle-abandoned",
       "openedAt": 0,
       "stabilityTrace": []
      },
-     "windowId": "lc-evt-pmt5selpq-34"
+     "windowId": "lc-evt-pmt74awdl-34"
     },
     "businessMeaning": "Hover over \"Search Flights\"",
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "discarded",
-    "endTime": 1787488344077,
+    "endTime": 1787568792882,
     "interactionId": "int-3",
     "lifecycleId": "lc-3",
     "memberEvents": [
@@ -10696,9 +10654,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 7003.9000000003725,
+      "captureSeq": 7015.9000000003725,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 113,
@@ -10727,7 +10685,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-34",
+      "eventId": "evt-pmt74awdl-34",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -10759,7 +10717,7 @@
        "testId": null,
        "xPath": "//button[@id='go']"
       },
-      "timestamp": 1787488342477,
+      "timestamp": 1787568791286,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -10767,9 +10725,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 8607.600000000559,
+      "captureSeq": 8619.400000000373,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 452,
@@ -10798,7 +10756,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-36",
+      "eventId": "evt-pmt74awdl-36",
       "eventType": "mouseleave",
       "isTrusted": true,
       "key": null,
@@ -10830,7 +10788,7 @@
        "testId": null,
        "xPath": "//button[@id='go']"
       },
-      "timestamp": 1787488344077,
+      "timestamp": 1787568792882,
       "valueAfter": null,
       "valueBefore": null
      }
@@ -10838,15 +10796,15 @@
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "confidence": 0,
-     "dwellMs": 1600,
+     "dwellMs": 1596,
      "evidenceReason": null,
      "meaningful": false,
      "targetName": "Search Flights"
     },
-    "startTime": 1787488342477,
+    "startTime": 1787568791286,
     "trigger": {
      "accessibleName": "Search Flights",
      "ariaLabel": null,
@@ -10873,9 +10831,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 7003.9000000003725,
+     "captureSeq": 7015.9000000003725,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 113,
@@ -10904,7 +10862,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-34",
+     "eventId": "evt-pmt74awdl-34",
      "eventType": "mouseenter",
      "isTrusted": true,
      "key": null,
@@ -10936,7 +10894,7 @@
       "testId": null,
       "xPath": "//button[@id='go']"
      },
-     "timestamp": 1787488342477,
+     "timestamp": 1787568791286,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -10961,7 +10919,7 @@
       "visibilityChanges": []
      },
      "frameId": "main",
-     "sourceEventId": "evt-pmt5selpq-42",
+     "sourceEventId": "evt-pmt74awdl-42",
      "sourceEventType": "lifecycle",
      "targetEvidence": {
       "after": null,
@@ -10989,22 +10947,22 @@
        "testId": null,
        "xPath": "//input[@id='return']"
       },
-      "identityCapturedAt": 8848.200000000186
+      "identityCapturedAt": 8864.300000000745
      },
      "window": {
-      "closedAt": 8848.200000000186,
+      "closedAt": 8864.300000000745,
       "durationMs": 0,
       "endReason": "lifecycle-abandoned",
       "openedAt": 0,
       "stabilityTrace": []
      },
-     "windowId": "lc-evt-pmt5selpq-42"
+     "windowId": "lc-evt-pmt74awdl-42"
     },
     "businessMeaning": "Hover over \"Return on\"",
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "abandoned",
-    "endTime": 1787488344161,
+    "endTime": 1787568792970,
     "interactionId": "int-4",
     "lifecycleId": "lc-4",
     "memberEvents": [
@@ -11012,9 +10970,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 8607.600000000559,
+      "captureSeq": 8619.400000000373,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 452,
@@ -11049,7 +11007,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-42",
+      "eventId": "evt-pmt74awdl-42",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -11081,7 +11039,7 @@
        "testId": null,
        "xPath": "//input[@id='return']"
       },
-      "timestamp": 1787488344078,
+      "timestamp": 1787568792884,
       "valueAfter": null,
       "valueBefore": null
      }
@@ -11089,7 +11047,7 @@
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "confidence": 0,
      "dwellMs": 0,
@@ -11097,7 +11055,7 @@
      "meaningful": false,
      "targetName": "Return on"
     },
-    "startTime": 1787488344078,
+    "startTime": 1787568792884,
     "trigger": {
      "accessibleName": "Return on",
      "ariaLabel": "Return on",
@@ -11124,9 +11082,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 8607.600000000559,
+     "captureSeq": 8619.400000000373,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 452,
@@ -11161,7 +11119,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-42",
+     "eventId": "evt-pmt74awdl-42",
      "eventType": "mouseenter",
      "isTrusted": true,
      "key": null,
@@ -11193,7 +11151,7 @@
       "testId": null,
       "xPath": "//input[@id='return']"
      },
-     "timestamp": 1787488344078,
+     "timestamp": 1787568792884,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -11218,14 +11176,14 @@
       "visibilityChanges": []
      },
      "frameId": "main",
-     "sourceEventId": "evt-pmt5selpq-44",
+     "sourceEventId": "evt-pmt74awdl-44",
      "sourceEventType": "lifecycle",
      "targetEvidence": {
       "after": {
        "ariaChecked": null,
        "ariaExpanded": null,
        "ariaPressed": null,
-       "capturedAt": 10062.100000000559,
+       "capturedAt": 10088.5,
        "checked": null,
        "childCount": 0,
        "className": "",
@@ -11261,22 +11219,22 @@
        "testId": null,
        "xPath": "//input[@id='return']"
       },
-      "identityCapturedAt": 10062.100000000559
+      "identityCapturedAt": 10088.5
      },
      "window": {
-      "closedAt": 10062.100000000559,
+      "closedAt": 10088.5,
       "durationMs": 0,
       "endReason": "lifecycle-complete",
       "openedAt": 0,
       "stabilityTrace": []
      },
-     "windowId": "lc-evt-pmt5selpq-44"
+     "windowId": "lc-evt-pmt74awdl-44"
     },
     "businessMeaning": "Select date \"Choose Tuesday, September 8th, 2026\" (Return on)",
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "completed",
-    "endTime": 1787488345370,
+    "endTime": 1787568794182,
     "interactionId": "int-5",
     "lifecycleId": "lc-5",
     "memberEvents": [
@@ -11284,9 +11242,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 8610.100000000559,
+      "captureSeq": 8622.400000000373,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": null,
@@ -11321,7 +11279,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-44",
+      "eventId": "evt-pmt74awdl-44",
       "eventType": "focus",
       "isTrusted": true,
       "key": null,
@@ -11353,7 +11311,7 @@
        "testId": null,
        "xPath": "//input[@id='return']"
       },
-      "timestamp": 1787488344079,
+      "timestamp": 1787568792884,
       "valueAfter": null,
       "valueBefore": ""
      },
@@ -11361,9 +11319,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 8692,
+      "captureSeq": 8708,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 452,
@@ -11398,7 +11356,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-45",
+      "eventId": "evt-pmt74awdl-45",
       "eventType": "click",
       "isTrusted": true,
       "key": null,
@@ -11430,7 +11388,7 @@
        "testId": null,
        "xPath": "//input[@id='return']"
       },
-      "timestamp": 1787488344161,
+      "timestamp": 1787568792970,
       "valueAfter": null,
       "valueBefore": ""
      },
@@ -11438,9 +11396,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 9898.100000000559,
+      "captureSeq": 9914.400000000373,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 536,
@@ -11475,7 +11433,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-46",
+      "eventId": "evt-pmt74awdl-46",
       "eventType": "mouseleave",
       "isTrusted": true,
       "key": null,
@@ -11507,7 +11465,7 @@
        "testId": null,
        "xPath": "//input[@id='return']"
       },
-      "timestamp": 1787488345367,
+      "timestamp": 1787568794177,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -11515,9 +11473,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 9898.100000000559,
+      "captureSeq": 9914.400000000373,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 536,
@@ -11552,7 +11510,7 @@
        "required": false,
        "tabIndex": -1
       },
-      "eventId": "evt-pmt5selpq-49",
+      "eventId": "evt-pmt74awdl-49",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -11584,7 +11542,7 @@
        "testId": null,
        "xPath": "//body/main/div[1]/div/div[2]/div[2]/div"
       },
-      "timestamp": 1787488345369,
+      "timestamp": 1787568794178,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -11592,9 +11550,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 9898.100000000559,
+      "captureSeq": 9914.400000000373,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 536,
@@ -11631,7 +11589,7 @@
        "required": false,
        "tabIndex": -1
       },
-      "eventId": "evt-pmt5selpq-50",
+      "eventId": "evt-pmt74awdl-50",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -11663,7 +11621,7 @@
        "testId": null,
        "xPath": "//div[@id='month-return']"
       },
-      "timestamp": 1787488345369,
+      "timestamp": 1787568794178,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -11671,9 +11629,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 9898.100000000559,
+      "captureSeq": 9914.400000000373,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 536,
@@ -11712,7 +11670,7 @@
        "required": false,
        "tabIndex": -1
       },
-      "eventId": "evt-pmt5selpq-51",
+      "eventId": "evt-pmt74awdl-51",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -11744,7 +11702,7 @@
        "testId": null,
        "xPath": "//body/main/div[1]/div/div[2]/div[2]/div/div/div"
       },
-      "timestamp": 1787488345369,
+      "timestamp": 1787568794179,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -11752,9 +11710,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 9898.100000000559,
+      "captureSeq": 9914.400000000373,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 536,
@@ -11795,7 +11753,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-52",
+      "eventId": "evt-pmt74awdl-52",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -11827,7 +11785,7 @@
        "testId": null,
        "xPath": "//body/main/div[1]/div/div[2]/div[2]/div/div/div/div[4]"
       },
-      "timestamp": 1787488345369,
+      "timestamp": 1787568794181,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -11835,9 +11793,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 9898.100000000559,
+      "captureSeq": 9914.400000000373,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 536,
@@ -11878,7 +11836,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-53",
+      "eventId": "evt-pmt74awdl-53",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -11910,7 +11868,7 @@
        "testId": null,
        "xPath": "//body/main/div[1]/div/div[2]/div[2]/div/div/div/div[4]"
       },
-      "timestamp": 1787488345370,
+      "timestamp": 1787568794181,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -11918,9 +11876,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 9898.100000000559,
+      "captureSeq": 9914.400000000373,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 536,
@@ -11961,7 +11919,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-54",
+      "eventId": "evt-pmt74awdl-54",
       "eventType": "mousedown",
       "isTrusted": true,
       "key": null,
@@ -11993,7 +11951,7 @@
        "testId": null,
        "xPath": "//body/main/div[1]/div/div[2]/div[2]/div/div/div/div[4]"
       },
-      "timestamp": 1787488345370,
+      "timestamp": 1787568794182,
       "valueAfter": null,
       "valueBefore": null
      },
@@ -12001,9 +11959,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 9987.200000000186,
+      "captureSeq": 10006.200000000186,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 536,
@@ -12044,7 +12002,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-57",
+      "eventId": "evt-pmt74awdl-57",
       "eventType": "click",
       "isTrusted": true,
       "key": null,
@@ -12076,7 +12034,7 @@
        "testId": null,
        "xPath": "//body/main/div[1]/div/div[2]/div[2]/div/div/div/div[4]"
       },
-      "timestamp": 1787488345456,
+      "timestamp": 1787568794269,
       "valueAfter": null,
       "valueBefore": null
      }
@@ -12084,13 +12042,13 @@
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "dateValue": "Choose Tuesday, September 8th, 2026",
      "selectedDate": "Choose Tuesday, September 8th, 2026",
      "targetName": "Return on"
     },
-    "startTime": 1787488344079,
+    "startTime": 1787568792884,
     "trigger": {
      "accessibleName": "Return on",
      "ariaLabel": "Return on",
@@ -12117,9 +12075,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 8610.100000000559,
+     "captureSeq": 8622.400000000373,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": null,
@@ -12154,7 +12112,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-44",
+     "eventId": "evt-pmt74awdl-44",
      "eventType": "focus",
      "isTrusted": true,
      "key": null,
@@ -12186,7 +12144,7 @@
       "testId": null,
       "xPath": "//input[@id='return']"
      },
-     "timestamp": 1787488344079,
+     "timestamp": 1787568792884,
      "valueAfter": null,
      "valueBefore": ""
     },
@@ -12211,7 +12169,7 @@
       "visibilityChanges": []
      },
      "frameId": "main",
-     "sourceEventId": "evt-pmt5selpq-69",
+     "sourceEventId": "evt-pmt74awdl-69",
      "sourceEventType": "lifecycle",
      "targetEvidence": {
       "after": null,
@@ -12239,22 +12197,22 @@
        "testId": null,
        "xPath": "//button[@id='go']"
       },
-      "identityCapturedAt": 11842
+      "identityCapturedAt": 11876
      },
      "window": {
-      "closedAt": 11842,
+      "closedAt": 11876,
       "durationMs": 0,
       "endReason": "lifecycle-abandoned",
       "openedAt": 0,
       "stabilityTrace": []
      },
-     "windowId": "lc-evt-pmt5selpq-69"
+     "windowId": "lc-evt-pmt74awdl-69"
     },
     "businessMeaning": "Hover over \"Search Flights\"",
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "abandoned",
-    "endTime": 1787488347148,
+    "endTime": 1787568795963,
     "interactionId": "int-6",
     "lifecycleId": "lc-6",
     "memberEvents": [
@@ -12262,9 +12220,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 11593.800000000745,
+      "captureSeq": 11613.600000000559,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 87,
@@ -12293,7 +12251,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-69",
+      "eventId": "evt-pmt74awdl-69",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -12325,7 +12283,7 @@
        "testId": null,
        "xPath": "//button[@id='go']"
       },
-      "timestamp": 1787488347065,
+      "timestamp": 1787568795878,
       "valueAfter": null,
       "valueBefore": null
      }
@@ -12333,7 +12291,7 @@
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "confidence": 0,
      "dwellMs": 0,
@@ -12341,7 +12299,7 @@
      "meaningful": false,
      "targetName": "Search Flights"
     },
-    "startTime": 1787488347065,
+    "startTime": 1787568795878,
     "trigger": {
      "accessibleName": "Search Flights",
      "ariaLabel": null,
@@ -12368,9 +12326,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 11593.800000000745,
+     "captureSeq": 11613.600000000559,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 87,
@@ -12399,7 +12357,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-69",
+     "eventId": "evt-pmt74awdl-69",
      "eventType": "mouseenter",
      "isTrusted": true,
      "key": null,
@@ -12431,7 +12389,7 @@
       "testId": null,
       "xPath": "//button[@id='go']"
      },
-     "timestamp": 1787488347065,
+     "timestamp": 1787568795878,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -12456,9 +12414,9 @@
         ],
         "characterDataDelta": null,
         "firstBatchIndex": 4,
-        "firstMutationAt": 5984.5,
+        "firstMutationAt": 5995.4000000003725,
         "lastBatchIndex": 4,
-        "lastMutationAt": 5984.5,
+        "lastMutationAt": 5995.4000000003725,
         "rawMutationCount": 1,
         "removedNodesCount": 0,
         "shadowContext": null,
@@ -12474,9 +12432,9 @@
         "changedAttributes": [],
         "characterDataDelta": null,
         "firstBatchIndex": 4,
-        "firstMutationAt": 5984.5,
+        "firstMutationAt": 5995.4000000003725,
         "lastBatchIndex": 4,
-        "lastMutationAt": 5984.5,
+        "lastMutationAt": 5995.4000000003725,
         "rawMutationCount": 1,
         "removedNodesCount": 1,
         "shadowContext": null,
@@ -12493,21 +12451,21 @@
         "durationMs": null,
         "endRelativeToEvent": null,
         "method": "GET",
-        "requestId": "26",
+        "requestId": "27",
         "resourceType": "unknown",
         "source": "webrequest",
-        "sourceEventId": "evt-pmt5selpq-72",
+        "sourceEventId": "evt-pmt74awdl-72",
         "startRelativeToEvent": 0,
         "status": 200,
         "url": "http://127.0.0.1:8190/collect?e=search"
        },
        {
-        "durationMs": 8.099999999627471,
-        "endRelativeToEvent": 8.299999999813735,
+        "durationMs": 8.299999999813735,
+        "endRelativeToEvent": 8.799999999813735,
         "method": "GET",
         "resourceType": "fetch",
         "source": "main-world",
-        "startRelativeToEvent": 0.20000000018626451,
+        "startRelativeToEvent": 0.5,
         "status": 200,
         "url": "/collect?e=search"
        }
@@ -12515,7 +12473,7 @@
       "newSurfaces": [],
       "performanceCondition": {
        "highChurnMode": false,
-       "longestBatchMs": 0.2999999998137355,
+       "longestBatchMs": 0.7000000001862645,
        "mainThreadBlocked": false,
        "totalBatches": 5
       },
@@ -12564,8 +12522,8 @@
         }
        ],
        "itemsOverflow": 0,
-       "scanDurationMs": 2,
-       "scannedAt": 11992.600000000559,
+       "scanDurationMs": 3,
+       "scannedAt": 12027.100000000559,
        "url": "http://127.0.0.1:8190/",
        "viewId": null
       },
@@ -12576,19 +12534,19 @@
         "oldValue": "",
         "path": "body > main > div > ul#opts",
         "property": "hidden",
-        "relativeTime": 5984.5
+        "relativeTime": 5995.4000000003725
        }
       ]
      },
      "frameId": "main",
-     "sourceEventId": "evt-pmt5selpq-72",
+     "sourceEventId": "evt-pmt74awdl-72",
      "sourceEventType": "click",
      "targetEvidence": {
       "after": {
        "ariaChecked": null,
        "ariaExpanded": null,
        "ariaPressed": null,
-       "capturedAt": 11992.5,
+       "capturedAt": 12026.900000000373,
        "checked": null,
        "childCount": 0,
        "className": "",
@@ -12604,7 +12562,7 @@
        "ariaChecked": null,
        "ariaExpanded": null,
        "ariaPressed": null,
-       "capturedAt": 11596.800000000745,
+       "capturedAt": 11617.300000000745,
        "checked": null,
        "childCount": 0,
        "className": "",
@@ -12623,7 +12581,7 @@
         "tagName": "BUTTON"
        },
        "before": null,
-       "detectedAt": 11994.300000000745
+       "detectedAt": 12029.900000000373
       },
       "identity": {
        "accessibleName": "Search Flights",
@@ -12647,43 +12605,43 @@
        "testId": null,
        "xPath": "//button[@id='go']"
       },
-      "identityCapturedAt": 11679.600000000559
+      "identityCapturedAt": 11701.800000000745
      },
      "window": {
-      "closedAt": 11994.300000000745,
-      "durationMs": 314.70000000018626,
+      "closedAt": 12029.900000000373,
+      "durationMs": 328.09999999962747,
       "endReason": "consequence-settled",
-      "openedAt": 11679.600000000559,
+      "openedAt": 11701.800000000745,
       "stabilityTrace": [
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 11679.600000000559
+        "timestamp": 11701.900000000373
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 0,
-        "timestamp": 11680.600000000559
+        "timestamp": 11703.900000000373
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 11992.300000000745
+        "timestamp": 12026.800000000745
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 11992.300000000745
+        "timestamp": 12026.800000000745
        }
       ]
      },
-     "windowId": "ev-evt-pmt5selpq-72"
+     "windowId": "ev-evt-pmt74awdl-72"
     },
     "businessMeaning": "Click \"Search Flights\"",
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "completed",
-    "endTime": 1787488347148,
+    "endTime": 1787568795963,
     "interactionId": "int-7",
     "lifecycleId": "lc-7",
     "memberEvents": [
@@ -12691,9 +12649,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 11678.5,
+      "captureSeq": 11700.300000000745,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 87,
@@ -12722,7 +12680,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-72",
+      "eventId": "evt-pmt74awdl-72",
       "eventType": "click",
       "isTrusted": true,
       "key": null,
@@ -12754,7 +12712,7 @@
        "testId": null,
        "xPath": "//button[@id='go']"
       },
-      "timestamp": 1787488347148,
+      "timestamp": 1787568795963,
       "valueAfter": null,
       "valueBefore": null
      }
@@ -12762,7 +12720,7 @@
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "clientX": 87,
      "clientY": 109,
@@ -12770,7 +12728,7 @@
      "targetRole": "button",
      "targetTag": "BUTTON"
     },
-    "startTime": 1787488347148,
+    "startTime": 1787568795963,
     "trigger": {
      "accessibleName": "Search Flights",
      "ariaLabel": null,
@@ -12797,9 +12755,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 11678.5,
+     "captureSeq": 11700.300000000745,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 87,
@@ -12828,7 +12786,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-72",
+     "eventId": "evt-pmt74awdl-72",
      "eventType": "click",
      "isTrusted": true,
      "key": null,
@@ -12860,7 +12818,7 @@
       "testId": null,
       "xPath": "//button[@id='go']"
      },
-     "timestamp": 1787488347148,
+     "timestamp": 1787568795963,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -12878,9 +12836,9 @@
         "changedAttributes": [],
         "characterDataDelta": null,
         "firstBatchIndex": 5,
-        "firstMutationAt": 7376.0999999996275,
+        "firstMutationAt": 7395.9000000003725,
         "lastBatchIndex": 5,
-        "lastMutationAt": 7376.0999999996275,
+        "lastMutationAt": 7395.9000000003725,
         "rawMutationCount": 1,
         "removedNodesCount": 1,
         "shadowContext": null,
@@ -12892,24 +12850,11 @@
        }
       ],
       "navigation": [],
-      "networkActivity": [
-       {
-        "durationMs": null,
-        "endRelativeToEvent": null,
-        "method": "GET",
-        "requestId": "27",
-        "resourceType": "unknown",
-        "source": "webrequest",
-        "sourceEventId": "evt-pmt5selpq-78",
-        "startRelativeToEvent": 0,
-        "status": 200,
-        "url": "http://127.0.0.1:8190/collect?e=notify"
-       }
-      ],
+      "networkActivity": [],
       "newSurfaces": [],
       "performanceCondition": {
        "highChurnMode": false,
-       "longestBatchMs": 0.2999999998137355,
+       "longestBatchMs": 0.7000000001862645,
        "mainThreadBlocked": false,
        "totalBatches": 6
       },
@@ -12959,21 +12904,21 @@
        ],
        "itemsOverflow": 0,
        "scanDurationMs": 1,
-       "scannedAt": 13378.800000000745,
+       "scannedAt": 13410.800000000745,
        "url": "http://127.0.0.1:8190/",
        "viewId": null
       },
       "visibilityChanges": []
      },
      "frameId": "main",
-     "sourceEventId": "evt-pmt5selpq-78",
+     "sourceEventId": "evt-pmt74awdl-78",
      "sourceEventType": "click",
      "targetEvidence": {
       "after": {
        "ariaChecked": null,
        "ariaExpanded": null,
        "ariaPressed": null,
-       "capturedAt": 13378.800000000745,
+       "capturedAt": 13410.800000000745,
        "checked": null,
        "childCount": 0,
        "className": "opt",
@@ -12989,7 +12934,7 @@
        "ariaChecked": null,
        "ariaExpanded": null,
        "ariaPressed": null,
-       "capturedAt": 12988.400000000373,
+       "capturedAt": 13016.300000000745,
        "checked": null,
        "childCount": 0,
        "className": "opt",
@@ -13024,43 +12969,43 @@
        "testId": "airport-opt-1",
        "xPath": "//body/main/div[2]/ul/li[1]"
       },
-      "identityCapturedAt": 13071.800000000745
+      "identityCapturedAt": 13103.300000000745
      },
      "window": {
-      "closedAt": 13379.600000000559,
-      "durationMs": 307.79999999981374,
+      "closedAt": 13411.800000000745,
+      "durationMs": 308.5,
       "endReason": "consequence-settled",
-      "openedAt": 13071.800000000745,
+      "openedAt": 13103.300000000745,
       "stabilityTrace": [
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 13071.900000000373
+        "timestamp": 13103.300000000745
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 0,
-        "timestamp": 13072
+        "timestamp": 13103.700000000186
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 13378.600000000559
+        "timestamp": 13410.600000000559
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 13378.700000000186
+        "timestamp": 13410.600000000559
        }
       ]
      },
-     "windowId": "ev-evt-pmt5selpq-78"
+     "windowId": "ev-evt-pmt74awdl-78"
     },
     "businessMeaning": "Click \"Bengaluru\"",
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "completed",
-    "endTime": 1787488348540,
+    "endTime": 1787568797365,
     "interactionId": "int-8",
     "lifecycleId": "lc-8",
     "memberEvents": [
@@ -13068,9 +13013,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 13070.800000000745,
+      "captureSeq": 13102.100000000559,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 247,
@@ -13101,7 +13046,7 @@
        "required": false,
        "tabIndex": -1
       },
-      "eventId": "evt-pmt5selpq-78",
+      "eventId": "evt-pmt74awdl-78",
       "eventType": "click",
       "isTrusted": true,
       "key": null,
@@ -13133,7 +13078,7 @@
        "testId": "airport-opt-1",
        "xPath": "//body/main/div[2]/ul/li[1]"
       },
-      "timestamp": 1787488348540,
+      "timestamp": 1787568797365,
       "valueAfter": null,
       "valueBefore": null
      }
@@ -13141,7 +13086,7 @@
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "clientX": 247,
      "clientY": 109,
@@ -13149,7 +13094,7 @@
      "targetRole": "listitem",
      "targetTag": "LI"
     },
-    "startTime": 1787488348540,
+    "startTime": 1787568797365,
     "trigger": {
      "accessibleName": "Bengaluru",
      "ariaLabel": null,
@@ -13176,9 +13121,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 13070.800000000745,
+     "captureSeq": 13102.100000000559,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 247,
@@ -13209,7 +13154,7 @@
       "required": false,
       "tabIndex": -1
      },
-     "eventId": "evt-pmt5selpq-78",
+     "eventId": "evt-pmt74awdl-78",
      "eventType": "click",
      "isTrusted": true,
      "key": null,
@@ -13241,7 +13186,7 @@
       "testId": "airport-opt-1",
       "xPath": "//body/main/div[2]/ul/li[1]"
      },
-     "timestamp": 1787488348540,
+     "timestamp": 1787568797365,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -13266,7 +13211,7 @@
       "visibilityChanges": []
      },
      "frameId": "main",
-     "sourceEventId": "evt-pmt5selpq-81",
+     "sourceEventId": "evt-pmt74awdl-81",
      "sourceEventType": "lifecycle",
      "targetEvidence": {
       "after": null,
@@ -13294,22 +13239,22 @@
        "testId": null,
        "xPath": "//button[@id='toast-btn']"
       },
-      "identityCapturedAt": 14623
+      "identityCapturedAt": 14658.400000000373
      },
      "window": {
-      "closedAt": 14623,
+      "closedAt": 14658.400000000373,
       "durationMs": 0,
       "endReason": "lifecycle-abandoned",
       "openedAt": 0,
       "stabilityTrace": []
      },
-     "windowId": "lc-evt-pmt5selpq-81"
+     "windowId": "lc-evt-pmt74awdl-81"
     },
     "businessMeaning": "Hover over \"Notify\"",
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "abandoned",
-    "endTime": 1787488349929,
+    "endTime": 1787568798757,
     "interactionId": "int-9",
     "lifecycleId": "lc-9",
     "memberEvents": [
@@ -13317,9 +13262,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 14376.800000000745,
+      "captureSeq": 14410.100000000559,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 433,
@@ -13348,7 +13293,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-81",
+      "eventId": "evt-pmt74awdl-81",
       "eventType": "mouseenter",
       "isTrusted": true,
       "key": null,
@@ -13380,7 +13325,7 @@
        "testId": null,
        "xPath": "//button[@id='toast-btn']"
       },
-      "timestamp": 1787488349847,
+      "timestamp": 1787568798673,
       "valueAfter": null,
       "valueBefore": null
      }
@@ -13388,7 +13333,7 @@
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "confidence": 0,
      "dwellMs": 0,
@@ -13396,7 +13341,7 @@
      "meaningful": false,
      "targetName": "Notify"
     },
-    "startTime": 1787488349847,
+    "startTime": 1787568798673,
     "trigger": {
      "accessibleName": "Notify",
      "ariaLabel": null,
@@ -13423,9 +13368,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 14376.800000000745,
+     "captureSeq": 14410.100000000559,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 433,
@@ -13454,7 +13399,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-81",
+     "eventId": "evt-pmt74awdl-81",
      "eventType": "mouseenter",
      "isTrusted": true,
      "key": null,
@@ -13486,7 +13431,7 @@
       "testId": null,
       "xPath": "//button[@id='toast-btn']"
      },
-     "timestamp": 1787488349847,
+     "timestamp": 1787568798673,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -13511,9 +13456,9 @@
         ],
         "characterDataDelta": null,
         "firstBatchIndex": 6,
-        "firstMutationAt": 8765.900000000373,
+        "firstMutationAt": 8788.700000000186,
         "lastBatchIndex": 6,
-        "lastMutationAt": 8765.900000000373,
+        "lastMutationAt": 8788.700000000186,
         "rawMutationCount": 1,
         "removedNodesCount": 0,
         "shadowContext": null,
@@ -13527,40 +13472,32 @@
       "navigation": [],
       "networkActivity": [
        {
-        "durationMs": 7.6000000005587935,
-        "endRelativeToEvent": 7.7999999998137355,
+        "durationMs": null,
+        "endRelativeToEvent": null,
+        "method": "GET",
+        "requestId": "28",
+        "resourceType": "unknown",
+        "source": "webrequest",
+        "sourceEventId": "evt-pmt74awdl-84",
+        "startRelativeToEvent": 0,
+        "status": 200,
+        "url": "http://127.0.0.1:8190/collect?e=notify"
+       },
+       {
+        "durationMs": 5.7999999998137355,
+        "endRelativeToEvent": 6.099999999627471,
         "method": "GET",
         "resourceType": "fetch",
         "source": "main-world",
-        "startRelativeToEvent": 0.19999999925494194,
+        "startRelativeToEvent": 0.2999999998137355,
         "status": 200,
         "url": "/collect?e=notify"
-       },
-       {
-        "durationMs": 12.799999999813735,
-        "endRelativeToEvent": 20.799999999813735,
-        "method": "GET",
-        "resourceType": "unknown",
-        "source": "webrequest",
-        "startRelativeToEvent": 8,
-        "status": 200,
-        "url": "http://127.0.0.1:8190/collect?e=notify"
-       },
-       {
-        "durationMs": 0,
-        "endRelativeToEvent": 52.99999999906868,
-        "method": "GET",
-        "resourceType": "resource",
-        "source": "performance-observer",
-        "startRelativeToEvent": 52.99999999906868,
-        "status": null,
-        "url": "http://127.0.0.1:8190/collect?e=notify"
        }
       ],
       "newSurfaces": [],
       "performanceCondition": {
        "highChurnMode": false,
-       "longestBatchMs": 0.2999999998137355,
+       "longestBatchMs": 0.7000000001862645,
        "mainThreadBlocked": false,
        "totalBatches": 7
       },
@@ -13608,22 +13545,22 @@
         }
        ],
        "itemsOverflow": 0,
-       "scanDurationMs": 1,
-       "scannedAt": 14777.600000000559,
+       "scanDurationMs": 0,
+       "scannedAt": 14809.600000000559,
        "url": "http://127.0.0.1:8190/",
        "viewId": null
       },
       "visibilityChanges": []
      },
      "frameId": "main",
-     "sourceEventId": "evt-pmt5selpq-84",
+     "sourceEventId": "evt-pmt74awdl-84",
      "sourceEventType": "click",
      "targetEvidence": {
       "after": {
        "ariaChecked": null,
        "ariaExpanded": null,
        "ariaPressed": null,
-       "capturedAt": 14777.600000000559,
+       "capturedAt": 14809.5,
        "checked": null,
        "childCount": 0,
        "className": "",
@@ -13639,7 +13576,7 @@
        "ariaChecked": null,
        "ariaExpanded": null,
        "ariaPressed": null,
-       "capturedAt": 14378.600000000559,
+       "capturedAt": 14412,
        "checked": null,
        "childCount": 0,
        "className": "",
@@ -13658,7 +13595,7 @@
         "tagName": "BUTTON"
        },
        "before": null,
-       "detectedAt": 14778.100000000559
+       "detectedAt": 14810.100000000559
       },
       "identity": {
        "accessibleName": "Notify",
@@ -13682,43 +13619,43 @@
        "testId": null,
        "xPath": "//button[@id='toast-btn']"
       },
-      "identityCapturedAt": 14461.300000000745
+      "identityCapturedAt": 14495.600000000559
      },
      "window": {
-      "closedAt": 14778.100000000559,
-      "durationMs": 316.79999999981374,
+      "closedAt": 14810.100000000559,
+      "durationMs": 314.5,
       "endReason": "consequence-settled",
-      "openedAt": 14461.300000000745,
+      "openedAt": 14495.600000000559,
       "stabilityTrace": [
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 14461.300000000745
+        "timestamp": 14495.600000000559
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 0,
-        "timestamp": 14462.200000000186
+        "timestamp": 14496.800000000745
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 14777.400000000373
+        "timestamp": 14809.400000000373
        },
        {
         "globalBatchCount": 0,
         "msSinceLastMutation": 300,
-        "timestamp": 14777.5
+        "timestamp": 14809.400000000373
        }
       ]
      },
-     "windowId": "ev-evt-pmt5selpq-84"
+     "windowId": "ev-evt-pmt74awdl-84"
     },
     "businessMeaning": "Click \"Notify\"",
     "componentFramework": "Generic",
     "componentType": "Generic",
     "endState": "completed",
-    "endTime": 1787488349929,
+    "endTime": 1787568798757,
     "interactionId": "int-10",
     "lifecycleId": "lc-10",
     "memberEvents": [
@@ -13726,9 +13663,9 @@
       "altKey": false,
       "captureOrigin": {
        "frameId": 0,
-       "tabId": 1140612370
+       "tabId": 757894229
       },
-      "captureSeq": 14460.200000000186,
+      "captureSeq": 14494.600000000559,
       "checkedAfter": null,
       "checkedBefore": null,
       "clientX": 433,
@@ -13757,7 +13694,7 @@
        "required": false,
        "tabIndex": 0
       },
-      "eventId": "evt-pmt5selpq-84",
+      "eventId": "evt-pmt74awdl-84",
       "eventType": "click",
       "isTrusted": true,
       "key": null,
@@ -13789,7 +13726,7 @@
        "testId": null,
        "xPath": "//button[@id='toast-btn']"
       },
-      "timestamp": 1787488349929,
+      "timestamp": 1787568798757,
       "valueAfter": null,
       "valueBefore": null
      }
@@ -13797,7 +13734,7 @@
     "metadata": {
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
      "clientX": 433,
      "clientY": 118,
@@ -13805,7 +13742,7 @@
      "targetRole": "button",
      "targetTag": "BUTTON"
     },
-    "startTime": 1787488349929,
+    "startTime": 1787568798757,
     "trigger": {
      "accessibleName": "Notify",
      "ariaLabel": null,
@@ -13832,9 +13769,9 @@
      "altKey": false,
      "captureOrigin": {
       "frameId": 0,
-      "tabId": 1140612370
+      "tabId": 757894229
      },
-     "captureSeq": 14460.200000000186,
+     "captureSeq": 14494.600000000559,
      "checkedAfter": null,
      "checkedBefore": null,
      "clientX": 433,
@@ -13863,7 +13800,7 @@
       "required": false,
       "tabIndex": 0
      },
-     "eventId": "evt-pmt5selpq-84",
+     "eventId": "evt-pmt74awdl-84",
      "eventType": "click",
      "isTrusted": true,
      "key": null,
@@ -13895,7 +13832,7 @@
       "testId": null,
       "xPath": "//button[@id='toast-btn']"
      },
-     "timestamp": 1787488349929,
+     "timestamp": 1787568798757,
      "valueAfter": null,
      "valueBefore": null
     },
@@ -13928,9 +13865,9 @@
     "input": "Choose Sunday, September 6th, 2026",
     "order": 0,
     "plainEnglish": "Select Choose Sunday, September 6th, 2026 in the Depart on",
-    "sourceEventId": "evt-pmt5selpq-8",
+    "sourceEventId": "evt-pmt74awdl-8",
     "target": {
-     "elementId": "f45db0e4-7acc-4001-b503-3239c7181906",
+     "elementId": "8df97d3b-1258-4031-96c9-89f3b976ac8d",
      "elementName": "Depart on",
      "kind": "element",
      "pageOrComponent": "main",
@@ -13970,9 +13907,9 @@
     "input": "Choose Tuesday, September 8th, 2026",
     "order": 1,
     "plainEnglish": "Select Choose Tuesday, September 8th, 2026 in the Return on",
-    "sourceEventId": "evt-pmt5selpq-44",
+    "sourceEventId": "evt-pmt74awdl-44",
     "target": {
-     "elementId": "98b19f03-058a-4fda-94dd-d8b51ef2b5e4",
+     "elementId": "3193210e-2ed7-4109-92c4-b9004cc28857",
      "elementName": "Return on",
      "kind": "element",
      "pageOrComponent": "main",
@@ -14034,9 +13971,9 @@
     "input": null,
     "order": 2,
     "plainEnglish": "Click the Search Flights",
-    "sourceEventId": "evt-pmt5selpq-72",
+    "sourceEventId": "evt-pmt74awdl-72",
     "target": {
-     "elementId": "da4c7562-6478-4ceb-b8f0-eaa7919c8670",
+     "elementId": "ebbf6d41-b5f5-4f66-a5ce-695527374c65",
      "elementName": "Search Flights",
      "kind": "element",
      "pageOrComponent": "main",
@@ -14098,7 +14035,7 @@
     "input": null,
     "order": 3,
     "plainEnglish": "Click the Bengaluru",
-    "sourceEventId": "evt-pmt5selpq-78",
+    "sourceEventId": "evt-pmt74awdl-78",
     "target": {
      "elementId": "",
      "elementName": "Bengaluru",
@@ -14162,9 +14099,9 @@
     "input": null,
     "order": 4,
     "plainEnglish": "Click the Notify",
-    "sourceEventId": "evt-pmt5selpq-84",
+    "sourceEventId": "evt-pmt74awdl-84",
     "target": {
-     "elementId": "cb1fb64c-ce8d-4adc-8b9c-6c4738f3e23f",
+     "elementId": "58d3f080-4237-4687-864e-e0758724a2a5",
      "elementName": "Notify",
      "kind": "element",
      "pageOrComponent": "main",
@@ -14199,7 +14136,7 @@
   "testCaseVersionNumber": 1,
   "title": "Recorded Test"
  },
- "execution_ir_plan_generated_at": "2026-08-23T12:32:32.873Z",
+ "execution_ir_plan_generated_at": "2026-08-24T10:53:21.733Z",
  "generated_files": {
   "files": [
    {
@@ -14230,9 +14167,9 @@
    "pattern": "flat"
   }
  },
- "repo_session_id": "e0c8e3d3-ef58-45c5-b459-0c7acd975947",
+ "repo_session_id": "e02f76e5-41dd-4069-ab1c-5527cfde5265",
  "session_context": {
-  "capturedAt": "2026-08-23T12:32:19.266Z",
+  "capturedAt": "2026-08-24T10:53:08.064Z",
   "startTitle": "CmdRunner Smart Recorder",
   "startUrl": "chrome-extension://gndjidfncanlhlonpcabokbdhnikglpn/src/sidepanel/index.html",
   "viewport": {
@@ -14241,11 +14178,11 @@
   }
  },
  "ui_state": {
-  "lastChanged": "2026-08-23T12:32:32.878Z",
+  "lastChanged": "2026-08-24T10:53:21.740Z",
   "recordingState": "stopped"
  },
  "understanding_result": {
-  "appId": "app-b24aev",
+  "appId": "app-vlwpj3",
   "behaviorModel": {
    "coverage": {
     "anchoredInteractions": 3,
@@ -14265,7 +14202,7 @@
       "actionTarget": "Search Flights",
       "actionType": "Click",
       "interactionId": "int-7",
-      "triggerTimestamp": 1787488347148
+      "triggerTimestamp": 1787568795963
      },
      "edges": [
       {
@@ -14274,7 +14211,7 @@
        "evidenceRefs": [
         {
          "kind": "request",
-         "requestId": "26"
+         "requestId": "27"
         }
        ],
        "from": {
@@ -14286,7 +14223,7 @@
        "latencyMs": null,
        "tier": "T1-stamp",
        "to": {
-        "requestId": "26",
+        "requestId": "27",
         "type": "api"
        }
       }
@@ -14303,14 +14240,14 @@
      "horizon": {
       "attribution": {
        "closeReason": "all-stamped-settled",
-       "closedAtMs": 1787488347148,
-       "openedAtMs": 1787488347148,
+       "closedAtMs": 1787568795963,
+       "openedAtMs": 1787568795963,
        "pendingRequestIds": []
       },
       "uiOwnership": {
        "closeReason": "stabilized",
-       "closedAtMs": 1787488347148,
-       "openedAtMs": 1787488347148
+       "closedAtMs": 1787568795963,
+       "openedAtMs": 1787568795963
       }
      },
      "id": "ep-int-7",
@@ -14343,7 +14280,7 @@
       }
      ],
      "provenanceLinks": [],
-     "tabId": 1140612370,
+     "tabId": 757894229,
      "unattributed": []
     },
     {
@@ -14351,31 +14288,9 @@
       "actionTarget": "Bengaluru",
       "actionType": "Click",
       "interactionId": "int-8",
-      "triggerTimestamp": 1787488348540
+      "triggerTimestamp": 1787568797365
      },
      "edges": [
-      {
-       "confidence": 0.9,
-       "detail": "GET http://127.0.0.1:8190/collect?e=notify initiated during ep-int-8",
-       "evidenceRefs": [
-        {
-         "kind": "request",
-         "requestId": "27"
-        }
-       ],
-       "from": {
-        "episodeId": "ep-int-8",
-        "interactionId": "int-8"
-       },
-       "id": "edge-ep-int-8-000",
-       "kind": "api",
-       "latencyMs": null,
-       "tier": "T1-stamp",
-       "to": {
-        "requestId": "27",
-        "type": "api"
-       }
-      },
       {
        "confidence": 0.7,
        "detail": "counter counter:body > main > div > p#result-count 1 → 2",
@@ -14389,7 +14304,7 @@
         "episodeId": "ep-int-8",
         "interactionId": "int-8"
        },
-       "id": "edge-ep-int-8-001",
+       "id": "edge-ep-int-8-000",
        "kind": "state",
        "latencyMs": null,
        "tier": "T3-transition",
@@ -14412,14 +14327,14 @@
      "horizon": {
       "attribution": {
        "closeReason": "all-stamped-settled",
-       "closedAtMs": 1787488348540,
-       "openedAtMs": 1787488348540,
+       "closedAtMs": 1787568797365,
+       "openedAtMs": 1787568797365,
        "pendingRequestIds": []
       },
       "uiOwnership": {
        "closeReason": "stabilized",
-       "closedAtMs": 1787488348540,
-       "openedAtMs": 1787488348540
+       "closedAtMs": 1787568797365,
+       "openedAtMs": 1787568797365
       }
      },
      "id": "ep-int-8",
@@ -14431,7 +14346,7 @@
      ],
      "parameterInputs": [],
      "provenanceLinks": [],
-     "tabId": 1140612370,
+     "tabId": 757894229,
      "unattributed": []
     },
     {
@@ -14439,9 +14354,31 @@
       "actionTarget": "Notify",
       "actionType": "Click",
       "interactionId": "int-10",
-      "triggerTimestamp": 1787488349929
+      "triggerTimestamp": 1787568798757
      },
      "edges": [
+      {
+       "confidence": 0.9,
+       "detail": "GET http://127.0.0.1:8190/collect?e=notify initiated during ep-int-10",
+       "evidenceRefs": [
+        {
+         "kind": "request",
+         "requestId": "28"
+        }
+       ],
+       "from": {
+        "episodeId": "ep-int-10",
+        "interactionId": "int-10"
+       },
+       "id": "edge-ep-int-10-000",
+       "kind": "api",
+       "latencyMs": null,
+       "tier": "T1-stamp",
+       "to": {
+        "requestId": "28",
+        "type": "api"
+       }
+      },
       {
        "confidence": 0.7,
        "detail": "notification \"Saved\" (info) appeared",
@@ -14455,7 +14392,7 @@
         "episodeId": "ep-int-10",
         "interactionId": "int-10"
        },
-       "id": "edge-ep-int-10-000",
+       "id": "edge-ep-int-10-001",
        "kind": "notification",
        "latencyMs": null,
        "tier": "T3-transition",
@@ -14477,14 +14414,14 @@
      "horizon": {
       "attribution": {
        "closeReason": "all-stamped-settled",
-       "closedAtMs": 1787488349929,
-       "openedAtMs": 1787488349929,
+       "closedAtMs": 1787568798757,
+       "openedAtMs": 1787568798757,
        "pendingRequestIds": []
       },
       "uiOwnership": {
        "closeReason": "stabilized",
-       "closedAtMs": 1787488349929,
-       "openedAtMs": 1787488349929
+       "closedAtMs": 1787568798757,
+       "openedAtMs": 1787568798757
       }
      },
      "id": "ep-int-10",
@@ -14496,84 +14433,84 @@
      ],
      "parameterInputs": [],
      "provenanceLinks": [],
-     "tabId": 1140612370,
+     "tabId": 757894229,
      "unattributed": []
     }
    ],
-   "generatedAtMs": 1787488352761,
-   "id": "abm-session-1787488352761",
+   "generatedAtMs": 1787568801589,
+   "id": "abm-session-1787568801589",
    "provenanceLinks": [],
-   "sessionId": "session-1787488352761",
+   "sessionId": "session-1787568801589",
    "unattributed": [
     {
-     "detail": "evidence window ev-evt-pmt5selpq-9 lies outside every uiOwnership horizon",
+     "detail": "evidence window ev-evt-pmt74awdl-9 lies outside every uiOwnership horizon",
      "evidenceRef": {
       "kind": "dom",
       "sequence": 0,
-      "windowId": "ev-evt-pmt5selpq-9"
+      "windowId": "ev-evt-pmt74awdl-9"
      },
      "id": "unattr-ui-int-2",
-     "observedAtMs": 1787488341164,
+     "observedAtMs": 1787568789969,
      "observedKind": "ui",
      "reason": "no-live-horizon",
-     "tabId": 1140612370
+     "tabId": 757894229
     },
     {
-     "detail": "evidence window lc-evt-pmt5selpq-44 lies outside every uiOwnership horizon",
+     "detail": "evidence window lc-evt-pmt74awdl-44 lies outside every uiOwnership horizon",
      "evidenceRef": {
       "kind": "dom",
       "sequence": 0,
-      "windowId": "lc-evt-pmt5selpq-44"
+      "windowId": "lc-evt-pmt74awdl-44"
      },
      "id": "unattr-ui-int-5",
-     "observedAtMs": 1787488344079,
+     "observedAtMs": 1787568792884,
      "observedKind": "ui",
      "reason": "no-live-horizon",
-     "tabId": 1140612370
+     "tabId": 757894229
     },
     {
-     "detail": "evidence window ev-evt-pmt5selpq-72 lies outside every uiOwnership horizon",
+     "detail": "evidence window ev-evt-pmt74awdl-72 lies outside every uiOwnership horizon",
      "evidenceRef": {
       "kind": "dom",
       "sequence": 0,
-      "windowId": "ev-evt-pmt5selpq-72"
+      "windowId": "ev-evt-pmt74awdl-72"
      },
      "id": "unattr-ui-int-7",
-     "observedAtMs": 1787488347148,
+     "observedAtMs": 1787568795963,
      "observedKind": "ui",
      "reason": "no-live-horizon",
-     "tabId": 1140612370
+     "tabId": 757894229
     },
     {
-     "detail": "evidence window ev-evt-pmt5selpq-78 lies outside every uiOwnership horizon",
+     "detail": "evidence window ev-evt-pmt74awdl-78 lies outside every uiOwnership horizon",
      "evidenceRef": {
       "kind": "dom",
       "sequence": 0,
-      "windowId": "ev-evt-pmt5selpq-78"
+      "windowId": "ev-evt-pmt74awdl-78"
      },
      "id": "unattr-ui-int-8",
-     "observedAtMs": 1787488348540,
+     "observedAtMs": 1787568797365,
      "observedKind": "ui",
      "reason": "no-live-horizon",
-     "tabId": 1140612370
+     "tabId": 757894229
     },
     {
-     "detail": "evidence window ev-evt-pmt5selpq-84 lies outside every uiOwnership horizon",
+     "detail": "evidence window ev-evt-pmt74awdl-84 lies outside every uiOwnership horizon",
      "evidenceRef": {
       "kind": "dom",
       "sequence": 0,
-      "windowId": "ev-evt-pmt5selpq-84"
+      "windowId": "ev-evt-pmt74awdl-84"
      },
      "id": "unattr-ui-int-10",
-     "observedAtMs": 1787488349929,
+     "observedAtMs": 1787568798757,
      "observedKind": "ui",
      "reason": "no-live-horizon",
-     "tabId": 1140612370
+     "tabId": 757894229
     }
    ],
    "warnings": []
   },
-  "generatedAt": "2026-08-23T12:32:32.836Z",
+  "generatedAt": "2026-08-24T10:53:21.690Z",
   "outcomes": [
    {
     "actionTarget": "Depart on",
@@ -14665,7 +14602,7 @@
   ],
   "schemaVersion": 2,
   "semanticKnowledge": {
-   "appId": "app-b24aev",
+   "appId": "app-vlwpj3",
    "components": [
     {
      "ariaRole": "textbox",
@@ -14848,7 +14785,7 @@
      "intentCoverage": 0.2
     },
     "enricherVersion": "m9.7-deterministic-v3-ddc",
-    "generatedAt": 1787488352812,
+    "generatedAt": 1787568801666,
     "interactionCount": 5,
     "viewCount": 0,
     "workflowCount": 1
@@ -14885,7 +14822,7 @@
      },
      "label": "Depart on",
      "overallOutcome": "success",
-     "sessionId": "session-1787488352761",
+     "sessionId": "session-1787568801589",
      "stepIds": [
       "int-2",
       "int-5",
@@ -14901,11 +14838,11 @@
       "Notify"
      ],
      "viewIds": [],
-     "workflowId": "wf-session-1787488352761-0"
+     "workflowId": "wf-session-1787568801589-0"
     }
    ]
   },
-  "sessionId": "session-1787488352761",
+  "sessionId": "session-1787568801589",
   "transitions": [
    {
     "after": {

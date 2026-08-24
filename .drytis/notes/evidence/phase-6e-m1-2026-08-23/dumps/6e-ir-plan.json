@@ -10,36 +10,15 @@
  },
  "steps": [
   {
-   "action": "fill",
+   "action": "selectDate",
    "assertions": [
-    {
-     "comparison": "equals",
-     "expectedValue": "Sat, 05 Sep",
-     "property": "value",
-     "severity": "soft",
-     "target": {
-      "elementId": "obs-0-0",
-      "elementName": "Depart on",
-      "kind": "element",
-      "pageOrComponent": "main",
-      "resolvedLocators": [
-       {
-        "confidence": 0.7,
-        "priority": 1,
-        "type": "css",
-        "value": "#depart"
-       }
-      ]
-     },
-     "type": "equality"
-    },
     {
      "comparison": "contains",
      "expectedValue": "0",
      "property": null,
      "severity": "soft",
      "target": {
-      "elementId": "obs-0-1",
+      "elementId": "obs-0-0",
       "elementName": "counter",
       "kind": "element",
       "pageOrComponent": "main",
@@ -60,7 +39,7 @@
      "property": null,
      "severity": "soft",
      "target": {
-      "elementId": "obs-0-2",
+      "elementId": "obs-0-1",
       "elementName": "02h 30m",
       "kind": "element",
       "pageOrComponent": "main",
@@ -74,9 +53,30 @@
       ]
      },
      "type": "textMatch"
+    },
+    {
+     "comparison": "isTrue",
+     "expectedValue": null,
+     "property": null,
+     "severity": "soft",
+     "target": {
+      "elementId": "obs-0-2",
+      "elementName": "product:MEAL",
+      "kind": "element",
+      "pageOrComponent": "main",
+      "resolvedLocators": [
+       {
+        "confidence": 0.7,
+        "priority": 1,
+        "type": "css",
+        "value": "[data-sku=\"MEAL\"]"
+       }
+      ]
+     },
+     "type": "presence"
     }
    ],
-   "description": "Fill \"Sat, 05 Sep\" in the Depart on",
+   "description": "Select Choose Saturday, September 5th, 2026 in the Depart on",
    "executionParameters": {
     "retryCount": 0,
     "retryDelayMs": 1000,
@@ -84,12 +84,12 @@
     "waitStrategy": "visible"
    },
    "id": "step-0001",
-   "input": "Sat, 05 Sep",
+   "input": "Choose Saturday, September 5th, 2026",
    "order": 0,
-   "plainEnglish": "Fill \"Sat, 05 Sep\" in the Depart on",
-   "sourceEventId": "evt-pmt5exfge-5",
+   "plainEnglish": "Select Choose Saturday, September 5th, 2026 in the Depart on",
+   "sourceEventId": "evt-pmt73u8wx-5",
    "target": {
-    "elementId": "4f54c016-adef-4a7f-9e35-8d974b50102b",
+    "elementId": "ae08c0a8-7728-44d5-a1cf-f39912b44cc7",
     "elementName": "Depart on",
     "kind": "element",
     "pageOrComponent": "main",
@@ -117,8 +117,72 @@
   },
   {
    "action": "click",
-   "assertions": [],
-   "description": "Click the Choose Saturday, September 5th, 2026",
+   "assertions": [
+    {
+     "comparison": "contains",
+     "expectedValue": "0",
+     "property": null,
+     "severity": "soft",
+     "target": {
+      "elementId": "obs-1-0",
+      "elementName": "counter",
+      "kind": "element",
+      "pageOrComponent": "main",
+      "resolvedLocators": [
+       {
+        "confidence": 0.7,
+        "priority": 1,
+        "type": "css",
+        "value": "[data-auto-id=\"cart-count\"]"
+       }
+      ]
+     },
+     "type": "textMatch"
+    },
+    {
+     "comparison": "contains",
+     "expectedValue": "02h 30m",
+     "property": null,
+     "severity": "soft",
+     "target": {
+      "elementId": "obs-1-1",
+      "elementName": "02h 30m",
+      "kind": "element",
+      "pageOrComponent": "main",
+      "resolvedLocators": [
+       {
+        "confidence": 0.7,
+        "priority": 1,
+        "type": "css",
+        "value": "#app-root"
+       }
+      ]
+     },
+     "type": "textMatch"
+    },
+    {
+     "comparison": "isTrue",
+     "expectedValue": null,
+     "property": null,
+     "severity": "soft",
+     "target": {
+      "elementId": "obs-1-2",
+      "elementName": "product:MEAL",
+      "kind": "element",
+      "pageOrComponent": "main",
+      "resolvedLocators": [
+       {
+        "confidence": 0.7,
+        "priority": 1,
+        "type": "css",
+        "value": "[data-sku=\"MEAL\"]"
+       }
+      ]
+     },
+     "type": "presence"
+    }
+   ],
+   "description": "Click the 02h 30m",
    "executionParameters": {
     "retryCount": 0,
     "retryDelayMs": 1000,
@@ -128,11 +192,11 @@
    "id": "step-0002",
    "input": null,
    "order": 1,
-   "plainEnglish": "Click the Choose Saturday, September 5th, 2026",
-   "sourceEventId": "evt-pmt5exfge-13",
+   "plainEnglish": "Click the 02h 30m",
+   "sourceEventId": "evt-pmt73u8wx-19",
    "target": {
     "elementId": "",
-    "elementName": "Choose Saturday, September 5th, 2026",
+    "elementName": "02h 30m",
     "kind": "element",
     "pageOrComponent": "main",
     "resolvedLocators": [
@@ -140,19 +204,19 @@
       "confidence": 0.9,
       "priority": 1,
       "type": "testId",
-      "value": "[data-auto-id=\"date-cell-2026-09-05\"]"
-     },
-     {
-      "confidence": 0.8,
-      "priority": 2,
-      "type": "accessibleName",
-      "value": "Choose Saturday, September 5th, 2026"
+      "value": "[data-auto-id=\"duration-under-2h\"]"
      },
      {
       "confidence": 0.72,
-      "priority": 3,
+      "priority": 2,
       "type": "css",
-      "value": "[class~=\"cal-cell\"]"
+      "value": "[class~=\"dur-chip\"]"
+     },
+     {
+      "confidence": 0.62,
+      "priority": 3,
+      "type": "accessibleName",
+      "value": "02h 30m"
      }
     ]
    }
@@ -162,7 +226,7 @@
    "assertions": [
     {
      "comparison": "contains",
-     "expectedValue": "0",
+     "expectedValue": "2",
      "property": null,
      "severity": "soft",
      "target": {
@@ -224,7 +288,7 @@
      "type": "presence"
     }
    ],
-   "description": "Click the 02h 30m",
+   "description": "Click the Select flight QP-1478",
    "executionParameters": {
     "retryCount": 0,
     "retryDelayMs": 1000,
@@ -234,114 +298,8 @@
    "id": "step-0003",
    "input": null,
    "order": 2,
-   "plainEnglish": "Click the 02h 30m",
-   "sourceEventId": "evt-pmt5exfge-19",
-   "target": {
-    "elementId": "",
-    "elementName": "02h 30m",
-    "kind": "element",
-    "pageOrComponent": "main",
-    "resolvedLocators": [
-     {
-      "confidence": 0.9,
-      "priority": 1,
-      "type": "testId",
-      "value": "[data-auto-id=\"duration-under-2h\"]"
-     },
-     {
-      "confidence": 0.72,
-      "priority": 2,
-      "type": "css",
-      "value": "[class~=\"dur-chip\"]"
-     },
-     {
-      "confidence": 0.62,
-      "priority": 3,
-      "type": "accessibleName",
-      "value": "02h 30m"
-     }
-    ]
-   }
-  },
-  {
-   "action": "click",
-   "assertions": [
-    {
-     "comparison": "contains",
-     "expectedValue": "2",
-     "property": null,
-     "severity": "soft",
-     "target": {
-      "elementId": "obs-3-0",
-      "elementName": "counter",
-      "kind": "element",
-      "pageOrComponent": "main",
-      "resolvedLocators": [
-       {
-        "confidence": 0.7,
-        "priority": 1,
-        "type": "css",
-        "value": "[data-auto-id=\"cart-count\"]"
-       }
-      ]
-     },
-     "type": "textMatch"
-    },
-    {
-     "comparison": "contains",
-     "expectedValue": "02h 30m",
-     "property": null,
-     "severity": "soft",
-     "target": {
-      "elementId": "obs-3-1",
-      "elementName": "02h 30m",
-      "kind": "element",
-      "pageOrComponent": "main",
-      "resolvedLocators": [
-       {
-        "confidence": 0.7,
-        "priority": 1,
-        "type": "css",
-        "value": "#app-root"
-       }
-      ]
-     },
-     "type": "textMatch"
-    },
-    {
-     "comparison": "isTrue",
-     "expectedValue": null,
-     "property": null,
-     "severity": "soft",
-     "target": {
-      "elementId": "obs-3-2",
-      "elementName": "product:MEAL",
-      "kind": "element",
-      "pageOrComponent": "main",
-      "resolvedLocators": [
-       {
-        "confidence": 0.7,
-        "priority": 1,
-        "type": "css",
-        "value": "[data-sku=\"MEAL\"]"
-       }
-      ]
-     },
-     "type": "presence"
-    }
-   ],
-   "description": "Click the Select flight QP-1478",
-   "executionParameters": {
-    "retryCount": 0,
-    "retryDelayMs": 1000,
-    "timeoutMs": 30000,
-    "waitStrategy": "visible"
-   },
-   "id": "step-0004",
-   "input": null,
-   "order": 3,
    "plainEnglish": "Click the Select flight QP-1478",
-   "sourceEventId": "evt-pmt5exfge-34",
+   "sourceEventId": "evt-pmt73u8wx-34",
    "target": {
     "elementId": "",
     "elementName": "Select flight QP-1478",
@@ -373,8 +331,8 @@
  "tags": [
   "src"
  ],
- "testCaseId": "tc-3a71f84a",
- "testCaseVersionId": "tcv-3a71f84a",
+ "testCaseId": "tc-bc174221",
+ "testCaseVersionId": "tcv-bc174221",
  "testCaseVersionNumber": 1,
  "title": "Recorded Test"
 }

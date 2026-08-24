@@ -21,47 +21,47 @@
  "dump": {
   "applications": [
    {
-    "appId": "app-b24aev",
-    "origin": "chrome-extension://gndjidfncanlhlonpcabokbdhnikglpn/src/sidepanel/index.html",
-    "label": "chrome-extension:",
-    "firstSeenAt": 1787465715033,
-    "lastActiveAt": 1787465715084,
+    "appId": "app-vlwpih",
+    "origin": "http://127.0.0.1:8189",
+    "label": "127.0.0.1:8189",
+    "firstSeenAt": 1787568023306,
+    "lastActiveAt": 1787568023355,
     "sessionCount": 1,
-    "lastSessionId": "session-1787465715014"
+    "lastSessionId": "session-1787568023254"
    }
   ],
   "knowledgeBehaviorSessions": [
    {
-    "key": "app-b24aev:session-1787465715014",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
+    "key": "app-vlwpih:session-1787568023254",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
     "seq": 1,
-    "generatedAtMs": 1787465715033,
-    "episodeCount": 5,
-    "edgeCount": 7,
+    "generatedAtMs": 1787568023306,
+    "episodeCount": 4,
+    "edgeCount": 5,
     "gapCount": 5,
     "coverage": {
-     "totalInteractions": 6,
-     "anchoredInteractions": 5,
+     "totalInteractions": 5,
+     "anchoredInteractions": 4,
      "memberInteractions": 0,
      "malformedInteractions": 0,
      "totalNetworkRows": 5,
-     "attributedNetworkRows": 5,
-     "totalObservations": 6,
-     "attributedObservations": 1,
+     "attributedNetworkRows": 4,
+     "totalObservations": 5,
+     "attributedObservations": 0,
      "unattributedConsequences": 5,
      "provenanceLinks": 0
     },
     "viewSetHash": "811c9dc5",
-    "signatureSetHash": "9084b4d3",
+    "signatureSetHash": "7c34f04a",
     "warnings": [
      {
       "code": "ref-conflict-skipped",
-      "message": "Edge from ep-int-8 (state) skipped: ref transition:st-int-8 already owned by edge-ep-int-8-001.",
+      "message": "Edge from ep-int-6 (state) skipped: ref transition:st-int-6 already owned by edge-ep-int-6-001.",
       "refs": [
-       "ep-int-8",
-       "transition:st-int-8",
-       "edge-ep-int-8-001"
+       "ep-int-6",
+       "transition:st-int-6",
+       "edge-ep-int-6-001"
       ]
      }
     ]
@@ -70,8 +70,8 @@
   "knowledgeCollections": [],
   "knowledgeCounters": [
    {
-    "key": "app-b24aev:counter:body > header > span",
-    "appId": "app-b24aev",
+    "key": "app-vlwpih:counter:body > header > span",
+    "appId": "app-vlwpih",
     "counterId": "counter:body > header > span",
     "label": "Cart items",
     "elementPath": "body > header > span",
@@ -79,23 +79,23 @@
     "history": [
      {
       "value": "0",
-      "observedAt": 1787465715033,
-      "sessionId": "session-1787465715014",
+      "observedAt": 1787568023306,
+      "sessionId": "session-1787568023254",
       "delta": null
      },
      {
       "value": "2",
-      "observedAt": 1787465715033,
-      "sessionId": "session-1787465715014",
+      "observedAt": 1787568023306,
+      "sessionId": "session-1787568023254",
       "delta": 2
      }
     ],
-    "lastUpdated": 1787465715084,
-    "lastSessionId": "session-1787465715014"
+    "lastUpdated": 1787568023355,
+    "lastSessionId": "session-1787568023254"
    },
    {
-    "key": "app-b24aev:counter:body > header > span > span",
-    "appId": "app-b24aev",
+    "key": "app-vlwpih:counter:body > header > span > span",
+    "appId": "app-vlwpih",
     "counterId": "counter:body > header > span > span",
     "label": "body > header > span > span",
     "elementPath": "body > header > span > span",
@@ -103,175 +103,133 @@
     "history": [
      {
       "value": "0",
-      "observedAt": 1787465715033,
-      "sessionId": "session-1787465715014",
+      "observedAt": 1787568023306,
+      "sessionId": "session-1787568023254",
       "delta": null
      },
      {
       "value": "2",
-      "observedAt": 1787465715033,
-      "sessionId": "session-1787465715014",
+      "observedAt": 1787568023306,
+      "sessionId": "session-1787568023254",
       "delta": 2
      }
     ],
-    "lastUpdated": 1787465715084,
-    "lastSessionId": "session-1787465715014"
+    "lastUpdated": 1787568023355,
+    "lastSessionId": "session-1787568023254"
    }
   ],
   "knowledgeEdges": [
    {
-    "key": "app-b24aev:session-1787465715014:edge-ep-int-12-000",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "episodeId": "ep-int-12",
-    "edgeId": "edge-ep-int-12-000",
+    "key": "app-vlwpih:session-1787568023254:edge-ep-int-10-000",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
+    "episodeId": "ep-int-10",
+    "edgeId": "edge-ep-int-10-000",
     "edgeSeq": 0,
     "tier": "T1-stamp",
     "kind": "api",
-    "detail": "GET http://127.0.0.1:8189/collect?e=filter_applied initiated during ep-int-12",
+    "detail": "GET http://127.0.0.1:8189/collect?e=flight_picked&f=flight-F2 initiated during ep-int-10",
     "confidence": 0.9,
     "latencyMs": null,
-    "fromEpisodeId": "ep-int-12",
-    "fromInteractionId": "int-12",
+    "fromEpisodeId": "ep-int-10",
+    "fromInteractionId": "int-10",
     "to": {
      "type": "api",
-     "requestId": "28"
+     "requestId": "42"
     },
-    "refJson": "[{\"kind\":\"request\",\"requestId\":\"28\"}]",
-    "signatureKey": "app-b24aev:sig:88381a2f"
+    "refJson": "[{\"kind\":\"request\",\"requestId\":\"42\"}]",
+    "signatureKey": "app-vlwpih:sig:961db957"
    },
    {
-    "key": "app-b24aev:session-1787465715014:edge-ep-int-13-000",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "episodeId": "ep-int-13",
-    "edgeId": "edge-ep-int-13-000",
-    "edgeSeq": 0,
-    "tier": "T1-stamp",
-    "kind": "api",
-    "detail": "GET http://127.0.0.1:8189/collect?e=flight_picked&f=flight-F2 initiated during ep-int-13",
-    "confidence": 0.9,
-    "latencyMs": null,
-    "fromEpisodeId": "ep-int-13",
-    "fromInteractionId": "int-13",
-    "to": {
-     "type": "api",
-     "requestId": "29"
-    },
-    "refJson": "[{\"kind\":\"request\",\"requestId\":\"29\"}]",
-    "signatureKey": "app-b24aev:sig:b32d9687"
-   },
-   {
-    "key": "app-b24aev:session-1787465715014:edge-ep-int-4-000",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
+    "key": "app-vlwpih:session-1787568023254:edge-ep-int-4-000",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
     "episodeId": "ep-int-4",
     "edgeId": "edge-ep-int-4-000",
     "edgeSeq": 0,
     "tier": "T1-stamp",
     "kind": "api",
-    "detail": "GET http://127.0.0.1:8189/collect?e=date_selected initiated during ep-int-4",
+    "detail": "GET http://127.0.0.1:8189/collect?e=filter_applied initiated during ep-int-4",
     "confidence": 0.9,
     "latencyMs": null,
     "fromEpisodeId": "ep-int-4",
     "fromInteractionId": "int-4",
     "to": {
      "type": "api",
-     "requestId": "26"
+     "requestId": "40"
     },
-    "refJson": "[{\"kind\":\"request\",\"requestId\":\"26\"}]",
-    "signatureKey": "app-b24aev:sig:3719b550"
+    "refJson": "[{\"kind\":\"request\",\"requestId\":\"40\"}]",
+    "signatureKey": "app-vlwpih:sig:ec6f0860"
    },
    {
-    "key": "app-b24aev:session-1787465715014:edge-ep-int-4-001",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "episodeId": "ep-int-4",
-    "edgeId": "edge-ep-int-4-001",
-    "edgeSeq": 1,
-    "tier": "T4-window",
-    "kind": "ui",
-    "detail": "UI observations on int-2: 1 DOM changes, 2 visibility changes",
-    "confidence": 0.6,
-    "latencyMs": 0,
-    "fromEpisodeId": "ep-int-4",
-    "fromInteractionId": "int-2",
-    "to": {
-     "type": "ui",
-     "summary": "1 DOM changes, 2 visibility changes"
-    },
-    "refJson": "[{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt5exfge-6\",\"sequence\":0}]",
-    "signatureKey": "app-b24aev:sig:3719b550"
-   },
-   {
-    "key": "app-b24aev:session-1787465715014:edge-ep-int-6-000",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
+    "key": "app-vlwpih:session-1787568023254:edge-ep-int-6-000",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
     "episodeId": "ep-int-6",
     "edgeId": "edge-ep-int-6-000",
     "edgeSeq": 0,
     "tier": "T1-stamp",
     "kind": "api",
-    "detail": "GET http://127.0.0.1:8189/collect?e=filter_applied initiated during ep-int-6",
+    "detail": "GET http://127.0.0.1:8189/collect?e=flight_picked&f=flight-F3 initiated during ep-int-6",
     "confidence": 0.9,
     "latencyMs": null,
     "fromEpisodeId": "ep-int-6",
     "fromInteractionId": "int-6",
     "to": {
      "type": "api",
-     "requestId": "27"
+     "requestId": "43"
     },
-    "refJson": "[{\"kind\":\"request\",\"requestId\":\"27\"}]",
-    "signatureKey": "app-b24aev:sig:886b0c50"
+    "refJson": "[{\"kind\":\"request\",\"requestId\":\"43\"}]",
+    "signatureKey": "app-vlwpih:sig:1e77e300"
    },
    {
-    "key": "app-b24aev:session-1787465715014:edge-ep-int-8-000",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "episodeId": "ep-int-8",
-    "edgeId": "edge-ep-int-8-000",
-    "edgeSeq": 0,
-    "tier": "T1-stamp",
-    "kind": "api",
-    "detail": "GET http://127.0.0.1:8189/collect?e=flight_picked&f=flight-F3 initiated during ep-int-8",
-    "confidence": 0.9,
-    "latencyMs": null,
-    "fromEpisodeId": "ep-int-8",
-    "fromInteractionId": "int-8",
-    "to": {
-     "type": "api",
-     "requestId": "30"
-    },
-    "refJson": "[{\"kind\":\"request\",\"requestId\":\"30\"}]",
-    "signatureKey": "app-b24aev:sig:021db6d0"
-   },
-   {
-    "key": "app-b24aev:session-1787465715014:edge-ep-int-8-001",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "episodeId": "ep-int-8",
-    "edgeId": "edge-ep-int-8-001",
+    "key": "app-vlwpih:session-1787568023254:edge-ep-int-6-001",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
+    "episodeId": "ep-int-6",
+    "edgeId": "edge-ep-int-6-001",
     "edgeSeq": 1,
     "tier": "T3-transition",
     "kind": "state",
     "detail": "counter counter:body > header > span 0 → 2",
     "confidence": 0.7,
     "latencyMs": null,
-    "fromEpisodeId": "ep-int-8",
-    "fromInteractionId": "int-8",
+    "fromEpisodeId": "ep-int-6",
+    "fromInteractionId": "int-6",
     "to": {
      "type": "state",
      "from": "counter:body > header > span=0",
      "to": "counter:body > header > span=2"
     },
-    "refJson": "[{\"kind\":\"transition\",\"transitionId\":\"st-int-8\"}]",
-    "signatureKey": "app-b24aev:sig:021db6d0"
+    "refJson": "[{\"kind\":\"transition\",\"transitionId\":\"st-int-6\"}]",
+    "signatureKey": "app-vlwpih:sig:1e77e300"
+   },
+   {
+    "key": "app-vlwpih:session-1787568023254:edge-ep-int-9-000",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
+    "episodeId": "ep-int-9",
+    "edgeId": "edge-ep-int-9-000",
+    "edgeSeq": 0,
+    "tier": "T1-stamp",
+    "kind": "api",
+    "detail": "GET http://127.0.0.1:8189/collect?e=filter_applied initiated during ep-int-9",
+    "confidence": 0.9,
+    "latencyMs": null,
+    "fromEpisodeId": "ep-int-9",
+    "fromInteractionId": "int-9",
+    "to": {
+     "type": "api",
+     "requestId": "41"
+    },
+    "refJson": "[{\"kind\":\"request\",\"requestId\":\"41\"}]",
+    "signatureKey": "app-vlwpih:sig:eff0663f"
    }
   ],
   "knowledgeEntities": [
    {
-    "key": "app-b24aev:product:MEAL",
-    "appId": "app-b24aev",
+    "key": "app-vlwpih:product:MEAL",
+    "appId": "app-vlwpih",
     "entityId": "product:MEAL",
     "type": "product",
     "attributes": {
@@ -280,75 +238,38 @@
      "title": "In-flight meal₹450"
     },
     "source": "content-observed",
-    "firstSeenAt": 1787465715033,
-    "lastSeenAt": 1787465715033,
+    "firstSeenAt": 1787568023306,
+    "lastSeenAt": 1787568023306,
     "revision": 1,
-    "lastSessionId": "session-1787465715014"
+    "lastSessionId": "session-1787568023254"
    }
   ],
   "knowledgeEpisodes": [
    {
-    "key": "app-b24aev:session-1787465715014:ep-int-12",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "episodeId": "ep-int-12",
+    "key": "app-vlwpih:session-1787568023254:ep-int-10",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
+    "episodeId": "ep-int-10",
     "anchor": {
-     "interactionId": "int-12",
-     "actionType": "Unclassified",
-     "actionTarget": "12h 10m",
-     "triggerTimestamp": 1787465709195
-    },
-    "members": [
-     {
-      "interactionId": "int-12",
-      "role": "anchor"
-     }
-    ],
-    "horizonAttribution": {
-     "openedAtMs": 1787465709195,
-     "closedAtMs": 1787465709195,
-     "closeReason": "all-stamped-settled"
-    },
-    "horizonUiOwnership": {
-     "openedAtMs": 1787465709195,
-     "closedAtMs": 1787465709195,
-     "closeReason": "stabilized"
-    },
-    "parameterInputs": [],
-    "episodeOutcome": {
-     "outcome": "incomplete",
-     "confidence": 0,
-     "confidenceLevel": "inconclusive",
-     "derivation": "derived-episode-outcome"
-    },
-    "tabId": 1323208195,
-    "signatureKey": "app-b24aev:sig:88381a2f"
-   },
-   {
-    "key": "app-b24aev:session-1787465715014:ep-int-13",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "episodeId": "ep-int-13",
-    "anchor": {
-     "interactionId": "int-13",
+     "interactionId": "int-10",
      "actionType": "Unclassified",
      "actionTarget": "AI-887\n10:15 – 12:30\n₹5380",
-     "triggerTimestamp": 1787465710487
+     "triggerTimestamp": 1787568018731
     },
     "members": [
      {
-      "interactionId": "int-13",
+      "interactionId": "int-10",
       "role": "anchor"
      }
     ],
     "horizonAttribution": {
-     "openedAtMs": 1787465710487,
-     "closedAtMs": 1787465710487,
+     "openedAtMs": 1787568018731,
+     "closedAtMs": 1787568018731,
      "closeReason": "all-stamped-settled"
     },
     "horizonUiOwnership": {
-     "openedAtMs": 1787465710487,
-     "closedAtMs": 1787465710487,
+     "openedAtMs": 1787568018731,
+     "closedAtMs": 1787568018731,
      "closeReason": "stabilized"
     },
     "parameterInputs": [],
@@ -358,19 +279,19 @@
      "confidenceLevel": "inconclusive",
      "derivation": "derived-episode-outcome"
     },
-    "tabId": 1323208195,
-    "signatureKey": "app-b24aev:sig:b32d9687"
+    "tabId": 1576846041,
+    "signatureKey": "app-vlwpih:sig:961db957"
    },
    {
-    "key": "app-b24aev:session-1787465715014:ep-int-4",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
+    "key": "app-vlwpih:session-1787568023254:ep-int-4",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
     "episodeId": "ep-int-4",
     "anchor": {
      "interactionId": "int-4",
      "actionType": "Click",
-     "actionTarget": "Choose Saturday, September 5th, 2026",
-     "triggerTimestamp": 1787465706204
+     "actionTarget": "02h 30m",
+     "triggerTimestamp": 1787568016141
     },
     "members": [
      {
@@ -379,50 +300,13 @@
      }
     ],
     "horizonAttribution": {
-     "openedAtMs": 1787465706204,
-     "closedAtMs": 1787465706204,
+     "openedAtMs": 1787568016141,
+     "closedAtMs": 1787568016141,
      "closeReason": "all-stamped-settled"
     },
     "horizonUiOwnership": {
-     "openedAtMs": 1787465706204,
-     "closedAtMs": 1787465706204,
-     "closeReason": "stabilized"
-    },
-    "parameterInputs": [],
-    "episodeOutcome": {
-     "outcome": "incomplete",
-     "confidence": 0,
-     "confidenceLevel": "inconclusive",
-     "derivation": "derived-episode-outcome"
-    },
-    "tabId": 1323208195,
-    "signatureKey": "app-b24aev:sig:3719b550"
-   },
-   {
-    "key": "app-b24aev:session-1787465715014:ep-int-6",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "episodeId": "ep-int-6",
-    "anchor": {
-     "interactionId": "int-6",
-     "actionType": "Click",
-     "actionTarget": "02h 30m",
-     "triggerTimestamp": 1787465707896
-    },
-    "members": [
-     {
-      "interactionId": "int-6",
-      "role": "anchor"
-     }
-    ],
-    "horizonAttribution": {
-     "openedAtMs": 1787465707896,
-     "closedAtMs": 1787465707896,
-     "closeReason": "all-stamped-settled"
-    },
-    "horizonUiOwnership": {
-     "openedAtMs": 1787465707896,
-     "closedAtMs": 1787465707896,
+     "openedAtMs": 1787568016141,
+     "closedAtMs": 1787568016141,
      "closeReason": "stabilized"
     },
     "parameterInputs": [],
@@ -432,34 +316,34 @@
      "confidenceLevel": "inconclusive",
      "derivation": "derived-episode-outcome"
     },
-    "tabId": 1323208195,
-    "signatureKey": "app-b24aev:sig:886b0c50"
+    "tabId": 1576846041,
+    "signatureKey": "app-vlwpih:sig:ec6f0860"
    },
    {
-    "key": "app-b24aev:session-1787465715014:ep-int-8",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "episodeId": "ep-int-8",
+    "key": "app-vlwpih:session-1787568023254:ep-int-6",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
+    "episodeId": "ep-int-6",
     "anchor": {
-     "interactionId": "int-8",
+     "interactionId": "int-6",
      "actionType": "Click",
      "actionTarget": "Select flight QP-1478",
-     "triggerTimestamp": 1787465712179
+     "triggerTimestamp": 1787568020420
     },
     "members": [
      {
-      "interactionId": "int-8",
+      "interactionId": "int-6",
       "role": "anchor"
      }
     ],
     "horizonAttribution": {
-     "openedAtMs": 1787465712179,
-     "closedAtMs": 1787465712179,
+     "openedAtMs": 1787568020420,
+     "closedAtMs": 1787568020420,
      "closeReason": "all-stamped-settled"
     },
     "horizonUiOwnership": {
-     "openedAtMs": 1787465712179,
-     "closedAtMs": 1787465712179,
+     "openedAtMs": 1787568020420,
+     "closedAtMs": 1787568020420,
      "closeReason": "stabilized"
     },
     "parameterInputs": [],
@@ -469,93 +353,116 @@
      "confidenceLevel": "likely",
      "derivation": "derived-episode-outcome"
     },
-    "tabId": 1323208195,
-    "signatureKey": "app-b24aev:sig:021db6d0"
+    "tabId": 1576846041,
+    "signatureKey": "app-vlwpih:sig:1e77e300"
+   },
+   {
+    "key": "app-vlwpih:session-1787568023254:ep-int-9",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
+    "episodeId": "ep-int-9",
+    "anchor": {
+     "interactionId": "int-9",
+     "actionType": "Unclassified",
+     "actionTarget": "12h 10m",
+     "triggerTimestamp": 1787568017439
+    },
+    "members": [
+     {
+      "interactionId": "int-9",
+      "role": "anchor"
+     }
+    ],
+    "horizonAttribution": {
+     "openedAtMs": 1787568017439,
+     "closedAtMs": 1787568017439,
+     "closeReason": "all-stamped-settled"
+    },
+    "horizonUiOwnership": {
+     "openedAtMs": 1787568017439,
+     "closedAtMs": 1787568017439,
+     "closeReason": "stabilized"
+    },
+    "parameterInputs": [],
+    "episodeOutcome": {
+     "outcome": "incomplete",
+     "confidence": 0,
+     "confidenceLevel": "inconclusive",
+     "derivation": "derived-episode-outcome"
+    },
+    "tabId": 1576846041,
+    "signatureKey": "app-vlwpih:sig:eff0663f"
    }
   ],
   "knowledgeGaps": [
    {
-    "key": "app-b24aev:session-1787465715014:unattr-ui-int-12",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "gapId": "unattr-ui-int-12",
+    "key": "app-vlwpih:session-1787568023254:unattr-ui-int-10",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
+    "gapId": "unattr-ui-int-10",
     "observedKind": "ui",
     "reason": "no-live-horizon",
-    "detail": "evidence window sw-evt-pmt5exfge-23 lies outside every uiOwnership horizon",
-    "observedAtMs": 1787465709195,
-    "tabId": 1323208195,
-    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"sw-evt-pmt5exfge-23\",\"sequence\":0}"
+    "detail": "evidence window sw-evt-pmt73u8wx-29 lies outside every uiOwnership horizon",
+    "observedAtMs": 1787568018731,
+    "tabId": 1576846041,
+    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"sw-evt-pmt73u8wx-29\",\"sequence\":0}"
    },
    {
-    "key": "app-b24aev:session-1787465715014:unattr-ui-int-13",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "gapId": "unattr-ui-int-13",
+    "key": "app-vlwpih:session-1787568023254:unattr-ui-int-2",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
+    "gapId": "unattr-ui-int-2",
     "observedKind": "ui",
     "reason": "no-live-horizon",
-    "detail": "evidence window sw-evt-pmt5exfge-29 lies outside every uiOwnership horizon",
-    "observedAtMs": 1787465710487,
-    "tabId": 1323208195,
-    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"sw-evt-pmt5exfge-29\",\"sequence\":0}"
+    "detail": "evidence window ev-evt-pmt73u8wx-6 lies outside every uiOwnership horizon",
+    "observedAtMs": 1787568013253,
+    "tabId": 1576846041,
+    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt73u8wx-6\",\"sequence\":0}"
    },
    {
-    "key": "app-b24aev:session-1787465715014:unattr-ui-int-4",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
+    "key": "app-vlwpih:session-1787568023254:unattr-ui-int-4",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
     "gapId": "unattr-ui-int-4",
     "observedKind": "ui",
     "reason": "no-live-horizon",
-    "detail": "evidence window sw-evt-pmt5exfge-13 lies outside every uiOwnership horizon",
-    "observedAtMs": 1787465706204,
-    "tabId": 1323208195,
-    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"sw-evt-pmt5exfge-13\",\"sequence\":0}"
+    "detail": "evidence window ev-evt-pmt73u8wx-19 lies outside every uiOwnership horizon",
+    "observedAtMs": 1787568016141,
+    "tabId": 1576846041,
+    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt73u8wx-19\",\"sequence\":0}"
    },
    {
-    "key": "app-b24aev:session-1787465715014:unattr-ui-int-6",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
+    "key": "app-vlwpih:session-1787568023254:unattr-ui-int-6",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
     "gapId": "unattr-ui-int-6",
     "observedKind": "ui",
     "reason": "no-live-horizon",
-    "detail": "evidence window ev-evt-pmt5exfge-19 lies outside every uiOwnership horizon",
-    "observedAtMs": 1787465707896,
-    "tabId": 1323208195,
-    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt5exfge-19\",\"sequence\":0}"
+    "detail": "evidence window ev-evt-pmt73u8wx-34 lies outside every uiOwnership horizon",
+    "observedAtMs": 1787568020420,
+    "tabId": 1576846041,
+    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt73u8wx-34\",\"sequence\":0}"
    },
    {
-    "key": "app-b24aev:session-1787465715014:unattr-ui-int-8",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "gapId": "unattr-ui-int-8",
+    "key": "app-vlwpih:session-1787568023254:unattr-ui-int-9",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
+    "gapId": "unattr-ui-int-9",
     "observedKind": "ui",
     "reason": "no-live-horizon",
-    "detail": "evidence window ev-evt-pmt5exfge-34 lies outside every uiOwnership horizon",
-    "observedAtMs": 1787465712179,
-    "tabId": 1323208195,
-    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt5exfge-34\",\"sequence\":0}"
+    "detail": "evidence window sw-evt-pmt73u8wx-23 lies outside every uiOwnership horizon",
+    "observedAtMs": 1787568017439,
+    "tabId": 1576846041,
+    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"sw-evt-pmt73u8wx-23\",\"sequence\":0}"
    }
   ],
   "knowledgeNotifications": [],
   "knowledgeOutcomes": [
    {
-    "key": "session-1787465715014:int-12",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "interactionId": "int-12",
-    "actionType": "Unclassified",
-    "actionTarget": "12h 10m",
-    "outcome": "incomplete",
-    "confidence": 0,
-    "confidenceLevel": "inconclusive",
-    "evidence": [],
-    "resultingEntities": [],
-    "persistedAt": 1787465715084
-   },
-   {
-    "key": "session-1787465715014:int-13",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "interactionId": "int-13",
+    "key": "session-1787568023254:int-10",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
+    "interactionId": "int-10",
     "actionType": "Unclassified",
     "actionTarget": "AI-887\n10:15 – 12:30\n₹5380",
     "outcome": "incomplete",
@@ -563,14 +470,14 @@
     "confidenceLevel": "inconclusive",
     "evidence": [],
     "resultingEntities": [],
-    "persistedAt": 1787465715084
+    "persistedAt": 1787568023355
    },
    {
-    "key": "session-1787465715014:int-2",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
+    "key": "session-1787568023254:int-2",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
     "interactionId": "int-2",
-    "actionType": "TextEntry",
+    "actionType": "DatePicker",
     "actionTarget": "Depart on",
     "outcome": "success",
     "confidence": 0.15,
@@ -586,27 +493,13 @@
     "resultingEntities": [
      "product:MEAL"
     ],
-    "persistedAt": 1787465715084
+    "persistedAt": 1787568023355
    },
    {
-    "key": "session-1787465715014:int-4",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
+    "key": "session-1787568023254:int-4",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
     "interactionId": "int-4",
-    "actionType": "Click",
-    "actionTarget": "Choose Saturday, September 5th, 2026",
-    "outcome": "incomplete",
-    "confidence": 0,
-    "confidenceLevel": "inconclusive",
-    "evidence": [],
-    "resultingEntities": [],
-    "persistedAt": 1787465715084
-   },
-   {
-    "key": "session-1787465715014:int-6",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "interactionId": "int-6",
     "actionType": "Click",
     "actionTarget": "02h 30m",
     "outcome": "success",
@@ -621,13 +514,13 @@
      }
     ],
     "resultingEntities": [],
-    "persistedAt": 1787465715084
+    "persistedAt": 1787568023355
    },
    {
-    "key": "session-1787465715014:int-8",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "interactionId": "int-8",
+    "key": "session-1787568023254:int-6",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
+    "interactionId": "int-6",
     "actionType": "Click",
     "actionTarget": "Select flight QP-1478",
     "outcome": "success",
@@ -660,18 +553,31 @@
      }
     ],
     "resultingEntities": [],
-    "persistedAt": 1787465715084
+    "persistedAt": 1787568023355
+   },
+   {
+    "key": "session-1787568023254:int-9",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
+    "interactionId": "int-9",
+    "actionType": "Unclassified",
+    "actionTarget": "12h 10m",
+    "outcome": "incomplete",
+    "confidence": 0,
+    "confidenceLevel": "inconclusive",
+    "evidence": [],
+    "resultingEntities": [],
+    "persistedAt": 1787568023355
    }
   ],
   "knowledgeRecordedWorkflows": [
    {
-    "key": "app-b24aev:wf-pattern-efd33752",
-    "appId": "app-b24aev",
-    "patternId": "wf-pattern-efd33752",
+    "key": "app-vlwpih:wf-pattern-7de4f7f8",
+    "appId": "app-vlwpih",
+    "patternId": "wf-pattern-7de4f7f8",
     "label": "Depart on",
     "canonicalSteps": [
      "depart on",
-     "choose saturday, september 5th, 2026",
      "02h 30m",
      "12h 10m",
      "ai-887 10:15 – 12:30 ₹5380",
@@ -679,46 +585,44 @@
     ],
     "viewSequence": [],
     "sessionIds": [
-     "session-1787465715014"
+     "session-1787568023254"
     ],
     "occurrenceCount": 1,
     "instances": [
-     "wf-session-1787465715014-0"
+     "wf-session-1787568023254-0"
     ],
     "signatureIds": [
-     "app-b24aev:sig:021db6d0",
-     "app-b24aev:sig:3719b550",
-     "app-b24aev:sig:88381a2f",
-     "app-b24aev:sig:886b0c50",
-     "app-b24aev:sig:b32d9687"
+     "app-vlwpih:sig:1e77e300",
+     "app-vlwpih:sig:961db957",
+     "app-vlwpih:sig:ec6f0860",
+     "app-vlwpih:sig:eff0663f"
     ],
     "linkageState": "linked",
     "instanceSignatureIds": {
-     "wf-session-1787465715014-0": [
-      "app-b24aev:sig:021db6d0",
-      "app-b24aev:sig:3719b550",
-      "app-b24aev:sig:88381a2f",
-      "app-b24aev:sig:886b0c50",
-      "app-b24aev:sig:b32d9687"
+     "wf-session-1787568023254-0": [
+      "app-vlwpih:sig:1e77e300",
+      "app-vlwpih:sig:961db957",
+      "app-vlwpih:sig:ec6f0860",
+      "app-vlwpih:sig:eff0663f"
      ]
     },
-    "firstSeenAt": 1787465715084,
-    "lastSeenAt": 1787465715084
+    "firstSeenAt": 1787568023355,
+    "lastSeenAt": 1787568023355
    }
   ],
   "knowledgeSignatures": [
    {
-    "key": "app-b24aev:sig:021db6d0",
-    "appId": "app-b24aev",
+    "key": "app-vlwpih:sig:1e77e300",
+    "appId": "app-vlwpih",
     "actionType": "Click",
     "normalizedTarget": "select flight qp-1478",
     "anchorViewId": null,
-    "firstSeenAtSession": "session-1787465715014",
-    "lastSeenAtSession": "session-1787465715014",
+    "firstSeenAtSession": "session-1787568023254",
+    "lastSeenAtSession": "session-1787568023254",
     "firstSeenSeq": 1,
     "lastSeenSeq": 1,
-    "firstSeenAtMs": 1787465715033,
-    "lastSeenAtMs": 1787465715033,
+    "firstSeenAtMs": 1787568023306,
+    "lastSeenAtMs": 1787568023306,
     "occurrenceCount": 1,
     "sessionsSinceSeen": 0,
     "status": "active",
@@ -732,15 +636,15 @@
       "occurrenceCount": 1,
       "hitCount": 1,
       "missedObservations": 0,
-      "firstSeenAtSession": "session-1787465715014",
-      "lastSeenAtSession": "session-1787465715014",
+      "firstSeenAtSession": "session-1787568023254",
+      "lastSeenAtSession": "session-1787568023254",
       "lastSeenSeq": 1,
       "confidence": 0.6,
       "status": "active",
       "evidenceSamples": [
        {
-        "sessionId": "session-1787465715014",
-        "edgeKey": "app-b24aev:session-1787465715014:edge-ep-int-8-000"
+        "sessionId": "session-1787568023254",
+        "edgeKey": "app-vlwpih:session-1787568023254:edge-ep-int-6-000"
        }
       ],
       "observedVia": "behavior/webrequest"
@@ -753,15 +657,15 @@
       "occurrenceCount": 1,
       "hitCount": 1,
       "missedObservations": 0,
-      "firstSeenAtSession": "session-1787465715014",
-      "lastSeenAtSession": "session-1787465715014",
+      "firstSeenAtSession": "session-1787568023254",
+      "lastSeenAtSession": "session-1787568023254",
       "lastSeenSeq": 1,
       "confidence": 0.6,
       "status": "active",
       "evidenceSamples": [
        {
-        "sessionId": "session-1787465715014",
-        "edgeKey": "app-b24aev:session-1787465715014:edge-ep-int-8-001"
+        "sessionId": "session-1787568023254",
+        "edgeKey": "app-vlwpih:session-1787568023254:edge-ep-int-6-001"
        }
       ],
       "observedVia": "behavior/state-transition"
@@ -770,161 +674,17 @@
     "divergenceFlags": []
    },
    {
-    "key": "app-b24aev:sig:3719b550",
-    "appId": "app-b24aev",
-    "actionType": "Click",
-    "normalizedTarget": "choose saturday, september 5th, 2026",
-    "anchorViewId": null,
-    "firstSeenAtSession": "session-1787465715014",
-    "lastSeenAtSession": "session-1787465715014",
-    "firstSeenSeq": 1,
-    "lastSeenSeq": 1,
-    "firstSeenAtMs": 1787465715033,
-    "lastSeenAtMs": 1787465715033,
-    "occurrenceCount": 1,
-    "sessionsSinceSeen": 0,
-    "status": "active",
-    "source": "behavior",
-    "consequenceProfile": [
-     {
-      "identity": "T1-stamp|api|GET /collect",
-      "tier": "T1-stamp",
-      "kind": "api",
-      "targetIdentity": "GET /collect",
-      "occurrenceCount": 1,
-      "hitCount": 1,
-      "missedObservations": 0,
-      "firstSeenAtSession": "session-1787465715014",
-      "lastSeenAtSession": "session-1787465715014",
-      "lastSeenSeq": 1,
-      "confidence": 0.6,
-      "status": "active",
-      "evidenceSamples": [
-       {
-        "sessionId": "session-1787465715014",
-        "edgeKey": "app-b24aev:session-1787465715014:edge-ep-int-4-000"
-       }
-      ],
-      "observedVia": "behavior/webrequest"
-     },
-     {
-      "identity": "T4-window|ui|anchor-window",
-      "tier": "T4-window",
-      "kind": "ui",
-      "targetIdentity": "anchor-window",
-      "occurrenceCount": 1,
-      "hitCount": 1,
-      "missedObservations": 0,
-      "firstSeenAtSession": "session-1787465715014",
-      "lastSeenAtSession": "session-1787465715014",
-      "lastSeenSeq": 1,
-      "confidence": 0.6,
-      "status": "active",
-      "evidenceSamples": [
-       {
-        "sessionId": "session-1787465715014",
-        "edgeKey": "app-b24aev:session-1787465715014:edge-ep-int-4-001"
-       }
-      ],
-      "observedVia": "behavior/dom-window"
-     }
-    ],
-    "divergenceFlags": []
-   },
-   {
-    "key": "app-b24aev:sig:88381a2f",
-    "appId": "app-b24aev",
-    "actionType": "Unclassified",
-    "normalizedTarget": "12h 10m",
-    "anchorViewId": null,
-    "firstSeenAtSession": "session-1787465715014",
-    "lastSeenAtSession": "session-1787465715014",
-    "firstSeenSeq": 1,
-    "lastSeenSeq": 1,
-    "firstSeenAtMs": 1787465715033,
-    "lastSeenAtMs": 1787465715033,
-    "occurrenceCount": 1,
-    "sessionsSinceSeen": 0,
-    "status": "active",
-    "source": "behavior",
-    "consequenceProfile": [
-     {
-      "identity": "T1-stamp|api|GET /collect",
-      "tier": "T1-stamp",
-      "kind": "api",
-      "targetIdentity": "GET /collect",
-      "occurrenceCount": 1,
-      "hitCount": 1,
-      "missedObservations": 0,
-      "firstSeenAtSession": "session-1787465715014",
-      "lastSeenAtSession": "session-1787465715014",
-      "lastSeenSeq": 1,
-      "confidence": 0.6,
-      "status": "active",
-      "evidenceSamples": [
-       {
-        "sessionId": "session-1787465715014",
-        "edgeKey": "app-b24aev:session-1787465715014:edge-ep-int-12-000"
-       }
-      ],
-      "observedVia": "behavior/webrequest"
-     }
-    ],
-    "divergenceFlags": []
-   },
-   {
-    "key": "app-b24aev:sig:886b0c50",
-    "appId": "app-b24aev",
-    "actionType": "Click",
-    "normalizedTarget": "02h 30m",
-    "anchorViewId": null,
-    "firstSeenAtSession": "session-1787465715014",
-    "lastSeenAtSession": "session-1787465715014",
-    "firstSeenSeq": 1,
-    "lastSeenSeq": 1,
-    "firstSeenAtMs": 1787465715033,
-    "lastSeenAtMs": 1787465715033,
-    "occurrenceCount": 1,
-    "sessionsSinceSeen": 0,
-    "status": "active",
-    "source": "behavior",
-    "consequenceProfile": [
-     {
-      "identity": "T1-stamp|api|GET /collect",
-      "tier": "T1-stamp",
-      "kind": "api",
-      "targetIdentity": "GET /collect",
-      "occurrenceCount": 1,
-      "hitCount": 1,
-      "missedObservations": 0,
-      "firstSeenAtSession": "session-1787465715014",
-      "lastSeenAtSession": "session-1787465715014",
-      "lastSeenSeq": 1,
-      "confidence": 0.6,
-      "status": "active",
-      "evidenceSamples": [
-       {
-        "sessionId": "session-1787465715014",
-        "edgeKey": "app-b24aev:session-1787465715014:edge-ep-int-6-000"
-       }
-      ],
-      "observedVia": "behavior/webrequest"
-     }
-    ],
-    "divergenceFlags": []
-   },
-   {
-    "key": "app-b24aev:sig:b32d9687",
-    "appId": "app-b24aev",
+    "key": "app-vlwpih:sig:961db957",
+    "appId": "app-vlwpih",
     "actionType": "Unclassified",
     "normalizedTarget": "ai-887 10:15 – 12:30 ₹5380",
     "anchorViewId": null,
-    "firstSeenAtSession": "session-1787465715014",
-    "lastSeenAtSession": "session-1787465715014",
+    "firstSeenAtSession": "session-1787568023254",
+    "lastSeenAtSession": "session-1787568023254",
     "firstSeenSeq": 1,
     "lastSeenSeq": 1,
-    "firstSeenAtMs": 1787465715033,
-    "lastSeenAtMs": 1787465715033,
+    "firstSeenAtMs": 1787568023306,
+    "lastSeenAtMs": 1787568023306,
     "occurrenceCount": 1,
     "sessionsSinceSeen": 0,
     "status": "active",
@@ -938,15 +698,97 @@
       "occurrenceCount": 1,
       "hitCount": 1,
       "missedObservations": 0,
-      "firstSeenAtSession": "session-1787465715014",
-      "lastSeenAtSession": "session-1787465715014",
+      "firstSeenAtSession": "session-1787568023254",
+      "lastSeenAtSession": "session-1787568023254",
       "lastSeenSeq": 1,
       "confidence": 0.6,
       "status": "active",
       "evidenceSamples": [
        {
-        "sessionId": "session-1787465715014",
-        "edgeKey": "app-b24aev:session-1787465715014:edge-ep-int-13-000"
+        "sessionId": "session-1787568023254",
+        "edgeKey": "app-vlwpih:session-1787568023254:edge-ep-int-10-000"
+       }
+      ],
+      "observedVia": "behavior/webrequest"
+     }
+    ],
+    "divergenceFlags": []
+   },
+   {
+    "key": "app-vlwpih:sig:ec6f0860",
+    "appId": "app-vlwpih",
+    "actionType": "Click",
+    "normalizedTarget": "02h 30m",
+    "anchorViewId": null,
+    "firstSeenAtSession": "session-1787568023254",
+    "lastSeenAtSession": "session-1787568023254",
+    "firstSeenSeq": 1,
+    "lastSeenSeq": 1,
+    "firstSeenAtMs": 1787568023306,
+    "lastSeenAtMs": 1787568023306,
+    "occurrenceCount": 1,
+    "sessionsSinceSeen": 0,
+    "status": "active",
+    "source": "behavior",
+    "consequenceProfile": [
+     {
+      "identity": "T1-stamp|api|GET /collect",
+      "tier": "T1-stamp",
+      "kind": "api",
+      "targetIdentity": "GET /collect",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787568023254",
+      "lastSeenAtSession": "session-1787568023254",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787568023254",
+        "edgeKey": "app-vlwpih:session-1787568023254:edge-ep-int-4-000"
+       }
+      ],
+      "observedVia": "behavior/webrequest"
+     }
+    ],
+    "divergenceFlags": []
+   },
+   {
+    "key": "app-vlwpih:sig:eff0663f",
+    "appId": "app-vlwpih",
+    "actionType": "Unclassified",
+    "normalizedTarget": "12h 10m",
+    "anchorViewId": null,
+    "firstSeenAtSession": "session-1787568023254",
+    "lastSeenAtSession": "session-1787568023254",
+    "firstSeenSeq": 1,
+    "lastSeenSeq": 1,
+    "firstSeenAtMs": 1787568023306,
+    "lastSeenAtMs": 1787568023306,
+    "occurrenceCount": 1,
+    "sessionsSinceSeen": 0,
+    "status": "active",
+    "source": "behavior",
+    "consequenceProfile": [
+     {
+      "identity": "T1-stamp|api|GET /collect",
+      "tier": "T1-stamp",
+      "kind": "api",
+      "targetIdentity": "GET /collect",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787568023254",
+      "lastSeenAtSession": "session-1787568023254",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787568023254",
+        "edgeKey": "app-vlwpih:session-1787568023254:edge-ep-int-9-000"
        }
       ],
       "observedVia": "behavior/webrequest"
@@ -957,31 +799,20 @@
   ],
   "knowledgeStateTransitions": [
    {
-    "key": "session-1787465715014:int-12",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "interactionId": "int-12",
+    "key": "session-1787568023254:int-10",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
+    "interactionId": "int-10",
     "changes": [],
     "fromViewId": null,
     "toViewId": null,
     "affectedEntities": [],
-    "timestamp": 1787465715084
+    "timestamp": 1787568023355
    },
    {
-    "key": "session-1787465715014:int-13",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "interactionId": "int-13",
-    "changes": [],
-    "fromViewId": null,
-    "toViewId": null,
-    "affectedEntities": [],
-    "timestamp": 1787465715084
-   },
-   {
-    "key": "session-1787465715014:int-2",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
+    "key": "session-1787568023254:int-2",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
     "interactionId": "int-2",
     "changes": [
      "page-content entity: product:MEAL",
@@ -993,24 +824,13 @@
     "affectedEntities": [
      "product:MEAL"
     ],
-    "timestamp": 1787465715084
+    "timestamp": 1787568023355
    },
    {
-    "key": "session-1787465715014:int-4",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
+    "key": "session-1787568023254:int-4",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
     "interactionId": "int-4",
-    "changes": [],
-    "fromViewId": null,
-    "toViewId": null,
-    "affectedEntities": [],
-    "timestamp": 1787465715084
-   },
-   {
-    "key": "session-1787465715014:int-6",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "interactionId": "int-6",
     "changes": [
      "page-content entity: product:MEAL",
      "page-content counter: body > header > span = 0",
@@ -1019,13 +839,13 @@
     "fromViewId": null,
     "toViewId": null,
     "affectedEntities": [],
-    "timestamp": 1787465715084
+    "timestamp": 1787568023355
    },
    {
-    "key": "session-1787465715014:int-8",
-    "appId": "app-b24aev",
-    "sessionId": "session-1787465715014",
-    "interactionId": "int-8",
+    "key": "session-1787568023254:int-6",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
+    "interactionId": "int-6",
     "changes": [
      "page-content entity: product:MEAL",
      "page-content counter: body > header > span > span = 2",
@@ -1034,7 +854,18 @@
     "fromViewId": null,
     "toViewId": null,
     "affectedEntities": [],
-    "timestamp": 1787465715084
+    "timestamp": 1787568023355
+   },
+   {
+    "key": "session-1787568023254:int-9",
+    "appId": "app-vlwpih",
+    "sessionId": "session-1787568023254",
+    "interactionId": "int-9",
+    "changes": [],
+    "fromViewId": null,
+    "toViewId": null,
+    "affectedEntities": [],
+    "timestamp": 1787568023355
    }
   ],
   "knowledgeViewTransitions": [],
