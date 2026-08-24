@@ -99,6 +99,14 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
   // so we monkey-patch the History API to emit synthetic 'navigation'
   // ObservedEvents. We also listen for popstate (back/forward) and
   // hashchange (hash-based routers).
+  //
+  // 7.1-W1: this ISOLATED-world patch is dormant on real pages (each
+  // world has its own `history` wrapper — page-world router calls are
+  // invisible here). The MAIN-world asset public/assets/nav-inject.js
+  // observes those and notifies via the 'cmdrunner-nav' CustomEvent
+  // below; both paths converge on emitSpaNavigation, and the
+  // lastKnownUrl dedup guarantees exactly ONE synthetic event per URL
+  // change regardless of which world saw it.
 
   /** Track last known URL to suppress duplicate navigation events. */
   let lastKnownUrl = location.href;
@@ -369,6 +377,31 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
   window.addEventListener('popstate', onPopState);
   window.addEventListener('hashchange', onHashChange);
 
+  // ── 7.1-W1: MAIN-world navigation bridge ───────────────────────────
+  // public/assets/nav-inject.js (MAIN world) observes page-world
+  // history.pushState/replaceState/popstate/hashchange — invisible to
+  // this world's patch — and notifies here via a CustomEvent. We simply
+  // re-run the existing synthetic emit; the lastKnownUrl dedup above
+  // collapses the (isolated patch, MAIN notify) pair into ONE event.
+  // Malformed/absent detail is ignored — no invention.
+  const onExternalNav = (e: Event) => {
+    const detail = (e as CustomEvent).detail as
+      | { navType?: string; fromUrl?: string; toUrl?: string }
+      | null
+      | undefined;
+    if (!detail || typeof detail.navType !== 'string') return;
+    if (
+      detail.navType !== 'pushState' &&
+      detail.navType !== 'replaceState' &&
+      detail.navType !== 'popstate' &&
+      detail.navType !== 'hashchange'
+    ) {
+      return;
+    }
+    emitSpaNavigation(detail.navType);
+  };
+  window.addEventListener('cmdrunner-nav', onExternalNav);
+
   // ── Stop ────────────────────────────────────────────────────────────
 
   return {
@@ -385,6 +418,7 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
       // Remove SPA navigation listeners
       window.removeEventListener('popstate', onPopState);
       window.removeEventListener('hashchange', onHashChange);
+      window.removeEventListener('cmdrunner-nav', onExternalNav);
     },
   };
 }
