@@ -201,7 +201,7 @@ describe('MS-U2 P2 — item attribute/visibility/uniqueness fidelity', () => {
     expect(el.textContent).toContain('data-count="2"');
   });
 
-  it('renders entityId in item details (D2; MS-U4 tooltip on summary)', () => {
+  it('renders entityId in item details (D2; 7.2-M1: no link without opener — honest absence)', () => {
     const entity: WireObservedItem = {
       kind: 'entity', matchedSelector: '[data-sku]', text: 'Notebook ₹120',
       numericValue: null, entityId: 'SKU-A', entityType: 'product',
@@ -213,9 +213,12 @@ describe('MS-U2 P2 — item attribute/visibility/uniqueness fidelity', () => {
     } as never));
     openAll(el);
     expect(el.textContent).toContain('entity product:SKU-A');
-    const summary = Array.from(el.querySelectorAll('details.evidence-drilldown--item > summary'))
-      .find((s) => /entity/.test(s.textContent || ''));
-    expect(summary?.getAttribute('title')).toBe('Knowledge browser arrives in MS-U4');
+    // 7.2-M1: the MS-U4 tooltip promise is gone; with no opener installed
+    // (and no appId scope) there is no fake affordance — plain detail only.
+    const detail = Array.from(el.querySelectorAll('details.evidence-drilldown--item'))
+      .find((d) => /entity/.test(d.textContent || ''));
+    expect(detail?.querySelector('.evidence-knowledge-link')).toBeNull();
+    expect(el.textContent).not.toContain('MS-U4');
   });
 
   it('renders unique ✓ for verified items', () => {

@@ -189,3 +189,34 @@
 .forward-tone--new { color: #6fd18f; }
 .forward-tone--reinforced { color: #7ab3e0; }
 .forward-tone--stale { color: #c9a96f; }
+
+/* ── 7.2-M1: KR chip as a real button (deep link) ────────────────── */
+button.interaction-chip--kr {
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  background: inherit; /* keeps the span-tuned background rule above */
+}
+button.interaction-chip--kr:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+}
+button.interaction-chip--kr:hover { text-decoration: underline; }
+
+/* 7.2-M1: evidence item → knowledge browser link */
+.evidence-knowledge-link {
+  margin-top: 4px;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 11px;
+  color: #4f46e5;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.evidence-knowledge-link:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+}

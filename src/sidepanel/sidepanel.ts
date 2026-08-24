@@ -22,10 +22,10 @@ import { StorageService } from '../storage/storage-service';
 import { sendMessage } from '../shared/messaging';
 import { RepositoryService } from '../repository/repository-service';
 import { renderProductionInteractions, buildHiddenSummary } from './interaction-renderer';
-import { attachKrChips, setKrLookup, joinSignatures } from './kr-chip';
-import type { KrLookup } from './kr-chip';
+import { attachKrChips, setKrLookup, joinSignatures, setKnowledgeOpen } from './kr-chip';
+import type { KrLookup, KnowledgeLinkTarget, KrChipResult } from './kr-chip';
 import { setAssertionPlan } from './assertion-chip';
-import { updateEvidenceOnInteraction } from './evidence-renderer';
+import { updateEvidenceOnInteraction, setKnowledgeLink, setKnowledgeAppId } from './evidence-renderer';
 import { renderUnderstandingCard } from './understanding-card';
 import type { GapLike, ForwardSigLike } from './understanding-card';
 import type { UnderstandingResult } from '../domain/entities/understanding-result';
@@ -540,6 +540,69 @@ async function refreshInteractionCards(): Promise<void> {
 
 // ── MS-U1: KR chip attach (read-only) ────────────────────────────────────
 
+// ── 7.2-M1: knowledge deep-link opener ───────────────────────────────────
+
+/**
+ * Opens the KR browser at the session's app (and optional focus key) via
+ * URL params handled by repository-page.ts (parseKnowledgeParams). Target
+ * null → cold open (status-quo behavior). Params are written via
+ * URLSearchParams (encoded) — never interpolated into HTML.
+ */
+function openKnowledgeBrowser(target: KnowledgeLinkTarget | null): void {
+  const base = chrome.runtime.getURL('src/repository/index.html');
+  const url = new URL(base);
+  if (target?.appId) url.searchParams.set('app', target.appId);
+  if (target?.signatureKey) url.searchParams.set('sig', target.signatureKey);
+  if (target?.entityId) url.searchParams.set('entity', target.entityId);
+  chrome.tabs.create({ url: url.toString() });
+}
+
+/**
+ * Resolve the current (or last) recording session's KR appId — same join
+ * domain as the chip/gaps/signatures lookups: the understanding sessionId
+ * → behavior-session row → appId. Cached after first hit. Failure → null
+ * (callers fall back to a cold open — honest degradation).
+ */
+let sessionAppIdCache: string | null | undefined;
+async function resolveSessionAppId(): Promise<string | null> {
+  if (sessionAppIdCache !== undefined) return sessionAppIdCache;
+  try {
+    const sessionId = await resolveUnderstandingSessionId();
+    if (!sessionId) {
+      sessionAppIdCache = null;
+      return null;
+    }
+    const { createKnowledgeDatabase } = await import(
+      '../understanding/persistence/knowledge-database'
+    );
+    const db = createKnowledgeDatabase();
+    const behaviorSession = await db.knowledgeBehaviorSessions
+      .where('sessionId').equals(sessionId).first().catch(() => undefined);
+    sessionAppIdCache = behaviorSession?.appId ?? null;
+  } catch {
+    sessionAppIdCache = null; // honest absence — cold open
+  }
+  return sessionAppIdCache;
+}
+
+/**
+ * The sessionId the knowledge rows are keyed under: the UNDERSTANDING
+ * session id from understanding_result (…:session-<epoch>), NOT the
+ * repository-v2 UUID in repo_session_id (which joins nothing in the
+ * knowledge DB — see lookupSessionGaps docblock for the live probe).
+ */
+let understandingSessionIdCache: string | null | undefined;
+async function resolveUnderstandingSessionId(): Promise<string | null> {
+  if (understandingSessionIdCache !== undefined) return understandingSessionIdCache;
+  try {
+    const result = await loadUnderstandingResult();
+    understandingSessionIdCache = result?.sessionId ?? null;
+  } catch {
+    understandingSessionIdCache = null;
+  }
+  return understandingSessionIdCache;
+}
+
 function collectCardMap(): Map<string, HTMLElement> {
   const cards = detectedInteractionsList.querySelectorAll<HTMLElement>('.interaction-event');
   const map = new Map<string, HTMLElement>();
@@ -554,13 +617,25 @@ function attachKrChipsToCards(): void {
   const cards = collectCardMap();
   if (cards.size === 0) return;
   // Display-paced async attach (honest absence on failure); never blocks render.
-  void attachKrChips(cards);
+// The async lookup install (dynamic import + DB open) races the first
+// render. installKrLookup() re-attaches once it settles, so a stopped
+// panel loaded straight into its single render still gets chips.
+void attachKrChips(cards);
 }
 
 /**
  * Real KR read (read-only, best-effort). Installed at panel load; if the
  * knowledge DB cannot be opened/read in this context the lookup stays null
  * and chips are honestly absent. One bulk read per attach, never per-card.
+ *
+ * Join key: the UNDERSTANDING sessionId (understanding_result.sessionId) —
+ * NOT repo_session_id. Knowledge rows are keyed `${appId}:session-…`
+ * where the session-… is the understanding pipeline's id; repo_session_id
+ * is an unrelated repository-v2 UUID and never matches any knowledge row
+ * (documented live-probed at lookupSessionGaps). The 7.2-M1 E2E dump
+ * dbg-cards-vs-episodes.json proves it again: card int-3 ↔ episode
+ * member int-3 under session-1787579002251 while repo_session_id held a
+ * UUID. resolveUnderstandingSessionId() returns the exact key.
  */
 async function installKrLookup(): Promise<void> {
   try {
@@ -571,17 +646,11 @@ async function installKrLookup(): Promise<void> {
     type KnowledgeEpisodeRow = import('../understanding/persistence/knowledge-types').KnowledgeEpisodeRow;
     const lookup: KrLookup = async (interactionIds) => {
       const idSet = new Set(interactionIds);
-      // D5: session-scoped via the indexed compound [appId+sessionId]; falls
-      // back to a full read only if no session/app id is known (honest
-      // absence either way). Still 2 bulk reads total — never per-card.
-      const sessionId = (await StorageService.getRaw(StorageKeys.REPOSITORY_SESSION_ID)) as
-        | string
-        | undefined;
-      // D5: session-scoped via the indexed compound [appId+sessionId]. The
-      // schema indexes episodes by the compound (not sessionId alone), so
-      // resolve the session's appId from its behavior-session row first
-      // (same DB, one indexed read). Falls back to a full read (bounded,
-      // still 2–3 bulk reads total — never per-card).
+      // D5: session-scoped via the indexed compound [appId+sessionId].
+      // Resolve the sessionId from understanding_result (the key the
+      // knowledge rows are actually written under); falls back to a full
+      // read (bounded, still 2–3 bulk reads total — never per-card).
+      const sessionId = await resolveUnderstandingSessionId();
       let episodes: KnowledgeEpisodeRow[];
       if (sessionId) {
         const behaviorSession = await db.knowledgeBehaviorSessions
@@ -601,9 +670,39 @@ async function installKrLookup(): Promise<void> {
       if (sigKeys.length === 0) return null;
       const signatures = await db.knowledgeSignatures
         .where('key').anyOf(sigKeys).toArray();
-      return joinSignatures(memberEpisodes, signatures);
+      // 7.2-M1: enrich with deep-link context (appId + signatureKey) from
+      // data this lookup ALREADY holds — no new reads. Members carry no
+      // signatureKey in the write path, so resolve it from the member's
+      // episode; appId comes from the SIGNATURE ROW itself (authoritative
+      // field, no key-string parsing). Missing either → plain span chip.
+      const base = joinSignatures(memberEpisodes, signatures);
+      const sigByKey = new Map(signatures.map((s) => [s.key, s]));
+      const memberSigKey = new Map<string, string>();
+      for (const ep of memberEpisodes) {
+        for (const m of ep.members ?? []) {
+          if (m?.interactionId && !memberSigKey.has(m.interactionId)) {
+            memberSigKey.set(m.interactionId, ep.signatureKey);
+          }
+        }
+      }
+      const enriched = new Map<string, KrChipResult>();
+      for (const [interactionId, chip] of base) {
+        const signatureKey = memberSigKey.get(interactionId);
+        const sigRow = signatureKey ? sigByKey.get(signatureKey) : undefined;
+        const appId = sigRow?.appId;
+        enriched.set(interactionId, signatureKey && appId
+          ? { ...chip, appId, signatureKey }
+          : chip);
+      }
+      return enriched;
     };
     setKrLookup(lookup);
+    // 7.2-M1: the install races the first render — if cards are already on
+    // screen from the stopped branch (single render, no later storage
+    // update to re-trigger), attach now that the lookup is live.
+    // Idempotent per card (attachKrChips skips cards that already carry a
+    // chip), so this is safe on every path.
+    void attachKrChipsToCards();
   } catch {
     setKrLookup(null); // honest absence — panel works fully without chips
   }
@@ -1328,7 +1427,7 @@ newTcBtn.addEventListener('click', () => openNewTestCase());
 // MS-U1: show-hidden toggle (stopped view only, view-only — no persistence).
 hiddenToggleRow.addEventListener('click', () => void onHiddenToggleClick());
 browseRepoBtn.addEventListener('click', () => {
-  chrome.tabs.create({ url: chrome.runtime.getURL('src/repository/index.html') });
+  void resolveSessionAppId().then((appId) => openKnowledgeBrowser({ appId: appId ?? undefined }));
 });
 
 tcProjectSelect.addEventListener('change', () => {
@@ -1441,7 +1540,7 @@ runTestBtn.addEventListener('click', () => handleRunTest());
 // Header
 settingsBtn.addEventListener('click', () => chrome.runtime.openOptionsPage());
 repoBtn.addEventListener('click', () => {
-  chrome.tabs.create({ url: chrome.runtime.getURL('src/repository/index.html') });
+  void resolveSessionAppId().then((appId) => openKnowledgeBrowser({ appId: appId ?? undefined }));
 });
 
 // ── Init ───────────────────────────────────────────────────
@@ -1539,3 +1638,7 @@ async function init(): Promise<void> {
 init();
 // MS-U1: install the read-only KR lookup (best-effort; honest absence).
 void installKrLookup();
+// 7.2-M1: install the knowledge deep-link opener (chip + evidence links).
+setKnowledgeOpen(openKnowledgeBrowser);
+setKnowledgeLink((target) => openKnowledgeBrowser(target));
+void resolveSessionAppId().then((appId) => setKnowledgeAppId(appId));

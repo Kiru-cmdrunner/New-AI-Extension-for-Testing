@@ -58,6 +58,16 @@ import {
 /** Max DOM change entries to show inline before collapsing to "show all". */
 const MAX_DOM_CHANGES_DISPLAY = 10;
 
+/** 7.2-M1: KR deep-link opener seam type (targets match kr-chip's). */
+export type KnowledgeLinkOpener = (target: {
+  appId?: string;
+  entityId?: string;
+  signatureKey?: string;
+}) => void;
+
+/** 7.2-M1: module-level opener (default null — honest absence). */
+let knowledgeLink: KnowledgeLinkOpener | null = null;
+
 /** Max network entries to show inline. */
 const MAX_NETWORK_DISPLAY = 10;
 
@@ -728,7 +738,7 @@ function renderResultingState(
       row.textContent = rowText(item);
       container.appendChild(row);
       // MS-U2 D2 — per-item drill-down (collapsed by default; compact row above unchanged)
-      const dd = renderObservedItemDetail(item);
+      const dd = renderObservedItemDetail(item, appIdForKnowledgeLinks ?? undefined);
       if (dd) container.appendChild(dd);
     }
     if (items.length > cap) {
@@ -776,7 +786,7 @@ function renderResultingState(
  * observer-verified uniqueness. Recorded facts only. Returns null when the
  * item has nothing drill-able (all sections absent → honest absence).
  */
-function renderObservedItemDetail(item: WireObservedItem): HTMLElement | null {
+function renderObservedItemDetail(item: WireObservedItem, appId?: string | null): HTMLElement | null {
   const parts: string[] = [];
   parts.push(`via ${item.matchedSelector || '(no selector)'}`);
   const attrEntries = Object.entries(item.attributes ?? {});
@@ -790,15 +800,52 @@ function renderObservedItemDetail(item: WireObservedItem): HTMLElement | null {
   details.className = 'evidence-drilldown evidence-drilldown--item';
   const summary = document.createElement('summary');
   summary.textContent = `item detail · ${item.kind}`;
-  // MS-U4 placeholder note (D2): entityId carries a tooltip only — NO link until
-  // the Knowledge Repository browser exists (no dead UI).
-  if (item.entityId != null) summary.title = 'Knowledge browser arrives in MS-U4';
   details.appendChild(summary);
   const body = document.createElement('div');
   body.className = 'evidence-row evidence-row--muted';
   body.textContent = parts.join(' · ');
   details.appendChild(body);
+  // 7.2-M1: close the knowledge loop — an item with an entityId gets a
+  // real "Open in knowledge browser" link when an opener is installed
+  // (replaces the long-stale MS-U4 tooltip promise). No opener, or no
+  // entityId → honest absence, no fake affordance.
+  if (item.entityId != null && knowledgeLink && appId) {
+    const link = document.createElement('button');
+    link.type = 'button';
+    link.className = 'evidence-knowledge-link';
+    link.textContent = 'Open in knowledge browser';
+    link.addEventListener('click', () => {
+      try {
+        knowledgeLink?.({ appId: appId!, entityId: item.entityId! });
+      } catch {
+        // opener failure must never surface in the panel
+      }
+    });
+    details.appendChild(link);
+  }
   return details;
+}
+
+/** 7.2-M1 — injected KR-browser opener seam (setKrLookup pattern).
+ * Default null → no link rendered (honest degradation). The renderer
+ * stays chrome.*-free; sidepanel.ts installs the real opener. */
+export function setKnowledgeLink(open: KnowledgeLinkOpener | null): void {
+  knowledgeLink = open;
+}
+
+/** 7.2-M1 — app scope for knowledge links (set by sidepanel per session). */
+export function setKnowledgeAppId(appId: string | null): void {
+  appIdForKnowledgeLinks = appId;
+}
+
+let appIdForKnowledgeLinks: string | null = null;
+
+/** Test visibility for the private renderer (7.2-M1 D10). */
+export function renderObservedItemDetailForTest(
+  item: WireObservedItem,
+  appId?: string | null,
+): HTMLElement | null {
+  return renderObservedItemDetail(item, appId);
 }
 
 /**

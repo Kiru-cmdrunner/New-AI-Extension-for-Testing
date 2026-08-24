@@ -24,7 +24,7 @@ import type {
 import { DexieUnitOfWorkFactory } from './v2';
 
 // ── MS-U4 imports (Knowledge View — KR browser, read-only) ────
-import { renderKrBrowser } from './kr-browser/kr-browser';
+import { renderKrBrowser, parseKnowledgeParams } from './kr-browser/kr-browser';
 
 // ── DOM References ────────────────────────────────────────────
 
@@ -735,14 +735,37 @@ elementDetailCloseBtn.addEventListener('click', () => {
 // panel never writes the KR. Renderer delegating to kr-browser modules.
 
 async function refreshKnowledge(): Promise<void> {
+  // 7.2-M1 deep-link fallback: a ?app= that is not among recorded apps
+  // (stale link, wrong profile) must never render a blank browser —
+  // fall back to the first app and drop the row focus params.
+  if (selectedAppId) {
+    try {
+      const { loadApplications } = await import('./kr-browser/kr-data');
+      const apps = await loadApplications();
+      if (!apps.some((a) => a.appId === selectedAppId)) {
+        selectedAppId = apps[0]?.appId ?? null;
+      }
+    } catch {
+      // membership check is best-effort; renderKrBrowser handles null
+    }
+  }
+  selectedAppIdWasLinked = selectedAppId === knowledgeParams.appId;
   await renderKrBrowser(krRoot, {
     selectedAppId,
     onAppSelected: (appId) => {
       selectedAppId = appId;
       void refreshKnowledge();
     },
+    ...(focusSignatureKey && selectedAppIdWasLinked
+      ? { focusSignatureKey }
+      : {}),
+    ...(focusEntityId && selectedAppIdWasLinked ? { focusEntityId } : {}),
+    ...(knowledgeProjectId ? { projectId: knowledgeProjectId } : {}),
   });
 }
+
+/** True when the deep-linked app survived the fallback check above. */
+let selectedAppIdWasLinked = false;
 
 // ════════ REFRESH DISPATCHER ═══════════════════════════════════
 
@@ -768,6 +791,20 @@ classicDetailCloseBtn.addEventListener('click', () => {
   classicDetailPanel.hidden = true;
 });
 
+// ════════ 7.2-M1: KNOWLEDGE DEEP LINKS ════════════════════════
+// Panel chips/links open this page with ?app=&sig=&entity=&project=.
+// The pure parser lives in kr-browser.ts (this page module has
+// module-level DOM listeners and cannot be imported by unit tests);
+// values are used ONLY as Dexie lookup keys / data attributes.
+
+// Deep-link state (set once at init from the URL; unknown-app fallback
+// is handled by refreshKnowledge via loadApplications membership).
+const knowledgeParams = parseKnowledgeParams(window.location.search);
+const focusSignatureKey = knowledgeParams.signatureKey ?? null;
+const focusEntityId = knowledgeParams.entityId ?? null;
+const knowledgeProjectId = knowledgeParams.projectId ?? null;
+
 // ════════ INIT ═════════════════════════════════════════════════
 
+selectedAppId = knowledgeParams.appId ?? null;
 refresh();

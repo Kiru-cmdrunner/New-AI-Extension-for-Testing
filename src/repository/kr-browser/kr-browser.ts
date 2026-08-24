@@ -99,6 +99,13 @@ export interface KrBrowserOptions {
    * are unaffected.
    */
   projectId?: string | null;
+  /**
+   * 7.2-M1 deep links: highlight + scroll to this signature row
+   * (matched by data-signature-key). Absent key → no highlight, no crash.
+   */
+  focusSignatureKey?: string | null;
+  /** 7.2-M1 deep links: highlight + scroll to this entity row. */
+  focusEntityId?: string | null;
 }
 
 /**
@@ -146,6 +153,59 @@ export async function renderKrBrowser(
     renderNotificationsSection(knowledge.notifications),
   ];
   container.append(...sections);
+
+  // 7.2-M1 deep-link focus: mark the targeted row and bring it into view.
+  // Values were parsed as lookup keys; they are only ever compared against
+  // signature/entity ids — never rendered as HTML.
+  if (options.focusSignatureKey) {
+    const row = container.querySelector(`[data-signature-key="${cssEscape(options.focusSignatureKey)}"]`);
+    row?.classList.add('kr-highlight');
+    scrollIntoViewSafe(row);
+  }
+  if (options.focusEntityId) {
+    const row = container.querySelector(`[data-entity-id="${cssEscape(options.focusEntityId)}"]`);
+    row?.classList.add('kr-highlight');
+    scrollIntoViewSafe(row);
+  }
+}
+
+/** scrollIntoView is not implemented in jsdom — never let focus throw. */
+function scrollIntoViewSafe(el: Element | null): void {
+  if (!el || typeof (el as HTMLElement).scrollIntoView !== 'function') return;
+  (el as HTMLElement).scrollIntoView({ block: 'center' });
+}
+
+/** Attribute-selector-safe escaping (ids contain : and |). */
+function cssEscape(value: string): string {
+  return (window.CSS?.escape ?? ((v: string) => v.replace(/["\\]/g, '\\$&')))(value);
+}
+
+// ── 7.2-M1: deep-link param parsing (pure, unit-tested) ────────────────
+
+export interface KnowledgeParams {
+  appId?: string;
+  signatureKey?: string;
+  entityId?: string;
+  projectId?: string;
+}
+
+/**
+ * Parse `?app=&sig=&entity=&project=` from a repository-page URL.
+ * Whitelist — unknown keys ignored. Values are lookup keys / data
+ * attributes only, never rendered as HTML.
+ */
+export function parseKnowledgeParams(search: string): KnowledgeParams {
+  const params = new URLSearchParams(search);
+  const out: KnowledgeParams = {};
+  const appId = params.get('app');
+  if (appId) out.appId = appId;
+  const sig = params.get('sig');
+  if (sig) out.signatureKey = sig;
+  const entity = params.get('entity');
+  if (entity) out.entityId = entity;
+  const project = params.get('project');
+  if (project) out.projectId = project;
+  return out;
 }
 
 // ── A3: app selector ────────────────────────────────────────────────────
@@ -207,6 +267,7 @@ export function renderSignaturesSection(
   const sorted = sortSignatures(rows).slice(0, KR_CAPS.signatures);
   for (const s of sorted) {
     const r = row();
+    r.dataset.signatureKey = s.key; // 7.2-M1 deep-link anchor
     const head = div('kr-row__head');
     head.appendChild(div('kr-row__type', s.actionType));
     const target = div('kr-row__target');
@@ -421,6 +482,7 @@ export function renderEntitiesSection(rows: KnowledgeEntityRow[]): HTMLElement {
   }
   for (const e of rows.slice(0, KR_CAPS.entities)) {
     const r = row();
+    r.dataset.entityId = e.entityId; // 7.2-M1 deep-link anchor
     const head = div('kr-row__head');
     head.appendChild(div('kr-row__type', e.type));
     head.appendChild(div('kr-row__label', e.entityId));
