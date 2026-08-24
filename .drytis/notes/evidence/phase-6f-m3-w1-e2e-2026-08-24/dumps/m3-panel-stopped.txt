@@ -1,0 +1,258 @@
+CmdRunner
+v10.9.0
+📋
+Recording Stopped
+📍
+RECORDING STARTED ON
+chrome-extension://gndjidfncanlhlonpcabokbdhnikglpn/src/sidepanel/index.html
+📋 Observed Workflow
+5
+📅 Date Picker
+int-2
+completed
+11 events · 1305ms
+✓ DatePicker (prio 10)
+
+why: detected via gridcell children
+
+1 dom change
+0 assertions
+
+Select date "Choose Sunday, September 6th, 2026" (Depart on)
+
+Window: 1611ms · consequence-settled
+🎯
+Target Evidence
+ELEMENT
+INPUT #onward [role=textbox] "Depart on"
+withIcon form-control
+type=text
+STATE CHANGES
+value: (empty) → Sat, 06 Sep
+🌐
+Application Evidence
+📸 RESULTING STATE (2 OBSERVED)
+scanned: http://127.0.0.1:8191/ · 1ms
+🚦 57,000
+item detail · status-badge
+🚦 57,000
+item detail · status-badge
+DOM CHANGES (1 · 1 NO-OP HIDDEN)
+VISIBILITY CHANGES (2)
+hidden: → — (body > main > div > div > div#td-onward …)
+hidden: — → (body > main > div > div > div#td-onward …)
+PERFORMANCE
+2 batches · longest: 0ms
+window internals
+Raw evidence JSON
+🖱️ Click
+int-5
+completed
+1 event · 0ms
+✓ Click (prio 180)
+0 assertions
+
+Click "Churn"
+
+Window: 0ms · lifecycle-complete
+🎯
+Target Evidence
+ELEMENT
+BUTTON #noop-churn [role=button] "Churn"
+No observable state changes
+🌐
+Application Evidence
+PERFORMANCE
+0 batches · longest: 0ms
+Raw evidence JSON
+🖱️ Click
+int-7
+completed
+1 event · 0ms
+✓ Click (prio 180)
+2 dom changes · 2 network
+1 assertion
+
+Click "Search Flights"
+
+Window: 311ms · consequence-settled
+🎯
+Target Evidence
+ELEMENT
+BUTTON #go [role=button] "Search Flights"
+No observable state changes
+FOCUS MOVEMENT
+(unknown) → BUTTON "Search Flights"
+🌐
+Application Evidence
+📸 RESULTING STATE (3 OBSERVED)
+scanned: http://127.0.0.1:8191/ · 2ms
+🔢 counter: 1 (body > main > div > p#result-count)
+item detail · counter
+🚦 57,000
+item detail · status-badge
+🚦 57,000
+item detail · status-badge
+DOM CHANGES (2)
+attributes · <ul> · hidden: → —
+raw detail
+childList · <p> · +1 nodes · -1 nodes
+raw detail
+VISIBILITY CHANGES (1)
+hidden: → — (body > main > div > ul#opts)
+NETWORK (2)
+🟣 GET 200 http://127.0.0.1:8191/collect?e=search
+network detail
+🔵 GET 200 /collect?e=search 13ms
+network detail
+PERFORMANCE
+4 batches · longest: 0ms
+window internals
+Raw evidence JSON
+🔗 Link
+int-9
+completed
+1 event · 0ms
+✓ Link (prio 70)
+1 network
+0 assertions
+
+Click "Flights" link
+
+Window: 16ms · page-reload
+🎯
+Target Evidence
+ELEMENT
+A #nav-away [role=link] "Flights"
+No observable state changes
+🌐
+Application Evidence
+NETWORK (1)
+🟣 GET 200 http://127.0.0.1:8191/flights?origin=MAA&dest=DEL&utm_source…
+network detail
+PERFORMANCE
+4 batches · longest: 0ms
+window internals
+Raw evidence JSON
+🧭 Navigation
+int-10
+completed
+1 event · 0ms
+✓ Navigation (prio 120)
+0 assertions
+
+Navigate to http://127.0.0.1:8191/flights
+
+Window: 0ms · page-reload-synthetic
+📋 Navigation evidence (page reloaded — synthetic)
+🎯
+Target Evidence
+ELEMENT
+HTML [role=document] "http://127.0.0.1:8191/flights?origin=MAA…"
+No observable state changes
+🌐
+Application Evidence
+NAVIGATION (1)
+full-reload: → http://127.0.0.1:8191/flights?origin=MAA…
+PERFORMANCE
+0 batches · longest: 0ms
+Raw evidence JSON
+🧠 What CmdRunner learned
+Session Understanding
+session session-1787533… · generated 2026-08-24T01:09:27.585Z
+APP
+app-b24aev
+DOMAIN
+unknown · 0%
+OUTCOMES
+1 success · 0 failure · 0 ambiguous · 4 incomplete
+5 actions this session
+COVERAGE
+3/5 interactions anchored
+2/2 network rows attributed
+2/5 observations attributed
+3 unattributed consequences
+intent 20%
+component 100%
+contract 100%
+WHAT WE COULD NOT PROVE
+ui · no-live-horizon — evidence window ev-evt-pmt6jg1bq-46 lies outside every uiOwnership horizon
+ui · no-live-horizon — evidence window lc-evt-pmt6jg1bq-40 lies outside every uiOwnership horizon
+ui · no-live-horizon — evidence window ev-evt-pmt6jg1bq-9 lies outside every uiOwnership horizon
+WHAT THIS RECORDING IMPROVES
+No signatures existed before this session — every action learned is new.
+Click "search flights" ◆ new signature — first observation; next recording reinforces it
+Link "flights" ◆ new signature — first observation; next recording reinforces it
+Click "churn" ◆ new signature — first observation; next recording reinforces it
+3 observation(s) could not be attributed (no-live-horizon ×3) — recording the flow again may confirm horizons.
+🔧 IR Plan — Test Steps
+5
+1. selectDate — Select Choose Sunday, September 6th, 2026 in the Depart on
+Target: Depart on (accessibleName: Depart on)
+Input: Choose Sunday, September 6th, 2026
+Assertions: none — not derived for this recording
+▶ IR STEP JSON
+2. click — Click the Churn
+Target: Churn (css: #noop-churn)
+Assertions: none — not derived for this recording
+▶ IR STEP JSON
+3. click — Click the Search Flights
+Target: Search Flights (testId: [data-auto-id="search-flights"])
+Assertions: textMatch contains 1 selected (counter)
+▶ IR STEP JSON
+4. click — Click the "Flights" link
+Target: Flights (css: #nav-away)
+Assertions: none — not derived for this recording
+▶ IR STEP JSON
+5. navigate — Navigate to http://127.0.0.1:8191/flights?origin=MAA&dest=DEL&utm_source=test
+Target: http://127.0.0.1:8191/flights?origin=MAA&dest=DEL&utm_source=test
+Input: http://127.0.0.1:8191/flights?origin=MAA&dest=DEL&utm_source=test
+Assertions: none — not derived for this recording
+▶ IR STEP JSON
+🎭 IR Playwright Project
+5 files
+📄 package.json
+▶ SHOW CODE
+Copy
+📄 playwright.config.ts
+▶ SHOW CODE
+Copy
+📄 tsconfig.json
+▶ SHOW CODE
+Copy
+📄 .gitignore
+▶ SHOW CODE
+Copy
+📋 tests/recorded-test.spec.ts
+▼ HIDE CODE
+Copy
+import { test, expect } from '@playwright/test';
+
+test.describe('Recorded Test', () => {
+  test('should complete recorded Test successfully', async ({ page }) => {
+    // Select Choose Sunday, September 6th, 2026 in the Depart on
+    await page.getByLabel('Depart on').fill('Choose Sunday, September 6th, 2026')
+
+    // Click the Churn
+    await page.locator('#noop-churn').click()
+
+    // Click the Search Flights
+    await page.locator('[data-auto-id="search-flights"]').click()
+    await expect.soft(page.locator('#result-count')).toContainText('1 selected')
+
+    // Click the "Flights" link
+    await page.locator('#nav-away').click()
+
+    // Navigate to http://127.0.0.1:8191/flights?origin=MAA&dest=DEL&utm_source=test
+    await page.goto('http://127.0.0.1:8191/flights?origin=MAA&dest=DEL&utm_source=test')
+  });
+});
+
+🗄️ Repository
+Session:
+80dc12a8
+▶ Execution
+Run Test
+No execution results yet. Click "Run Test" to execute the generated test plan.
+New Test Case
+v10.9.0 · Component Runtime

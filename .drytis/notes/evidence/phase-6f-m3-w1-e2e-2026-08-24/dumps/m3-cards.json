@@ -1,0 +1,104 @@
+[
+ {
+  "type": "DatePicker",
+  "name": "Depart on",
+  "dateValue": "Choose Sunday, September 6th, 2026",
+  "pageUrl": null,
+  "pageTitle": null,
+  "sel": "#onward",
+  "dataAutoId": null,
+  "ev": {
+   "endReason": "consequence-settled",
+   "domChanges": [
+    {
+     "attrs": [
+      "hidden"
+     ],
+     "deltas": {
+      "hidden": {
+       "new": "",
+       "old": ""
+      }
+     },
+     "added": 0,
+     "removed": 0,
+     "text": false
+    }
+   ]
+  }
+ },
+ {
+  "type": "Click",
+  "name": "Churn",
+  "dateValue": null,
+  "pageUrl": null,
+  "pageTitle": null,
+  "sel": "#noop-churn",
+  "dataAutoId": null,
+  "ev": {
+   "endReason": "lifecycle-complete",
+   "domChanges": []
+  }
+ },
+ {
+  "type": "Click",
+  "name": "Search Flights",
+  "dateValue": null,
+  "pageUrl": null,
+  "pageTitle": null,
+  "sel": "#go",
+  "dataAutoId": "search-flights",
+  "ev": {
+   "endReason": "consequence-settled",
+   "domChanges": [
+    {
+     "attrs": [
+      "hidden"
+     ],
+     "deltas": {
+      "hidden": {
+       "new": null,
+       "old": ""
+      }
+     },
+     "added": 0,
+     "removed": 0,
+     "text": false
+    },
+    {
+     "attrs": [],
+     "deltas": {},
+     "added": 1,
+     "removed": 1,
+     "text": false
+    }
+   ]
+  }
+ },
+ {
+  "type": "Link",
+  "name": "Flights",
+  "dateValue": null,
+  "pageUrl": null,
+  "pageTitle": null,
+  "sel": "#nav-away",
+  "dataAutoId": null,
+  "ev": {
+   "endReason": "page-reload",
+   "domChanges": []
+  }
+ },
+ {
+  "type": "Navigation",
+  "name": null,
+  "dateValue": null,
+  "pageUrl": "http://127.0.0.1:8191/flights?origin=MAA&dest=DEL&utm_source=test",
+  "pageTitle": "127.0.0.1:8191/flights?origin=MAA&dest=DEL&utm_source=test",
+  "sel": "html",
+  "dataAutoId": null,
+  "ev": {
+   "endReason": "page-reload-synthetic",
+   "domChanges": []
+  }
+ }
+]

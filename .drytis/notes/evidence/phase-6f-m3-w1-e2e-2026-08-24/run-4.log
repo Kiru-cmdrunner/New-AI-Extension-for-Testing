@@ -1,0 +1,20 @@
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+app ready = true
+START → undefined
+depart value = "Sat, 06 Sep"
+STOP → stopped
+cards: [{"t":"DatePicker","n":"Depart on","u":""},{"t":"Click","n":"Churn","u":""},{"t":"Click","n":"Search Flights","u":""},{"t":"Link","n":"Flights","u":""},{"t":"Navigation","n":"","u":"http://127.0.0.1:8191/flights?origin=MAA&dest=DEL&utm_source"}]
+PASS — M5 DatePicker completed with selected date :: 1 DatePicker cards
+PASS — M5 6B regression: data-auto-id search-flights → exactly one Click :: ["Click"]
+PASS — M5 6F-M1 regression: zero twin Click cards on calendar cells :: 0 twin clicks
+PASS — M2 fixture: no-op churn Click captured :: [{"t":"DatePicker","n":"Depart on"},{"t":"Click","n":"Churn"},{"t":"Click","n":"Search Flights"},{"t":"Link","n":"Flights"},{"t":"Navigation","n":null}]
+PASS — M4 fixture: Navigation card captured :: [{"t":"Navigation","u":"http://127.0.0.1:8191/flights?origin=MAA&dest=DEL&utm_source=test","ti":"127.0.0.1:8191/flights?origin=MAA&dest=DEL&utm_source=test"}]
+FAIL — M4-O14: nav label shows origin+path, query params ABSENT in panel :: Navigate to "127.0.0.1:8191/flights?origin=MAA&dest=DEL&utm_source=test" | 5. navigate — Navigate to http://127.0.0.1:8191/flights?origin=MAA&dest=DEL&utm_source=test |     // Navigate to http://127.0.0.1:8191/flights?origin=MAA&dest=DEL&utm_source=test
+PASS — M1-O13: stopped view NEVER shows "Collecting behavioral evidence" :: clean
+terminal notes in stopped view: 0
+PASS — M1-O13: terminal note present where evidence is absent (≥1 card) :: 0 notes; evidence-less cards: 0
+PASS — M2-O2: no-op hidden header present in panel DOM
+PASS — M3-O12 non-regression: no recovered-after-unload notice on this normal flow :: unexpected notice in a no-crash flow
+panel js error count probe: 0
+
+════ 6F-M3 W1 E2E — 9 PASS / 1 FAIL ════

@@ -1,0 +1,13 @@
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+app ready = false
+START → undefined
+file:///workspace/.drytis/notes/evidence/phase-6f-m3-w1-e2e-2026-08-24/harness-m3w1.mjs:66
+  if (!r) throw new Error('no element: ' + sel + '[' + nth + ']');
+                ^
+
+Error: no element: #onward[0]
+    at clickEl (file:///workspace/.drytis/notes/evidence/phase-6f-m3-w1-e2e-2026-08-24/harness-m3w1.mjs:66:17)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///workspace/.drytis/notes/evidence/phase-6f-m3-w1-e2e-2026-08-24/harness-m3w1.mjs:86:1
+
+Node.js v20.20.2

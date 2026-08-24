@@ -1,0 +1,23 @@
+🧭 Navigation
+int-10
+completed
+1 event · 0ms
+✓ Navigation (prio 120)
+0 assertions
+
+Navigate to http://127.0.0.1:8191/flights
+
+Window: 0ms · page-reload-synthetic
+📋 Navigation evidence (page reloaded — synthetic)
+🎯
+Target Evidence
+ELEMENT
+HTML [role=document] "http://127.0.0.1:8191/flights?origin=MAA…"
+No observable state changes
+🌐
+Application Evidence
+NAVIGATION (1)
+full-reload: → http://127.0.0.1:8191/flights?origin=MAA…
+PERFORMANCE
+0 batches · longest: 0ms
+Raw evidence JSON
