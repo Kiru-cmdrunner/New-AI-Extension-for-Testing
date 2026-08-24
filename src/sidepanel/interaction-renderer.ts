@@ -18,8 +18,8 @@
  */
 
 import type { ComponentInteraction } from '../shared/component-types';
-import { renderEvidence, renderEvidencePlaceholder } from './evidence-renderer';
-import { quoteSafeTitle } from '../enrichment/quote-safe';
+import { renderEvidence, renderEvidencePlaceholder, renderEvidenceTerminal } from './evidence-renderer';
+import { quoteSafeTitle, displayUrl, isUrlDerivedTitle } from '../enrichment/quote-safe';
 import {
   buildUnderstandingBadge,
   buildProjectedChip,
@@ -166,9 +166,13 @@ function fallbackActionDescription(interaction: ComponentInteraction): string {
       // D10 (audit D11): titles arrive raw from the page and may contain or
       // be wrapped in double quotes — normalize so the label never renders
       // nested/doubled quotes.
-      const title = quoteSafeTitle(String(metadata.pageTitle ?? ''));
-      if (title) return `Navigate to "${title}"`;
-      return `Navigate to ${url}`;
+      const rawTitle = String(metadata.pageTitle ?? '');
+      const title = quoteSafeTitle(rawTitle);
+      if (title && !isUrlDerivedTitle(rawTitle, url)) return `Navigate to "${title}"`;
+      // 6F-M3 O14: title absent (or Chrome's URL-synthesized pseudo-title)
+      // — display form drops query/hash and truncates (panel label only;
+      // IR/KR keep the raw URL).
+      return `Navigate to ${displayUrl(url)}`;
     }
 
     default:
@@ -402,12 +406,22 @@ export function createInteractionElement(interaction: ComponentInteraction): HTM
  * Otherwise, show a placeholder that will be replaced when
  * INTERACTION_EVIDENCE_UPDATE arrives.
  *
+/**
+ * 6F-M3 O13: which view is rendering — the live timeline keeps the
+ * "Collecting…" placeholder; the stopped view must never promise collection
+ * that ended. Default 'live' preserves pre-change behavior for every caller
+ * that does not opt in.
+ */
+type EvidenceView = 'live' | 'stopped';
+
+/**
  * Wrapped in try/catch so a malformed evidence object renders a safe
  * fallback rather than aborting the entire render loop.
  */
 function attachEvidenceDisplay(
   el: HTMLElement,
   interaction: ComponentInteraction,
+  view: EvidenceView = 'live',
 ): void {
   if (interaction.behavioralEvidence) {
     try {
@@ -427,6 +441,10 @@ function attachEvidenceDisplay(
       note.textContent = '⚠️ Evidence data incomplete';
       el.appendChild(note);
     }
+  } else if (view === 'stopped') {
+    // 6F-M3 O13: the recording has ended — nothing more will arrive.
+    // Honest terminal note instead of the misleading "Collecting…".
+    el.appendChild(renderEvidenceTerminal());
   } else {
     el.appendChild(renderEvidencePlaceholder());
   }
@@ -438,6 +456,7 @@ function attachEvidenceDisplay(
 export function renderInteractions(
   container: HTMLElement,
   interactions: ComponentInteraction[],
+  view: EvidenceView = 'live',
 ): void {
   container.innerHTML = '';
 
@@ -452,7 +471,7 @@ export function renderInteractions(
   for (const interaction of interactions) {
     try {
       const el = createInteractionElement(interaction);
-      attachEvidenceDisplay(el, interaction);
+      attachEvidenceDisplay(el, interaction, view);
       container.appendChild(el);
     } catch (err) {
       // One card failed — render a minimal fallback so the remaining
@@ -487,6 +506,9 @@ export function renderInteractions(
  */
 export interface RenderOptions {
   showHidden?: boolean;
+  /** 6F-M3 O13: 'stopped' renders the honest terminal note for cards with
+   *  no behavioral evidence (default 'live' = pre-change behavior). */
+  view?: 'live' | 'stopped';
 }
 
 export function renderProductionInteractions(
@@ -495,7 +517,7 @@ export function renderProductionInteractions(
   options?: RenderOptions,
 ): void {
   if (options?.showHidden === true) {
-    renderInteractions(container, interactions);
+    renderInteractions(container, interactions, options?.view ?? 'live');
     for (const interaction of interactions) {
       const reason = suppressionReason(interaction);
       if (!reason) continue;
@@ -505,7 +527,11 @@ export function renderProductionInteractions(
     }
     return;
   }
-  renderInteractions(container, interactions.filter(isProductionInteraction));
+  renderInteractions(
+    container,
+    interactions.filter(isProductionInteraction),
+    options?.view ?? 'live',
+  );
 }
 
 function findCardById(container: HTMLElement, interactionId: string): HTMLElement | null {

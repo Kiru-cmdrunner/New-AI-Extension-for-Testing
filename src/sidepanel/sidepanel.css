@@ -1805,6 +1805,13 @@ body {
   border-top: 1px dashed #e5e7eb;
 }
 
+/* 6F-M3 O13: terminal note in the stopped view — same muted row, no italic
+   (it is a statement of fact, not an in-progress hint). */
+.evidence-placeholder--final {
+  font-style: normal;
+  color: #6b7280;
+}
+
 .evidence-window-meta {
   font-size: 10px;
   color: #6b7280;

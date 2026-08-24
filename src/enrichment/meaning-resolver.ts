@@ -9,7 +9,7 @@
 
 import type { ComponentInteraction } from '../shared/component-types';
 import type { ComponentDetectionResult } from './component-types';
-import { quoteSafeTitle } from './quote-safe';
+import { quoteSafeTitle, displayUrl, isUrlDerivedTitle } from './quote-safe';
 
 /**
  * Resolve a human-readable business meaning from an interaction.
@@ -188,9 +188,13 @@ export function resolveMeaning(
       // D10 (audit D11): titles arrive raw from the page and may contain or
       // be wrapped in double quotes — normalize so the label never renders
       // nested/doubled quotes.
-      const title = quoteSafeTitle(String(metadata.pageTitle ?? ''));
-      if (title) return `Navigate to "${title}"`;
-      return `Navigate to ${url}`;
+      const rawTitle = String(metadata.pageTitle ?? '');
+      const title = quoteSafeTitle(rawTitle);
+      if (title && !isUrlDerivedTitle(rawTitle, url)) return `Navigate to "${title}"`;
+      // 6F-M3 O14: title absent (or Chrome's URL-synthesized pseudo-title
+      // for untitled pages) — display form drops query/hash and truncates
+      // (panel label only; IR/KR keep the raw URL).
+      return `Navigate to ${displayUrl(url)}`;
     }
 
     default:

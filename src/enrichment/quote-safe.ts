@@ -30,3 +30,52 @@ export function quoteSafeTitle(raw: string): string {
   }
   return s.replace(/"/g, "'");
 }
+
+/**
+ * 6F-M3 O14 (E2E run-4 finding): Chrome synthesizes the tab title from the
+ * URL for untitled pages — `chrome.tabs.get` at onCommitted then returns the
+ * FULL query-bearing URL as `pageTitle`, and the title-first label branch
+ * renders it verbatim. True when the title carries no information beyond
+ * the URL (exact equality after quote-safety) — the caller should use the
+ * displayUrl form instead of the quoted "title".
+ */
+export function isUrlDerivedTitle(title: string, url: string): boolean {
+  if (title === '' || url === '') return false;
+  const t = quoteSafeTitle(title);
+  if (t === url) return true;
+  // Chrome's synthesized pseudo-title omits the scheme ("host/path?q"),
+  // so also compare against the URL with its scheme stripped.
+  const schemeStripped = url.replace(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//, '');
+  return t === schemeStripped;
+}
+
+/**
+ * Display URL for panel labels — 6F-M3 O14.
+ *
+ * When a Navigation card has no page title, the fallback label shows the
+ * URL. The raw URL can carry query strings, tracking params and tokens —
+ * noisy in card labels and leak-prone in screenshots. This helper keeps
+ * origin + pathname only (search/hash dropped) and truncates to `maxLen`
+ * characters with a single trailing ellipsis.
+ *
+ * Pure and honest: unparseable input is returned unchanged (never throws,
+ * never invents a scheme). This is a DISPLAY form only — the machine record
+ * (metadata.pageUrl, IR, KR) keeps the full raw URL.
+ */
+export function displayUrl(raw: string, maxLen = 60): string {
+  let display = raw;
+  try {
+    const parsed = new URL(raw);
+    // Opaque origins (about:, data:, …) serialize as the literal string
+    // "null" — meaningless as a display prefix. Keep the raw string.
+    if (parsed.origin && parsed.origin !== 'null') {
+      display = `${parsed.origin}${parsed.pathname}`;
+    }
+  } catch {
+    // Not a parseable absolute URL — keep the raw string.
+  }
+  if (display.length > maxLen) {
+    return `${display.slice(0, maxLen)}…`;
+  }
+  return display;
+}

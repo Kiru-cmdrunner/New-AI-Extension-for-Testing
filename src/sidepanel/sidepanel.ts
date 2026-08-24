@@ -500,6 +500,7 @@ function showDetectedInteractions(interactions: ComponentInteraction[]): void {
   detectedInteractionsCount.textContent = String(interactions.length);
   renderProductionInteractions(detectedInteractionsList, interactions, {
     showHidden: showHiddenInteractions,
+    view: 'stopped', // 6F-M3 O13: honest terminal note for evidence-less cards
   });
   renderHiddenToggleRow(interactions);
   void attachKrChipsToCards();

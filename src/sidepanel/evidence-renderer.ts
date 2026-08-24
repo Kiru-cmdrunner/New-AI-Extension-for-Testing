@@ -341,16 +341,25 @@ function renderDomChanges(
   const safeChanges = changes ?? [];
   if (safeChanges.length === 0 && overflow === 0) return null;
 
+  // 6F-M3 O2: suppress no-op rows — attribute-only with every old==new, no
+  // node counts, no characterData delta (nothing materialized; pure noise:
+  // 1 of 5 rows in the committed 6E-M2 dump). Filter BEFORE the display cap
+  // so suppressed rows never consume slots. Raw evidence objects untouched;
+  // the header keeps the raw observed count and reports the hidden tally.
+  const material = safeChanges.filter((c) => !isNoOpDomChange(c));
+  const noOpHidden = safeChanges.length - material.length;
+
   const container = document.createElement('div');
 
   const header = document.createElement('div');
   header.className = 'evidence-subheader';
   const overflowText = overflow > 0 ? ` (${overflow} more dropped)` : '';
   const coarseText = coarseMode ? ' ⚠️ high-churn' : '';
-  header.textContent = `DOM Changes (${safeChanges.length}${overflowText}${coarseText})`;
+  const noOpText = noOpHidden > 0 ? ` · ${noOpHidden} no-op hidden` : '';
+  header.textContent = `DOM Changes (${safeChanges.length}${overflowText}${coarseText}${noOpText})`;
   container.appendChild(header);
 
-  const visible = safeChanges.slice(0, MAX_DOM_CHANGES_DISPLAY);
+  const visible = material.slice(0, MAX_DOM_CHANGES_DISPLAY);
   for (const change of visible) {
     const row = document.createElement('div');
     row.className = 'evidence-row';
@@ -406,14 +415,48 @@ function renderDomChanges(
   }
 
   // "Show more" indicator
-  if (safeChanges.length > MAX_DOM_CHANGES_DISPLAY) {
+  if (material.length > MAX_DOM_CHANGES_DISPLAY) {
     const more = document.createElement('div');
     more.className = 'evidence-row evidence-row--muted';
-    more.textContent = `… ${safeChanges.length - MAX_DOM_CHANGES_DISPLAY} more`;
+    more.textContent = `… ${material.length - MAX_DOM_CHANGES_DISPLAY} more`;
     container.appendChild(more);
   }
 
   return container;
+}
+
+/**
+ * 6F-M3 O2 — true when a DomChangeSummary row materialized NOTHING for
+ * display: attribute-only, every changed attribute's delta has old === new,
+ * zero added/removed nodes, no characterData delta. Such rows render as
+ * e.g. `class: "x" → "x"` — pure noise.
+ *
+ * Honesty guard: a changed attribute with a MISSING delta is NOT a no-op
+ * (unknown is information). Exported for unit-test pins.
+ */
+export function isNoOpDomChange(change: DomChangeSummary): boolean {
+  if ((change.addedNodesCount ?? 0) !== 0) return false;
+  if ((change.removedNodesCount ?? 0) !== 0) return false;
+  if (change.characterDataDelta != null) return false;
+  const attrs = change.changedAttributes ?? [];
+  for (const attr of attrs) {
+    const delta = change.attributeDeltas?.[attr];
+    if (!delta) return false; // unknown → treat as material
+    if (delta.old !== delta.new) return false;
+  }
+  return true;
+}
+
+/**
+ * Test seam for renderDomChanges (private renderer — 6F-M3 O2 pins).
+ * Behavior-identical to the internal function.
+ */
+export function renderDomChangesForTest(
+  changes: DomChangeSummary[],
+  overflow: number,
+  coarseMode: boolean,
+): HTMLElement | null {
+  return renderDomChanges(changes, overflow, coarseMode);
 }
 
 /**
@@ -960,6 +1003,19 @@ export function renderEvidence(
     container.appendChild(notice);
   }
 
+  // 6F-M3 O12: no-owner recovered windows keep null identity by constraint
+  // (RC7). Explain WHY "Unknown element" is honest on this path — one line,
+  // same class as the synthetic notice. Silent when the 6F-M2b identity
+  // seed already tells the truth.
+  if (endReason === 'sw-recovered-form-submit'
+      && (evidence?.targetEvidence?.identity ?? null) === null) {
+    const notice = document.createElement('div');
+    notice.className = 'evidence-synthetic-notice';
+    notice.textContent =
+      '↻ Evidence recovered after page unload — target identity not captured (no owner resolved)';
+    container.appendChild(notice);
+  }
+
   // Target evidence section
   container.appendChild(renderTargetEvidence(evidence?.targetEvidence));
 
@@ -1060,6 +1116,19 @@ export function renderEvidencePlaceholder(): HTMLElement {
   placeholder.className = 'evidence-placeholder';
   placeholder.textContent = '⏳ Collecting behavioral evidence…';
   return placeholder;
+}
+
+/**
+ * 6F-M3 O13 — honest terminal note for cards with NO behavioral evidence
+ * in the STOPPED view. "Collecting…" is a lie after stop: nothing more will
+ * arrive. Used by interaction-renderer's attachEvidenceDisplay (view =
+ * 'stopped'); never in the live timeline.
+ */
+export function renderEvidenceTerminal(): HTMLElement {
+  const note = document.createElement('div');
+  note.className = 'evidence-placeholder evidence-placeholder--final';
+  note.textContent = 'No behavioral evidence captured for this interaction';
+  return note;
 }
 
 /**
