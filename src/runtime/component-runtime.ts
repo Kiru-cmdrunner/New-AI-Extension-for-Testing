@@ -412,6 +412,30 @@ class ComponentRuntimeImpl implements ComponentRuntime {
       }
     }
 
+    // WARN-4 (6F-M1 doctrine extension): a discrete event absorbed by an
+    // ACTIVE lifecycle breaks the exact ledger adjacency for this page's
+    // gesture records — the same discipline step 2c applies to unhandled
+    // discrete events. Without it, a stale record can claim a later
+    // genuine click for the OLD interaction (misattribution) and then be
+    // consumed, so the interaction the click actually belonged to loses
+    // its evidence. Strictly structural: pageId equality + discrete type
+    // only — no timing fields, no captureSeq windows (owner doctrine
+    // 2026-08-20). The mousedownCaptureSeq < event.captureSeq guard is
+    // ORDERING, not timing: the completing mousedown that CREATED a record
+    // is itself a discrete event handled by an active lifecycle, and
+    // without the guard it would supersede its own fresh record at birth
+    // (every mousedown-completed gesture born dead — regression caught by
+    // the W4-T4/T5 pins). A record is broken only by events that occur
+    // BETWEEN its completing mousedown and the potential release click.
+    if (handled && DISCRETE_ACTION_TYPES.has(event.eventType)) {
+      const warn4PageId = pageIdOf(event.eventId);
+      for (const g of this.completedGestures) {
+        if (g.pageId === warn4PageId && g.mousedownCaptureSeq < event.captureSeq) {
+          g.superseded = true;
+        }
+      }
+    }
+
     // 3b. 6F-M1 A: gesture ownership — a click that is the NEXT discrete
     //     event after a mousedown that COMPLETED a lifecycle, on the same
     //     element and page, is the second half of that same gesture. It is
