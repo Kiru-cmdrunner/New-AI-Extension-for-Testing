@@ -1,0 +1,212 @@
+{
+ "environment": {
+  "baseUrl": "http://127.0.0.1:8241",
+  "browser": "chrome",
+  "startUrl": "http://127.0.0.1:8241/auto-id-generic-validation.html",
+  "viewport": {
+   "height": 437,
+   "width": 780
+  }
+ },
+ "steps": [
+  {
+   "action": "click",
+   "assertions": [
+    {
+     "comparison": "isTrue",
+     "expectedValue": null,
+     "property": null,
+     "severity": "soft",
+     "target": {
+      "elementId": "obs-0-0",
+      "elementName": "notification",
+      "kind": "element",
+      "pageOrComponent": "main",
+      "resolvedLocators": [
+       {
+        "confidence": 0.7,
+        "priority": 1,
+        "type": "css",
+        "value": "#status"
+       }
+      ]
+     },
+     "type": "presence"
+    }
+   ],
+   "description": "Click the Flight 6E-231",
+   "executionParameters": {
+    "retryCount": 0,
+    "retryDelayMs": 1000,
+    "timeoutMs": 30000,
+    "waitStrategy": "visible"
+   },
+   "id": "step-0001",
+   "input": null,
+   "order": 0,
+   "plainEnglish": "Click the Flight 6E-231",
+   "sourceEventId": "evt-pmt7i5ucd-5",
+   "target": {
+    "elementId": "",
+    "elementName": "Flight 6E-231",
+    "kind": "element",
+    "pageOrComponent": "main",
+    "resolvedLocators": [
+     {
+      "confidence": 0.9,
+      "priority": 1,
+      "type": "testId",
+      "value": "[auto-id=\"select_flight_card\"]"
+     },
+     {
+      "confidence": 0.8,
+      "priority": 2,
+      "type": "accessibleName",
+      "value": "Flight 6E-231"
+     },
+     {
+      "confidence": 0.72,
+      "priority": 3,
+      "type": "css",
+      "value": "[class~=\"card\"]"
+     }
+    ]
+   }
+  },
+  {
+   "action": "click",
+   "assertions": [
+    {
+     "comparison": "isTrue",
+     "expectedValue": null,
+     "property": null,
+     "severity": "soft",
+     "target": {
+      "elementId": "obs-1-0",
+      "elementName": "notification",
+      "kind": "element",
+      "pageOrComponent": "main",
+      "resolvedLocators": [
+       {
+        "confidence": 0.7,
+        "priority": 1,
+        "type": "css",
+        "value": "#status"
+       }
+      ]
+     },
+     "type": "presence"
+    }
+   ],
+   "description": "Click the Flight 6E-502",
+   "executionParameters": {
+    "retryCount": 0,
+    "retryDelayMs": 1000,
+    "timeoutMs": 30000,
+    "waitStrategy": "visible"
+   },
+   "id": "step-0002",
+   "input": null,
+   "order": 1,
+   "plainEnglish": "Click the Flight 6E-502",
+   "sourceEventId": "evt-pmt7i5ucd-12",
+   "target": {
+    "elementId": "",
+    "elementName": "Flight 6E-502",
+    "kind": "element",
+    "pageOrComponent": "main",
+    "resolvedLocators": [
+     {
+      "confidence": 0.9,
+      "priority": 1,
+      "type": "testId",
+      "value": "[data-auto-id=\"select_return_flight_card\"]"
+     },
+     {
+      "confidence": 0.8,
+      "priority": 2,
+      "type": "accessibleName",
+      "value": "Flight 6E-502"
+     },
+     {
+      "confidence": 0.72,
+      "priority": 3,
+      "type": "css",
+      "value": "[class~=\"card\"]"
+     }
+    ]
+   }
+  },
+  {
+   "action": "click",
+   "assertions": [
+    {
+     "comparison": "isTrue",
+     "expectedValue": null,
+     "property": null,
+     "severity": "soft",
+     "target": {
+      "elementId": "obs-2-0",
+      "elementName": "notification",
+      "kind": "element",
+      "pageOrComponent": "main",
+      "resolvedLocators": [
+       {
+        "confidence": 0.7,
+        "priority": 1,
+        "type": "css",
+        "value": "#status"
+       }
+      ]
+     },
+     "type": "presence"
+    }
+   ],
+   "description": "Click the Add bundle",
+   "executionParameters": {
+    "retryCount": 0,
+    "retryDelayMs": 1000,
+    "timeoutMs": 30000,
+    "waitStrategy": "visible"
+   },
+   "id": "step-0003",
+   "input": null,
+   "order": 2,
+   "plainEnglish": "Click the Add bundle",
+   "sourceEventId": "evt-pmt7i5ucd-26",
+   "target": {
+    "elementId": "30b9669e-c27e-4dcc-9865-5663c4f4b427",
+    "elementName": "Add bundle",
+    "kind": "element",
+    "pageOrComponent": "main",
+    "resolvedLocators": [
+     {
+      "confidence": 0.72,
+      "priority": 1,
+      "type": "css",
+      "value": "#bundle-add"
+     },
+     {
+      "confidence": 0.62,
+      "priority": 2,
+      "type": "accessibleName",
+      "value": "Add bundle"
+     },
+     {
+      "confidence": 0.35,
+      "priority": 3,
+      "type": "xpath",
+      "value": "//button[@id='bundle-add']"
+     }
+    ]
+   }
+  }
+ ],
+ "tags": [
+  "auto-id-generic-validation.html"
+ ],
+ "testCaseId": "tc-6588b475",
+ "testCaseVersionId": "tcv-6588b475",
+ "testCaseVersionNumber": 1,
+ "title": "Recorded Test"
+}

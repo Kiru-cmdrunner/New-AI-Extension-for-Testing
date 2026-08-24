@@ -1,0 +1,52 @@
+{
+ "interactions": [
+  {
+   "type": "Click",
+   "autoId": "select_flight_card",
+   "dataAutoId": null,
+   "tag": "DIV",
+   "name": "Flight 6E-231",
+   "css": "body > div:nth-of-type(1)"
+  },
+  {
+   "type": "Click",
+   "autoId": null,
+   "dataAutoId": "select_return_flight_card",
+   "tag": "DIV",
+   "name": "Flight 6E-502",
+   "css": "body > div:nth-of-type(2)"
+  },
+  {
+   "type": "Click",
+   "autoId": null,
+   "dataAutoId": null,
+   "tag": "BUTTON",
+   "name": "Add bundle",
+   "css": "#bundle-add"
+  },
+  {
+   "type": "Unclassified",
+   "autoId": null,
+   "dataAutoId": null,
+   "tag": "DIV",
+   "name": "Free meal offer (no QA id)\n₹0",
+   "css": "body > div:nth-of-type(3) > div"
+  }
+ ],
+ "ir": {
+  "actions": [
+   {
+    "type": "click",
+    "locators": []
+   },
+   {
+    "type": "click",
+    "locators": []
+   },
+   {
+    "type": "click",
+    "locators": []
+   }
+  ]
+ }
+}

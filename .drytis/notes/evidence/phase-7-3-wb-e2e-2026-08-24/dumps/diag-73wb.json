@@ -1,0 +1,36 @@
+{
+ "keys": [
+  "cmdrunner_live_interactions",
+  "cmdrunner_recording_active",
+  "repo_session_id",
+  "session_context"
+ ],
+ "liveLen": 4,
+ "liveSample": [
+  {
+   "type": "Click",
+   "tag": "DIV",
+   "autoId": "select_flight_card",
+   "dataAutoId": null
+  },
+  {
+   "type": "Click",
+   "tag": "DIV",
+   "autoId": null,
+   "dataAutoId": "select_return_flight_card"
+  },
+  {
+   "type": "Click",
+   "tag": "BUTTON",
+   "autoId": null,
+   "dataAutoId": null
+  },
+  {
+   "type": "Unclassified",
+   "tag": "DIV",
+   "autoId": null,
+   "dataAutoId": null
+  }
+ ],
+ "ui": "stopped"
+}
