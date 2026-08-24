@@ -1,0 +1,40 @@
+{
+ "cards": [
+  {
+   "id": "int-2",
+   "chips": []
+  },
+  {
+   "id": "int-3",
+   "chips": [
+    "BUTTON:◆ new signature"
+   ]
+  }
+ ],
+ "undSid": "session-1787582327275",
+ "sessions": [
+  {
+   "key": "app-vlwpj3:session-1787582327275",
+   "appId": "app-vlwpj3",
+   "sessionId": "session-1787582327275"
+  }
+ ],
+ "episodes": [
+  {
+   "key": "app-vlwpj3:session-1787582327275:ep-int-3",
+   "appId": "app-vlwpj3",
+   "sessionId": "session-1787582327275",
+   "sigKey": "app-vlwpj3:sig:5a949edc",
+   "members": [
+    "int-3"
+   ]
+  }
+ ],
+ "sigs": [
+  {
+   "key": "app-vlwpj3:sig:5a949edc",
+   "appId": "app-vlwpj3",
+   "occ": 1
+  }
+ ]
+}

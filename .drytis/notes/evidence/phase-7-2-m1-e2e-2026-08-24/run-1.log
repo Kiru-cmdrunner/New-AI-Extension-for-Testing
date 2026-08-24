@@ -1,0 +1,13 @@
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+STOP → stopped
+PRE-RELOAD :: {"sess":"daedda35-24c5-44ac-9c33-1897faba8686","liveLen":2,"und":true,"ui":"stopped","dbs":["cmdrunner_knowledge","cmdrunner_repository"],"cardsNow":0,"view":"home"}
+DBG (see dbg-cards-vs-episodes.json)
+PASS — W1 chip BUTTON with data-app-id + data-signature-key (producer enrichment) :: {"total":1,"buttons":1,"appId":"app-vlwpj3","sig":"app-vlwpj3:sig:5a949edc","text":"◆ new signature"}
+PASS — W2 chip click → repository tab with ?app=&sig= params :: chrome-extension://gndjidfncanlhlonpcabokbdhnikglpn/src/repository/index.html?app=app-vlwpj3&sig=app-vlwpj3%3Asig%3A5a949edc
+PASS — W3a app selector shows session app (origin) selected :: {"selected":"http://127.0.0.1:8190 — app-vlwpj3 (1 session)","hlText":"Unclassifiedchoose saturday, september 5th, 2026×1activesession-1787582327275 → session-1787582327275 (seq 1–1) · anchor","sigRows":1}
+PASS — W3b focused signature row highlighted (.kr-highlight) :: {"hl":"Unclassifiedchoose saturday, september 5th, 2026×1activesession-1787582327275 → session-1787582327275 (seq 1–1) · anchor","rows":1}
+PASS — W4 header repo-btn opens app-scoped tab (?app= present) :: chrome-extension://gndjidfncanlhlonpcabokbdhnikglpn/src/repository/index.html?app=app-vlwpj3&sig=app-vlwpj3%3Asig%3A5a949edc | chrome-extension://gndjidfncanlhlonpcabokbdhnikglpn/src/repository/index.html?app=app-vlwpj3
+PASS — W5a stopped view intact (cards ≥1, understanding card present, no chip duplication) :: {"cards":2,"und":true,"dupe":false}
+PASS — W5b zero console errors in panel + repository tabs :: {"panel":[],"repo":[]}
+
+════ 7.2-M1 E2E pin ⑫ — 7 PASS / 0 FAIL ════

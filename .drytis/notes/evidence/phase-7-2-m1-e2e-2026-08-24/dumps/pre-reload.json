@@ -1,0 +1,12 @@
+{
+ "sess": "daedda35-24c5-44ac-9c33-1897faba8686",
+ "liveLen": 2,
+ "und": true,
+ "ui": "stopped",
+ "dbs": [
+  "cmdrunner_knowledge",
+  "cmdrunner_repository"
+ ],
+ "cardsNow": 0,
+ "view": "home"
+}
