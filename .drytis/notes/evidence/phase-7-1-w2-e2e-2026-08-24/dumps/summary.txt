@@ -1,0 +1,34 @@
+{
+ "s1": {
+  "apps": [
+   {
+    "o": "http://127.0.0.1:8231",
+    "s": 1
+   }
+  ],
+  "views": [
+   "cart",
+   "search-results"
+  ],
+  "viewTransitions": [
+   "cart->search-results(x1)",
+   "search-results->cart(x1)"
+  ]
+ },
+ "s2": {
+  "apps": [
+   {
+    "o": "http://127.0.0.1:8231",
+    "s": 2
+   }
+  ],
+  "views": [
+   "cart",
+   "search-results"
+  ],
+  "viewTransitions": [
+   "cart->search-results(x2)",
+   "search-results->cart(x2)"
+  ]
+ }
+}

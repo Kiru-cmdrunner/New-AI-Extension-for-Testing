@@ -1,0 +1,1096 @@
+{
+ "found": true,
+ "name": "cmdrunner_knowledge",
+ "dump": {
+  "applications": [
+   {
+    "appId": "app-vlwq4n",
+    "origin": "http://127.0.0.1:8231",
+    "label": "127.0.0.1:8231",
+    "firstSeenAt": 1787560433979,
+    "lastActiveAt": 1787560434050,
+    "sessionCount": 1,
+    "lastSessionId": "session-1787560433958"
+   }
+  ],
+  "knowledgeBehaviorSessions": [
+   {
+    "key": "app-vlwq4n:session-1787560433958",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "seq": 1,
+    "generatedAtMs": 1787560433979,
+    "episodeCount": 3,
+    "edgeCount": 14,
+    "gapCount": 1,
+    "coverage": {
+     "totalInteractions": 7,
+     "anchoredInteractions": 3,
+     "memberInteractions": 3,
+     "malformedInteractions": 0,
+     "totalNetworkRows": 3,
+     "attributedNetworkRows": 3,
+     "totalObservations": 7,
+     "attributedObservations": 6,
+     "unattributedConsequences": 1,
+     "provenanceLinks": 0
+    },
+    "viewSetHash": "261010b6",
+    "signatureSetHash": "5cdaa9a9",
+    "warnings": []
+   }
+  ],
+  "knowledgeCollections": [],
+  "knowledgeCounters": [],
+  "knowledgeEdges": [
+   {
+    "key": "app-vlwq4n:session-1787560433958:edge-ep-int-3-000",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "episodeId": "ep-int-3",
+    "edgeId": "edge-ep-int-3-000",
+    "edgeSeq": 0,
+    "tier": "T1-stamp",
+    "kind": "api",
+    "detail": "GET http://127.0.0.1:8231/search-results.html?q=flights+to+chennai initiated during ep-int-3",
+    "confidence": 0.9,
+    "latencyMs": null,
+    "fromEpisodeId": "ep-int-3",
+    "fromInteractionId": "int-3",
+    "to": {
+     "type": "api",
+     "requestId": "31"
+    },
+    "refJson": "[{\"kind\":\"request\",\"requestId\":\"31\"}]",
+    "signatureKey": "app-vlwq4n:sig:3037c178"
+   },
+   {
+    "key": "app-vlwq4n:session-1787560433958:edge-ep-int-3-001",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "episodeId": "ep-int-3",
+    "edgeId": "edge-ep-int-3-001",
+    "edgeSeq": 1,
+    "tier": "T2-lineage",
+    "kind": "navigation",
+    "detail": "navigation committed to http://127.0.0.1:8231/search-results.html?q=flights+to+chennai",
+    "confidence": 0.85,
+    "latencyMs": 42,
+    "fromEpisodeId": "ep-int-3",
+    "fromInteractionId": "int-4",
+    "to": {
+     "type": "navigation",
+     "navEventId": "nav-1787560425494-gsqgc0",
+     "toUrl": "http://127.0.0.1:8231/search-results.html?q=flights+to+chennai"
+    },
+    "refJson": "[{\"kind\":\"nav\",\"navEventId\":\"nav-1787560425494-gsqgc0\"}]",
+    "signatureKey": "app-vlwq4n:sig:3037c178"
+   },
+   {
+    "key": "app-vlwq4n:session-1787560433958:edge-ep-int-3-002",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "episodeId": "ep-int-3",
+    "edgeId": "edge-ep-int-3-002",
+    "edgeSeq": 2,
+    "tier": "T4-window",
+    "kind": "ui",
+    "detail": "UI observations on int-3: 0 DOM changes",
+    "confidence": 0.6,
+    "latencyMs": 0,
+    "fromEpisodeId": "ep-int-3",
+    "fromInteractionId": "int-3",
+    "to": {
+     "type": "ui",
+     "summary": "0 DOM changes"
+    },
+    "refJson": "[{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt6zbmh2-5\",\"sequence\":0}]",
+    "signatureKey": "app-vlwq4n:sig:3037c178"
+   },
+   {
+    "key": "app-vlwq4n:session-1787560433958:edge-ep-int-3-003",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "episodeId": "ep-int-3",
+    "edgeId": "edge-ep-int-3-003",
+    "edgeSeq": 3,
+    "tier": "T4-window",
+    "kind": "ui",
+    "detail": "UI observations on int-4: 0 DOM changes",
+    "confidence": 0.6,
+    "latencyMs": 40,
+    "fromEpisodeId": "ep-int-3",
+    "fromInteractionId": "int-4",
+    "to": {
+     "type": "ui",
+     "summary": "0 DOM changes"
+    },
+    "refJson": "[{\"kind\":\"dom\",\"windowId\":\"synthetic-nav-nav-1787560425494-gsqgc0\",\"sequence\":0,\"degradation\":[\"synthesized-evidence\"]}]",
+    "signatureKey": "app-vlwq4n:sig:3037c178"
+   },
+   {
+    "key": "app-vlwq4n:session-1787560433958:edge-ep-int-6-000",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "episodeId": "ep-int-6",
+    "edgeId": "edge-ep-int-6-000",
+    "edgeSeq": 0,
+    "tier": "T1-stamp",
+    "kind": "api",
+    "detail": "GET http://127.0.0.1:8231/cart.html?ASIN=B08KGRVW2S initiated during ep-int-6",
+    "confidence": 0.9,
+    "latencyMs": null,
+    "fromEpisodeId": "ep-int-6",
+    "fromInteractionId": "int-6",
+    "to": {
+     "type": "api",
+     "requestId": "35"
+    },
+    "refJson": "[{\"kind\":\"request\",\"requestId\":\"35\"}]",
+    "signatureKey": "app-vlwq4n:sig:f341e2a0"
+   },
+   {
+    "key": "app-vlwq4n:session-1787560433958:edge-ep-int-6-001",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "episodeId": "ep-int-6",
+    "edgeId": "edge-ep-int-6-001",
+    "edgeSeq": 1,
+    "tier": "T2-lineage",
+    "kind": "navigation",
+    "detail": "navigation committed to http://127.0.0.1:8231/cart.html?ASIN=B08KGRVW2S",
+    "confidence": 0.85,
+    "latencyMs": 40,
+    "fromEpisodeId": "ep-int-6",
+    "fromInteractionId": "int-7",
+    "to": {
+     "type": "navigation",
+     "navEventId": "nav-1787560428533-y4dhbm",
+     "toUrl": "http://127.0.0.1:8231/cart.html?ASIN=B08KGRVW2S"
+    },
+    "refJson": "[{\"kind\":\"nav\",\"navEventId\":\"nav-1787560428533-y4dhbm\"}]",
+    "signatureKey": "app-vlwq4n:sig:f341e2a0"
+   },
+   {
+    "key": "app-vlwq4n:session-1787560433958:edge-ep-int-6-002",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "episodeId": "ep-int-6",
+    "edgeId": "edge-ep-int-6-002",
+    "edgeSeq": 2,
+    "tier": "T3-transition",
+    "kind": "state",
+    "detail": "view search-results → cart",
+    "confidence": 0.7,
+    "latencyMs": null,
+    "fromEpisodeId": "ep-int-6",
+    "fromInteractionId": "int-7",
+    "to": {
+     "type": "state",
+     "from": "search-results",
+     "to": "cart"
+    },
+    "refJson": "[{\"kind\":\"transition\",\"transitionId\":\"st-int-7\"}]",
+    "signatureKey": "app-vlwq4n:sig:f341e2a0"
+   },
+   {
+    "key": "app-vlwq4n:session-1787560433958:edge-ep-int-6-003",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "episodeId": "ep-int-6",
+    "edgeId": "edge-ep-int-6-003",
+    "edgeSeq": 3,
+    "tier": "T4-window",
+    "kind": "ui",
+    "detail": "UI observations on int-6: 0 DOM changes",
+    "confidence": 0.6,
+    "latencyMs": 0,
+    "fromEpisodeId": "ep-int-6",
+    "fromInteractionId": "int-6",
+    "to": {
+     "type": "ui",
+     "summary": "0 DOM changes"
+    },
+    "refJson": "[{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt6zbnsf-6\",\"sequence\":0}]",
+    "signatureKey": "app-vlwq4n:sig:f341e2a0"
+   },
+   {
+    "key": "app-vlwq4n:session-1787560433958:edge-ep-int-6-004",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "episodeId": "ep-int-6",
+    "edgeId": "edge-ep-int-6-004",
+    "edgeSeq": 4,
+    "tier": "T4-window",
+    "kind": "ui",
+    "detail": "UI observations on int-7: 0 DOM changes",
+    "confidence": 0.6,
+    "latencyMs": 38,
+    "fromEpisodeId": "ep-int-6",
+    "fromInteractionId": "int-7",
+    "to": {
+     "type": "ui",
+     "summary": "0 DOM changes"
+    },
+    "refJson": "[{\"kind\":\"dom\",\"windowId\":\"ev-nav-1787560428533-y4dhbm\",\"sequence\":0}]",
+    "signatureKey": "app-vlwq4n:sig:f341e2a0"
+   },
+   {
+    "key": "app-vlwq4n:session-1787560433958:edge-ep-int-9-000",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "episodeId": "ep-int-9",
+    "edgeId": "edge-ep-int-9-000",
+    "edgeSeq": 0,
+    "tier": "T1-stamp",
+    "kind": "api",
+    "detail": "GET http://127.0.0.1:8231/search-results.html initiated during ep-int-9",
+    "confidence": 0.9,
+    "latencyMs": null,
+    "fromEpisodeId": "ep-int-9",
+    "fromInteractionId": "int-9",
+    "to": {
+     "type": "api",
+     "requestId": "39"
+    },
+    "refJson": "[{\"kind\":\"request\",\"requestId\":\"39\"}]",
+    "signatureKey": "app-vlwq4n:sig:b3c04aff"
+   },
+   {
+    "key": "app-vlwq4n:session-1787560433958:edge-ep-int-9-001",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "episodeId": "ep-int-9",
+    "edgeId": "edge-ep-int-9-001",
+    "edgeSeq": 1,
+    "tier": "T2-lineage",
+    "kind": "navigation",
+    "detail": "navigation committed to http://127.0.0.1:8231/search-results.html",
+    "confidence": 0.85,
+    "latencyMs": 55,
+    "fromEpisodeId": "ep-int-9",
+    "fromInteractionId": "int-10",
+    "to": {
+     "type": "navigation",
+     "navEventId": "nav-1787560431548-ufkppg",
+     "toUrl": "http://127.0.0.1:8231/search-results.html"
+    },
+    "refJson": "[{\"kind\":\"nav\",\"navEventId\":\"nav-1787560431548-ufkppg\"}]",
+    "signatureKey": "app-vlwq4n:sig:b3c04aff"
+   },
+   {
+    "key": "app-vlwq4n:session-1787560433958:edge-ep-int-9-002",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "episodeId": "ep-int-9",
+    "edgeId": "edge-ep-int-9-002",
+    "edgeSeq": 2,
+    "tier": "T3-transition",
+    "kind": "state",
+    "detail": "view cart → search-results",
+    "confidence": 0.7,
+    "latencyMs": null,
+    "fromEpisodeId": "ep-int-9",
+    "fromInteractionId": "int-10",
+    "to": {
+     "type": "state",
+     "from": "cart",
+     "to": "search-results"
+    },
+    "refJson": "[{\"kind\":\"transition\",\"transitionId\":\"st-int-10\"}]",
+    "signatureKey": "app-vlwq4n:sig:b3c04aff"
+   },
+   {
+    "key": "app-vlwq4n:session-1787560433958:edge-ep-int-9-003",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "episodeId": "ep-int-9",
+    "edgeId": "edge-ep-int-9-003",
+    "edgeSeq": 3,
+    "tier": "T4-window",
+    "kind": "ui",
+    "detail": "UI observations on int-9: 0 DOM changes",
+    "confidence": 0.6,
+    "latencyMs": 0,
+    "fromEpisodeId": "ep-int-9",
+    "fromInteractionId": "int-9",
+    "to": {
+     "type": "ui",
+     "summary": "0 DOM changes"
+    },
+    "refJson": "[{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt6zbq57-4\",\"sequence\":0}]",
+    "signatureKey": "app-vlwq4n:sig:b3c04aff"
+   },
+   {
+    "key": "app-vlwq4n:session-1787560433958:edge-ep-int-9-004",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "episodeId": "ep-int-9",
+    "edgeId": "edge-ep-int-9-004",
+    "edgeSeq": 4,
+    "tier": "T4-window",
+    "kind": "ui",
+    "detail": "UI observations on int-10: 0 DOM changes",
+    "confidence": 0.6,
+    "latencyMs": 46,
+    "fromEpisodeId": "ep-int-9",
+    "fromInteractionId": "int-10",
+    "to": {
+     "type": "ui",
+     "summary": "0 DOM changes"
+    },
+    "refJson": "[{\"kind\":\"dom\",\"windowId\":\"synthetic-nav-nav-1787560431548-ufkppg\",\"sequence\":0,\"degradation\":[\"synthesized-evidence\"]}]",
+    "signatureKey": "app-vlwq4n:sig:b3c04aff"
+   }
+  ],
+  "knowledgeEntities": [],
+  "knowledgeEpisodes": [
+   {
+    "key": "app-vlwq4n:session-1787560433958:ep-int-3",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "episodeId": "ep-int-3",
+    "anchor": {
+     "interactionId": "int-3",
+     "actionType": "Click",
+     "actionTarget": "Search",
+     "triggerTimestamp": 1787560425459
+    },
+    "members": [
+     {
+      "interactionId": "int-3",
+      "role": "anchor"
+     },
+     {
+      "interactionId": "int-4",
+      "role": "navigation"
+     }
+    ],
+    "horizonAttribution": {
+     "openedAtMs": 1787560425459,
+     "closedAtMs": 1787560428501,
+     "closeReason": "all-stamped-settled"
+    },
+    "horizonUiOwnership": {
+     "openedAtMs": 1787560425459,
+     "closedAtMs": 1787560428501,
+     "closeReason": "stabilized"
+    },
+    "parameterInputs": [],
+    "episodeOutcome": {
+     "outcome": "success",
+     "confidence": 0.4,
+     "confidenceLevel": "inconclusive",
+     "derivation": "derived-episode-outcome"
+    },
+    "tabId": 1792030315,
+    "signatureKey": "app-vlwq4n:sig:3037c178"
+   },
+   {
+    "key": "app-vlwq4n:session-1787560433958:ep-int-6",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "episodeId": "ep-int-6",
+    "anchor": {
+     "interactionId": "int-6",
+     "actionType": "Click",
+     "actionTarget": "Add to cart",
+     "triggerTimestamp": 1787560428502
+    },
+    "members": [
+     {
+      "interactionId": "int-6",
+      "role": "anchor"
+     },
+     {
+      "interactionId": "int-7",
+      "role": "navigation"
+     }
+    ],
+    "horizonAttribution": {
+     "openedAtMs": 1787560428502,
+     "closedAtMs": 1787560431513,
+     "closeReason": "all-stamped-settled"
+    },
+    "horizonUiOwnership": {
+     "openedAtMs": 1787560428502,
+     "closedAtMs": 1787560431513,
+     "closeReason": "next-anchor"
+    },
+    "parameterInputs": [],
+    "episodeOutcome": {
+     "outcome": "incomplete",
+     "confidence": 0,
+     "confidenceLevel": "inconclusive",
+     "derivation": "derived-episode-outcome"
+    },
+    "tabId": 1792030315,
+    "signatureKey": "app-vlwq4n:sig:f341e2a0"
+   },
+   {
+    "key": "app-vlwq4n:session-1787560433958:ep-int-9",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "episodeId": "ep-int-9",
+    "anchor": {
+     "interactionId": "int-9",
+     "actionType": "Link",
+     "actionTarget": "← back to results",
+     "triggerTimestamp": 1787560431513
+    },
+    "members": [
+     {
+      "interactionId": "int-9",
+      "role": "anchor"
+     },
+     {
+      "interactionId": "int-10",
+      "role": "navigation"
+     }
+    ],
+    "horizonAttribution": {
+     "openedAtMs": 1787560431513,
+     "closedAtMs": 1787560434568,
+     "closeReason": "all-stamped-settled"
+    },
+    "horizonUiOwnership": {
+     "openedAtMs": 1787560431513,
+     "closedAtMs": 1787560434568,
+     "closeReason": "stabilized"
+    },
+    "parameterInputs": [],
+    "episodeOutcome": {
+     "outcome": "success",
+     "confidence": 0.4,
+     "confidenceLevel": "inconclusive",
+     "derivation": "derived-episode-outcome"
+    },
+    "tabId": 1792030315,
+    "signatureKey": "app-vlwq4n:sig:b3c04aff"
+   }
+  ],
+  "knowledgeGaps": [
+   {
+    "key": "app-vlwq4n:session-1787560433958:unattr-ui-int-1",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "gapId": "unattr-ui-int-1",
+    "observedKind": "ui",
+    "reason": "no-live-horizon",
+    "detail": "evidence window synthetic-nav-nav-1787560423775-edp4nc lies outside every uiOwnership horizon",
+    "observedAtMs": 1787560423798,
+    "tabId": 1792030315,
+    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"synthetic-nav-nav-1787560423775-edp4nc\",\"sequence\":0}"
+   }
+  ],
+  "knowledgeNotifications": [],
+  "knowledgeOutcomes": [
+   {
+    "key": "session-1787560433958:int-1",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "interactionId": "int-1",
+    "actionType": "Navigation",
+    "actionTarget": "http://127.0.0.1:8231/search-form.html",
+    "outcome": "incomplete",
+    "confidence": 0,
+    "confidenceLevel": "inconclusive",
+    "evidence": [],
+    "resultingEntities": [],
+    "persistedAt": 1787560434050
+   },
+   {
+    "key": "session-1787560433958:int-10",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "interactionId": "int-10",
+    "actionType": "Navigation",
+    "actionTarget": "http://127.0.0.1:8231/search-results.html",
+    "outcome": "incomplete",
+    "confidence": 0,
+    "confidenceLevel": "inconclusive",
+    "evidence": [],
+    "resultingEntities": [],
+    "persistedAt": 1787560434050
+   },
+   {
+    "key": "session-1787560433958:int-3",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "interactionId": "int-3",
+    "actionType": "Click",
+    "actionTarget": "Search",
+    "outcome": "success",
+    "confidence": 0.4,
+    "confidenceLevel": "inconclusive",
+    "evidence": [
+     {
+      "kind": "api-operation",
+      "result": "success",
+      "weight": 0.4,
+      "detail": "search API GET http://127.0.0.1:8231/search-results.html?q=flights+to+chennai -> 200"
+     }
+    ],
+    "resultingEntities": [],
+    "persistedAt": 1787560434050
+   },
+   {
+    "key": "session-1787560433958:int-4",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "interactionId": "int-4",
+    "actionType": "Navigation",
+    "actionTarget": "http://127.0.0.1:8231/search-results.html?q=flights+to+chennai",
+    "outcome": "incomplete",
+    "confidence": 0,
+    "confidenceLevel": "inconclusive",
+    "evidence": [],
+    "resultingEntities": [],
+    "persistedAt": 1787560434050
+   },
+   {
+    "key": "session-1787560433958:int-6",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "interactionId": "int-6",
+    "actionType": "Click",
+    "actionTarget": "Add to cart",
+    "outcome": "incomplete",
+    "confidence": 0,
+    "confidenceLevel": "inconclusive",
+    "evidence": [],
+    "resultingEntities": [],
+    "persistedAt": 1787560434050
+   },
+   {
+    "key": "session-1787560433958:int-7",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "interactionId": "int-7",
+    "actionType": "Navigation",
+    "actionTarget": "http://127.0.0.1:8231/cart.html?ASIN=B08KGRVW2S",
+    "outcome": "incomplete",
+    "confidence": 0,
+    "confidenceLevel": "inconclusive",
+    "evidence": [],
+    "resultingEntities": [],
+    "persistedAt": 1787560434050
+   },
+   {
+    "key": "session-1787560433958:int-9",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "interactionId": "int-9",
+    "actionType": "Link",
+    "actionTarget": "← back to results",
+    "outcome": "success",
+    "confidence": 0.4,
+    "confidenceLevel": "inconclusive",
+    "evidence": [
+     {
+      "kind": "api-operation",
+      "result": "success",
+      "weight": 0.4,
+      "detail": "search API GET http://127.0.0.1:8231/search-results.html -> 200"
+     }
+    ],
+    "resultingEntities": [],
+    "persistedAt": 1787560434050
+   }
+  ],
+  "knowledgeRecordedWorkflows": [
+   {
+    "key": "app-vlwq4n:wf-pattern-a723d6cf",
+    "appId": "app-vlwq4n",
+    "patternId": "wf-pattern-a723d6cf",
+    "label": "Fetch data",
+    "canonicalSteps": [
+     "search products"
+    ],
+    "viewSequence": [
+     "cart",
+     "search-results"
+    ],
+    "sessionIds": [
+     "session-1787560433958"
+    ],
+    "occurrenceCount": 1,
+    "instances": [
+     "wf-session-1787560433958-1"
+    ],
+    "signatureIds": [
+     "app-vlwq4n:sig:b3c04aff"
+    ],
+    "linkageState": "linked",
+    "instanceSignatureIds": {
+     "wf-session-1787560433958-1": [
+      "app-vlwq4n:sig:b3c04aff"
+     ]
+    },
+    "firstSeenAt": 1787560434050,
+    "lastSeenAt": 1787560434050
+   },
+   {
+    "key": "app-vlwq4n:wf-pattern-e911a8cc",
+    "appId": "app-vlwq4n",
+    "patternId": "wf-pattern-e911a8cc",
+    "label": "Search products",
+    "canonicalSteps": [
+     "search products",
+     "add to cart",
+     "/cart.html?asin=b08kgrvw2s"
+    ],
+    "viewSequence": [
+     "search-results",
+     "cart"
+    ],
+    "sessionIds": [
+     "session-1787560433958"
+    ],
+    "occurrenceCount": 1,
+    "instances": [
+     "wf-session-1787560433958-0"
+    ],
+    "signatureIds": [
+     "app-vlwq4n:sig:3037c178",
+     "app-vlwq4n:sig:f341e2a0"
+    ],
+    "linkageState": "linked",
+    "instanceSignatureIds": {
+     "wf-session-1787560433958-0": [
+      "app-vlwq4n:sig:3037c178",
+      "app-vlwq4n:sig:f341e2a0"
+     ]
+    },
+    "firstSeenAt": 1787560434050,
+    "lastSeenAt": 1787560434050
+   }
+  ],
+  "knowledgeSignatures": [
+   {
+    "key": "app-vlwq4n:sig:3037c178",
+    "appId": "app-vlwq4n",
+    "actionType": "Click",
+    "normalizedTarget": "search",
+    "anchorViewId": "search-results",
+    "firstSeenAtSession": "session-1787560433958",
+    "lastSeenAtSession": "session-1787560433958",
+    "firstSeenSeq": 1,
+    "lastSeenSeq": 1,
+    "firstSeenAtMs": 1787560433979,
+    "lastSeenAtMs": 1787560433979,
+    "occurrenceCount": 1,
+    "sessionsSinceSeen": 0,
+    "status": "active",
+    "source": "behavior",
+    "consequenceProfile": [
+     {
+      "identity": "T1-stamp|api|GET /search-results.html",
+      "tier": "T1-stamp",
+      "kind": "api",
+      "targetIdentity": "GET /search-results.html",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787560433958",
+      "lastSeenAtSession": "session-1787560433958",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787560433958",
+        "edgeKey": "app-vlwq4n:session-1787560433958:edge-ep-int-3-000"
+       }
+      ],
+      "observedVia": "behavior/webrequest"
+     },
+     {
+      "identity": "T2-lineage|navigation|to:/search-results.html",
+      "tier": "T2-lineage",
+      "kind": "navigation",
+      "targetIdentity": "to:/search-results.html",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787560433958",
+      "lastSeenAtSession": "session-1787560433958",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787560433958",
+        "edgeKey": "app-vlwq4n:session-1787560433958:edge-ep-int-3-001"
+       }
+      ],
+      "observedVia": "behavior/nav-lineage"
+     },
+     {
+      "identity": "T4-window|ui|anchor-window",
+      "tier": "T4-window",
+      "kind": "ui",
+      "targetIdentity": "anchor-window",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787560433958",
+      "lastSeenAtSession": "session-1787560433958",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787560433958",
+        "edgeKey": "app-vlwq4n:session-1787560433958:edge-ep-int-3-002"
+       }
+      ],
+      "observedVia": "behavior/dom-window"
+     }
+    ],
+    "divergenceFlags": []
+   },
+   {
+    "key": "app-vlwq4n:sig:b3c04aff",
+    "appId": "app-vlwq4n",
+    "actionType": "Link",
+    "normalizedTarget": "← back to results",
+    "anchorViewId": "cart",
+    "firstSeenAtSession": "session-1787560433958",
+    "lastSeenAtSession": "session-1787560433958",
+    "firstSeenSeq": 1,
+    "lastSeenSeq": 1,
+    "firstSeenAtMs": 1787560433979,
+    "lastSeenAtMs": 1787560433979,
+    "occurrenceCount": 1,
+    "sessionsSinceSeen": 0,
+    "status": "active",
+    "source": "behavior",
+    "consequenceProfile": [
+     {
+      "identity": "T1-stamp|api|GET /search-results.html",
+      "tier": "T1-stamp",
+      "kind": "api",
+      "targetIdentity": "GET /search-results.html",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787560433958",
+      "lastSeenAtSession": "session-1787560433958",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787560433958",
+        "edgeKey": "app-vlwq4n:session-1787560433958:edge-ep-int-9-000"
+       }
+      ],
+      "observedVia": "behavior/webrequest"
+     },
+     {
+      "identity": "T2-lineage|navigation|to:/search-results.html",
+      "tier": "T2-lineage",
+      "kind": "navigation",
+      "targetIdentity": "to:/search-results.html",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787560433958",
+      "lastSeenAtSession": "session-1787560433958",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787560433958",
+        "edgeKey": "app-vlwq4n:session-1787560433958:edge-ep-int-9-001"
+       }
+      ],
+      "observedVia": "behavior/nav-lineage"
+     },
+     {
+      "identity": "T3-transition|state|cart→search-results",
+      "tier": "T3-transition",
+      "kind": "state",
+      "targetIdentity": "cart→search-results",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787560433958",
+      "lastSeenAtSession": "session-1787560433958",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787560433958",
+        "edgeKey": "app-vlwq4n:session-1787560433958:edge-ep-int-9-002"
+       }
+      ],
+      "observedVia": "behavior/state-transition"
+     },
+     {
+      "identity": "T4-window|ui|anchor-window",
+      "tier": "T4-window",
+      "kind": "ui",
+      "targetIdentity": "anchor-window",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787560433958",
+      "lastSeenAtSession": "session-1787560433958",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787560433958",
+        "edgeKey": "app-vlwq4n:session-1787560433958:edge-ep-int-9-003"
+       }
+      ],
+      "observedVia": "behavior/dom-window"
+     }
+    ],
+    "divergenceFlags": []
+   },
+   {
+    "key": "app-vlwq4n:sig:f341e2a0",
+    "appId": "app-vlwq4n",
+    "actionType": "Click",
+    "normalizedTarget": "add to cart",
+    "anchorViewId": "search-results",
+    "firstSeenAtSession": "session-1787560433958",
+    "lastSeenAtSession": "session-1787560433958",
+    "firstSeenSeq": 1,
+    "lastSeenSeq": 1,
+    "firstSeenAtMs": 1787560433979,
+    "lastSeenAtMs": 1787560433979,
+    "occurrenceCount": 1,
+    "sessionsSinceSeen": 0,
+    "status": "active",
+    "source": "behavior",
+    "consequenceProfile": [
+     {
+      "identity": "T1-stamp|api|GET /cart.html",
+      "tier": "T1-stamp",
+      "kind": "api",
+      "targetIdentity": "GET /cart.html",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787560433958",
+      "lastSeenAtSession": "session-1787560433958",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787560433958",
+        "edgeKey": "app-vlwq4n:session-1787560433958:edge-ep-int-6-000"
+       }
+      ],
+      "observedVia": "behavior/webrequest"
+     },
+     {
+      "identity": "T2-lineage|navigation|to:/cart.html",
+      "tier": "T2-lineage",
+      "kind": "navigation",
+      "targetIdentity": "to:/cart.html",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787560433958",
+      "lastSeenAtSession": "session-1787560433958",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787560433958",
+        "edgeKey": "app-vlwq4n:session-1787560433958:edge-ep-int-6-001"
+       }
+      ],
+      "observedVia": "behavior/nav-lineage"
+     },
+     {
+      "identity": "T3-transition|state|search-results→cart",
+      "tier": "T3-transition",
+      "kind": "state",
+      "targetIdentity": "search-results→cart",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787560433958",
+      "lastSeenAtSession": "session-1787560433958",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787560433958",
+        "edgeKey": "app-vlwq4n:session-1787560433958:edge-ep-int-6-002"
+       }
+      ],
+      "observedVia": "behavior/state-transition"
+     },
+     {
+      "identity": "T4-window|ui|anchor-window",
+      "tier": "T4-window",
+      "kind": "ui",
+      "targetIdentity": "anchor-window",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787560433958",
+      "lastSeenAtSession": "session-1787560433958",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787560433958",
+        "edgeKey": "app-vlwq4n:session-1787560433958:edge-ep-int-6-003"
+       }
+      ],
+      "observedVia": "behavior/dom-window"
+     }
+    ],
+    "divergenceFlags": []
+   }
+  ],
+  "knowledgeStateTransitions": [
+   {
+    "key": "session-1787560433958:int-1",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "interactionId": "int-1",
+    "changes": [
+     "view → search-results"
+    ],
+    "fromViewId": null,
+    "toViewId": "search-results",
+    "affectedEntities": [],
+    "timestamp": 1787560434050
+   },
+   {
+    "key": "session-1787560433958:int-10",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "interactionId": "int-10",
+    "changes": [
+     "view → search-results"
+    ],
+    "fromViewId": "cart",
+    "toViewId": "search-results",
+    "affectedEntities": [],
+    "timestamp": 1787560434050
+   },
+   {
+    "key": "session-1787560433958:int-3",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "interactionId": "int-3",
+    "changes": [],
+    "fromViewId": "search-results",
+    "toViewId": "search-results",
+    "affectedEntities": [],
+    "timestamp": 1787560434050
+   },
+   {
+    "key": "session-1787560433958:int-4",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "interactionId": "int-4",
+    "changes": [
+     "view → search-results"
+    ],
+    "fromViewId": "search-results",
+    "toViewId": "search-results",
+    "affectedEntities": [],
+    "timestamp": 1787560434050
+   },
+   {
+    "key": "session-1787560433958:int-6",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "interactionId": "int-6",
+    "changes": [],
+    "fromViewId": "search-results",
+    "toViewId": "search-results",
+    "affectedEntities": [],
+    "timestamp": 1787560434050
+   },
+   {
+    "key": "session-1787560433958:int-7",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "interactionId": "int-7",
+    "changes": [
+     "view → cart"
+    ],
+    "fromViewId": "search-results",
+    "toViewId": "cart",
+    "affectedEntities": [],
+    "timestamp": 1787560434050
+   },
+   {
+    "key": "session-1787560433958:int-9",
+    "appId": "app-vlwq4n",
+    "sessionId": "session-1787560433958",
+    "interactionId": "int-9",
+    "changes": [],
+    "fromViewId": "cart",
+    "toViewId": "cart",
+    "affectedEntities": [],
+    "timestamp": 1787560434050
+   }
+  ],
+  "knowledgeViewTransitions": [
+   {
+    "key": "app-vlwq4n:cart->search-results",
+    "appId": "app-vlwq4n",
+    "fromViewId": "cart",
+    "toViewId": "search-results",
+    "count": 1,
+    "firstSeenAt": 1787560433979,
+    "lastSeenAt": 1787560434050,
+    "lastSessionId": "session-1787560433958"
+   },
+   {
+    "key": "app-vlwq4n:search-results->cart",
+    "appId": "app-vlwq4n",
+    "fromViewId": "search-results",
+    "toViewId": "cart",
+    "count": 1,
+    "firstSeenAt": 1787560433979,
+    "lastSeenAt": 1787560434050,
+    "lastSessionId": "session-1787560433958"
+   }
+  ],
+  "knowledgeViews": [
+   {
+    "key": "app-vlwq4n:cart",
+    "appId": "app-vlwq4n",
+    "viewId": "cart",
+    "label": "Cart",
+    "detectedFrom": "url-pattern",
+    "firstSeenAt": 1787560433979,
+    "lastSeenAt": 1787560434050,
+    "visitCount": 1,
+    "lastSessionId": "session-1787560433958"
+   },
+   {
+    "key": "app-vlwq4n:search-results",
+    "appId": "app-vlwq4n",
+    "viewId": "search-results",
+    "label": "Search Results",
+    "detectedFrom": "url-pattern",
+    "firstSeenAt": 1787560433979,
+    "lastSeenAt": 1787560434050,
+    "visitCount": 1,
+    "lastSessionId": "session-1787560433958"
+   }
+  ]
+ }
+}
