@@ -193,18 +193,20 @@ function renderTestIdLocator(value: string): string {
     return `getByTestId('${escapeString(attrMatch[1])}')`;
   }
 
-  // 6B provenance: NON-DEFAULT test-ID families carry their attribute in the
-  // value ('[data-cy="X"]', '[data-qa="X"]', '[data-auto-id="X"]'). These
-  // cannot be getByTestId — Playwright's default testIdAttribute is
-  // data-testid — so render the CSS attribute locator, which resolves the
-  // EXACT attribute and fails loudly (strict mode) on ambiguity.
+  // 6B provenance + 7.3 W-B: NON-DEFAULT test-ID families carry their
+  // attribute in the value ('[data-cy="X"]', '[data-qa="X"]',
+  // '[data-auto-id="X"]', '[auto-id="X"]'). These cannot be getByTestId —
+  // Playwright's default testIdAttribute is data-testid — so render the CSS
+  // attribute locator, which resolves the EXACT attribute and fails loudly
+  // (strict mode) on ambiguity. Prefix-optional match: the bare spelling
+  // names the bare attribute.
   // SAFE_VALUE_RE: value charset excludes quotes/brackets/commas/parens, so a
   // crafted "value" can never widen this into a selector LIST.
   const familyMatch = value.match(
-    /^\[data-(cy|qa|auto-id|test|test-id)=["']([^\]"',()]+)["']\]$/,
+    /^\[(data-)?(cy|qa|auto-id|test|test-id)=["']([^\]"',()]+)["']\]$/,
   );
   if (familyMatch) {
-    return `locator('[data-${familyMatch[1]}="${escapeString(familyMatch[2])}"]')`;
+    return `locator('[${familyMatch[1] ?? ''}${familyMatch[2]}="${escapeString(familyMatch[3])}"]')`;
   }
 
   // Plain ID value: 'email-input'

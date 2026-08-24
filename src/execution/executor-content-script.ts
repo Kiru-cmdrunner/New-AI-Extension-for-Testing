@@ -115,23 +115,26 @@ function cssEscape(value: string): string {
 /**
  * FAMILY-TAGGED TEST_ID: 6B locator-durability values arrive as the exact
  * attribute selector `[data-<family>="value"]` (families: cy, qa, auto-id,
- * test, test-id). These resolve the named attribute ONLY — no cross-family
- * fall-through — matching locator-resolver.ts resolveByTestId.
- * Bare values keep the legacy three-family probe.
- * Regex mirrors the shared TEST_ID_FAMILY_RE contract (kept in sync by
- * tests/execution/executor-family-parity.test.ts). SAFE_VALUE charset — no
- * quotes/brackets/commas/parens — blocks selector-list widening.
+ * test, test-id). 7.3 W-B adds the prefix-less spelling `[auto-id="value"]` —
+ * same industry convention, DISTINCT attribute family. These resolve the
+ * named attribute ONLY — no cross-family fall-through (a bare-auto-id value
+ * never matches a data-auto-id decoy and vice versa) — matching
+ * locator-resolver.ts resolveByTestId. Bare values keep the legacy
+ * three-family probe. Regex mirrors the shared TEST_ID_FAMILY_RE contract
+ * (kept in sync by tests/execution/executor-family-parity.test.ts).
+ * SAFE_VALUE charset — no quotes/brackets/commas/parens — blocks
+ * selector-list widening.
  */
-const TEST_ID_FAMILY_RE = /^\[data-(cy|qa|auto-id|test|test-id)=["']([^\]"',()]+)["']\]$/;
+const TEST_ID_FAMILY_RE = /^\[(data-)?(cy|qa|auto-id|test|test-id)=["']([^\]"',()]+)["']\]$/;
 
-function familyAttrSelector(family: string, value: string): string {
-  return `[data-${family}="${cssEscape(value)}"]`;
+function familyAttrSelector(prefix: string | undefined, family: string, value: string): string {
+  return `[${prefix ?? ''}${family}="${cssEscape(value)}"]`;
 }
 
 function resolveByTestId(doc: Document, value: string): Element | null {
   const tagged = TEST_ID_FAMILY_RE.exec(value);
   if (tagged) {
-    return doc.querySelector(familyAttrSelector(tagged[1], tagged[2])) || null;
+    return doc.querySelector(familyAttrSelector(tagged[1], tagged[2], tagged[3])) || null;
   }
   return (
     doc.querySelector(`[data-testid="${cssEscape(value)}"]`) ||
@@ -259,7 +262,7 @@ function resolveAllByType(doc: Document, locator: LocatorInput): Element[] | nul
         // FAMILY-TAGGED values (6B): resolve the named attribute only.
         const tagged = TEST_ID_FAMILY_RE.exec(locator.value);
         if (tagged) {
-          return Array.from(doc.querySelectorAll(familyAttrSelector(tagged[1], tagged[2])));
+          return Array.from(doc.querySelectorAll(familyAttrSelector(tagged[1], tagged[2], tagged[3])));
         }
         const seen = new Set<Element>();
         for (const sel of [
@@ -336,6 +339,8 @@ function extractElementIdentity(element: Element): Record<string, string | null>
     dataCy: el.getAttribute('data-cy'),
     dataQa: el.getAttribute('data-qa'),
     dataAutoId: el.getAttribute('data-auto-id'),
+    // 7.3 W-B: bare spelling — distinct family, own value.
+    autoId: el.getAttribute('auto-id'),
     id: el.id || null,
     name: el.getAttribute('name'),
     placeholder: el.getAttribute('placeholder'),

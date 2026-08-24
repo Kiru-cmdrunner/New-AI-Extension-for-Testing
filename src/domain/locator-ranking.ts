@@ -265,6 +265,16 @@ export function extractCandidatesFromIdentity(identity: ElementIdentity): Locato
       category: LocatorCategory.BUSINESS,
     });
   }
+  // 7.3 W-B: bare `auto-id` spelling — DISTINCT family, never conflated
+  // with dataAutoId. Family-tagged so resolver/renderer name the exact
+  // attribute the app used (same provenance rule as 6B).
+  if (identity.autoId) {
+    candidates.push({
+      type: LocatorStrategyType.TEST_ID,
+      value: `[auto-id="${identity.autoId}"]`,
+      category: LocatorCategory.BUSINESS,
+    });
+  }
 
   // Category 2: Accessibility
   if (identity.ariaLabel) {

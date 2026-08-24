@@ -46,7 +46,19 @@ export const clickDefinition: ComponentDefinition = {
         event.domContext.ancestorRoles,
         event.domContext.ancestorClasses,
       )) {
-        return null;
+        // 7.3 W-B: QA-instrumented target gate. A target bearing an auto-id
+        // (either industry spelling) is a deliberate test target by the app
+        // author's own instrumentation — attribute-presence fact, no timing,
+        // no site vocabulary. Truthy check: empty strings claim nothing
+        // (honest absence — matches the identity layer's ''→null
+        // normalization, and stays safe against raw '' fields).
+        // Scoped to the Click definition — isInteractiveElement untouched.
+        if (
+          !event.target.autoId &&
+          !event.target.dataAutoId
+        ) {
+          return null;
+        }
       }
     }
 

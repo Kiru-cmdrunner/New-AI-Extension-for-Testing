@@ -612,6 +612,12 @@ export function elementKey(identity: ElementIdentity): string {
   if (identity.dataCy) return `dataCy:${identity.dataCy}`;
   if (identity.dataQa) return `dataQa:${identity.dataQa}`;
   if (identity.stableId) return `id:${identity.stableId}`;
+  // 7.3 W-B: auto-id spellings join AFTER stableId (6B byte-identity rule —
+  // elements keyed by DOM id today keep their key), dataAutoId first, then
+  // the bare spelling. Aligns with the harvest chain (session-element-harvest
+  // AC8) which already honors dataAutoId.
+  if (identity.dataAutoId) return `dataAutoId:${identity.dataAutoId}`;
+  if (identity.autoId) return `autoId:${identity.autoId}`;
   const name = identity.accessibleName || '';
   const selector = identity.cssSelector || '';
   if (name && selector) return `name:${name}|sel:${selector}`;

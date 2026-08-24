@@ -362,6 +362,11 @@ export function extractIdentity(el: Element): ElementIdentity {
     // testId/dataCy/dataQa siblings' getAttribute behavior above for absent
     // attrs, and keeps empty-string ids out of the BUSINESS tier).
     dataAutoId: el.getAttribute('data-auto-id') || null,
+    // 7.3 W-B: bare `auto-id` spelling — same industry QA convention, own
+    // family. Empty string normalizes to null (honest absence, mirrors the
+    // dataAutoId rule). Independent of dataAutoId — both fields carry their
+    // own attribute's value when both spellings are present.
+    autoId: el.getAttribute('auto-id') || null,
     cssSelector: generateCssSelector(el),
     xPath: generateXPath(el),
     inIframe,
@@ -493,6 +498,12 @@ const INTERACTIVE_SELECTOR = [
   '[role="slider"]', '[role="group"]', '[role="radiogroup"]',
   '[tabindex]', '[onclick]', '[data-action]', '[data-toggle]', '[data-bs-toggle]',
   '[aria-haspopup]',
+  // 7.3 W-B: QA-instrumented targets (industry auto-id convention, both
+  // spellings). resolveTarget stops at / walks up to these when the click
+  // leaf is a plain non-interactive descendant — leaf-first composedPath
+  // order keeps genuinely interactive inner elements (button, a[href],
+  // [role=button], …) winning over the instrumented ancestor.
+  '[auto-id]', '[data-auto-id]',
 ].join(', ');
 
 /**

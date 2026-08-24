@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>7.3 W-B — generic QA auto-id validation</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 24px; background: #f7f8fa; }
+    .card { border: 1px solid #d8dbe0; border-radius: 8px; padding: 16px; margin: 12px 0; max-width: 480px; background: #fff; cursor: default; }
+    .row { display: flex; justify-content: space-between; gap: 12px; }
+    .price { font-weight: 600; }
+    .meta { color: #556; font-size: 14px; }
+    button { padding: 6px 14px; border-radius: 6px; border: 1px solid #2b6cb0; background: #2b6cb0; color: #fff; cursor: pointer; }
+    #status { margin-top: 16px; font-size: 14px; color: #333; }
+  </style>
+</head>
+<body>
+  <h1>7.3 W-B — QA auto-id conventions (generic)</h1>
+  <p class="meta">Fixture for spec .drytis/specs/phase-7-3-wb-auto-id-generic.md AC8:
+     bare <code>auto-id</code> card (inner span click must lift + classify),
+     <code>data-auto-id</code> sibling card, un-instrumented div (honest
+     Unclassified), real inner button (leaf wins).</p>
+
+  <!-- Card 1: BARE auto-id spelling — the industry convention W-B adds. -->
+  <div class="card" auto-id="select_flight_card" aria-label="Flight 6E-231">
+    <div class="row">
+      <div>
+        <div>IndiGo 6E-231</div>
+        <div class="meta">DEL → BOM · 14:20 – 16:40</div>
+      </div>
+      <span class="price">₹7,000</span>
+    </div>
+  </div>
+
+  <!-- Card 2: data- prefixed spelling (6B) — claimable too after W-B. -->
+  <div class="card" data-auto-id="select_return_flight_card" aria-label="Flight 6E-502">
+    <div class="row">
+      <div>
+        <div>IndiGo 6E-502</div>
+        <div class="meta">BOM → DEL · 19:05 – 21:15</div>
+      </div>
+      <span class="price">₹6,400</span>
+    </div>
+  </div>
+
+  <!-- Card 3: un-instrumented — must stay honestly Unclassified. -->
+  <div class="card" aria-label="Uninstrumented offer">
+    <div class="row">
+      <div class="meta">Free meal offer (no QA id)</div>
+      <span class="price">₹0</span>
+    </div>
+  </div>
+
+  <!-- Card 4: instrumented ancestor + real inner button — leaf wins. -->
+  <div class="card" auto-id="bundle_card">
+    <div class="row">
+      <div class="meta">Bundle &amp; save</div>
+      <button type="button" id="bundle-add">Add bundle</button>
+    </div>
+  </div>
+
+  <div id="status">No clicks yet.</div>
+
+  <script>
+    document.addEventListener('click', function (e) {
+      var status = document.getElementById('status');
+      var t = e.target;
+      status.textContent = 'Clicked: ' + (t.tagName.toLowerCase())
+        + (t.getAttribute('auto-id') ? '[auto-id=' + t.getAttribute('auto-id') + ']'
+           : t.getAttribute('data-auto-id') ? '[data-auto-id=' + t.getAttribute('data-auto-id') + ']'
+           : '');
+    });
+  </script>
+</body>
+</html>

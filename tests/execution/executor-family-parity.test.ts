@@ -107,6 +107,43 @@ describe('6B executor-content-script family parity (AC4)', () => {
     expect(fns.resolveByTestId(doc, '[data-auto-id="from-airport"]')).toBeInstanceOf(HTMLElement);
   });
 
+  // ── 7.3 W-B: bare auto-id spelling (spec phase-7-3-wb-auto-id-generic.md) ──
+
+  it('7.3 W-B: bare [auto-id="X"] resolves the EXACT bare attribute', () => {
+    const doc = docOf('<div auto-id="select_flight_card">Card</div>');
+    const fns = loadExecutorFns(doc);
+    const el = fns.resolveByTestId(doc, '[auto-id="select_flight_card"]');
+    expect(el).toBeInstanceOf(HTMLElement);
+    expect((el as HTMLElement).textContent?.trim()).toBe('Card');
+  });
+
+  it('7.3 W-B: [auto-id="X"] does NOT match a data-auto-id decoy (family isolation)', () => {
+    const doc = docOf('<div data-auto-id="select_flight_card">Decoy</div>');
+    const fns = loadExecutorFns(doc);
+    expect(fns.resolveByTestId(doc, '[auto-id="select_flight_card"]')).toBeNull();
+  });
+
+  it('7.3 W-B: [data-auto-id="X"] does NOT match a bare auto-id decoy (reverse isolation)', () => {
+    const doc = docOf('<div auto-id="select_flight_card">Decoy</div>');
+    const fns = loadExecutorFns(doc);
+    expect(fns.resolveByTestId(doc, '[data-auto-id="select_flight_card"]')).toBeNull();
+  });
+
+  it('7.3 W-B: bare-auto-id value with unsafe chars is NOT family-tagged (safe charset)', () => {
+    const doc = docOf('<div auto-id="x">A</div>');
+    const fns = loadExecutorFns(doc);
+    const probe = '[auto-id="x"], body, [auto-id="y"]';
+    expect((fns.TEST_ID_FAMILY_RE as RegExp).test(probe)).toBe(false);
+  });
+
+  it('7.3 W-B: extractElementIdentity reports autoId (runtime healing signal)', () => {
+    const doc = docOf('<div auto-id="select_flight_card">Card</div>');
+    const fns = loadExecutorFns(doc);
+    const el = doc.querySelector('div') as HTMLElement;
+    const identity = fns.extractElementIdentity(el) as Record<string, string | null>;
+    expect(identity.autoId).toBe('select_flight_card');
+  });
+
   it('bare value keeps the legacy 3-family probe (testid → cy → qa)', () => {
     const doc = docOf('<button data-qa="legacy-btn">Legacy</button>');
     const fns = loadExecutorFns(doc);

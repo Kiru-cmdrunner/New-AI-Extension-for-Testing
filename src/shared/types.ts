@@ -148,6 +148,15 @@ export interface RawElementIdentity {
    * and fixtures without it remain type-valid.
    */
   dataAutoId?: string | null;
+  /**
+   * Value of the bare `auto-id` attribute, null if absent.
+   * Phase 7.3 W-B: the prefix-less spelling of the same industry QA test-ID
+   * convention 6B covered (`data-auto-id`). Two DISTINCT families — never
+   * conflated: locators name the exact attribute the app used
+   * (`[auto-id="X"]` vs `[data-auto-id="X"]`). Optional field — pre-7.3
+   * identities and fixtures without it remain type-valid.
+   */
+  autoId?: string | null;
   /** Generated CSS selector (hidden fallback). */
   cssSelector: string;
   /** Generated XPath (hidden fallback). */

@@ -153,16 +153,20 @@ export function isElementVisible(element: Element): boolean {
  * Returns the matched element or null.
  */
 function resolveByTestId(doc: Document, value: string): Element | null {
-  // 6B provenance: family-tagged values ('[data-cy="X"]', '[data-auto-id="X"]')
-  // resolve against the EXACT attribute — no cross-family fall-through, so a
-  // tagged locator can never silently match a different attribute's decoy.
+  // 6B provenance + 7.3 W-B: family-tagged values ('[data-cy="X"]',
+  // '[data-auto-id="X"]', '[auto-id="X"]') resolve against the EXACT
+  // attribute — no cross-family fall-through, so a tagged locator can never
+  // silently match a different attribute's decoy (including the other
+  // auto-id spelling). Prefix-optional family match keeps 6B values
+  // byte-identical.
   // SAFE_VALUE charset: no quotes/brackets/commas/parens — a crafted value can
   // never widen the querySelector into a selector list.
   const familyMatch = value.match(
-    /^\[data-(cy|qa|auto-id|test|test-id)=["']([^\]"',()]+)["']\]$/,
+    /^\[(data-)?(cy|qa|auto-id|test|test-id)=["']([^\]"',()]+)["']\]$/,
   );
   if (familyMatch) {
-    return doc.querySelector(`[data-${familyMatch[1]}="${cssEscape(familyMatch[2])}"]`);
+    const attr = `${familyMatch[1] ?? ''}${familyMatch[2]}`;
+    return doc.querySelector(`[${attr}="${cssEscape(familyMatch[3])}"]`);
   }
 
   // Bare values keep the legacy 3-family probe — try data-testid, data-cy,

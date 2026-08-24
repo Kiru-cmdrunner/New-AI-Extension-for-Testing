@@ -89,3 +89,43 @@ describe('6B AC4 — executor family-aware TEST_ID resolution', () => {
     expect(result).toBeNull();
   });
 });
+
+// ── 7.3 W-B: bare auto-id spelling — renderer + resolver parity ───────────
+
+describe('7.3 W-B — bare auto-id family (renderer + executor resolver)', () => {
+  it('renders [auto-id="X"] as a CSS attribute locator naming the bare attribute', () => {
+    const out = renderLocator([rl(LocatorStrategyType.TEST_ID, '[auto-id="select_flight_card"]')]);
+    expect(out.expression).toBe(`locator('[auto-id="select_flight_card"]')`);
+  });
+
+  it('renders [data-auto-id="X"] exactly as before (6B byte-identity)', () => {
+    const out = renderLocator([rl(LocatorStrategyType.TEST_ID, '[data-auto-id="x"]')]);
+    expect(out.expression).toBe(`locator('[data-auto-id="x"]')`);
+  });
+
+  it('resolves [auto-id="X"] against the bare attribute (not a data-auto-id decoy)', () => {
+    document.body.innerHTML = `
+      <div auto-id="select_flight_card">Real</div>
+      <div data-auto-id="select_flight_card">Decoy</div>
+    `;
+    const result = resolveTestId('[auto-id="select_flight_card"]');
+    expect(result?.element.textContent).toBe('Real');
+  });
+
+  it('resolves [data-auto-id="X"] without matching the bare spelling decoy (reverse)', () => {
+    document.body.innerHTML = `
+      <div auto-id="select_flight_card">Decoy</div>
+    `;
+    const result = resolveTestId('[data-auto-id="select_flight_card"]');
+    expect(result).toBeNull();
+  });
+
+  it('resolves [auto-id="X"] miss without falling through to any family', () => {
+    document.body.innerHTML = `
+      <div data-testid="gone">Decoy</div>
+      <div data-auto-id="gone">Decoy2</div>
+    `;
+    const result = resolveTestId('[auto-id="gone"]');
+    expect(result).toBeNull();
+  });
+});
