@@ -23,6 +23,7 @@ import type {
   ComponentTrigger,
   RuntimeConfig,
   InteractionType,
+  ElementIdentity,
 } from '../shared/component-types';
 import { DEDUP_WINDOW_MS } from '../shared/component-types';
 import { elementKey, extractSemanticRoles } from '../definitions/patterns';
@@ -41,6 +42,14 @@ interface DedupRecord {
   endTime: number;
   /** Optional metadata snapshot for type-specific dedup (e.g., selectedDate). */
   metadata: Record<string, unknown>;
+  /**
+   * 7.4-B3 S2: interactionId of the emitted interaction this record's
+   * window describes. Absent on records restored after an SW restart
+   * (the live interaction object is not serialized) — in that degraded
+   * state the fold target is unavailable and the suppress-and-release
+   * fallback applies (pinned, honest Unclassified).
+   */
+  interactionId?: string;
 }
 
 /**
@@ -67,6 +76,16 @@ const SEEN_EVENTS_CAP = 500;
 function pageIdOf(eventId: string): string {
   const match = eventId.match(/^evt-(.+)-\d+$/);
   return match ? match[1] : 'unknown';
+}
+
+/**
+ * 7.4-B3 S2: element identity key for a ledger entry (D1 targetIdentity
+ * preferred — same normalization the Projection Engine applies).
+ */
+function ledgerEntryKey(entry: { targetIdentity?: unknown }): string {
+  const id = entry.targetIdentity as ElementIdentity | null | undefined;
+  if (id) return elementKey(id);
+  return 'tag:∅';
 }
 
 /**
@@ -174,6 +193,13 @@ export interface ComponentRuntime {
   /** Restore from a snapshot. */
   restore(snap: RuntimeSnapshot): void;
 
+  /**
+   * 7.4-B3 S3: live lifecycle stack, trigger-first. Read-only view for
+   * SW-side episode trackers (typed-text sampling must not mint when a
+   * definition mid-flight owns the element).
+   */
+  getLiveLifecycles(): { id: string; trigger?: unknown }[];
+
   /** Get the current active stack depth (for diagnostics). */
   get activeCount(): number;
 
@@ -194,6 +220,13 @@ class ComponentRuntimeImpl implements ComponentRuntime {
   private lifecycleCounter: number = 0;
   /** Per-type dedup: tracks the last interaction of each type independently. */
   private dedupByType: Map<InteractionType, DedupRecord> = new Map();
+  /**
+   * 7.4-B3 S2: last emitted interaction per type (object ref). The dedup
+   * fold appends suppressed events to this interaction instead of leaving
+   * them unclaimed. NOT serialized — after an SW restart the map is empty
+   * and the suppress-and-release degradation applies (pinned).
+   */
+  private lastInteractionByType: Map<InteractionType, ComponentInteraction> = new Map();
   private errorLog: string[] = [];
 
   // ── 6F-M1 A: gesture ownership ───────────────────────────────────────
@@ -596,6 +629,20 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     this.dedupByType = new Map(
       (snap.dedupRecords ?? []).map((r) => [r.type, r]),
     );
+    // 7.4-B3 S2: lastInteractionByType deliberately NOT rebuilt — the live
+    // interaction objects are not serialized. A duplicate arriving in the
+    // post-restart window degrades to suppress-and-release (pinned honest
+    // fallback). The SW re-seeds the map on its next emission of each type.
+  }
+
+  /**
+   * 7.4-B3 S3: read-only view of the live stack (trigger identity included).
+   */
+  getLiveLifecycles(): { id: string; trigger?: unknown }[] {
+    return this.activeStack.map((ctx) => ({
+      id: ctx.lifecycleId as string,
+      trigger: ctx.trigger as unknown,
+    }));
   }
 
   // ── Internal ─────────────────────────────────────────────────────
@@ -703,9 +750,30 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     // Dedup check
     const key = elementKey(ctx.trigger);
     if (this.isDuplicate(ctx, metadata, key)) {
-      // Suppressed by dedup — release all absorbed events for this lifecycle.
-      // The events were absorbed but no completed interaction backs them.
-      this.ledger?.releaseClaims(ctx.lifecycleId ?? '');
+      // 7.4-B3 S2: fold into the prior interaction instead of resurrecting.
+      //
+      // Pre-B3 this branch called releaseClaims, flipping the suppressed
+      // gesture's events to 'unclaimed' → the Projection Engine minted an
+      // Unclassified card for a click the system HAD recognized (F1: a Save
+      // BUTTON ended "unrecognized" on a real-Chrome dump). The card lied
+      // and the repeat information was lost.
+      //
+      // The fold keeps the honest outcome: the prior interaction gains the
+      // suppressed gesture's discrete events as memberEvents (eventId-
+      // guarded, same append-only pattern as 6F-M1 gesture ownership) and
+      // metadata.repeatCount increments — the ledger entry stays 'claimed'
+      // by the PRIOR interactionId, so projection mints no card.
+      //
+      // Degradation (pinned): after an SW restart lastInteractionByType is
+      // empty (not serialized) while dedupByType IS restored — a duplicate
+      // within that window falls back to suppress-and-release, the honest
+      // Unclassified of the pre-B3 behavior.
+      const prior = this.lastInteractionByType.get(ctx.type);
+      if (prior) {
+        this.foldIntoPrior(ctx, prior);
+      } else {
+        this.ledger?.releaseClaims(ctx.lifecycleId ?? '');
+      }
       return null;
     }
 
@@ -730,7 +798,10 @@ class ComponentRuntimeImpl implements ComponentRuntime {
       elementKey: key,
       endTime: ctx.endTime,
       metadata: { ...metadata },
+      interactionId: interaction.interactionId,
     });
+    // 7.4-B3 S2: fold target for subsequent duplicates of this type.
+    this.lastInteractionByType.set(ctx.type, interaction);
 
     // Evidence Ledger disposition: claim or release all discrete member events
     if (this.ledger) {
@@ -783,6 +854,78 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     }
 
     return interaction;
+  }
+
+  /**
+   * 7.4-B3 S2: fold a dedup-suppressed lifecycle into the prior emitted
+   * interaction of the same type.
+   *
+   * - All discrete member events of the suppressed lifecycle are appended
+   *   to the prior's memberEvents (eventId-guarded) and their ledger
+   *   disposition set to 'claimed' by the PRIOR interactionId — projection
+   *   therefore mints no Unclassified card for them.
+   * - The gesture's press-half (the PENDING mousedown twin that preceded
+   *   the suppressed click in ledger order on the same element) is claimed
+   *   too. Without this, pairPhysicalPress cannot pair the pair (they are
+   *   non-adjacent in the [...unclaimed, ...pending] projection order) and
+   *   the twin surfaces as a separate Unclassified card — the int-17
+   *   half-card observed on the B2 dump.
+   * - metadata.repeatCount increments on the prior (repeat information is
+   *   preserved, not lost).
+   */
+  private foldIntoPrior(ctx: ComponentContext, prior: ComponentInteraction): void {
+    const memberIds = new Set((prior.memberEvents ?? []).map((e) => e.eventId));
+
+    for (const ev of ctx.memberEvents) {
+      if (!DISCRETE_ACTION_TYPES.has(ev.eventType)) continue;
+      if (!memberIds.has(ev.eventId)) {
+        prior.memberEvents.push(ev);
+        memberIds.add(ev.eventId);
+      }
+      this.ledger?.setDisposition(ev.eventId, 'claimed', prior.interactionId, ctx.type);
+    }
+
+    // Press-half recovery: the immediately preceding PENDING mousedown on
+    // the same element (ledger order, same page) belongs to this suppressed
+    // gesture. Structural facts only — pageId + elementKey + adjacency in
+    // the discrete-entry sequence, the same identity pairPhysicalPress uses.
+    if (this.ledger) {
+      const key = elementKey(ctx.trigger);
+      const pageId = pageIdOf(ctx.triggerEvent?.eventId ?? '');
+      const entries = this.ledger.getEntries();
+      for (let i = entries.length - 1; i >= 0; i--) {
+        const e = entries[i];
+        if (e.eventId === ctx.triggerEvent?.eventId) continue;
+        if (e.disposition !== 'pending') continue;
+        if (e.eventType !== 'mousedown') break; // adjacency: stop at first non-twin
+        if (pageIdOf(e.eventId) === pageId && ledgerEntryKey(e) === key) {
+          if (!memberIds.has(e.eventId)) {
+            // Materialize a memberEvent view of the twin from the ledger
+            // entry (the ObservedEvent object is not retained here).
+            prior.memberEvents.push({
+              eventId: e.eventId,
+              eventType: e.eventType,
+              timestamp: e.timestamp,
+              captureSeq: e.captureSeq,
+              target: e.targetIdentity ?? (ctx.trigger as never),
+              isTrusted: true,
+            } as never);
+            memberIds.add(e.eventId);
+          }
+          this.ledger.setDisposition(e.eventId, 'claimed', prior.interactionId, ctx.type);
+        }
+        break; // only the immediately preceding pending mousedown
+      }
+    }
+
+    prior.metadata.repeatCount =
+      (typeof prior.metadata.repeatCount === 'number' ? prior.metadata.repeatCount : 0) + 1;
+
+    try {
+      this.config.onDedupFold?.(prior, ctx);
+    } catch (err) {
+      this.logError(ctx.type, 'onDedupFold', err);
+    }
   }
 
   /**

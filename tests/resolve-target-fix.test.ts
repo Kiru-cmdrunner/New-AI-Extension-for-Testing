@@ -19,8 +19,10 @@ import { describe, it, expect, beforeEach } from 'vitest';
 // re-implementing it in a way that mirrors the production code exactly,
 // then verifying it produces the same results.
 
+// 7.4-B3 S4 mirror update: BODY + HTML removed (production
+// src/tap/identity-extractor.ts flipped the same way).
 const NON_INTERACTIVE_TAGS = new Set([
-  'HTML', 'HEAD', 'BODY', 'SCRIPT', 'STYLE', 'LINK', 'META',
+  'HEAD', 'SCRIPT', 'STYLE', 'LINK', 'META',
   'NOSCRIPT', 'TEMPLATE', 'SVG', 'PATH', 'G', 'DEFS', 'RECT',
   'CIRCLE', 'LINE', 'POLYLINE', 'POLYGON', 'USE', 'CLIPPATH',
 ]);
@@ -266,7 +268,7 @@ describe('resolveTarget — Adani One Root Cause Fix', () => {
       }
     });
 
-    it('Click on body is filtered', () => {
+    it('Click on body is captured (7.4-B3 S4 flip: honest Unclassified, not silent drop)', () => {
       const event = new MouseEvent('click', { bubbles: true });
       Object.defineProperty(event, 'target', { value: document.body, writable: false });
       Object.defineProperty(event, 'composedPath', {
@@ -274,7 +276,10 @@ describe('resolveTarget — Adani One Root Cause Fix', () => {
         writable: false,
       });
       const result = resolveTarget(event);
-      expect(result).toBeNull();
+      // S4: BODY/HTML removed from NON_INTERACTIVE_TAGS — a click on empty
+      // background is a real gesture (click-away dismissal); it now flows
+      // through as an observed event → ledger → projected Unclassified card.
+      expect(result).toBe(document.body);
     });
   });
 

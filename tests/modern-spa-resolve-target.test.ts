@@ -19,8 +19,10 @@ import { describe, it, expect, beforeEach } from 'vitest';
 
 // ═══ Mirror the production resolveTarget stack exactly ══════════════
 
+// 7.4-B3 S4 mirror update: BODY + HTML removed (production
+// src/tap/identity-extractor.ts flipped the same way).
 const NON_INTERACTIVE_TAGS = new Set([
-  'HTML', 'HEAD', 'BODY', 'SCRIPT', 'STYLE', 'LINK', 'META',
+  'HEAD', 'SCRIPT', 'STYLE', 'LINK', 'META',
   'NOSCRIPT', 'TEMPLATE', 'SVG', 'PATH', 'G', 'DEFS', 'RECT',
   'CIRCLE', 'LINE', 'POLYLINE', 'POLYGON', 'USE', 'CLIPPATH',
 ]);
@@ -616,20 +618,20 @@ describe('Modern SPA Framework Patterns — resolveTarget Stress Test', () => {
   // ═══ Performance / Edge Cases ═══
 
   describe('Edge Cases & Safety', () => {
-    it('document.body click returns null (filtered)', () => {
+    it('document.body click is captured (7.4-B3 S4: honest Unclassified, not silent drop)', () => {
       const event = new MouseEvent('click', { bubbles: true });
       Object.defineProperty(event, 'target', { value: document.body });
       Object.defineProperty(event, 'composedPath', { value: () => [document.body, document.documentElement, document, window] });
       const result = resolveTarget(event);
-      expect(result).toBeNull();
+      expect(result).toBe(document.body);
     });
 
-    it('document.documentElement click returns null', () => {
+    it('document.documentElement click is captured (7.4-B3 S4)', () => {
       const event = new MouseEvent('click', { bubbles: true });
       Object.defineProperty(event, 'target', { value: document.documentElement });
       Object.defineProperty(event, 'composedPath', { value: () => [document.documentElement, document, window] });
       const result = resolveTarget(event);
-      expect(result).toBeNull();
+      expect(result).toBe(document.documentElement);
     });
 
     it('Empty <div> with no text content is still captured', () => {

@@ -525,6 +525,19 @@ export interface RuntimeConfig {
   onLifecycleStart?: (ctx: ComponentContext) => void;
 
   /**
+   * 7.4-B3 S2: called after a dedup-suppressed lifecycle's events are
+   * folded into the prior emitted interaction of the same type. The service
+   * worker uses this to persist the mutated prior interaction (MV3 death
+   * survival) and — critically — to notify the content script that the
+   * suppressed lifecycle TERMINATED (a folded lifecycle never emits, so
+   * the FINALIZE_EVIDENCE that would otherwise release its EvidenceCollector
+   * binding never fires; a stale binding holds every later window open —
+   * see notes/rca-stale-lifecyclebindings-leak-b3-c3.md). Optional —
+   * omitting it keeps the fold in-memory only (leak unchanged).
+   */
+  onDedupFold?: (prior: ComponentInteraction, suppressedCtx: ComponentContext) => void;
+
+  /**
    * Starting interaction ID counter (for MV3 recovery — continues from
    * where the previous runtime left off).
    */

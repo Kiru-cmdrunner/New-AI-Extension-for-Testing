@@ -168,6 +168,10 @@ function createUnclassifiedFromLedger(
       captureOrigin: entry.captureOrigin
         ? { ...entry.captureOrigin }
         : undefined,
+      // 7.4-B3 S3: surfaced terminal value for synthetic typed-text
+      // samples — the projected card must SHOW what the user typed,
+      // not just that a 'change' happened.
+      sampledValueAfter: entry.synthetic ? entry.sampledValueAfter : undefined,
     },
   };
 }

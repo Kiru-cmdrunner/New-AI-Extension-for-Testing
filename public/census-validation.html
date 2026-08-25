@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Census Validation — Unclassified residual classification (7.4-B3)</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 24px; }
+  .box { border: 1px solid #ccc; border-radius: 6px; padding: 12px 16px; margin: 12px 0; }
+  h2 { margin: 8px 0 4px; font-size: 15px; }
+  p  { margin: 2px 0 10px; font-size: 12px; color: #555; }
+  #plain-zone { background: #fafafa; }
+  #popover-backdrop { position: fixed; inset: 0; display: none; }
+  #popover { position: fixed; top: 40%; left: 40%; padding: 24px; background: #fff;
+             border: 1px solid #333; border-radius: 8px; display: none; }
+  #output { font-family: monospace; font-size: 12px; white-space: pre-wrap;
+            margin-top: 16px; }
+  .hidden-node-for-removal { display: none; }
+</style>
+</head>
+<body>
+
+<h1 style="font-size:16px">7.4-B3 Census Fixture</h1>
+
+<!-- F4 gate-rejected population: plain div, NO role/tabindex/onclick attrs,
+     NO classes (INTERACTIVE_CLASS_RE), NO cursor:pointer, NO QA ids.
+     Listens via addEventListener only — invisible to every claim gate. -->
+<div class="box" id="plain-zone">
+  <h2>Plain surface (gate-rejected expected)</h2>
+  <p>Click anywhere inside this box. No interactive signals on the target.</p>
+  <div id="plain-div" data-note="plain div click target">plain div — no affordance</div>
+</div>
+
+<!-- F1 dedup-resurrection population: double-click a real BUTTON within 2s -->
+<div class="box">
+  <h2>Repeat click (dedup expected)</h2>
+  <p>Click twice, quickly. Same button, gap ≤ 2s → duplicate suppressed.</p>
+  <button id="repeat-btn" type="button">Repeat Me</button>
+</div>
+
+<!-- F4 body click-away population: backdrop listens on document,
+     dismisses the popover. The visible popover is plain. -->
+<div class="box">
+  <h2>Popover with body dismissal</h2>
+  <p>Opens a popover; a click on the page background closes it.</p>
+  <button id="open-popover" type="button">Open popover</button>
+</div>
+
+<div id="popover-backdrop"></div>
+<div id="popover" role="presentation">
+  <p style="margin:0 0 8px">Popover body — click the page background to dismiss.</p>
+</div>
+
+<!-- F3 typed-text population: autofocus input, no click/focus interaction
+     needed. Content script loads on page load; recording may start after
+     autofocus already fired. -->
+<div class="box">
+  <h2>Autofocus input (typed-text loss scenario)</h2>
+  <p>Load page → input already focused → type without any click/focus
+     interaction → click elsewhere (body) to blur.</p>
+  <input id="autofocus-input" type="text" placeholder="type here" autofocus />
+</div>
+
+<!-- F2 evidence-consequential population: the plain div DOES something —
+     appends a node. Census should classify evidence-consequential (pre-S1
+     the evidence strands; post-S1 it attaches). -->
+<div class="box">
+  <h2>Plain div with app response (evidence-consequential expected)</h2>
+  <p>Click the strip below; the app appends a line to output.</p>
+  <div id="responding-div" data-note="plain div that appends output">plain div that responds</div>
+</div>
+
+<div id="output">—</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var out = document.getElementById('output');
+
+  // Plain div — deliberately NO inline onclick, NO cursor style, NO classes.
+  // addEventListener only. Expected: gate-rejected (Unclassified card,
+  // no evidence) pre-B3; same card post-B3 but now evidenced + flagged.
+  document.getElementById('plain-div').addEventListener('click', function () {
+    out.textContent = 'plain-div clicked';
+  });
+
+  // Responding div — same invisibility (addEventListener only), but the
+  // app DEMONSTRABLY responds: appends a line to #output. Post-B3 (S1+S5)
+  // this is the actionabilityEvidence=true case: gate-rejected card that
+  // carries consequence evidence.
+  document.getElementById('responding-div').addEventListener('click', function () {
+    out.textContent += '\nresponding-div clicked';
+  });
+
+  // Repeat button — emits nothing; the point is the double click itself.
+  document.getElementById('repeat-btn').addEventListener('click', function () {
+    out.textContent = 'repeat clicked';
+  });
+
+  // Popover dismissal. The backdrop <div> is plain (no role/attrs); the
+  // dismissal click lands on the backdrop or body. Pre-B3 (F4): click on
+  // body/backdrop is dropped at capture → the dismissal is LOST. Post-B3:
+  // captured → Unclassified card with removal/visibility evidence.
+  var popover = document.getElementById('popover');
+  var backdrop = document.getElementById('popover-backdrop');
+  document.getElementById('open-popover').addEventListener('click', function (e) {
+    e.stopPropagation();
+    popover.style.display = 'block';
+    backdrop.style.display = 'block';
+    out.textContent = 'popover opened';
+  });
+  backdrop.addEventListener('click', function () {
+    popover.style.display = 'none';
+    backdrop.style = '';
+    out.textContent = 'popover dismissed via backdrop';
+  });
+
+  // Autofocus input: no listeners at all — typing must be lost pre-B3 (F3),
+  // surface as one synthetic terminal-sample card post-B3.
+  // (No focus/click listeners: the TextEntry lifecycle normally starts on
+  // focus; if the extension loads after page load, focus already happened
+  // before START_RECORDING → lifecycle never starts → inputs fall through.)
+})();
+</script>
+</body>
+</html>

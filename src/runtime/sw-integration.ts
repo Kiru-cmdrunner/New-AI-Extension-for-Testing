@@ -23,6 +23,9 @@ import type {
   RuntimeConfig,
 } from '../shared/component-types';
 import type { BehavioralEvidence, NetworkActivity } from '../shared/behavioral-evidence-types';
+import { elementKey } from '../definitions/patterns';
+import type { ElementIdentity } from '../shared/types';
+import type { DomContext } from '../shared/component-types';
 import {
   EvidenceLedger,
   EVIDENCE_LEDGER_KEY,
@@ -76,6 +79,215 @@ let lastVerificationResult: VerificationResult | null = null;
 
 const pendingEvidence = new Map<string, BehavioralEvidence>();
 const MAX_PENDING_EVIDENCE = 100;
+
+// ── 7.4-B3 S3: typed-text episode tracker ───────────────────────────
+//
+// F3 channel: input events claimed by NO lifecycle (extension loaded after
+// focus, recording started mid-focus, content-script race). The runtime
+// sees the input events but no TextEntry lifecycle exists → the episode
+// is invisible: no interaction, no ledger entry, no Unclassified card.
+//
+// The tracker accumulates such episodes per element and, when the SAME
+// element blurs, mints exactly ONE synthetic ledger entry (eventType
+// 'change', terminal valueAfter) via ledger.appendSynthetic. Projection
+// then surfaces it as an Unclassified card (physicalEventType 'change')
+// — the honest artifact: the user typed 'hotel' here and we never
+// classified it. Raw input events stay un-stored (R1); only this
+// curated terminal sample crosses the boundary.
+//
+// Episodic, bounded state (cleared in resetState; deliberately NOT
+// persisted — an MV3 death mid-episode drops at most one episode's
+// trace, same class of accepted cost as the S2 post-restart fold
+// degradation).
+
+interface TypedTextEpisode {
+  elementKey: string;
+  target: ElementIdentity;
+  domContext: DomContext;
+  pageId: string;
+  lastValueAfter: string;
+  lastInputEventId: string;
+  lastInputCaptureSeq: number;
+  lastTimestamp: number;
+}
+const typedTextEpisodes = new Map<string, TypedTextEpisode>();
+/** Synthetic entryIds minted so far this session (dedup + id stability). */
+const syntheticMinted = new Set<string>();
+/**
+ * Monotonic counter for synthetic entryIds. MUST stay far above any real
+ * captureSeq-derived eventId counter on the same page so synthetic ids
+ * never collide with raw event ids (page ids are per-tab-session).
+ */
+let syntheticCounter = 1_000_000_000;
+
+function typedTextKey(target: ElementIdentity): string {
+  return elementKey(target);
+}
+
+/**
+ * S3: observe every post-classification emission. An input event with NO
+ * emitted interaction is an unclaimed typing episode data point; a blur on
+ * a tracked element closes the episode and mints the synthetic sample.
+ */
+function trackTypedTextEpisode(
+  event: ObservedEvent,
+  emitted: ComponentInteraction[],
+  runtime: ComponentRuntime,
+): void {
+  if (event.eventType === 'input' && event.valueAfter != null) {
+    // A tracked episode is only unclaimed if no lifecycle absorbed/emitted
+    // for it. `emitted.length === 0` is the SW-visible signal; a lifecycle
+    // mid-flight that has not emitted yet must NOT be tracked either, so
+    // we additionally require that no live lifecycle owns this element.
+    const claimed = hasLiveLifecycleOnElement(runtime, event.target);
+    if (!claimed && emitted.length === 0) {
+      typedTextEpisodes.set(typedTextKey(event.target), {
+        elementKey: typedTextKey(event.target),
+        target: event.target,
+        domContext: event.domContext,
+        pageId: extractPageIdSafe(event.eventId),
+        lastValueAfter: event.valueAfter,
+        lastInputEventId: event.eventId,
+        lastInputCaptureSeq: event.captureSeq,
+        lastTimestamp: event.timestamp,
+      });
+    } else {
+      // A lifecycle claimed THIS input → the element is being tracked by a
+      // definition; drop any stale unclaimed-episode record for it.
+      typedTextEpisodes.delete(typedTextKey(event.target));
+    }
+    return;
+  }
+
+  if (event.eventType === 'blur') {
+    const key = typedTextKey(event.target);
+    const episode = typedTextEpisodes.get(key);
+    if (!episode) return;
+    typedTextEpisodes.delete(key);
+    mintTypedTextSample(episode, event);
+  }
+}
+
+/**
+ * S3: mint the synthetic 'change' ledger entry for a closed episode.
+ * The entry persists → projects → surfaces as an Unclassified card.
+ */
+function mintTypedTextSample(episode: TypedTextEpisode, blurEvent: ObservedEvent): void {
+  // blurEvent supplies only the pageUrl/pageTitle of the blur context; the
+  // sample's timestamp/captureSeq come from the episode's last input (see
+  // the captureSeq comment below).
+  if (!evidenceLedger) return;
+  // S3 RCA (reviewer Critical #1): the synthetic entry's eventId must keep
+  // the ledger's pageId extraction and ordering intact. An intermediate
+  // `-syn-` broke extractPageId's `^evt-(.+)-\d+$` greedy match (pageId
+  // came out as `{pageId}-syn-…`, sorting the entry AFTER every real entry
+  // of that page), which made the S2 twin scan break on it before reaching
+  // the real pending mousedown twin — resurrecting the half-card the fold
+  // is supposed to suppress. Keep the canonical `evt-{pageId}-{counter}`
+  // shape: pageId parses correctly, captureSeq keeps blur order, and
+  // appendSynthetic still marks synthetic=true for M5 self-consistency.
+  const entryId = `evt-${episode.pageId}-${syntheticCounter++}`;
+  if (syntheticMinted.has(entryId)) return;
+  syntheticMinted.add(entryId);
+
+  evidenceLedger.appendSynthetic({
+    eventId: entryId,
+    eventType: 'change' as any,
+    // Position at the LAST INPUT of the episode, not the blur. The blur can
+    // fire between another element's mousedown and its click (mousedown
+    // moves focus → blur → click); positioning on the blur wedges the
+    // sample between that gesture's halves and breaks pairPhysicalPress
+    // adjacency (two BODY cards instead of one). The value belongs to the
+    // typing, so it sorts at the episode's own end.
+    timestamp: episode.lastTimestamp,
+    captureSeq: episode.lastInputCaptureSeq,
+    isTrusted: true, // minted from trusted input events; the sample is curated, not synthetic user input
+    target: episode.target,
+    domContext: episode.domContext,
+    valueBefore: null,
+    valueAfter: episode.lastValueAfter,
+    checkedBefore: null,
+    checkedAfter: null,
+    clientX: null,
+    clientY: null,
+    key: null,
+    code: null,
+    shiftKey: false,
+    ctrlKey: false,
+    altKey: false,
+    metaKey: false,
+    scrollDeltaY: null,
+    scrollDeltaX: null,
+    pageUrl: blurEvent.pageUrl,
+    pageTitle: blurEvent.pageTitle,
+  });
+  persistEvidenceLedger();
+}
+
+/** S3 helper: pageId from an eventId, '' when malformed. */
+function extractPageIdSafe(eventId: string): string {
+  const m = /^evt-(.+?)-\d+$/.exec(eventId);
+  return m ? m[1] : '';
+}
+
+/**
+ * S3 helper: does any live lifecycle own THIS element right now?
+ * A mid-flight TextEntry (or any definition tracking this element) makes
+ * the typing episode claimed — no synthetic sample may be minted.
+ */
+function hasLiveLifecycleOnElement(
+  runtime: ComponentRuntime,
+  target: ElementIdentity,
+): boolean {
+  const live = runtime.getLiveLifecycles();
+  const key = elementKey(target);
+  return live.some(
+    (lc: { trigger?: unknown }) => elementKey(lc.trigger as ElementIdentity) === key,
+  );
+}
+
+/**
+ * 7.4-B3 S5: compute the actionabilityEvidence presentation flag on a
+ * projected Unclassified card, post evidence join.
+ *
+ * Deterministic shape check over recorded facts — the badge may claim
+ * "app responded — DOM change in click window", never causation.
+ */
+function computeActionabilityEvidence(interaction: ComponentInteraction): void {
+  const evidence = interaction.behavioralEvidence ?? undefined;
+  if (!evidence) {
+    interaction.metadata.actionabilityEvidence = false;
+    return;
+  }
+  const app = evidence.applicationEvidence;
+  const cardEventId = interaction.triggerEvent?.eventId
+    ?? (interaction.metadata?.eventId as string | undefined)
+    ?? null;
+  const networkMatch = app.networkActivity.some(
+    (n) => cardEventId !== null && n.sourceEventId === cardEventId,
+  );
+  interaction.metadata.actionabilityEvidence = Boolean(
+    app.domChanges.length > 0 ||
+    app.newSurfaces.length + app.removedSurfaces.length > 0 ||
+    app.visibilityChanges.length > 0 ||
+    app.navigation.length > 0 ||
+    networkMatch,
+  );
+}
+
+/**
+ * 7.4-B3 S1: key-set snapshot taken after each STOP-time drain so the
+ * drain block can detect whether any keys were actually removed and
+ * persist exactly once per STOP (R9: no write storm, no double persist).
+ */
+let drainGuardRef: Set<string> | null = null;
+
+/** 7.4-B3 S1: set equality for the drain persist guard. */
+function setsEqual(a: Set<string>, b: Set<string>): boolean {
+  if (a.size !== b.size) return false;
+  for (const k of a) if (!b.has(k)) return false;
+  return true;
+}
 
 // ── Evidence Persistence Dedup Guard (M8.5) ───────────────────────────
 //
@@ -285,6 +497,59 @@ function sendFinalizeEvidence(interaction: ComponentInteraction): void {
           metadata: interaction.metadata ?? {},
           endState: interaction.endState,
           triggerIdentity: interaction.trigger ?? undefined,
+        },
+      }).catch(() => {
+        // Content script may have been destroyed (navigation) — non-fatal
+      });
+    })
+    .catch(() => {
+      // Tab query failed — non-fatal
+    });
+}
+
+/**
+ * RCA fix (stale-lifecycleBindings leak, 2026-08-25):
+ * A dedup-folded lifecycle never emits, so the FINALIZE_EVIDENCE that would
+ * release its EvidenceCollector binding never fires. A stale binding then
+ * holds every LATER window open (openWindow checks
+ * lifecycleBindings.size > 0), deferring its evidence to STOP force-close —
+ * after the S1 drain — which silently stranded dismissal-click evidence
+ * (E2E check C3 in harness-74b3.mjs).
+ *
+ * This helper sends FINALIZE_EVIDENCE for the suppressed lifecycle itself:
+ * the collector releases the binding keyed by the suppressed lifecycleId,
+ * and the eventIds (suppressed lifecycle's own events) attribute the
+ * windows to the PRIOR interaction — the fold owner. Same payload shape
+ * as sendFinalizeEvidence.
+ */
+function sendFinalizeForSuppressedLifecycle(
+  ctx: ComponentContext,
+  prior: ComponentInteraction,
+): void {
+  const eventIds: string[] = [];
+  if (ctx.triggerEvent?.eventId) {
+    eventIds.push(ctx.triggerEvent.eventId);
+  }
+  for (const ev of ctx.memberEvents ?? []) {
+    if (ev.eventId && !eventIds.includes(ev.eventId)) {
+      eventIds.push(ev.eventId);
+    }
+  }
+
+  chrome.tabs
+    .query({ active: true, currentWindow: true })
+    .then((tabs) => {
+      if (tabs.length === 0 || !tabs[0].id) return;
+      chrome.tabs.sendMessage(tabs[0].id, {
+        type: 'FINALIZE_EVIDENCE',
+        payload: {
+          lifecycleId: ctx.lifecycleId,
+          interactionId: prior.interactionId,
+          interactionType: prior.type,
+          eventIds,
+          metadata: prior.metadata ?? {},
+          endState: prior.endState,
+          triggerIdentity: prior.trigger ?? undefined,
         },
       }).catch(() => {
         // Content script may have been destroyed (navigation) — non-fatal
@@ -668,6 +933,8 @@ export function initRecording(): void {
     clearTimeout(pendingEvidenceFlushTimer);
     pendingEvidenceFlushTimer = null;
   }
+  // 7.4-B3 S1: reset the STOP-drain persist guard.
+  drainGuardRef = null;
   // M8.5: Clear the evidence persistence dedup guard for the new cycle.
   clearPersistedEvidenceGuard();
   // Clear stale persisted pending evidence from storage
@@ -706,6 +973,23 @@ export function initRecording(): void {
       // Tell the content script that a new lifecycle has started so it can
       // bind evidence windows to this lifecycle.
       sendLifecycleBound(ctx);
+    },
+    onDedupFold: (prior, suppressedCtx) => {
+      // 7.4-B3 S2: the fold mutated the PRIOR interaction (memberEvents +
+      // repeatCount). Persist so the fold survives MV3 death (INV-5 parity:
+      // disposition changes already persist per-event via the ledger).
+      // persistLiveInteractions is guarded (returns false once stopped) —
+      // no clobber of the projected production list at STOP.
+      void persistLiveInteractions();
+      // RCA (stale-lifecyclebindings leak, 2026-08-25): a folded lifecycle
+      // never emits, so the FINALIZE_EVIDENCE that would release its
+      // EvidenceCollector binding never fires. A stale binding then holds
+      // every LATER window open (openWindow checks
+      // lifecycleBindings.size > 0), deferring its evidence to STOP
+      // force-close — after the S1 drain — which silently stranded
+      // dismissal-click evidence (E2E C3). Send the finalize for the
+      // SUPPRESSED lifecycle so the binding is released immediately.
+      sendFinalizeForSuppressedLifecycle(suppressedCtx, prior);
     },
     evidenceLedger,
   };
@@ -763,9 +1047,38 @@ export function stopRecording(): ComponentInteraction[] {
         // the IR (no fabricated steps; the honesty invariant holds).
         // Legacy ledger rows restore ancestor context to null → [] via LP3,
         // so detectComponent degrades to its no-ancestry behaviour.
+        //
+        // ── 7.4-B3 S1: projection evidence join ─────────────────────────
+        // Projected Unclassified cards are minted AFTER all emission, so
+        // the onEmit-time drainPendingEvidence never ran for them — even
+        // when pendingEvidence holds a consequence-bearing window keyed to
+        // their exact triggerEvent.eventId (F2: verified 0-for-N across
+        // every dump with Unclassified cards). Drain here, with the same
+        // semantics (richest wins, guard on existing evidence, delete
+        // drained keys, persist once).
+        for (const interaction of projection.interactions) {
+          if (interaction.type === 'Unclassified') {
+            drainPendingEvidence(interaction);
+          }
+        }
+        // Persist exactly once when the drain removed keys. Compare the
+        // post-drain key set against the pre-STOP snapshot.
+        const postDrainKeys = new Set(pendingEvidence.keys());
+        if (drainGuardRef === null || !setsEqual(drainGuardRef, postDrainKeys)) {
+          void persistPendingEvidence();
+        }
+        drainGuardRef = postDrainKeys;
         for (const interaction of projection.interactions) {
           if (interaction.type === 'Unclassified') {
             enrichInteraction(interaction);
+            // ── 7.4-B3 S5: actionabilityEvidence flag ──────────────────
+            // Pure shape check over the (now-joined) evidence: did the
+            // application demonstrably respond in this event's window?
+            // Presentation metadata ONLY — no type change, no IR change,
+            // no KR signature change (metadata is not hashed into
+            // signatureKey). INV-APP-1 preserved: the flag asserts a
+            // change OCCURRED IN THE WINDOW, never causality.
+            computeActionabilityEvidence(interaction);
           }
         }
 
@@ -845,6 +1158,14 @@ export function processObservedEvent(
 
   const emitted = runtime.process(event);
 
+  // ── 7.4-B3 S3: typed-text episode tracking ──────────────────────
+  // input events claimed by no lifecycle are tracked per element; the
+  // episode closes on blur of the same element → one synthetic 'change'
+  // entry with the terminal value (see mintTypedTextSample). Fires
+  // AFTER runtime.process so lifecycle claims from THIS event are
+  // already visible.
+  trackTypedTextEpisode(event, emitted, runtime);
+
   // Persist ledger on every event (INV-5: persisted on every disposition change).
   // Even if no interaction is emitted (e.g., absorbed by a lifecycle), the
   // ledger entry's disposition has changed from 'pending' to 'absorbed'.
@@ -872,6 +1193,10 @@ export function getLiveInteractions(): ComponentInteraction[] {
  *
  * M8.3: Also clears persisted pending evidence and the debounce timer.
  */
+export function getEvidenceLedger(): EvidenceLedger | null {
+  return evidenceLedger;
+}
+
 export function resetState(): void {
   liveInteractions = [];
   runtime = null;
@@ -881,6 +1206,11 @@ export function resetState(): void {
   recordingStopped = true;
   evidenceLedger = null;
   lastVerificationResult = null;
+  // 7.4-B3 S3: clear typed-text episode state (episodic by design — a
+  // reset must never resurrect a stale episode across sessions).
+  typedTextEpisodes.clear();
+  syntheticMinted.clear();
+  syntheticCounter = 1_000_000_000;
   // M8.5: Clear the evidence persistence dedup guard.
   clearPersistedEvidenceGuard();
   pendingEvidence.clear();
@@ -982,6 +1312,15 @@ export async function restoreFromStorage(): Promise<boolean> {
       },
       onLifecycleStart: (ctx) => {
         sendLifecycleBound(ctx);
+      },
+      onDedupFold: (prior, suppressedCtx) => {
+        // 7.4-B3 S2 (restore path): same persist + binding-release hooks
+        // as initRecording. The fold target (prior) may be a pre-restart
+        // interaction from the restored liveInteractions list — in-memory
+        // mutation + persist. The suppressed lifecycle's collector binding
+        // must also be released (same RCA as the init path).
+        void persistLiveInteractions();
+        sendFinalizeForSuppressedLifecycle(suppressedCtx, prior);
       },
       evidenceLedger,
     };

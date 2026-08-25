@@ -372,8 +372,13 @@ describe('Runtime Disposition Tracking — Milestone 3', () => {
     ledger.append(click2);
     runtime.process(click2);
 
-    // click2 was absorbed by immediate completion, then dedup returned null → released
-    expect(ledger.get('evt-p1-2')!.disposition).toBe('unclaimed');
+    // click2 was absorbed by immediate completion, then dedup suppressed
+    // it — 7.4-B3 S2 FOLDS it into the prior interaction instead of
+    // releasing: disposition 'claimed' by the PRIOR interactionId (no
+    // Unclassified resurrection; repeatCount recorded).
+    expect(ledger.get('evt-p1-2')!.disposition).toBe('claimed');
+    expect(ledger.get('evt-p1-2')!.claimedBy).toBe('int-1');
+    expect(ledger.get('evt-p1-2')!.claimType).toBe('Click');
   });
 
   // ── Non-discrete events don't enter ledger ──────────────────────────

@@ -156,6 +156,17 @@ export function buildWhyBlock(
       return signal ? `why: combobox input (aria-autocomplete=${signal})` : null;
     }
 
+    case 'Unclassified': {
+      // 7.4-B3 S5: actionabilityEvidence presentation flag (metadata only).
+      // Rendered ONLY when the joined evidence shows the application
+      // responded in the event's window — copy says "in click window",
+      // never causation (INV-APP-1).
+      if (metadata.actionabilityEvidence === true) {
+        return 'why: app responded — DOM change in click window';
+      }
+      return null;
+    }
+
     default:
       return null;
   }

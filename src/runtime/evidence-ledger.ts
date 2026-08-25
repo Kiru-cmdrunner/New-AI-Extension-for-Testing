@@ -113,6 +113,12 @@ export interface LedgerEntry {
   ancestorRoles: string[] | null;
   /** Ancestor classes (up to 10 levels, index 0 = parent); null on legacy rows. */
   ancestorClasses: string[] | null;
+
+  // ── 7.4-B3 S3: synthetic-entry marker ─────────────────────────────
+  /** True when this entry was minted from an accumulating-event episode (typed-text terminal sample), not raw capture. */
+  synthetic?: boolean;
+  /** S3: terminal value of the sampled typing episode (synthetic entries only). */
+  sampledValueAfter?: string;
 }
 
 /** Chrome storage key for the evidence ledger. */
@@ -174,6 +180,48 @@ export class EvidenceLedger {
         ? [...(event.domContext.ancestorClasses ?? [])]
         : null,
     });
+  }
+
+  /**
+   * 7.4-B3 S3: append a SYNTHETIC entry minted from an accumulating event
+   * episode (typed text that no lifecycle ever claimed).
+   *
+   * Bypasses the DISCRETE_ACTION_TYPES filter (that filter is the R1 raw
+   * contract — raw input/change events stay un-stored; only this curated,
+   * terminal-value sample crosses the boundary as a synthesized 'change').
+   * Same eventId dedup + disposition lifecycle as append(). The entry is
+   * marked synthetic=true so M5 self-consistency and downstream consumers
+   * can distinguish it from raw capture.
+   */
+  appendSynthetic(event: ObservedEvent): void {
+    if (this.entries.has(event.eventId)) return;
+
+    const entry: LedgerEntry = {
+      eventId: event.eventId,
+      captureSeq: event.captureSeq,
+      pageId: extractPageId(event.eventId),
+      eventType: event.eventType,
+      timestamp: event.timestamp,
+      disposition: 'pending',
+      targetTag: event.target.tag,
+      targetName: event.target.accessibleName,
+      targetRole: event.target.ariaRole,
+      targetIdentity: event.target ? { ...event.target } : null,
+      captureOrigin: event.captureOrigin
+        ? { tabId: event.captureOrigin.tabId, frameId: event.captureOrigin.frameId }
+        : null,
+      ancestorRoles: event.domContext
+        ? [...(event.domContext.ancestorRoles ?? [])]
+        : null,
+      ancestorClasses: event.domContext
+        ? [...(event.domContext.ancestorClasses ?? [])]
+        : null,
+      // S3 marker
+      synthetic: true,
+      sampledValueAfter:
+        event.valueAfter != null ? String(event.valueAfter) : undefined,
+    };
+    this.entries.set(event.eventId, entry);
   }
 
   /**

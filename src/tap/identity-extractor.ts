@@ -481,9 +481,18 @@ export function captureCheckedState(el: Element): boolean | undefined {
 
 // ── Target Resolution ──────────────────────────────────────────────────
 
-/** Elements that should NEVER be captured as click targets. */
+/**
+ * Elements that should NEVER be captured as click targets.
+ *
+ * 7.4-B3 S4: BODY and HTML REMOVED from this set. A click on empty page
+ * background is a real user gesture (click-away dismissal is the dominant
+ * SPA pattern) and was silently dropped at capture — the honest artifact
+ * is an Unclassified card, not silence. The census script classifies these
+ * as `body-structural`. All genuinely structural tags (head-level metadata,
+ * SVG internals) remain rejected.
+ */
 const NON_INTERACTIVE_TAGS = new Set([
-  'HTML', 'HEAD', 'BODY', 'SCRIPT', 'STYLE', 'LINK', 'META',
+  'HEAD', 'SCRIPT', 'STYLE', 'LINK', 'META',
   'NOSCRIPT', 'TEMPLATE', 'SVG', 'PATH', 'G', 'DEFS', 'RECT',
   'CIRCLE', 'LINE', 'POLYLINE', 'POLYGON', 'USE', 'CLIPPATH',
 ]);
