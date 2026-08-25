@@ -1,0 +1,146 @@
+{
+ "environment": {
+  "baseUrl": "http://127.0.0.1:8242",
+  "browser": "chrome",
+  "startUrl": "http://127.0.0.1:8242/expander-validation.html",
+  "viewport": {
+   "height": 437,
+   "width": 780
+  }
+ },
+ "steps": [
+  {
+   "action": "click",
+   "assertions": [],
+   "description": "Expand or collapse the Section One",
+   "executionParameters": {
+    "retryCount": 0,
+    "retryDelayMs": 1000,
+    "timeoutMs": 30000,
+    "waitStrategy": "visible"
+   },
+   "id": "step-0001",
+   "input": null,
+   "order": 0,
+   "plainEnglish": "Expand or collapse the Section One",
+   "sourceEventId": "evt-pmt86rio4-5",
+   "target": {
+    "elementId": "1d452ec1-ab2b-41ff-8ee8-dd3adfbe0b52",
+    "elementName": "Section One",
+    "kind": "element",
+    "pageOrComponent": "main",
+    "resolvedLocators": [
+     {
+      "confidence": 0.72,
+      "priority": 1,
+      "type": "css",
+      "value": "#s1"
+     },
+     {
+      "confidence": 0.72,
+      "priority": 2,
+      "type": "css",
+      "value": "[class~=\"head\"]"
+     },
+     {
+      "confidence": 0.72,
+      "priority": 3,
+      "type": "css",
+      "value": "[class~=\"btn\"]"
+     }
+    ]
+   }
+  },
+  {
+   "action": "click",
+   "assertions": [],
+   "description": "Expand or collapse the Section Two",
+   "executionParameters": {
+    "retryCount": 0,
+    "retryDelayMs": 1000,
+    "timeoutMs": 30000,
+    "waitStrategy": "visible"
+   },
+   "id": "step-0002",
+   "input": null,
+   "order": 1,
+   "plainEnglish": "Expand or collapse the Section Two",
+   "sourceEventId": "evt-pmt86rio4-13",
+   "target": {
+    "elementId": "fbd58fc8-d0e4-4e04-969f-2ef256cb41ea",
+    "elementName": "Section Two",
+    "kind": "element",
+    "pageOrComponent": "main",
+    "resolvedLocators": [
+     {
+      "confidence": 0.72,
+      "priority": 1,
+      "type": "css",
+      "value": "#s2"
+     },
+     {
+      "confidence": 0.72,
+      "priority": 2,
+      "type": "css",
+      "value": "[class~=\"head\"]"
+     },
+     {
+      "confidence": 0.62,
+      "priority": 3,
+      "type": "accessibleName",
+      "value": "Section Two"
+     }
+    ]
+   }
+  },
+  {
+   "action": "click",
+   "assertions": [],
+   "description": "Expand or collapse the Section Three",
+   "executionParameters": {
+    "retryCount": 0,
+    "retryDelayMs": 1000,
+    "timeoutMs": 30000,
+    "waitStrategy": "visible"
+   },
+   "id": "step-0003",
+   "input": null,
+   "order": 2,
+   "plainEnglish": "Expand or collapse the Section Three",
+   "sourceEventId": "evt-pmt86rio4-22",
+   "target": {
+    "elementId": "b2ce54d2-b776-4c09-aace-82196b283a4a",
+    "elementName": "Section Three",
+    "kind": "element",
+    "pageOrComponent": "main",
+    "resolvedLocators": [
+     {
+      "confidence": 0.72,
+      "priority": 1,
+      "type": "css",
+      "value": "#s3"
+     },
+     {
+      "confidence": 0.72,
+      "priority": 2,
+      "type": "css",
+      "value": "[class~=\"head\"]"
+     },
+     {
+      "confidence": 0.62,
+      "priority": 3,
+      "type": "accessibleName",
+      "value": "Section Three"
+     }
+    ]
+   }
+  }
+ ],
+ "tags": [
+  "expander-validation.html"
+ ],
+ "testCaseId": "tc-7e3336b0",
+ "testCaseVersionId": "tcv-7e3336b0",
+ "testCaseVersionNumber": 1,
+ "title": "Recorded Test"
+}

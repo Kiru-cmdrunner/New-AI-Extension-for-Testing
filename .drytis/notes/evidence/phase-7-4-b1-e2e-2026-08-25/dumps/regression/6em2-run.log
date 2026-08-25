@@ -1,0 +1,46 @@
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+START → undefined
+depart value = "Sat, 06 Sep"
+return value = "Sat, 08 Sep"
+STOP → stopped
+cards: [
+ {
+  "t": "DatePicker",
+  "n": "Depart on",
+  "dv": "Choose Sunday, September 6th, 2026"
+ },
+ {
+  "t": "DatePicker",
+  "n": "Return on",
+  "dv": "Choose Tuesday, September 8th, 2026"
+ },
+ {
+  "t": "Click",
+  "n": "Search Flights",
+  "dv": null
+ },
+ {
+  "t": "Click",
+  "n": "Bengaluru",
+  "dv": null
+ },
+ {
+  "t": "Click",
+  "n": "Notify",
+  "dv": null
+ }
+]
+PASS — E1+E2 Depart-on: DatePicker lifecycle completed with selected date value :: 2 DatePicker cards :: [{"n":"Depart on","dv":"Choose Sunday, September 6th, 2026"},{"n":"Return on","dv":"Choose Tuesday, September 8th, 2026"}]
+PASS — E3 Return-on: second DatePicker completed (round-trip) :: ["Depart on","Return on"]
+PASS — E2b ZERO Unclassified calendar-cell cards :: 0 unclassified cells :: []
+PASS — E4 6B regression: data-auto-id search-flights → exactly one Click :: [{"t":"Click","id":"search-flights"}]
+PASS — E5 6D.1 W3 regression: options-list li.opt Bengaluru → exactly one Click :: [{"t":"Click","n":"Bengaluru"}]
+E6 notification-ish cards: []
+IR steps: ["selectDate","selectDate","click","click","click"]
+PASS — E8 IR plan: date steps present, no Unclassified leak (plan generated from claimed cards only) :: 5 steps: ["selectDate","selectDate","click","click","click"]
+KR tables: {"applications":1,"knowledgeBehaviorSessions":1,"knowledgeCollections":1,"knowledgeCounters":1,"knowledgeEdges":4,"knowledgeEntities":0,"knowledgeEpisodes":3,"knowledgeGaps":5,"knowledgeNotifications":1,"knowledgeOutcomes":5,"knowledgeRecordedWorkflows":1,"knowledgeSignatures":3,"knowledgeStateTransitions":5,"knowledgeViewTransitions":0,"knowledgeViews":0}
+PASS — E9 KR Dexie rows written (DatePicker signatures among them) :: {"applications":1,"knowledgeBehaviorSessions":1,"knowledgeCollections":1,"knowledgeCounters":1,"knowledgeEdges":4,"knowledgeEntities":0,"knowledgeEpisodes":3,"knowledgeGaps":5,"knowledgeNotifications":1,"knowledgeOutcomes":5,"knowledgeRecordedWorkflows":1,"knowledgeSignatures":3,"knowledgeStateTransitions":5,"knowledgeViewTransitions":0,"knowledgeViews":0}
+DatePicker KR signatures: 0
+PASS — E7 6D.1 W2 regression: #id-only p#result-count counter seeded :: [{"id":"counter:body > main > div > p#result-count","cur":"2"}]
+
+════ 6E-M2 E2E — 8 PASS / 0 FAIL ════

@@ -1,0 +1,48 @@
+fixture listening on 8242
+fixture up: true
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+page probe: {"url":"http://127.0.0.1:8242/expander-validation.html","heads":3,"ready":"complete"}
+PASS — fixture: #s1 found
+PASS — fixture: #s2 found
+PASS — fixture: #s3 found
+fixture aria-expanded after clicks: true,true,true
+STOP → stopped
+cards: [
+ {
+  "type": "Expander",
+  "name": "Section One",
+  "sel": "#s1",
+  "expandedAtTrigger": false,
+  "endReason": null
+ },
+ {
+  "type": "Expander",
+  "name": "Section Two",
+  "sel": "#s2",
+  "expandedAtTrigger": false,
+  "endReason": null
+ },
+ {
+  "type": "Expander",
+  "name": "Section Three",
+  "sel": "#s3",
+  "expandedAtTrigger": false,
+  "endReason": null
+ }
+]
+PASS — X1 <button aria-expanded> → Expander :: [{"s":"#s1","t":"Expander"},{"s":"#s2","t":"Expander"},{"s":"#s3","t":"Expander"}]
+PASS — X2 role=button div aria-expanded → Expander
+PASS — X3 bare div aria-expanded → Expander
+PASS — X4a exactly three Expander cards total :: 3
+PASS — X4b expandedAtTrigger=false pre-flip on all three :: [false,false,false]
+PASS — X5 state rows property=expanded false→true (×3) :: ["control: Section One (expanded) false → true","control: Section Two (expanded) false → true","control: Section Three (expanded) false → true"]
+IR steps: ["click","click","click"]
+PASS — X6 IR plan: 3 steps, every action=click (Expander maps to CLICK) :: 3 steps: ["click","click","click"]
+PASS — X6b IR plan has ZERO toggle actions :: ["click","click","click"]
+PASS — X7 InteractionContract.expanded=true for each Expander (×3) :: [{"l":"Section One","e":true},{"l":"Section Two","e":true},{"l":"Section Three","e":true}]
+PASS — X8 zero console errors in panel context
+KR expanded state transitions: 3
+PASS — X5b KR state transitions carry expanded (≥3) :: 3
+PASS — X7b KR signatures minted for Expander (signature fragmentation accepted, pinned) :: 3
+
+RESULT: 15 PASS / 0 FAIL

@@ -1,0 +1,5384 @@
+{
+ "cmdrunner_evidence_ledger": [
+  {
+   "ancestorClasses": [
+    "panel",
+    "",
+    ""
+   ],
+   "ancestorRoles": [
+    "div",
+    "body",
+    "html"
+   ],
+   "captureOrigin": {
+    "frameId": 0,
+    "tabId": 555276326
+   },
+   "captureSeq": 3802.7000000001863,
+   "disposition": "pending",
+   "eventId": "evt-pmt86rio4-3",
+   "eventType": "mousedown",
+   "pageId": "pmt86rio4",
+   "targetIdentity": {
+    "accessibleName": "Section One",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "button",
+    "autoId": null,
+    "className": "head btn",
+    "cssSelector": "#s1",
+    "dataAutoId": null,
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": null,
+    "name": null,
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": "s1",
+    "tag": "BUTTON",
+    "testId": null,
+    "xPath": "//button[@id='s1']"
+   },
+   "targetName": "Section One",
+   "targetRole": "button",
+   "targetTag": "BUTTON",
+   "timestamp": 1787633389634
+  },
+  {
+   "ancestorClasses": [
+    "panel",
+    "",
+    ""
+   ],
+   "ancestorRoles": [
+    "div",
+    "body",
+    "html"
+   ],
+   "captureOrigin": {
+    "frameId": 0,
+    "tabId": 555276326
+   },
+   "captureSeq": 3808.600000000559,
+   "claimType": "Expander",
+   "claimedBy": "int-2",
+   "disposition": "claimed",
+   "eventId": "evt-pmt86rio4-5",
+   "eventType": "click",
+   "pageId": "pmt86rio4",
+   "targetIdentity": {
+    "accessibleName": "Section One",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "button",
+    "autoId": null,
+    "className": "head btn",
+    "cssSelector": "#s1",
+    "dataAutoId": null,
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": null,
+    "name": null,
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": "s1",
+    "tag": "BUTTON",
+    "testId": null,
+    "xPath": "//button[@id='s1']"
+   },
+   "targetName": "Section One",
+   "targetRole": "button",
+   "targetTag": "BUTTON",
+   "timestamp": 1787633389638
+  },
+  {
+   "ancestorClasses": [
+    "panel",
+    "",
+    ""
+   ],
+   "ancestorRoles": [
+    "div",
+    "body",
+    "html"
+   ],
+   "captureOrigin": {
+    "frameId": 0,
+    "tabId": 555276326
+   },
+   "captureSeq": 4717.700000000186,
+   "disposition": "pending",
+   "eventId": "evt-pmt86rio4-10",
+   "eventType": "mousedown",
+   "pageId": "pmt86rio4",
+   "targetIdentity": {
+    "accessibleName": "Section Two",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "button",
+    "autoId": null,
+    "className": "head",
+    "cssSelector": "#s2",
+    "dataAutoId": null,
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": null,
+    "name": null,
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": "s2",
+    "tag": "DIV",
+    "testId": null,
+    "xPath": "//div[@id='s2']"
+   },
+   "targetName": "Section Two",
+   "targetRole": "button",
+   "targetTag": "DIV",
+   "timestamp": 1787633390547
+  },
+  {
+   "ancestorClasses": [
+    "panel",
+    "",
+    ""
+   ],
+   "ancestorRoles": [
+    "div",
+    "body",
+    "html"
+   ],
+   "captureOrigin": {
+    "frameId": 0,
+    "tabId": 555276326
+   },
+   "captureSeq": 4723.300000000745,
+   "claimType": "Expander",
+   "claimedBy": "int-4",
+   "disposition": "claimed",
+   "eventId": "evt-pmt86rio4-13",
+   "eventType": "click",
+   "pageId": "pmt86rio4",
+   "targetIdentity": {
+    "accessibleName": "Section Two",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "button",
+    "autoId": null,
+    "className": "head",
+    "cssSelector": "#s2",
+    "dataAutoId": null,
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": null,
+    "name": null,
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": "s2",
+    "tag": "DIV",
+    "testId": null,
+    "xPath": "//div[@id='s2']"
+   },
+   "targetName": "Section Two",
+   "targetRole": "button",
+   "targetTag": "DIV",
+   "timestamp": 1787633390551
+  },
+  {
+   "ancestorClasses": [
+    "panel",
+    "",
+    ""
+   ],
+   "ancestorRoles": [
+    "div",
+    "body",
+    "html"
+   ],
+   "captureOrigin": {
+    "frameId": 0,
+    "tabId": 555276326
+   },
+   "captureSeq": 5630.200000000186,
+   "disposition": "pending",
+   "eventId": "evt-pmt86rio4-20",
+   "eventType": "mousedown",
+   "pageId": "pmt86rio4",
+   "targetIdentity": {
+    "accessibleName": "Section Three",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": null,
+    "autoId": null,
+    "className": "head",
+    "cssSelector": "#s3",
+    "dataAutoId": null,
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": null,
+    "name": null,
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": "s3",
+    "tag": "DIV",
+    "testId": null,
+    "xPath": "//div[@id='s3']"
+   },
+   "targetName": "Section Three",
+   "targetRole": null,
+   "targetTag": "DIV",
+   "timestamp": 1787633391460
+  },
+  {
+   "ancestorClasses": [
+    "panel",
+    "",
+    ""
+   ],
+   "ancestorRoles": [
+    "div",
+    "body",
+    "html"
+   ],
+   "captureOrigin": {
+    "frameId": 0,
+    "tabId": 555276326
+   },
+   "captureSeq": 5635.4000000003725,
+   "claimType": "Expander",
+   "claimedBy": "int-5",
+   "disposition": "claimed",
+   "eventId": "evt-pmt86rio4-22",
+   "eventType": "click",
+   "pageId": "pmt86rio4",
+   "targetIdentity": {
+    "accessibleName": "Section Three",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": null,
+    "autoId": null,
+    "className": "head",
+    "cssSelector": "#s3",
+    "dataAutoId": null,
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": null,
+    "name": null,
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": "s3",
+    "tag": "DIV",
+    "testId": null,
+    "xPath": "//div[@id='s3']"
+   },
+   "targetName": "Section Three",
+   "targetRole": null,
+   "targetTag": "DIV",
+   "timestamp": 1787633391463
+  }
+ ],
+ "cmdrunner_live_interactions": [
+  {
+   "behavioralEvidence": {
+    "applicationEvidence": {
+     "coarseMode": false,
+     "domChangeOverflow": 0,
+     "domChanges": [
+      {
+       "addedNodesCount": 0,
+       "attributeDeltas": {
+        "aria-expanded": {
+         "new": "true",
+         "old": "false"
+        }
+       },
+       "changedAttributes": [
+        "aria-expanded"
+       ],
+       "characterDataDelta": null,
+       "firstBatchIndex": 0,
+       "firstMutationAt": 0.7000000001862645,
+       "lastBatchIndex": 0,
+       "lastMutationAt": 0.7000000001862645,
+       "rawMutationCount": 1,
+       "removedNodesCount": 0,
+       "shadowContext": null,
+       "targetPath": "body > div > button#s1",
+       "targetTag": "button",
+       "types": [
+        "attributes"
+       ]
+      },
+      {
+       "addedNodesCount": 0,
+       "attributeDeltas": {
+        "class": {
+         "new": "body open",
+         "old": "body"
+        }
+       },
+       "changedAttributes": [
+        "class"
+       ],
+       "characterDataDelta": null,
+       "firstBatchIndex": 0,
+       "firstMutationAt": 0.7000000001862645,
+       "lastBatchIndex": 0,
+       "lastMutationAt": 0.7000000001862645,
+       "rawMutationCount": 1,
+       "removedNodesCount": 0,
+       "shadowContext": null,
+       "targetPath": "body > div > div#b1",
+       "targetTag": "div",
+       "types": [
+        "attributes"
+       ]
+      }
+     ],
+     "navigation": [],
+     "networkActivity": [],
+     "newSurfaces": [],
+     "performanceCondition": {
+      "highChurnMode": false,
+      "longestBatchMs": 0.2999999998137355,
+      "mainThreadBlocked": false,
+      "totalBatches": 1
+     },
+     "removedSurfaces": [],
+     "visibilityChanges": []
+    },
+    "frameId": "main",
+    "sourceEventId": "evt-pmt86rio4-5",
+    "sourceEventType": "click",
+    "targetEvidence": {
+     "after": {
+      "ariaChecked": null,
+      "ariaExpanded": true,
+      "ariaPressed": null,
+      "capturedAt": 4117.800000000745,
+      "checked": null,
+      "childCount": 0,
+      "className": "head btn",
+      "controlledValue": "First section body.",
+      "disabled": false,
+      "scrollLeft": null,
+      "scrollTop": null,
+      "selectedValues": null,
+      "textContent": "Section One",
+      "value": null
+     },
+     "before": {
+      "ariaChecked": null,
+      "ariaExpanded": false,
+      "ariaPressed": null,
+      "capturedAt": 3807.100000000559,
+      "checked": null,
+      "childCount": 0,
+      "className": "head btn",
+      "controlledValue": "First section body.",
+      "disabled": false,
+      "scrollLeft": null,
+      "scrollTop": null,
+      "selectedValues": null,
+      "textContent": "Section One",
+      "value": null
+     },
+     "focusMovement": {
+      "after": {
+       "accessibleName": "Section One",
+       "ariaRole": null,
+       "tagName": "BUTTON"
+      },
+      "before": null,
+      "detectedAt": 4118.600000000559
+     },
+     "identity": {
+      "accessibleName": "Section One",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "ariaRole": "button",
+      "autoId": null,
+      "className": "head btn",
+      "cssSelector": "#s1",
+      "dataAutoId": null,
+      "dataCy": null,
+      "dataQa": null,
+      "elementId": "",
+      "href": null,
+      "inIframe": false,
+      "inputType": null,
+      "name": null,
+      "placeholder": null,
+      "shadowDom": false,
+      "stableId": "s1",
+      "tag": "BUTTON",
+      "testId": null,
+      "xPath": "//button[@id='s1']"
+     },
+     "identityCapturedAt": 3811.600000000559
+    },
+    "window": {
+     "closedAt": 4118.700000000186,
+     "durationMs": 307.09999999962747,
+     "endReason": "consequence-settled",
+     "openedAt": 3811.600000000559,
+     "stabilityTrace": [
+      {
+       "globalBatchCount": 0,
+       "msSinceLastMutation": 300,
+       "timestamp": 3811.7000000001863
+      },
+      {
+       "globalBatchCount": 0,
+       "msSinceLastMutation": 0,
+       "timestamp": 3812.300000000745
+      },
+      {
+       "globalBatchCount": 0,
+       "msSinceLastMutation": 300,
+       "timestamp": 4117.300000000745
+      },
+      {
+       "globalBatchCount": 0,
+       "msSinceLastMutation": 300,
+       "timestamp": 4117.4000000003725
+      }
+     ]
+    },
+    "windowId": "ev-evt-pmt86rio4-5"
+   },
+   "businessMeaning": "Expander on \"Section One\"",
+   "componentFramework": "Generic",
+   "componentType": "Generic",
+   "endState": "completed",
+   "endTime": 1787633389638,
+   "interactionId": "int-2",
+   "lifecycleId": "lc-2",
+   "memberEvents": [
+    {
+     "altKey": false,
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "captureSeq": 3808.600000000559,
+     "checkedAfter": null,
+     "checkedBefore": null,
+     "clientX": 87,
+     "clientY": 148,
+     "code": null,
+     "ctrlKey": false,
+     "domContext": {
+      "ancestorClasses": [
+       "panel",
+       "",
+       ""
+      ],
+      "ancestorRoles": [
+       "div",
+       "body",
+       "html"
+      ],
+      "ariaExpanded": false,
+      "ariaHasPopup": null,
+      "clickHandler": false,
+      "disabled": false,
+      "inputType": null,
+      "isContentEditable": false,
+      "pointerCursor": true,
+      "readOnly": false,
+      "required": false,
+      "tabIndex": 0
+     },
+     "eventId": "evt-pmt86rio4-5",
+     "eventType": "click",
+     "isTrusted": true,
+     "key": null,
+     "metaKey": false,
+     "pageTitle": "Expander Validation — Generic Accordion",
+     "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+     "scrollDeltaX": null,
+     "scrollDeltaY": null,
+     "shiftKey": false,
+     "target": {
+      "accessibleName": "Section One",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "ariaRole": "button",
+      "autoId": null,
+      "className": "head btn",
+      "cssSelector": "#s1",
+      "dataAutoId": null,
+      "dataCy": null,
+      "dataQa": null,
+      "elementId": "",
+      "href": null,
+      "inIframe": false,
+      "inputType": null,
+      "name": null,
+      "placeholder": null,
+      "shadowDom": false,
+      "stableId": "s1",
+      "tag": "BUTTON",
+      "testId": null,
+      "xPath": "//button[@id='s1']"
+     },
+     "timestamp": 1787633389638,
+     "valueAfter": null,
+     "valueBefore": null
+    }
+   ],
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 555276326
+    },
+    "clientX": 87,
+    "clientY": 148,
+    "expandedAtTrigger": false,
+    "targetName": "Section One",
+    "targetRole": "button",
+    "targetTag": "BUTTON"
+   },
+   "startTime": 1787633389638,
+   "trigger": {
+    "accessibleName": "Section One",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "button",
+    "autoId": null,
+    "className": "head btn",
+    "cssSelector": "#s1",
+    "dataAutoId": null,
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": null,
+    "name": null,
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": "s1",
+    "tag": "BUTTON",
+    "testId": null,
+    "xPath": "//button[@id='s1']"
+   },
+   "triggerEvent": {
+    "altKey": false,
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 555276326
+    },
+    "captureSeq": 3808.600000000559,
+    "checkedAfter": null,
+    "checkedBefore": null,
+    "clientX": 87,
+    "clientY": 148,
+    "code": null,
+    "ctrlKey": false,
+    "domContext": {
+     "ancestorClasses": [
+      "panel",
+      "",
+      ""
+     ],
+     "ancestorRoles": [
+      "div",
+      "body",
+      "html"
+     ],
+     "ariaExpanded": false,
+     "ariaHasPopup": null,
+     "clickHandler": false,
+     "disabled": false,
+     "inputType": null,
+     "isContentEditable": false,
+     "pointerCursor": true,
+     "readOnly": false,
+     "required": false,
+     "tabIndex": 0
+    },
+    "eventId": "evt-pmt86rio4-5",
+    "eventType": "click",
+    "isTrusted": true,
+    "key": null,
+    "metaKey": false,
+    "pageTitle": "Expander Validation — Generic Accordion",
+    "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+    "scrollDeltaX": null,
+    "scrollDeltaY": null,
+    "shiftKey": false,
+    "target": {
+     "accessibleName": "Section One",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": "button",
+     "autoId": null,
+     "className": "head btn",
+     "cssSelector": "#s1",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s1",
+     "tag": "BUTTON",
+     "testId": null,
+     "xPath": "//button[@id='s1']"
+    },
+    "timestamp": 1787633389638,
+    "valueAfter": null,
+    "valueBefore": null
+   },
+   "type": "Expander"
+  },
+  {
+   "behavioralEvidence": {
+    "applicationEvidence": {
+     "coarseMode": false,
+     "domChangeOverflow": 0,
+     "domChanges": [
+      {
+       "addedNodesCount": 0,
+       "attributeDeltas": {
+        "aria-expanded": {
+         "new": "true",
+         "old": "false"
+        }
+       },
+       "changedAttributes": [
+        "aria-expanded"
+       ],
+       "characterDataDelta": null,
+       "firstBatchIndex": 1,
+       "firstMutationAt": 912.6000000005588,
+       "lastBatchIndex": 1,
+       "lastMutationAt": 912.6000000005588,
+       "rawMutationCount": 1,
+       "removedNodesCount": 0,
+       "shadowContext": null,
+       "targetPath": "body > div > div#s2",
+       "targetTag": "div",
+       "types": [
+        "attributes"
+       ]
+      },
+      {
+       "addedNodesCount": 0,
+       "attributeDeltas": {
+        "class": {
+         "new": "body open",
+         "old": "body"
+        }
+       },
+       "changedAttributes": [
+        "class"
+       ],
+       "characterDataDelta": null,
+       "firstBatchIndex": 1,
+       "firstMutationAt": 912.6000000005588,
+       "lastBatchIndex": 1,
+       "lastMutationAt": 912.6000000005588,
+       "rawMutationCount": 1,
+       "removedNodesCount": 0,
+       "shadowContext": null,
+       "targetPath": "body > div > div#b2",
+       "targetTag": "div",
+       "types": [
+        "attributes"
+       ]
+      }
+     ],
+     "navigation": [],
+     "networkActivity": [],
+     "newSurfaces": [],
+     "performanceCondition": {
+      "highChurnMode": false,
+      "longestBatchMs": 0.2999999998137355,
+      "mainThreadBlocked": false,
+      "totalBatches": 2
+     },
+     "removedSurfaces": [],
+     "visibilityChanges": []
+    },
+    "frameId": "main",
+    "sourceEventId": "evt-pmt86rio4-13",
+    "sourceEventType": "click",
+    "targetEvidence": {
+     "after": {
+      "ariaChecked": null,
+      "ariaExpanded": true,
+      "ariaPressed": null,
+      "capturedAt": 5030.800000000745,
+      "checked": null,
+      "childCount": 0,
+      "className": "head",
+      "controlledValue": "Second section body.",
+      "disabled": false,
+      "scrollLeft": null,
+      "scrollTop": null,
+      "selectedValues": null,
+      "textContent": "Section Two",
+      "value": null
+     },
+     "before": {
+      "ariaChecked": null,
+      "ariaExpanded": false,
+      "ariaPressed": null,
+      "capturedAt": 4720.200000000186,
+      "checked": null,
+      "childCount": 0,
+      "className": "head",
+      "controlledValue": "Second section body.",
+      "disabled": false,
+      "scrollLeft": null,
+      "scrollTop": null,
+      "selectedValues": null,
+      "textContent": "Section Two",
+      "value": null
+     },
+     "focusMovement": {
+      "after": {
+       "accessibleName": "Section Two",
+       "ariaRole": "button",
+       "tagName": "DIV"
+      },
+      "before": null,
+      "detectedAt": 5030.9000000003725
+     },
+     "identity": {
+      "accessibleName": "Section Two",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "ariaRole": "button",
+      "autoId": null,
+      "className": "head",
+      "cssSelector": "#s2",
+      "dataAutoId": null,
+      "dataCy": null,
+      "dataQa": null,
+      "elementId": "",
+      "href": null,
+      "inIframe": false,
+      "inputType": null,
+      "name": null,
+      "placeholder": null,
+      "shadowDom": false,
+      "stableId": "s2",
+      "tag": "DIV",
+      "testId": null,
+      "xPath": "//div[@id='s2']"
+     },
+     "identityCapturedAt": 4723.700000000186
+    },
+    "window": {
+     "closedAt": 5030.9000000003725,
+     "durationMs": 307.20000000018626,
+     "endReason": "consequence-settled",
+     "openedAt": 4723.700000000186,
+     "stabilityTrace": [
+      {
+       "globalBatchCount": 0,
+       "msSinceLastMutation": 300,
+       "timestamp": 4723.700000000186
+      },
+      {
+       "globalBatchCount": 0,
+       "msSinceLastMutation": 0,
+       "timestamp": 4723.9000000003725
+      },
+      {
+       "globalBatchCount": 0,
+       "msSinceLastMutation": 300,
+       "timestamp": 5030.600000000559
+      },
+      {
+       "globalBatchCount": 0,
+       "msSinceLastMutation": 300,
+       "timestamp": 5030.600000000559
+      }
+     ]
+    },
+    "windowId": "ev-evt-pmt86rio4-13"
+   },
+   "businessMeaning": "Expander on \"Section Two\"",
+   "componentFramework": "Generic",
+   "componentType": "Generic",
+   "endState": "completed",
+   "endTime": 1787633390551,
+   "interactionId": "int-4",
+   "lifecycleId": "lc-4",
+   "memberEvents": [
+    {
+     "altKey": false,
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "captureSeq": 4723.300000000745,
+     "checkedAfter": null,
+     "checkedBefore": null,
+     "clientX": 289,
+     "clientY": 276,
+     "code": null,
+     "ctrlKey": false,
+     "domContext": {
+      "ancestorClasses": [
+       "panel",
+       "",
+       ""
+      ],
+      "ancestorRoles": [
+       "div",
+       "body",
+       "html"
+      ],
+      "ariaExpanded": false,
+      "ariaHasPopup": null,
+      "clickHandler": false,
+      "disabled": false,
+      "inputType": null,
+      "isContentEditable": false,
+      "pointerCursor": true,
+      "readOnly": false,
+      "required": false,
+      "tabIndex": 0
+     },
+     "eventId": "evt-pmt86rio4-13",
+     "eventType": "click",
+     "isTrusted": true,
+     "key": null,
+     "metaKey": false,
+     "pageTitle": "Expander Validation — Generic Accordion",
+     "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+     "scrollDeltaX": null,
+     "scrollDeltaY": null,
+     "shiftKey": false,
+     "target": {
+      "accessibleName": "Section Two",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "ariaRole": "button",
+      "autoId": null,
+      "className": "head",
+      "cssSelector": "#s2",
+      "dataAutoId": null,
+      "dataCy": null,
+      "dataQa": null,
+      "elementId": "",
+      "href": null,
+      "inIframe": false,
+      "inputType": null,
+      "name": null,
+      "placeholder": null,
+      "shadowDom": false,
+      "stableId": "s2",
+      "tag": "DIV",
+      "testId": null,
+      "xPath": "//div[@id='s2']"
+     },
+     "timestamp": 1787633390551,
+     "valueAfter": null,
+     "valueBefore": null
+    }
+   ],
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 555276326
+    },
+    "clientX": 289,
+    "clientY": 276,
+    "expandedAtTrigger": false,
+    "targetName": "Section Two",
+    "targetRole": "button",
+    "targetTag": "DIV"
+   },
+   "startTime": 1787633390551,
+   "trigger": {
+    "accessibleName": "Section Two",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": "button",
+    "autoId": null,
+    "className": "head",
+    "cssSelector": "#s2",
+    "dataAutoId": null,
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": null,
+    "name": null,
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": "s2",
+    "tag": "DIV",
+    "testId": null,
+    "xPath": "//div[@id='s2']"
+   },
+   "triggerEvent": {
+    "altKey": false,
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 555276326
+    },
+    "captureSeq": 4723.300000000745,
+    "checkedAfter": null,
+    "checkedBefore": null,
+    "clientX": 289,
+    "clientY": 276,
+    "code": null,
+    "ctrlKey": false,
+    "domContext": {
+     "ancestorClasses": [
+      "panel",
+      "",
+      ""
+     ],
+     "ancestorRoles": [
+      "div",
+      "body",
+      "html"
+     ],
+     "ariaExpanded": false,
+     "ariaHasPopup": null,
+     "clickHandler": false,
+     "disabled": false,
+     "inputType": null,
+     "isContentEditable": false,
+     "pointerCursor": true,
+     "readOnly": false,
+     "required": false,
+     "tabIndex": 0
+    },
+    "eventId": "evt-pmt86rio4-13",
+    "eventType": "click",
+    "isTrusted": true,
+    "key": null,
+    "metaKey": false,
+    "pageTitle": "Expander Validation — Generic Accordion",
+    "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+    "scrollDeltaX": null,
+    "scrollDeltaY": null,
+    "shiftKey": false,
+    "target": {
+     "accessibleName": "Section Two",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": "button",
+     "autoId": null,
+     "className": "head",
+     "cssSelector": "#s2",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s2",
+     "tag": "DIV",
+     "testId": null,
+     "xPath": "//div[@id='s2']"
+    },
+    "timestamp": 1787633390551,
+    "valueAfter": null,
+    "valueBefore": null
+   },
+   "type": "Expander"
+  },
+  {
+   "behavioralEvidence": {
+    "applicationEvidence": {
+     "coarseMode": false,
+     "domChangeOverflow": 0,
+     "domChanges": [
+      {
+       "addedNodesCount": 0,
+       "attributeDeltas": {
+        "aria-expanded": {
+         "new": "true",
+         "old": "false"
+        }
+       },
+       "changedAttributes": [
+        "aria-expanded"
+       ],
+       "characterDataDelta": null,
+       "firstBatchIndex": 2,
+       "firstMutationAt": 1825.2999999998137,
+       "lastBatchIndex": 2,
+       "lastMutationAt": 1825.2999999998137,
+       "rawMutationCount": 1,
+       "removedNodesCount": 0,
+       "shadowContext": null,
+       "targetPath": "body > div > div#s3",
+       "targetTag": "div",
+       "types": [
+        "attributes"
+       ]
+      },
+      {
+       "addedNodesCount": 0,
+       "attributeDeltas": {
+        "class": {
+         "new": "body open",
+         "old": "body"
+        }
+       },
+       "changedAttributes": [
+        "class"
+       ],
+       "characterDataDelta": null,
+       "firstBatchIndex": 2,
+       "firstMutationAt": 1825.2999999998137,
+       "lastBatchIndex": 2,
+       "lastMutationAt": 1825.2999999998137,
+       "rawMutationCount": 1,
+       "removedNodesCount": 0,
+       "shadowContext": null,
+       "targetPath": "body > div > div#b3",
+       "targetTag": "div",
+       "types": [
+        "attributes"
+       ]
+      }
+     ],
+     "navigation": [],
+     "networkActivity": [],
+     "newSurfaces": [],
+     "performanceCondition": {
+      "highChurnMode": false,
+      "longestBatchMs": 0.2999999998137355,
+      "mainThreadBlocked": false,
+      "totalBatches": 3
+     },
+     "removedSurfaces": [],
+     "visibilityChanges": []
+    },
+    "frameId": "main",
+    "sourceEventId": "evt-pmt86rio4-22",
+    "sourceEventType": "click",
+    "targetEvidence": {
+     "after": {
+      "ariaChecked": null,
+      "ariaExpanded": true,
+      "ariaPressed": null,
+      "capturedAt": 5943.4000000003725,
+      "checked": null,
+      "childCount": 0,
+      "className": "head",
+      "controlledValue": "Third section body.",
+      "disabled": false,
+      "scrollLeft": null,
+      "scrollTop": null,
+      "selectedValues": null,
+      "textContent": "Section Three",
+      "value": null
+     },
+     "before": {
+      "ariaChecked": null,
+      "ariaExpanded": false,
+      "ariaPressed": null,
+      "capturedAt": 5632.9000000003725,
+      "checked": null,
+      "childCount": 0,
+      "className": "head",
+      "controlledValue": "Third section body.",
+      "disabled": false,
+      "scrollLeft": null,
+      "scrollTop": null,
+      "selectedValues": null,
+      "textContent": "Section Three",
+      "value": null
+     },
+     "focusMovement": null,
+     "identity": {
+      "accessibleName": "Section Three",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "ariaRole": null,
+      "autoId": null,
+      "className": "head",
+      "cssSelector": "#s3",
+      "dataAutoId": null,
+      "dataCy": null,
+      "dataQa": null,
+      "elementId": "",
+      "href": null,
+      "inIframe": false,
+      "inputType": null,
+      "name": null,
+      "placeholder": null,
+      "shadowDom": false,
+      "stableId": "s3",
+      "tag": "DIV",
+      "testId": null,
+      "xPath": "//div[@id='s3']"
+     },
+     "identityCapturedAt": 5636.4000000003725
+    },
+    "window": {
+     "closedAt": 5943.600000000559,
+     "durationMs": 307.20000000018626,
+     "endReason": "consequence-settled",
+     "openedAt": 5636.4000000003725,
+     "stabilityTrace": [
+      {
+       "globalBatchCount": 0,
+       "msSinceLastMutation": 300,
+       "timestamp": 5636.4000000003725
+      },
+      {
+       "globalBatchCount": 0,
+       "msSinceLastMutation": 0,
+       "timestamp": 5636.5
+      },
+      {
+       "globalBatchCount": 0,
+       "msSinceLastMutation": 300,
+       "timestamp": 5943.200000000186
+      },
+      {
+       "globalBatchCount": 0,
+       "msSinceLastMutation": 300,
+       "timestamp": 5943.300000000745
+      }
+     ]
+    },
+    "windowId": "ev-evt-pmt86rio4-22"
+   },
+   "businessMeaning": "Expander on \"Section Three\"",
+   "componentFramework": "Generic",
+   "componentType": "Generic",
+   "endState": "completed",
+   "endTime": 1787633391463,
+   "interactionId": "int-5",
+   "lifecycleId": "lc-5",
+   "memberEvents": [
+    {
+     "altKey": false,
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "captureSeq": 5635.4000000003725,
+     "checkedAfter": null,
+     "checkedBefore": null,
+     "clientX": 289,
+     "clientY": 382,
+     "code": null,
+     "ctrlKey": false,
+     "domContext": {
+      "ancestorClasses": [
+       "panel",
+       "",
+       ""
+      ],
+      "ancestorRoles": [
+       "div",
+       "body",
+       "html"
+      ],
+      "ariaExpanded": false,
+      "ariaHasPopup": null,
+      "clickHandler": false,
+      "disabled": false,
+      "inputType": null,
+      "isContentEditable": false,
+      "pointerCursor": true,
+      "readOnly": false,
+      "required": false,
+      "tabIndex": -1
+     },
+     "eventId": "evt-pmt86rio4-22",
+     "eventType": "click",
+     "isTrusted": true,
+     "key": null,
+     "metaKey": false,
+     "pageTitle": "Expander Validation — Generic Accordion",
+     "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+     "scrollDeltaX": null,
+     "scrollDeltaY": null,
+     "shiftKey": false,
+     "target": {
+      "accessibleName": "Section Three",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "ariaRole": null,
+      "autoId": null,
+      "className": "head",
+      "cssSelector": "#s3",
+      "dataAutoId": null,
+      "dataCy": null,
+      "dataQa": null,
+      "elementId": "",
+      "href": null,
+      "inIframe": false,
+      "inputType": null,
+      "name": null,
+      "placeholder": null,
+      "shadowDom": false,
+      "stableId": "s3",
+      "tag": "DIV",
+      "testId": null,
+      "xPath": "//div[@id='s3']"
+     },
+     "timestamp": 1787633391463,
+     "valueAfter": null,
+     "valueBefore": null
+    }
+   ],
+   "metadata": {
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 555276326
+    },
+    "clientX": 289,
+    "clientY": 382,
+    "expandedAtTrigger": false,
+    "targetName": "Section Three",
+    "targetRole": null,
+    "targetTag": "DIV"
+   },
+   "startTime": 1787633391463,
+   "trigger": {
+    "accessibleName": "Section Three",
+    "ariaLabel": null,
+    "ariaLabelledBy": null,
+    "ariaRole": null,
+    "autoId": null,
+    "className": "head",
+    "cssSelector": "#s3",
+    "dataAutoId": null,
+    "dataCy": null,
+    "dataQa": null,
+    "elementId": "",
+    "href": null,
+    "inIframe": false,
+    "inputType": null,
+    "name": null,
+    "placeholder": null,
+    "shadowDom": false,
+    "stableId": "s3",
+    "tag": "DIV",
+    "testId": null,
+    "xPath": "//div[@id='s3']"
+   },
+   "triggerEvent": {
+    "altKey": false,
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 555276326
+    },
+    "captureSeq": 5635.4000000003725,
+    "checkedAfter": null,
+    "checkedBefore": null,
+    "clientX": 289,
+    "clientY": 382,
+    "code": null,
+    "ctrlKey": false,
+    "domContext": {
+     "ancestorClasses": [
+      "panel",
+      "",
+      ""
+     ],
+     "ancestorRoles": [
+      "div",
+      "body",
+      "html"
+     ],
+     "ariaExpanded": false,
+     "ariaHasPopup": null,
+     "clickHandler": false,
+     "disabled": false,
+     "inputType": null,
+     "isContentEditable": false,
+     "pointerCursor": true,
+     "readOnly": false,
+     "required": false,
+     "tabIndex": -1
+    },
+    "eventId": "evt-pmt86rio4-22",
+    "eventType": "click",
+    "isTrusted": true,
+    "key": null,
+    "metaKey": false,
+    "pageTitle": "Expander Validation — Generic Accordion",
+    "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+    "scrollDeltaX": null,
+    "scrollDeltaY": null,
+    "shiftKey": false,
+    "target": {
+     "accessibleName": "Section Three",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": null,
+     "autoId": null,
+     "className": "head",
+     "cssSelector": "#s3",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s3",
+     "tag": "DIV",
+     "testId": null,
+     "xPath": "//div[@id='s3']"
+    },
+    "timestamp": 1787633391463,
+    "valueAfter": null,
+    "valueBefore": null
+   },
+   "type": "Expander"
+  }
+ ],
+ "cmdrunner_net_last_action": {},
+ "cmdrunner_net_observing_tabs": [],
+ "cmdrunner_pending_nav_docs": {},
+ "cmdrunner_recording_active": false,
+ "cmdrunner_runtime_snapshot": {
+  "dedupRecords": [
+   {
+    "elementKey": "id:s2",
+    "endTime": 1787633390551,
+    "metadata": {
+     "confidence": 0,
+     "dwellMs": 0,
+     "evidenceReason": null,
+     "meaningful": false,
+     "targetName": "Section Two"
+    },
+    "type": "Hover"
+   },
+   {
+    "elementKey": "id:s3",
+    "endTime": 1787633391463,
+    "metadata": {
+     "clientX": 289,
+     "clientY": 382,
+     "expandedAtTrigger": false,
+     "targetName": "Section Three",
+     "targetRole": null,
+     "targetTag": "DIV"
+    },
+    "type": "Expander"
+   }
+  ],
+  "interactionCounter": 5,
+  "seenEventIds": [
+   "evt-pmt86rio4-1",
+   "evt-pmt86rio4-2",
+   "evt-pmt86rio4-3",
+   "evt-pmt86rio4-4",
+   "evt-pmt86rio4-5",
+   "evt-pmt86rio4-6",
+   "evt-pmt86rio4-7",
+   "evt-pmt86rio4-8",
+   "evt-pmt86rio4-9",
+   "evt-pmt86rio4-10",
+   "evt-pmt86rio4-11",
+   "evt-pmt86rio4-12",
+   "evt-pmt86rio4-13",
+   "evt-pmt86rio4-14",
+   "evt-pmt86rio4-15",
+   "evt-pmt86rio4-16",
+   "evt-pmt86rio4-17",
+   "evt-pmt86rio4-18",
+   "evt-pmt86rio4-19",
+   "evt-pmt86rio4-20",
+   "evt-pmt86rio4-21",
+   "evt-pmt86rio4-22"
+  ]
+ },
+ "cmdrunner_verification_result": {
+  "differences": [],
+  "ledgerSnapshot": [
+   {
+    "ancestorClasses": [
+     "panel",
+     "",
+     ""
+    ],
+    "ancestorRoles": [
+     "div",
+     "body",
+     "html"
+    ],
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 555276326
+    },
+    "captureSeq": 3802.7000000001863,
+    "disposition": "pending",
+    "eventId": "evt-pmt86rio4-3",
+    "eventType": "mousedown",
+    "pageId": "pmt86rio4",
+    "targetIdentity": {
+     "accessibleName": "Section One",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": "button",
+     "autoId": null,
+     "className": "head btn",
+     "cssSelector": "#s1",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s1",
+     "tag": "BUTTON",
+     "testId": null,
+     "xPath": "//button[@id='s1']"
+    },
+    "targetName": "Section One",
+    "targetRole": "button",
+    "targetTag": "BUTTON",
+    "timestamp": 1787633389634
+   },
+   {
+    "ancestorClasses": [
+     "panel",
+     "",
+     ""
+    ],
+    "ancestorRoles": [
+     "div",
+     "body",
+     "html"
+    ],
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 555276326
+    },
+    "captureSeq": 3808.600000000559,
+    "claimType": "Expander",
+    "claimedBy": "int-2",
+    "disposition": "claimed",
+    "eventId": "evt-pmt86rio4-5",
+    "eventType": "click",
+    "pageId": "pmt86rio4",
+    "targetIdentity": {
+     "accessibleName": "Section One",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": "button",
+     "autoId": null,
+     "className": "head btn",
+     "cssSelector": "#s1",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s1",
+     "tag": "BUTTON",
+     "testId": null,
+     "xPath": "//button[@id='s1']"
+    },
+    "targetName": "Section One",
+    "targetRole": "button",
+    "targetTag": "BUTTON",
+    "timestamp": 1787633389638
+   },
+   {
+    "ancestorClasses": [
+     "panel",
+     "",
+     ""
+    ],
+    "ancestorRoles": [
+     "div",
+     "body",
+     "html"
+    ],
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 555276326
+    },
+    "captureSeq": 4717.700000000186,
+    "disposition": "pending",
+    "eventId": "evt-pmt86rio4-10",
+    "eventType": "mousedown",
+    "pageId": "pmt86rio4",
+    "targetIdentity": {
+     "accessibleName": "Section Two",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": "button",
+     "autoId": null,
+     "className": "head",
+     "cssSelector": "#s2",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s2",
+     "tag": "DIV",
+     "testId": null,
+     "xPath": "//div[@id='s2']"
+    },
+    "targetName": "Section Two",
+    "targetRole": "button",
+    "targetTag": "DIV",
+    "timestamp": 1787633390547
+   },
+   {
+    "ancestorClasses": [
+     "panel",
+     "",
+     ""
+    ],
+    "ancestorRoles": [
+     "div",
+     "body",
+     "html"
+    ],
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 555276326
+    },
+    "captureSeq": 4723.300000000745,
+    "claimType": "Expander",
+    "claimedBy": "int-4",
+    "disposition": "claimed",
+    "eventId": "evt-pmt86rio4-13",
+    "eventType": "click",
+    "pageId": "pmt86rio4",
+    "targetIdentity": {
+     "accessibleName": "Section Two",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": "button",
+     "autoId": null,
+     "className": "head",
+     "cssSelector": "#s2",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s2",
+     "tag": "DIV",
+     "testId": null,
+     "xPath": "//div[@id='s2']"
+    },
+    "targetName": "Section Two",
+    "targetRole": "button",
+    "targetTag": "DIV",
+    "timestamp": 1787633390551
+   },
+   {
+    "ancestorClasses": [
+     "panel",
+     "",
+     ""
+    ],
+    "ancestorRoles": [
+     "div",
+     "body",
+     "html"
+    ],
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 555276326
+    },
+    "captureSeq": 5630.200000000186,
+    "disposition": "pending",
+    "eventId": "evt-pmt86rio4-20",
+    "eventType": "mousedown",
+    "pageId": "pmt86rio4",
+    "targetIdentity": {
+     "accessibleName": "Section Three",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": null,
+     "autoId": null,
+     "className": "head",
+     "cssSelector": "#s3",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s3",
+     "tag": "DIV",
+     "testId": null,
+     "xPath": "//div[@id='s3']"
+    },
+    "targetName": "Section Three",
+    "targetRole": null,
+    "targetTag": "DIV",
+    "timestamp": 1787633391460
+   },
+   {
+    "ancestorClasses": [
+     "panel",
+     "",
+     ""
+    ],
+    "ancestorRoles": [
+     "div",
+     "body",
+     "html"
+    ],
+    "captureOrigin": {
+     "frameId": 0,
+     "tabId": 555276326
+    },
+    "captureSeq": 5635.4000000003725,
+    "claimType": "Expander",
+    "claimedBy": "int-5",
+    "disposition": "claimed",
+    "eventId": "evt-pmt86rio4-22",
+    "eventType": "click",
+    "pageId": "pmt86rio4",
+    "targetIdentity": {
+     "accessibleName": "Section Three",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": null,
+     "autoId": null,
+     "className": "head",
+     "cssSelector": "#s3",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s3",
+     "tag": "DIV",
+     "testId": null,
+     "xPath": "//div[@id='s3']"
+    },
+    "targetName": "Section Three",
+    "targetRole": null,
+    "targetTag": "DIV",
+    "timestamp": 1787633391463
+   }
+  ],
+  "match": true,
+  "projectedOutput": [
+   {
+    "behavioralEvidence": {
+     "applicationEvidence": {
+      "coarseMode": false,
+      "domChangeOverflow": 0,
+      "domChanges": [
+       {
+        "addedNodesCount": 0,
+        "attributeDeltas": {
+         "aria-expanded": {
+          "new": "true",
+          "old": "false"
+         }
+        },
+        "changedAttributes": [
+         "aria-expanded"
+        ],
+        "characterDataDelta": null,
+        "firstBatchIndex": 0,
+        "firstMutationAt": 0.7000000001862645,
+        "lastBatchIndex": 0,
+        "lastMutationAt": 0.7000000001862645,
+        "rawMutationCount": 1,
+        "removedNodesCount": 0,
+        "shadowContext": null,
+        "targetPath": "body > div > button#s1",
+        "targetTag": "button",
+        "types": [
+         "attributes"
+        ]
+       },
+       {
+        "addedNodesCount": 0,
+        "attributeDeltas": {
+         "class": {
+          "new": "body open",
+          "old": "body"
+         }
+        },
+        "changedAttributes": [
+         "class"
+        ],
+        "characterDataDelta": null,
+        "firstBatchIndex": 0,
+        "firstMutationAt": 0.7000000001862645,
+        "lastBatchIndex": 0,
+        "lastMutationAt": 0.7000000001862645,
+        "rawMutationCount": 1,
+        "removedNodesCount": 0,
+        "shadowContext": null,
+        "targetPath": "body > div > div#b1",
+        "targetTag": "div",
+        "types": [
+         "attributes"
+        ]
+       }
+      ],
+      "navigation": [],
+      "networkActivity": [],
+      "newSurfaces": [],
+      "performanceCondition": {
+       "highChurnMode": false,
+       "longestBatchMs": 0.2999999998137355,
+       "mainThreadBlocked": false,
+       "totalBatches": 1
+      },
+      "removedSurfaces": [],
+      "visibilityChanges": []
+     },
+     "frameId": "main",
+     "sourceEventId": "evt-pmt86rio4-5",
+     "sourceEventType": "click",
+     "targetEvidence": {
+      "after": {
+       "ariaChecked": null,
+       "ariaExpanded": true,
+       "ariaPressed": null,
+       "capturedAt": 4117.800000000745,
+       "checked": null,
+       "childCount": 0,
+       "className": "head btn",
+       "controlledValue": "First section body.",
+       "disabled": false,
+       "scrollLeft": null,
+       "scrollTop": null,
+       "selectedValues": null,
+       "textContent": "Section One",
+       "value": null
+      },
+      "before": {
+       "ariaChecked": null,
+       "ariaExpanded": false,
+       "ariaPressed": null,
+       "capturedAt": 3807.100000000559,
+       "checked": null,
+       "childCount": 0,
+       "className": "head btn",
+       "controlledValue": "First section body.",
+       "disabled": false,
+       "scrollLeft": null,
+       "scrollTop": null,
+       "selectedValues": null,
+       "textContent": "Section One",
+       "value": null
+      },
+      "focusMovement": {
+       "after": {
+        "accessibleName": "Section One",
+        "ariaRole": null,
+        "tagName": "BUTTON"
+       },
+       "before": null,
+       "detectedAt": 4118.600000000559
+      },
+      "identity": {
+       "accessibleName": "Section One",
+       "ariaLabel": null,
+       "ariaLabelledBy": null,
+       "ariaRole": "button",
+       "autoId": null,
+       "className": "head btn",
+       "cssSelector": "#s1",
+       "dataAutoId": null,
+       "dataCy": null,
+       "dataQa": null,
+       "elementId": "",
+       "href": null,
+       "inIframe": false,
+       "inputType": null,
+       "name": null,
+       "placeholder": null,
+       "shadowDom": false,
+       "stableId": "s1",
+       "tag": "BUTTON",
+       "testId": null,
+       "xPath": "//button[@id='s1']"
+      },
+      "identityCapturedAt": 3811.600000000559
+     },
+     "window": {
+      "closedAt": 4118.700000000186,
+      "durationMs": 307.09999999962747,
+      "endReason": "consequence-settled",
+      "openedAt": 3811.600000000559,
+      "stabilityTrace": [
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 300,
+        "timestamp": 3811.7000000001863
+       },
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 0,
+        "timestamp": 3812.300000000745
+       },
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 300,
+        "timestamp": 4117.300000000745
+       },
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 300,
+        "timestamp": 4117.4000000003725
+       }
+      ]
+     },
+     "windowId": "ev-evt-pmt86rio4-5"
+    },
+    "businessMeaning": "Expander on \"Section One\"",
+    "componentFramework": "Generic",
+    "componentType": "Generic",
+    "endState": "completed",
+    "endTime": 1787633389638,
+    "interactionId": "int-2",
+    "lifecycleId": "lc-2",
+    "memberEvents": [
+     {
+      "altKey": false,
+      "captureOrigin": {
+       "frameId": 0,
+       "tabId": 555276326
+      },
+      "captureSeq": 3808.600000000559,
+      "checkedAfter": null,
+      "checkedBefore": null,
+      "clientX": 87,
+      "clientY": 148,
+      "code": null,
+      "ctrlKey": false,
+      "domContext": {
+       "ancestorClasses": [
+        "panel",
+        "",
+        ""
+       ],
+       "ancestorRoles": [
+        "div",
+        "body",
+        "html"
+       ],
+       "ariaExpanded": false,
+       "ariaHasPopup": null,
+       "clickHandler": false,
+       "disabled": false,
+       "inputType": null,
+       "isContentEditable": false,
+       "pointerCursor": true,
+       "readOnly": false,
+       "required": false,
+       "tabIndex": 0
+      },
+      "eventId": "evt-pmt86rio4-5",
+      "eventType": "click",
+      "isTrusted": true,
+      "key": null,
+      "metaKey": false,
+      "pageTitle": "Expander Validation — Generic Accordion",
+      "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+      "scrollDeltaX": null,
+      "scrollDeltaY": null,
+      "shiftKey": false,
+      "target": {
+       "accessibleName": "Section One",
+       "ariaLabel": null,
+       "ariaLabelledBy": null,
+       "ariaRole": "button",
+       "autoId": null,
+       "className": "head btn",
+       "cssSelector": "#s1",
+       "dataAutoId": null,
+       "dataCy": null,
+       "dataQa": null,
+       "elementId": "",
+       "href": null,
+       "inIframe": false,
+       "inputType": null,
+       "name": null,
+       "placeholder": null,
+       "shadowDom": false,
+       "stableId": "s1",
+       "tag": "BUTTON",
+       "testId": null,
+       "xPath": "//button[@id='s1']"
+      },
+      "timestamp": 1787633389638,
+      "valueAfter": null,
+      "valueBefore": null
+     }
+    ],
+    "metadata": {
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "clientX": 87,
+     "clientY": 148,
+     "expandedAtTrigger": false,
+     "targetName": "Section One",
+     "targetRole": "button",
+     "targetTag": "BUTTON"
+    },
+    "startTime": 1787633389638,
+    "trigger": {
+     "accessibleName": "Section One",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": "button",
+     "autoId": null,
+     "className": "head btn",
+     "cssSelector": "#s1",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s1",
+     "tag": "BUTTON",
+     "testId": null,
+     "xPath": "//button[@id='s1']"
+    },
+    "triggerEvent": {
+     "altKey": false,
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "captureSeq": 3808.600000000559,
+     "checkedAfter": null,
+     "checkedBefore": null,
+     "clientX": 87,
+     "clientY": 148,
+     "code": null,
+     "ctrlKey": false,
+     "domContext": {
+      "ancestorClasses": [
+       "panel",
+       "",
+       ""
+      ],
+      "ancestorRoles": [
+       "div",
+       "body",
+       "html"
+      ],
+      "ariaExpanded": false,
+      "ariaHasPopup": null,
+      "clickHandler": false,
+      "disabled": false,
+      "inputType": null,
+      "isContentEditable": false,
+      "pointerCursor": true,
+      "readOnly": false,
+      "required": false,
+      "tabIndex": 0
+     },
+     "eventId": "evt-pmt86rio4-5",
+     "eventType": "click",
+     "isTrusted": true,
+     "key": null,
+     "metaKey": false,
+     "pageTitle": "Expander Validation — Generic Accordion",
+     "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+     "scrollDeltaX": null,
+     "scrollDeltaY": null,
+     "shiftKey": false,
+     "target": {
+      "accessibleName": "Section One",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "ariaRole": "button",
+      "autoId": null,
+      "className": "head btn",
+      "cssSelector": "#s1",
+      "dataAutoId": null,
+      "dataCy": null,
+      "dataQa": null,
+      "elementId": "",
+      "href": null,
+      "inIframe": false,
+      "inputType": null,
+      "name": null,
+      "placeholder": null,
+      "shadowDom": false,
+      "stableId": "s1",
+      "tag": "BUTTON",
+      "testId": null,
+      "xPath": "//button[@id='s1']"
+     },
+     "timestamp": 1787633389638,
+     "valueAfter": null,
+     "valueBefore": null
+    },
+    "type": "Expander"
+   },
+   {
+    "behavioralEvidence": {
+     "applicationEvidence": {
+      "coarseMode": false,
+      "domChangeOverflow": 0,
+      "domChanges": [
+       {
+        "addedNodesCount": 0,
+        "attributeDeltas": {
+         "aria-expanded": {
+          "new": "true",
+          "old": "false"
+         }
+        },
+        "changedAttributes": [
+         "aria-expanded"
+        ],
+        "characterDataDelta": null,
+        "firstBatchIndex": 1,
+        "firstMutationAt": 912.6000000005588,
+        "lastBatchIndex": 1,
+        "lastMutationAt": 912.6000000005588,
+        "rawMutationCount": 1,
+        "removedNodesCount": 0,
+        "shadowContext": null,
+        "targetPath": "body > div > div#s2",
+        "targetTag": "div",
+        "types": [
+         "attributes"
+        ]
+       },
+       {
+        "addedNodesCount": 0,
+        "attributeDeltas": {
+         "class": {
+          "new": "body open",
+          "old": "body"
+         }
+        },
+        "changedAttributes": [
+         "class"
+        ],
+        "characterDataDelta": null,
+        "firstBatchIndex": 1,
+        "firstMutationAt": 912.6000000005588,
+        "lastBatchIndex": 1,
+        "lastMutationAt": 912.6000000005588,
+        "rawMutationCount": 1,
+        "removedNodesCount": 0,
+        "shadowContext": null,
+        "targetPath": "body > div > div#b2",
+        "targetTag": "div",
+        "types": [
+         "attributes"
+        ]
+       }
+      ],
+      "navigation": [],
+      "networkActivity": [],
+      "newSurfaces": [],
+      "performanceCondition": {
+       "highChurnMode": false,
+       "longestBatchMs": 0.2999999998137355,
+       "mainThreadBlocked": false,
+       "totalBatches": 2
+      },
+      "removedSurfaces": [],
+      "visibilityChanges": []
+     },
+     "frameId": "main",
+     "sourceEventId": "evt-pmt86rio4-13",
+     "sourceEventType": "click",
+     "targetEvidence": {
+      "after": {
+       "ariaChecked": null,
+       "ariaExpanded": true,
+       "ariaPressed": null,
+       "capturedAt": 5030.800000000745,
+       "checked": null,
+       "childCount": 0,
+       "className": "head",
+       "controlledValue": "Second section body.",
+       "disabled": false,
+       "scrollLeft": null,
+       "scrollTop": null,
+       "selectedValues": null,
+       "textContent": "Section Two",
+       "value": null
+      },
+      "before": {
+       "ariaChecked": null,
+       "ariaExpanded": false,
+       "ariaPressed": null,
+       "capturedAt": 4720.200000000186,
+       "checked": null,
+       "childCount": 0,
+       "className": "head",
+       "controlledValue": "Second section body.",
+       "disabled": false,
+       "scrollLeft": null,
+       "scrollTop": null,
+       "selectedValues": null,
+       "textContent": "Section Two",
+       "value": null
+      },
+      "focusMovement": {
+       "after": {
+        "accessibleName": "Section Two",
+        "ariaRole": "button",
+        "tagName": "DIV"
+       },
+       "before": null,
+       "detectedAt": 5030.9000000003725
+      },
+      "identity": {
+       "accessibleName": "Section Two",
+       "ariaLabel": null,
+       "ariaLabelledBy": null,
+       "ariaRole": "button",
+       "autoId": null,
+       "className": "head",
+       "cssSelector": "#s2",
+       "dataAutoId": null,
+       "dataCy": null,
+       "dataQa": null,
+       "elementId": "",
+       "href": null,
+       "inIframe": false,
+       "inputType": null,
+       "name": null,
+       "placeholder": null,
+       "shadowDom": false,
+       "stableId": "s2",
+       "tag": "DIV",
+       "testId": null,
+       "xPath": "//div[@id='s2']"
+      },
+      "identityCapturedAt": 4723.700000000186
+     },
+     "window": {
+      "closedAt": 5030.9000000003725,
+      "durationMs": 307.20000000018626,
+      "endReason": "consequence-settled",
+      "openedAt": 4723.700000000186,
+      "stabilityTrace": [
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 300,
+        "timestamp": 4723.700000000186
+       },
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 0,
+        "timestamp": 4723.9000000003725
+       },
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 300,
+        "timestamp": 5030.600000000559
+       },
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 300,
+        "timestamp": 5030.600000000559
+       }
+      ]
+     },
+     "windowId": "ev-evt-pmt86rio4-13"
+    },
+    "businessMeaning": "Expander on \"Section Two\"",
+    "componentFramework": "Generic",
+    "componentType": "Generic",
+    "endState": "completed",
+    "endTime": 1787633390551,
+    "interactionId": "int-4",
+    "lifecycleId": "lc-4",
+    "memberEvents": [
+     {
+      "altKey": false,
+      "captureOrigin": {
+       "frameId": 0,
+       "tabId": 555276326
+      },
+      "captureSeq": 4723.300000000745,
+      "checkedAfter": null,
+      "checkedBefore": null,
+      "clientX": 289,
+      "clientY": 276,
+      "code": null,
+      "ctrlKey": false,
+      "domContext": {
+       "ancestorClasses": [
+        "panel",
+        "",
+        ""
+       ],
+       "ancestorRoles": [
+        "div",
+        "body",
+        "html"
+       ],
+       "ariaExpanded": false,
+       "ariaHasPopup": null,
+       "clickHandler": false,
+       "disabled": false,
+       "inputType": null,
+       "isContentEditable": false,
+       "pointerCursor": true,
+       "readOnly": false,
+       "required": false,
+       "tabIndex": 0
+      },
+      "eventId": "evt-pmt86rio4-13",
+      "eventType": "click",
+      "isTrusted": true,
+      "key": null,
+      "metaKey": false,
+      "pageTitle": "Expander Validation — Generic Accordion",
+      "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+      "scrollDeltaX": null,
+      "scrollDeltaY": null,
+      "shiftKey": false,
+      "target": {
+       "accessibleName": "Section Two",
+       "ariaLabel": null,
+       "ariaLabelledBy": null,
+       "ariaRole": "button",
+       "autoId": null,
+       "className": "head",
+       "cssSelector": "#s2",
+       "dataAutoId": null,
+       "dataCy": null,
+       "dataQa": null,
+       "elementId": "",
+       "href": null,
+       "inIframe": false,
+       "inputType": null,
+       "name": null,
+       "placeholder": null,
+       "shadowDom": false,
+       "stableId": "s2",
+       "tag": "DIV",
+       "testId": null,
+       "xPath": "//div[@id='s2']"
+      },
+      "timestamp": 1787633390551,
+      "valueAfter": null,
+      "valueBefore": null
+     }
+    ],
+    "metadata": {
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "clientX": 289,
+     "clientY": 276,
+     "expandedAtTrigger": false,
+     "targetName": "Section Two",
+     "targetRole": "button",
+     "targetTag": "DIV"
+    },
+    "startTime": 1787633390551,
+    "trigger": {
+     "accessibleName": "Section Two",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": "button",
+     "autoId": null,
+     "className": "head",
+     "cssSelector": "#s2",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s2",
+     "tag": "DIV",
+     "testId": null,
+     "xPath": "//div[@id='s2']"
+    },
+    "triggerEvent": {
+     "altKey": false,
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "captureSeq": 4723.300000000745,
+     "checkedAfter": null,
+     "checkedBefore": null,
+     "clientX": 289,
+     "clientY": 276,
+     "code": null,
+     "ctrlKey": false,
+     "domContext": {
+      "ancestorClasses": [
+       "panel",
+       "",
+       ""
+      ],
+      "ancestorRoles": [
+       "div",
+       "body",
+       "html"
+      ],
+      "ariaExpanded": false,
+      "ariaHasPopup": null,
+      "clickHandler": false,
+      "disabled": false,
+      "inputType": null,
+      "isContentEditable": false,
+      "pointerCursor": true,
+      "readOnly": false,
+      "required": false,
+      "tabIndex": 0
+     },
+     "eventId": "evt-pmt86rio4-13",
+     "eventType": "click",
+     "isTrusted": true,
+     "key": null,
+     "metaKey": false,
+     "pageTitle": "Expander Validation — Generic Accordion",
+     "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+     "scrollDeltaX": null,
+     "scrollDeltaY": null,
+     "shiftKey": false,
+     "target": {
+      "accessibleName": "Section Two",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "ariaRole": "button",
+      "autoId": null,
+      "className": "head",
+      "cssSelector": "#s2",
+      "dataAutoId": null,
+      "dataCy": null,
+      "dataQa": null,
+      "elementId": "",
+      "href": null,
+      "inIframe": false,
+      "inputType": null,
+      "name": null,
+      "placeholder": null,
+      "shadowDom": false,
+      "stableId": "s2",
+      "tag": "DIV",
+      "testId": null,
+      "xPath": "//div[@id='s2']"
+     },
+     "timestamp": 1787633390551,
+     "valueAfter": null,
+     "valueBefore": null
+    },
+    "type": "Expander"
+   },
+   {
+    "behavioralEvidence": {
+     "applicationEvidence": {
+      "coarseMode": false,
+      "domChangeOverflow": 0,
+      "domChanges": [
+       {
+        "addedNodesCount": 0,
+        "attributeDeltas": {
+         "aria-expanded": {
+          "new": "true",
+          "old": "false"
+         }
+        },
+        "changedAttributes": [
+         "aria-expanded"
+        ],
+        "characterDataDelta": null,
+        "firstBatchIndex": 2,
+        "firstMutationAt": 1825.2999999998137,
+        "lastBatchIndex": 2,
+        "lastMutationAt": 1825.2999999998137,
+        "rawMutationCount": 1,
+        "removedNodesCount": 0,
+        "shadowContext": null,
+        "targetPath": "body > div > div#s3",
+        "targetTag": "div",
+        "types": [
+         "attributes"
+        ]
+       },
+       {
+        "addedNodesCount": 0,
+        "attributeDeltas": {
+         "class": {
+          "new": "body open",
+          "old": "body"
+         }
+        },
+        "changedAttributes": [
+         "class"
+        ],
+        "characterDataDelta": null,
+        "firstBatchIndex": 2,
+        "firstMutationAt": 1825.2999999998137,
+        "lastBatchIndex": 2,
+        "lastMutationAt": 1825.2999999998137,
+        "rawMutationCount": 1,
+        "removedNodesCount": 0,
+        "shadowContext": null,
+        "targetPath": "body > div > div#b3",
+        "targetTag": "div",
+        "types": [
+         "attributes"
+        ]
+       }
+      ],
+      "navigation": [],
+      "networkActivity": [],
+      "newSurfaces": [],
+      "performanceCondition": {
+       "highChurnMode": false,
+       "longestBatchMs": 0.2999999998137355,
+       "mainThreadBlocked": false,
+       "totalBatches": 3
+      },
+      "removedSurfaces": [],
+      "visibilityChanges": []
+     },
+     "frameId": "main",
+     "sourceEventId": "evt-pmt86rio4-22",
+     "sourceEventType": "click",
+     "targetEvidence": {
+      "after": {
+       "ariaChecked": null,
+       "ariaExpanded": true,
+       "ariaPressed": null,
+       "capturedAt": 5943.4000000003725,
+       "checked": null,
+       "childCount": 0,
+       "className": "head",
+       "controlledValue": "Third section body.",
+       "disabled": false,
+       "scrollLeft": null,
+       "scrollTop": null,
+       "selectedValues": null,
+       "textContent": "Section Three",
+       "value": null
+      },
+      "before": {
+       "ariaChecked": null,
+       "ariaExpanded": false,
+       "ariaPressed": null,
+       "capturedAt": 5632.9000000003725,
+       "checked": null,
+       "childCount": 0,
+       "className": "head",
+       "controlledValue": "Third section body.",
+       "disabled": false,
+       "scrollLeft": null,
+       "scrollTop": null,
+       "selectedValues": null,
+       "textContent": "Section Three",
+       "value": null
+      },
+      "focusMovement": null,
+      "identity": {
+       "accessibleName": "Section Three",
+       "ariaLabel": null,
+       "ariaLabelledBy": null,
+       "ariaRole": null,
+       "autoId": null,
+       "className": "head",
+       "cssSelector": "#s3",
+       "dataAutoId": null,
+       "dataCy": null,
+       "dataQa": null,
+       "elementId": "",
+       "href": null,
+       "inIframe": false,
+       "inputType": null,
+       "name": null,
+       "placeholder": null,
+       "shadowDom": false,
+       "stableId": "s3",
+       "tag": "DIV",
+       "testId": null,
+       "xPath": "//div[@id='s3']"
+      },
+      "identityCapturedAt": 5636.4000000003725
+     },
+     "window": {
+      "closedAt": 5943.600000000559,
+      "durationMs": 307.20000000018626,
+      "endReason": "consequence-settled",
+      "openedAt": 5636.4000000003725,
+      "stabilityTrace": [
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 300,
+        "timestamp": 5636.4000000003725
+       },
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 0,
+        "timestamp": 5636.5
+       },
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 300,
+        "timestamp": 5943.200000000186
+       },
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 300,
+        "timestamp": 5943.300000000745
+       }
+      ]
+     },
+     "windowId": "ev-evt-pmt86rio4-22"
+    },
+    "businessMeaning": "Expander on \"Section Three\"",
+    "componentFramework": "Generic",
+    "componentType": "Generic",
+    "endState": "completed",
+    "endTime": 1787633391463,
+    "interactionId": "int-5",
+    "lifecycleId": "lc-5",
+    "memberEvents": [
+     {
+      "altKey": false,
+      "captureOrigin": {
+       "frameId": 0,
+       "tabId": 555276326
+      },
+      "captureSeq": 5635.4000000003725,
+      "checkedAfter": null,
+      "checkedBefore": null,
+      "clientX": 289,
+      "clientY": 382,
+      "code": null,
+      "ctrlKey": false,
+      "domContext": {
+       "ancestorClasses": [
+        "panel",
+        "",
+        ""
+       ],
+       "ancestorRoles": [
+        "div",
+        "body",
+        "html"
+       ],
+       "ariaExpanded": false,
+       "ariaHasPopup": null,
+       "clickHandler": false,
+       "disabled": false,
+       "inputType": null,
+       "isContentEditable": false,
+       "pointerCursor": true,
+       "readOnly": false,
+       "required": false,
+       "tabIndex": -1
+      },
+      "eventId": "evt-pmt86rio4-22",
+      "eventType": "click",
+      "isTrusted": true,
+      "key": null,
+      "metaKey": false,
+      "pageTitle": "Expander Validation — Generic Accordion",
+      "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+      "scrollDeltaX": null,
+      "scrollDeltaY": null,
+      "shiftKey": false,
+      "target": {
+       "accessibleName": "Section Three",
+       "ariaLabel": null,
+       "ariaLabelledBy": null,
+       "ariaRole": null,
+       "autoId": null,
+       "className": "head",
+       "cssSelector": "#s3",
+       "dataAutoId": null,
+       "dataCy": null,
+       "dataQa": null,
+       "elementId": "",
+       "href": null,
+       "inIframe": false,
+       "inputType": null,
+       "name": null,
+       "placeholder": null,
+       "shadowDom": false,
+       "stableId": "s3",
+       "tag": "DIV",
+       "testId": null,
+       "xPath": "//div[@id='s3']"
+      },
+      "timestamp": 1787633391463,
+      "valueAfter": null,
+      "valueBefore": null
+     }
+    ],
+    "metadata": {
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "clientX": 289,
+     "clientY": 382,
+     "expandedAtTrigger": false,
+     "targetName": "Section Three",
+     "targetRole": null,
+     "targetTag": "DIV"
+    },
+    "startTime": 1787633391463,
+    "trigger": {
+     "accessibleName": "Section Three",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": null,
+     "autoId": null,
+     "className": "head",
+     "cssSelector": "#s3",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s3",
+     "tag": "DIV",
+     "testId": null,
+     "xPath": "//div[@id='s3']"
+    },
+    "triggerEvent": {
+     "altKey": false,
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "captureSeq": 5635.4000000003725,
+     "checkedAfter": null,
+     "checkedBefore": null,
+     "clientX": 289,
+     "clientY": 382,
+     "code": null,
+     "ctrlKey": false,
+     "domContext": {
+      "ancestorClasses": [
+       "panel",
+       "",
+       ""
+      ],
+      "ancestorRoles": [
+       "div",
+       "body",
+       "html"
+      ],
+      "ariaExpanded": false,
+      "ariaHasPopup": null,
+      "clickHandler": false,
+      "disabled": false,
+      "inputType": null,
+      "isContentEditable": false,
+      "pointerCursor": true,
+      "readOnly": false,
+      "required": false,
+      "tabIndex": -1
+     },
+     "eventId": "evt-pmt86rio4-22",
+     "eventType": "click",
+     "isTrusted": true,
+     "key": null,
+     "metaKey": false,
+     "pageTitle": "Expander Validation — Generic Accordion",
+     "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+     "scrollDeltaX": null,
+     "scrollDeltaY": null,
+     "shiftKey": false,
+     "target": {
+      "accessibleName": "Section Three",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "ariaRole": null,
+      "autoId": null,
+      "className": "head",
+      "cssSelector": "#s3",
+      "dataAutoId": null,
+      "dataCy": null,
+      "dataQa": null,
+      "elementId": "",
+      "href": null,
+      "inIframe": false,
+      "inputType": null,
+      "name": null,
+      "placeholder": null,
+      "shadowDom": false,
+      "stableId": "s3",
+      "tag": "DIV",
+      "testId": null,
+      "xPath": "//div[@id='s3']"
+     },
+     "timestamp": 1787633391463,
+     "valueAfter": null,
+     "valueBefore": null
+    },
+    "type": "Expander"
+   },
+   {
+    "businessMeaning": "Unclassified on \"Section One\"",
+    "componentFramework": "Generic",
+    "componentType": "Generic",
+    "endState": "completed",
+    "endTime": 1787633389634,
+    "interactionId": "int-6",
+    "memberEvents": [],
+    "metadata": {
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "physicalEventType": "mousedown",
+     "reason": "unclaimed-at-projection",
+     "recognized": false,
+     "targetName": "Section One",
+     "targetRole": "button",
+     "targetTag": "BUTTON"
+    },
+    "startTime": 1787633389634,
+    "trigger": {
+     "accessibleName": "Section One",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": "button",
+     "autoId": null,
+     "className": "head btn",
+     "cssSelector": "#s1",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s1",
+     "tag": "BUTTON",
+     "testId": null,
+     "xPath": "//button[@id='s1']"
+    },
+    "triggerEvent": {
+     "altKey": false,
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "captureSeq": 3802.7000000001863,
+     "checkedAfter": null,
+     "checkedBefore": null,
+     "clientX": null,
+     "clientY": null,
+     "code": null,
+     "ctrlKey": false,
+     "domContext": {
+      "ancestorClasses": [
+       "panel",
+       "",
+       ""
+      ],
+      "ancestorRoles": [
+       "div",
+       "body",
+       "html"
+      ],
+      "ariaExpanded": null,
+      "ariaHasPopup": null,
+      "disabled": false,
+      "inputType": null,
+      "isContentEditable": false,
+      "readOnly": false,
+      "required": false,
+      "tabIndex": null
+     },
+     "eventId": "evt-pmt86rio4-3",
+     "eventType": "mousedown",
+     "isTrusted": true,
+     "key": null,
+     "metaKey": false,
+     "pageTitle": "",
+     "pageUrl": "",
+     "scrollDeltaX": null,
+     "scrollDeltaY": null,
+     "shiftKey": false,
+     "target": {
+      "accessibleName": "Section One",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "ariaRole": "button",
+      "autoId": null,
+      "className": "head btn",
+      "cssSelector": "#s1",
+      "dataAutoId": null,
+      "dataCy": null,
+      "dataQa": null,
+      "elementId": "",
+      "href": null,
+      "inIframe": false,
+      "inputType": null,
+      "name": null,
+      "placeholder": null,
+      "shadowDom": false,
+      "stableId": "s1",
+      "tag": "BUTTON",
+      "testId": null,
+      "xPath": "//button[@id='s1']"
+     },
+     "timestamp": 1787633389634,
+     "valueAfter": null,
+     "valueBefore": null
+    },
+    "type": "Unclassified"
+   },
+   {
+    "businessMeaning": "Unclassified on \"Section Two\"",
+    "componentFramework": "Generic",
+    "componentType": "Generic",
+    "endState": "completed",
+    "endTime": 1787633390547,
+    "interactionId": "int-7",
+    "memberEvents": [],
+    "metadata": {
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "physicalEventType": "mousedown",
+     "reason": "unclaimed-at-projection",
+     "recognized": false,
+     "targetName": "Section Two",
+     "targetRole": "button",
+     "targetTag": "DIV"
+    },
+    "startTime": 1787633390547,
+    "trigger": {
+     "accessibleName": "Section Two",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": "button",
+     "autoId": null,
+     "className": "head",
+     "cssSelector": "#s2",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s2",
+     "tag": "DIV",
+     "testId": null,
+     "xPath": "//div[@id='s2']"
+    },
+    "triggerEvent": {
+     "altKey": false,
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "captureSeq": 4717.700000000186,
+     "checkedAfter": null,
+     "checkedBefore": null,
+     "clientX": null,
+     "clientY": null,
+     "code": null,
+     "ctrlKey": false,
+     "domContext": {
+      "ancestorClasses": [
+       "panel",
+       "",
+       ""
+      ],
+      "ancestorRoles": [
+       "div",
+       "body",
+       "html"
+      ],
+      "ariaExpanded": null,
+      "ariaHasPopup": null,
+      "disabled": false,
+      "inputType": null,
+      "isContentEditable": false,
+      "readOnly": false,
+      "required": false,
+      "tabIndex": null
+     },
+     "eventId": "evt-pmt86rio4-10",
+     "eventType": "mousedown",
+     "isTrusted": true,
+     "key": null,
+     "metaKey": false,
+     "pageTitle": "",
+     "pageUrl": "",
+     "scrollDeltaX": null,
+     "scrollDeltaY": null,
+     "shiftKey": false,
+     "target": {
+      "accessibleName": "Section Two",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "ariaRole": "button",
+      "autoId": null,
+      "className": "head",
+      "cssSelector": "#s2",
+      "dataAutoId": null,
+      "dataCy": null,
+      "dataQa": null,
+      "elementId": "",
+      "href": null,
+      "inIframe": false,
+      "inputType": null,
+      "name": null,
+      "placeholder": null,
+      "shadowDom": false,
+      "stableId": "s2",
+      "tag": "DIV",
+      "testId": null,
+      "xPath": "//div[@id='s2']"
+     },
+     "timestamp": 1787633390547,
+     "valueAfter": null,
+     "valueBefore": null
+    },
+    "type": "Unclassified"
+   },
+   {
+    "businessMeaning": "Unclassified on \"Section Three\"",
+    "componentFramework": "Generic",
+    "componentType": "Generic",
+    "endState": "completed",
+    "endTime": 1787633391460,
+    "interactionId": "int-8",
+    "memberEvents": [],
+    "metadata": {
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "physicalEventType": "mousedown",
+     "reason": "unclaimed-at-projection",
+     "recognized": false,
+     "targetName": "Section Three",
+     "targetRole": null,
+     "targetTag": "DIV"
+    },
+    "startTime": 1787633391460,
+    "trigger": {
+     "accessibleName": "Section Three",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": null,
+     "autoId": null,
+     "className": "head",
+     "cssSelector": "#s3",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s3",
+     "tag": "DIV",
+     "testId": null,
+     "xPath": "//div[@id='s3']"
+    },
+    "triggerEvent": {
+     "altKey": false,
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "captureSeq": 5630.200000000186,
+     "checkedAfter": null,
+     "checkedBefore": null,
+     "clientX": null,
+     "clientY": null,
+     "code": null,
+     "ctrlKey": false,
+     "domContext": {
+      "ancestorClasses": [
+       "panel",
+       "",
+       ""
+      ],
+      "ancestorRoles": [
+       "div",
+       "body",
+       "html"
+      ],
+      "ariaExpanded": null,
+      "ariaHasPopup": null,
+      "disabled": false,
+      "inputType": null,
+      "isContentEditable": false,
+      "readOnly": false,
+      "required": false,
+      "tabIndex": null
+     },
+     "eventId": "evt-pmt86rio4-20",
+     "eventType": "mousedown",
+     "isTrusted": true,
+     "key": null,
+     "metaKey": false,
+     "pageTitle": "",
+     "pageUrl": "",
+     "scrollDeltaX": null,
+     "scrollDeltaY": null,
+     "shiftKey": false,
+     "target": {
+      "accessibleName": "Section Three",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "ariaRole": null,
+      "autoId": null,
+      "className": "head",
+      "cssSelector": "#s3",
+      "dataAutoId": null,
+      "dataCy": null,
+      "dataQa": null,
+      "elementId": "",
+      "href": null,
+      "inIframe": false,
+      "inputType": null,
+      "name": null,
+      "placeholder": null,
+      "shadowDom": false,
+      "stableId": "s3",
+      "tag": "DIV",
+      "testId": null,
+      "xPath": "//div[@id='s3']"
+     },
+     "timestamp": 1787633391460,
+     "valueAfter": null,
+     "valueBefore": null
+    },
+    "type": "Unclassified"
+   }
+  ],
+  "runtimeOutput": [
+   {
+    "behavioralEvidence": {
+     "applicationEvidence": {
+      "coarseMode": false,
+      "domChangeOverflow": 0,
+      "domChanges": [],
+      "navigation": [],
+      "networkActivity": [],
+      "newSurfaces": [],
+      "performanceCondition": {
+       "highChurnMode": false,
+       "longestBatchMs": 0,
+       "mainThreadBlocked": false,
+       "totalBatches": 0
+      },
+      "removedSurfaces": [],
+      "visibilityChanges": []
+     },
+     "frameId": "main",
+     "sourceEventId": "evt-pmt86rio4-2",
+     "sourceEventType": "lifecycle",
+     "targetEvidence": {
+      "after": null,
+      "before": null,
+      "focusMovement": null,
+      "identity": {
+       "accessibleName": "Section One",
+       "ariaLabel": null,
+       "ariaLabelledBy": null,
+       "ariaRole": "button",
+       "autoId": null,
+       "className": "head btn",
+       "cssSelector": "#s1",
+       "dataAutoId": null,
+       "dataCy": null,
+       "dataQa": null,
+       "elementId": "",
+       "href": null,
+       "inIframe": false,
+       "inputType": null,
+       "name": null,
+       "placeholder": null,
+       "shadowDom": false,
+       "stableId": "s1",
+       "tag": "BUTTON",
+       "testId": null,
+       "xPath": "//button[@id='s1']"
+      },
+      "identityCapturedAt": 3967
+     },
+     "window": {
+      "closedAt": 3967,
+      "durationMs": 0,
+      "endReason": "lifecycle-abandoned",
+      "openedAt": 0,
+      "stabilityTrace": []
+     },
+     "windowId": "lc-evt-pmt86rio4-2"
+    },
+    "businessMeaning": "Hover over \"Section One\"",
+    "componentFramework": "Generic",
+    "componentType": "Generic",
+    "endState": "abandoned",
+    "endTime": 1787633389638,
+    "interactionId": "int-1",
+    "lifecycleId": "lc-1",
+    "memberEvents": [
+     {
+      "altKey": false,
+      "captureOrigin": {
+       "frameId": 0,
+       "tabId": 555276326
+      },
+      "captureSeq": 3802.7000000001863,
+      "checkedAfter": null,
+      "checkedBefore": null,
+      "clientX": 87,
+      "clientY": 148,
+      "code": null,
+      "ctrlKey": false,
+      "domContext": {
+       "ancestorClasses": [
+        "panel",
+        "",
+        ""
+       ],
+       "ancestorRoles": [
+        "div",
+        "body",
+        "html"
+       ],
+       "ariaExpanded": false,
+       "ariaHasPopup": null,
+       "clickHandler": false,
+       "disabled": false,
+       "inputType": null,
+       "isContentEditable": false,
+       "pointerCursor": true,
+       "readOnly": false,
+       "required": false,
+       "tabIndex": 0
+      },
+      "eventId": "evt-pmt86rio4-2",
+      "eventType": "mouseenter",
+      "isTrusted": true,
+      "key": null,
+      "metaKey": false,
+      "pageTitle": "Expander Validation — Generic Accordion",
+      "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+      "scrollDeltaX": null,
+      "scrollDeltaY": null,
+      "shiftKey": false,
+      "target": {
+       "accessibleName": "Section One",
+       "ariaLabel": null,
+       "ariaLabelledBy": null,
+       "ariaRole": "button",
+       "autoId": null,
+       "className": "head btn",
+       "cssSelector": "#s1",
+       "dataAutoId": null,
+       "dataCy": null,
+       "dataQa": null,
+       "elementId": "",
+       "href": null,
+       "inIframe": false,
+       "inputType": null,
+       "name": null,
+       "placeholder": null,
+       "shadowDom": false,
+       "stableId": "s1",
+       "tag": "BUTTON",
+       "testId": null,
+       "xPath": "//button[@id='s1']"
+      },
+      "timestamp": 1787633389633,
+      "valueAfter": null,
+      "valueBefore": null
+     }
+    ],
+    "metadata": {
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "confidence": 0,
+     "dwellMs": 0,
+     "evidenceReason": null,
+     "meaningful": false,
+     "targetName": "Section One"
+    },
+    "startTime": 1787633389633,
+    "trigger": {
+     "accessibleName": "Section One",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": "button",
+     "autoId": null,
+     "className": "head btn",
+     "cssSelector": "#s1",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s1",
+     "tag": "BUTTON",
+     "testId": null,
+     "xPath": "//button[@id='s1']"
+    },
+    "triggerEvent": {
+     "altKey": false,
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "captureSeq": 3802.7000000001863,
+     "checkedAfter": null,
+     "checkedBefore": null,
+     "clientX": 87,
+     "clientY": 148,
+     "code": null,
+     "ctrlKey": false,
+     "domContext": {
+      "ancestorClasses": [
+       "panel",
+       "",
+       ""
+      ],
+      "ancestorRoles": [
+       "div",
+       "body",
+       "html"
+      ],
+      "ariaExpanded": false,
+      "ariaHasPopup": null,
+      "clickHandler": false,
+      "disabled": false,
+      "inputType": null,
+      "isContentEditable": false,
+      "pointerCursor": true,
+      "readOnly": false,
+      "required": false,
+      "tabIndex": 0
+     },
+     "eventId": "evt-pmt86rio4-2",
+     "eventType": "mouseenter",
+     "isTrusted": true,
+     "key": null,
+     "metaKey": false,
+     "pageTitle": "Expander Validation — Generic Accordion",
+     "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+     "scrollDeltaX": null,
+     "scrollDeltaY": null,
+     "shiftKey": false,
+     "target": {
+      "accessibleName": "Section One",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "ariaRole": "button",
+      "autoId": null,
+      "className": "head btn",
+      "cssSelector": "#s1",
+      "dataAutoId": null,
+      "dataCy": null,
+      "dataQa": null,
+      "elementId": "",
+      "href": null,
+      "inIframe": false,
+      "inputType": null,
+      "name": null,
+      "placeholder": null,
+      "shadowDom": false,
+      "stableId": "s1",
+      "tag": "BUTTON",
+      "testId": null,
+      "xPath": "//button[@id='s1']"
+     },
+     "timestamp": 1787633389633,
+     "valueAfter": null,
+     "valueBefore": null
+    },
+    "type": "Hover"
+   },
+   {
+    "behavioralEvidence": {
+     "applicationEvidence": {
+      "coarseMode": false,
+      "domChangeOverflow": 0,
+      "domChanges": [
+       {
+        "addedNodesCount": 0,
+        "attributeDeltas": {
+         "aria-expanded": {
+          "new": "true",
+          "old": "false"
+         }
+        },
+        "changedAttributes": [
+         "aria-expanded"
+        ],
+        "characterDataDelta": null,
+        "firstBatchIndex": 0,
+        "firstMutationAt": 0.7000000001862645,
+        "lastBatchIndex": 0,
+        "lastMutationAt": 0.7000000001862645,
+        "rawMutationCount": 1,
+        "removedNodesCount": 0,
+        "shadowContext": null,
+        "targetPath": "body > div > button#s1",
+        "targetTag": "button",
+        "types": [
+         "attributes"
+        ]
+       },
+       {
+        "addedNodesCount": 0,
+        "attributeDeltas": {
+         "class": {
+          "new": "body open",
+          "old": "body"
+         }
+        },
+        "changedAttributes": [
+         "class"
+        ],
+        "characterDataDelta": null,
+        "firstBatchIndex": 0,
+        "firstMutationAt": 0.7000000001862645,
+        "lastBatchIndex": 0,
+        "lastMutationAt": 0.7000000001862645,
+        "rawMutationCount": 1,
+        "removedNodesCount": 0,
+        "shadowContext": null,
+        "targetPath": "body > div > div#b1",
+        "targetTag": "div",
+        "types": [
+         "attributes"
+        ]
+       }
+      ],
+      "navigation": [],
+      "networkActivity": [],
+      "newSurfaces": [],
+      "performanceCondition": {
+       "highChurnMode": false,
+       "longestBatchMs": 0.2999999998137355,
+       "mainThreadBlocked": false,
+       "totalBatches": 1
+      },
+      "removedSurfaces": [],
+      "visibilityChanges": []
+     },
+     "frameId": "main",
+     "sourceEventId": "evt-pmt86rio4-5",
+     "sourceEventType": "click",
+     "targetEvidence": {
+      "after": {
+       "ariaChecked": null,
+       "ariaExpanded": true,
+       "ariaPressed": null,
+       "capturedAt": 4117.800000000745,
+       "checked": null,
+       "childCount": 0,
+       "className": "head btn",
+       "controlledValue": "First section body.",
+       "disabled": false,
+       "scrollLeft": null,
+       "scrollTop": null,
+       "selectedValues": null,
+       "textContent": "Section One",
+       "value": null
+      },
+      "before": {
+       "ariaChecked": null,
+       "ariaExpanded": false,
+       "ariaPressed": null,
+       "capturedAt": 3807.100000000559,
+       "checked": null,
+       "childCount": 0,
+       "className": "head btn",
+       "controlledValue": "First section body.",
+       "disabled": false,
+       "scrollLeft": null,
+       "scrollTop": null,
+       "selectedValues": null,
+       "textContent": "Section One",
+       "value": null
+      },
+      "focusMovement": {
+       "after": {
+        "accessibleName": "Section One",
+        "ariaRole": null,
+        "tagName": "BUTTON"
+       },
+       "before": null,
+       "detectedAt": 4118.600000000559
+      },
+      "identity": {
+       "accessibleName": "Section One",
+       "ariaLabel": null,
+       "ariaLabelledBy": null,
+       "ariaRole": "button",
+       "autoId": null,
+       "className": "head btn",
+       "cssSelector": "#s1",
+       "dataAutoId": null,
+       "dataCy": null,
+       "dataQa": null,
+       "elementId": "",
+       "href": null,
+       "inIframe": false,
+       "inputType": null,
+       "name": null,
+       "placeholder": null,
+       "shadowDom": false,
+       "stableId": "s1",
+       "tag": "BUTTON",
+       "testId": null,
+       "xPath": "//button[@id='s1']"
+      },
+      "identityCapturedAt": 3811.600000000559
+     },
+     "window": {
+      "closedAt": 4118.700000000186,
+      "durationMs": 307.09999999962747,
+      "endReason": "consequence-settled",
+      "openedAt": 3811.600000000559,
+      "stabilityTrace": [
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 300,
+        "timestamp": 3811.7000000001863
+       },
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 0,
+        "timestamp": 3812.300000000745
+       },
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 300,
+        "timestamp": 4117.300000000745
+       },
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 300,
+        "timestamp": 4117.4000000003725
+       }
+      ]
+     },
+     "windowId": "ev-evt-pmt86rio4-5"
+    },
+    "businessMeaning": "Expander on \"Section One\"",
+    "componentFramework": "Generic",
+    "componentType": "Generic",
+    "endState": "completed",
+    "endTime": 1787633389638,
+    "interactionId": "int-2",
+    "lifecycleId": "lc-2",
+    "memberEvents": [
+     {
+      "altKey": false,
+      "captureOrigin": {
+       "frameId": 0,
+       "tabId": 555276326
+      },
+      "captureSeq": 3808.600000000559,
+      "checkedAfter": null,
+      "checkedBefore": null,
+      "clientX": 87,
+      "clientY": 148,
+      "code": null,
+      "ctrlKey": false,
+      "domContext": {
+       "ancestorClasses": [
+        "panel",
+        "",
+        ""
+       ],
+       "ancestorRoles": [
+        "div",
+        "body",
+        "html"
+       ],
+       "ariaExpanded": false,
+       "ariaHasPopup": null,
+       "clickHandler": false,
+       "disabled": false,
+       "inputType": null,
+       "isContentEditable": false,
+       "pointerCursor": true,
+       "readOnly": false,
+       "required": false,
+       "tabIndex": 0
+      },
+      "eventId": "evt-pmt86rio4-5",
+      "eventType": "click",
+      "isTrusted": true,
+      "key": null,
+      "metaKey": false,
+      "pageTitle": "Expander Validation — Generic Accordion",
+      "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+      "scrollDeltaX": null,
+      "scrollDeltaY": null,
+      "shiftKey": false,
+      "target": {
+       "accessibleName": "Section One",
+       "ariaLabel": null,
+       "ariaLabelledBy": null,
+       "ariaRole": "button",
+       "autoId": null,
+       "className": "head btn",
+       "cssSelector": "#s1",
+       "dataAutoId": null,
+       "dataCy": null,
+       "dataQa": null,
+       "elementId": "",
+       "href": null,
+       "inIframe": false,
+       "inputType": null,
+       "name": null,
+       "placeholder": null,
+       "shadowDom": false,
+       "stableId": "s1",
+       "tag": "BUTTON",
+       "testId": null,
+       "xPath": "//button[@id='s1']"
+      },
+      "timestamp": 1787633389638,
+      "valueAfter": null,
+      "valueBefore": null
+     }
+    ],
+    "metadata": {
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "clientX": 87,
+     "clientY": 148,
+     "expandedAtTrigger": false,
+     "targetName": "Section One",
+     "targetRole": "button",
+     "targetTag": "BUTTON"
+    },
+    "startTime": 1787633389638,
+    "trigger": {
+     "accessibleName": "Section One",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": "button",
+     "autoId": null,
+     "className": "head btn",
+     "cssSelector": "#s1",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s1",
+     "tag": "BUTTON",
+     "testId": null,
+     "xPath": "//button[@id='s1']"
+    },
+    "triggerEvent": {
+     "altKey": false,
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "captureSeq": 3808.600000000559,
+     "checkedAfter": null,
+     "checkedBefore": null,
+     "clientX": 87,
+     "clientY": 148,
+     "code": null,
+     "ctrlKey": false,
+     "domContext": {
+      "ancestorClasses": [
+       "panel",
+       "",
+       ""
+      ],
+      "ancestorRoles": [
+       "div",
+       "body",
+       "html"
+      ],
+      "ariaExpanded": false,
+      "ariaHasPopup": null,
+      "clickHandler": false,
+      "disabled": false,
+      "inputType": null,
+      "isContentEditable": false,
+      "pointerCursor": true,
+      "readOnly": false,
+      "required": false,
+      "tabIndex": 0
+     },
+     "eventId": "evt-pmt86rio4-5",
+     "eventType": "click",
+     "isTrusted": true,
+     "key": null,
+     "metaKey": false,
+     "pageTitle": "Expander Validation — Generic Accordion",
+     "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+     "scrollDeltaX": null,
+     "scrollDeltaY": null,
+     "shiftKey": false,
+     "target": {
+      "accessibleName": "Section One",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "ariaRole": "button",
+      "autoId": null,
+      "className": "head btn",
+      "cssSelector": "#s1",
+      "dataAutoId": null,
+      "dataCy": null,
+      "dataQa": null,
+      "elementId": "",
+      "href": null,
+      "inIframe": false,
+      "inputType": null,
+      "name": null,
+      "placeholder": null,
+      "shadowDom": false,
+      "stableId": "s1",
+      "tag": "BUTTON",
+      "testId": null,
+      "xPath": "//button[@id='s1']"
+     },
+     "timestamp": 1787633389638,
+     "valueAfter": null,
+     "valueBefore": null
+    },
+    "type": "Expander"
+   },
+   {
+    "behavioralEvidence": {
+     "applicationEvidence": {
+      "coarseMode": false,
+      "domChangeOverflow": 0,
+      "domChanges": [],
+      "navigation": [],
+      "networkActivity": [],
+      "newSurfaces": [],
+      "performanceCondition": {
+       "highChurnMode": false,
+       "longestBatchMs": 0,
+       "mainThreadBlocked": false,
+       "totalBatches": 0
+      },
+      "removedSurfaces": [],
+      "visibilityChanges": []
+     },
+     "frameId": "main",
+     "sourceEventId": "evt-pmt86rio4-9",
+     "sourceEventType": "lifecycle",
+     "targetEvidence": {
+      "after": null,
+      "before": null,
+      "focusMovement": null,
+      "identity": {
+       "accessibleName": "Section Two",
+       "ariaLabel": null,
+       "ariaLabelledBy": null,
+       "ariaRole": "button",
+       "autoId": null,
+       "className": "head",
+       "cssSelector": "#s2",
+       "dataAutoId": null,
+       "dataCy": null,
+       "dataQa": null,
+       "elementId": "",
+       "href": null,
+       "inIframe": false,
+       "inputType": null,
+       "name": null,
+       "placeholder": null,
+       "shadowDom": false,
+       "stableId": "s2",
+       "tag": "DIV",
+       "testId": null,
+       "xPath": "//div[@id='s2']"
+      },
+      "identityCapturedAt": 4880.4000000003725
+     },
+     "window": {
+      "closedAt": 4880.4000000003725,
+      "durationMs": 0,
+      "endReason": "lifecycle-abandoned",
+      "openedAt": 0,
+      "stabilityTrace": []
+     },
+     "windowId": "lc-evt-pmt86rio4-9"
+    },
+    "businessMeaning": "Hover over \"Section Two\"",
+    "componentFramework": "Generic",
+    "componentType": "Generic",
+    "endState": "abandoned",
+    "endTime": 1787633390551,
+    "interactionId": "int-3",
+    "lifecycleId": "lc-3",
+    "memberEvents": [
+     {
+      "altKey": false,
+      "captureOrigin": {
+       "frameId": 0,
+       "tabId": 555276326
+      },
+      "captureSeq": 4717.700000000186,
+      "checkedAfter": null,
+      "checkedBefore": null,
+      "clientX": 289,
+      "clientY": 276,
+      "code": null,
+      "ctrlKey": false,
+      "domContext": {
+       "ancestorClasses": [
+        "panel",
+        "",
+        ""
+       ],
+       "ancestorRoles": [
+        "div",
+        "body",
+        "html"
+       ],
+       "ariaExpanded": false,
+       "ariaHasPopup": null,
+       "clickHandler": false,
+       "disabled": false,
+       "inputType": null,
+       "isContentEditable": false,
+       "pointerCursor": true,
+       "readOnly": false,
+       "required": false,
+       "tabIndex": 0
+      },
+      "eventId": "evt-pmt86rio4-9",
+      "eventType": "mouseenter",
+      "isTrusted": true,
+      "key": null,
+      "metaKey": false,
+      "pageTitle": "Expander Validation — Generic Accordion",
+      "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+      "scrollDeltaX": null,
+      "scrollDeltaY": null,
+      "shiftKey": false,
+      "target": {
+       "accessibleName": "Section Two",
+       "ariaLabel": null,
+       "ariaLabelledBy": null,
+       "ariaRole": "button",
+       "autoId": null,
+       "className": "head",
+       "cssSelector": "#s2",
+       "dataAutoId": null,
+       "dataCy": null,
+       "dataQa": null,
+       "elementId": "",
+       "href": null,
+       "inIframe": false,
+       "inputType": null,
+       "name": null,
+       "placeholder": null,
+       "shadowDom": false,
+       "stableId": "s2",
+       "tag": "DIV",
+       "testId": null,
+       "xPath": "//div[@id='s2']"
+      },
+      "timestamp": 1787633390546,
+      "valueAfter": null,
+      "valueBefore": null
+     }
+    ],
+    "metadata": {
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "confidence": 0,
+     "dwellMs": 0,
+     "evidenceReason": null,
+     "meaningful": false,
+     "targetName": "Section Two"
+    },
+    "startTime": 1787633390546,
+    "trigger": {
+     "accessibleName": "Section Two",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": "button",
+     "autoId": null,
+     "className": "head",
+     "cssSelector": "#s2",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s2",
+     "tag": "DIV",
+     "testId": null,
+     "xPath": "//div[@id='s2']"
+    },
+    "triggerEvent": {
+     "altKey": false,
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "captureSeq": 4717.700000000186,
+     "checkedAfter": null,
+     "checkedBefore": null,
+     "clientX": 289,
+     "clientY": 276,
+     "code": null,
+     "ctrlKey": false,
+     "domContext": {
+      "ancestorClasses": [
+       "panel",
+       "",
+       ""
+      ],
+      "ancestorRoles": [
+       "div",
+       "body",
+       "html"
+      ],
+      "ariaExpanded": false,
+      "ariaHasPopup": null,
+      "clickHandler": false,
+      "disabled": false,
+      "inputType": null,
+      "isContentEditable": false,
+      "pointerCursor": true,
+      "readOnly": false,
+      "required": false,
+      "tabIndex": 0
+     },
+     "eventId": "evt-pmt86rio4-9",
+     "eventType": "mouseenter",
+     "isTrusted": true,
+     "key": null,
+     "metaKey": false,
+     "pageTitle": "Expander Validation — Generic Accordion",
+     "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+     "scrollDeltaX": null,
+     "scrollDeltaY": null,
+     "shiftKey": false,
+     "target": {
+      "accessibleName": "Section Two",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "ariaRole": "button",
+      "autoId": null,
+      "className": "head",
+      "cssSelector": "#s2",
+      "dataAutoId": null,
+      "dataCy": null,
+      "dataQa": null,
+      "elementId": "",
+      "href": null,
+      "inIframe": false,
+      "inputType": null,
+      "name": null,
+      "placeholder": null,
+      "shadowDom": false,
+      "stableId": "s2",
+      "tag": "DIV",
+      "testId": null,
+      "xPath": "//div[@id='s2']"
+     },
+     "timestamp": 1787633390546,
+     "valueAfter": null,
+     "valueBefore": null
+    },
+    "type": "Hover"
+   },
+   {
+    "behavioralEvidence": {
+     "applicationEvidence": {
+      "coarseMode": false,
+      "domChangeOverflow": 0,
+      "domChanges": [
+       {
+        "addedNodesCount": 0,
+        "attributeDeltas": {
+         "aria-expanded": {
+          "new": "true",
+          "old": "false"
+         }
+        },
+        "changedAttributes": [
+         "aria-expanded"
+        ],
+        "characterDataDelta": null,
+        "firstBatchIndex": 1,
+        "firstMutationAt": 912.6000000005588,
+        "lastBatchIndex": 1,
+        "lastMutationAt": 912.6000000005588,
+        "rawMutationCount": 1,
+        "removedNodesCount": 0,
+        "shadowContext": null,
+        "targetPath": "body > div > div#s2",
+        "targetTag": "div",
+        "types": [
+         "attributes"
+        ]
+       },
+       {
+        "addedNodesCount": 0,
+        "attributeDeltas": {
+         "class": {
+          "new": "body open",
+          "old": "body"
+         }
+        },
+        "changedAttributes": [
+         "class"
+        ],
+        "characterDataDelta": null,
+        "firstBatchIndex": 1,
+        "firstMutationAt": 912.6000000005588,
+        "lastBatchIndex": 1,
+        "lastMutationAt": 912.6000000005588,
+        "rawMutationCount": 1,
+        "removedNodesCount": 0,
+        "shadowContext": null,
+        "targetPath": "body > div > div#b2",
+        "targetTag": "div",
+        "types": [
+         "attributes"
+        ]
+       }
+      ],
+      "navigation": [],
+      "networkActivity": [],
+      "newSurfaces": [],
+      "performanceCondition": {
+       "highChurnMode": false,
+       "longestBatchMs": 0.2999999998137355,
+       "mainThreadBlocked": false,
+       "totalBatches": 2
+      },
+      "removedSurfaces": [],
+      "visibilityChanges": []
+     },
+     "frameId": "main",
+     "sourceEventId": "evt-pmt86rio4-13",
+     "sourceEventType": "click",
+     "targetEvidence": {
+      "after": {
+       "ariaChecked": null,
+       "ariaExpanded": true,
+       "ariaPressed": null,
+       "capturedAt": 5030.800000000745,
+       "checked": null,
+       "childCount": 0,
+       "className": "head",
+       "controlledValue": "Second section body.",
+       "disabled": false,
+       "scrollLeft": null,
+       "scrollTop": null,
+       "selectedValues": null,
+       "textContent": "Section Two",
+       "value": null
+      },
+      "before": {
+       "ariaChecked": null,
+       "ariaExpanded": false,
+       "ariaPressed": null,
+       "capturedAt": 4720.200000000186,
+       "checked": null,
+       "childCount": 0,
+       "className": "head",
+       "controlledValue": "Second section body.",
+       "disabled": false,
+       "scrollLeft": null,
+       "scrollTop": null,
+       "selectedValues": null,
+       "textContent": "Section Two",
+       "value": null
+      },
+      "focusMovement": {
+       "after": {
+        "accessibleName": "Section Two",
+        "ariaRole": "button",
+        "tagName": "DIV"
+       },
+       "before": null,
+       "detectedAt": 5030.9000000003725
+      },
+      "identity": {
+       "accessibleName": "Section Two",
+       "ariaLabel": null,
+       "ariaLabelledBy": null,
+       "ariaRole": "button",
+       "autoId": null,
+       "className": "head",
+       "cssSelector": "#s2",
+       "dataAutoId": null,
+       "dataCy": null,
+       "dataQa": null,
+       "elementId": "",
+       "href": null,
+       "inIframe": false,
+       "inputType": null,
+       "name": null,
+       "placeholder": null,
+       "shadowDom": false,
+       "stableId": "s2",
+       "tag": "DIV",
+       "testId": null,
+       "xPath": "//div[@id='s2']"
+      },
+      "identityCapturedAt": 4723.700000000186
+     },
+     "window": {
+      "closedAt": 5030.9000000003725,
+      "durationMs": 307.20000000018626,
+      "endReason": "consequence-settled",
+      "openedAt": 4723.700000000186,
+      "stabilityTrace": [
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 300,
+        "timestamp": 4723.700000000186
+       },
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 0,
+        "timestamp": 4723.9000000003725
+       },
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 300,
+        "timestamp": 5030.600000000559
+       },
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 300,
+        "timestamp": 5030.600000000559
+       }
+      ]
+     },
+     "windowId": "ev-evt-pmt86rio4-13"
+    },
+    "businessMeaning": "Expander on \"Section Two\"",
+    "componentFramework": "Generic",
+    "componentType": "Generic",
+    "endState": "completed",
+    "endTime": 1787633390551,
+    "interactionId": "int-4",
+    "lifecycleId": "lc-4",
+    "memberEvents": [
+     {
+      "altKey": false,
+      "captureOrigin": {
+       "frameId": 0,
+       "tabId": 555276326
+      },
+      "captureSeq": 4723.300000000745,
+      "checkedAfter": null,
+      "checkedBefore": null,
+      "clientX": 289,
+      "clientY": 276,
+      "code": null,
+      "ctrlKey": false,
+      "domContext": {
+       "ancestorClasses": [
+        "panel",
+        "",
+        ""
+       ],
+       "ancestorRoles": [
+        "div",
+        "body",
+        "html"
+       ],
+       "ariaExpanded": false,
+       "ariaHasPopup": null,
+       "clickHandler": false,
+       "disabled": false,
+       "inputType": null,
+       "isContentEditable": false,
+       "pointerCursor": true,
+       "readOnly": false,
+       "required": false,
+       "tabIndex": 0
+      },
+      "eventId": "evt-pmt86rio4-13",
+      "eventType": "click",
+      "isTrusted": true,
+      "key": null,
+      "metaKey": false,
+      "pageTitle": "Expander Validation — Generic Accordion",
+      "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+      "scrollDeltaX": null,
+      "scrollDeltaY": null,
+      "shiftKey": false,
+      "target": {
+       "accessibleName": "Section Two",
+       "ariaLabel": null,
+       "ariaLabelledBy": null,
+       "ariaRole": "button",
+       "autoId": null,
+       "className": "head",
+       "cssSelector": "#s2",
+       "dataAutoId": null,
+       "dataCy": null,
+       "dataQa": null,
+       "elementId": "",
+       "href": null,
+       "inIframe": false,
+       "inputType": null,
+       "name": null,
+       "placeholder": null,
+       "shadowDom": false,
+       "stableId": "s2",
+       "tag": "DIV",
+       "testId": null,
+       "xPath": "//div[@id='s2']"
+      },
+      "timestamp": 1787633390551,
+      "valueAfter": null,
+      "valueBefore": null
+     }
+    ],
+    "metadata": {
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "clientX": 289,
+     "clientY": 276,
+     "expandedAtTrigger": false,
+     "targetName": "Section Two",
+     "targetRole": "button",
+     "targetTag": "DIV"
+    },
+    "startTime": 1787633390551,
+    "trigger": {
+     "accessibleName": "Section Two",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": "button",
+     "autoId": null,
+     "className": "head",
+     "cssSelector": "#s2",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s2",
+     "tag": "DIV",
+     "testId": null,
+     "xPath": "//div[@id='s2']"
+    },
+    "triggerEvent": {
+     "altKey": false,
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "captureSeq": 4723.300000000745,
+     "checkedAfter": null,
+     "checkedBefore": null,
+     "clientX": 289,
+     "clientY": 276,
+     "code": null,
+     "ctrlKey": false,
+     "domContext": {
+      "ancestorClasses": [
+       "panel",
+       "",
+       ""
+      ],
+      "ancestorRoles": [
+       "div",
+       "body",
+       "html"
+      ],
+      "ariaExpanded": false,
+      "ariaHasPopup": null,
+      "clickHandler": false,
+      "disabled": false,
+      "inputType": null,
+      "isContentEditable": false,
+      "pointerCursor": true,
+      "readOnly": false,
+      "required": false,
+      "tabIndex": 0
+     },
+     "eventId": "evt-pmt86rio4-13",
+     "eventType": "click",
+     "isTrusted": true,
+     "key": null,
+     "metaKey": false,
+     "pageTitle": "Expander Validation — Generic Accordion",
+     "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+     "scrollDeltaX": null,
+     "scrollDeltaY": null,
+     "shiftKey": false,
+     "target": {
+      "accessibleName": "Section Two",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "ariaRole": "button",
+      "autoId": null,
+      "className": "head",
+      "cssSelector": "#s2",
+      "dataAutoId": null,
+      "dataCy": null,
+      "dataQa": null,
+      "elementId": "",
+      "href": null,
+      "inIframe": false,
+      "inputType": null,
+      "name": null,
+      "placeholder": null,
+      "shadowDom": false,
+      "stableId": "s2",
+      "tag": "DIV",
+      "testId": null,
+      "xPath": "//div[@id='s2']"
+     },
+     "timestamp": 1787633390551,
+     "valueAfter": null,
+     "valueBefore": null
+    },
+    "type": "Expander"
+   },
+   {
+    "behavioralEvidence": {
+     "applicationEvidence": {
+      "coarseMode": false,
+      "domChangeOverflow": 0,
+      "domChanges": [
+       {
+        "addedNodesCount": 0,
+        "attributeDeltas": {
+         "aria-expanded": {
+          "new": "true",
+          "old": "false"
+         }
+        },
+        "changedAttributes": [
+         "aria-expanded"
+        ],
+        "characterDataDelta": null,
+        "firstBatchIndex": 2,
+        "firstMutationAt": 1825.2999999998137,
+        "lastBatchIndex": 2,
+        "lastMutationAt": 1825.2999999998137,
+        "rawMutationCount": 1,
+        "removedNodesCount": 0,
+        "shadowContext": null,
+        "targetPath": "body > div > div#s3",
+        "targetTag": "div",
+        "types": [
+         "attributes"
+        ]
+       },
+       {
+        "addedNodesCount": 0,
+        "attributeDeltas": {
+         "class": {
+          "new": "body open",
+          "old": "body"
+         }
+        },
+        "changedAttributes": [
+         "class"
+        ],
+        "characterDataDelta": null,
+        "firstBatchIndex": 2,
+        "firstMutationAt": 1825.2999999998137,
+        "lastBatchIndex": 2,
+        "lastMutationAt": 1825.2999999998137,
+        "rawMutationCount": 1,
+        "removedNodesCount": 0,
+        "shadowContext": null,
+        "targetPath": "body > div > div#b3",
+        "targetTag": "div",
+        "types": [
+         "attributes"
+        ]
+       }
+      ],
+      "navigation": [],
+      "networkActivity": [],
+      "newSurfaces": [],
+      "performanceCondition": {
+       "highChurnMode": false,
+       "longestBatchMs": 0.2999999998137355,
+       "mainThreadBlocked": false,
+       "totalBatches": 3
+      },
+      "removedSurfaces": [],
+      "visibilityChanges": []
+     },
+     "frameId": "main",
+     "sourceEventId": "evt-pmt86rio4-22",
+     "sourceEventType": "click",
+     "targetEvidence": {
+      "after": {
+       "ariaChecked": null,
+       "ariaExpanded": true,
+       "ariaPressed": null,
+       "capturedAt": 5943.4000000003725,
+       "checked": null,
+       "childCount": 0,
+       "className": "head",
+       "controlledValue": "Third section body.",
+       "disabled": false,
+       "scrollLeft": null,
+       "scrollTop": null,
+       "selectedValues": null,
+       "textContent": "Section Three",
+       "value": null
+      },
+      "before": {
+       "ariaChecked": null,
+       "ariaExpanded": false,
+       "ariaPressed": null,
+       "capturedAt": 5632.9000000003725,
+       "checked": null,
+       "childCount": 0,
+       "className": "head",
+       "controlledValue": "Third section body.",
+       "disabled": false,
+       "scrollLeft": null,
+       "scrollTop": null,
+       "selectedValues": null,
+       "textContent": "Section Three",
+       "value": null
+      },
+      "focusMovement": null,
+      "identity": {
+       "accessibleName": "Section Three",
+       "ariaLabel": null,
+       "ariaLabelledBy": null,
+       "ariaRole": null,
+       "autoId": null,
+       "className": "head",
+       "cssSelector": "#s3",
+       "dataAutoId": null,
+       "dataCy": null,
+       "dataQa": null,
+       "elementId": "",
+       "href": null,
+       "inIframe": false,
+       "inputType": null,
+       "name": null,
+       "placeholder": null,
+       "shadowDom": false,
+       "stableId": "s3",
+       "tag": "DIV",
+       "testId": null,
+       "xPath": "//div[@id='s3']"
+      },
+      "identityCapturedAt": 5636.4000000003725
+     },
+     "window": {
+      "closedAt": 5943.600000000559,
+      "durationMs": 307.20000000018626,
+      "endReason": "consequence-settled",
+      "openedAt": 5636.4000000003725,
+      "stabilityTrace": [
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 300,
+        "timestamp": 5636.4000000003725
+       },
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 0,
+        "timestamp": 5636.5
+       },
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 300,
+        "timestamp": 5943.200000000186
+       },
+       {
+        "globalBatchCount": 0,
+        "msSinceLastMutation": 300,
+        "timestamp": 5943.300000000745
+       }
+      ]
+     },
+     "windowId": "ev-evt-pmt86rio4-22"
+    },
+    "businessMeaning": "Expander on \"Section Three\"",
+    "componentFramework": "Generic",
+    "componentType": "Generic",
+    "endState": "completed",
+    "endTime": 1787633391463,
+    "interactionId": "int-5",
+    "lifecycleId": "lc-5",
+    "memberEvents": [
+     {
+      "altKey": false,
+      "captureOrigin": {
+       "frameId": 0,
+       "tabId": 555276326
+      },
+      "captureSeq": 5635.4000000003725,
+      "checkedAfter": null,
+      "checkedBefore": null,
+      "clientX": 289,
+      "clientY": 382,
+      "code": null,
+      "ctrlKey": false,
+      "domContext": {
+       "ancestorClasses": [
+        "panel",
+        "",
+        ""
+       ],
+       "ancestorRoles": [
+        "div",
+        "body",
+        "html"
+       ],
+       "ariaExpanded": false,
+       "ariaHasPopup": null,
+       "clickHandler": false,
+       "disabled": false,
+       "inputType": null,
+       "isContentEditable": false,
+       "pointerCursor": true,
+       "readOnly": false,
+       "required": false,
+       "tabIndex": -1
+      },
+      "eventId": "evt-pmt86rio4-22",
+      "eventType": "click",
+      "isTrusted": true,
+      "key": null,
+      "metaKey": false,
+      "pageTitle": "Expander Validation — Generic Accordion",
+      "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+      "scrollDeltaX": null,
+      "scrollDeltaY": null,
+      "shiftKey": false,
+      "target": {
+       "accessibleName": "Section Three",
+       "ariaLabel": null,
+       "ariaLabelledBy": null,
+       "ariaRole": null,
+       "autoId": null,
+       "className": "head",
+       "cssSelector": "#s3",
+       "dataAutoId": null,
+       "dataCy": null,
+       "dataQa": null,
+       "elementId": "",
+       "href": null,
+       "inIframe": false,
+       "inputType": null,
+       "name": null,
+       "placeholder": null,
+       "shadowDom": false,
+       "stableId": "s3",
+       "tag": "DIV",
+       "testId": null,
+       "xPath": "//div[@id='s3']"
+      },
+      "timestamp": 1787633391463,
+      "valueAfter": null,
+      "valueBefore": null
+     }
+    ],
+    "metadata": {
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "clientX": 289,
+     "clientY": 382,
+     "expandedAtTrigger": false,
+     "targetName": "Section Three",
+     "targetRole": null,
+     "targetTag": "DIV"
+    },
+    "startTime": 1787633391463,
+    "trigger": {
+     "accessibleName": "Section Three",
+     "ariaLabel": null,
+     "ariaLabelledBy": null,
+     "ariaRole": null,
+     "autoId": null,
+     "className": "head",
+     "cssSelector": "#s3",
+     "dataAutoId": null,
+     "dataCy": null,
+     "dataQa": null,
+     "elementId": "",
+     "href": null,
+     "inIframe": false,
+     "inputType": null,
+     "name": null,
+     "placeholder": null,
+     "shadowDom": false,
+     "stableId": "s3",
+     "tag": "DIV",
+     "testId": null,
+     "xPath": "//div[@id='s3']"
+    },
+    "triggerEvent": {
+     "altKey": false,
+     "captureOrigin": {
+      "frameId": 0,
+      "tabId": 555276326
+     },
+     "captureSeq": 5635.4000000003725,
+     "checkedAfter": null,
+     "checkedBefore": null,
+     "clientX": 289,
+     "clientY": 382,
+     "code": null,
+     "ctrlKey": false,
+     "domContext": {
+      "ancestorClasses": [
+       "panel",
+       "",
+       ""
+      ],
+      "ancestorRoles": [
+       "div",
+       "body",
+       "html"
+      ],
+      "ariaExpanded": false,
+      "ariaHasPopup": null,
+      "clickHandler": false,
+      "disabled": false,
+      "inputType": null,
+      "isContentEditable": false,
+      "pointerCursor": true,
+      "readOnly": false,
+      "required": false,
+      "tabIndex": -1
+     },
+     "eventId": "evt-pmt86rio4-22",
+     "eventType": "click",
+     "isTrusted": true,
+     "key": null,
+     "metaKey": false,
+     "pageTitle": "Expander Validation — Generic Accordion",
+     "pageUrl": "http://127.0.0.1:8242/expander-validation.html",
+     "scrollDeltaX": null,
+     "scrollDeltaY": null,
+     "shiftKey": false,
+     "target": {
+      "accessibleName": "Section Three",
+      "ariaLabel": null,
+      "ariaLabelledBy": null,
+      "ariaRole": null,
+      "autoId": null,
+      "className": "head",
+      "cssSelector": "#s3",
+      "dataAutoId": null,
+      "dataCy": null,
+      "dataQa": null,
+      "elementId": "",
+      "href": null,
+      "inIframe": false,
+      "inputType": null,
+      "name": null,
+      "placeholder": null,
+      "shadowDom": false,
+      "stableId": "s3",
+      "tag": "DIV",
+      "testId": null,
+      "xPath": "//div[@id='s3']"
+     },
+     "timestamp": 1787633391463,
+     "valueAfter": null,
+     "valueBefore": null
+    },
+    "type": "Expander"
+   }
+  ]
+ },
+ "execution_ir_plan": {
+  "environment": {
+   "baseUrl": "http://127.0.0.1:8242",
+   "browser": "chrome",
+   "startUrl": "http://127.0.0.1:8242/expander-validation.html",
+   "viewport": {
+    "height": 437,
+    "width": 780
+   }
+  },
+  "steps": [
+   {
+    "action": "click",
+    "assertions": [],
+    "description": "Expand or collapse the Section One",
+    "executionParameters": {
+     "retryCount": 0,
+     "retryDelayMs": 1000,
+     "timeoutMs": 30000,
+     "waitStrategy": "visible"
+    },
+    "id": "step-0001",
+    "input": null,
+    "order": 0,
+    "plainEnglish": "Expand or collapse the Section One",
+    "sourceEventId": "evt-pmt86rio4-5",
+    "target": {
+     "elementId": "1d452ec1-ab2b-41ff-8ee8-dd3adfbe0b52",
+     "elementName": "Section One",
+     "kind": "element",
+     "pageOrComponent": "main",
+     "resolvedLocators": [
+      {
+       "confidence": 0.72,
+       "priority": 1,
+       "type": "css",
+       "value": "#s1"
+      },
+      {
+       "confidence": 0.72,
+       "priority": 2,
+       "type": "css",
+       "value": "[class~=\"head\"]"
+      },
+      {
+       "confidence": 0.72,
+       "priority": 3,
+       "type": "css",
+       "value": "[class~=\"btn\"]"
+      }
+     ]
+    }
+   },
+   {
+    "action": "click",
+    "assertions": [],
+    "description": "Expand or collapse the Section Two",
+    "executionParameters": {
+     "retryCount": 0,
+     "retryDelayMs": 1000,
+     "timeoutMs": 30000,
+     "waitStrategy": "visible"
+    },
+    "id": "step-0002",
+    "input": null,
+    "order": 1,
+    "plainEnglish": "Expand or collapse the Section Two",
+    "sourceEventId": "evt-pmt86rio4-13",
+    "target": {
+     "elementId": "fbd58fc8-d0e4-4e04-969f-2ef256cb41ea",
+     "elementName": "Section Two",
+     "kind": "element",
+     "pageOrComponent": "main",
+     "resolvedLocators": [
+      {
+       "confidence": 0.72,
+       "priority": 1,
+       "type": "css",
+       "value": "#s2"
+      },
+      {
+       "confidence": 0.72,
+       "priority": 2,
+       "type": "css",
+       "value": "[class~=\"head\"]"
+      },
+      {
+       "confidence": 0.62,
+       "priority": 3,
+       "type": "accessibleName",
+       "value": "Section Two"
+      }
+     ]
+    }
+   },
+   {
+    "action": "click",
+    "assertions": [],
+    "description": "Expand or collapse the Section Three",
+    "executionParameters": {
+     "retryCount": 0,
+     "retryDelayMs": 1000,
+     "timeoutMs": 30000,
+     "waitStrategy": "visible"
+    },
+    "id": "step-0003",
+    "input": null,
+    "order": 2,
+    "plainEnglish": "Expand or collapse the Section Three",
+    "sourceEventId": "evt-pmt86rio4-22",
+    "target": {
+     "elementId": "b2ce54d2-b776-4c09-aace-82196b283a4a",
+     "elementName": "Section Three",
+     "kind": "element",
+     "pageOrComponent": "main",
+     "resolvedLocators": [
+      {
+       "confidence": 0.72,
+       "priority": 1,
+       "type": "css",
+       "value": "#s3"
+      },
+      {
+       "confidence": 0.72,
+       "priority": 2,
+       "type": "css",
+       "value": "[class~=\"head\"]"
+      },
+      {
+       "confidence": 0.62,
+       "priority": 3,
+       "type": "accessibleName",
+       "value": "Section Three"
+      }
+     ]
+    }
+   }
+  ],
+  "tags": [
+   "expander-validation.html"
+  ],
+  "testCaseId": "tc-7e3336b0",
+  "testCaseVersionId": "tcv-7e3336b0",
+  "testCaseVersionNumber": 1,
+  "title": "Recorded Test"
+ },
+ "execution_ir_plan_generated_at": "2026-08-25T04:49:52.473Z",
+ "generated_files": {
+  "files": [
+   {
+    "content": "{\n  \"name\": \"recorded-test\",\n  \"version\": \"1.0.0\",\n  \"private\": true,\n  \"description\": \"Playwright tests for Recorded Test\",\n  \"scripts\": {\n    \"test\": \"npx playwright test\",\n    \"test:headed\": \"npx playwright test --headed\",\n    \"test:ui\": \"npx playwright test --ui\",\n    \"report\": \"npx playwright show-report\"\n  },\n  \"devDependencies\": {\n    \"@playwright/test\": \"^1.52.0\"\n  }\n}\n",
+    "path": "package.json"
+   },
+   {
+    "content": "import { defineConfig, devices } from '@playwright/test';\n\n/**\n * Playwright configuration for Recorded Test.\n * Generated by CmdRunner from the Execution IR.\n */\nexport default defineConfig({\n  testDir: './tests',\n  fullyParallel: true,\n  forbidOnly: !!process.env.CI,\n  retries: process.env.CI ? 2 : 0,\n  workers: process.env.CI ? 1 : undefined,\n  reporter: 'html',\n  use: {\n    baseURL: 'http://127.0.0.1:8242',\n    viewport: { width: 780, height: 437 },\n    trace: 'on-first-retry',\n  },\n  projects: [\n    {\n      name: 'chromium',\n      use: { ...devices['Desktop Chrome'] },\n    },\n  ],\n});\n",
+    "path": "playwright.config.ts"
+   },
+   {
+    "content": "{\n  \"compilerOptions\": {\n    \"target\": \"ES2020\",\n    \"module\": \"commonjs\",\n    \"moduleResolution\": \"node\",\n    \"strict\": true,\n    \"esModuleInterop\": true,\n    \"skipLibCheck\": true,\n    \"forceConsistentCasingInFileNames\": true,\n    \"outDir\": \"./test-out\"\n  },\n  \"include\": [\n    \"tests/**/*.ts\"\n  ]\n}\n",
+    "path": "tsconfig.json"
+   },
+   {
+    "content": "node_modules/\ntest-results/\nplaywright-report/\nplaywright/.cache/\n",
+    "path": ".gitignore"
+   },
+   {
+    "content": "import { test, expect } from '@playwright/test';\n\ntest.describe('Recorded Test', () => {\n  test('should complete recorded Test successfully', async ({ page }) => {\n    // NOTE: No assertions generated — assertion derivation is not available. This test replays actions only.\n\n    // Expand or collapse the Section One\n    await page.locator('#s1').click()\n\n    // Expand or collapse the Section Two\n    await page.locator('#s2').click()\n\n    // Expand or collapse the Section Three\n    await page.locator('#s3').click()\n  });\n});\n",
+    "path": "tests/recorded-test.spec.ts"
+   }
+  ],
+  "projectMetadata": {
+   "engine": "playwright",
+   "fileCount": 5,
+   "language": "typescript",
+   "pattern": "flat"
+  }
+ },
+ "repo_session_id": "30f174e1-ad50-45f3-9c74-d3c99cbc1fa6",
+ "session_context": {
+  "capturedAt": "2026-08-25T04:49:48.829Z",
+  "startTitle": "Expander Validation — Generic Accordion",
+  "startUrl": "http://127.0.0.1:8242/expander-validation.html",
+  "viewport": {
+   "height": 437,
+   "width": 780
+  }
+ },
+ "ui_state": {
+  "lastChanged": "2026-08-25T04:49:52.479Z",
+  "recordingState": "stopped"
+ },
+ "understanding_result": {
+  "appId": "app-vlwq5j",
+  "behaviorModel": {
+   "coverage": {
+    "anchoredInteractions": 3,
+    "attributedNetworkRows": 0,
+    "attributedObservations": 0,
+    "malformedInteractions": 0,
+    "memberInteractions": 0,
+    "provenanceLinks": 0,
+    "totalInteractions": 3,
+    "totalNetworkRows": 0,
+    "totalObservations": 3,
+    "unattributedConsequences": 3
+   },
+   "episodes": [
+    {
+     "anchor": {
+      "actionTarget": "Section One",
+      "actionType": "Expander",
+      "interactionId": "int-2",
+      "triggerTimestamp": 1787633389638
+     },
+     "edges": [],
+     "episodeOutcome": {
+      "confidence": 0,
+      "confidenceLevel": "inconclusive",
+      "contributingMembers": [],
+      "derivation": "derived-episode-outcome",
+      "outcome": "incomplete"
+     },
+     "horizon": {
+      "attribution": {
+       "closeReason": "all-stamped-settled",
+       "closedAtMs": 1787633389638,
+       "openedAtMs": 1787633389638,
+       "pendingRequestIds": []
+      },
+      "uiOwnership": {
+       "closeReason": "stabilized",
+       "closedAtMs": 1787633389638,
+       "openedAtMs": 1787633389638
+      }
+     },
+     "id": "ep-int-2",
+     "members": [
+      {
+       "interactionId": "int-2",
+       "role": "anchor"
+      }
+     ],
+     "parameterInputs": [],
+     "provenanceLinks": [],
+     "tabId": 555276326,
+     "unattributed": []
+    },
+    {
+     "anchor": {
+      "actionTarget": "Section Two",
+      "actionType": "Expander",
+      "interactionId": "int-4",
+      "triggerTimestamp": 1787633390551
+     },
+     "edges": [],
+     "episodeOutcome": {
+      "confidence": 0,
+      "confidenceLevel": "inconclusive",
+      "contributingMembers": [],
+      "derivation": "derived-episode-outcome",
+      "outcome": "incomplete"
+     },
+     "horizon": {
+      "attribution": {
+       "closeReason": "all-stamped-settled",
+       "closedAtMs": 1787633390551,
+       "openedAtMs": 1787633390551,
+       "pendingRequestIds": []
+      },
+      "uiOwnership": {
+       "closeReason": "stabilized",
+       "closedAtMs": 1787633390551,
+       "openedAtMs": 1787633390551
+      }
+     },
+     "id": "ep-int-4",
+     "members": [
+      {
+       "interactionId": "int-4",
+       "role": "anchor"
+      }
+     ],
+     "parameterInputs": [],
+     "provenanceLinks": [],
+     "tabId": 555276326,
+     "unattributed": []
+    },
+    {
+     "anchor": {
+      "actionTarget": "Section Three",
+      "actionType": "Expander",
+      "interactionId": "int-5",
+      "triggerTimestamp": 1787633391463
+     },
+     "edges": [],
+     "episodeOutcome": {
+      "confidence": 0,
+      "confidenceLevel": "inconclusive",
+      "contributingMembers": [],
+      "derivation": "derived-episode-outcome",
+      "outcome": "incomplete"
+     },
+     "horizon": {
+      "attribution": {
+       "closeReason": "all-stamped-settled",
+       "closedAtMs": 1787633391463,
+       "openedAtMs": 1787633391463,
+       "pendingRequestIds": []
+      },
+      "uiOwnership": {
+       "closeReason": "stabilized",
+       "closedAtMs": 1787633391463,
+       "openedAtMs": 1787633391463
+      }
+     },
+     "id": "ep-int-5",
+     "members": [
+      {
+       "interactionId": "int-5",
+       "role": "anchor"
+      }
+     ],
+     "parameterInputs": [],
+     "provenanceLinks": [],
+     "tabId": 555276326,
+     "unattributed": []
+    }
+   ],
+   "generatedAtMs": 1787633392378,
+   "id": "abm-session-1787633392378",
+   "provenanceLinks": [],
+   "sessionId": "session-1787633392378",
+   "unattributed": [
+    {
+     "detail": "evidence window ev-evt-pmt86rio4-5 lies outside every uiOwnership horizon",
+     "evidenceRef": {
+      "kind": "dom",
+      "sequence": 0,
+      "windowId": "ev-evt-pmt86rio4-5"
+     },
+     "id": "unattr-ui-int-2",
+     "observedAtMs": 1787633389638,
+     "observedKind": "ui",
+     "reason": "no-live-horizon",
+     "tabId": 555276326
+    },
+    {
+     "detail": "evidence window ev-evt-pmt86rio4-13 lies outside every uiOwnership horizon",
+     "evidenceRef": {
+      "kind": "dom",
+      "sequence": 0,
+      "windowId": "ev-evt-pmt86rio4-13"
+     },
+     "id": "unattr-ui-int-4",
+     "observedAtMs": 1787633390551,
+     "observedKind": "ui",
+     "reason": "no-live-horizon",
+     "tabId": 555276326
+    },
+    {
+     "detail": "evidence window ev-evt-pmt86rio4-22 lies outside every uiOwnership horizon",
+     "evidenceRef": {
+      "kind": "dom",
+      "sequence": 0,
+      "windowId": "ev-evt-pmt86rio4-22"
+     },
+     "id": "unattr-ui-int-5",
+     "observedAtMs": 1787633391463,
+     "observedKind": "ui",
+     "reason": "no-live-horizon",
+     "tabId": 555276326
+    }
+   ],
+   "warnings": []
+  },
+  "generatedAt": "2026-08-25T04:49:52.434Z",
+  "outcomes": [
+   {
+    "actionTarget": "Section One",
+    "actionType": "Expander",
+    "confidence": 0,
+    "confidenceLevel": "inconclusive",
+    "interactionId": "int-2",
+    "outcome": "incomplete",
+    "resultingEntities": [],
+    "stateChanges": [
+     "control: Section One (expanded) false → true"
+    ],
+    "supportingEvidence": []
+   },
+   {
+    "actionTarget": "Section Two",
+    "actionType": "Expander",
+    "confidence": 0,
+    "confidenceLevel": "inconclusive",
+    "interactionId": "int-4",
+    "outcome": "incomplete",
+    "resultingEntities": [],
+    "stateChanges": [
+     "control: Section Two (expanded) false → true"
+    ],
+    "supportingEvidence": []
+   },
+   {
+    "actionTarget": "Section Three",
+    "actionType": "Expander",
+    "confidence": 0,
+    "confidenceLevel": "inconclusive",
+    "interactionId": "int-5",
+    "outcome": "incomplete",
+    "resultingEntities": [],
+    "stateChanges": [
+     "control: Section Three (expanded) false → true"
+    ],
+    "supportingEvidence": []
+   }
+  ],
+  "schemaVersion": 2,
+  "semanticKnowledge": {
+   "appId": "app-vlwq5j",
+   "components": [
+    {
+     "ariaRole": "button",
+     "businessMeaning": "Expander on \"Section One\"",
+     "componentFramework": "Generic",
+     "componentType": "Generic",
+     "detectedBy": "enrichment",
+     "interactionId": "int-2",
+     "label": "Section One",
+     "viewId": null
+    },
+    {
+     "ariaRole": "button",
+     "businessMeaning": "Expander on \"Section Two\"",
+     "componentFramework": "Generic",
+     "componentType": "Generic",
+     "detectedBy": "enrichment",
+     "interactionId": "int-4",
+     "label": "Section Two",
+     "viewId": null
+    },
+    {
+     "ariaRole": null,
+     "businessMeaning": "Expander on \"Section Three\"",
+     "componentFramework": "Generic",
+     "componentType": "Generic",
+     "detectedBy": "enrichment",
+     "interactionId": "int-5",
+     "label": "Section Three",
+     "viewId": null
+    }
+   ],
+   "contracts": [
+    {
+     "checked": null,
+     "disabled": false,
+     "elementPath": "//button[@id='s1']",
+     "elementType": "button",
+     "expanded": true,
+     "format": null,
+     "inputType": null,
+     "interactionId": "int-2",
+     "label": "Section One",
+     "optionCount": null,
+     "placeholder": null,
+     "required": false,
+     "tag": "BUTTON"
+    },
+    {
+     "checked": null,
+     "disabled": false,
+     "elementPath": "//div[@id='s2']",
+     "elementType": "other",
+     "expanded": true,
+     "format": null,
+     "inputType": null,
+     "interactionId": "int-4",
+     "label": "Section Two",
+     "optionCount": null,
+     "placeholder": null,
+     "required": false,
+     "tag": "DIV"
+    },
+    {
+     "checked": null,
+     "disabled": false,
+     "elementPath": "//div[@id='s3']",
+     "elementType": "other",
+     "expanded": true,
+     "format": null,
+     "inputType": null,
+     "interactionId": "int-5",
+     "label": "Section Three",
+     "optionCount": null,
+     "placeholder": null,
+     "required": false,
+     "tag": "DIV"
+    }
+   ],
+   "domain": {
+    "alternative": null,
+    "confidence": 0,
+    "domain": "unknown",
+    "evidence": {
+     "apiOperationScore": 0,
+     "entityTypeScore": 0,
+     "matchedSignals": [],
+     "notificationKeywordScore": 0,
+     "urlStructureScore": 0,
+     "viewPatternScore": 0
+    },
+    "margin": 0
+   },
+   "intents": [
+    {
+     "confidence": 0.3,
+     "intent": "Section One",
+     "interactionId": "int-2",
+     "resolutionPath": "context"
+    },
+    {
+     "confidence": 0.3,
+     "intent": "Section Two",
+     "interactionId": "int-4",
+     "resolutionPath": "context"
+    },
+    {
+     "confidence": 0.3,
+     "intent": "Section Three",
+     "interactionId": "int-5",
+     "resolutionPath": "context"
+    }
+   ],
+   "metadata": {
+    "coverage": {
+     "componentCoverage": 1,
+     "contractCoverage": 1,
+     "intentCoverage": 0
+    },
+    "enricherVersion": "m9.7-deterministic-v3-ddc",
+    "generatedAt": 1787633392419,
+    "interactionCount": 3,
+    "viewCount": 0,
+    "workflowCount": 1
+   },
+   "recordedWorkflows": [],
+   "surface": {
+    "navigationEdges": [],
+    "views": []
+   },
+   "workflows": [
+    {
+     "effects": {
+      "collectionChanges": [],
+      "counterDeltas": [],
+      "entitiesCreated": [],
+      "entitiesModified": [],
+      "notificationsEmitted": [],
+      "viewTransitions": []
+     },
+     "label": "Section One",
+     "overallOutcome": "unknown",
+     "sessionId": "session-1787633392378",
+     "stepIds": [
+      "int-2",
+      "int-4",
+      "int-5"
+     ],
+     "stepIntents": [
+      "Section One",
+      "Section Two",
+      "Section Three"
+     ],
+     "viewIds": [],
+     "workflowId": "wf-session-1787633392378-0"
+    }
+   ]
+  },
+  "sessionId": "session-1787633392378",
+  "transitions": [
+   {
+    "after": {
+     "collections": {},
+     "counters": {},
+     "currentUrl": null,
+     "currentView": null,
+     "entities": {},
+     "interactionCount": 1,
+     "lastInteractionId": "int-2",
+     "notifications": []
+    },
+    "before": {
+     "collections": {},
+     "counters": {},
+     "currentUrl": null,
+     "currentView": null,
+     "entities": {},
+     "interactionCount": 0,
+     "lastInteractionId": null,
+     "notifications": []
+    },
+    "changes": [
+     "control: Section One (expanded) false → true"
+    ],
+    "interactionId": "int-2"
+   },
+   {
+    "after": {
+     "collections": {},
+     "counters": {},
+     "currentUrl": null,
+     "currentView": null,
+     "entities": {},
+     "interactionCount": 2,
+     "lastInteractionId": "int-4",
+     "notifications": []
+    },
+    "before": {
+     "collections": {},
+     "counters": {},
+     "currentUrl": null,
+     "currentView": null,
+     "entities": {},
+     "interactionCount": 1,
+     "lastInteractionId": "int-2",
+     "notifications": []
+    },
+    "changes": [
+     "control: Section Two (expanded) false → true"
+    ],
+    "interactionId": "int-4"
+   },
+   {
+    "after": {
+     "collections": {},
+     "counters": {},
+     "currentUrl": null,
+     "currentView": null,
+     "entities": {},
+     "interactionCount": 3,
+     "lastInteractionId": "int-5",
+     "notifications": []
+    },
+    "before": {
+     "collections": {},
+     "counters": {},
+     "currentUrl": null,
+     "currentView": null,
+     "entities": {},
+     "interactionCount": 2,
+     "lastInteractionId": "int-4",
+     "notifications": []
+    },
+    "changes": [
+     "control: Section Three (expanded) false → true"
+    ],
+    "interactionId": "int-5"
+   }
+  ]
+ }
+}

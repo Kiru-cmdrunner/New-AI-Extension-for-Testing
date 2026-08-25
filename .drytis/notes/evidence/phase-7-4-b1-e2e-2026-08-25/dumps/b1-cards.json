@@ -1,0 +1,23 @@
+[
+ {
+  "type": "Expander",
+  "name": "Section One",
+  "sel": "#s1",
+  "expandedAtTrigger": false,
+  "endReason": null
+ },
+ {
+  "type": "Expander",
+  "name": "Section Two",
+  "sel": "#s2",
+  "expandedAtTrigger": false,
+  "endReason": null
+ },
+ {
+  "type": "Expander",
+  "name": "Section Three",
+  "sel": "#s3",
+  "expandedAtTrigger": false,
+  "endReason": null
+ }
+]
