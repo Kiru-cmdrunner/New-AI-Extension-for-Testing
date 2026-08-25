@@ -72,6 +72,16 @@ export interface DomContext {
   /** TabIndex of the element (HTMLElement.tabIndex). -1 for elements without tabindex attr, null for non-HTMLElement (SVG, etc.). */
   tabIndex: number | null;
 
+  // ── Interaction affordance (7.4-M1) ──
+  // Computed/DOM facts declaring WHY the resolved target is interactive.
+  // Captured at event time for the RESOLVED target; classification input only
+  // (never identity/locators — replay must not depend on computed style).
+
+  /** Computed style cursor === 'pointer' on the resolved target. */
+  pointerCursor?: boolean;
+  /** The onclick ATTRIBUTE is present on the resolved target. */
+  clickHandler?: boolean;
+
   // ── ARIA value attributes (for custom sliders/spinbuttons) ──
   // Present only when the DOM attribute exists (conditionally set by captureDomContext).
 

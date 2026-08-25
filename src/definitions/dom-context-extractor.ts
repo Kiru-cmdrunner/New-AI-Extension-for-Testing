@@ -34,6 +34,13 @@ export function extractDomContext(el: Element): DomContext {
     ancestorRoles: getAncestorRoles(el),
     ancestorClasses: getAncestorClasses(el),
     tabIndex: el instanceof HTMLElement ? el.tabIndex : null,
+    // 7.4-M1: interaction affordance facts — the same computed checks
+    // resolveTarget Strategy 2 already performs (identity-extractor.ts), now
+    // PERSISTED for classification instead of discarded. Boolean by
+    // construction ('' and undefined both fail === 'pointer'). Classification
+    // input only — never identity/locators.
+    pointerCursor: window.getComputedStyle(el).cursor === 'pointer',
+    clickHandler: el.hasAttribute('onclick'),
   };
 }
 

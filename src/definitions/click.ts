@@ -57,7 +57,19 @@ export const clickDefinition: ComponentDefinition = {
           !event.target.autoId &&
           !event.target.dataAutoId
         ) {
-          return null;
+          // 7.4-M1: affordance gate. A target the app itself declares
+          // clickable — cursor:pointer computed style (the platform's own
+          // affordance declaration) or an onclick attribute — is a deliberate
+          // click target by DOM/computed-state fact at event time. No timing,
+          // no site vocabulary, no statistics. Truthiness: undefined
+          // (pre-7.4 persisted sessions) stays inert.
+          // Scoped to the Click definition — isInteractiveElement untouched.
+          if (
+            !event.domContext.pointerCursor &&
+            !event.domContext.clickHandler
+          ) {
+            return null;
+          }
         }
       }
     }
