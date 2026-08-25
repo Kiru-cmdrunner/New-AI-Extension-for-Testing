@@ -26,6 +26,7 @@ import type {
 import {
   isDropdownTrigger,
   isDropdownOption,
+  isTextEntry,
   isInsideDropdownSurface,
   isInsideCalendarSurface,
   isCalendarCell,
@@ -46,7 +47,32 @@ export const dropdownDefinition: ComponentDefinition = {
 
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
     const { tag, ariaRole, className } = event.target;
-    const { ariaHasPopup, inputType } = event.domContext;
+    const { ariaHasPopup, inputType, isContentEditable } = event.domContext;
+
+    // 7.4-B2a: a TYPEABLE entry field's typed query belongs to TextEntry
+    // (priority 50). The selection side falls through to Click discovery
+    // (role=option is interactive). Readonly display-inputs (OXD family)
+    // keep the Dropdown lifecycle. Guards ALL Dropdown claim paths for
+    // typeable inputs: isDropdownTrigger class match, aria-haspopup=listbox
+    // on the input itself, and the OXD ancestor-class path below.
+    if (
+      isTextEntry(tag, inputType, ariaRole, isContentEditable) &&
+      event.domContext.readOnly !== true
+    ) {
+      return null;
+    }
+
+    // 7.4-B2a W-A.3 (guard 2): an OPTION-shaped target may COMPLETE a Dropdown
+    // lifecycle (containment-proven selection, handleEvent below) but never
+    // START one. Without this guard, option classes that match
+    // DROPDOWN_TRIGGER_CLASS_RE (ant-select-item, select-option,
+    // oxd-select-option) start a stray Dropdown lifecycle on the option at
+    // discovery — the same root cause as 6E-M2 W-A.3 (calendar cells whose
+    // class contains 'datepicker'). Does NOT affect absorbed options
+    // (lifecycle claims via isInScope, never reaches detectTrigger).
+    if (isDropdownOption(ariaRole, className)) {
+      return null;
+    }
 
     // Standard dropdown triggers
     if (isDropdownTrigger(tag, ariaRole, className)) {
@@ -272,7 +298,16 @@ export const dropdownDefinition: ComponentDefinition = {
       selectedValue,
       noOpSelection,
     };
-    if (!selectionConfirmed && pending) {
+    if (selectionConfirmed) {
+      // 7.4-B2b: write selectionConfirmed=true into emitted metadata so the
+      // IR bridge can distinguish a containment-proven completion (→ two
+      // CLICK steps for INPUT triggers) from an unconfirmed/parked one.
+      // Pre-existing gap (.drytis/notes/dropdown-whyline-dead-path.md): this
+      // key was never written, so the renderer why-line AND the S2b IR gate
+      // were both dead paths. Fixed here — the key is always emitted on the
+      // confirmed path.
+      metadata.selectionConfirmed = true;
+    } else if (pending) {
       metadata.provisionalSelection = pending.name;
       metadata.selectionConfirmed = false;
     }

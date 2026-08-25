@@ -82,6 +82,17 @@ export interface DomContext {
   /** The onclick ATTRIBUTE is present on the resolved target. */
   clickHandler?: boolean;
 
+  // ── Combobox autocomplete signals (7.4-B2 S1) ──
+  // Present only when the DOM attribute exists. Declared-but-unfilled until
+  // 7.4-B2 added the extractor calls below (lesson 4: these fields existed in
+  // the legacy recorder's DomContext but were never populated by the live
+  // capture path — the recurring "declared-but-unfilled" sin).
+
+  /** Value of aria-autocomplete attribute ("list", "both", "inline"). null if absent. */
+  ariaAutoComplete?: string | null;
+  /** Value of the `list` attribute on <input> (native datalist association). null if absent. */
+  listId?: string | null;
+
   // ── ARIA value attributes (for custom sliders/spinbuttons) ──
   // Present only when the DOM attribute exists (conditionally set by captureDomContext).
 

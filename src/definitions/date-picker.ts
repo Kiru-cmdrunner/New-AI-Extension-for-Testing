@@ -47,6 +47,17 @@ export const datePickerDefinition: ComponentDefinition = {
     const { tag, className, name, placeholder } = event.target;
     const { inputType, ariaHasPopup } = event.domContext;
 
+    // 7.4-B2a: aria-haspopup="listbox" is the W3C combobox-with-list popup
+    // shape — never a calendar (calendars use dialog/grid). Prevents the
+    // name-hint vocabulary (e.g. name="arrival") from stealing typeable
+    // comboboxes at priority 10 before Dropdown (20) or TextEntry (50) are
+    // consulted. Deliberately narrow: role=combobox alone is NOT declined
+    // (MUI Desktop DatePicker is role=combobox aria-haspopup=dialog); only
+    // the listbox popup shape is disclaimed.
+    if (ariaHasPopup === 'listbox') {
+      return null;
+    }
+
     if (
       isDatePickerTrigger(tag, inputType, className, ariaHasPopup, name, placeholder)
     ) {

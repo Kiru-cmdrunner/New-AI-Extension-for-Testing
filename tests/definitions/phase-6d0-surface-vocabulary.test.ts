@@ -257,11 +257,11 @@ describe('Phase 6D.0 — dropdown containment proof (b) with real format', () =>
     const sel = emitted.find((i) => i.type === 'Dropdown');
     expect(sel).toBeDefined();
     expect(sel!.metadata.selectedValue).toBe('Premium Economy');
-    // RCA2 contract: a CONFIRMED completion carries NO unconfirmed markers —
-    // selectionConfirmed is undefined when proven (pinned in
-    // structural-fixes-rca2.test.ts:478-492). It is only false on
-    // abandoned/displaced ends.
-    expect(sel!.metadata.selectionConfirmed).toBeUndefined();
+    // 7.4-B2b (dropdown-whyline-dead-path fix): a CONFIRMED completion now
+    // WRITES selectionConfirmed=true — the key the IR bridge gate reads for
+    // the two-step CLICK path on INPUT-triggered Dropdowns, and the panel
+    // why-line. Previously this was undefined (the documented dead path).
+    expect(sel!.metadata.selectionConfirmed).toBe(true);
     expect(sel!.endState).toBe('completed');
   });
 

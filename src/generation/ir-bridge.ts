@@ -42,6 +42,8 @@ import {
   rankLocatorCandidates,
 } from '../domain/locator-ranking';
 import { LocatorStrategyType, ValidationType, ValidationComparison, ValidationSeverity } from '../domain/enums';
+import { isDropdownOption } from '../definitions/patterns';
+import type { ObservedEvent } from '../shared/component-types';
 import type { GenerationInput, GenerationEnrichment, StepScopedAssertion } from './generation-types';
 
 // ── Interaction Type → IRAction Mapping (14 types) ────────
@@ -552,6 +554,32 @@ function deriveTags(
 // ── Main Compile Function ──────────────────────────────────
 
 /**
+ * 7.4-B2b: find the completing option event for an INPUT-triggered Dropdown.
+ *
+ * The option is the last member event whose target is a dropdown option
+ * (isDropdownOption on ariaRole + className). For INPUT-triggered
+ * Dropdowns that completed with selectionConfirmed=true, this always
+ * exists — the only completion path for that shape is the
+ * containment-proven option click (dropdown.ts:170-213).
+ *
+ * Deterministic: reads only recorded data (memberEvents), no timing.
+ */
+function findCompletingOptionEvent(
+  interaction: ComponentInteraction,
+): ObservedEvent | undefined {
+  const clickEvents = interaction.memberEvents.filter(
+    (e) => e.eventType === 'click',
+  );
+  for (let i = clickEvents.length - 1; i >= 0; i--) {
+    const e = clickEvents[i];
+    if (isDropdownOption(e.target.ariaRole, e.target.className)) {
+      return e;
+    }
+  }
+  return undefined;
+}
+
+/**
  * Compile ComponentInteraction[] into an ExecutionIRPlan.
  *
  * This is the Generation Layer's entry point. It takes the recording
@@ -574,6 +602,91 @@ export function build(input: GenerationInput): ExecutionIRPlan {
 
     // Look up business label for this interaction (if enriched)
     const businessLabel = enrichment?.businessLabels?.get(interaction.interactionId);
+
+    // 7.4-B2b: IR honesty for INPUT-triggered Dropdowns (readonly combobox
+    // family). A Dropdown completed on an INPUT trigger emits two CLICK
+    // steps instead of a single non-replayable SELECT — the trigger opens
+    // the list, the completing option click selects from it.
+    //
+    // Today this shape covers the OXD readonly display-input combobox and
+    // any INPUT-triggered Dropdown whose completion is a containment-proven
+    // option click (dropdown.ts:170-213). A native <select> keeps single
+    // SELECT (trigger.tag === 'SELECT' — executeSelect handles it).
+    //
+    // The completing option event is identified deterministically from
+    // recorded data: the last member event whose target is a dropdown
+    // option (isDropdownOption on role+class). For INPUT-triggered
+    // Dropdowns this always exists — the only completion path for that
+    // shape is the containment-proven option click.
+    if (
+      interaction.type === 'Dropdown' &&
+      interaction.trigger.tag === 'INPUT' &&
+      interaction.metadata['selectionConfirmed'] === true
+    ) {
+      const triggerName = businessLabel ?? getElementDisplayName(interaction);
+
+      // Step 1: click the trigger (open the list)
+      const triggerTarget = resolveElementTarget(interaction.trigger, elementIdByKey);
+      const triggerSourceEventId = interaction.triggerEvent.eventId;
+      const triggerAssertions = deriveAssertions(
+        triggerTarget.kind === 'element' ? triggerTarget.elementId : '',
+        triggerSourceEventId,
+        stepCounter,
+        enrichment,
+      );
+
+      const triggerDesc = `Open the ${triggerName} list`;
+      steps.push({
+        id: `step-${String(stepCounter + 1).padStart(4, '0')}`,
+        order: stepCounter,
+        action: IRAction.CLICK,
+        description: triggerDesc,
+        plainEnglish: triggerDesc.charAt(0).toUpperCase() + triggerDesc.slice(1),
+        target: triggerTarget,
+        input: null,
+        assertions: triggerAssertions,
+        executionParameters: DEFAULT_EXECUTION_PARAMETERS,
+        sourceEventId: triggerSourceEventId,
+      });
+      stepCounter++;
+
+      // Step 2: click the completing option (select the value).
+      // The option is the last member event with a dropdown-option target.
+      const optionEvent = findCompletingOptionEvent(interaction);
+      const selectedValue = (interaction.metadata['selectedValue'] as string) ?? '';
+      const optionName = businessLabel
+        ? selectedValue
+        : (optionEvent?.target.accessibleName
+          || optionEvent?.target.ariaLabel
+          || selectedValue
+          || '');
+      const optionTarget = optionEvent
+        ? resolveElementTarget(optionEvent.target, elementIdByKey)
+        : triggerTarget; // degenerate fallback — never expected in practice
+      const optionSourceEventId = optionEvent?.eventId ?? triggerSourceEventId;
+      const optionAssertions = deriveAssertions(
+        optionTarget.kind === 'element' ? optionTarget.elementId : '',
+        optionSourceEventId,
+        stepCounter,
+        enrichment,
+      );
+
+      const optionDesc = `Select ${selectedValue || optionName}`;
+      steps.push({
+        id: `step-${String(stepCounter + 1).padStart(4, '0')}`,
+        order: stepCounter,
+        action: IRAction.CLICK,
+        description: optionDesc,
+        plainEnglish: optionDesc.charAt(0).toUpperCase() + optionDesc.slice(1),
+        target: optionTarget,
+        input: null,
+        assertions: optionAssertions,
+        executionParameters: DEFAULT_EXECUTION_PARAMETERS,
+        sourceEventId: optionSourceEventId,
+      });
+      stepCounter++;
+      continue;
+    }
 
     // Determine action
     const action = INTERACTION_TO_IR_ACTION[interaction.type] ?? IRAction.CLICK;

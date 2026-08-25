@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Combobox Typeable — B2 Validation</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 40px; }
+  .field { margin: 20px 0; position: relative; }
+  label { display: block; margin-bottom: 4px; font-weight: 600; }
+  .combobox-input {
+    width: 240px; padding: 8px 12px; border: 1px solid #ccc;
+    border-radius: 4px; font-size: 14px; box-sizing: border-box;
+  }
+  .options-list {
+    position: absolute; top: 100%; left: 0; right: 0; max-height: 200px;
+    overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;
+    background: white; z-index: 10; display: none; margin: 0; padding: 0; list-style: none;
+  }
+  .options-list.open { display: block; }  .opt {
+    padding: 8px 12px; cursor: pointer; font-size: 14px;
+  }
+  .opt:hover, .opt.active { background: #e6f7ff; }
+  .save-btn {
+    margin-top: 30px; padding: 10px 20px; background: #1890ff; color: white;
+    border: none; border-radius: 4px; font-size: 14px; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<h1>Combobox Typeable — B2 Validation</h1>
+
+<!-- Flow A: type + option click -->
+<div class="field" id="flow-a">
+  <label for="city-a">City (type + select)</label>
+  <input id="city-a" class="combobox-input" role="combobox"
+         aria-autocomplete="list" aria-haspopup="listbox"
+         aria-expanded="false" aria-controls="city-a-list"
+         autocomplete="off" placeholder="Type a city…" />
+  <ul id="city-a-list" class="options-list" role="listbox">
+    <li class="opt" role="option" data-value="New York">New York</li>
+    <li class="opt" role="option" data-value="London">London</li>
+    <li class="opt" role="option" data-value="Tokyo">Tokyo</li>
+  </ul>
+</div>
+
+<!-- Flow B: type + Enter -->
+<div class="field" id="flow-b">
+  <label for="fruit-b">Fruit (type + Enter)</label>
+  <input id="fruit-b" class="combobox-input" role="combobox"
+         aria-autocomplete="list" aria-haspopup="listbox"
+         aria-expanded="false" aria-controls="fruit-b-list"
+         autocomplete="off" placeholder="Type a fruit…" />
+  <ul id="fruit-b-list" class="options-list" role="listbox">
+    <li class="opt" role="option" data-value="Apple">Apple</li>
+    <li class="opt" role="option" data-value="Banana">Banana</li>
+    <li class="opt" role="option" data-value="Cherry">Cherry</li>
+  </ul>
+</div>
+
+<!-- Flow C: type + click elsewhere -->
+<div class="field" id="flow-c">
+  <label for="search-c">Search (type + click elsewhere)</label>
+  <input id="search-c" class="combobox-input" role="combobox"
+         aria-autocomplete="list" aria-haspopup="listbox"
+         aria-expanded="false" aria-controls="search-c-list"
+         autocomplete="off" placeholder="Type a query…" />
+  <ul id="search-c-list" class="options-list" role="listbox">
+    <li class="opt" role="option" data-value="Result 1">Result 1</li>
+  </ul>
+</div>
+
+<!-- Flow D: readonly combobox (OXD-style — display-input, not typeable) -->
+<div class="field" id="flow-d">
+  <label for="status-d">Status (readonly combobox)</label>
+  <input id="status-d" class="combobox-input oxd-select-text" role="combobox"
+         aria-haspopup="listbox" aria-expanded="false"
+         aria-controls="status-d-list" readonly
+         placeholder="-- Select --" value="-- Select --" />
+  <ul id="status-d-list" class="options-list oxd-select-dropdown" role="listbox">
+    <li class="opt oxd-select-option" role="option" data-value="Active">Active</li>
+    <li class="opt oxd-select-option" role="option" data-value="Inactive">Inactive</li>
+  </ul>
+</div>
+
+<!-- Flow E: datalist combobox (native <input list>) -->
+<div class="field" id="flow-e">
+  <label for="browser-e">Browser (native datalist)</label>
+  <input id="browser-e" class="combobox-input" list="browsers" autocomplete="off"
+         placeholder="Type a browser…" />
+  <datalist id="browsers">
+    <option value="Chrome"></option>
+    <option value="Firefox"></option>
+    <option value="Safari"></option>
+  </datalist>
+</div>
+
+<button id="save-btn" class="save-btn">Save</button>
+
+<script>
+  // Minimal combobox behavior — opens on focus, closes on option-click / Enter.
+  // Zero test attributes, no site tokens — generic W3C/ARIA conventions only.
+  document.querySelectorAll('.combobox-input').forEach(function(input) {
+    var list = document.getElementById(input.getAttribute('aria-controls'));
+    if (!list) return;
+
+    var isReadonly = input.hasAttribute('readonly');
+
+    var open = function() {
+      input.setAttribute('aria-expanded', 'true');
+      list.classList.add('open');
+    };
+    var close = function() {
+      input.setAttribute('aria-expanded', 'false');
+      list.classList.remove('open');
+    };
+
+    input.addEventListener('focus', open);
+    if (isReadonly) input.addEventListener('click', open);
+
+    input.addEventListener('input', function() {
+      var q = input.value.toLowerCase();
+      list.querySelectorAll('.opt').forEach(function(opt) {
+        var v = opt.dataset.value.toLowerCase();
+        opt.style.display = v.includes(q) ? '' : 'none';
+      });
+    });
+
+    list.addEventListener('click', function(e) {
+      if (e.target.classList.contains('opt')) {
+        input.value = e.target.dataset.value;
+        close();
+      }
+    });
+
+    // Do NOT close the list on blur: the production event order is
+    // mousedown(option) → blur(input) → mouseup → click(option), and the
+    // list must survive through the option's click (closing it on blur
+    // would hide the element before mouseup and Chrome cancels the click).
+    // The list closes on the option's CLICK (above) instead.
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        close();
+      }
+    });
+  });
+</script>
+</body>
+</html>

@@ -41,6 +41,13 @@ export function extractDomContext(el: Element): DomContext {
     // input only — never identity/locators.
     pointerCursor: window.getComputedStyle(el).cursor === 'pointer',
     clickHandler: el.hasAttribute('onclick'),
+    // 7.4-B2 S1: combobox autocomplete signals — declared in DomContext but
+    // never populated by the live capture path (the "declared-but-unfilled"
+    // sin, lesson 4). Filled here so TextEntry/classification can distinguish
+    // typeable comboboxes from plain text inputs. Same null-when-absent
+    // convention as ariaHasPopup above; never undefined from the live extractor.
+    ariaAutoComplete: getAttributeString(el, 'aria-autocomplete'),
+    listId: el instanceof HTMLInputElement ? (el.getAttribute('list') ?? null) : null,
   };
 }
 

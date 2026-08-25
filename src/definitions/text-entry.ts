@@ -105,13 +105,28 @@ export const textEntryDefinition: ComponentDefinition = {
       ctx.trigger.placeholder,
     );
 
-    return {
-      metadata: {
-        targetName: name,
-        textValue,
-        typedValue,
-        userTyped,
-      },
+    // 7.4-B2a: comboboxSignal — distinguishes typeable comboboxes from plain
+    // text inputs. Read from the trigger event's DomContext (captured at focus
+    // time). Boolean-valued lesson (B1-12): undefined on legacy events stays
+    // undefined (never a fabricated signal). Only present when S1 captured a
+    // real attribute value.
+    const ariaAC = ctx.triggerEvent.domContext?.ariaAutoComplete;
+    const listId = ctx.triggerEvent.domContext?.listId;
+    const comboboxSignal =
+      typeof ariaAC === 'string' && ariaAC !== '' ? ariaAC
+      : typeof listId === 'string' && listId !== '' ? 'datalist'
+      : undefined;
+
+    const metadata: Record<string, unknown> = {
+      targetName: name,
+      textValue,
+      typedValue,
+      userTyped,
     };
+    if (comboboxSignal !== undefined) {
+      metadata.comboboxSignal = comboboxSignal;
+    }
+
+    return { metadata };
   },
 };

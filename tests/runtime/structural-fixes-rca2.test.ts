@@ -499,7 +499,10 @@ describe("S3' — parked provisional selection + structural displaced end", () =
 
     const result = dropdownDefinition.buildResult(ctx, { endState: 'completed' });
     expect(result.metadata.selectedValue).toBe('New York');
-    expect(result.metadata.selectionConfirmed).toBeUndefined();
+    // 7.4-B2b (dropdown-whyline-dead-path fix): confirmed completion now
+    // WRITES selectionConfirmed=true (was undefined — the documented dead
+    // path that gated the IR two-step CLICK and the panel why-line).
+    expect(result.metadata.selectionConfirmed).toBe(true);
     expect(result.metadata.provisionalSelection).toBeUndefined();
   });
 

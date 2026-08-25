@@ -146,6 +146,16 @@ export function buildWhyBlock(
       return 'why: detected via gridcell children';
     }
 
+    case 'TextEntry': {
+      // 7.4-B2a: comboboxSignal metadata (text-entry.ts buildResult) — present
+      // only when S1 captured aria-autocomplete or a datalist list= attribute.
+      // Renders the signal string; nothing when absent (boolean-valued lesson).
+      const signal = typeof metadata.comboboxSignal === 'string'
+        ? metadata.comboboxSignal
+        : null;
+      return signal ? `why: combobox input (aria-autocomplete=${signal})` : null;
+    }
+
     default:
       return null;
   }
