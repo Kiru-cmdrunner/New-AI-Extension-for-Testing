@@ -1,0 +1,66 @@
+[
+ {
+  "type": "TextEntry",
+  "name": "City (type + select)",
+  "sel": "#city-a",
+  "signal": "list",
+  "typedValue": "New",
+  "endReason": null
+ },
+ {
+  "type": "Click",
+  "name": "New York",
+  "sel": "body > div:nth-of-type(1) > ul > li:nth-of-type(1)",
+  "signal": null,
+  "typedValue": null,
+  "endReason": null
+ },
+ {
+  "type": "TextEntry",
+  "name": "Fruit (type + Enter)",
+  "sel": "#fruit-b",
+  "signal": "list",
+  "typedValue": "App",
+  "endReason": null
+ },
+ {
+  "type": "TextEntry",
+  "name": "Search (type + click elsewhere)",
+  "sel": "#search-c",
+  "signal": "list",
+  "typedValue": "query",
+  "endReason": null
+ },
+ {
+  "type": "Click",
+  "name": "Save",
+  "sel": "#save-btn",
+  "signal": null,
+  "typedValue": null,
+  "endReason": null
+ },
+ {
+  "type": "Dropdown",
+  "name": "Status (readonly combobox)",
+  "sel": "#status-d",
+  "signal": null,
+  "typedValue": null,
+  "endReason": null
+ },
+ {
+  "type": "TextEntry",
+  "name": "Browser (native datalist)",
+  "sel": "#browser-e",
+  "signal": "datalist",
+  "typedValue": "Chro",
+  "endReason": null
+ },
+ {
+  "type": "Click",
+  "name": "Save",
+  "sel": "#save-btn",
+  "signal": null,
+  "typedValue": null,
+  "endReason": null
+ }
+]

@@ -1,0 +1,65 @@
+[
+ {
+  "type": "TextEntry",
+  "name": "City (type + select)",
+  "sel": "#city-a",
+  "typedValue": "New",
+  "textValue": "New",
+  "comboboxSignal": "list",
+  "endReason": null
+ },
+ {
+  "type": "Click",
+  "name": "New York",
+  "sel": "body > div:nth-of-type(1) > ul > li:nth-of-type(1)",
+  "typedValue": null,
+  "textValue": null,
+  "comboboxSignal": null,
+  "endReason": null
+ },
+ {
+  "type": "TextEntry",
+  "name": "Fruit (type + Enter)",
+  "sel": "#fruit-b",
+  "typedValue": "App",
+  "textValue": "App",
+  "comboboxSignal": "list",
+  "endReason": null
+ },
+ {
+  "type": "Click",
+  "name": "Save",
+  "sel": "#save-btn",
+  "typedValue": null,
+  "textValue": null,
+  "comboboxSignal": null,
+  "endReason": null
+ },
+ {
+  "type": "TextEntry",
+  "name": "Search (type + click elsewhere)",
+  "sel": "#search-c",
+  "typedValue": "hotels",
+  "textValue": "hotels",
+  "comboboxSignal": "list",
+  "endReason": null
+ },
+ {
+  "type": "Unclassified",
+  "name": "Save",
+  "sel": "#save-btn",
+  "typedValue": null,
+  "textValue": null,
+  "comboboxSignal": null,
+  "endReason": null
+ },
+ {
+  "type": "Unclassified",
+  "name": "Save",
+  "sel": "#save-btn",
+  "typedValue": null,
+  "textValue": null,
+  "comboboxSignal": null,
+  "endReason": null
+ }
+]

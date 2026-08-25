@@ -1,0 +1,23 @@
+{
+ "errors": [],
+ "harnessLog": [
+  "PASS — A0 fixture: #city-a found",
+  "PASS — A0b fixture: option list open",
+  "PASS — D0 fixture: readonly option list open",
+  "PASS — A1 #city-a → TextEntry card (typeable combobox claimed by TextEntry) :: [{\"type\":\"TextEntry\",\"name\":\"City (type + select)\",\"sel\":\"#city-a\",\"signal\":\"list\",\"typedValue\":\"New\",\"endReason\":null}]",
+  "PASS — A2 option \"New York\" → Click card",
+  "PASS — A3 ZERO Dropdown cards on the typeable combobox :: []",
+  "PASS — B1 #fruit-b → exactly one card, type TextEntry :: [{\"type\":\"TextEntry\",\"name\":\"Fruit (type + Enter)\",\"sel\":\"#fruit-b\",\"signal\":\"list\",\"typedValue\":\"App\",\"endReason\":null}]",
+  "PASS — C1 #search-c → TextEntry card :: [{\"type\":\"TextEntry\",\"name\":\"Search (type + click elsewhere)\",\"sel\":\"#search-c\",\"signal\":\"list\",\"typedValue\":\"query\",\"endReason\":null}]",
+  "PASS — C2 #save-btn → Click card",
+  "PASS — D1 readonly #status-d → Dropdown card (R1 pinned) :: [{\"type\":\"Dropdown\",\"name\":\"Status (readonly combobox)\",\"sel\":\"#status-d\",\"signal\":null,\"typedValue\":null,\"endReason\":null}]",
+  "PASS — D2 readonly #status-d → ZERO TextEntry",
+  "PASS — E1 datalist #browser-e → TextEntry card :: [{\"type\":\"TextEntry\",\"name\":\"Browser (native datalist)\",\"sel\":\"#browser-e\",\"signal\":\"datalist\",\"typedValue\":\"Chro\",\"endReason\":null}]",
+  "PASS — E2 TextEntry comboboxSignal=datalist (S1 listId) :: \"datalist\"",
+  "PASS — S1a #city-a TextEntry carries comboboxSignal=list :: \"list\"",
+  "PASS — X-Panel panel renders cards (≥5) :: {\"cardCount\":8,\"textBadges\":5}",
+  "PASS — X-IR1 IR plan uses click steps (≥2 for flows D + C save) :: 9 steps: [\"fill\",\"click\",\"fill\",\"fill\",\"click\",\"click\",\"click\",\"fill\",\"click\"]",
+  "PASS — X-IR2 IR plan has ZERO select steps (no INPUT-based fake SELECT) :: [\"fill\",\"click\",\"fill\",\"fill\",\"click\",\"click\",\"click\",\"fill\",\"click\"]",
+  "PASS — X8 zero console errors in panel context"
+ ]
+}

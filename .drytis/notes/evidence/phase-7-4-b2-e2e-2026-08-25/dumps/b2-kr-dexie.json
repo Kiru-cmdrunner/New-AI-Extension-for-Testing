@@ -1,0 +1,639 @@
+{
+ "found": true,
+ "name": "cmdrunner_knowledge",
+ "dump": {
+  "applications": [
+   {
+    "appId": "app-vlwq5k",
+    "origin": "http://127.0.0.1:8243",
+    "label": "127.0.0.1:8243",
+    "firstSeenAt": 1787656145795,
+    "lastActiveAt": 1787656145832,
+    "sessionCount": 1,
+    "lastSessionId": "session-1787656145777"
+   }
+  ],
+  "knowledgeBehaviorSessions": [
+   {
+    "key": "app-vlwq5k:session-1787656145777",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "seq": 1,
+    "generatedAtMs": 1787656145795,
+    "episodeCount": 4,
+    "edgeCount": 3,
+    "gapCount": 3,
+    "coverage": {
+     "totalInteractions": 7,
+     "anchoredInteractions": 4,
+     "memberInteractions": 2,
+     "malformedInteractions": 0,
+     "totalNetworkRows": 0,
+     "attributedNetworkRows": 0,
+     "totalObservations": 5,
+     "attributedObservations": 2,
+     "unattributedConsequences": 3,
+     "provenanceLinks": 0
+    },
+    "viewSetHash": "811c9dc5",
+    "signatureSetHash": "c5ca1447",
+    "warnings": []
+   }
+  ],
+  "knowledgeCollections": [],
+  "knowledgeCounters": [],
+  "knowledgeEdges": [
+   {
+    "key": "app-vlwq5k:session-1787656145777:edge-ep-int-11-000",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "episodeId": "ep-int-11",
+    "edgeId": "edge-ep-int-11-000",
+    "edgeSeq": 0,
+    "tier": "T3-transition",
+    "kind": "entity",
+    "detail": "entity search-query:h (search-query) created",
+    "confidence": 0.7,
+    "latencyMs": null,
+    "fromEpisodeId": "ep-int-11",
+    "fromInteractionId": "int-10",
+    "to": {
+     "type": "entity",
+     "entityId": "search-query:h",
+     "operation": "create"
+    },
+    "refJson": "[{\"kind\":\"entity\",\"entityId\":\"search-query:h\",\"interactionId\":\"int-10\"}]",
+    "signatureKey": "app-vlwq5k:sig:d44955df"
+   },
+   {
+    "key": "app-vlwq5k:session-1787656145777:edge-ep-int-4-000",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "episodeId": "ep-int-4",
+    "edgeId": "edge-ep-int-4-000",
+    "edgeSeq": 0,
+    "tier": "T4-window",
+    "kind": "ui",
+    "detail": "UI observations on int-2: 3 DOM changes, 3 visibility changes",
+    "confidence": 0.6,
+    "latencyMs": 0,
+    "fromEpisodeId": "ep-int-4",
+    "fromInteractionId": "int-2",
+    "to": {
+     "type": "ui",
+     "summary": "3 DOM changes, 3 visibility changes"
+    },
+    "refJson": "[{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt8kb63m-5\",\"sequence\":0}]",
+    "signatureKey": "app-vlwq5k:sig:a8974c3d"
+   },
+   {
+    "key": "app-vlwq5k:session-1787656145777:edge-ep-int-8-000",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "episodeId": "ep-int-8",
+    "edgeId": "edge-ep-int-8-000",
+    "edgeSeq": 0,
+    "tier": "T4-window",
+    "kind": "ui",
+    "detail": "UI observations on int-6: 3 DOM changes, 3 visibility changes",
+    "confidence": 0.5,
+    "latencyMs": 0,
+    "fromEpisodeId": "ep-int-8",
+    "fromInteractionId": "int-6",
+    "to": {
+     "type": "ui",
+     "summary": "3 DOM changes, 3 visibility changes"
+    },
+    "refJson": "[{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt8kb63m-26\",\"sequence\":0}]",
+    "signatureKey": "app-vlwq5k:sig:dd28d779"
+   }
+  ],
+  "knowledgeEntities": [
+   {
+    "key": "app-vlwq5k:search-query:h",
+    "appId": "app-vlwq5k",
+    "entityId": "search-query:h",
+    "type": "search-query",
+    "attributes": {
+     "term": "h",
+     "field": "#search-c",
+     "control.expanded": "true"
+    },
+    "source": "target-derived",
+    "firstSeenAt": 1787656145795,
+    "lastSeenAt": 1787656145795,
+    "revision": 1,
+    "lastSessionId": "session-1787656145777"
+   }
+  ],
+  "knowledgeEpisodes": [
+   {
+    "key": "app-vlwq5k:session-1787656145777:ep-int-11",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "episodeId": "ep-int-11",
+    "anchor": {
+     "interactionId": "int-11",
+     "actionType": "Unclassified",
+     "actionTarget": "Save",
+     "triggerTimestamp": 1787656145232
+    },
+    "members": [
+     {
+      "interactionId": "int-11",
+      "role": "anchor"
+     },
+     {
+      "interactionId": "int-10",
+      "role": "parameter"
+     }
+    ],
+    "horizonAttribution": {
+     "openedAtMs": 1787656145232,
+     "closedAtMs": 1787656145232,
+     "closeReason": "all-stamped-settled"
+    },
+    "horizonUiOwnership": {
+     "openedAtMs": 1787656145232,
+     "closedAtMs": 1787656145232,
+     "closeReason": "stabilized"
+    },
+    "parameterInputs": [
+     {
+      "interactionId": "int-10",
+      "label": "Search (type + click elsewhere)",
+      "value": "hotels",
+      "link": "form-overlap"
+     }
+    ],
+    "episodeOutcome": {
+     "outcome": "incomplete",
+     "confidence": 0,
+     "confidenceLevel": "inconclusive",
+     "derivation": "derived-episode-outcome"
+    },
+    "tabId": 1223576305,
+    "signatureKey": "app-vlwq5k:sig:d44955df"
+   },
+   {
+    "key": "app-vlwq5k:session-1787656145777:ep-int-17",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "episodeId": "ep-int-17",
+    "anchor": {
+     "interactionId": "int-17",
+     "actionType": "Unclassified",
+     "actionTarget": "Save",
+     "triggerTimestamp": 1787656145223
+    },
+    "members": [
+     {
+      "interactionId": "int-17",
+      "role": "anchor"
+     }
+    ],
+    "horizonAttribution": {
+     "openedAtMs": 1787656145223,
+     "closedAtMs": 1787656145223,
+     "closeReason": "all-stamped-settled"
+    },
+    "horizonUiOwnership": {
+     "openedAtMs": 1787656145223,
+     "closedAtMs": 1787656145223,
+     "closeReason": "stabilized"
+    },
+    "parameterInputs": [],
+    "episodeOutcome": null,
+    "tabId": 1223576305,
+    "signatureKey": "app-vlwq5k:sig:d44955df"
+   },
+   {
+    "key": "app-vlwq5k:session-1787656145777:ep-int-4",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "episodeId": "ep-int-4",
+    "anchor": {
+     "interactionId": "int-4",
+     "actionType": "Click",
+     "actionTarget": "New York",
+     "triggerTimestamp": 1787656142345
+    },
+    "members": [
+     {
+      "interactionId": "int-4",
+      "role": "anchor"
+     }
+    ],
+    "horizonAttribution": {
+     "openedAtMs": 1787656142345,
+     "closedAtMs": 1787656142345,
+     "closeReason": "all-stamped-settled"
+    },
+    "horizonUiOwnership": {
+     "openedAtMs": 1787656142345,
+     "closedAtMs": 1787656142345,
+     "closeReason": "stabilized"
+    },
+    "parameterInputs": [],
+    "episodeOutcome": {
+     "outcome": "incomplete",
+     "confidence": 0,
+     "confidenceLevel": "inconclusive",
+     "derivation": "derived-episode-outcome"
+    },
+    "tabId": 1223576305,
+    "signatureKey": "app-vlwq5k:sig:a8974c3d"
+   },
+   {
+    "key": "app-vlwq5k:session-1787656145777:ep-int-8",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "episodeId": "ep-int-8",
+    "anchor": {
+     "interactionId": "int-8",
+     "actionType": "Click",
+     "actionTarget": "Save",
+     "triggerTimestamp": 1787656143818
+    },
+    "members": [
+     {
+      "interactionId": "int-8",
+      "role": "anchor"
+     },
+     {
+      "interactionId": "int-6",
+      "role": "parameter"
+     }
+    ],
+    "horizonAttribution": {
+     "openedAtMs": 1787656143818,
+     "closedAtMs": 1787656143818,
+     "closeReason": "all-stamped-settled"
+    },
+    "horizonUiOwnership": {
+     "openedAtMs": 1787656143818,
+     "closedAtMs": 1787656143818,
+     "closeReason": "stabilized"
+    },
+    "parameterInputs": [
+     {
+      "interactionId": "int-6",
+      "label": "Fruit (type + Enter)",
+      "value": "App",
+      "link": "form-overlap"
+     }
+    ],
+    "episodeOutcome": {
+     "outcome": "incomplete",
+     "confidence": 0,
+     "confidenceLevel": "inconclusive",
+     "derivation": "derived-episode-outcome"
+    },
+    "tabId": 1223576305,
+    "signatureKey": "app-vlwq5k:sig:dd28d779"
+   }
+  ],
+  "knowledgeGaps": [
+   {
+    "key": "app-vlwq5k:session-1787656145777:unattr-ui-int-10",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "gapId": "unattr-ui-int-10",
+    "observedKind": "ui",
+    "reason": "no-live-horizon",
+    "detail": "evidence window ev-evt-pmt8kb63m-48 lies outside every uiOwnership horizon",
+    "observedAtMs": 1787656144327,
+    "tabId": 1223576305,
+    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt8kb63m-48\",\"sequence\":0}"
+   },
+   {
+    "key": "app-vlwq5k:session-1787656145777:unattr-ui-int-4",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "gapId": "unattr-ui-int-4",
+    "observedKind": "ui",
+    "reason": "no-live-horizon",
+    "detail": "evidence window ev-evt-pmt8kb63m-18 lies outside every uiOwnership horizon",
+    "observedAtMs": 1787656142345,
+    "tabId": 1223576305,
+    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt8kb63m-18\",\"sequence\":0}"
+   },
+   {
+    "key": "app-vlwq5k:session-1787656145777:unattr-ui-int-8",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "gapId": "unattr-ui-int-8",
+    "observedKind": "ui",
+    "reason": "no-live-horizon",
+    "detail": "evidence window ev-evt-pmt8kb63m-41 lies outside every uiOwnership horizon",
+    "observedAtMs": 1787656143818,
+    "tabId": 1223576305,
+    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt8kb63m-41\",\"sequence\":0}"
+   }
+  ],
+  "knowledgeNotifications": [],
+  "knowledgeOutcomes": [
+   {
+    "key": "session-1787656145777:int-10",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "interactionId": "int-10",
+    "actionType": "TextEntry",
+    "actionTarget": "Search (type + click elsewhere)",
+    "outcome": "incomplete",
+    "confidence": 0,
+    "confidenceLevel": "inconclusive",
+    "evidence": [],
+    "resultingEntities": [
+     "search-query:h"
+    ],
+    "persistedAt": 1787656145832
+   },
+   {
+    "key": "session-1787656145777:int-2",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "interactionId": "int-2",
+    "actionType": "TextEntry",
+    "actionTarget": "City (type + select)",
+    "outcome": "incomplete",
+    "confidence": 0,
+    "confidenceLevel": "inconclusive",
+    "evidence": [],
+    "resultingEntities": [],
+    "persistedAt": 1787656145832
+   },
+   {
+    "key": "session-1787656145777:int-4",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "interactionId": "int-4",
+    "actionType": "Click",
+    "actionTarget": "New York",
+    "outcome": "incomplete",
+    "confidence": 0,
+    "confidenceLevel": "inconclusive",
+    "evidence": [],
+    "resultingEntities": [],
+    "persistedAt": 1787656145832
+   },
+   {
+    "key": "session-1787656145777:int-6",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "interactionId": "int-6",
+    "actionType": "TextEntry",
+    "actionTarget": "Fruit (type + Enter)",
+    "outcome": "incomplete",
+    "confidence": 0,
+    "confidenceLevel": "inconclusive",
+    "evidence": [],
+    "resultingEntities": [],
+    "persistedAt": 1787656145832
+   },
+   {
+    "key": "session-1787656145777:int-8",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "interactionId": "int-8",
+    "actionType": "Click",
+    "actionTarget": "Save",
+    "outcome": "incomplete",
+    "confidence": 0,
+    "confidenceLevel": "inconclusive",
+    "evidence": [],
+    "resultingEntities": [],
+    "persistedAt": 1787656145832
+   }
+  ],
+  "knowledgeRecordedWorkflows": [
+   {
+    "key": "app-vlwq5k:wf-pattern-c8168671",
+    "appId": "app-vlwq5k",
+    "patternId": "wf-pattern-c8168671",
+    "label": "Save record",
+    "canonicalSteps": [
+     "city (type + select)",
+     "new york",
+     "fruit (type + enter)",
+     "save record",
+     "search products",
+     "save record"
+    ],
+    "viewSequence": [],
+    "sessionIds": [
+     "session-1787656145777"
+    ],
+    "occurrenceCount": 1,
+    "instances": [
+     "wf-session-1787656145777-0"
+    ],
+    "signatureIds": [
+     "app-vlwq5k:sig:a8974c3d",
+     "app-vlwq5k:sig:d44955df",
+     "app-vlwq5k:sig:dd28d779"
+    ],
+    "linkageState": "linked",
+    "instanceSignatureIds": {
+     "wf-session-1787656145777-0": [
+      "app-vlwq5k:sig:a8974c3d",
+      "app-vlwq5k:sig:d44955df",
+      "app-vlwq5k:sig:dd28d779"
+     ]
+    },
+    "firstSeenAt": 1787656145832,
+    "lastSeenAt": 1787656145832
+   }
+  ],
+  "knowledgeSignatures": [
+   {
+    "key": "app-vlwq5k:sig:a8974c3d",
+    "appId": "app-vlwq5k",
+    "actionType": "Click",
+    "normalizedTarget": "new york",
+    "anchorViewId": null,
+    "firstSeenAtSession": "session-1787656145777",
+    "lastSeenAtSession": "session-1787656145777",
+    "firstSeenSeq": 1,
+    "lastSeenSeq": 1,
+    "firstSeenAtMs": 1787656145795,
+    "lastSeenAtMs": 1787656145795,
+    "occurrenceCount": 1,
+    "sessionsSinceSeen": 0,
+    "status": "active",
+    "source": "behavior",
+    "consequenceProfile": [
+     {
+      "identity": "T4-window|ui|anchor-window",
+      "tier": "T4-window",
+      "kind": "ui",
+      "targetIdentity": "anchor-window",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787656145777",
+      "lastSeenAtSession": "session-1787656145777",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787656145777",
+        "edgeKey": "app-vlwq5k:session-1787656145777:edge-ep-int-4-000"
+       }
+      ],
+      "observedVia": "behavior/dom-window"
+     }
+    ],
+    "divergenceFlags": []
+   },
+   {
+    "key": "app-vlwq5k:sig:d44955df",
+    "appId": "app-vlwq5k",
+    "actionType": "Unclassified",
+    "normalizedTarget": "save",
+    "anchorViewId": null,
+    "firstSeenAtSession": "session-1787656145777",
+    "lastSeenAtSession": "session-1787656145777",
+    "firstSeenSeq": 1,
+    "lastSeenSeq": 1,
+    "firstSeenAtMs": 1787656145795,
+    "lastSeenAtMs": 1787656145795,
+    "occurrenceCount": 1,
+    "sessionsSinceSeen": 0,
+    "status": "active",
+    "source": "behavior",
+    "consequenceProfile": [
+     {
+      "identity": "T3-transition|entity|search-query:create",
+      "tier": "T3-transition",
+      "kind": "entity",
+      "targetIdentity": "search-query:create",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787656145777",
+      "lastSeenAtSession": "session-1787656145777",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787656145777",
+        "edgeKey": "app-vlwq5k:session-1787656145777:edge-ep-int-11-000"
+       }
+      ],
+      "observedVia": "behavior/entity-derivation"
+     }
+    ],
+    "divergenceFlags": []
+   },
+   {
+    "key": "app-vlwq5k:sig:dd28d779",
+    "appId": "app-vlwq5k",
+    "actionType": "Click",
+    "normalizedTarget": "save",
+    "anchorViewId": null,
+    "firstSeenAtSession": "session-1787656145777",
+    "lastSeenAtSession": "session-1787656145777",
+    "firstSeenSeq": 1,
+    "lastSeenSeq": 1,
+    "firstSeenAtMs": 1787656145795,
+    "lastSeenAtMs": 1787656145795,
+    "occurrenceCount": 1,
+    "sessionsSinceSeen": 0,
+    "status": "active",
+    "source": "behavior",
+    "consequenceProfile": [
+     {
+      "identity": "T4-window|ui|post-anchor",
+      "tier": "T4-window",
+      "kind": "ui",
+      "targetIdentity": "post-anchor",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787656145777",
+      "lastSeenAtSession": "session-1787656145777",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787656145777",
+        "edgeKey": "app-vlwq5k:session-1787656145777:edge-ep-int-8-000"
+       }
+      ],
+      "observedVia": "behavior/dom-window"
+     }
+    ],
+    "divergenceFlags": []
+   }
+  ],
+  "knowledgeStateTransitions": [
+   {
+    "key": "session-1787656145777:int-10",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "interactionId": "int-10",
+    "changes": [
+     "search query: \"h\"",
+     "control: Search (type + click elsewhere) (expanded) false → true",
+     "entity attribute: search-query:h control.expanded=true"
+    ],
+    "fromViewId": null,
+    "toViewId": null,
+    "affectedEntities": [
+     "search-query:h"
+    ],
+    "timestamp": 1787656145832
+   },
+   {
+    "key": "session-1787656145777:int-2",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "interactionId": "int-2",
+    "changes": [],
+    "fromViewId": null,
+    "toViewId": null,
+    "affectedEntities": [],
+    "timestamp": 1787656145832
+   },
+   {
+    "key": "session-1787656145777:int-4",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "interactionId": "int-4",
+    "changes": [],
+    "fromViewId": null,
+    "toViewId": null,
+    "affectedEntities": [],
+    "timestamp": 1787656145832
+   },
+   {
+    "key": "session-1787656145777:int-6",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "interactionId": "int-6",
+    "changes": [],
+    "fromViewId": null,
+    "toViewId": null,
+    "affectedEntities": [],
+    "timestamp": 1787656145832
+   },
+   {
+    "key": "session-1787656145777:int-8",
+    "appId": "app-vlwq5k",
+    "sessionId": "session-1787656145777",
+    "interactionId": "int-8",
+    "changes": [],
+    "fromViewId": null,
+    "toViewId": null,
+    "affectedEntities": [],
+    "timestamp": 1787656145832
+   }
+  ],
+  "knowledgeViewTransitions": [],
+  "knowledgeViews": []
+ }
+}
