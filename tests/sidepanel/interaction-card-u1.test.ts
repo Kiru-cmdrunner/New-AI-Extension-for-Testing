@@ -137,10 +137,12 @@ describe('P1 — every InteractionType renders a real type badge', () => {
   const TYPES: ComponentInteraction['type'][] = [
     'Click', 'TextEntry', 'Dropdown', 'Checkbox', 'RadioButton', 'DatePicker',
     'Hover', 'Link', 'FileUpload', 'Slider', 'ColorInput', 'Tab', 'Scroll',
-    'Navigation', 'DragDrop', 'KeyboardShortcut', 'CompoundInteraction', 'Unclassified',
+    'Navigation', 'DragDrop', 'KeyboardShortcut', 'CompoundInteraction',
+    'Expander', // 7.4-B1
+    'Unclassified',
   ];
 
-  it('renders a non-Unknown badge for each of the 18 types', () => {
+  it('renders a non-Unknown badge for each of the 19 types', () => {
     for (const t of TYPES) {
       const el = createInteractionElement(interaction({ type: t }));
       const badge = el.querySelector<HTMLElement>('.interaction-badge');

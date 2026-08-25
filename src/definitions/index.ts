@@ -28,6 +28,7 @@ import { textEntryDefinition } from './text-entry';
 import { hoverDefinition } from './hover';
 import { linkDefinition } from './link';
 import { tabDefinition } from './tab';
+import { expanderDefinition } from './expander';
 import { scrollDefinition } from './scroll';
 import { navigationDefinition } from './navigation';
 import { clickDefinition } from './click';
@@ -48,6 +49,8 @@ import { clickDefinition } from './click';
  *   60 = Hover
  *   65 = Tab (checked before Link — tabs are often <a> tags)
  *   70 = Link
+ *   80 = Expander (7.4-B1: aria-expanded disclosure; above Click fallback,
+ *        below Tab/Dropdown which keep their types when also aria-expanded)
  *  110 = Scroll
  *  120 = Navigation
  *  180 = Click (universal fallback — always checked last)
@@ -70,6 +73,7 @@ export const ALL_DEFINITIONS: ComponentDefinition[] = [
   hoverDefinition,           // priority 60
   tabDefinition,             // priority 65
   linkDefinition,            // priority 70
+  expanderDefinition,        // priority 80 (7.4-B1: aria-expanded disclosure)
   scrollDefinition,          // priority 110
   navigationDefinition,      // priority 120
   clickDefinition,           // priority 180 (fallback)

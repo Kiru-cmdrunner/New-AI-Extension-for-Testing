@@ -48,6 +48,7 @@ const TYPE_DISPLAY: Record<string, TypeDisplay> = {
   Hover:        { icon: '👆', label: 'Hover',         color: '#6366f1' },
   Link:         { icon: '🔗', label: 'Link',          color: '#06b6d4' },
   Tab:          { icon: '📂', label: 'Tab',           color: '#8b5cf6' },
+  Expander:     { icon: '🔽', label: 'Expander',      color: '#14b8a6' },
   Scroll:       { icon: '📜', label: 'Scroll',        color: '#6b7280' },
   Navigation:   { icon: '🧭', label: 'Navigation',   color: '#0ea5e9' },
   ColorInput:   { icon: '🎨', label: 'Color Input',   color: '#a855f7' },

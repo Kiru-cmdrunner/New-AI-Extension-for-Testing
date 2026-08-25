@@ -19,10 +19,10 @@ import type { ComponentInteraction } from '../shared/component-types';
 //
 // D1 (spec §3): priorities are properties of the definition FILES, stable
 // and deterministic. The renderer MUST NOT import the engine registry
-// (bundle coupling: ALL_DEFINITIONS would pull all 16 definition modules
+// (bundle coupling: ALL_DEFINITIONS would pull all 17 definition modules
 // and their engine deps into the sidepanel). This is a hand-frozen copy;
 // the P4c pin (tests/sidepanel/understanding-badge.test.ts) PARSES the
-// 16 definition files from source and fails when this map drifts —
+// 17 definition files from source and fails when this map drifts —
 // priority change, new definition, or removal.
 //
 // Source of truth: `type:` + `priority:` literals in src/definitions/*.ts
@@ -42,6 +42,7 @@ export const DEFINITION_PRIORITIES: Readonly<Record<string, number>> = Object.fr
   Hover: 60,
   Tab: 65,
   Link: 70,
+  Expander: 80,
   Scroll: 110,
   Navigation: 120,
   Click: 180,

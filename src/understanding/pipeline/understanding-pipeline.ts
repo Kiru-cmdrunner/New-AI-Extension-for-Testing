@@ -582,7 +582,9 @@ export class UnderstandingPipeline {
         if (idx < 0) continue;
 
         const navTime = interaction.endTime ?? interaction.startTime ?? 0;
-        const actionTypes = new Set(['Click', 'KeyboardShortcut', 'CompoundInteraction', 'Link']);
+        // 7.4-B1: Expander included — its clicks are recovery-attributable
+        // like any other discrete click-triggered interaction.
+        const actionTypes = new Set(['Click', 'KeyboardShortcut', 'CompoundInteraction', 'Link', 'Expander']);
         let candidate: ComponentInteraction | null = null;
         for (let n = idx - 1; n >= 0; n--) {
           const cand = interactions[n];

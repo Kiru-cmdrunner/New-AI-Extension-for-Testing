@@ -412,7 +412,7 @@ describe('M9.10 definition registry', () => {
   });
 
   it('has 16 definitions total (14 original + 2 new)', () => {
-    expect(ALL_DEFINITIONS).toHaveLength(16);
+    expect(ALL_DEFINITIONS).toHaveLength(17); // 7.4-B1: +Expander
   });
 
   it('DragDrop has highest priority (lowest number)', () => {

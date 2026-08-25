@@ -104,8 +104,8 @@ describe('P4c — DEFINITION_PRIORITIES matches the definition files (parsed fro
     ...parseDefinitionFile(fs.readFileSync(path.join(DEFS_DIR, f), 'utf-8'))!,
   }));
 
-  it('parses all 16 definition files (parse-failure fails the pin)', () => {
-    expect(parsed.length).toBe(16);
+  it('parses all 17 definition files (parse-failure fails the pin)', () => {
+    expect(parsed.length).toBe(17); // 7.4-B1: +expander.ts
   });
 
   it('has a map entry for every parsed definition type', () => {

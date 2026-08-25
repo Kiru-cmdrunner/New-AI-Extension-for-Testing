@@ -128,11 +128,13 @@ describe('InteractionType', () => {
     const types: InteractionType[] = [
       'Click', 'TextEntry', 'Dropdown', 'Checkbox', 'RadioButton',
       'DatePicker', 'Hover', 'Link', 'FileUpload', 'Slider',
+      'ColorInput', // was missing pre-7.4-B1 (stale count) — honest fix
       'Tab', 'Scroll', 'Navigation',
       'DragDrop', 'KeyboardShortcut', 'CompoundInteraction',
+      'Expander', // 7.4-B1
       'Unclassified',
     ];
-    expect(types).toHaveLength(17);
+    expect(types).toHaveLength(19);
   });
 });
 

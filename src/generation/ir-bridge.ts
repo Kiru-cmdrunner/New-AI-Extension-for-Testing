@@ -66,6 +66,11 @@ const INTERACTION_TO_IR_ACTION: Record<InteractionType, IRAction> = {
   Slider: IRAction.FILL,
   ColorInput: IRAction.FILL,
   Tab: IRAction.CLICK,
+  Expander: IRAction.CLICK,   // 7.4-B1: replay parity — a human replays an
+                              // expander by clicking it; TOGGLE sets
+                              // .checked (checkbox-specific, no-op on
+                              // div/button triggers). Direction lives on
+                              // metadata + behavioral layer, never the input.
   Scroll: IRAction.CLICK,      // filtered as noise below
   Navigation: IRAction.NAVIGATE,
   DragDrop: IRAction.DRAG_DROP,
@@ -252,6 +257,12 @@ function generateDescription(
     }
     case 'Tab': {
       return `Click the "${name}" tab`;
+    }
+    case 'Expander': {
+      // 7.4-B1: direction is post-event (behavioral layer owns it), so the
+      // description is direction-neutral — "Expand or collapse" reads
+      // correctly for both flips.
+      return `Expand or collapse the ${name}`;
     }
     case 'Link':
       return `Click the "${name}" link`;

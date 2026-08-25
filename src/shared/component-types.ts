@@ -220,6 +220,7 @@ export type InteractionType =
   | 'Slider'
   | 'ColorInput'
   | 'Tab'
+  | 'Expander'
   | 'Scroll'
   | 'Navigation'
   | 'DragDrop'
