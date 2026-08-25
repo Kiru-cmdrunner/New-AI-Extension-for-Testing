@@ -1,0 +1,14 @@
+PASS — E3 Return-on: second DatePicker completed (round-trip) :: ["Depart on","Return on"]
+PASS — E2b ZERO Unclassified calendar-cell cards :: 0 unclassified cells :: []
+PASS — 6F-M1 zero twin Click cards on calendar cells :: 0 twin clicks :: []
+PASS — E4 6B regression: data-auto-id search-flights → exactly one Click :: [{"t":"Click","id":"search-flights"}]
+PASS — E5 6D.1 W3 regression: options-list li.opt Bengaluru → exactly one Click :: [{"t":"Click","n":"Bengaluru"}]
+E6 notification-ish cards: []
+IR steps: ["selectDate","selectDate","click","click","click"]
+PASS — E8 IR plan: date steps present, no Unclassified leak (plan generated from claimed cards only) :: 5 steps: ["selectDate","selectDate","click","click","click"]
+KR tables: {"applications":1,"knowledgeBehaviorSessions":1,"knowledgeCollections":1,"knowledgeCounters":1,"knowledgeEdges":4,"knowledgeEntities":0,"knowledgeEpisodes":3,"knowledgeGaps":5,"knowledgeNotifications":1,"knowledgeOutcomes":5,"knowledgeRecordedWorkflows":1,"knowledgeSignatures":3,"knowledgeStateTransitions":5,"knowledgeViewTransitions":0,"knowledgeViews":0}
+PASS — E9 KR Dexie rows written (DatePicker signatures among them) :: {"applications":1,"knowledgeBehaviorSessions":1,"knowledgeCollections":1,"knowledgeCounters":1,"knowledgeEdges":4,"knowledgeEntities":0,"knowledgeEpisodes":3,"knowledgeGaps":5,"knowledgeNotifications":1,"knowledgeOutcomes":5,"knowledgeRecordedWorkflows":1,"knowledgeSignatures":3,"knowledgeStateTransitions":5,"knowledgeViewTransitions":0,"knowledgeViews":0}
+DatePicker KR signatures: 0
+PASS — E7 6D.1 W2 regression: #id-only p#result-count counter seeded :: [{"id":"counter:body > main > div > p#result-count","cur":"2"}]
+
+════ 6E-M2 E2E — 9 PASS / 0 FAIL ════

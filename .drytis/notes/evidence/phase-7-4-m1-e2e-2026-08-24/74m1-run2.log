@@ -1,0 +1,71 @@
+fixture listening on 8242
+fixture up: true
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+page probe: {"url":"http://127.0.0.1:8242/affordance-validation.html","cards":6,"ready":"complete"}
+PASS — fixture: pointer chip found
+PASS — fixture: plain div found
+PASS — fixture: inner span found
+PASS — fixture: onclick div found
+PASS — fixture: inline pointer div found
+PASS — fixture: cursor:default div found
+fixture state: clicked: HTML
+STOP → stopped
+interactions: [
+ {
+  "type": "Click",
+  "tag": "DIV",
+  "cls": "pointer-chip",
+  "name": "Select departure 06:30",
+  "css": "#chip-1",
+  "pc": true,
+  "ch": false
+ },
+ {
+  "type": "Click",
+  "tag": "SPAN",
+  "cls": "chip-label",
+  "name": "Inner label — click ME",
+  "css": "#chip-2-label",
+  "pc": true,
+  "ch": false
+ },
+ {
+  "type": "Click",
+  "tag": "DIV",
+  "cls": "plain",
+  "name": "Attribute handler",
+  "css": "#onclick-1",
+  "pc": false,
+  "ch": true
+ },
+ {
+  "type": "Unclassified",
+  "tag": "DIV",
+  "cls": "plain",
+  "name": "Not clickable styling",
+  "css": "#plain-1",
+  "pc": "absent",
+  "ch": "absent"
+ }
+]
+PASS — V1 pointer chip (stylesheet) claimed as Click :: {"type":"Click","tag":"DIV","cls":"pointer-chip","name":"Select departure 06:30","css":"#chip-1","pc":true,"ch":false}
+PASS — V2 plain div stays honest Unclassified :: [{"type":"Unclassified","tag":"DIV","cls":"plain","name":"Not clickable styling","css":"#plain-1","pc":"absent","ch":"absent"}]
+FAIL — V3 inner span click LIFTED to parent chip (Click on the chip) :: count=0 rows=[]
+FAIL — V3b no stray Unclassified for the inner span :: [{"type":"Click","tag":"SPAN","cls":"chip-label","name":"Inner label — click ME","css":"#chip-2-label","pc":true,"ch":false}]
+PASS — V4 onclick-attribute div claimed as Click :: {"type":"Click","tag":"DIV","cls":"plain","name":"Attribute handler","css":"#onclick-1","pc":false,"ch":true}
+FAIL — V5 inline cursor:pointer div claimed as Click
+FAIL — V6 explicit cursor:default stays honest Unclassified :: []
+PASS — V7a chip-1 card carries pointerCursor=true :: pc=true
+PASS — V7b onclick card carries clickHandler=true :: ch=true
+PASS — V8 zero console errors in panel context
+
+RESULT: 12 PASS / 4 FAIL
+file:///workspace/.drytis/notes/evidence/phase-7-4-m1-e2e-2026-08-24/harness-74m1.mjs:200
+chrome.kill(); fixture.kill();
+                       ^
+
+TypeError: fixture.kill is not a function
+    at file:///workspace/.drytis/notes/evidence/phase-7-4-m1-e2e-2026-08-24/harness-74m1.mjs:200:24
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+
+Node.js v20.20.2

@@ -1,0 +1,58 @@
+{
+ "interactions": [
+  {
+   "type": "Click",
+   "tag": "DIV",
+   "cls": "pointer-chip",
+   "name": "Select departure 06:30",
+   "css": "#chip-1",
+   "pc": true,
+   "ch": false
+  },
+  {
+   "type": "Click",
+   "tag": "SPAN",
+   "cls": "chip-label",
+   "name": "Inner label — click ME",
+   "css": "#chip-2-label",
+   "pc": true,
+   "ch": false
+  },
+  {
+   "type": "Click",
+   "tag": "DIV",
+   "cls": "plain",
+   "name": "Attribute handler",
+   "css": "#onclick-1",
+   "pc": false,
+   "ch": true
+  },
+  {
+   "type": "Click",
+   "tag": "DIV",
+   "cls": null,
+   "name": "Inline-styled target",
+   "css": "#inline-1",
+   "pc": true,
+   "ch": false
+  },
+  {
+   "type": "Unclassified",
+   "tag": "DIV",
+   "cls": "plain",
+   "name": "Not clickable styling",
+   "css": "#plain-1",
+   "pc": "absent",
+   "ch": "absent"
+  },
+  {
+   "type": "Unclassified",
+   "tag": "DIV",
+   "cls": null,
+   "name": "Explicit default cursor",
+   "css": "#default-1",
+   "pc": "absent",
+   "ch": "absent"
+  }
+ ]
+}

@@ -1,0 +1,296 @@
+{
+ "environment": {
+  "baseUrl": "chrome-extension://gndjidfncanlhlonpcabokbdhnikglpn/src/sidepanel/index.html",
+  "browser": "chrome",
+  "startUrl": "chrome-extension://gndjidfncanlhlonpcabokbdhnikglpn/src/sidepanel/index.html",
+  "viewport": {
+   "height": 437,
+   "width": 780
+  }
+ },
+ "steps": [
+  {
+   "action": "selectDate",
+   "assertions": [],
+   "description": "Select Choose Sunday, September 6th, 2026 in the Depart on",
+   "executionParameters": {
+    "retryCount": 0,
+    "retryDelayMs": 1000,
+    "timeoutMs": 30000,
+    "waitStrategy": "visible"
+   },
+   "id": "step-0001",
+   "input": "Choose Sunday, September 6th, 2026",
+   "order": 0,
+   "plainEnglish": "Select Choose Sunday, September 6th, 2026 in the Depart on",
+   "sourceEventId": "evt-pmt7zndgh-8",
+   "target": {
+    "elementId": "1ea984ac-efc0-49b1-be98-82abf9f603c1",
+    "elementName": "Depart on",
+    "kind": "element",
+    "pageOrComponent": "main",
+    "resolvedLocators": [
+     {
+      "confidence": 0.8,
+      "priority": 1,
+      "type": "accessibleName",
+      "value": "Depart on"
+     },
+     {
+      "confidence": 0.72,
+      "priority": 2,
+      "type": "css",
+      "value": "#onward"
+     },
+     {
+      "confidence": 0.72,
+      "priority": 3,
+      "type": "label",
+      "value": "onward"
+     }
+    ]
+   }
+  },
+  {
+   "action": "selectDate",
+   "assertions": [],
+   "description": "Select Choose Tuesday, September 8th, 2026 in the Return on",
+   "executionParameters": {
+    "retryCount": 0,
+    "retryDelayMs": 1000,
+    "timeoutMs": 30000,
+    "waitStrategy": "visible"
+   },
+   "id": "step-0002",
+   "input": "Choose Tuesday, September 8th, 2026",
+   "order": 1,
+   "plainEnglish": "Select Choose Tuesday, September 8th, 2026 in the Return on",
+   "sourceEventId": "evt-pmt7zndgh-44",
+   "target": {
+    "elementId": "60a71e74-3dfb-4dfb-9a6b-db6591c236f6",
+    "elementName": "Return on",
+    "kind": "element",
+    "pageOrComponent": "main",
+    "resolvedLocators": [
+     {
+      "confidence": 0.8,
+      "priority": 1,
+      "type": "accessibleName",
+      "value": "Return on"
+     },
+     {
+      "confidence": 0.72,
+      "priority": 2,
+      "type": "css",
+      "value": "#return"
+     },
+     {
+      "confidence": 0.72,
+      "priority": 3,
+      "type": "label",
+      "value": "return"
+     }
+    ]
+   }
+  },
+  {
+   "action": "click",
+   "assertions": [
+    {
+     "comparison": "contains",
+     "expectedValue": "1 selected",
+     "property": null,
+     "severity": "soft",
+     "target": {
+      "elementId": "obs-2-0",
+      "elementName": "counter",
+      "kind": "element",
+      "pageOrComponent": "main",
+      "resolvedLocators": [
+       {
+        "confidence": 0.7,
+        "priority": 1,
+        "type": "css",
+        "value": "#result-count"
+       }
+      ]
+     },
+     "type": "textMatch"
+    }
+   ],
+   "description": "Click the Search Flights",
+   "executionParameters": {
+    "retryCount": 0,
+    "retryDelayMs": 1000,
+    "timeoutMs": 30000,
+    "waitStrategy": "visible"
+   },
+   "id": "step-0003",
+   "input": null,
+   "order": 2,
+   "plainEnglish": "Click the Search Flights",
+   "sourceEventId": "evt-pmt7zndgh-72",
+   "target": {
+    "elementId": "b9c97271-8fe2-457c-be9a-314e76e9cfe6",
+    "elementName": "Search Flights",
+    "kind": "element",
+    "pageOrComponent": "main",
+    "resolvedLocators": [
+     {
+      "confidence": 0.9,
+      "priority": 1,
+      "type": "testId",
+      "value": "[data-auto-id=\"search-flights\"]"
+     },
+     {
+      "confidence": 0.72,
+      "priority": 2,
+      "type": "css",
+      "value": "#go"
+     },
+     {
+      "confidence": 0.62,
+      "priority": 3,
+      "type": "accessibleName",
+      "value": "Search Flights"
+     }
+    ]
+   }
+  },
+  {
+   "action": "click",
+   "assertions": [
+    {
+     "comparison": "contains",
+     "expectedValue": "2 selected",
+     "property": null,
+     "severity": "soft",
+     "target": {
+      "elementId": "obs-3-0",
+      "elementName": "counter",
+      "kind": "element",
+      "pageOrComponent": "main",
+      "resolvedLocators": [
+       {
+        "confidence": 0.7,
+        "priority": 1,
+        "type": "css",
+        "value": "#result-count"
+       }
+      ]
+     },
+     "type": "textMatch"
+    }
+   ],
+   "description": "Click the Bengaluru",
+   "executionParameters": {
+    "retryCount": 0,
+    "retryDelayMs": 1000,
+    "timeoutMs": 30000,
+    "waitStrategy": "visible"
+   },
+   "id": "step-0004",
+   "input": null,
+   "order": 3,
+   "plainEnglish": "Click the Bengaluru",
+   "sourceEventId": "evt-pmt7zndgh-78",
+   "target": {
+    "elementId": "",
+    "elementName": "Bengaluru",
+    "kind": "element",
+    "pageOrComponent": "main",
+    "resolvedLocators": [
+     {
+      "confidence": 0.9,
+      "priority": 1,
+      "type": "testId",
+      "value": "airport-opt-1"
+     },
+     {
+      "confidence": 0.72,
+      "priority": 2,
+      "type": "css",
+      "value": "[class~=\"opt\"]"
+     },
+     {
+      "confidence": 0.62,
+      "priority": 3,
+      "type": "accessibleName",
+      "value": "Bengaluru"
+     }
+    ]
+   }
+  },
+  {
+   "action": "click",
+   "assertions": [
+    {
+     "comparison": "isTrue",
+     "expectedValue": null,
+     "property": null,
+     "severity": "soft",
+     "target": {
+      "elementId": "obs-4-0",
+      "elementName": "notification",
+      "kind": "element",
+      "pageOrComponent": "main",
+      "resolvedLocators": [
+       {
+        "confidence": 0.7,
+        "priority": 1,
+        "type": "css",
+        "value": "#snack"
+       }
+      ]
+     },
+     "type": "presence"
+    }
+   ],
+   "description": "Click the Notify",
+   "executionParameters": {
+    "retryCount": 0,
+    "retryDelayMs": 1000,
+    "timeoutMs": 30000,
+    "waitStrategy": "visible"
+   },
+   "id": "step-0005",
+   "input": null,
+   "order": 4,
+   "plainEnglish": "Click the Notify",
+   "sourceEventId": "evt-pmt7zndgh-84",
+   "target": {
+    "elementId": "b0e77f4e-998e-4861-b40f-e367b24371b0",
+    "elementName": "Notify",
+    "kind": "element",
+    "pageOrComponent": "main",
+    "resolvedLocators": [
+     {
+      "confidence": 0.72,
+      "priority": 1,
+      "type": "css",
+      "value": "#toast-btn"
+     },
+     {
+      "confidence": 0.62,
+      "priority": 2,
+      "type": "accessibleName",
+      "value": "Notify"
+     },
+     {
+      "confidence": 0.35,
+      "priority": 3,
+      "type": "xpath",
+      "value": "//button[@id='toast-btn']"
+     }
+    ]
+   }
+  }
+ ],
+ "tags": [
+  "src"
+ ],
+ "testCaseId": "tc-db968e6d",
+ "testCaseVersionId": "tcv-db968e6d",
+ "testCaseVersionNumber": 1,
+ "title": "Recorded Test"
+}

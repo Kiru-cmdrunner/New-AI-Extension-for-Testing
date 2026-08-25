@@ -1,0 +1,721 @@
+{
+ "found": true,
+ "name": "cmdrunner_knowledge",
+ "dump": {
+  "applications": [
+   {
+    "appId": "app-vlwpj3",
+    "origin": "http://127.0.0.1:8190",
+    "label": "127.0.0.1:8190",
+    "firstSeenAt": 1787621451707,
+    "lastActiveAt": 1787621451744,
+    "sessionCount": 1,
+    "lastSessionId": "session-1787621451667"
+   }
+  ],
+  "knowledgeBehaviorSessions": [
+   {
+    "key": "app-vlwpj3:session-1787621451667",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "seq": 1,
+    "generatedAtMs": 1787621451707,
+    "episodeCount": 3,
+    "edgeCount": 4,
+    "gapCount": 5,
+    "coverage": {
+     "totalInteractions": 5,
+     "anchoredInteractions": 3,
+     "memberInteractions": 2,
+     "malformedInteractions": 0,
+     "totalNetworkRows": 2,
+     "attributedNetworkRows": 2,
+     "totalObservations": 5,
+     "attributedObservations": 0,
+     "unattributedConsequences": 5,
+     "provenanceLinks": 0
+    },
+    "viewSetHash": "811c9dc5",
+    "signatureSetHash": "b6768446",
+    "warnings": []
+   }
+  ],
+  "knowledgeCollections": [
+   {
+    "key": "app-vlwpj3:collection:body > main > div > p#result-count",
+    "appId": "app-vlwpj3",
+    "collectionId": "collection:body > main > div > p#result-count",
+    "entityType": "unknown",
+    "currentCount": 0,
+    "maxCount": 0,
+    "lastUpdated": 1787621451744,
+    "lastSessionId": "session-1787621451667"
+   }
+  ],
+  "knowledgeCounters": [
+   {
+    "key": "app-vlwpj3:counter:body > main > div > p#result-count",
+    "appId": "app-vlwpj3",
+    "counterId": "counter:body > main > div > p#result-count",
+    "label": "body > main > div > p#result-count",
+    "elementPath": "body > main > div > p#result-count",
+    "currentValue": "2",
+    "history": [
+     {
+      "value": "1",
+      "observedAt": 1787621451707,
+      "sessionId": "session-1787621451667",
+      "delta": null
+     },
+     {
+      "value": "2",
+      "observedAt": 1787621451707,
+      "sessionId": "session-1787621451667",
+      "delta": 1
+     }
+    ],
+    "lastUpdated": 1787621451744,
+    "lastSessionId": "session-1787621451667"
+   }
+  ],
+  "knowledgeEdges": [
+   {
+    "key": "app-vlwpj3:session-1787621451667:edge-ep-int-10-000",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "episodeId": "ep-int-10",
+    "edgeId": "edge-ep-int-10-000",
+    "edgeSeq": 0,
+    "tier": "T1-stamp",
+    "kind": "api",
+    "detail": "GET http://127.0.0.1:8190/collect?e=notify initiated during ep-int-10",
+    "confidence": 0.9,
+    "latencyMs": null,
+    "fromEpisodeId": "ep-int-10",
+    "fromInteractionId": "int-10",
+    "to": {
+     "type": "api",
+     "requestId": "27"
+    },
+    "refJson": "[{\"kind\":\"request\",\"requestId\":\"27\"}]",
+    "signatureKey": "app-vlwpj3:sig:dc518201"
+   },
+   {
+    "key": "app-vlwpj3:session-1787621451667:edge-ep-int-10-001",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "episodeId": "ep-int-10",
+    "edgeId": "edge-ep-int-10-001",
+    "edgeSeq": 1,
+    "tier": "T3-transition",
+    "kind": "notification",
+    "detail": "notification \"Saved\" (info) appeared",
+    "confidence": 0.7,
+    "latencyMs": null,
+    "fromEpisodeId": "ep-int-10",
+    "fromInteractionId": "int-10",
+    "to": {
+     "type": "ui",
+     "summary": "notification: Saved"
+    },
+    "refJson": "[{\"kind\":\"event\",\"eventId\":\"notification-0\"}]",
+    "signatureKey": "app-vlwpj3:sig:dc518201"
+   },
+   {
+    "key": "app-vlwpj3:session-1787621451667:edge-ep-int-7-000",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "episodeId": "ep-int-7",
+    "edgeId": "edge-ep-int-7-000",
+    "edgeSeq": 0,
+    "tier": "T1-stamp",
+    "kind": "api",
+    "detail": "GET http://127.0.0.1:8190/collect?e=search initiated during ep-int-7",
+    "confidence": 0.9,
+    "latencyMs": null,
+    "fromEpisodeId": "ep-int-7",
+    "fromInteractionId": "int-7",
+    "to": {
+     "type": "api",
+     "requestId": "26"
+    },
+    "refJson": "[{\"kind\":\"request\",\"requestId\":\"26\"}]",
+    "signatureKey": "app-vlwpj3:sig:352a1a8f"
+   },
+   {
+    "key": "app-vlwpj3:session-1787621451667:edge-ep-int-8-000",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "episodeId": "ep-int-8",
+    "edgeId": "edge-ep-int-8-000",
+    "edgeSeq": 0,
+    "tier": "T3-transition",
+    "kind": "state",
+    "detail": "counter counter:body > main > div > p#result-count 1 → 2",
+    "confidence": 0.7,
+    "latencyMs": null,
+    "fromEpisodeId": "ep-int-8",
+    "fromInteractionId": "int-8",
+    "to": {
+     "type": "state",
+     "from": "counter:body > main > div > p#result-count=1",
+     "to": "counter:body > main > div > p#result-count=2"
+    },
+    "refJson": "[{\"kind\":\"transition\",\"transitionId\":\"st-int-8\"}]",
+    "signatureKey": "app-vlwpj3:sig:c5843d6d"
+   }
+  ],
+  "knowledgeEntities": [],
+  "knowledgeEpisodes": [
+   {
+    "key": "app-vlwpj3:session-1787621451667:ep-int-10",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "episodeId": "ep-int-10",
+    "anchor": {
+     "interactionId": "int-10",
+     "actionType": "Click",
+     "actionTarget": "Notify",
+     "triggerTimestamp": 1787621448835
+    },
+    "members": [
+     {
+      "interactionId": "int-10",
+      "role": "anchor"
+     }
+    ],
+    "horizonAttribution": {
+     "openedAtMs": 1787621448835,
+     "closedAtMs": 1787621448835,
+     "closeReason": "all-stamped-settled"
+    },
+    "horizonUiOwnership": {
+     "openedAtMs": 1787621448835,
+     "closedAtMs": 1787621448835,
+     "closeReason": "stabilized"
+    },
+    "parameterInputs": [],
+    "episodeOutcome": {
+     "outcome": "success",
+     "confidence": 0.2,
+     "confidenceLevel": "inconclusive",
+     "derivation": "derived-episode-outcome"
+    },
+    "tabId": 1682176539,
+    "signatureKey": "app-vlwpj3:sig:dc518201"
+   },
+   {
+    "key": "app-vlwpj3:session-1787621451667:ep-int-7",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "episodeId": "ep-int-7",
+    "anchor": {
+     "interactionId": "int-7",
+     "actionType": "Click",
+     "actionTarget": "Search Flights",
+     "triggerTimestamp": 1787621446051
+    },
+    "members": [
+     {
+      "interactionId": "int-7",
+      "role": "anchor"
+     },
+     {
+      "interactionId": "int-2",
+      "role": "parameter"
+     },
+     {
+      "interactionId": "int-5",
+      "role": "parameter"
+     }
+    ],
+    "horizonAttribution": {
+     "openedAtMs": 1787621446051,
+     "closedAtMs": 1787621446051,
+     "closeReason": "all-stamped-settled"
+    },
+    "horizonUiOwnership": {
+     "openedAtMs": 1787621446051,
+     "closedAtMs": 1787621446051,
+     "closeReason": "stabilized"
+    },
+    "parameterInputs": [
+     {
+      "interactionId": "int-2",
+      "label": "Depart on",
+      "value": "Choose Sunday, September 6th, 2026",
+      "link": "form-overlap"
+     },
+     {
+      "interactionId": "int-5",
+      "label": "Return on",
+      "value": "Choose Tuesday, September 8th, 2026",
+      "link": "form-overlap"
+     }
+    ],
+    "episodeOutcome": {
+     "outcome": "success",
+     "confidence": 0.2,
+     "confidenceLevel": "inconclusive",
+     "derivation": "derived-episode-outcome"
+    },
+    "tabId": 1682176539,
+    "signatureKey": "app-vlwpj3:sig:352a1a8f"
+   },
+   {
+    "key": "app-vlwpj3:session-1787621451667:ep-int-8",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "episodeId": "ep-int-8",
+    "anchor": {
+     "interactionId": "int-8",
+     "actionType": "Click",
+     "actionTarget": "Bengaluru",
+     "triggerTimestamp": 1787621447447
+    },
+    "members": [
+     {
+      "interactionId": "int-8",
+      "role": "anchor"
+     }
+    ],
+    "horizonAttribution": {
+     "openedAtMs": 1787621447447,
+     "closedAtMs": 1787621447447,
+     "closeReason": "all-stamped-settled"
+    },
+    "horizonUiOwnership": {
+     "openedAtMs": 1787621447447,
+     "closedAtMs": 1787621447447,
+     "closeReason": "stabilized"
+    },
+    "parameterInputs": [],
+    "episodeOutcome": {
+     "outcome": "success",
+     "confidence": 0.2,
+     "confidenceLevel": "inconclusive",
+     "derivation": "derived-episode-outcome"
+    },
+    "tabId": 1682176539,
+    "signatureKey": "app-vlwpj3:sig:c5843d6d"
+   }
+  ],
+  "knowledgeGaps": [
+   {
+    "key": "app-vlwpj3:session-1787621451667:unattr-ui-int-10",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "gapId": "unattr-ui-int-10",
+    "observedKind": "ui",
+    "reason": "no-live-horizon",
+    "detail": "evidence window ev-evt-pmt7zndgh-84 lies outside every uiOwnership horizon",
+    "observedAtMs": 1787621448835,
+    "tabId": 1682176539,
+    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt7zndgh-84\",\"sequence\":0}"
+   },
+   {
+    "key": "app-vlwpj3:session-1787621451667:unattr-ui-int-2",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "gapId": "unattr-ui-int-2",
+    "observedKind": "ui",
+    "reason": "no-live-horizon",
+    "detail": "evidence window ev-evt-pmt7zndgh-9 lies outside every uiOwnership horizon",
+    "observedAtMs": 1787621440067,
+    "tabId": 1682176539,
+    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt7zndgh-9\",\"sequence\":0}"
+   },
+   {
+    "key": "app-vlwpj3:session-1787621451667:unattr-ui-int-5",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "gapId": "unattr-ui-int-5",
+    "observedKind": "ui",
+    "reason": "no-live-horizon",
+    "detail": "evidence window lc-evt-pmt7zndgh-44 lies outside every uiOwnership horizon",
+    "observedAtMs": 1787621442983,
+    "tabId": 1682176539,
+    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"lc-evt-pmt7zndgh-44\",\"sequence\":0}"
+   },
+   {
+    "key": "app-vlwpj3:session-1787621451667:unattr-ui-int-7",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "gapId": "unattr-ui-int-7",
+    "observedKind": "ui",
+    "reason": "no-live-horizon",
+    "detail": "evidence window ev-evt-pmt7zndgh-72 lies outside every uiOwnership horizon",
+    "observedAtMs": 1787621446051,
+    "tabId": 1682176539,
+    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt7zndgh-72\",\"sequence\":0}"
+   },
+   {
+    "key": "app-vlwpj3:session-1787621451667:unattr-ui-int-8",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "gapId": "unattr-ui-int-8",
+    "observedKind": "ui",
+    "reason": "no-live-horizon",
+    "detail": "evidence window ev-evt-pmt7zndgh-78 lies outside every uiOwnership horizon",
+    "observedAtMs": 1787621447447,
+    "tabId": 1682176539,
+    "windowRefJson": "{\"kind\":\"dom\",\"windowId\":\"ev-evt-pmt7zndgh-78\",\"sequence\":0}"
+   }
+  ],
+  "knowledgeNotifications": [
+   {
+    "key": "app-vlwpj3:notification-0",
+    "appId": "app-vlwpj3",
+    "text": "Saved",
+    "severity": "info",
+    "elementPath": "body > div#snack",
+    "appearedAt": 1787621451707,
+    "sessionId": "session-1787621451667"
+   }
+  ],
+  "knowledgeOutcomes": [
+   {
+    "key": "session-1787621451667:int-10",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "interactionId": "int-10",
+    "actionType": "Click",
+    "actionTarget": "Notify",
+    "outcome": "success",
+    "confidence": 0.2,
+    "confidenceLevel": "inconclusive",
+    "evidence": [
+     {
+      "kind": "page-content",
+      "result": "success",
+      "weight": 0.2,
+      "detail": "Page content notification: \"Saved\""
+     }
+    ],
+    "resultingEntities": [],
+    "persistedAt": 1787621451744
+   },
+   {
+    "key": "session-1787621451667:int-2",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "interactionId": "int-2",
+    "actionType": "DatePicker",
+    "actionTarget": "Depart on",
+    "outcome": "incomplete",
+    "confidence": 0,
+    "confidenceLevel": "inconclusive",
+    "evidence": [],
+    "resultingEntities": [],
+    "persistedAt": 1787621451744
+   },
+   {
+    "key": "session-1787621451667:int-5",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "interactionId": "int-5",
+    "actionType": "DatePicker",
+    "actionTarget": "Return on",
+    "outcome": "incomplete",
+    "confidence": 0,
+    "confidenceLevel": "inconclusive",
+    "evidence": [],
+    "resultingEntities": [],
+    "persistedAt": 1787621451744
+   },
+   {
+    "key": "session-1787621451667:int-7",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "interactionId": "int-7",
+    "actionType": "Click",
+    "actionTarget": "Search Flights",
+    "outcome": "success",
+    "confidence": 0.2,
+    "confidenceLevel": "inconclusive",
+    "evidence": [
+     {
+      "kind": "page-content",
+      "result": "success",
+      "weight": 0.2,
+      "detail": "Page content counter: body > main > div > p#result-count = 1"
+     }
+    ],
+    "resultingEntities": [],
+    "persistedAt": 1787621451744
+   },
+   {
+    "key": "session-1787621451667:int-8",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "interactionId": "int-8",
+    "actionType": "Click",
+    "actionTarget": "Bengaluru",
+    "outcome": "success",
+    "confidence": 0.2,
+    "confidenceLevel": "inconclusive",
+    "evidence": [
+     {
+      "kind": "page-content",
+      "result": "success",
+      "weight": 0.2,
+      "detail": "Page content counter: body > main > div > p#result-count = 2"
+     }
+    ],
+    "resultingEntities": [],
+    "persistedAt": 1787621451744
+   }
+  ],
+  "knowledgeRecordedWorkflows": [
+   {
+    "key": "app-vlwpj3:wf-pattern-423eb94f",
+    "appId": "app-vlwpj3",
+    "patternId": "wf-pattern-423eb94f",
+    "label": "Depart on",
+    "canonicalSteps": [
+     "depart on",
+     "return on",
+     "search products",
+     "bengaluru",
+     "notify"
+    ],
+    "viewSequence": [],
+    "sessionIds": [
+     "session-1787621451667"
+    ],
+    "occurrenceCount": 1,
+    "instances": [
+     "wf-session-1787621451667-0"
+    ],
+    "signatureIds": [
+     "app-vlwpj3:sig:352a1a8f",
+     "app-vlwpj3:sig:c5843d6d",
+     "app-vlwpj3:sig:dc518201"
+    ],
+    "linkageState": "linked",
+    "instanceSignatureIds": {
+     "wf-session-1787621451667-0": [
+      "app-vlwpj3:sig:352a1a8f",
+      "app-vlwpj3:sig:c5843d6d",
+      "app-vlwpj3:sig:dc518201"
+     ]
+    },
+    "firstSeenAt": 1787621451744,
+    "lastSeenAt": 1787621451744
+   }
+  ],
+  "knowledgeSignatures": [
+   {
+    "key": "app-vlwpj3:sig:352a1a8f",
+    "appId": "app-vlwpj3",
+    "actionType": "Click",
+    "normalizedTarget": "search flights",
+    "anchorViewId": null,
+    "firstSeenAtSession": "session-1787621451667",
+    "lastSeenAtSession": "session-1787621451667",
+    "firstSeenSeq": 1,
+    "lastSeenSeq": 1,
+    "firstSeenAtMs": 1787621451707,
+    "lastSeenAtMs": 1787621451707,
+    "occurrenceCount": 1,
+    "sessionsSinceSeen": 0,
+    "status": "active",
+    "source": "behavior",
+    "consequenceProfile": [
+     {
+      "identity": "T1-stamp|api|GET /collect",
+      "tier": "T1-stamp",
+      "kind": "api",
+      "targetIdentity": "GET /collect",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787621451667",
+      "lastSeenAtSession": "session-1787621451667",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787621451667",
+        "edgeKey": "app-vlwpj3:session-1787621451667:edge-ep-int-7-000"
+       }
+      ],
+      "observedVia": "behavior/webrequest"
+     }
+    ],
+    "divergenceFlags": []
+   },
+   {
+    "key": "app-vlwpj3:sig:c5843d6d",
+    "appId": "app-vlwpj3",
+    "actionType": "Click",
+    "normalizedTarget": "bengaluru",
+    "anchorViewId": null,
+    "firstSeenAtSession": "session-1787621451667",
+    "lastSeenAtSession": "session-1787621451667",
+    "firstSeenSeq": 1,
+    "lastSeenSeq": 1,
+    "firstSeenAtMs": 1787621451707,
+    "lastSeenAtMs": 1787621451707,
+    "occurrenceCount": 1,
+    "sessionsSinceSeen": 0,
+    "status": "active",
+    "source": "behavior",
+    "consequenceProfile": [
+     {
+      "identity": "T3-transition|state|counter:body > main > div > p#result-count=1→counter:body > main > div > p#result-count=2",
+      "tier": "T3-transition",
+      "kind": "state",
+      "targetIdentity": "counter:body > main > div > p#result-count=1→counter:body > main > div > p#result-count=2",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787621451667",
+      "lastSeenAtSession": "session-1787621451667",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787621451667",
+        "edgeKey": "app-vlwpj3:session-1787621451667:edge-ep-int-8-000"
+       }
+      ],
+      "observedVia": "behavior/state-transition"
+     }
+    ],
+    "divergenceFlags": []
+   },
+   {
+    "key": "app-vlwpj3:sig:dc518201",
+    "appId": "app-vlwpj3",
+    "actionType": "Click",
+    "normalizedTarget": "notify",
+    "anchorViewId": null,
+    "firstSeenAtSession": "session-1787621451667",
+    "lastSeenAtSession": "session-1787621451667",
+    "firstSeenSeq": 1,
+    "lastSeenSeq": 1,
+    "firstSeenAtMs": 1787621451707,
+    "lastSeenAtMs": 1787621451707,
+    "occurrenceCount": 1,
+    "sessionsSinceSeen": 0,
+    "status": "active",
+    "source": "behavior",
+    "consequenceProfile": [
+     {
+      "identity": "T1-stamp|api|GET /collect",
+      "tier": "T1-stamp",
+      "kind": "api",
+      "targetIdentity": "GET /collect",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787621451667",
+      "lastSeenAtSession": "session-1787621451667",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787621451667",
+        "edgeKey": "app-vlwpj3:session-1787621451667:edge-ep-int-10-000"
+       }
+      ],
+      "observedVia": "behavior/webrequest"
+     },
+     {
+      "identity": "T3-transition|notification|anchor-window",
+      "tier": "T3-transition",
+      "kind": "notification",
+      "targetIdentity": "anchor-window",
+      "occurrenceCount": 1,
+      "hitCount": 1,
+      "missedObservations": 0,
+      "firstSeenAtSession": "session-1787621451667",
+      "lastSeenAtSession": "session-1787621451667",
+      "lastSeenSeq": 1,
+      "confidence": 0.6,
+      "status": "active",
+      "evidenceSamples": [
+       {
+        "sessionId": "session-1787621451667",
+        "edgeKey": "app-vlwpj3:session-1787621451667:edge-ep-int-10-001"
+       }
+      ],
+      "observedVia": "behavior/observed-event"
+     }
+    ],
+    "divergenceFlags": []
+   }
+  ],
+  "knowledgeStateTransitions": [
+   {
+    "key": "session-1787621451667:int-10",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "interactionId": "int-10",
+    "changes": [
+     "page-content notification: \"Saved\""
+    ],
+    "fromViewId": null,
+    "toViewId": null,
+    "affectedEntities": [],
+    "timestamp": 1787621451744
+   },
+   {
+    "key": "session-1787621451667:int-2",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "interactionId": "int-2",
+    "changes": [],
+    "fromViewId": null,
+    "toViewId": null,
+    "affectedEntities": [],
+    "timestamp": 1787621451744
+   },
+   {
+    "key": "session-1787621451667:int-5",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "interactionId": "int-5",
+    "changes": [],
+    "fromViewId": null,
+    "toViewId": null,
+    "affectedEntities": [],
+    "timestamp": 1787621451744
+   },
+   {
+    "key": "session-1787621451667:int-7",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "interactionId": "int-7",
+    "changes": [
+     "page-content counter: body > main > div > p#result-count = 1",
+     "list: body > main > div > p#result-count (+0 items)"
+    ],
+    "fromViewId": null,
+    "toViewId": null,
+    "affectedEntities": [],
+    "timestamp": 1787621451744
+   },
+   {
+    "key": "session-1787621451667:int-8",
+    "appId": "app-vlwpj3",
+    "sessionId": "session-1787621451667",
+    "interactionId": "int-8",
+    "changes": [
+     "page-content counter: body > main > div > p#result-count = 2",
+     "list: body > main > div > p#result-count (+0 items)"
+    ],
+    "fromViewId": null,
+    "toViewId": null,
+    "affectedEntities": [],
+    "timestamp": 1787621451744
+   }
+  ],
+  "knowledgeViewTransitions": [],
+  "knowledgeViews": []
+ }
+}

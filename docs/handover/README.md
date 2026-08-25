@@ -1,5 +1,11 @@
 # CmdRunner AI Extension — Project Handover Documentation
 
+> ⚠️ **STATUS ANCHOR (2026-08-24):** this docs/handover set was last updated 2026-07-21
+> and reflects Phase 8-era state — it is 17 milestones stale. For current state read
+> **`.drytis/HANDOVER-2026-08-24.md`** (current HEAD, 6F→7.x decision history, doctrine,
+> open/parked items, operating rules) and **`.drytis/notes/ROADMAP-2026-08-22.md`** (living
+> decision log). This set remains source-of-truth for frozen vision and architecture history.
+
 > **Purpose:** This documentation is the permanent source of truth for the CmdRunner AI Extension project. A new AI assistant or developer can understand the project, its architecture, design philosophy, current state, and development trajectory by reading these documents — no prior conversation history required.
 
 > **← Back to [Root README](../../README.md)**

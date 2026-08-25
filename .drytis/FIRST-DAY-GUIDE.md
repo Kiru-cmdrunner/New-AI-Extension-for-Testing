@@ -1,5 +1,9 @@
 # First Day Guide — Semantic Test Intelligence (CmdRunner)
 
+> ⚠️ **READ `.drytis/HANDOVER-2026-08-24.md` BEFORE THIS GUIDE** — both are anchored at
+> 2026-08-07 and pre-date 17 milestones (6E-M2 → 7.3 W-B). The new handover has current
+> HEAD, doctrine updates, operating rules, and the open owner decision (7.4 direction).
+
 **Created:** 2026-08-07
 **Purpose:** Practical onboarding for the first hour. Read this before writing any code.
 

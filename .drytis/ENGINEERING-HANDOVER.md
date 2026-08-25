@@ -1,5 +1,12 @@
 # Engineering Handover — Semantic Test Intelligence (CmdRunner)
 
+> ⚠️ **SUPERSEDED FOR CURRENT STATE (2026-08-24).** This handover is frozen at
+> 2026-08-07 / HEAD `be03f78` (pre-6E). Since then: 6E-M2, 6F-M1/M2a/M2b/M3-W1, WARN-4,
+> 7.0-KR, 7.1-W1/W2, 7.2-M1, 7.3 W-B all shipped. **Read `.drytis/HANDOVER-2026-08-24.md`
+> first** — it carries the current HEAD, open/parked state, the doctrine as it evolved
+> (no timing rules, genericity constraint, two-commit closure), and instructions.
+> This document stays valid for frozen vision (P1–P9), principles, and history.
+
 **Date:** 2026-08-07
 **Branch:** `capability-v1-complete`
 **HEAD:** `be03f78` — "fix: M5 reviewer warnings — ledger persistence on every event + verification self-consistency"
