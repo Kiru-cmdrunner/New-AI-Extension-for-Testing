@@ -20,3 +20,7 @@ download/
 
 # Build snapshot directories (not source — contain node_modules/dist/zips)
 baseline-*/
+
+# Runtime download-server root (background service 3657 — contains only the ZIP + README copy)
+serve-download-root/
+serve-download/

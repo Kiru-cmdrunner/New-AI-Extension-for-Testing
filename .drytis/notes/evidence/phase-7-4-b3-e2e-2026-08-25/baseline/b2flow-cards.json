@@ -1,0 +1,140 @@
+[
+ {
+  "type": "TextEntry",
+  "name": "City (type + select)",
+  "tag": null,
+  "sel": "#city-a",
+  "typedValue": "New",
+  "physicalEventType": null,
+  "repeatCount": null,
+  "actionabilityEvidence": null,
+  "reason": null,
+  "hasEvidence": true,
+  "members": [
+   "focus",
+   "click",
+   "keydown",
+   "input",
+   "keydown",
+   "input",
+   "keydown",
+   "input",
+   "mouseleave",
+   "change",
+   "blur"
+  ]
+ },
+ {
+  "type": "Click",
+  "name": "New York",
+  "tag": "LI",
+  "sel": "body > div:nth-of-type(1) > ul > li:nth-of-type(1)",
+  "typedValue": null,
+  "physicalEventType": null,
+  "repeatCount": null,
+  "actionabilityEvidence": null,
+  "reason": null,
+  "hasEvidence": true,
+  "members": [
+   "click"
+  ]
+ },
+ {
+  "type": "TextEntry",
+  "name": "Fruit (type + Enter)",
+  "tag": null,
+  "sel": "#fruit-b",
+  "typedValue": "App",
+  "physicalEventType": null,
+  "repeatCount": null,
+  "actionabilityEvidence": null,
+  "reason": null,
+  "hasEvidence": true,
+  "members": [
+   "focus",
+   "click",
+   "keydown",
+   "input",
+   "keydown",
+   "input",
+   "keydown",
+   "input",
+   "keydown",
+   "mouseleave",
+   "change",
+   "blur"
+  ]
+ },
+ {
+  "type": "TextEntry",
+  "name": "Search (type + click elsewhere)",
+  "tag": null,
+  "sel": "#search-c",
+  "typedValue": "hotels",
+  "physicalEventType": null,
+  "repeatCount": null,
+  "actionabilityEvidence": null,
+  "reason": null,
+  "hasEvidence": true,
+  "members": [
+   "focus",
+   "click",
+   "keydown",
+   "input",
+   "keydown",
+   "input",
+   "keydown",
+   "input",
+   "keydown",
+   "input",
+   "keydown",
+   "input",
+   "keydown",
+   "input",
+   "mouseleave",
+   "change",
+   "blur"
+  ]
+ },
+ {
+  "type": "Click",
+  "name": "Save",
+  "tag": "BUTTON",
+  "sel": "#save-btn",
+  "typedValue": null,
+  "physicalEventType": null,
+  "repeatCount": null,
+  "actionabilityEvidence": null,
+  "reason": null,
+  "hasEvidence": false,
+  "members": [
+   "click"
+  ]
+ },
+ {
+  "type": "Unclassified",
+  "name": "Save",
+  "tag": "BUTTON",
+  "sel": "#save-btn",
+  "typedValue": null,
+  "physicalEventType": "click",
+  "repeatCount": null,
+  "actionabilityEvidence": null,
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": false,
+  "members": []
+ },
+ {
+  "type": "Unclassified",
+  "name": "Save",
+  "tag": "BUTTON",
+  "sel": "#save-btn",
+  "typedValue": null,
+  "physicalEventType": "mousedown",
+  "repeatCount": null,
+  "actionabilityEvidence": null,
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": false,
+  "members": []
+ }
+]

@@ -1,0 +1,38 @@
+{
+  "label": "b2-baseline",
+  "source": ".drytis/notes/evidence/phase-7-4-b3-e2e-2026-08-25/baseline/b2flow-storage.json",
+  "unclassifiedTotal": 2,
+  "counts": {
+    "dedup-resurrected": 1,
+    "gate-rejected": 1
+  },
+  "ledger": {
+    "total": 25,
+    "dispositions": {
+      "pending": 6,
+      "claimed": 18,
+      "unclaimed": 1
+    }
+  },
+  "pendingEvidenceKeys": 0,
+  "cards": [
+    {
+      "interactionId": "int-12",
+      "eventId": "evt-pmt8w9qbw-68",
+      "physicalEventType": "click",
+      "targetName": "Save",
+      "targetTag": "BUTTON",
+      "classification": "dedup-resurrected",
+      "priorInteractionId": "int-11",
+      "gapMs": 297
+    },
+    {
+      "interactionId": "int-18",
+      "eventId": "evt-pmt8w9qbw-67",
+      "physicalEventType": "mousedown",
+      "targetName": "Save",
+      "targetTag": "BUTTON",
+      "classification": "gate-rejected"
+    }
+  ]
+}

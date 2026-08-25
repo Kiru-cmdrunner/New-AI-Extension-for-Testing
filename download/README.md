@@ -5,23 +5,36 @@
 Always download **`cmdrunner-extension.zip`** from this directory (the
 unversioned name is kept current; versioned files are archived and 404).
 
-- **Current build:** manifest **10.9.0**, packed **2026-08-23 12:39 UTC**
-  from HEAD `be5faf3` (branch `capability-surgical-removal`; src state of
-  commit `89ff297` + tests-only commits after).
-- **MD5:** `586daa2cf9e7d2ee394445828e281c19`
-- **SHA-256:** `8a1118d37222771e084fd8debc8ab3017a48bf0d67fabd49e9bb09b7baf49008`
-- **Size:** 296,202 bytes / 38 files
-- **What it contains beyond the Aug-22 `7594401` build (last manual-test
-  build):**
-  - 6E-M2 react-datepicker family (separator-tolerant triggers, travel-date
-    vocab, `datepicker__day` cells, ancestor-path guard) — AdaniOne dates
-    defect CLOSED
-  - 6F-M1 structural gesture ownership — twin Click cards after
-    mousedown-completed DatePickers are absorbed (no duplicate cards/IR
-    steps); KR parameter values render for date params; settle-window
-    stabilityTrace delivered
-- **Verified:** real-Chrome E2E 9 PASS / 0 FAIL (`phase-6f-m1-e2e-2026-08-23`);
-  suite 260 files / 4,513 tests green; infra audit PASS.
+- **Current build:** manifest **10.9.0**, packed **2026-08-25 ~21:24 UTC**
+  (closure build) from the 7.4-B3 working tree on `capability-surgical-removal`
+  (baseline HEAD `6f94df4` + B3 changes + reviewer-critical fixes; closure
+  commits follow).
+- **MD5:** `b702ac441996d015ca0efa404c0dafb8`
+- **SHA-256:** `d2eb9c0d4cc4c56cd24bebb8b3120c0984b462731e1e13b5d5c4472d47e78e90`
+- **Size:** 304,841 bytes / 40 files
+- **What it contains beyond the Aug-25 `762de56e` B2 build:**
+  - 7.4-B3 S1: STOP-time projection evidence join — stranded
+    `cmdrunner_pending_evidence` now attaches to projected Unclassified
+    cards (eventId join, persist-exactly-once guard)
+  - 7.4-B3 S2: dedup fold — dedup-suppressed clicks fold into the prior
+    interaction (repeatCount, claimed members, press-half recovery) instead
+    of resurrecting as Unclassified
+  - 7.4-B3 S3: typed-text terminal sample — one synthetic `change` ledger
+    entry per typing episode surfaces the final value even when no
+    TextEntry card exists
+  - 7.4-B3 S4: BODY/HTML click-away capture — body-dismissal clicks are
+    now captured as (Unclassified) cards instead of invisible
+  - 7.4-B3 S5: `actionabilityEvidence` flag + panel badge; RCA fix —
+    folded lifecycles release their evidence bindings (FINALIZE_EVIDENCE
+    at fold time)
+- **Verified:** real-Chrome E2E 14 PASS / 0 FAIL
+  (`phase-7-4-b3-e2e-2026-08-25/b3-full-closure`, harness-74b3.mjs against
+  this closure build); suite 300 files / 4,800 tests green; tsc exactly 8
+  pre-existing errors; infra audit PASS after serve-mirror + provenance
+  refresh. NOTE: the ZIP packer embeds build mtimes, so byte-identity holds
+  only within one build — the pinned md5 above refers to THE closure build
+  served from this directory; entry content is deterministic across
+  rebuilds (verified entry-hash-equal).
 
 Historical builds live under `.drytis/artifacts/archive-2026-08-23/`
 (workspace-only, not served).

@@ -1,0 +1,235 @@
+[
+ {
+  "type": "Click",
+  "name": "Repeat Me",
+  "tag": "BUTTON",
+  "sel": "#repeat-btn",
+  "typedValue": null,
+  "physicalEventType": null,
+  "repeatCount": 1,
+  "actionabilityEvidence": null,
+  "reason": null,
+  "hasEvidence": true,
+  "members": [
+   "click",
+   "click",
+   "mousedown"
+  ]
+ },
+ {
+  "type": "Click",
+  "name": "Open popover",
+  "tag": "BUTTON",
+  "sel": "#open-popover",
+  "typedValue": null,
+  "physicalEventType": null,
+  "repeatCount": null,
+  "actionabilityEvidence": null,
+  "reason": null,
+  "hasEvidence": true,
+  "members": [
+   "click"
+  ]
+ },
+ {
+  "type": "Unclassified",
+  "name": "type here",
+  "tag": "INPUT",
+  "sel": "#autofocus-input",
+  "typedValue": null,
+  "physicalEventType": "keydown",
+  "repeatCount": null,
+  "actionabilityEvidence": false,
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": false,
+  "members": []
+ },
+ {
+  "type": "Unclassified",
+  "name": "type here",
+  "tag": "INPUT",
+  "sel": "#autofocus-input",
+  "typedValue": null,
+  "physicalEventType": "keydown",
+  "repeatCount": null,
+  "actionabilityEvidence": false,
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": false,
+  "members": []
+ },
+ {
+  "type": "Unclassified",
+  "name": "type here",
+  "tag": "INPUT",
+  "sel": "#autofocus-input",
+  "typedValue": null,
+  "physicalEventType": "keydown",
+  "repeatCount": null,
+  "actionabilityEvidence": false,
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": false,
+  "members": []
+ },
+ {
+  "type": "Unclassified",
+  "name": "type here",
+  "tag": "INPUT",
+  "sel": "#autofocus-input",
+  "typedValue": null,
+  "physicalEventType": "keydown",
+  "repeatCount": null,
+  "actionabilityEvidence": false,
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": false,
+  "members": []
+ },
+ {
+  "type": "Unclassified",
+  "name": "type here",
+  "tag": "INPUT",
+  "sel": "#autofocus-input",
+  "typedValue": null,
+  "physicalEventType": "keydown",
+  "repeatCount": null,
+  "actionabilityEvidence": false,
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": false,
+  "members": []
+ },
+ {
+  "type": "Unclassified",
+  "name": "type here",
+  "tag": "INPUT",
+  "sel": "#autofocus-input",
+  "typedValue": null,
+  "physicalEventType": "keydown",
+  "repeatCount": null,
+  "actionabilityEvidence": false,
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": false,
+  "members": []
+ },
+ {
+  "type": "Unclassified",
+  "name": "type here",
+  "tag": "INPUT",
+  "sel": "#autofocus-input",
+  "typedValue": null,
+  "physicalEventType": "keydown",
+  "repeatCount": null,
+  "actionabilityEvidence": false,
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": false,
+  "members": []
+ },
+ {
+  "type": "Unclassified",
+  "name": "type here",
+  "tag": "INPUT",
+  "sel": "#autofocus-input",
+  "typedValue": null,
+  "physicalEventType": "keydown",
+  "repeatCount": null,
+  "actionabilityEvidence": false,
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": false,
+  "members": []
+ },
+ {
+  "type": "Unclassified",
+  "name": "type here",
+  "tag": "INPUT",
+  "sel": "#autofocus-input",
+  "typedValue": null,
+  "physicalEventType": "keydown",
+  "repeatCount": null,
+  "actionabilityEvidence": false,
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": false,
+  "members": []
+ },
+ {
+  "type": "Unclassified",
+  "name": "7.4-B3 Census Fixture\nPlain surface (gate-rejected expected)\n\nClick anywhere inside this box. No interactive signals on the target.\n\nplain div — no affordance\nRepeat click (dedup expected)\n\nClick twic",
+  "tag": "BODY",
+  "sel": "body",
+  "typedValue": null,
+  "physicalEventType": "mousedown",
+  "repeatCount": null,
+  "actionabilityEvidence": false,
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": false,
+  "members": []
+ },
+ {
+  "type": "Unclassified",
+  "name": "type here",
+  "tag": "INPUT",
+  "sel": "#autofocus-input",
+  "typedValue": "lost text",
+  "physicalEventType": "change",
+  "repeatCount": null,
+  "actionabilityEvidence": false,
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": false,
+  "members": []
+ },
+ {
+  "type": "Unclassified",
+  "name": "7.4-B3 Census Fixture\nPlain surface (gate-rejected expected)\n\nClick anywhere inside this box. No interactive signals on the target.\n\nplain div — no affordance\nRepeat click (dedup expected)\n\nClick twic",
+  "tag": "BODY",
+  "sel": "body",
+  "typedValue": null,
+  "physicalEventType": "click",
+  "repeatCount": null,
+  "actionabilityEvidence": false,
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": true,
+  "members": []
+ },
+ {
+  "type": "Unclassified",
+  "name": "plain div — no affordance",
+  "tag": "DIV",
+  "sel": "#plain-div",
+  "typedValue": null,
+  "physicalEventType": "click",
+  "repeatCount": null,
+  "actionabilityEvidence": true,
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": true,
+  "members": [
+   "mousedown"
+  ]
+ },
+ {
+  "type": "Unclassified",
+  "name": "plain div that responds",
+  "tag": "DIV",
+  "sel": "#responding-div",
+  "typedValue": null,
+  "physicalEventType": "click",
+  "repeatCount": null,
+  "actionabilityEvidence": true,
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": true,
+  "members": [
+   "mousedown"
+  ]
+ },
+ {
+  "type": "Unclassified",
+  "name": "",
+  "tag": "DIV",
+  "sel": "#popover-backdrop",
+  "typedValue": null,
+  "physicalEventType": "click",
+  "repeatCount": null,
+  "actionabilityEvidence": true,
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": true,
+  "members": [
+   "mousedown"
+  ]
+ }
+]

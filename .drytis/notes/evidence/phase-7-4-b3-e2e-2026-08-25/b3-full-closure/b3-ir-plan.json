@@ -1,0 +1,126 @@
+{
+ "environment": {
+  "baseUrl": "http://127.0.0.1:8244",
+  "browser": "chrome",
+  "startUrl": "http://127.0.0.1:8244/census-validation.html",
+  "viewport": {
+   "height": 437,
+   "width": 780
+  }
+ },
+ "steps": [
+  {
+   "action": "click",
+   "assertions": [],
+   "description": "Click the Repeat Me",
+   "executionParameters": {
+    "retryCount": 0,
+    "retryDelayMs": 1000,
+    "timeoutMs": 30000,
+    "waitStrategy": "visible"
+   },
+   "id": "step-0001",
+   "input": null,
+   "order": 0,
+   "plainEnglish": "Click the Repeat Me",
+   "sourceEventId": "evt-pmt969qb5-43",
+   "target": {
+    "elementId": "0318d202-9ec5-4d5c-a280-8f10e2068822",
+    "elementName": "Repeat Me",
+    "kind": "element",
+    "pageOrComponent": "main",
+    "resolvedLocators": [
+     {
+      "confidence": 0.72,
+      "priority": 1,
+      "type": "css",
+      "value": "#repeat-btn"
+     },
+     {
+      "confidence": 0.62,
+      "priority": 2,
+      "type": "accessibleName",
+      "value": "Repeat Me"
+     },
+     {
+      "confidence": 0.35,
+      "priority": 3,
+      "type": "xpath",
+      "value": "//button[@id='repeat-btn']"
+     }
+    ]
+   }
+  },
+  {
+   "action": "click",
+   "assertions": [
+    {
+     "comparison": "isTrue",
+     "expectedValue": null,
+     "property": null,
+     "severity": "soft",
+     "target": {
+      "elementId": "obs-1-0",
+      "elementName": "notification",
+      "kind": "element",
+      "pageOrComponent": "main",
+      "resolvedLocators": [
+       {
+        "confidence": 0.7,
+        "priority": 1,
+        "type": "css",
+        "value": "#output"
+       }
+      ]
+     },
+     "type": "presence"
+    }
+   ],
+   "description": "Click the Open popover",
+   "executionParameters": {
+    "retryCount": 0,
+    "retryDelayMs": 1000,
+    "timeoutMs": 30000,
+    "waitStrategy": "visible"
+   },
+   "id": "step-0002",
+   "input": null,
+   "order": 1,
+   "plainEnglish": "Click the Open popover",
+   "sourceEventId": "evt-pmt969qb5-53",
+   "target": {
+    "elementId": "eb64c689-291b-44c0-ae07-eeb5fcb87bbc",
+    "elementName": "Open popover",
+    "kind": "element",
+    "pageOrComponent": "main",
+    "resolvedLocators": [
+     {
+      "confidence": 0.72,
+      "priority": 1,
+      "type": "css",
+      "value": "#open-popover"
+     },
+     {
+      "confidence": 0.62,
+      "priority": 2,
+      "type": "accessibleName",
+      "value": "Open popover"
+     },
+     {
+      "confidence": 0.35,
+      "priority": 3,
+      "type": "xpath",
+      "value": "//button[@id='open-popover']"
+     }
+    ]
+   }
+  }
+ ],
+ "tags": [
+  "census-validation.html"
+ ],
+ "testCaseId": "tc-87041b26",
+ "testCaseVersionId": "tcv-87041b26",
+ "testCaseVersionNumber": 1,
+ "title": "Recorded Test"
+}

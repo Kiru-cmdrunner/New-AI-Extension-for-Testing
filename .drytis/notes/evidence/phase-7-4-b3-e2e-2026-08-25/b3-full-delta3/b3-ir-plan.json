@@ -1,0 +1,296 @@
+{
+ "environment": {
+  "baseUrl": "http://127.0.0.1:8244",
+  "browser": "chrome",
+  "startUrl": "http://127.0.0.1:8244/combobox-typeable-validation.html",
+  "viewport": {
+   "height": 437,
+   "width": 780
+  }
+ },
+ "steps": [
+  {
+   "action": "fill",
+   "assertions": [
+    {
+     "comparison": "equals",
+     "expectedValue": "New",
+     "property": "value",
+     "severity": "soft",
+     "target": {
+      "elementId": "obs-0-0",
+      "elementName": "City (type + select)",
+      "kind": "element",
+      "pageOrComponent": "main",
+      "resolvedLocators": [
+       {
+        "confidence": 0.7,
+        "priority": 1,
+        "type": "css",
+        "value": "#city-a"
+       }
+      ]
+     },
+     "type": "equality"
+    }
+   ],
+   "description": "Fill \"New\" in the City (type + select)",
+   "executionParameters": {
+    "retryCount": 0,
+    "retryDelayMs": 1000,
+    "timeoutMs": 30000,
+    "waitStrategy": "visible"
+   },
+   "id": "step-0001",
+   "input": "New",
+   "order": 0,
+   "plainEnglish": "Fill \"New\" in the City (type + select)",
+   "sourceEventId": "evt-pmt8ysw95-6",
+   "target": {
+    "elementId": "422b9b74-7029-4ebd-b6e1-97c0d6e49034",
+    "elementName": "City (type + select)",
+    "kind": "element",
+    "pageOrComponent": "main",
+    "resolvedLocators": [
+     {
+      "confidence": 0.72,
+      "priority": 1,
+      "type": "css",
+      "value": "#city-a"
+     },
+     {
+      "confidence": 0.72,
+      "priority": 2,
+      "type": "css",
+      "value": "[class~=\"combobox-input\"]"
+     },
+     {
+      "confidence": 0.62,
+      "priority": 3,
+      "type": "accessibleName",
+      "value": "City (type + select)"
+     }
+    ]
+   }
+  },
+  {
+   "action": "click",
+   "assertions": [],
+   "description": "Click the New York",
+   "executionParameters": {
+    "retryCount": 0,
+    "retryDelayMs": 1000,
+    "timeoutMs": 30000,
+    "waitStrategy": "visible"
+   },
+   "id": "step-0002",
+   "input": null,
+   "order": 1,
+   "plainEnglish": "Click the New York",
+   "sourceEventId": "evt-pmt8ysw95-20",
+   "target": {
+    "elementId": "52e559a8-fe1c-4df1-85fc-fa6edda29daa",
+    "elementName": "New York",
+    "kind": "element",
+    "pageOrComponent": "main",
+    "resolvedLocators": [
+     {
+      "confidence": 0.72,
+      "priority": 1,
+      "type": "css",
+      "value": "[class~=\"opt\"]"
+     },
+     {
+      "confidence": 0.62,
+      "priority": 2,
+      "type": "accessibleName",
+      "value": "New York"
+     },
+     {
+      "confidence": 0.35,
+      "priority": 3,
+      "type": "css",
+      "value": "body > div:nth-of-type(1) > ul > li:nth-of-type(1)"
+     }
+    ]
+   }
+  },
+  {
+   "action": "fill",
+   "assertions": [
+    {
+     "comparison": "equals",
+     "expectedValue": "App",
+     "property": "value",
+     "severity": "soft",
+     "target": {
+      "elementId": "obs-2-0",
+      "elementName": "Fruit (type + Enter)",
+      "kind": "element",
+      "pageOrComponent": "main",
+      "resolvedLocators": [
+       {
+        "confidence": 0.7,
+        "priority": 1,
+        "type": "css",
+        "value": "#fruit-b"
+       }
+      ]
+     },
+     "type": "equality"
+    }
+   ],
+   "description": "Fill \"App\" in the Fruit (type + Enter)",
+   "executionParameters": {
+    "retryCount": 0,
+    "retryDelayMs": 1000,
+    "timeoutMs": 30000,
+    "waitStrategy": "visible"
+   },
+   "id": "step-0003",
+   "input": "App",
+   "order": 2,
+   "plainEnglish": "Fill \"App\" in the Fruit (type + Enter)",
+   "sourceEventId": "evt-pmt8ysw95-27",
+   "target": {
+    "elementId": "7ecab8a3-6be2-4a23-8349-7f3501d497c9",
+    "elementName": "Fruit (type + Enter)",
+    "kind": "element",
+    "pageOrComponent": "main",
+    "resolvedLocators": [
+     {
+      "confidence": 0.72,
+      "priority": 1,
+      "type": "css",
+      "value": "#fruit-b"
+     },
+     {
+      "confidence": 0.72,
+      "priority": 2,
+      "type": "css",
+      "value": "[class~=\"combobox-input\"]"
+     },
+     {
+      "confidence": 0.62,
+      "priority": 3,
+      "type": "accessibleName",
+      "value": "Fruit (type + Enter)"
+     }
+    ]
+   }
+  },
+  {
+   "action": "fill",
+   "assertions": [
+    {
+     "comparison": "equals",
+     "expectedValue": "hotels",
+     "property": "value",
+     "severity": "soft",
+     "target": {
+      "elementId": "obs-3-0",
+      "elementName": "Search (type + click elsewhere)",
+      "kind": "element",
+      "pageOrComponent": "main",
+      "resolvedLocators": [
+       {
+        "confidence": 0.7,
+        "priority": 1,
+        "type": "css",
+        "value": "#search-c"
+       }
+      ]
+     },
+     "type": "equality"
+    }
+   ],
+   "description": "Fill \"hotels\" in the Search (type + click elsewhere)",
+   "executionParameters": {
+    "retryCount": 0,
+    "retryDelayMs": 1000,
+    "timeoutMs": 30000,
+    "waitStrategy": "visible"
+   },
+   "id": "step-0004",
+   "input": "hotels",
+   "order": 3,
+   "plainEnglish": "Fill \"hotels\" in the Search (type + click elsewhere)",
+   "sourceEventId": "evt-pmt8ysw95-43",
+   "target": {
+    "elementId": "57015746-3b5f-4028-b011-f9a049bb85b7",
+    "elementName": "Search (type + click elsewhere)",
+    "kind": "element",
+    "pageOrComponent": "main",
+    "resolvedLocators": [
+     {
+      "confidence": 0.72,
+      "priority": 1,
+      "type": "css",
+      "value": "#search-c"
+     },
+     {
+      "confidence": 0.72,
+      "priority": 2,
+      "type": "css",
+      "value": "[class~=\"combobox-input\"]"
+     },
+     {
+      "confidence": 0.62,
+      "priority": 3,
+      "type": "accessibleName",
+      "value": "Search (type + click elsewhere)"
+     }
+    ]
+   }
+  },
+  {
+   "action": "click",
+   "assertions": [],
+   "description": "Click the Save",
+   "executionParameters": {
+    "retryCount": 0,
+    "retryDelayMs": 1000,
+    "timeoutMs": 30000,
+    "waitStrategy": "visible"
+   },
+   "id": "step-0005",
+   "input": null,
+   "order": 4,
+   "plainEnglish": "Click the Save",
+   "sourceEventId": "evt-pmt8ysw95-68",
+   "target": {
+    "elementId": "67547429-8673-47fb-866f-d36a11ee5877",
+    "elementName": "Save",
+    "kind": "element",
+    "pageOrComponent": "main",
+    "resolvedLocators": [
+     {
+      "confidence": 0.72,
+      "priority": 1,
+      "type": "css",
+      "value": "#save-btn"
+     },
+     {
+      "confidence": 0.72,
+      "priority": 2,
+      "type": "css",
+      "value": "[class~=\"save-btn\"]"
+     },
+     {
+      "confidence": 0.62,
+      "priority": 3,
+      "type": "accessibleName",
+      "value": "Save"
+     }
+    ]
+   }
+  }
+ ],
+ "tags": [
+  "combobox-typeable-validation.html"
+ ],
+ "testCaseId": "tc-78279f43",
+ "testCaseVersionId": "tcv-78279f43",
+ "testCaseVersionNumber": 1,
+ "title": "Recorded Test"
+}
