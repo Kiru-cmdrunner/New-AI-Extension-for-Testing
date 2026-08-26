@@ -262,6 +262,64 @@ describe('toIRAction', () => {
     expect(action).not.toBeNull();
     expect(action!.type).toBe('HOVER');
   });
+
+  // ── 7.4-B4 S2-2: Unclassified → null (D2 DROP policy) ─────────────
+  // The adapter's Unclassified branch previously EMITTED (click/mousedown
+  // → CLICK {unclassified:true}, contextmenu → RIGHT_CLICK). D2 decision
+  // (2026-08-26): DROP — aligned to the live bridge's NOISE_TYPES policy.
+  // Unclassified interactions stay in the panel/storage (capture guarantee
+  // v2) but never become IR steps.
+  // Ref: .drytis/specs/phase-7-4-b4-unclassified-output-policy.md
+
+  it('maps Unclassified click to null (D2 DROP, 7.4-B4)', () => {
+    const action = toIRAction(
+      makeInteraction({
+        type: 'Unclassified',
+        metadata: { physicalEventType: 'click', recognized: false, targetName: 'Plain Div' },
+      }),
+    );
+    expect(action).toBeNull();
+  });
+
+  it('maps Unclassified mousedown to null (D2 DROP, 7.4-B4)', () => {
+    const action = toIRAction(
+      makeInteraction({
+        type: 'Unclassified',
+        metadata: { physicalEventType: 'mousedown', recognized: false, targetName: 'Plain Div' },
+      }),
+    );
+    expect(action).toBeNull();
+  });
+
+  it('maps Unclassified contextmenu to null — no RIGHT_CLICK ever minted (D2 DROP, 7.4-B4)', () => {
+    const action = toIRAction(
+      makeInteraction({
+        type: 'Unclassified',
+        metadata: { physicalEventType: 'contextmenu', recognized: false, targetName: 'Row' },
+      }),
+    );
+    expect(action).toBeNull();
+  });
+
+  it('maps Unclassified keydown to null (D2 DROP, 7.4-B4)', () => {
+    const action = toIRAction(
+      makeInteraction({
+        type: 'Unclassified',
+        metadata: { physicalEventType: 'keydown', recognized: false, targetName: 'Body' },
+      }),
+    );
+    expect(action).toBeNull();
+  });
+
+  it('maps Unclassified dragstart to null (D2 DROP, 7.4-B4)', () => {
+    const action = toIRAction(
+      makeInteraction({
+        type: 'Unclassified',
+        metadata: { physicalEventType: 'dragstart', recognized: false, targetName: 'Card' },
+      }),
+    );
+    expect(action).toBeNull();
+  });
 });
 
 // ── toIRActions (end-to-end filter + map) ────────────────────────────
@@ -279,5 +337,23 @@ describe('toIRActions', () => {
     expect(actions.length).toBe(2);
     expect(actions[0].type).toBe('FILL');
     expect(actions[1].type).toBe('CLICK');
+  });
+
+  it('Unclassified interactions contribute zero actions end-to-end (D2 DROP, 7.4-B4)', () => {
+    const interactions = [
+      makeInteraction({
+        type: 'Unclassified',
+        metadata: { physicalEventType: 'click', recognized: false, targetName: 'Plain Div' },
+      }),
+      makeInteraction({
+        type: 'Unclassified',
+        metadata: { physicalEventType: 'contextmenu', recognized: false, targetName: 'Row' },
+      }),
+      makeInteraction({ type: 'Click', metadata: { targetName: 'Login' } }),
+    ];
+
+    const actions = toIRActions(interactions);
+    expect(actions.length).toBe(1);
+    expect(actions[0].type).toBe('CLICK');
   });
 });

@@ -78,7 +78,7 @@ const INTERACTION_TO_IR_ACTION: Record<InteractionType, IRAction> = {
   DragDrop: IRAction.DRAG_DROP,
   KeyboardShortcut: IRAction.KEYBOARD_SHORTCUT,
   CompoundInteraction: IRAction.DRAG_DROP, // compound actions typically resolve to drag-drop or click
-  Unclassified: IRAction.CLICK, // fallback
+  Unclassified: IRAction.CLICK, // unreachable — NOISE_TYPES drops Unclassified before the mapping table is consulted (D2 DROP, 7.4-B4)
 };
 
 // ── Noise Filtering ────────────────────────────────────────
@@ -86,6 +86,11 @@ const INTERACTION_TO_IR_ACTION: Record<InteractionType, IRAction> = {
 /**
  * Interaction types that produce no meaningful test step.
  * Filtered out during IR plan construction.
+ *
+ * D2 DECISION (7.4-B4, 2026-08-26): Unclassified is DROPPED — the live
+ * policy of the product since the first IR plan. Not exported; pinned
+ * black-box via build() in tests/generation/ir-bridge-noise-drop-7-4-b4.test.ts.
+ * Spec: .drytis/specs/phase-7-4-b4-unclassified-output-policy.md
  */
 const NOISE_TYPES: Set<InteractionType> = new Set([
   'Scroll',

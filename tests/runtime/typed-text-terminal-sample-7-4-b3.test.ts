@@ -195,4 +195,57 @@ describe('7.4-B3 S3: typed-text terminal sample', () => {
     // raw change (no blur) → nothing at all
     expect(result.filter((i) => i.type === 'Unclassified').length).toBe(0);
   });
+
+  // ── 7.4-B4 S4-2: cross-element blur arms (spec §S4-2) ──────────────
+  // The same-element negative arms (lifecycle-exists → zero, blur without
+  // input → zero) are ALREADY pinned by S3-3/S3-4 above. The genuinely
+  // untested boundary: blur on element B must NOT close element A's open
+  // episode — the episode is keyed by elementKey, and a stray blur from a
+  // different element must leave A's terminal sample to A's own blur.
+
+  it('S4-2a: blur on element B does NOT close element A\'s open episode (A\'s own blur mints exactly one)', async () => {
+    setupChromeMock({
+      cmdrunner_recording_active: true,
+      cmdrunner_live_interactions: [],
+      cmdrunner_evidence_ledger: [],
+      cmdrunner_pending_evidence: [],
+    });
+    const { restoreFromStorage, initRecording, processObservedEvent, getEvidenceLedger } =
+      await import('../../src/runtime/sw-integration');
+    await restoreFromStorage();
+    initRecording();
+
+    const a = mkTarget('search');
+    const b = mkTarget('notes');
+    // A receives input; then B blurs (unrelated); then A blurs.
+    processObservedEvent(ev('evt-p-6-1', 'input', 1000, a, 'ho'));
+    processObservedEvent(ev('evt-p-6-2', 'input', 1010, a, 'hotel'));
+    processObservedEvent(ev('evt-p-6-3', 'blur', 1020, b));      // B's blur: must not close A
+    processObservedEvent(ev('evt-p-6-4', 'blur', 1100, a));      // A's blur: closes A, exactly one
+
+    const ledger = getEvidenceLedger()!;
+    const synthetics = ledger.getEntries().filter((e) => (e as any).synthetic === true);
+    expect(synthetics.length).toBe(1);
+    expect(synthetics[0].sampledValueAfter).toBe('hotel');        // A's terminal value
+    expect(synthetics[0].eventId).toMatch(/^evt-p-6-\d+$/);       // A's page
+  });
+
+  it('S4-2b: blur on element B with no episode of its own does nothing', async () => {
+    setupChromeMock({
+      cmdrunner_recording_active: true,
+      cmdrunner_live_interactions: [],
+      cmdrunner_evidence_ledger: [],
+      cmdrunner_pending_evidence: [],
+    });
+    const { restoreFromStorage, initRecording, processObservedEvent, getEvidenceLedger } =
+      await import('../../src/runtime/sw-integration');
+    await restoreFromStorage();
+    initRecording();
+
+    const b = mkTarget('notes');
+    processObservedEvent(ev('evt-p-7-1', 'blur', 1100, b));       // no episode anywhere
+
+    const ledger = getEvidenceLedger()!;
+    expect(ledger.getEntries().filter((e) => (e as any).synthetic === true).length).toBe(0);
+  });
 });

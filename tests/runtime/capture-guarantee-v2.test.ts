@@ -581,10 +581,19 @@ describe('Capture Guarantee v2', () => {
 
   // ═══════════════════════════════════════════════════════════════════
   // GROUP 4: OUTPUT ADAPTER — IR MAPPING
+  //
+  // 7.4-B4 / D2 decision (2026-08-26): Unclassified interactions are
+  // DROPPED from IR output — `toIRAction` returns null for every physical
+  // type. The live bridge (ir-bridge.ts NOISE_TYPES) has always dropped
+  // them; these pins align the dead adapter path to the same policy.
+  // Capture guarantee is UNCHANGED: Unclassified still passes the
+  // production filter (see the fourth test) — preservation happens in the
+  // panel/storage layer, never in IR generation.
+  // Ref: .drytis/specs/phase-7-4-b4-unclassified-output-policy.md
   // ═══════════════════════════════════════════════════════════════════
 
   describe('output adapter — Unclassified IR mapping', () => {
-    it('maps Unclassified click to CLICK IR action', async () => {
+    it('maps Unclassified click to null (D2 DROP policy, 7.4-B4)', async () => {
       const { toIRAction, isProductionInteraction } = await import(
         '../../src/presentation/output-adapter'
       );
@@ -631,13 +640,10 @@ describe('Capture Guarantee v2', () => {
       expect(isProductionInteraction(interaction)).toBe(true);
 
       const ir = toIRAction(interaction);
-      expect(ir).not.toBeNull();
-      expect(ir!.type).toBe('CLICK');
-      expect(ir!.metadata?.unclassified).toBe(true);
-      expect(ir!.metadata?.physicalEventType).toBe('click');
+      expect(ir).toBeNull();
     });
 
-    it('maps Unclassified contextmenu to RIGHT_CLICK IR action', async () => {
+    it('maps Unclassified contextmenu to null (D2 DROP policy, 7.4-B4)', async () => {
       const { toIRAction } = await import('../../src/presentation/output-adapter');
 
       const interaction: ComponentInteraction = {
@@ -680,8 +686,7 @@ describe('Capture Guarantee v2', () => {
       };
 
       const ir = toIRAction(interaction);
-      expect(ir).not.toBeNull();
-      expect(ir!.type).toBe('RIGHT_CLICK');
+      expect(ir).toBeNull(); // D2 DROP — no RIGHT_CLICK ever minted
     });
 
     it('maps Unclassified keydown to null (not replayable, but preserved)', async () => {
@@ -727,6 +732,7 @@ describe('Capture Guarantee v2', () => {
       };
 
       // Keydown is preserved in the interaction list but not replayable
+      // (D2 DROP, 7.4-B4 — null for every physical type)
       const ir = toIRAction(interaction);
       expect(ir).toBeNull(); // Not replayable
       // But it IS a production interaction (not filtered out)

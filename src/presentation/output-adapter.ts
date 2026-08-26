@@ -13,6 +13,20 @@
  * - DatePicker: selectedDate must be non-empty
  * - Scroll: hasDelta must be true (non-zero delta)
  *
+ * D2 DECISION — Unclassified IR policy is DROP (7.4-B4, 2026-08-26):
+ * toIRAction returns null for EVERY Unclassified interaction regardless
+ * of physical type. This aligns this (currently dead — SW imports only
+ * filterProductionInteractions) path with the LIVE bridge policy
+ * (ir-bridge.ts NOISE_TYPES drops Unclassified before mapping). The old
+ * EMIT branch (click/mousedown → CLICK {unclassified:true},
+ * contextmenu → RIGHT_CLICK) was never reachable in production and is
+ * removed. Unclassified interactions stay in the panel/storage via
+ * isProductionInteraction (capture guarantee v2) — preservation happens
+ * there, never in IR generation.
+ *
+ * Decision record: .drytis/notes/phase-7-4-b3-d1-d2-decision-record.md
+ * Spec: .drytis/specs/phase-7-4-b4-unclassified-output-policy.md
+ *
  * Architecture: `.drytis/specs/m0a-architecture-validation.md` §2.2 Stage 6
  */
 
@@ -120,11 +134,17 @@ export function filterProductionInteractions(
 /**
  * IR Action types — what the generation pipeline expects.
  * These map to Playwright actions in the code generator.
+ *
+ * NOTE: this is a LOCAL, presentation-layer shape. The DOMAIN IRAction
+ * enum lives in src/domain/execution-ir/types.ts (lowercase values,
+ * 'click' etc.) — the two vocabularies are intentionally distinct. Per
+ * the 7.4-B4 scope audit, the local union is REDUCED to exactly the
+ * members this adapter can produce post-D2; importing the domain enum is
+ * deliberately NOT done (would rewrite every emitted literal).
  */
 export interface IRAction {
   type:
     | 'CLICK'
-    | 'RIGHT_CLICK'
     | 'FILL'
     | 'SELECT'
     | 'TOGGLE'
@@ -287,40 +307,16 @@ export function toIRAction(interaction: ComponentInteraction): IRAction | null {
       };
 
     case 'Unclassified':
-      // Capture-guarantee v2: map Unclassified by its original physical event type.
-      // A physical 'click' → CLICK (preserves the deliberate action).
-      // A physical 'contextmenu' → RIGHT_CLICK.
-      // Keydowns, dragstarts, and other non-CLICK events that we cannot
-      // meaningfully replay → null (explicitly unsupported, NOT silently dropped —
-      // the physical interaction IS preserved in the interactions list, just not
-      // mappable to a replayable IR action).
-      {
-        const physicalType = String(metadata.physicalEventType ?? 'click');
-        if (physicalType === 'contextmenu') {
-          return {
-            type: 'RIGHT_CLICK',
-            target,
-            metadata: {
-              unclassified: true,
-              physicalEventType: physicalType,
-            },
-            ...enrichment,
-          };
-        }
-        if (physicalType === 'click' || physicalType === 'mousedown') {
-          return {
-            type: 'CLICK',
-            target,
-            metadata: {
-              unclassified: true,
-              physicalEventType: physicalType,
-            },
-            ...enrichment,
-          };
-        }
-        // keydown, dragstart, etc. — preserved in interactions, not replayable
-        return null;
-      }
+      // D2 DROP (7.4-B4, 2026-08-26): Unclassified interactions never
+      // become IR steps — for ANY physical type. The live bridge's
+      // NOISE_TYPES filter drops them first (see ir-bridge.ts); this
+      // dead-path alignment removes the accidental EMIT branch
+      // (click/mousedown → CLICK {unclassified:true}, contextmenu →
+      // RIGHT_CLICK) that no production call site ever exercised.
+      // Preservation is isProductionInteraction's job (capture guarantee
+      // v2: every deliberate physical action stays in the panel and
+      // stored interactions list), NOT IR generation's.
+      return null;
 
     default:
       return null;
