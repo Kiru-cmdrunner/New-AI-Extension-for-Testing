@@ -66,3 +66,25 @@ cards: Repeat Me folded with members [click,click,mousedown], ONE paired
 BODY card, 9 keydown + 1 change typed-text cards, census
 `dedup-resurrected = 0`, unclassifiedTotal 14 = 10/1/3). final3 remains the
 detailed semantic evidence; closure is the served/pinned artifact.
+
+---
+
+## 7.4-B4 S5 — keydown residual written disposition (2026-08-26)
+
+The 9-per-key keydown Unclassified cards from no-focus typing (baseline
+finding above, tracked as "possible future keydown-grouping slice") are
+explicitly NOT grouped in 7.4-B4. Decision and rationale:
+
+- Grouping would change card counts, M5 self-consistency accounting, and
+  possibly KR anchor populations (each Unclassified card that reaches the
+  behavior model becomes an episode anchor persisted under signatureKey =
+  appId | actionType | normalizedTarget | anchorViewId — the vocabulary
+  freeze treats 'Unclassified' as a stable actionType).
+- B4's scope is the Unclassified IR output policy (D2 DROP) and deferred
+  test pins; card-composition changes belong to a dedicated spec with its
+  own census before/after evidence.
+- Revisit trigger: a real-site session where keydown noise demonstrably
+  hurts review (owner-visible complaint), not before.
+
+Spec of record: .drytis/specs/phase-7-4-b4-unclassified-output-policy.md §S5.
+No code change accompanies this note (S5-2).

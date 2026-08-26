@@ -258,7 +258,7 @@ This is the production pipeline — everything that actually runs. Understanding
 
 #### Layer 6: Output Adapter + Capability Engine + IR Bridge
 - `filterProductionInteractions()` — removes incidental Hovers, Scrolls, no-op selections
-- `toIRActions()` — maps 15 interaction types to 10 IR action types (CLICK, FILL, SELECT, TOGGLE, SELECT_DATE, NAVIGATE, HOVER, WAIT, RIGHT_CLICK)
+- `toIRActions()` — maps 14 interaction types to 8 IR action types (CLICK, FILL, SELECT, TOGGLE, SELECT_DATE, NAVIGATE, HOVER, WAIT). NOTE (7.4-B4/D2, 2026-08-26): this adapter path is DEAD in production (the SW imports only `filterProductionInteractions`; the live IR builder is `ir-bridge.ts build()`). Per the D2 DROP decision, `toIRAction` returns null for every Unclassified interaction; the live bridge's NOISE_TYPES drops Unclassified + Scroll before mapping. Preservation of Unclassified happens in the panel/storage via `isProductionInteraction` (capture guarantee v2), never in IR generation.
 - `runCapabilityInference()` — 12 capability types with evidence-based classification
 - `buildIRPlan()` — constructs `ExecutionIRPlan`
 - `PlaywrightCodeGenerator` — renders to Playwright test code
