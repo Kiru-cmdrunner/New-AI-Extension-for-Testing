@@ -106,7 +106,15 @@ function renderActionLine(step: IRStep, pageVar: string): string {
       // principle: the IR says WHAT, the adapter decides HOW.
       return '';
 
+    case IRAction.KEYBOARD_SHORTCUT:
+      // 7.4-B5 B5-2c-1: page-scoped keypress — ignores element target.
+      // Generic over any shortcut string (Escape, Control+s, etc.).
+      // Incidentally closes F3 (the latent modifier-shortcut replay hole).
+      return renderKeyboardShortcut(step, pageVar);
+
     default:
+      // 7.4-B5 §7 limit 6: DRAG_DROP is the other unrendered IRAction enum
+      // member. It remains out of scope for B5 — separate disposition.
       throw new Error(
         `Unsupported IRAction: "${step.action}". ` +
         `This is an IR completeness gap — add a renderer for this action.`,
@@ -233,6 +241,25 @@ function renderHover(step: IRStep, pageVar: string): string {
 }
 
 // ── Non-Element Actions ───────────────────────────────────
+
+/**
+ * KEYBOARD_SHORTCUT → `page.keyboard.press('<input>')`
+ *
+ * 7.4-B5 B5-2c-1: page-scoped keypress — NoTarget, ignores element target.
+ * Generic over any shortcut string (Escape, Control+s, etc.). Incidentally
+ * closes F3 (the latent modifier-shortcut replay hole — any recorded
+ * Ctrl/Cmd/Alt combo already mapped to KEYBOARD_SHORTCUT would have thrown
+ * here before B5-2c).
+ *
+ * Fidelity: Playwright's `page.keyboard.press` dispatches a trusted real
+ * keypress — covers native `<dialog>` Escape auto-behavior that the
+ * synthetic executor keydown cannot (spec §7 limit 3).
+ */
+function renderKeyboardShortcut(step: IRStep, pageVar: string): string {
+  const input = step.input ?? '';
+  const key = formatStringValue(input);
+  return `${pageVar}.keyboard.press('${key}')`;
+}
 
 /**
  * NAVIGATE → `page.goto('url')`

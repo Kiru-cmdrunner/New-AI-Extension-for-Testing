@@ -25,7 +25,7 @@ describe('7.4-B1 Expander understanding layer', () => {
 
   it('B1-18: DDC-3 reload-recovery allowlist includes Expander', () => {
     const p = src('understanding/pipeline/understanding-pipeline.ts');
-    expect(p).toMatch(/new Set\(\['Click', 'KeyboardShortcut', 'CompoundInteraction', 'Link', 'Expander'\]\)/);
+    expect(p).toMatch(/new Set\(\['Click', 'KeyboardShortcut', 'CompoundInteraction', 'Link', 'Expander', 'Modal'\]\)/);
   });
 
   it('B1-19: dedup 2s limit — Expander subject to the generic same-type rule (known limit, pinned)', () => {

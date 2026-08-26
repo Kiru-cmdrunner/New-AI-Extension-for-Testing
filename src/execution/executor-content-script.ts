@@ -420,6 +420,19 @@ function executeAction(
     case 'wait': return { success: true };
     case 'navigate': return { success: true };
     case 'waitForElement': return { success: true };
+    case 'keyboardShortcut': {
+      // 7.4-B5 B5-2c-2: dispatch KeyboardEvent keydown+keyup on
+      // activeElement (or document). Same synthetic-event family as
+      // executeClick/executeFill. Fidelity limit (spec §7 limit 3):
+      // synthetic keydowns are untrusted — JS-handled modals close;
+      // native <dialog> Escape auto-behavior will NOT.
+      const key = String(input ?? 'Escape');
+      const target = element ?? document.activeElement ?? document.body ?? document;
+      const init = { key, code: key, bubbles: true, cancelable: true };
+      target.dispatchEvent(new KeyboardEvent('keydown', init));
+      target.dispatchEvent(new KeyboardEvent('keyup', init));
+      return { success: true };
+    }
     default: return { success: false, error: { message: `Unknown action: ${action}`, type: 'UnknownAction' } };
   }
 }

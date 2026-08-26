@@ -22,7 +22,7 @@ import type { ComponentInteraction } from '../shared/component-types';
 // (bundle coupling: ALL_DEFINITIONS would pull all 17 definition modules
 // and their engine deps into the sidepanel). This is a hand-frozen copy;
 // the P4c pin (tests/sidepanel/understanding-badge.test.ts) PARSES the
-// 17 definition files from source and fails when this map drifts —
+// 18 definition files from source and fails when this map drifts —
 // priority change, new definition, or removal.
 //
 // Source of truth: `type:` + `priority:` literals in src/definitions/*.ts
@@ -42,6 +42,7 @@ export const DEFINITION_PRIORITIES: Readonly<Record<string, number>> = Object.fr
   Hover: 60,
   Tab: 65,
   Link: 70,
+  Modal: 75, // 7.4-B5: dialog open + Escape dismissal
   Expander: 80,
   Scroll: 110,
   Navigation: 120,
@@ -163,6 +164,19 @@ export function buildWhyBlock(
       // never causation (INV-APP-1).
       if (metadata.actionabilityEvidence === true) {
         return 'why: app responded — DOM change in click window';
+      }
+      return null;
+    }
+
+    case 'Modal': {
+      // 7.4-B5: action-named metadata. Open: strict aria-haspopup=dialog
+      // on the target (W3C dialog-opener convention). Dismiss: bare Escape
+      // while dialog focused (ancestry-or-self).
+      if (metadata.action === 'open') {
+        return 'why: aria-haspopup=dialog (W3C dialog-opener convention)';
+      }
+      if (metadata.action === 'dismiss-escape') {
+        return 'why: Escape pressed while dialog focused (ancestry/self)';
       }
       return null;
     }

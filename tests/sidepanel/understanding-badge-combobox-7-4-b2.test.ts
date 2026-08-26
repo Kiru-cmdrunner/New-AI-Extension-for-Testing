@@ -94,8 +94,8 @@ describe('7.4-B2 — DEFINITION_PRIORITIES unchanged (P4c drift pin)', () => {
     ...parseDefinitionFile(fs.readFileSync(path.join(DEFS_DIR, f), 'utf-8'))!,
   }));
 
-  it('parses all 17 definition files (no new definition added)', () => {
-    expect(parsed.length).toBe(17);
+  it('parses all 18 definition files (7.4-B5: +modal.ts)', () => {
+    expect(parsed.length).toBe(18);
   });
 
   it('has a map entry for every parsed definition type', () => {

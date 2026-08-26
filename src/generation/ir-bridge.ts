@@ -73,6 +73,9 @@ const INTERACTION_TO_IR_ACTION: Record<InteractionType, IRAction> = {
                               // .checked (checkbox-specific, no-op on
                               // div/button triggers). Direction lives on
                               // metadata + behavioral layer, never the input.
+  Modal: IRAction.CLICK,     // 7.4-B5: open → CLICK (same replay as a human
+                             // clicking the trigger); dismiss → overridden
+                             // below to KEYBOARD_SHORTCUT with NoTarget.
   Scroll: IRAction.CLICK,      // filtered as noise below
   Navigation: IRAction.NAVIGATE,
   DragDrop: IRAction.DRAG_DROP,
@@ -282,6 +285,16 @@ function generateDescription(
       const keys = (md['shortcut'] as string) ?? '';
       return `Press ${keys}`;
     }
+    case 'Modal': {
+      // 7.4-B5: open → "Click the X" (replay parity — a human clicks the
+      // dialog trigger); dismiss → "Press Escape to dismiss the dialog"
+      // (direction-neutral per B1's description discipline).
+      const action = (md['action'] as string) ?? 'open';
+      if (action === 'dismiss-escape') {
+        return `Press Escape to dismiss the ${name}`;
+      }
+      return `Open the ${name} dialog`;
+    }
     case 'CompoundInteraction': {
       const summary = (md['summary'] as string) ?? name;
       return summary;
@@ -363,6 +376,15 @@ function extractInputValue(interaction: ComponentInteraction): IRInput {
 
     case 'KeyboardShortcut':
       return (md['shortcut'] as string) ?? null;
+
+    case 'Modal':
+      // 7.4-B5: open → null (CLICK has no input); dismiss → the key string
+      // (metadata.key, e.g. 'Escape'). The KEYBOARD_SHORTCUT executor and
+      // renderer consume this as the press target.
+      if (md['action'] === 'dismiss-escape') {
+        return (md['key'] as string) ?? null;
+      }
+      return null;
 
     default:
       return null;
@@ -694,13 +716,28 @@ export function build(input: GenerationInput): ExecutionIRPlan {
     }
 
     // Determine action
-    const action = INTERACTION_TO_IR_ACTION[interaction.type] ?? IRAction.CLICK;
+    let action = INTERACTION_TO_IR_ACTION[interaction.type] ?? IRAction.CLICK;
+
+    // 7.4-B5: Modal-dismiss → KEYBOARD_SHORTCUT with NoTarget (page-scoped
+    // keypress, no element). Modal-open stays CLICK (replay parity — a
+    // human clicks the trigger). The metadata.action distinguishes the two
+    // branches within a single Modal type.
+    if (interaction.type === 'Modal' && interaction.metadata['action'] === 'dismiss-escape') {
+      action = IRAction.KEYBOARD_SHORTCUT;
+    }
 
     // Resolve target
     let target: ResolvedTarget;
     if (action === IRAction.NAVIGATE) {
       const url = (interaction.metadata['pageUrl'] as string) ?? recordingContext.startUrl;
       target = resolveUrlTarget(url);
+    } else if (action === IRAction.KEYBOARD_SHORTCUT) {
+      // 7.4-B5 B5-2c-3: page-scoped keypress — no element target.
+      // NoTarget {kind:'none'} is the domain type for non-element steps.
+      // ir-executor-impl.ts skips locator resolution for non-element targets
+      // (the navigate precedent at :294 shows the guard shape).
+      // R12: this path applies ONLY to KEYBOARD_SHORTCUT steps.
+      target = { kind: 'none' } as ResolvedTarget;
     } else {
       target = resolveElementTarget(interaction.trigger, elementIdByKey);
     }

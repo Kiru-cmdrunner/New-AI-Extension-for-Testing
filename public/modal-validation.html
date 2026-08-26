@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Modal Validation — 7.4-B5</title>
+<style>
+  body { font-family: sans-serif; padding: 20px; }
+  .dialog-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 100;
+  }
+  .dialog-overlay.open { display: block; }
+  .dialog-content {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white; padding: 24px; border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    z-index: 101;
+  }
+  .nested-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+  }
+  .nested-overlay.open { display: block; }
+  .nested-content {
+    position: fixed; top: 30%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white; padding: 20px; border-radius: 8px;
+    z-index: 201;
+  }
+  .late-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 300;
+  }
+  .late-overlay.open { display: block; }
+  .late-content {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white; padding: 20px; border-radius: 8px;
+    z-index: 301;
+  }
+  .mui-backdrop-shape {
+    display: none;
+    position: fixed; inset: 0;
+    z-index: 400;
+  }
+  .mui-backdrop-shape.open { display: block; }
+  .MuiDialog-root { position: fixed; inset: 0; z-index: 400; }
+  .MuiBackdrop-root {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.3);
+  }
+  .MuiDialog-paper {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white; padding: 20px; border-radius: 8px;
+  }
+  .popover-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.15);
+    z-index: 500;
+  }
+  .popover-backdrop.open { display: block; }
+  button { padding: 8px 16px; cursor: pointer; margin: 4px; }
+</style>
+</head>
+<body>
+  <h1>Modal Validation Fixture — 7.4-B5</h1>
+
+  <!-- M1/M2: Open dialog with aria-haspopup=dialog -->
+  <button id="open-modal" aria-haspopup="dialog" aria-expanded="false">Open Dialog</button>
+
+  <div id="dialog-overlay" class="dialog-overlay" role="dialog" aria-label="Settings Dialog" aria-modal="true">
+    <div class="dialog-content">
+      <h2>Settings</h2>
+      <input id="dialog-input" type="text" placeholder="Enter value" aria-label="Dialog input">
+      <br>
+      <button id="cancel-dialog">Cancel</button>
+    </div>
+  </div>
+
+  <!-- M4: Nested dialog -->
+  <button id="open-nested" aria-haspopup="dialog" aria-expanded="false">Open Nested Dialog</button>
+
+  <div id="nested-overlay" class="nested-overlay" role="dialog" aria-label="Outer Dialog" aria-modal="true">
+    <div class="nested-content">
+      <h2>Outer Dialog</h2>
+      <input id="nested-input" type="text" placeholder="Type here" aria-label="Nested input">
+      <br>
+      <button id="open-inner" aria-haspopup="dialog" aria-expanded="false">Open Inner</button>
+      <div id="inner-dialog" role="dialog" aria-label="Inner Dialog" style="display:none; margin-top:10px; border:1px solid #ccc; padding:10px;">
+        <h3>Inner Dialog</h3>
+        <input id="inner-input" type="text" placeholder="Inner input" aria-label="Inner input">
+      </div>
+      <br>
+      <button id="close-nested">Close</button>
+    </div>
+  </div>
+
+  <!-- M5: MUI-shape in-overlay backdrop -->
+  <button id="open-mui" aria-haspopup="dialog" aria-expanded="false">Open MUI Dialog</button>
+
+  <div id="mui-dialog-root" class="MuiDialog-root" style="display:none;">
+    <div class="MuiBackdrop-root" id="mui-backdrop"></div>
+    <div class="MuiDialog-paper">
+      <h2>MUI Dialog</h2>
+      <button id="close-mui">Close</button>
+    </div>
+  </div>
+
+  <!-- M8: Late-dialog (+600ms render) -->
+  <button id="open-late" aria-haspopup="dialog" aria-expanded="false">Open Late Dialog</button>
+
+  <div id="late-overlay" class="late-overlay" role="dialog" aria-label="Late Dialog" aria-modal="true">
+    <div class="late-content">
+      <h2>Late Dialog (delayed render)</h2>
+      <button id="close-late">Close</button>
+    </div>
+  </div>
+
+  <!-- M10: Sibling backdrop (roleless, B3 parity) -->
+  <button id="open-popover">Open Popover</button>
+
+  <div id="popover-backdrop" class="popover-backdrop">
+    <div style="position:fixed; top:30%; left:50%; transform:translate(-50%,-50%); background:white; padding:20px; border-radius:8px;">
+      <h2>Popover</h2>
+      <button id="close-popover">Close Popover</button>
+    </div>
+  </div>
+
+  <script>
+    // ── M1/M2: Dialog open/close ──
+    const modal = document.getElementById('dialog-overlay');
+    const openBtn = document.getElementById('open-modal');
+    const cancelBtn = document.getElementById('cancel-dialog');
+    const dialogInput = document.getElementById('dialog-input');
+
+    openBtn.addEventListener('click', () => {
+      modal.classList.add('open');
+      openBtn.setAttribute('aria-expanded', 'true');
+      // Focus the dialog container (not the input) so Escape is not
+      // absorbed by a TextEntry lifecycle on the input.
+      modal.setAttribute('tabindex', '-1');
+      setTimeout(() => modal.focus(), 50);
+    });
+    cancelBtn.addEventListener('click', () => {
+      modal.classList.remove('open');
+      openBtn.setAttribute('aria-expanded', 'false');
+    });
+    modal.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        modal.classList.remove('open');
+        openBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // ── M4: Nested dialog ──
+    const nestedOverlay = document.getElementById('nested-overlay');
+    const openNestedBtn = document.getElementById('open-nested');
+    const nestedInput = document.getElementById('nested-input');
+    const openInnerBtn = document.getElementById('open-inner');
+    const innerDialog = document.getElementById('inner-dialog');
+    const innerInput = document.getElementById('inner-input');
+    const closeNestedBtn = document.getElementById('close-nested');
+
+    openNestedBtn.addEventListener('click', () => {
+      nestedOverlay.classList.add('open');
+      openNestedBtn.setAttribute('aria-expanded', 'true');
+      nestedOverlay.setAttribute('tabindex', '-1');
+      setTimeout(() => nestedOverlay.focus(), 50);
+    });
+    openInnerBtn.addEventListener('click', () => {
+      innerDialog.style.display = 'block';
+      openInnerBtn.setAttribute('aria-expanded', 'true');
+      innerDialog.setAttribute('tabindex', '-1');
+      setTimeout(() => innerDialog.focus(), 50);
+    });
+    closeNestedBtn.addEventListener('click', () => {
+      nestedOverlay.classList.remove('open');
+      openNestedBtn.setAttribute('aria-expanded', 'false');
+    });
+    nestedOverlay.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (innerDialog.style.display !== 'none') {
+          innerDialog.style.display = 'none';
+          openInnerBtn.setAttribute('aria-expanded', 'false');
+        } else {
+          nestedOverlay.classList.remove('open');
+          openNestedBtn.setAttribute('aria-expanded', 'false');
+        }
+      }
+    });
+
+    // ── M5: MUI-shape ──
+    const muiRoot = document.getElementById('mui-dialog-root');
+    const openMuiBtn = document.getElementById('open-mui');
+    const muiBackdrop = document.getElementById('mui-backdrop');
+    const closeMuiBtn = document.getElementById('close-mui');
+
+    openMuiBtn.addEventListener('click', () => {
+      muiRoot.style.display = 'block';
+      openMuiBtn.setAttribute('aria-expanded', 'true');
+    });
+    muiBackdrop.addEventListener('click', () => {
+      muiRoot.style.display = 'none';
+      openMuiBtn.setAttribute('aria-expanded', 'false');
+    });
+    closeMuiBtn.addEventListener('click', () => {
+      muiRoot.style.display = 'none';
+      openMuiBtn.setAttribute('aria-expanded', 'false');
+    });
+
+    // ── M8: Late dialog (600ms delay) ──
+    const lateOverlay = document.getElementById('late-overlay');
+    const openLateBtn = document.getElementById('open-late');
+    const closeLateBtn = document.getElementById('close-late');
+
+    openLateBtn.addEventListener('click', () => {
+      openLateBtn.setAttribute('aria-expanded', 'true');
+      // Simulate async render — dialog appears after 600ms
+      setTimeout(() => {
+        lateOverlay.classList.add('open');
+      }, 600);
+    });
+    closeLateBtn.addEventListener('click', () => {
+      lateOverlay.classList.remove('open');
+      openLateBtn.setAttribute('aria-expanded', 'false');
+    });
+
+    // ── M10: Sibling popover ──
+    const popover = document.getElementById('popover-backdrop');
+    const openPopoverBtn = document.getElementById('open-popover');
+    const closePopoverBtn = document.getElementById('close-popover');
+
+    openPopoverBtn.addEventListener('click', () => {
+      popover.classList.add('open');
+    });
+    popover.addEventListener('click', (e) => {
+      if (e.target === popover) {
+        popover.classList.remove('open');
+      }
+    });
+    closePopoverBtn.addEventListener('click', () => {
+      popover.classList.remove('open');
+    });
+  </script>
+</body>
+</html>

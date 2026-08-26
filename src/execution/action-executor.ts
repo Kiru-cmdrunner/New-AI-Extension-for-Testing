@@ -29,7 +29,8 @@ export type ActionType =
   | 'navigate'
   | 'verify'
   | 'wait'
-  | 'waitForElement';
+  | 'waitForElement'
+  | 'keyboardShortcut'; // 7.4-B5 B5-2c: page-scoped keypress
 
 export interface ActionExecutionResult {
   readonly success: boolean;
@@ -278,6 +279,23 @@ export function executeAction(
     case 'waitForElement':
       // Handled by locator resolver with wait strategy, not here
       return { success: true };
+
+    case 'keyboardShortcut': {
+      // 7.4-B5 B5-2c-2: dispatch a trusted-shaped KeyboardEvent keydown+keyup
+      // on document.activeElement (or document if none). Same synthetic-event
+      // family the executors already use (el.click(), new Event('input')).
+      //
+      // Fidelity limit (spec §7 limit 3): synthetic keydowns are untrusted —
+      // JS-handled modals (MUI/AntD/Radix) close; the native <dialog> Escape
+      // auto-behavior will NOT. The Playwright render is a trusted real
+      // keypress and covers that path.
+      const key = String(input ?? 'Escape');
+      const target = element ?? document.activeElement ?? document.body ?? document;
+      const init = { key, code: key, bubbles: true, cancelable: true };
+      target.dispatchEvent(new KeyboardEvent('keydown', init));
+      target.dispatchEvent(new KeyboardEvent('keyup', init));
+      return { success: true };
+    }
 
     default:
       return {

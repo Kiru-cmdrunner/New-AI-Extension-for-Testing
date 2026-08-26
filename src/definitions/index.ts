@@ -27,6 +27,7 @@ import { radioButtonDefinition } from './radio-button';
 import { textEntryDefinition } from './text-entry';
 import { hoverDefinition } from './hover';
 import { linkDefinition } from './link';
+import { modalDefinition } from './modal';
 import { tabDefinition } from './tab';
 import { expanderDefinition } from './expander';
 import { scrollDefinition } from './scroll';
@@ -73,6 +74,7 @@ export const ALL_DEFINITIONS: ComponentDefinition[] = [
   hoverDefinition,           // priority 60
   tabDefinition,             // priority 65
   linkDefinition,            // priority 70
+  modalDefinition,            // priority 75 (7.4-B5: dialog open + Escape dismissal)
   expanderDefinition,        // priority 80 (7.4-B1: aria-expanded disclosure)
   scrollDefinition,          // priority 110
   navigationDefinition,      // priority 120
@@ -95,6 +97,7 @@ export {
   textEntryDefinition,
   hoverDefinition,
   linkDefinition,
+  modalDefinition,
   tabDefinition,
   scrollDefinition,
   navigationDefinition,

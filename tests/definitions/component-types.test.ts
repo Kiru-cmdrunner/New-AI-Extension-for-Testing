@@ -132,9 +132,10 @@ describe('InteractionType', () => {
       'Tab', 'Scroll', 'Navigation',
       'DragDrop', 'KeyboardShortcut', 'CompoundInteraction',
       'Expander', // 7.4-B1
+      'Modal',   // 7.4-B5
       'Unclassified',
     ];
-    expect(types).toHaveLength(19);
+    expect(types).toHaveLength(20); // 7.4-B5: +Modal
   });
 });
 

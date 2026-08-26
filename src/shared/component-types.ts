@@ -232,6 +232,7 @@ export type InteractionType =
   | 'ColorInput'
   | 'Tab'
   | 'Expander'
+  | 'Modal' // 7.4-B5: dialog open + Escape dismissal
   | 'Scroll'
   | 'Navigation'
   | 'DragDrop'
