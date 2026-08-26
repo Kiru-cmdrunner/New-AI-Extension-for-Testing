@@ -5,28 +5,26 @@
 Always download **`cmdrunner-extension.zip`** from this directory (the
 unversioned name is kept current; versioned files are archived and 404).
 
-- **Current build:** manifest **10.9.0**, packed **2026-08-26 ~03:27 UTC**
-  (7.4-B4 build) from the B4 working tree on `capability-surgical-removal`
-  (B3 closure `21e6bf8` + 7.4-B4 D2 policy alignment).
-- **MD5:** `fabec45419834c511d65300b7c6a91eb`
-- **SHA-256:** `c9c7228c6abd97a214010ee2247450141fe21c4635b2cec2587d908d807c977c`
-- **Size:** 304,895 bytes / 40 files
-- **What it contains beyond the Aug-25 `b702ac44` B3 closure build:**
-  - 7.4-B4 (D2 DROP): the dead-path output-adapter's Unclassified EMIT
-    branch is removed — `toIRAction` returns null for every Unclassified
-    physical type, aligning with the live bridge's NOISE_TYPES policy;
-    local IRAction union reduced (no RIGHT_CLICK)
-  - **No behavioral change in shipped bytes**: the semantic bundle diff
-    vs the B3 closure is exactly ONE comment line (the ir-bridge
-    annotation); the adapter was already tree-shaken out. Both pre/post
-    SW bundles are archived in
-    `.drytis/notes/evidence/phase-7-4-b4-e2e-2026-08-26/`.
-- **Verified:** real-Chrome E2E 14 PASS / 0 FAIL (`b4-full`,
-  harness-74b3.mjs); census-flow IR plan identical to the B3 closure run
-  (volatile-id-normalized); suite 303 files / 4,817 tests green; tsc
-  exactly 8 pre-existing errors. NOTE: the ZIP packer embeds build
-  mtimes, so the md5 above refers to THIS build served from this
-  directory; entry content is deterministic across rebuilds.
+- **Current build:** manifest **10.9.0**, packed **2026-08-26 ~10:00 UTC**
+  (7.4-B5 build) from commit `544059c` on `capability-surgical-removal`
+  (B4 closure `ff8eb15` + 7.4-B5 Modal definition).
+- **MD5:** `9a879ef9cb1fcfa742d57f0459775c49`
+- **SHA-256:** `e3a896d257bdc4e558753d01a458d0ac253d803fa0fcfa46c6845b1c0185d5a6`
+- **Size:** 305,561 bytes / 40 files
+- **What it contains beyond the Aug-26 `fabec454` B4 closure build:**
+  - 7.4-B5 Modal definition: dialog open (aria-haspopup=dialog) + Escape
+    dismissal (dialog in ancestry-or-self) at priority 75
+  - KEYBOARD_SHORTCUT replay: renderer case (page.keyboard.press), both
+    executor cases (KeyboardEvent keydown+keyup), ir-bridge NoTarget path
+  - Incidentally fixes F3 (latent modifier-shortcut replay defect)
+  - Deleted modal-tracker.ts (114 lines dead code)
+  - Six new test files + five pin updates (309 files / 4,867 tests green)
+- **Verified:** real-Chrome E2E 12 PASS / 0 FAIL (`b5-full-final`,
+  harness-74b5.mjs); ZIP four-way md5 identical (root, download/, serve
+  mirror, live URL); suite 309 files / 4,867 tests green; tsc exactly 8
+  pre-existing errors. NOTE: the ZIP packer embeds build mtimes, so the md5
+  above refers to THIS build served from this directory; entry content is
+  deterministic across rebuilds.
 
 Historical builds live under `.drytis/artifacts/archive-2026-08-23/`
 (workspace-only, not served).

@@ -258,7 +258,7 @@ This is the production pipeline — everything that actually runs. Understanding
 
 #### Layer 6: Output Adapter + Capability Engine + IR Bridge
 - `filterProductionInteractions()` — removes incidental Hovers, Scrolls, no-op selections
-- `toIRActions()` — maps 14 interaction types to 8 IR action types (CLICK, FILL, SELECT, TOGGLE, SELECT_DATE, NAVIGATE, HOVER, WAIT). NOTE (7.4-B4/D2, 2026-08-26): this adapter path is DEAD in production (the SW imports only `filterProductionInteractions`; the live IR builder is `ir-bridge.ts build()`). Per the D2 DROP decision, `toIRAction` returns null for every Unclassified interaction; the live bridge's NOISE_TYPES drops Unclassified + Scroll before mapping. Preservation of Unclassified happens in the panel/storage via `isProductionInteraction` (capture guarantee v2), never in IR generation.
+- `toIRActions()` — maps 15 interaction types to 9 IR action types (CLICK, FILL, SELECT, TOGGLE, SELECT_DATE, NAVIGATE, HOVER, WAIT, KEYBOARD_SHORTCUT). NOTE (7.4-B4/D2, 2026-08-26): this adapter path is DEAD in production (the SW imports only `filterProductionInteractions`; the live IR builder is `ir-bridge.ts build()`). Per the D2 DROP decision, `toIRAction` returns null for every Unclassified interaction; the live bridge's NOISE_TYPES drops Unclassified + Scroll before mapping. Preservation of Unclassified happens in the panel/storage via `isProductionInteraction` (capture guarantee v2), never in IR generation. NOTE (7.4-B5, 2026-08-26): Modal definition added at priority 75 (dialog open → CLICK, Escape dismissal → KEYBOARD_SHORTCUT with NoTarget). KEYBOARD_SHORTCUT was a latent no-executor/no-renderer defect until B5-2c wired all three replay touchpoints (renderer, both executors, ir-bridge NoTarget path).
 - `runCapabilityInference()` — 12 capability types with evidence-based classification
 - `buildIRPlan()` — constructs `ExecutionIRPlan`
 - `PlaywrightCodeGenerator` — renders to Playwright test code
@@ -398,14 +398,14 @@ These have tests (which inflate the 4072 count). They represent earlier architec
 ### P1: Missing Interaction Coverage
 
 - **Drag-and-drop:** Completely invisible. No definitions, no event types. Specs exist (`drag-drop.md`, `drag-drop-grouping.md`).
-- **Keyboard interactions:** `keydown` captured in ledger but most definitions don't model keyboard semantics.
+- **Keyboard interactions:** `keydown` captured in ledger. Bare Escape (dialog dismissal) now claimed by Modal definition (7.4-B5). Modifier shortcuts claimed by keyboard-shortcut definition. Other bare keys still Unclassified. KEYBOARD_SHORTCUT replay was a latent no-executor/no-renderer defect until B5-2c (2026-08-26) wired all three replay touchpoints.
 - **FileUpload / Tab:** Captured but map to `null` in IR (not replayable as Playwright actions).
 - **Scroll maps to WAIT:** Not replayable as an action.
 
 ### P2: Code Quality
 
 - `any[]` casts in service worker adapting `ComponentInteraction` → IR Bridge types
-- Two parallel `IRAction` type systems (`output-adapter.ts` vs `execution-ir/types.ts`) not unified
+- Two parallel `IRAction` type systems (`output-adapter.ts` vs `execution-ir/types.ts`) — B4 D2 DROP aligned the dead adapter to return null for Unclassified; B5 added KEYBOARD_SHORTCUT to both. Full unification still deferred.
 - Dead code has tests — test count is misleading (live test count is lower)
 - No lint script, no `tsc --noEmit` in CI
 - `createUnclassifiedFromLedger` in Projection Engine produces stubs with `tag: 'UNKNOWN'`, empty `accessibleName` — no real element identity
