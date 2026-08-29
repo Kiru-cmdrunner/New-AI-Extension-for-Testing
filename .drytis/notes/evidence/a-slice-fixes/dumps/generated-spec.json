@@ -1,0 +1,11 @@
+{
+  "count": 5,
+  "names": [
+    "package.json",
+    "playwright.config.ts",
+    "tsconfig.json",
+    ".gitignore",
+    "tests/recorded-test.spec.ts"
+  ],
+  "spec": "import { test, expect } from '@playwright/test';\n\ntest.describe('Recorded Test', () => {\n  test('should complete recorded Test successfully', async ({ page }) => {\n    // Fill \"headphones\" in the Search products\n    await page.locator('#q').fill('headphones')\n\n    // Click the Go\n    await page.locator('#go').click()\n    await expect.soft(page.locator('#results > *')).toHaveCount(3)\n    await expect.soft(page.locator('#results')).toBeAttached()\n\n    // Navigate to http://127.0.0.1:8152/cart\n    await page.goto('http://127.0.0.1:8152/cart')\n    await expect.soft(page.locator('#cart-count')).toContainText('0 items')\n\n    // Click the Add to cart\n    await page.locator('#add1').click()\n    await expect.soft(page.locator('#cart-count')).toContainText('1 items')\n    await expect.soft(page.locator('#cart-items > *')).toHaveCount(1)\n\n    // Click the Add to cart\n    await page.locator('#add1').click()\n    await expect.soft(page.locator('#cart-count')).toContainText('2 items')\n    await expect.soft(page.locator('#cart-items > *')).toHaveCount(2)\n  });\n});\n"
+}

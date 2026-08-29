@@ -1,0 +1,20 @@
+{
+  "label": "adanione.com apex",
+  "url": "https://adanione.com/",
+  "phase": "done",
+  "lastState": {
+    "url": "chrome-error://chromewebdata/",
+    "readyState": "loading",
+    "hasDOM": false,
+    "nEls": 0,
+    "title": ""
+  },
+  "elapsedMs": 1942,
+  "final": {
+    "url": "chrome-error://chromewebdata/",
+    "readyState": "loading",
+    "hasDOM": false,
+    "nEls": 0,
+    "title": ""
+  }
+}

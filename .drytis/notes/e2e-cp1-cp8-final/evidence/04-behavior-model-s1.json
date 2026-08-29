@@ -1,0 +1,830 @@
+{
+  "coverage": {
+    "anchoredInteractions": 7,
+    "attributedNetworkRows": 11,
+    "attributedObservations": 5,
+    "malformedInteractions": 0,
+    "memberInteractions": 3,
+    "provenanceLinks": 0,
+    "totalInteractions": 11,
+    "totalNetworkRows": 11,
+    "totalObservations": 7,
+    "unattributedConsequences": 2
+  },
+  "episodes": [
+    {
+      "anchor": {
+        "actionTarget": "Search products",
+        "actionType": "Unclassified",
+        "interactionId": "int-10",
+        "triggerTimestamp": 1786952019713
+      },
+      "edges": [],
+      "episodeOutcome": null,
+      "horizon": {
+        "attribution": {
+          "closeReason": "all-stamped-settled",
+          "closedAtMs": 1786952019713,
+          "openedAtMs": 1786952019713,
+          "pendingRequestIds": []
+        },
+        "uiOwnership": {
+          "closeReason": "stabilized",
+          "closedAtMs": 1786952019713,
+          "openedAtMs": 1786952019713
+        }
+      },
+      "id": "ep-int-10",
+      "members": [
+        {
+          "interactionId": "int-10",
+          "role": "anchor"
+        }
+      ],
+      "parameterInputs": [],
+      "provenanceLinks": [],
+      "tabId": null,
+      "unattributed": []
+    },
+    {
+      "anchor": {
+        "actionTarget": "Go",
+        "actionType": "Unclassified",
+        "interactionId": "int-11",
+        "triggerTimestamp": 1786952021373
+      },
+      "edges": [],
+      "episodeOutcome": null,
+      "horizon": {
+        "attribution": {
+          "closeReason": "all-stamped-settled",
+          "closedAtMs": 1786952021373,
+          "openedAtMs": 1786952021373,
+          "pendingRequestIds": []
+        },
+        "uiOwnership": {
+          "closeReason": "stabilized",
+          "closedAtMs": 1786952021373,
+          "openedAtMs": 1786952021373
+        }
+      },
+      "id": "ep-int-11",
+      "members": [
+        {
+          "interactionId": "int-11",
+          "role": "anchor"
+        }
+      ],
+      "parameterInputs": [],
+      "provenanceLinks": [],
+      "tabId": null,
+      "unattributed": []
+    },
+    {
+      "anchor": {
+        "actionTarget": "Go",
+        "actionType": "Click",
+        "interactionId": "int-5",
+        "triggerTimestamp": 1786952021399
+      },
+      "edges": [
+        {
+          "confidence": 0.9,
+          "detail": "GET http://127.0.0.1:8098/api/suggest?q=he initiated during ep-int-5",
+          "evidenceRefs": [
+            {
+              "kind": "request",
+              "requestId": "15"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-5",
+            "interactionId": "int-3"
+          },
+          "id": "edge-ep-int-5-000",
+          "kind": "api",
+          "latencyMs": null,
+          "tier": "T1-stamp",
+          "to": {
+            "requestId": "15",
+            "type": "api"
+          }
+        },
+        {
+          "confidence": 0.9,
+          "detail": "GET http://127.0.0.1:8098/api/suggest?q=hea initiated during ep-int-5",
+          "evidenceRefs": [
+            {
+              "kind": "request",
+              "requestId": "16"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-5",
+            "interactionId": "int-3"
+          },
+          "id": "edge-ep-int-5-001",
+          "kind": "api",
+          "latencyMs": null,
+          "tier": "T1-stamp",
+          "to": {
+            "requestId": "16",
+            "type": "api"
+          }
+        },
+        {
+          "confidence": 0.9,
+          "detail": "GET http://127.0.0.1:8098/api/suggest?q=head initiated during ep-int-5",
+          "evidenceRefs": [
+            {
+              "kind": "request",
+              "requestId": "17"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-5",
+            "interactionId": "int-3"
+          },
+          "id": "edge-ep-int-5-002",
+          "kind": "api",
+          "latencyMs": null,
+          "tier": "T1-stamp",
+          "to": {
+            "requestId": "17",
+            "type": "api"
+          }
+        },
+        {
+          "confidence": 0.9,
+          "detail": "GET http://127.0.0.1:8098/api/suggest?q=headp initiated during ep-int-5",
+          "evidenceRefs": [
+            {
+              "kind": "request",
+              "requestId": "18"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-5",
+            "interactionId": "int-3"
+          },
+          "id": "edge-ep-int-5-003",
+          "kind": "api",
+          "latencyMs": null,
+          "tier": "T1-stamp",
+          "to": {
+            "requestId": "18",
+            "type": "api"
+          }
+        },
+        {
+          "confidence": 0.9,
+          "detail": "GET http://127.0.0.1:8098/api/suggest?q=headph initiated during ep-int-5",
+          "evidenceRefs": [
+            {
+              "kind": "request",
+              "requestId": "19"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-5",
+            "interactionId": "int-3"
+          },
+          "id": "edge-ep-int-5-004",
+          "kind": "api",
+          "latencyMs": null,
+          "tier": "T1-stamp",
+          "to": {
+            "requestId": "19",
+            "type": "api"
+          }
+        },
+        {
+          "confidence": 0.9,
+          "detail": "GET http://127.0.0.1:8098/api/suggest?q=headpho initiated during ep-int-5",
+          "evidenceRefs": [
+            {
+              "kind": "request",
+              "requestId": "20"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-5",
+            "interactionId": "int-3"
+          },
+          "id": "edge-ep-int-5-005",
+          "kind": "api",
+          "latencyMs": null,
+          "tier": "T1-stamp",
+          "to": {
+            "requestId": "20",
+            "type": "api"
+          }
+        },
+        {
+          "confidence": 0.9,
+          "detail": "GET http://127.0.0.1:8098/api/suggest?q=headphon initiated during ep-int-5",
+          "evidenceRefs": [
+            {
+              "kind": "request",
+              "requestId": "21"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-5",
+            "interactionId": "int-3"
+          },
+          "id": "edge-ep-int-5-006",
+          "kind": "api",
+          "latencyMs": null,
+          "tier": "T1-stamp",
+          "to": {
+            "requestId": "21",
+            "type": "api"
+          }
+        },
+        {
+          "confidence": 0.9,
+          "detail": "GET http://127.0.0.1:8098/api/suggest?q=headphone initiated during ep-int-5",
+          "evidenceRefs": [
+            {
+              "kind": "request",
+              "requestId": "22"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-5",
+            "interactionId": "int-3"
+          },
+          "id": "edge-ep-int-5-007",
+          "kind": "api",
+          "latencyMs": null,
+          "tier": "T1-stamp",
+          "to": {
+            "requestId": "22",
+            "type": "api"
+          }
+        },
+        {
+          "confidence": 0.9,
+          "detail": "GET http://127.0.0.1:8098/api/suggest?q=headphones initiated during ep-int-5",
+          "evidenceRefs": [
+            {
+              "kind": "request",
+              "requestId": "23"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-5",
+            "interactionId": "int-3"
+          },
+          "id": "edge-ep-int-5-008",
+          "kind": "api",
+          "latencyMs": null,
+          "tier": "T1-stamp",
+          "to": {
+            "requestId": "23",
+            "type": "api"
+          }
+        },
+        {
+          "confidence": 0.7,
+          "detail": "entity search-query:headphones (search-query) created",
+          "evidenceRefs": [
+            {
+              "entityId": "search-query:headphones",
+              "interactionId": "int-3",
+              "kind": "entity"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-5",
+            "interactionId": "int-3"
+          },
+          "id": "edge-ep-int-5-009",
+          "kind": "entity",
+          "latencyMs": null,
+          "tier": "T3-transition",
+          "to": {
+            "entityId": "search-query:headphones",
+            "operation": "create",
+            "type": "entity"
+          }
+        },
+        {
+          "confidence": 0.6,
+          "detail": "UI observations on int-3: 3 DOM changes, 2 visibility changes",
+          "evidenceRefs": [
+            {
+              "kind": "dom",
+              "sequence": 0,
+              "windowId": "ev-evt-pmswx3cxk-8"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-5",
+            "interactionId": "int-3"
+          },
+          "id": "edge-ep-int-5-010",
+          "kind": "ui",
+          "latencyMs": 0,
+          "tier": "T4-window",
+          "to": {
+            "summary": "3 DOM changes, 2 visibility changes",
+            "type": "ui"
+          }
+        }
+      ],
+      "episodeOutcome": {
+        "confidence": 1,
+        "confidenceLevel": "confirmed",
+        "contributingMembers": [
+          "int-3"
+        ],
+        "derivation": "derived-episode-outcome",
+        "outcome": "success"
+      },
+      "horizon": {
+        "attribution": {
+          "closeReason": "all-stamped-settled",
+          "closedAtMs": 1786952021399,
+          "openedAtMs": 1786952021399,
+          "pendingRequestIds": []
+        },
+        "uiOwnership": {
+          "closeReason": "stabilized",
+          "closedAtMs": 1786952021399,
+          "openedAtMs": 1786952021399
+        }
+      },
+      "id": "ep-int-5",
+      "members": [
+        {
+          "interactionId": "int-5",
+          "role": "anchor"
+        },
+        {
+          "interactionId": "int-3",
+          "role": "parameter"
+        }
+      ],
+      "parameterInputs": [
+        {
+          "interactionId": "int-3",
+          "label": "Search products",
+          "link": "form-overlap",
+          "value": "headphones"
+        }
+      ],
+      "provenanceLinks": [],
+      "tabId": 12119211,
+      "unattributed": []
+    },
+    {
+      "anchor": {
+        "actionTarget": "Aurora Wireless Headphones — $89.99\nOver-ear ANC headphones · ★4.5",
+        "actionType": "Unclassified",
+        "interactionId": "int-12",
+        "triggerTimestamp": 1786952022916
+      },
+      "edges": [],
+      "episodeOutcome": null,
+      "horizon": {
+        "attribution": {
+          "closeReason": "all-stamped-settled",
+          "closedAtMs": 1786952022916,
+          "openedAtMs": 1786952022916,
+          "pendingRequestIds": []
+        },
+        "uiOwnership": {
+          "closeReason": "stabilized",
+          "closedAtMs": 1786952022916,
+          "openedAtMs": 1786952022916
+        }
+      },
+      "id": "ep-int-12",
+      "members": [
+        {
+          "interactionId": "int-12",
+          "role": "anchor"
+        }
+      ],
+      "parameterInputs": [],
+      "provenanceLinks": [],
+      "tabId": null,
+      "unattributed": []
+    },
+    {
+      "anchor": {
+        "actionTarget": "Aurora Wireless Headphones — $89.99\nOver-ear ANC headphones · ★4.5",
+        "actionType": "Unclassified",
+        "interactionId": "int-13",
+        "triggerTimestamp": 1786952022919
+      },
+      "edges": [
+        {
+          "confidence": 0.9,
+          "detail": "GET http://127.0.0.1:8098/product.html?id=P100 initiated during ep-int-13",
+          "evidenceRefs": [
+            {
+              "kind": "request",
+              "requestId": "24"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-13",
+            "interactionId": "int-13"
+          },
+          "id": "edge-ep-int-13-000",
+          "kind": "api",
+          "latencyMs": null,
+          "tier": "T1-stamp",
+          "to": {
+            "requestId": "24",
+            "type": "api"
+          }
+        },
+        {
+          "confidence": 0.85,
+          "detail": "navigation committed to http://127.0.0.1:8098/product.html?id=P100",
+          "evidenceRefs": [
+            {
+              "kind": "nav",
+              "navEventId": "nav-1786952022946-czy0h3"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-13",
+            "interactionId": "int-6"
+          },
+          "id": "edge-ep-int-13-001",
+          "kind": "navigation",
+          "latencyMs": 38,
+          "tier": "T2-lineage",
+          "to": {
+            "navEventId": "nav-1786952022946-czy0h3",
+            "toUrl": "http://127.0.0.1:8098/product.html?id=P100",
+            "type": "navigation"
+          }
+        },
+        {
+          "confidence": 0.5,
+          "detail": "UI observations on int-6: 0 DOM changes",
+          "evidenceRefs": [
+            {
+              "degradation": [
+                "synthesized-evidence"
+              ],
+              "kind": "dom",
+              "sequence": 0,
+              "windowId": "synthetic-nav-nav-1786952022946-czy0h3"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-13",
+            "interactionId": "int-6"
+          },
+          "id": "edge-ep-int-13-002",
+          "kind": "ui",
+          "latencyMs": 29,
+          "tier": "T4-window",
+          "to": {
+            "summary": "0 DOM changes",
+            "type": "ui"
+          }
+        },
+        {
+          "confidence": 0.6,
+          "detail": "UI observations on int-13: 0 DOM changes",
+          "evidenceRefs": [
+            {
+              "kind": "dom",
+              "sequence": 0,
+              "windowId": "sw-evt-pmswx3cxk-47"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-13",
+            "interactionId": "int-13"
+          },
+          "id": "edge-ep-int-13-003",
+          "kind": "ui",
+          "latencyMs": 0,
+          "tier": "T4-window",
+          "to": {
+            "summary": "0 DOM changes",
+            "type": "ui"
+          }
+        }
+      ],
+      "episodeOutcome": {
+        "confidence": 0,
+        "confidenceLevel": "inconclusive",
+        "contributingMembers": [],
+        "derivation": "derived-episode-outcome",
+        "outcome": "incomplete"
+      },
+      "horizon": {
+        "attribution": {
+          "closeReason": "all-stamped-settled",
+          "closedAtMs": 1786952025957,
+          "openedAtMs": 1786952022919,
+          "pendingRequestIds": []
+        },
+        "uiOwnership": {
+          "closeReason": "stabilized",
+          "closedAtMs": 1786952025957,
+          "openedAtMs": 1786952022919
+        }
+      },
+      "id": "ep-int-13",
+      "members": [
+        {
+          "interactionId": "int-13",
+          "role": "anchor"
+        },
+        {
+          "interactionId": "int-6",
+          "role": "navigation"
+        }
+      ],
+      "parameterInputs": [],
+      "provenanceLinks": [],
+      "tabId": null,
+      "unattributed": []
+    },
+    {
+      "anchor": {
+        "actionTarget": "Add to Cart",
+        "actionType": "Unclassified",
+        "interactionId": "int-14",
+        "triggerTimestamp": 1786952026632
+      },
+      "edges": [
+        {
+          "confidence": 0.85,
+          "detail": "navigation committed to http://127.0.0.1:8098/cart.html?added=P100",
+          "evidenceRefs": [
+            {
+              "kind": "nav",
+              "navEventId": "nav-1786952026681-cu9wdx"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-14",
+            "interactionId": "int-9"
+          },
+          "id": "edge-ep-int-14-000",
+          "kind": "navigation",
+          "latencyMs": 175,
+          "tier": "T2-lineage",
+          "to": {
+            "navEventId": "nav-1786952026681-cu9wdx",
+            "toUrl": "http://127.0.0.1:8098/cart.html?added=P100",
+            "type": "navigation"
+          }
+        },
+        {
+          "confidence": 0.7,
+          "detail": "view search-results → cart",
+          "evidenceRefs": [
+            {
+              "kind": "transition",
+              "transitionId": "st-int-9"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-14",
+            "interactionId": "int-9"
+          },
+          "id": "edge-ep-int-14-001",
+          "kind": "state",
+          "latencyMs": null,
+          "tier": "T3-transition",
+          "to": {
+            "from": "search-results",
+            "to": "cart",
+            "type": "state"
+          }
+        },
+        {
+          "confidence": 0.5,
+          "detail": "UI observations on int-8: 0 DOM changes",
+          "evidenceRefs": [
+            {
+              "kind": "dom",
+              "sequence": 0,
+              "windowId": "ev-evt-pmswx3hhq-7"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-14",
+            "interactionId": "int-8"
+          },
+          "id": "edge-ep-int-14-002",
+          "kind": "ui",
+          "latencyMs": 8,
+          "tier": "T4-window",
+          "to": {
+            "summary": "0 DOM changes",
+            "type": "ui"
+          }
+        },
+        {
+          "confidence": 0.6,
+          "detail": "UI observations on int-9: 0 DOM changes",
+          "evidenceRefs": [
+            {
+              "degradation": [
+                "synthesized-evidence"
+              ],
+              "kind": "dom",
+              "sequence": 0,
+              "windowId": "synthetic-nav-nav-1786952026681-cu9wdx"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-14",
+            "interactionId": "int-9"
+          },
+          "id": "edge-ep-int-14-003",
+          "kind": "ui",
+          "latencyMs": 77,
+          "tier": "T4-window",
+          "to": {
+            "summary": "0 DOM changes",
+            "type": "ui"
+          }
+        }
+      ],
+      "episodeOutcome": {
+        "confidence": 0,
+        "confidenceLevel": "inconclusive",
+        "contributingMembers": [],
+        "derivation": "derived-episode-outcome",
+        "outcome": "incomplete"
+      },
+      "horizon": {
+        "attribution": {
+          "closeReason": "all-stamped-settled",
+          "closedAtMs": 1786952029807,
+          "openedAtMs": 1786952026632,
+          "pendingRequestIds": []
+        },
+        "uiOwnership": {
+          "closeReason": "stabilized",
+          "closedAtMs": 1786952029807,
+          "openedAtMs": 1786952026632
+        }
+      },
+      "id": "ep-int-14",
+      "members": [
+        {
+          "interactionId": "int-14",
+          "role": "anchor"
+        },
+        {
+          "interactionId": "int-9",
+          "role": "navigation"
+        }
+      ],
+      "parameterInputs": [],
+      "provenanceLinks": [],
+      "tabId": null,
+      "unattributed": []
+    },
+    {
+      "anchor": {
+        "actionTarget": "Add to Cart",
+        "actionType": "Click",
+        "interactionId": "int-8",
+        "triggerTimestamp": 1786952026640
+      },
+      "edges": [
+        {
+          "confidence": 0.9,
+          "detail": "GET http://127.0.0.1:8098/cart.html?added=P100 initiated during ep-int-8",
+          "evidenceRefs": [
+            {
+              "kind": "request",
+              "requestId": "26"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-8",
+            "interactionId": "int-8"
+          },
+          "id": "edge-ep-int-8-000",
+          "kind": "api",
+          "latencyMs": null,
+          "tier": "T1-stamp",
+          "to": {
+            "requestId": "26",
+            "type": "api"
+          }
+        },
+        {
+          "confidence": 0.9,
+          "detail": "entity cart-item:int-8 (cart-item) created from API",
+          "evidenceRefs": [
+            {
+              "entityId": "cart-item:int-8",
+              "interactionId": "int-8",
+              "kind": "entity"
+            }
+          ],
+          "from": {
+            "episodeId": "ep-int-8",
+            "interactionId": "int-8"
+          },
+          "id": "edge-ep-int-8-001",
+          "kind": "entity",
+          "latencyMs": null,
+          "tier": "T1-stamp",
+          "to": {
+            "entityId": "cart-item:int-8",
+            "operation": "create",
+            "type": "entity"
+          }
+        }
+      ],
+      "episodeOutcome": {
+        "confidence": 0.4,
+        "confidenceLevel": "inconclusive",
+        "contributingMembers": [
+          "int-8"
+        ],
+        "derivation": "derived-episode-outcome",
+        "outcome": "success"
+      },
+      "horizon": {
+        "attribution": {
+          "closeReason": "all-stamped-settled",
+          "closedAtMs": 1786952026640,
+          "openedAtMs": 1786952026640,
+          "pendingRequestIds": []
+        },
+        "uiOwnership": {
+          "closeReason": "stabilized",
+          "closedAtMs": 1786952026640,
+          "openedAtMs": 1786952026640
+        }
+      },
+      "id": "ep-int-8",
+      "members": [
+        {
+          "interactionId": "int-8",
+          "role": "anchor"
+        }
+      ],
+      "parameterInputs": [],
+      "provenanceLinks": [],
+      "tabId": 12119211,
+      "unattributed": []
+    }
+  ],
+  "generatedAtMs": 1786952031337,
+  "id": "abm-session-1786952031337",
+  "provenanceLinks": [],
+  "sessionId": "session-1786952031337",
+  "unattributed": [
+    {
+      "detail": "evidence window synthetic-nav-nav-1786952017198-pbn31f lies outside every uiOwnership horizon",
+      "evidenceRef": {
+        "kind": "dom",
+        "sequence": 0,
+        "windowId": "synthetic-nav-nav-1786952017198-pbn31f"
+      },
+      "id": "unattr-ui-int-1",
+      "observedAtMs": 1786952017204,
+      "observedKind": "ui",
+      "reason": "no-live-horizon",
+      "tabId": null
+    },
+    {
+      "detail": "evidence window ev-evt-pmswx3cxk-39 lies outside every uiOwnership horizon",
+      "evidenceRef": {
+        "kind": "dom",
+        "sequence": 0,
+        "windowId": "ev-evt-pmswx3cxk-39"
+      },
+      "id": "unattr-ui-int-5",
+      "observedAtMs": 1786952021399,
+      "observedKind": "ui",
+      "reason": "no-live-horizon",
+      "tabId": 12119211
+    }
+  ],
+  "warnings": [
+    {
+      "code": "unknown-tab-resolution",
+      "message": "One or more anchors carry no captureOrigin.tabId; they were grouped into the shared null-tab scope. Membership decisions involving them may be coarser than tab-scoped ones.",
+      "refs": [
+        "ep-int-10",
+        "ep-int-11",
+        "ep-int-12",
+        "ep-int-13",
+        "ep-int-14"
+      ]
+    }
+  ]
+}

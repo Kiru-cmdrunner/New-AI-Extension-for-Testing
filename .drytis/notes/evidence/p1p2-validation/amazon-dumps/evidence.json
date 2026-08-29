@@ -1,0 +1,54 @@
+[
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "net": 0,
+    "rs": null
+  },
+  {
+    "t": "Click",
+    "end": "consequence-settled",
+    "net": 3,
+    "rs": [
+      {
+        "k": "counter",
+        "e": null,
+        "p": "body > span#cart-count",
+        "attrs": {
+          "aria-label": "Cart items",
+          "data-count": "1"
+        }
+      },
+      {
+        "k": "notification",
+        "e": null,
+        "p": "body > div#toast-slot > div",
+        "attrs": {
+          "aria-label": "Cart updated"
+        }
+      },
+      {
+        "k": "collection",
+        "e": null,
+        "p": "body > div#grid",
+        "attrs": {}
+      },
+      {
+        "k": "entity",
+        "e": "B0VAL1",
+        "p": "body > div#grid > div",
+        "attrs": {
+          "data-asin": "B0VAL1"
+        }
+      },
+      {
+        "k": "entity",
+        "e": "B0VAL2",
+        "p": "body > div#grid > div",
+        "attrs": {
+          "data-asin": "B0VAL2"
+        }
+      }
+    ]
+  }
+]

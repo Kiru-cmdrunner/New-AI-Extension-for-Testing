@@ -210,14 +210,16 @@ describe('Phase 6D.0 — click.detectTrigger gate with real-format ancestry', ()
     ).toEqual({ type: 'Click' });
   });
 
-  it('bare div with generic bracketed ancestry → still NOT a Click', () => {
+  it('bare div with generic bracketed ancestry → claims Click (v1.2 flip)', () => {
+    // Click Qualification v1.2 §8.5: surface ancestry no longer gates
+    // detectTrigger; qualification is capture-time.
     expect(
       clickDefinition.detectTrigger(baseEvent({ ancestorRoles: ['div[role=main]'] })),
-    ).toBeNull();
+    ).toEqual({ type: 'Click' });
   });
 
-  it('bare div with no ancestry → still NOT a Click (gate unchanged)', () => {
-    expect(clickDefinition.detectTrigger(baseEvent({}))).toBeNull();
+  it('bare div with no ancestry → claims Click (v1.2 flip)', () => {
+    expect(clickDefinition.detectTrigger(baseEvent({}))).toEqual({ type: 'Click' });
   });
 });
 
@@ -375,8 +377,11 @@ describe('Phase 6D.0 — hover overlay-role dwell with real format', () => {
 
     const hover = emitted.find((i) => i.type === 'Hover');
     expect(hover).toBeDefined();
-    expect(hover!.metadata.meaningful).toBe(true);
-    expect(hover!.metadata.evidenceReason).toBe('overlay-role-dwell');
+    // B7-P2: ancestry NEVER gates semantics (F-2 vocabulary rule). The
+    // tooltip-ancestor hover completes on leave like any other; meaning is
+    // derived downstream from consequence evidence only.
+    expect(hover!.endState).toBe('completed');
+    expect(hover!.metadata.terminal).toBe('left');
   });
 
   it('generic ancestry does not fire the overlay-role path', () => {
@@ -391,13 +396,12 @@ describe('Phase 6D.0 — hover overlay-role dwell with real format', () => {
         { ancestorRoles: ['div[role=main]'] }, { timestamp: t0 + 600 }),
     );
     const hover = emitted.find((i) => i.type === 'Hover');
-    // dwell alone (no stationarity evidence from a single leave) must not
-    // promote — the runtime emits it with endState 'discarded' (projection
-    // filters discarded interactions). The pin: NO meaningful promotion, and
-    // the overlay-role evidence did NOT fire.
+    // B7-P2: generic ancestry behaves IDENTICALLY to tooltip ancestry —
+    // ancestry is never a semantic input. Both complete on the "left"
+    // terminal; neither carries stored meaning.
     expect(hover).toBeDefined();
-    expect(hover!.endState).toBe('discarded');
-    expect(hover!.metadata.meaningful).toBe(false);
-    expect(hover!.metadata.evidenceReason).not.toBe('overlay-role-dwell');
+    expect(hover!.endState).toBe('completed');
+    expect(hover!.metadata.terminal).toBe('left');
+    expect(hover!.metadata.meaningful).toBeUndefined();
   });
 });

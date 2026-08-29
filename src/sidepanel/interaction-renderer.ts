@@ -27,6 +27,7 @@ import {
 } from './understanding-badge';
 import { buildEvidenceFooter } from './evidence-footer';
 import { getAssertionCountFor } from './assertion-chip';
+import { deriveConsequenceClasses } from '../presentation/output-adapter';
 
 // ── Layer 1: Type Display Config ──────────────────────────────────────
 
@@ -191,6 +192,14 @@ function formatMetadata(interaction: ComponentInteraction): string | null {
   switch (type) {
     case 'TextEntry':
       if (metadata.userTyped === false) parts.push('⚠️ no typing detected');
+      // 7.4-B6/B6.1 commit provenance — honest effect-grounded labels.
+      // Only real commit paths carry commitSignal: 'submit' (native form
+      // submit), 'navigation' (form-less SPA route change), 'network'
+      // (STOP-rescued, network-joined + corroborated). Absent ⇒ blur
+      // completion, and we say nothing (no fabrication).
+      if (metadata.commitSignal === 'submit') parts.push('✓ committed via form submit');
+      else if (metadata.commitSignal === 'navigation') parts.push('✓ committed via Enter (route change)');
+      else if (metadata.commitSignal === 'network') parts.push('✓ committed via Enter (app request)');
       break;
 
     case 'Dropdown':
@@ -248,7 +257,9 @@ function suppressionReason(interaction: ComponentInteraction): string | null {
     case 'Scroll':
       return interaction.metadata.hasDelta !== true ? '0px scroll' : null;
     case 'Hover':
-      return interaction.metadata.meaningful !== true ? 'not meaningful' : null;
+      // B7-P4 (bridge deletion): admission derives from recorded evidence
+      // at render time — metadata.meaningful is inert P2/P3-era history.
+      return deriveConsequenceClasses(interaction).length > 0 ? null : 'not meaningful';
     default:
       return null;
   }
@@ -350,6 +361,16 @@ export function createInteractionElement(interaction: ComponentInteraction): HTM
   const projected = buildProjectedChip(interaction.metadata ?? {});
   if (projected) {
     appendChip(el, projected.text, 'interaction-chip interaction-chip--understanding', '#94a3b8');
+  }
+
+  // B7-P4: evidence-derived per-class badge chips for admitted hovers —
+  // the derived consequence classes rendered directly (reveal, insertion,
+  // removal, stamped-fetch, nav, revert, pointer-reach). One chip per
+  // class; gesture-only hovers have no classes and render none.
+  if (interaction.type === 'Hover') {
+    for (const cls of deriveConsequenceClasses(interaction)) {
+      appendChip(el, cls, 'interaction-chip interaction-chip--consequence', '#6366f1');
+    }
   }
 
   const why = buildWhyBlock(interaction);
@@ -559,7 +580,9 @@ function isProductionInteraction(i: ComponentInteraction): boolean {  if (i.endS
     case 'Scroll':
       return i.metadata.hasDelta === true;
     case 'Hover':
-      return i.metadata.meaningful === true;
+      // B7-P4 (bridge deletion): same derived admission as the suppression
+      // reason — a single derivation source for the panel.
+      return deriveConsequenceClasses(i).length > 0;
     default:
       return true;
   }

@@ -1,0 +1,84 @@
+{
+  "verno": 30,
+  "workflows": [
+    {
+      "key": "app-3l9zqg:wf-pattern-2cdb629c",
+      "appId": "app-3l9zqg",
+      "patternId": "wf-pattern-2cdb629c",
+      "label": "Fetch data",
+      "canonicalSteps": [
+        "search products",
+        "navigate",
+        "/product.html?id=p100",
+        "/cart.html?added=p100"
+      ],
+      "viewSequence": [
+        "search-results",
+        "cart"
+      ],
+      "sessionIds": [
+        "session-1786985931077",
+        "session-1786985943596"
+      ],
+      "occurrenceCount": 2,
+      "instances": [
+        "wf-session-1786985931077-0",
+        "wf-session-1786985943596-0"
+      ],
+      "firstSeenAt": 1786985931163,
+      "lastSeenAt": 1786985943655
+    }
+  ],
+  "behaviorSessions": [
+    {
+      "key": "app-3l9zqg:session-1786985931077",
+      "appId": "app-3l9zqg",
+      "sessionId": "session-1786985931077",
+      "seq": 1,
+      "generatedAtMs": 1786985931095,
+      "episodeCount": 3,
+      "edgeCount": 35,
+      "gapCount": 0,
+      "coverage": {
+        "totalInteractions": 7,
+        "anchoredInteractions": 3,
+        "memberInteractions": 4,
+        "malformedInteractions": 0,
+        "totalNetworkRows": 19,
+        "attributedNetworkRows": 19,
+        "totalObservations": 7,
+        "attributedObservations": 7,
+        "unattributedConsequences": 0,
+        "provenanceLinks": 0
+      },
+      "viewSetHash": "261010b6",
+      "signatureSetHash": "627d1ed1",
+      "warnings": []
+    },
+    {
+      "key": "app-3l9zqg:session-1786985943596",
+      "appId": "app-3l9zqg",
+      "sessionId": "session-1786985943596",
+      "seq": 2,
+      "generatedAtMs": 1786985943603,
+      "episodeCount": 3,
+      "edgeCount": 31,
+      "gapCount": 0,
+      "coverage": {
+        "totalInteractions": 7,
+        "anchoredInteractions": 3,
+        "memberInteractions": 4,
+        "malformedInteractions": 0,
+        "totalNetworkRows": 19,
+        "attributedNetworkRows": 19,
+        "totalObservations": 7,
+        "attributedObservations": 7,
+        "unattributedConsequences": 0,
+        "provenanceLinks": 0
+      },
+      "viewSetHash": "261010b6",
+      "signatureSetHash": "627d1ed1",
+      "warnings": []
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+[
+  {
+    "id": "int-2",
+    "t": "Click",
+    "end": "consequence-settled",
+    "md": {
+      "targetName": "Increase quantity of Notebook"
+    },
+    "trig": {
+      "id": null,
+      "testId": null,
+      "name": "Increase quantity of Notebook",
+      "tag": "BUTTON",
+      "cls": "step-up"
+    },
+    "net": 0,
+    "dom": 4,
+    "rs": {
+      "url": "http://127.0.0.1:8177/shop",
+      "items": [
+        {
+          "k": "counter",
+          "n": 3,
+          "t": "3",
+          "p": "body > header > span",
+          "sel": "[data-testid*=\"cart-count\" i], [data-tes"
+        },
+        {
+          "k": "entity",
+          "n": null,
+          "t": "NotebookSKU-A âˆ’ 2 +",
+          "p": "body > main > div > div",
+          "sel": "[data-sku]:not([data-product-id]):not([d"
+        },
+        {
+          "k": "entity",
+          "n": null,
+          "t": "Pen setSKU-B âˆ’ 1 +",
+          "p": "body > main > div > div",
+          "sel": "[data-sku]:not([data-product-id]):not([d"
+        }
+      ]
+    }
+  },
+  {
+    "id": "int-3",
+    "t": "Click",
+    "end": "consequence-settled",
+    "md": {
+      "targetName": "Increase quantity of Notebook"
+    },
+    "trig": {
+      "id": null,
+      "testId": null,
+      "name": "Increase quantity of Notebook",
+      "tag": "BUTTON",
+      "cls": "step-up"
+    },
+    "net": 0,
+    "dom": 4,
+    "rs": {
+      "url": "http://127.0.0.1:8177/shop",
+      "items": [
+        {
+          "k": "counter",
+          "n": 4,
+          "t": "4",
+          "p": "body > header > span",
+          "sel": "[data-testid*=\"cart-count\" i], [data-tes"
+        },
+        {
+          "k": "entity",
+          "n": null,
+          "t": "NotebookSKU-A âˆ’ 3 +",
+          "p": "body > main > div > div",
+          "sel": "[data-sku]:not([data-product-id]):not([d"
+        },
+        {
+          "k": "entity",
+          "n": null,
+          "t": "Pen setSKU-B âˆ’ 1 +",
+          "p": "body > main > div > div",
+          "sel": "[data-sku]:not([data-product-id]):not([d"
+        }
+      ]
+    }
+  },
+  {
+    "id": "int-5",
+    "t": "Click",
+    "end": "consequence-settled",
+    "md": {
+      "targetName": "Increase quantity of Pen set"
+    },
+    "trig": {
+      "id": null,
+      "testId": null,
+      "name": "Increase quantity of Pen set",
+      "tag": "BUTTON",
+      "cls": "step-up"
+    },
+    "net": 0,
+    "dom": 4,
+    "rs": {
+      "url": "http://127.0.0.1:8177/shop",
+      "items": [
+        {
+          "k": "counter",
+          "n": 5,
+          "t": "5",
+          "p": "body > header > span",
+          "sel": "[data-testid*=\"cart-count\" i], [data-tes"
+        },
+        {
+          "k": "entity",
+          "n": null,
+          "t": "NotebookSKU-A âˆ’ 3 +",
+          "p": "body > main > div > div",
+          "sel": "[data-sku]:not([data-product-id]):not([d"
+        },
+        {
+          "k": "entity",
+          "n": null,
+          "t": "Pen setSKU-B âˆ’ 2 +",
+          "p": "body > main > div > div",
+          "sel": "[data-sku]:not([data-product-id]):not([d"
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,93 @@
+{
+  "env": "http://127.0.0.1:8152",
+  "n": 5,
+  "steps": [
+    {
+      "id": "step-0001",
+      "action": "fill",
+      "src": "evt-pmt0fp9dk-4",
+      "locator": "#q",
+      "assertions": []
+    },
+    {
+      "id": "step-0002",
+      "action": "click",
+      "src": "evt-pmt0fp9dk-32",
+      "locator": "#go",
+      "assertions": [
+        {
+          "type": "count",
+          "comp": "equals",
+          "sev": "soft",
+          "exp": 3,
+          "loc": "#results > *"
+        },
+        {
+          "type": "presence",
+          "comp": "isTrue",
+          "sev": "soft",
+          "exp": null,
+          "loc": "#results"
+        }
+      ]
+    },
+    {
+      "id": "step-0003",
+      "action": "navigate",
+      "src": "nav-1787164677261-urv3wg",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "comp": "contains",
+          "sev": "soft",
+          "exp": "0 items",
+          "loc": "#cart-count"
+        }
+      ]
+    },
+    {
+      "id": "step-0004",
+      "action": "click",
+      "src": "evt-pmt0fpehn-4",
+      "locator": "#add1",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "comp": "contains",
+          "sev": "soft",
+          "exp": "1 items",
+          "loc": "#cart-count"
+        },
+        {
+          "type": "count",
+          "comp": "equals",
+          "sev": "soft",
+          "exp": 1,
+          "loc": "#cart-items > *"
+        }
+      ]
+    },
+    {
+      "id": "step-0005",
+      "action": "click",
+      "src": "evt-pmt0fpehn-6",
+      "locator": "#add1",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "comp": "contains",
+          "sev": "soft",
+          "exp": "2 items",
+          "loc": "#cart-count"
+        },
+        {
+          "type": "count",
+          "comp": "equals",
+          "sev": "soft",
+          "exp": 2,
+          "loc": "#cart-items > *"
+        }
+      ]
+    }
+  ]
+}

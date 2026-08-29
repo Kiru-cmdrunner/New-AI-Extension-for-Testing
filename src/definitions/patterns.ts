@@ -14,6 +14,7 @@
  */
 
 import type { ElementIdentity } from '../shared/types';
+import type { DomContext } from '../shared/component-types';
 
 // ── Best Name ──────────────────────────────────────────────────────────
 
@@ -623,6 +624,29 @@ export function elementKey(identity: ElementIdentity): string {
   if (name && selector) return `name:${name}|sel:${selector}`;
   if (selector) return `sel:${selector}`;
   return `tag:${identity.tag}`;
+}
+
+// ── Owner-Form Join (7.4-B6) ──────────────────────────────────────────
+
+/**
+ * Join key for "which form owns this control?" — the prefixed elementKey
+ * of the closest ancestor <form>, as captured at event time in
+ * DomContext.formElementKey.
+ *
+ * Pure function of RECORDED data (identity + domContext snapshot) — the
+ * caller must never query the live DOM. Returns null when the field is
+ * absent (legacy events, pre-B6 recordings) or honestly empty — a null
+ * join NEVER matches, so legacy behavior is preserved byte-for-byte.
+ *
+ * Spec: .drytis/specs/phase-7-4-b6-enter-submit-commit.md §4.1
+ */
+export function formJoinKey(
+  _identity: ElementIdentity,
+  domContext: Pick<DomContext, 'formElementKey'> | undefined,
+): string | null {
+  const key = domContext?.formElementKey;
+  if (typeof key !== 'string' || key === '') return null;
+  return `form:${key}`;
 }
 
 // ── File Upload Patterns ───────────────────────────────────────────────

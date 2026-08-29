@@ -1,0 +1,319 @@
+{
+  "summary": {
+    "sampleTotal": 31,
+    "sampleResolved": 31,
+    "sampleResolvableFlag": 0
+  },
+  "items": [
+    {
+      "signature": "app-3l9zqg:sig:2cebd020",
+      "consequence": "T1-stamp|api|GET /product.html",
+      "sample": {
+        "sessionId": "session-1786952031337",
+        "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-13-000"
+      },
+      "resolved": true,
+      "detail": "GET http://127.0.0.1:8098/product.html?id=P100 initiated during ep-int-13"
+    },
+    {
+      "signature": "app-3l9zqg:sig:2cebd020",
+      "consequence": "T1-stamp|api|GET /product.html",
+      "sample": {
+        "sessionId": "session-1786952051298",
+        "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-13-000"
+      },
+      "resolved": true,
+      "detail": "GET http://127.0.0.1:8098/product.html?id=P100 initiated during ep-int-13"
+    },
+    {
+      "signature": "app-3l9zqg:sig:2cebd020",
+      "consequence": "T2-lineage|navigation|to:/product.html",
+      "sample": {
+        "sessionId": "session-1786952031337",
+        "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-13-001"
+      },
+      "resolved": true,
+      "detail": "navigation committed to http://127.0.0.1:8098/product.html?id=P100"
+    },
+    {
+      "signature": "app-3l9zqg:sig:2cebd020",
+      "consequence": "T2-lineage|navigation|to:/product.html",
+      "sample": {
+        "sessionId": "session-1786952051298",
+        "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-13-001"
+      },
+      "resolved": true,
+      "detail": "navigation committed to http://127.0.0.1:8098/product.html?id=P100"
+    },
+    {
+      "signature": "app-3l9zqg:sig:2cebd020",
+      "consequence": "T4-window|ui|post-anchor",
+      "sample": {
+        "sessionId": "session-1786952031337",
+        "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-13-002"
+      },
+      "resolved": true,
+      "detail": "UI observations on int-6: 0 DOM changes"
+    },
+    {
+      "signature": "app-3l9zqg:sig:2cebd020",
+      "consequence": "T4-window|ui|post-anchor",
+      "sample": {
+        "sessionId": "session-1786952051298",
+        "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-13-002"
+      },
+      "resolved": true,
+      "detail": "UI observations on int-6: 0 DOM changes"
+    },
+    {
+      "signature": "app-3l9zqg:sig:2cebd020",
+      "consequence": "T4-window|ui|anchor-window",
+      "sample": {
+        "sessionId": "session-1786952031337",
+        "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-13-003"
+      },
+      "resolved": true,
+      "detail": "UI observations on int-13: 0 DOM changes"
+    },
+    {
+      "signature": "app-3l9zqg:sig:2cebd020",
+      "consequence": "T4-window|ui|anchor-window",
+      "sample": {
+        "sessionId": "session-1786952051298",
+        "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-13-003"
+      },
+      "resolved": true,
+      "detail": "UI observations on int-13: 0 DOM changes"
+    },
+    {
+      "signature": "app-3l9zqg:sig:524daaea",
+      "consequence": "T1-stamp|api|GET /api/suggest",
+      "sample": {
+        "sessionId": "session-1786952031337",
+        "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-5-000"
+      },
+      "resolved": true,
+      "detail": "GET http://127.0.0.1:8098/api/suggest?q=he initiated during ep-int-5"
+    },
+    {
+      "signature": "app-3l9zqg:sig:524daaea",
+      "consequence": "T1-stamp|api|GET /api/suggest",
+      "sample": {
+        "sessionId": "session-1786952051298",
+        "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-5-000"
+      },
+      "resolved": true,
+      "detail": "GET http://127.0.0.1:8098/api/suggest?q=he initiated during ep-int-5"
+    },
+    {
+      "signature": "app-3l9zqg:sig:524daaea",
+      "consequence": "T1-stamp|api|GET /api/suggest",
+      "sample": {
+        "sessionId": "session-1786952066785",
+        "edgeKey": "app-3l9zqg:session-1786952066785:edge-ep-int-5-000"
+      },
+      "resolved": true,
+      "detail": "GET http://127.0.0.1:8098/api/suggest?q=he initiated during ep-int-5"
+    },
+    {
+      "signature": "app-3l9zqg:sig:524daaea",
+      "consequence": "T3-transition|entity|search-query:create",
+      "sample": {
+        "sessionId": "session-1786952031337",
+        "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-5-009"
+      },
+      "resolved": true,
+      "detail": "entity search-query:headphones (search-query) created"
+    },
+    {
+      "signature": "app-3l9zqg:sig:524daaea",
+      "consequence": "T4-window|ui|anchor-window",
+      "sample": {
+        "sessionId": "session-1786952031337",
+        "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-5-010"
+      },
+      "resolved": true,
+      "detail": "UI observations on int-3: 3 DOM changes, 2 visibility changes"
+    },
+    {
+      "signature": "app-3l9zqg:sig:524daaea",
+      "consequence": "T4-window|ui|anchor-window",
+      "sample": {
+        "sessionId": "session-1786952051298",
+        "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-5-009"
+      },
+      "resolved": true,
+      "detail": "UI observations on int-3: 3 DOM changes, 2 visibility changes"
+    },
+    {
+      "signature": "app-3l9zqg:sig:524daaea",
+      "consequence": "T4-window|ui|anchor-window",
+      "sample": {
+        "sessionId": "session-1786952066785",
+        "edgeKey": "app-3l9zqg:session-1786952066785:edge-ep-int-5-009"
+      },
+      "resolved": true,
+      "detail": "UI observations on int-3: 3 DOM changes, 2 visibility changes"
+    },
+    {
+      "signature": "app-3l9zqg:sig:7808fc38",
+      "consequence": "T2-lineage|navigation|to:/cart.html",
+      "sample": {
+        "sessionId": "session-1786952031337",
+        "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-14-000"
+      },
+      "resolved": true,
+      "detail": "navigation committed to http://127.0.0.1:8098/cart.html?added=P100"
+    },
+    {
+      "signature": "app-3l9zqg:sig:7808fc38",
+      "consequence": "T2-lineage|navigation|to:/cart.html",
+      "sample": {
+        "sessionId": "session-1786952051298",
+        "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-14-000"
+      },
+      "resolved": true,
+      "detail": "navigation committed to http://127.0.0.1:8098/cart.html?added=P100"
+    },
+    {
+      "signature": "app-3l9zqg:sig:7808fc38",
+      "consequence": "T3-transition|state|search-results→cart",
+      "sample": {
+        "sessionId": "session-1786952031337",
+        "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-14-001"
+      },
+      "resolved": true,
+      "detail": "view search-results → cart"
+    },
+    {
+      "signature": "app-3l9zqg:sig:7808fc38",
+      "consequence": "T3-transition|state|search-results→cart",
+      "sample": {
+        "sessionId": "session-1786952051298",
+        "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-14-001"
+      },
+      "resolved": true,
+      "detail": "view search-results → cart"
+    },
+    {
+      "signature": "app-3l9zqg:sig:7808fc38",
+      "consequence": "T4-window|ui|post-anchor",
+      "sample": {
+        "sessionId": "session-1786952031337",
+        "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-14-002"
+      },
+      "resolved": true,
+      "detail": "UI observations on int-8: 0 DOM changes"
+    },
+    {
+      "signature": "app-3l9zqg:sig:7808fc38",
+      "consequence": "T4-window|ui|post-anchor",
+      "sample": {
+        "sessionId": "session-1786952051298",
+        "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-14-002"
+      },
+      "resolved": true,
+      "detail": "UI observations on int-8: 0 DOM changes"
+    },
+    {
+      "signature": "app-3l9zqg:sig:7808fc38",
+      "consequence": "T4-window|ui|anchor-window",
+      "sample": {
+        "sessionId": "session-1786952031337",
+        "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-14-003"
+      },
+      "resolved": true,
+      "detail": "UI observations on int-9: 0 DOM changes"
+    },
+    {
+      "signature": "app-3l9zqg:sig:7808fc38",
+      "consequence": "T4-window|ui|anchor-window",
+      "sample": {
+        "sessionId": "session-1786952051298",
+        "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-14-003"
+      },
+      "resolved": true,
+      "detail": "UI observations on int-9: 0 DOM changes"
+    },
+    {
+      "signature": "app-3l9zqg:sig:ccb2c83d",
+      "consequence": "T1-stamp|api|GET /product.html",
+      "sample": {
+        "sessionId": "session-1786952066785",
+        "edgeKey": "app-3l9zqg:session-1786952066785:edge-ep-int-10-000"
+      },
+      "resolved": true,
+      "detail": "GET http://127.0.0.1:8098/product.html?id=P100 initiated during ep-int-10"
+    },
+    {
+      "signature": "app-3l9zqg:sig:ccb2c83d",
+      "consequence": "T2-lineage|navigation|to:/product.html",
+      "sample": {
+        "sessionId": "session-1786952066785",
+        "edgeKey": "app-3l9zqg:session-1786952066785:edge-ep-int-10-001"
+      },
+      "resolved": true,
+      "detail": "navigation committed to http://127.0.0.1:8098/product.html?id=P100"
+    },
+    {
+      "signature": "app-3l9zqg:sig:ccb2c83d",
+      "consequence": "T4-window|ui|post-anchor",
+      "sample": {
+        "sessionId": "session-1786952066785",
+        "edgeKey": "app-3l9zqg:session-1786952066785:edge-ep-int-10-002"
+      },
+      "resolved": true,
+      "detail": "UI observations on int-6: 0 DOM changes"
+    },
+    {
+      "signature": "app-3l9zqg:sig:ccb2c83d",
+      "consequence": "T4-window|ui|anchor-window",
+      "sample": {
+        "sessionId": "session-1786952066785",
+        "edgeKey": "app-3l9zqg:session-1786952066785:edge-ep-int-10-003"
+      },
+      "resolved": true,
+      "detail": "UI observations on int-10: 0 DOM changes"
+    },
+    {
+      "signature": "app-3l9zqg:sig:e0e59cec",
+      "consequence": "T1-stamp|api|GET /cart.html",
+      "sample": {
+        "sessionId": "session-1786952031337",
+        "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-8-000"
+      },
+      "resolved": true,
+      "detail": "GET http://127.0.0.1:8098/cart.html?added=P100 initiated during ep-int-8"
+    },
+    {
+      "signature": "app-3l9zqg:sig:e0e59cec",
+      "consequence": "T1-stamp|entity|cart-item:create",
+      "sample": {
+        "sessionId": "session-1786952031337",
+        "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-8-001"
+      },
+      "resolved": true,
+      "detail": "entity cart-item:int-8 (cart-item) created from API"
+    },
+    {
+      "signature": "app-3l9zqg:sig:e0e59cec",
+      "consequence": "T1-stamp|entity|cart-item:create",
+      "sample": {
+        "sessionId": "session-1786952051298",
+        "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-8-001"
+      },
+      "resolved": true,
+      "detail": "entity cart-item:P100 (cart-item) created from API"
+    },
+    {
+      "signature": "app-3l9zqg:sig:e0e59cec",
+      "consequence": "T1-stamp|api|POST /cart/add",
+      "sample": {
+        "sessionId": "session-1786952051298",
+        "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-8-000"
+      },
+      "resolved": true,
+      "detail": "POST http://127.0.0.1:8098/cart/add initiated during ep-int-8"
+    }
+  ]
+}

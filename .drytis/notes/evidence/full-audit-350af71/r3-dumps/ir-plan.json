@@ -1,0 +1,143 @@
+{
+  "env": "http://127.0.0.1:8177",
+  "n": 8,
+  "steps": [
+    {
+      "id": "step-0001",
+      "action": "fill",
+      "src": "evt-pmt2f7x42-4",
+      "loc": "#q",
+      "assertions": []
+    },
+    {
+      "id": "step-0002",
+      "action": "click",
+      "src": "evt-pmt2f7x42-18",
+      "loc": "#go",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "exp": "0 items",
+          "loc": "#cart-count"
+        },
+        {
+          "type": "count",
+          "exp": 1,
+          "loc": "#results > *"
+        }
+      ]
+    },
+    {
+      "id": "step-0003",
+      "action": "click",
+      "src": "evt-pmt2f7x42-26",
+      "loc": "Advanced options",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "exp": "0 items",
+          "loc": "#cart-count"
+        },
+        {
+          "type": "count",
+          "exp": 1,
+          "loc": "#results > *"
+        },
+        {
+          "type": "textMatch",
+          "exp": "In stock",
+          "loc": "#results"
+        }
+      ]
+    },
+    {
+      "id": "step-0004",
+      "action": "toggle",
+      "src": "evt-pmt2f7x42-34",
+      "loc": "#gift",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "exp": "0 items",
+          "loc": "#cart-count"
+        },
+        {
+          "type": "count",
+          "exp": 1,
+          "loc": "#results > *"
+        },
+        {
+          "type": "textMatch",
+          "exp": "In stock",
+          "loc": "#results"
+        }
+      ]
+    },
+    {
+      "id": "step-0005",
+      "action": "click",
+      "src": "evt-pmt2f7x42-46",
+      "loc": "Add War and Peace to cart",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "exp": "1 items",
+          "loc": "#cart-count"
+        },
+        {
+          "type": "count",
+          "exp": 1,
+          "loc": "#results > *"
+        },
+        {
+          "type": "textMatch",
+          "exp": "In stock",
+          "loc": "#results"
+        }
+      ]
+    },
+    {
+      "id": "step-0006",
+      "action": "navigate",
+      "src": "nav-1787284803674-ott40d",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "exp": "0 items",
+          "loc": "#cart-count"
+        }
+      ]
+    },
+    {
+      "id": "step-0007",
+      "action": "click",
+      "src": "evt-pmt2f84n8-4",
+      "loc": "#place-order",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "exp": "1 items",
+          "loc": "#cart-count"
+        }
+      ]
+    },
+    {
+      "id": "step-0008",
+      "action": "click",
+      "src": "evt-pmt2f84n8-12",
+      "loc": "#cancel-order",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "exp": "1 items",
+          "loc": "#cart-count"
+        },
+        {
+          "type": "presence",
+          "exp": null,
+          "loc": "#toast-slot"
+        }
+      ]
+    }
+  ]
+}

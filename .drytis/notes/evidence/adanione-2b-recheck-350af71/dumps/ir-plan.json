@@ -1,0 +1,147 @@
+{
+  "env": "http://127.0.0.1:8166",
+  "n": 8,
+  "steps": [
+    {
+      "id": "step-0001",
+      "action": "fill",
+      "src": "evt-pmt1fa00d-6",
+      "loc": "#origin",
+      "assertions": []
+    },
+    {
+      "id": "step-0002",
+      "action": "click",
+      "src": "evt-pmt1fa00d-21",
+      "loc": "BOM — Mumbai",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "comp": "contains",
+          "exp": "0",
+          "loc": "[data-auto-id=\"cart-count\"]"
+        }
+      ]
+    },
+    {
+      "id": "step-0003",
+      "action": "click",
+      "src": "evt-pmt1fa00d-29",
+      "loc": "#go",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "comp": "contains",
+          "exp": "0",
+          "loc": "[data-auto-id=\"cart-count\"]"
+        }
+      ]
+    },
+    {
+      "id": "step-0004",
+      "action": "click",
+      "src": "evt-pmt1fa00d-40",
+      "loc": "Add extras for flight AI-887",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "comp": "contains",
+          "exp": "0",
+          "loc": "[data-auto-id=\"cart-count\"]"
+        }
+      ]
+    },
+    {
+      "id": "step-0005",
+      "action": "click",
+      "src": "evt-pmt1fa00d-49",
+      "loc": "Add meal to flight AI-887",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "comp": "contains",
+          "exp": "1",
+          "loc": "[data-auto-id=\"cart-count\"]"
+        }
+      ]
+    },
+    {
+      "id": "step-0006",
+      "action": "click",
+      "src": "evt-pmt1fa00d-60",
+      "loc": "Cart",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "comp": "contains",
+          "exp": "1",
+          "loc": "[data-auto-id=\"cart-count\"]"
+        },
+        {
+          "type": "textMatch",
+          "comp": "contains",
+          "exp": "1",
+          "loc": "[data-auto-id=\"cart-total\"]"
+        },
+        {
+          "type": "presence",
+          "comp": "isTrue",
+          "exp": null,
+          "loc": "[data-sku=\"MEAL\"]"
+        }
+      ]
+    },
+    {
+      "id": "step-0007",
+      "action": "click",
+      "src": "evt-pmt1fa00d-71",
+      "loc": "Increase quantity of MEAL",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "comp": "contains",
+          "exp": "2",
+          "loc": "[data-auto-id=\"cart-count\"]"
+        },
+        {
+          "type": "textMatch",
+          "comp": "contains",
+          "exp": "2",
+          "loc": "[data-auto-id=\"cart-total\"]"
+        },
+        {
+          "type": "presence",
+          "comp": "isTrue",
+          "exp": null,
+          "loc": "[data-sku=\"MEAL\"]"
+        }
+      ]
+    },
+    {
+      "id": "step-0008",
+      "action": "click",
+      "src": "evt-pmt1fa00d-73",
+      "loc": "Increase quantity of MEAL",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "comp": "contains",
+          "exp": "3",
+          "loc": "[data-auto-id=\"cart-count\"]"
+        },
+        {
+          "type": "textMatch",
+          "comp": "contains",
+          "exp": "3",
+          "loc": "[data-auto-id=\"cart-total\"]"
+        },
+        {
+          "type": "presence",
+          "comp": "isTrue",
+          "exp": null,
+          "loc": "[data-sku=\"MEAL\"]"
+        }
+      ]
+    }
+  ]
+}

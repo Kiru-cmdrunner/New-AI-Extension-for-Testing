@@ -1,0 +1,19 @@
+=== TLS www.adanione.com ===
+Connecting to 23.222.241.45
+CONNECTION ESTABLISHED
+Protocol version: TLSv1.3
+Ciphersuite: TLS_AES_256_GCM_SHA384
+Peer certificate: C=IN, ST=Gujarat, L=Ahmedabad, O=Adani Enterprises Limited, CN=*.adanione.com
+Hash used: SHA256
+Signature type: ecdsa_secp256r1_sha256
+Verification: OK
+Negotiated TLS1.3 group: X25519MLKEM768
+DONE
+
+=== curl h2 GET (15s) ===
+code=000 size=0 t=0.141130s
+exit=92 body_bytes=
+
+=== curl http/1.1 forced GET (15s) ===
+code=000 size=0 t=15.002918s
+exit=28 body_bytes=

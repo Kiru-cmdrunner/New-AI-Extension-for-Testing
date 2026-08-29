@@ -1,0 +1,30 @@
+[
+ {
+  "action": "click",
+  "targetKind": "element",
+  "input": null,
+  "sourceEventId": "evt-pmt9uxtqh-6",
+  "description": "Open the Open Dialog dialog"
+ },
+ {
+  "action": "click",
+  "targetKind": "element",
+  "input": null,
+  "sourceEventId": "evt-pmt9uxtqh-27",
+  "description": "Click the Cancel"
+ },
+ {
+  "action": "click",
+  "targetKind": "element",
+  "input": null,
+  "sourceEventId": "evt-pmt9uxtqh-37",
+  "description": "Open the Open Nested Dialog dialog"
+ },
+ {
+  "action": "click",
+  "targetKind": "element",
+  "input": null,
+  "sourceEventId": "evt-pmt9uxtqh-47",
+  "description": "Open the Open Inner dialog"
+ }
+]

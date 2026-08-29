@@ -1,0 +1,12 @@
+{
+  "card": true,
+  "row": true,
+  "subs": [
+    "🔔 JS Dialog (alert)",
+    "🔔 JS Dialog (alert)"
+  ],
+  "dlgRows": [
+    "alert(\"Order confirmed\")",
+    "alert(\"Order confirmed\")"
+  ]
+}

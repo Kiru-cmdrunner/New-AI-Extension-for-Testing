@@ -14,7 +14,9 @@
  *               Projection Engine → Observed Workflow / Capability Analysis / IR
  */
 
-import type { ObservedEvent, InteractionType, ElementIdentity } from '../shared/component-types';
+import type { ObservedEvent, InteractionType, ElementIdentity, ClickQualification, ClickInvalidityCause, ComponentInteraction } from '../shared/component-types';
+import { isInteractiveElement } from '../definitions/patterns';
+import { deriveConsequenceClasses } from '../presentation/output-adapter';
 
 /**
  * Browser event types that represent deliberate user actions.
@@ -28,6 +30,103 @@ export const DISCRETE_ACTION_TYPES = new Set<string>([
   'click', 'contextmenu', 'mousedown', 'keydown',
   'dragstart', 'drop', // M9.10 — drag & drop are discrete user actions
 ]);
+
+/**
+ * B7-P2 §5.2.4 (A-3): DISCRETE_ACTION_TYPES is decomposed into explicit
+ * per-consumer predicates. The monolithic export stays for compat and gains
+ * NO members — mouseenter never joins it. Each consumer switches to its
+ * named predicate below.
+ *
+ * LEDGER_APPENDABLE — what append() stores. Base = the monolithic set plus
+ * gated discovery mouseenters. The gate is a PREDICATE, not a membership:
+ * bare pointer crossings on non-interactive elements never touch the ledger
+ * (no Unclassified flood — B-1). Computed from the event's own target
+ * fields via the shared structural affordance predicate (no vocabulary).
+ */
+export const LEDGER_APPENDABLE = new Set<string>([...DISCRETE_ACTION_TYPES]);
+
+/**
+ * ANCHOR_ELIGIBLE — episode-builder anchor gate (§5.2.4, W-3 pin:
+ * Dropdown's mousedown-completing lifecycles mean anchors CAN be
+ * mousedown today — verified against the definitions; the amendment's
+ * "exclude mousedown" branch is NOT taken, the "keep mousedown" branch
+ * IS). Base = the monolithic set minus NOTHING; admitted hovers join
+ * anchoring in P3 via admission, not raw enter membership.
+ */
+export const ANCHOR_ELIGIBLE = new Set<string>([...DISCRETE_ACTION_TYPES]);
+
+/**
+ * B7-P3 §5.3.1: the ANCHOR GATE PREDICATE over interactions (not raw
+ * events). Every interaction whose trigger event type ∈ ANCHOR_ELIGIBLE
+ * anchors exactly as before (byte-identical non-hover behavior); an
+ * admitted Hover — endState 'completed' with ≥1 recorded consequence
+ * class (the P2 §5.2.7 admission outcome, surfaced via the compat
+ * bridge as metadata.consequenceClasses) — additionally anchors.
+ * Gesture-only and abandoned/interrupted hovers never anchor (V4: no
+ * negative knowledge in the model).
+ *
+ * Keyed on the ADMISSION OUTCOME, never on the enter event's membership:
+ * admission is derived from recorded evidence; ANCHOR_ELIGIBLE remains
+ * the raw-event view for non-hover types. No timing, no vocabulary —
+ * consequenceClasses is a P2-recorded fact list.
+ */
+export function isAnchorEligibleInteraction(interaction: {
+  type: InteractionType | string;
+  endState?: string;
+  triggerEvent?: { eventType?: string } | null;
+  metadata?: Record<string, unknown> | null;
+  behavioralEvidence?: unknown;
+}): boolean {
+  const triggerType = interaction.triggerEvent?.eventType ?? null;
+  if (triggerType !== null && ANCHOR_ELIGIBLE.has(triggerType)) return true;
+  if (interaction.type === 'Hover') {
+    if (interaction.endState !== 'completed') return false;
+    // B7-P4 (bridge deletion): admission derives from the recorded
+    // evidence at read time — deriveConsequenceClasses is the primary
+    // authority (same function the production filter uses). The stored
+    // metadata.consequenceClasses array remains a LEGITIMATE fallback:
+    // it is the P2-recorded fact list (written by the bridge era), and
+    // legacy rows recorded before this commit still anchor on it. The
+    // bridge's WRITE is deleted; the READ of already-recorded facts
+    // survives. metadata.meaningful (the stored judgment) is never
+    // consulted — it was already dead as a gate in P2.
+    if (deriveConsequenceClasses(interaction as unknown as ComponentInteraction).length > 0) return true;
+    const classes = interaction.metadata?.consequenceClasses;
+    return Array.isArray(classes) && classes.length > 0;
+  }
+  return false;
+}
+
+/**
+ * STAMP_ELIGIBLE types (primary/secondary classification stays in
+ * network-observation.ts stampClass — the R-4 dispatcher-site gate computes
+ * isGatedEnter there). Listed here for the single-source-of-truth doc point.
+ */
+
+/**
+ * GESTURE_SUPERSESSION_ELIGIBLE — today's supersession set minus pointer
+ * events (§5.2.4): mouseenter/mousemove/mouseleave are gesture-family
+ * events, not adjacency breakers. Base = the monolithic set minus click
+ * (step 3b owns click) — unchanged from today.
+ */
+
+/**
+ * Is this event a gated hover discovery enter?
+ * The SHARED structural predicate — same gate as the definition's
+ * detectTrigger and the SW stamp site (one predicate, three call sites,
+ * no vocabulary). patterns.ts is dependency-free (shared types only), so
+ * this import introduces no cycle.
+ */
+export function isGatedDiscoveryEnter(event: ObservedEvent): boolean {
+  if (event.eventType !== 'mouseenter') return false;
+  if (event.isTrusted !== true) return false;
+  return isInteractiveElement(
+    event.target.tag,
+    event.target.ariaRole,
+    event.target.className,
+    event.domContext?.tabIndex ?? null,
+  );
+}
 
 /**
  * Disposition lifecycle:
@@ -119,10 +218,45 @@ export interface LedgerEntry {
   synthetic?: boolean;
   /** S3: terminal value of the sampled typing episode (synthetic entries only). */
   sampledValueAfter?: string;
+
+  // ── Capture-time click qualification (v1.2 Step 1, 2026-08-29) ────
+  // Spec: .drytis/specs/click-capture-qualification-v1.md §7. The frozen
+  // verdict record from DomContext.clickQualification, persisted on the
+  // durable row so qualification is auditable from the record alone
+  // (ends ledger starvation for qualification facts). Null on legacy
+  // rows and on non-click-family events (null = legacy = qualified,
+  // never pre-gated). Restore-stable. Step 1 is INERT: no consumer may
+  // read this for a typing decision until Step 2 wires the pre-gate.
+  /** Click provable-invalidity verdict + fact vector; null on legacy/non-click rows. */
+  clickQualification?: ClickQualification | null;
 }
 
 /** Chrome storage key for the evidence ledger. */
 export const EVIDENCE_LEDGER_KEY = 'cmdrunner_evidence_ledger';
+
+/**
+ * Structural copy of a ClickQualification record for ledger persistence
+ * (v1.2 Step 1). The original is frozen at capture; the copy keeps the
+ * ledger's ownership of its own row data explicit. Causes/hitTest/hitTarget
+ * are re-frozen to preserve immutability guarantees through restore().
+ */
+function copyClickQualification(q: ClickQualification): ClickQualification {
+  const copy: ClickQualification = {
+    verdict: q.verdict,
+    causes: [...q.causes] as ClickInvalidityCause[],
+    insufficient: q.insufficient,
+    facts: {
+      ...q.facts,
+      hitTest: { ...q.facts.hitTest },
+      hitTarget: { ...q.facts.hitTarget },
+    },
+  };
+  Object.freeze(copy.causes);
+  Object.freeze(copy.facts.hitTest);
+  Object.freeze(copy.facts.hitTarget);
+  Object.freeze(copy.facts);
+  return Object.freeze(copy);
+}
 
 /**
  * Extract pageId from an eventId of the form `evt-{pageId}-{counter}`.
@@ -145,11 +279,15 @@ export class EvidenceLedger {
 
   /**
    * Append an ObservedEvent to the ledger.
-   * Filters to discrete action types only. Deduplicates by eventId.
+   * B7-P2 §5.2.4: LEDGER_APPENDABLE filter — discrete action types plus
+   * gated discovery mouseenters only. Deduplicates by eventId.
    * New entries start with disposition='pending'.
    */
   append(event: ObservedEvent): void {
-    if (!DISCRETE_ACTION_TYPES.has(event.eventType)) return;
+    const appendable =
+      LEDGER_APPENDABLE.has(event.eventType) ||
+      isGatedDiscoveryEnter(event);
+    if (!appendable) return;
     if (this.entries.has(event.eventId)) return;
 
     this.entries.set(event.eventId, {
@@ -178,6 +316,12 @@ export class EvidenceLedger {
         : null,
       ancestorClasses: event.domContext
         ? [...(event.domContext.ancestorClasses ?? [])]
+        : null,
+      // v1.2 Step 1: persist the frozen qualification record (shallow
+      // structural copy — the record's own fields are frozen at capture;
+      // copy so a later event mutation can never alias into the ledger).
+      clickQualification: event.domContext?.clickQualification
+        ? copyClickQualification(event.domContext.clickQualification)
         : null,
     });
   }
@@ -307,6 +451,9 @@ export class EvidenceLedger {
         captureOrigin: entry.captureOrigin ?? null,
         ancestorRoles: entry.ancestorRoles ?? null,
         ancestorClasses: entry.ancestorClasses ?? null,
+        // v1.2 Step 1: normalize legacy snapshots (pre-qualification rows)
+        // to explicit null — same D1/LP3 convention.
+        clickQualification: entry.clickQualification ?? null,
       });
     }
     this.resetAbsorbedToUnclaimed();

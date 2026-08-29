@@ -53,6 +53,24 @@ import { createDefaultPageContentConfig } from '../understanding/page-content/pa
 import { BrowserPageContentAdapter, toWireSnapshot } from './page-content-dom-adapter';
 import { readPageWorldSignals } from './page-world-signals';
 import type { DialogSignal, WindowOpenSignal } from '../shared/behavioral-evidence-types';
+// B7-P1: shared structural Hover discovery gate (definitions/patterns.ts —
+// imports shared types only, safe in the content-script world).
+import { isInteractiveElement } from '../definitions/patterns';
+
+/**
+ * B7-P1 (§5.1.1): is this mouseenter a gated Hover discovery enter?
+ * Per-lifecycle window eligibility — the same structural predicate the
+ * Hover definition's detectTrigger uses (isInteractiveElement). No
+ * dwell, no vocabulary, no timing: pure DOM-structure fact from the
+ * recorded ObservedEvent.
+ */
+export function isHoverDiscoveryEnter(observedEvent?: ObservedEvent | null): boolean {
+  if (!observedEvent) return false;
+  if (observedEvent.eventType !== 'mouseenter') return false;
+  if (observedEvent.isTrusted !== true) return false;
+  const { tag, ariaRole, className } = observedEvent.target;
+  return isInteractiveElement(tag, ariaRole, className, observedEvent.domContext?.tabIndex ?? null);
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
@@ -184,6 +202,8 @@ const CAPTURE_ONLY_EVENTS = new Set([
  * Internal state for a single observation window.
  */
 interface ObservationWindowState {
+  /** B7-P1: provisional hover window (gated discovery enter, R-2 holdOpen). */
+  isHoverProvisional?: boolean;
   windowId: string;
   sourceEventId: string;
   sourceEventType: string;
@@ -340,6 +360,33 @@ export class EvidenceCollector {
   /** Companion event suppression: prevents orphan evidence windows. */
   private companionSuppressUntil = 0;
 
+  /**
+   * B7-P4 provenance-regression amendment (C-1, 2026-08-29): the DOM-observer
+   * global batch counter recorded at OBSERVATION time for click-family
+   * WINDOW_OPEN events (click, contextmenu), keyed by eventId. The recording
+   * happens in onAfterEvent BEFORE the companion-suppression early return —
+   * consumer clicks (click the hover-revealed item) are consumed by the
+   * in-flight hover lifecycle: their own `ev-{click}` window is silently
+   * closed by the finalize sweep (the click eventId sits in the hover
+   * lifecycle's member list) and their lifecycle completes via
+   * finalizeWithoutWindow, whose synthetic `lc-` window previously carried NO
+   * ordinal. Rule (b)'s fact-granularity guard in the shared ownership pass
+   * was therefore inert for exactly the click population that must NOT veto
+   * pre-click facts — P3 surface-reuse provenance died session-wide.
+   *
+   * No timing heuristic and no second authority: the value is the SAME
+   * counter `openWindow` reads for state.openedBatch, read in the SAME
+   * synchronous capture-phase stack (no microtask can advance the counter
+   * between recording and window open), so for clicks that DO open windows
+   * the recorded value is identical to the window stamp. Single source,
+   * single instant.
+   *
+   * Bounded: cleared on start() alongside other per-session state; entries
+   * are one number per click event and never grow within a session beyond
+   * the session's click count.
+   */
+  private clickOrdinals = new Map<string, number>();
+
   /** Whether the page is unloading (pagehide fired). */
   private isUnloading = false;
 
@@ -365,6 +412,7 @@ export class EvidenceCollector {
     this.activeTypingTarget = null;
     this.activeTypingWindow = null;
     this.lastScrollWindowTime = -Infinity;
+    this.clickOrdinals.clear();
     this.lastKnownUrl = typeof location !== 'undefined' ? location.href : '';
     // Resulting Application State (Phase 1): build the scanner lazily here —
     // never in the ctor — so pure-unit collectors without a live document
@@ -377,6 +425,38 @@ export class EvidenceCollector {
         );
       } catch {
         this.pageContentObserver = undefined;
+      }
+    }
+  }
+
+  /**
+   * B7-P2 §5.2.2 (recording-end evidence ordering): force-close ONLY the
+   * open PROVISIONAL HOVER windows, delivering their evidence NOW.
+   *
+   * Why: a no-leave hover completes via completesAtRecordingEnd at the SW's
+   * STOP flush(), but its provisional window is still open HERE at that
+   * moment — the window only force-closes on the STOP_RECORDING broadcast,
+   * which the SW sends AFTER the whole stop pipeline (flush → projection →
+   * admission filter) already ran. The hover's evidence then lands with the
+   * interaction already emitted and filtered out (evidence-less → not
+   * admitted) — the S5 real-Chrome failure.
+   *
+   * The SW therefore sends STOP_EVIDENCE_DRAIN BEFORE the pipeline: this
+   * method closes exactly the open provisional hover windows with the
+   * structural endReason 'recording-stopped' (same delivery path as stop()
+   * — closeWindow → buildAndDeliverEvidence → BEHAVIORAL_EVIDENCE). All
+   * other window classes (typing/click/nav/post-nav, settling windows) are
+   * UNTOUCHED — their delivery contract is unchanged, so non-hover STOP
+   * outcomes stay byte-identical. The collector keeps running: recording
+   * events continue to flow until STOP_RECORDING arrives.
+   *
+   * Delivery mechanics only — no clock, no vocabulary, no semantics. See
+   * the S5 harness note in .drytis/zz-b7-p2-validate.mjs.
+   */
+  drainHoverWindowsAtStop(): void {
+    for (const win of [...this.activeWindows]) {
+      if (!win.isClosed && win.isHoverProvisional) {
+        win.adaptiveWindow.close('recording-stopped');
       }
     }
   }
@@ -428,6 +508,17 @@ export class EvidenceCollector {
   ): void {
     if (!this.isRunning) return;
 
+    // B7-P4 provenance-regression amendment (C-1): record the click ordinal
+    // BEFORE any early return below — companion suppression must not lose
+    // it. Read from the same counter openWindow stamps state.openedBatch
+    // from, in the same synchronous stack: identical value, no drift, no
+    // second authority. Only click-family WINDOW_OPEN events participate
+    // (they are rule (b)'s veto anchors); other event types' ordinals are
+    // only meaningful on their windows, which already carry them.
+    if (eventType === 'click' || eventType === 'contextmenu') {
+      this.clickOrdinals.set(eventId, this.domObserver.getBatchCounter());
+    }
+
     // Lifecycle-Driven Evidence: Companion event suppression.
     // After a lifecycle finalizes, the companion click (e.g., click after
     // mousedown completion) should not create an orphan evidence window.
@@ -442,6 +533,16 @@ export class EvidenceCollector {
     }
 
     // Capture-only events — no evidence window
+    // B7-P1 (§5.1.1): window eligibility for pointer events becomes
+    // per-lifecycle, not per-event-type. A trusted gated mouseenter (the
+    // Hover discovery gate — isInteractiveElement, the shared structural
+    // predicate from definitions/patterns.ts) opens a PROVISIONAL hover
+    // evidence window. All other capture-only events (mousemove,
+    // mouseleave, focus, blur, mousedown) still open nothing.
+    if (eventType === 'mouseenter' && isHoverDiscoveryEnter(observedEvent)) {
+      this.openHoverWindow(targetEl, eventId, identity ?? null, observedEvent ?? null);
+      return;
+    }
     if (CAPTURE_ONLY_EVENTS.has(eventType)) return;
 
     // Navigation events — GAP-4 fix: open their own evidence window
@@ -485,6 +586,7 @@ export class EvidenceCollector {
     identity: ElementIdentity | null = null,
     observedEvent: ObservedEvent | null = null,
     maxDurationMs?: number,
+    hoverOpts?: { isHoverProvisional: boolean },
   ): void {
     // Enforce max concurrent windows with displacement
     this.enforceMaxConcurrent();
@@ -559,6 +661,9 @@ export class EvidenceCollector {
       beforeSnapshot,
       openedAt,
       adaptiveWindow,
+      // B7-P1: provisional hover window — holdOpen from birth (R-2), never
+      // settles closed while unbound; preferred displacement victim (R-5).
+      isHoverProvisional: hoverOpts?.isHoverProvisional === true,
       navEvents: [],
       isClosed: false,
       isNavigationWindow: false,
@@ -586,6 +691,18 @@ export class EvidenceCollector {
       adaptiveWindow.setHoldOpen(true);
     }
 
+    // B7-P1 (R-2): provisional hover windows hold open from BIRTH — the
+    // SW's LIFECYCLE_BOUND round-trip can outrun any settle deadline, and
+    // only binding/STOP/pagehide/displacement/TRIGGER_REMOVED may close it.
+    // NOTE: isLifecycleBound stays FALSE until handleLifecycleBound actually
+    // binds it — the R-2 hold is a delivery mechanic, not a binding claim;
+    // finalizeAtPagehide's pure predicate then correctly drops an unbound
+    // zero-signal hover window (never bound, no navEvents, non-action type)
+    // while finalizing genuinely bound ones.
+    if (state.isHoverProvisional) {
+      adaptiveWindow.setHoldOpen(true);
+    }
+
     this.activeWindows.push(state);
 
     // A-Slice fix 1: a new interaction window supersedes any OPEN window
@@ -601,12 +718,120 @@ export class EvidenceCollector {
     // Arm the adaptive window (starts stabilization timer)
     adaptiveWindow.arm();
 
-    // Register batch callback to feed mutations to the adaptive window
+    // Register batch callback to feed mutations to the adaptive window.
+    // B7-P1 (§5.1.4): the same batch is the TRIGGER_REMOVED producer — on
+    // every delivered batch, any open hover window whose target element is
+    // structurally disconnected (isConnected === false) is closed with
+    // endReason 'element-removed'. The mutation fact itself is already
+    // recorded by DOMObserver; this only makes the terminal observable.
+    // Structural (not cosmetic) — no timer, no class name, no vocabulary.
     this.domObserver.start((batchIndex) => {
       if (!state.isClosed) {
         adaptiveWindow.recordMutation(batchIndex);
       }
+      this.checkHoverTargetsRemoved();
     });
+  }
+
+  /**
+   * B7-P1 (§5.1.4): TRIGGER_REMOVED producer. One structural pass over the
+   * open hover windows per delivered mutation batch. Element references are
+   * weakly held by the window's targetEl — a removed element reports
+   * isConnected === false even before GC claims it.
+   */
+  private checkHoverTargetsRemoved(): void {
+    for (const w of this.activeWindows) {
+      if (w.isClosed || !w.isHoverProvisional) continue;
+      const target = w.targetEl as unknown as { isConnected?: boolean } | null;
+      if (target && target.isConnected === false) {
+        this.notifyTriggerRemoved(w);
+        w.adaptiveWindow.close('element-removed');
+      }
+    }
+  }
+
+  /**
+   * B7-P2 §5.2.2 T4: notify the SW that a hover's TRIGGER element was
+   * removed from the DOM, so the SW-side LIFECYCLE can complete with
+   * terminal 'target-removed' (spec §5.1 line 130). Sent at the same
+   * moment the window is closed — the lifecycle join keys are the
+   * window's lifecycleId (bound via LIFECYCLE_BOUND) with the
+   * sourceEventId fallback for the R-2 unbound-window race. Fire-and-
+   * forget delivery mechanics: the SW's runtime no-ops safely on an
+   * unknown/already-completed id.
+   */
+  private notifyTriggerRemoved(win: ObservationWindowState): void {
+    try {
+      chrome?.runtime?.sendMessage?.(
+        {
+          type: 'TRIGGER_REMOVED',
+          payload: {
+            lifecycleId: win.lifecycleId ?? null,
+            triggerEventId: win.sourceEventId,
+          },
+        },
+        () => { void chrome.runtime.lastError; },
+      );
+    } catch {
+      // Fire-and-forget — a missing runtime API (unit tests) must not
+      // break the window close that follows.
+    }
+  }
+
+  // ── B7-P1: Hover evidence windows ───────────────────────────────────
+
+  /**
+   * B7-P1 (§5.1.2): open a PROVISIONAL hover evidence window on a gated
+   * discovery enter.
+   *
+   * R-2 (binding race): the hover LIFECYCLE is created in the service
+   * worker after a message round-trip that can exceed the companion/
+   * settle window — the provisional window must survive until
+   * LIFECYCLE_BOUND binds it (or STOP/pagehide ends it). It therefore
+   * opens holdOpen from BIRTH and is closed ONLY by:
+   *   (a) binding + lifecycle terminal (FINALIZE_EVIDENCE → settle),
+   *   (b) STOP force-close ('recording-stopped'),
+   *   (c) pagehide finalize ('page-reload' — bound windows; unbound
+   *       zero-signal windows are dropped per finalizeAtPagehide), or
+   *   (d) TRIGGER_REMOVED ('element-removed'),
+   *   (e) displacement at MAX_CONCURRENT_WINDOWS (preferred over evicting
+   *       non-hover windows).
+   * Never by settle/quiescence mechanics — delivery mechanics only, no
+   * clock decides meaning.
+   *
+   * R-5 (long gestures): holdOpen suspends AdaptiveWindow maxDuration
+   * (TD-8), so a 30s mega-menu rest keeps its window open until a
+   * structural terminal.
+   */
+  private openHoverWindow(
+    targetEl: Element,
+    eventId: string,
+    identity: ElementIdentity | null = null,
+    observedEvent: ObservedEvent | null = null,
+  ): void {
+    this.openWindow(targetEl, eventId, 'mouseenter', identity, observedEvent, undefined, {
+      isHoverProvisional: true,
+    });
+  }
+
+  /**
+   * B7-P1 (§5.1.4): TRIGGER_REMOVED — the hover target was removed from
+   * the DOM mid-gesture. The MutationObserver fact is already flowing;
+   * this makes the terminal observable because the window exists to
+   * receive it. Closes the hover window bound to this trigger with
+   * endReason 'element-removed' and delivers its evidence. Unknown
+   * eventIds (already closed / never opened) are harmless no-ops.
+   */
+  handleTriggerRemoved(triggerEventId: string): void {
+    const win = this.activeWindows.find(
+      (w) => !w.isClosed && w.sourceEventId === triggerEventId,
+    );
+    if (!win) return;
+    // B7-P2 §5.2.2 T4: same notification the structural producer sends —
+    // the window's join keys ride along (lifecycleId preferred, the
+    // sourceEventId fallback for unbound windows).
+    this.notifyTriggerRemoved(win);
+    win.adaptiveWindow.close('element-removed');
   }
 
   /**
@@ -713,6 +938,16 @@ export class EvidenceCollector {
         evidenceWindow.endReason === 'stabilized'
           ? 'consequence-settled'
           : evidenceWindow.endReason;
+      // B7-P1: an ABANDONED lifecycle's settle-close must deliver
+      // 'lifecycle-abandoned', not 'consequence-settled' — the endState
+      // travels in the settle metadata (hover provisional windows always
+      // settle rather than finalize-immediately, since they hold open from
+      // birth and are never unloading at leave time in the common case).
+      const settledEndState = (state.settleMetadata ?? {}).__lifecycleEndState;
+      const finalReason =
+        settledEndState === 'abandoned' && reason === 'consequence-settled'
+          ? 'lifecycle-abandoned'
+          : reason;
       // G3 kept verbatim from the executeFinalization path — schedule
       // BEFORE cleanup so late-completing causal requests still surface.
       this.scheduleLateNetworkReCollect(state);
@@ -730,7 +965,7 @@ export class EvidenceCollector {
       // once, inside the single-delivery settle branch, BEFORE evidence is
       // assembled. Event-driven (fires at window close, not on any timer).
       this.captureResultingState(state);
-      this.buildAndDeliverEvidence(state, afterSnapshot, reason);
+      this.buildAndDeliverEvidence(state, afterSnapshot, finalReason);
       return;
     }
 
@@ -1003,7 +1238,10 @@ export class EvidenceCollector {
       sourceEventType: state.sourceEventType,
       windowId: state.windowId,
       frameId: 'main', // top-level frame
-      window: evidenceWindow,
+      // B7-P4 ownership delivery: openedBatch rides the window meta so
+      // downstream consumers can verify fact-recording boundaries (the
+      // AdaptiveWindow itself never sees the DOM-observer counter).
+      window: { ...evidenceWindow, openedBatch: state.openedBatch },
       targetEvidence,
       applicationEvidence,
     };
@@ -1095,8 +1333,13 @@ export class EvidenceCollector {
   private enforceMaxConcurrent(): void {
     const openWindows = this.activeWindows.filter((w) => !w.isClosed);
     if (openWindows.length >= MAX_CONCURRENT_WINDOWS) {
-      // Force-close the oldest open window
-      const oldest = openWindows[0];
+      // B7-P1 (§5.1.5): displacement PREFERENCE at the cap — provisional
+      // hover windows are evicted before any non-hover window. A click's
+      // evidence window is never displaced by hover churn; only when NO
+      // hover window is open does legacy oldest-first apply (unchanged for
+      // all other types).
+      const hoverVictim = openWindows.find((w) => w.isHoverProvisional === true);
+      const oldest = hoverVictim ?? openWindows[0];
       oldest.adaptiveWindow.close('displaced');
     }
   }
@@ -1511,7 +1754,22 @@ export class EvidenceCollector {
     // consequence has settled (DOM quiescent + causal in-flight == 0) or
     // at the hard cap — whichever comes first. The settle-close branch in
     // closeWindow delivers the evidence exactly once.
-    this.enterSettleMode(win, payload.metadata);
+    //
+    // B7-P1: carry the lifecycle endState through settle so the settle-close
+    // delivery maps abandoned finals honestly (closeWindow reads
+    // __lifecycleEndState from settleMetadata).
+    // SCOPED TO HOVER ONLY (reviewer WARN, byte-identity): pre-P1, every
+    // settle-close mapped stabilized → 'consequence-settled' regardless of
+    // lifecycle endState. Injecting the remap for non-hover types would
+    // change their delivered endReason (e.g. a nav-interrupted Dropdown).
+    // Hover windows always settle (hold-open from birth), so the remap is
+    // load-bearing there and inert everywhere else.
+    const settleMetadata: Record<string, unknown> = { ...payload.metadata };
+    if (payload.interactionType === 'Hover') {
+      settleMetadata.__lifecycleEndState =
+        payload.endState === 'completed' ? 'completed' : 'abandoned';
+    }
+    this.enterSettleMode(win, settleMetadata);
   }
 
   /**
@@ -1596,13 +1854,28 @@ export class EvidenceCollector {
 
     win.settleMode = true;
     win.settleMetadata = { ...metadata };
+    // B7-P1: __lifecycleEndState arrives via the settleMetadata injected in
+    // finalizeWindow ('completed' | 'abandoned'); default 'completed' for
+    // legacy callers that enter settle without it.
+    if ((win.settleMetadata as Record<string, unknown>).__lifecycleEndState === undefined) {
+      (win.settleMetadata as Record<string, unknown>).__lifecycleEndState = 'completed';
+    }
 
     // Phase 3 Fix A: settleEntry() completes the transition — releases the
     // lifecycle hold (TD-8 cap re-arm), installs the causal close gate, and
     // re-arms the stabilization loop so quiescence is measured from settle
     // ENTRY (on an already-quiet DOM no timer was running; the window would
     // otherwise park until the 10s cap and scan a stale DOM).
-    win.adaptiveWindow.settleEntry(() => this.causalNetworkIdle(win));
+    // B7-P1 (R-5): for HOVER windows the cap re-arms from SETTLE ENTRY,
+    // not OPEN — a >10s gesture must not insta-close at leave-settle
+    // (settleEntry's TD-8 re-arm measures remaining-from-open, which is
+    // negative for long hovers). The gesture's own lifetime never counted
+    // against the settle budget.
+    if (win.isHoverProvisional === true) {
+      win.adaptiveWindow.settleEntryFromNow(() => this.causalNetworkIdle(win));
+    } else {
+      win.adaptiveWindow.settleEntry(() => this.causalNetworkIdle(win));
+    }
   }
 
   /**
@@ -1838,6 +2111,11 @@ export class EvidenceCollector {
         closedAt: performance.now(),
         durationMs: performance.now() - state.openedAt,
         endReason,
+        // B7-P4 ownership delivery: the global batch counter at open,
+        // in the same coordinate space as every fact ordinal — the
+        // adversarial ownership pass compares fact batches against it
+        // (rule (a)).
+        openedBatch: state.openedBatch,
         // 6F-M1 C: deliver the AdaptiveWindow's recorded stability trace
         // (capped at MAX_TRACE by adaptive-window.ts). Previously hardcoded
         // [] — the settle branch is the ONLY delivery path for
@@ -1898,6 +2176,18 @@ export class EvidenceCollector {
       // Use the first eventId as sourceEventId for SW correlation
       const sourceEventId = payload.eventIds[0] ?? '';
 
+      // B7-P4 provenance-regression amendment (C-1): stamp the click's
+      // OBSERVATION-time ordinal on the lifecycle synthetic window — the
+      // value recorded in onAfterEvent before companion suppression, NOT
+      // the current counter (which has since advanced past the click's own
+      // consequence batches). This is what lets rule (b)'s fact-granularity
+      // guard distinguish "reveal recorded before the click" (hover keeps
+      // it — P3 S1) from "reveal recorded at/after the click" (click owns
+      // it — P4 V1) on the consumer-click population. Absent only for
+      // non-click lifecycles (DatePicker etc.) and genuinely legacy
+      // sessions — both shapes the ownership pass already treats honestly.
+      const clickOrdinal = this.clickOrdinals.get(sourceEventId);
+
       const evidence: BehavioralEvidence = {
         sourceEventId,
         sourceEventType: 'lifecycle',
@@ -1908,6 +2198,7 @@ export class EvidenceCollector {
           closedAt: performance.now(),
           durationMs: 0,
           endReason,
+          ...(clickOrdinal !== undefined ? { openedBatch: clickOrdinal } : {}),
           stabilityTrace: [],
         },
         targetEvidence: {
@@ -1938,8 +2229,10 @@ export class EvidenceCollector {
           // confirm) would otherwise be orphaned on <html>.
           //
           // Fix A (dialog-attribution RCA 2026-08-21): LAST-RESORT only.
-          // mouseenter is CAPTURE_ONLY (no window ever opens for a Hover),
-          // so this path is how an abandoned Hover lifecycle could steal a
+          // (B7-P1 note: gated enters now open provisional hover windows,
+          // so a hover window CAN exist — which is exactly why it joins the
+          // candidate-owner predicate below. Pre-P1 this path was how an
+          // abandoned Hover lifecycle could steal a
           // stamp before the CAUSAL click window's settle-close read — the
           // stamp landed on a Hover card the production filter hides
           // (endState !== 'completed' && meaningful !== true), making the
@@ -1962,7 +2255,8 @@ export class EvidenceCollector {
             const candidateOwnerExists = this.activeWindows.some(
               (w) =>
                 !w.isClosed &&
-                (WINDOW_OPEN_EVENTS.has(w.sourceEventType) ||
+                (w.isHoverProvisional === true ||
+                  WINDOW_OPEN_EVENTS.has(w.sourceEventType) ||
                   w.sourceEventType === 'submit'),
             );
             if (candidateOwnerExists) {
@@ -2124,4 +2418,5 @@ export class EvidenceCollector {
   getIsRunning(): boolean {
     return this.isRunning;
   }
+
 }

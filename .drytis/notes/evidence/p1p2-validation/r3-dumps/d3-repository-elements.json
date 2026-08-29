@@ -1,0 +1,29 @@
+{
+  "repoDb": true,
+  "stores": [
+    "behavioralEvidence",
+    "elements",
+    "executionIRs",
+    "executionRuns",
+    "projects",
+    "recordingSessions",
+    "sourceArtifacts",
+    "testCaseVersions",
+    "testCases"
+  ],
+  "elementCount": 9,
+  "sample": [
+    {
+      "id": "2f436f08-327b-49a7-830f-76a44a96c176",
+      "name": "Search"
+    },
+    {
+      "id": "3047ff10-946d-4972-9b66-568c93d6db17",
+      "name": "Format"
+    },
+    {
+      "id": "65348370-a569-469b-b670-9debe4a6dec6",
+      "name": "Add War and Peace to cart"
+    }
+  ]
+}

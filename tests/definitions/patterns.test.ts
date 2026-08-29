@@ -533,8 +533,10 @@ describe('click.detectTrigger — S6/LP1 open-selection-surface gate', async () 
       pageTitle: 'Test',
     }) as any;
 
-  it('bare div with no ancestry → NOT a Click (unchanged gate)', () => {
-    expect(clickDefinition.detectTrigger(baseEvent({}))).toBeNull();
+  it('bare div with no ancestry → claims Click (v1.2 flip — qualification is capture-time)', () => {
+    // Click Qualification v1.2 §8.5: the LP1 surface gate is DELETED from
+    // detectTrigger; a qualified trusted click on a bare div is a Click.
+    expect(clickDefinition.detectTrigger(baseEvent({}))).toEqual({ type: 'Click' });
   });
 
   it('bare div inside role=listbox → Click (LP1)', () => {

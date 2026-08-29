@@ -1,0 +1,16 @@
+[
+  {
+    "ts": 564.42199,
+    "url": "https://www.adanione.com/",
+    "err": "net::ERR_HTTP2_PROTOCOL_ERROR",
+    "blocked": null,
+    "type": "Document"
+  },
+  {
+    "ts": 565.070057,
+    "url": "https://www.adanione.com/",
+    "err": "net::ERR_HTTP2_PROTOCOL_ERROR",
+    "blocked": null,
+    "type": "Document"
+  }
+]

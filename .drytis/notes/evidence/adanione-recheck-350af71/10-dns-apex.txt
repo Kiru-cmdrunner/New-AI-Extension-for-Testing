@@ -1,0 +1,38 @@
+=== DNS A/AAAA ===
+20.192.98.161   STREAM adanione.com
+20.192.98.161   DGRAM  
+20.192.98.161   RAW    
+2600:1408:c400:11::17cd:6b5b STREAM 
+2600:1408:c400:11::17cd:6b5b DGRAM  
+2600:1408:c400:11::17cd:6b5b RAW    
+
+--- www ---
+23.222.241.39   STREAM e116425.dsca.akamaiedge.net
+23.222.241.39   DGRAM  
+23.222.241.39   RAW    
+23.222.241.45   STREAM 
+23.222.241.45   DGRAM  
+23.222.241.45   RAW    
+
+=== apex curl -vI (http/1.1) ===
+* Host adanione.com:80 was resolved.
+* IPv6: 2600:1408:5400:7::170c:9224, 2600:1408:5400:7::170c:9211
+* IPv4: 20.192.98.161
+*   Trying [2600:1408:5400:7::170c:9224]:80...
+* Immediate connect fail for 2600:1408:5400:7::170c:9224: Network is unreachable
+*   Trying [2600:1408:5400:7::170c:9211]:80...
+* Immediate connect fail for 2600:1408:5400:7::170c:9211: Network is unreachable
+*   Trying 20.192.98.161:80...
+* Connected to adanione.com (20.192.98.161) port 80
+* using HTTP/1.x
+> HEAD / HTTP/1.1
+> Host: adanione.com
+> User-Agent: curl/8.14.1
+> Accept: */*
+> 
+* Request completely sent off
+< HTTP/1.1 301 Moved Permanently
+< Date: Thu, 20 Aug 2026 10:59:43 GMT
+< Location: https://adanione.com/
+< 
+* Connection #0 to host adanione.com left intact

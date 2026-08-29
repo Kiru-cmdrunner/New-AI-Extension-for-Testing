@@ -1,0 +1,40 @@
+{
+  "build": "dist @ 350af71 (manifest 10.9.0, built 2026-08-20 08:59 from HEAD source)",
+  "L1_extension_loaded": true,
+  "L2_adanione_loaded": false,
+  "L2_observed": {
+    "apex": {
+      "url": "chrome-error://chromewebdata/",
+      "readyState": "loading",
+      "hasDOM": false,
+      "nEls": 0,
+      "title": ""
+    },
+    "www": {
+      "url": "chrome-error://chromewebdata/",
+      "readyState": "complete",
+      "hasDOM": true,
+      "nEls": 22,
+      "title": "www.adanione.com"
+    },
+    "netErrors": [
+      {
+        "ts": 564.42199,
+        "url": "https://www.adanione.com/",
+        "err": "net::ERR_HTTP2_PROTOCOL_ERROR",
+        "blocked": null,
+        "type": "Document"
+      },
+      {
+        "ts": 565.070057,
+        "url": "https://www.adanione.com/",
+        "err": "net::ERR_HTTP2_PROTOCOL_ERROR",
+        "blocked": null,
+        "type": "Document"
+      }
+    ]
+  },
+  "L3_injection_evaluable": false,
+  "contrast_saucedemo_loaded": true,
+  "classification": "AdaniOne/environment ACCESS failure — earliest failing layer is site body delivery (pre-DOM). NOT extension behavior; NOT harness behavior."
+}

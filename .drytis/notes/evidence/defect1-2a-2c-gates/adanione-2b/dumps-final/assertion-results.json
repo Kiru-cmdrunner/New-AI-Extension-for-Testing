@@ -1,0 +1,119 @@
+[
+  {
+    "step": "step-0002",
+    "actualValue": "0",
+    "expectedValue": "0",
+    "message": "Text matched",
+    "passed": true,
+    "severity": "soft",
+    "type": "textMatch"
+  },
+  {
+    "step": "step-0003",
+    "actualValue": "0",
+    "expectedValue": "0",
+    "message": "Text matched",
+    "passed": true,
+    "severity": "soft",
+    "type": "textMatch"
+  },
+  {
+    "step": "step-0004",
+    "actualValue": "0",
+    "expectedValue": "0",
+    "message": "Text matched",
+    "passed": true,
+    "severity": "soft",
+    "type": "textMatch"
+  },
+  {
+    "step": "step-0005",
+    "actualValue": "1",
+    "expectedValue": "1",
+    "message": "Text matched",
+    "passed": true,
+    "severity": "soft",
+    "type": "textMatch"
+  },
+  {
+    "step": "step-0006",
+    "actualValue": "1",
+    "expectedValue": "1",
+    "message": "Text matched",
+    "passed": true,
+    "severity": "soft",
+    "type": "textMatch"
+  },
+  {
+    "step": "step-0006",
+    "actualValue": "1",
+    "expectedValue": "1",
+    "message": "Text matched",
+    "passed": true,
+    "severity": "soft",
+    "type": "textMatch"
+  },
+  {
+    "step": "step-0006",
+    "actualValue": true,
+    "expectedValue": null,
+    "message": "Element is present",
+    "passed": true,
+    "severity": "soft",
+    "type": "presence"
+  },
+  {
+    "step": "step-0007",
+    "actualValue": "2",
+    "expectedValue": "2",
+    "message": "Text matched",
+    "passed": true,
+    "severity": "soft",
+    "type": "textMatch"
+  },
+  {
+    "step": "step-0007",
+    "actualValue": "2",
+    "expectedValue": "2",
+    "message": "Text matched",
+    "passed": true,
+    "severity": "soft",
+    "type": "textMatch"
+  },
+  {
+    "step": "step-0007",
+    "actualValue": true,
+    "expectedValue": null,
+    "message": "Element is present",
+    "passed": true,
+    "severity": "soft",
+    "type": "presence"
+  },
+  {
+    "step": "step-0008",
+    "actualValue": "3",
+    "expectedValue": "3",
+    "message": "Text matched",
+    "passed": true,
+    "severity": "soft",
+    "type": "textMatch"
+  },
+  {
+    "step": "step-0008",
+    "actualValue": "3",
+    "expectedValue": "3",
+    "message": "Text matched",
+    "passed": true,
+    "severity": "soft",
+    "type": "textMatch"
+  },
+  {
+    "step": "step-0008",
+    "actualValue": true,
+    "expectedValue": null,
+    "message": "Element is present",
+    "passed": true,
+    "severity": "soft",
+    "type": "presence"
+  }
+]

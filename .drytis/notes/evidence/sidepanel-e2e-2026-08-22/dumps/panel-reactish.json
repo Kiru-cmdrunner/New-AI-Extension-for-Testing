@@ -1,0 +1,56 @@
+{
+  "cardTitles": [
+    "📅 Date Pickerint-2Select date \"Sat, 22 Aug\" (Choose a date)Window: 931ms · stabilized🎯Target EvidenceElementINPUT [role=textbox] \"Choose a date\"field-input da",
+    "⌨️ Text Entryint-4Enter \"ben\" in \"Type a city\"Window: 816ms · stabilized🎯Target EvidenceElementINPUT [role=textbox] \"Type a city\"field-input origin-inputtype=t",
+    "🖱️ Clickint-6Click \"Plan trip\"Window: 1231ms · stabilized🎯Target EvidenceElementBUTTON [role=button] \"Plan trip\"btn btn-primary commit-btnNo observable state "
+  ],
+  "cardTypes": [
+    "📅 Date Picker",
+    "⌨️ Text Entry",
+    "🖱️ Click"
+  ],
+  "resultingStateHeaders": [
+    "Element",
+    "State Changes",
+    "Focus Movement",
+    "Performance",
+    "Element",
+    "State Changes",
+    "Focus Movement",
+    "Performance",
+    "Element",
+    "Focus Movement",
+    "DOM Changes (1)",
+    "Performance"
+  ],
+  "allEvidenceRows": [
+    "value: (empty) → Sat, 22 Aug",
+    "(unknown) → INPUT",
+    "0 batches · longest: 0ms",
+    "value: (empty) → ben",
+    "(unknown) → INPUT",
+    "0 batches · longest: 0ms",
+    "No observable state changes",
+    "(unknown) → BUTTON \"Plan trip\"",
+    "attributes+childList · <p> · data-state: idle → pending · +1 nodes · -1 nodes",
+    "2 batches · longest: 1ms"
+  ],
+  "windowMeta": [
+    "Window: 931ms · stabilized",
+    "Window: 816ms · stabilized",
+    "Window: 1231ms · stabilized"
+  ],
+  "irSteps": [
+    "1. selectDate — Select Sat, 22 Aug in the Choose a dateTarget: Choose a date (accessibleName: Choose a date)Input: Sat, 22 AugAssertions: none — not derived for",
+    "2. fill — Fill \"ben\" in the Type a cityTarget: Type a city (accessibleName: Type a city)Input: benAssertions: none — not derived for this recording▶ IR Step JSO",
+    "3. click — Click the Plan tripTarget: Plan trip (accessibleName: Plan trip)Assertions: none — not derived for this recording▶ IR Step JSON{ \"action\": \"click\",",
+    "📄 package.json▶ Show CodeCopy{ \"name\": \"recorded-test\", \"version\": \"1.0.0\", \"private\": true, \"description\": \"Playwright tests for Recorded Test\", \"sc",
+    "📄 playwright.config.ts▶ Show CodeCopyimport { defineConfig, devices } from '@playwright/test'; /** * Playwright configuration for Recorded Test. * Generated",
+    "📄 tsconfig.json▶ Show CodeCopy{ \"compilerOptions\": { \"target\": \"ES2020\", \"module\": \"commonjs\", \"moduleResolution\": \"node\", \"strict\": true, ",
+    "📄 .gitignore▶ Show CodeCopynode_modules/ test-results/ playwright-report/ playwright/.cache/ ",
+    "📋 tests/recorded-test.spec.ts▼ Hide CodeCopyimport { test, expect } from '@playwright/test'; test.describe('Recorded Test', () => { test('should complete re"
+  ],
+  "bodyHasResultingState": false,
+  "bodyTextLength": 9920,
+  "detectedSectionHidden": false
+}

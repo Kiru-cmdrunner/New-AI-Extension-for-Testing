@@ -44,6 +44,7 @@ import type {
   WirePageContentSnapshot,
 } from '../shared/page-content-wire';
 import { isVerifiedAttrAllowed } from '../shared/page-content-wire';
+import { deriveSurfaceFactOwnership, type OwnedSurfaceFact } from '../shared/surface-fact-ownership';
 import type { GenerationEnrichment, StepScopedAssertion } from './generation-types';
 
 // ── Bounds ───────────────────────────────────────────────────────────────
@@ -68,6 +69,12 @@ const DERIVABLE_KINDS = new Set<WireObservedItem['kind']>([
   'status-badge',
   'notification',
   'entity',
+  // B7-P4: the hover-owned revealed-surface kind. Unlike the snapshot
+  // kinds above, `surface-visible` facts arrive from the shared
+  // adversarial ownership pass (src/shared/surface-fact-ownership) —
+  // owned facts carry their own honest locator — and are derived in
+  // deriveForOwnedSurfaceFacts, NOT from a resulting-state snapshot.
+  'surface-visible',
 ]);
 
 // ── Locator Policy ───────────────────────────────────────────────────────
@@ -480,6 +487,45 @@ function deriveForSnapshot(snapshot: WirePageContentSnapshot): StepScopedAsserti
 // ── Public API ───────────────────────────────────────────────────────────
 
 /**
+ * B7-P4: derive surface-visible assertions from a hover's OWNED surface
+ * facts (the shared adversarial ownership pass's verdict for that
+ * interaction).
+ *
+ * Locator honesty (INV-GEN-4): owned facts carry their own honest locator
+ * (the last #id-bearing path segment as '#id'); facts without one are
+ * owned-but-not-derivable and emit nothing. `deriveConsequenceClasses`
+ * parity is preserved by the pass's fact extraction itself.
+ *
+ * Cap: MAX_ASSERTIONS_PER_STEP (3), first-N in fact order.
+ */
+function deriveForOwnedSurfaceFacts(
+  ownedFacts: OwnedSurfaceFact[],
+): StepScopedAssertion[] {
+  const out: StepScopedAssertion[] = [];
+  for (const fact of ownedFacts) {
+    // (a) already enforced by the pass; here only locator honesty and the
+    // assertion-derivable kinds apply.
+    if (fact.kind === 'mutation') continue;
+    if (!fact.locator) continue;
+    if (out.length >= MAX_ASSERTIONS_PER_STEP) break;
+    out.push({
+      type: 'presence',
+      comparison: 'isTrue',
+      severity: 'soft',
+      expectedValue: null,
+      property: null,
+      targetCss: fact.locator,
+      targetName:
+        fact.targetName?.slice(0, MAX_ASSERT_TEXT_LENGTH) ||
+        fact.ariaRole ||
+        'revealed surface',
+      derivedFrom: 'surface-visible',
+    });
+  }
+  return out;
+}
+
+/**
  * Build the Track-3 stepAssertions enrichment from recorded interactions.
  *
  * Reads each interaction's OWN behavioralEvidence.applicationEvidence.
@@ -494,10 +540,29 @@ function deriveForSnapshot(snapshot: WirePageContentSnapshot): StepScopedAsserti
 export function deriveStepAssertions(
   interactions: readonly ComponentInteraction[],
 ): ReadonlyMap<string, StepScopedAssertion[]> {
+  // B7-P4: ONE shared ownership pass over the whole interaction list —
+  // the same pass the causal-graph provenance seam consumes. Computed
+  // once, consulted per-hover.
+  const surfaceOwnership = deriveSurfaceFactOwnership(interactions);
   const map = new Map<string, StepScopedAssertion[]>();
   for (const interaction of interactions) {
     const eventId = interaction.triggerEvent?.eventId;
     if (!eventId) continue;
+
+    // B7-P1 containment gate REMOVED (B7-P4). Hovers now derive — but
+    // ONLY ownership-safe surface-visible assertions: a Hover's evidence
+    // window may CONTAIN facts caused by another interaction's action
+    // (Channel A Variants 1+2 — INV-C1: the DOM/surface accumulator is
+    // GLOBAL, overlapping windows re-report each other's facts). The
+    // shared adversarial ownership pass (rule (a) batch boundary, rule
+    // (b) primary-action veto, rule (c) container precedence) decides
+    // which facts are genuinely the hover's; locator honesty (INV-GEN-4)
+    // then requires an id-bearing path. Every other interaction type is
+    // byte-identical to the pre-P4 derivation.
+    const hoverOwnedFacts =
+      interaction.type === 'Hover'
+        ? (surfaceOwnership.ownedByInteraction.get(interaction.interactionId) ?? [])
+        : null;
 
     // Phase 6C (P2): a typed fill's committed value comes from the
     // interaction's OWN metadata — controlled-input commits produce no DOM
@@ -508,7 +573,10 @@ export function deriveStepAssertions(
       interaction.behavioralEvidence?.applicationEvidence?.resultingState;
 
     let assertions: StepScopedAssertion[] = [];
-    if (snapshot && snapshot.items && snapshot.items.length > 0) {
+    if (hoverOwnedFacts) {
+      // Hover: derive ONLY from owned facts (spec §5.4 P4-amendment).
+      assertions = deriveForOwnedSurfaceFacts(hoverOwnedFacts);
+    } else if (snapshot && snapshot.items && snapshot.items.length > 0) {
       assertions = deriveForSnapshot(snapshot);
     }
     if (fillAssertion) {

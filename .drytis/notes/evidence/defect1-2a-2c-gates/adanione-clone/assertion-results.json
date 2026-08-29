@@ -1,0 +1,20 @@
+[
+  {
+    "step": "step-0006",
+    "actualValue": "",
+    "expectedValue": "1",
+    "message": "Text \"\" did not match \"1\"",
+    "passed": false,
+    "severity": "soft",
+    "type": "textMatch"
+  },
+  {
+    "step": "step-0006",
+    "actualValue": false,
+    "expectedValue": null,
+    "message": "Element is not present",
+    "passed": false,
+    "severity": "soft",
+    "type": "presence"
+  }
+]

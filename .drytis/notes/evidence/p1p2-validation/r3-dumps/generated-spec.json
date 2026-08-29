@@ -1,0 +1,11 @@
+{
+  "count": 5,
+  "names": [
+    "package.json",
+    "playwright.config.ts",
+    "tsconfig.json",
+    ".gitignore",
+    "tests/recorded-test.spec.ts"
+  ],
+  "spec": "import { test, expect } from '@playwright/test';\n\ntest.describe('Recorded Test', () => {\n  test('should complete recorded Test successfully', async ({ page }) => {\n    // Fill \"war\" in the Search books\n    await page.locator('#q').fill('war')\n\n    // Click the Search\n    await page.locator('#go').click()\n    await expect.soft(page.locator('#cart-count')).toContainText('0 items')\n    await expect.soft(page.locator('#results > *')).toHaveCount(1)\n\n    // Click the Advanced options\n    await page.getByLabel('Advanced options').click()\n    await expect.soft(page.locator('#cart-count')).toContainText('0 items')\n    await expect.soft(page.locator('#results > *')).toHaveCount(1)\n    await expect.soft(page.locator('#results')).toContainText('In stock')\n\n    // Check the Gift wrap\n    await page.locator('#gift').check()\n    await expect.soft(page.locator('#cart-count')).toContainText('0 items')\n    await expect.soft(page.locator('#results > *')).toHaveCount(1)\n    await expect.soft(page.locator('#results')).toContainText('In stock')\n\n    // Select \"Hardcover\" from the Format\n    await page.locator('#fmt').selectOption('Hardcover')\n    await expect.soft(page.locator('#cart-count')).toContainText('1 items')\n    await expect.soft(page.locator('#results > *')).toHaveCount(1)\n    await expect.soft(page.locator('#results')).toContainText('In stock')\n\n    // Click the Add War and Peace to cart\n    await page.getByLabel('Add War and Peace to cart').click()\n\n    // Navigate to http://127.0.0.1:8177/order\n    await page.goto('http://127.0.0.1:8177/order')\n    await expect.soft(page.locator('#cart-count')).toContainText('0 items')\n\n    // Click the Place order\n    await page.locator('#place-order').click()\n    await expect.soft(page.locator('#cart-count')).toContainText('1 items')\n\n    // Click the Cancel (confirm)\n    await page.locator('#cancel-order').click()\n    await expect.soft(page.locator('#cart-count')).toContainText('1 items')\n    await expect.soft(page.locator('#toast-slot')).toBeAttached()\n  });\n});\n"
+}

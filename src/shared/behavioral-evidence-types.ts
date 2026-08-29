@@ -60,6 +60,18 @@ export interface EvidenceWindow {
   /** performance.now() when the window opened (event dispatch time). */
   openedAt: number;
 
+  /**
+   * B7-P4 (ownership delivery): the GLOBAL MutationObserver batch counter
+   * at window open — the same coordinate space as every fact ordinal
+   * (DomChangeSummary.firstBatchIndex, SurfaceChange.batchIndex,
+   * VisibilityChange.batchIndex). The adversarial surface-fact ownership
+   * pass compares fact ordinals against it to reject pre-open replay
+   * (INV-C1 global-accumulator re-reports). Optional: rows recorded
+   * before P4 lack the field — ownership for them is unverifiable and
+   * the pass stays silent (never claims what it cannot verify).
+   */
+  openedBatch?: number;
+
   /** performance.now() when the window closed. */
   closedAt: number;
 

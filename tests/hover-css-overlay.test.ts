@@ -82,10 +82,13 @@ function makeDropdownCtx(enter: ObservedEvent): ComponentContext {
   };
 }
 
-// ── CSS Overlay Evidence Tests ────────────────────────────────────────
+// ── Hover discovery + terminals (B7-P2: the CSS-overlay signal model is
+// REPEALED — classes never gate, dwell never gates; the affordance
+// predicate discovers, the "left" terminal completes, downstream evidence
+// admission decides production-worthiness). ────────────────────────────
 
-describe('Hover: CSS overlay evidence signal', () => {
-  it('promotes hover for element with "has-submenu" class + dwell ≥ 500ms', () => {
+describe('Hover: discovery and terminals (B7-P2)', () => {
+  it('has-submenu link (interactive affordance) discovers and completes on leave', () => {
     const enter = makeEvent({
       target: makeTarget({ className: 'nav-link has-submenu' }),
     });
@@ -100,8 +103,7 @@ describe('Hover: CSS overlay evidence signal', () => {
 
     expect(completion).not.toBeNull();
     expect(completion!.endState).toBe('completed');
-    expect((ctx.data.confidence as number) ?? 0).toBeGreaterThanOrEqual(50);
-    expect(ctx.data.evidenceReason).toBe('overlay-css');
+    expect(ctx.data.terminal).toBe('left');
   });
 
   it('promotes hover for element inside a navbar ancestor', () => {
@@ -128,8 +130,7 @@ describe('Hover: CSS overlay evidence signal', () => {
 
     expect(completion).not.toBeNull();
     expect(completion!.endState).toBe('completed');
-    // nav-link matches OVERLAY_CSS_RE, so overlay-css reason takes priority
-    expect(['overlay-css', 'nav-ancestor']).toContain(ctx.data.evidenceReason);
+    expect(ctx.data.terminal).toBe('left');
   });
 
   it('promotes hover for element with "dropdown-trigger" class', () => {
@@ -175,7 +176,7 @@ describe('Hover: CSS overlay evidence signal', () => {
     expect(trigger).toBeNull();
   });
 
-  it('does NOT promote hover with CSS evidence but dwell < 500ms', () => {
+  it('short dwell still completes on leave — no transit threshold (DC-1)', () => {
     const enter = makeEvent({
       target: makeTarget({ className: 'has-submenu' }),
     });
@@ -188,9 +189,10 @@ describe('Hover: CSS overlay evidence signal', () => {
     const leave = makeLeaveEvent(enter, 200);
     const completion = hoverDefinition.handleEvent(leave, ctx);
 
-    // Below 500ms threshold → discarded (no evidence accumulated)
+    // 200ms leave completes identically (dwell is a recorded FACT, never a
+    // gate). Admission decides downstream via evidence classes.
     expect(completion).not.toBeNull();
-    expect(completion!.endState).toBe('discarded');
+    expect(completion!.endState).toBe('completed');
   });
 });
 

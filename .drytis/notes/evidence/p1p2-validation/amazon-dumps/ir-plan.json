@@ -1,0 +1,1 @@
+{"n":1,"steps":[{"id":"step-0001","action":"click","loc":"add-B0VAL1","assertions":[{"type":"textMatch","exp":"1 items","loc":"#cart-count"},{"type":"count","exp":2,"loc":"#grid > *"},{"type":"presence","exp":null,"loc":"[aria-label=\"Cart updated\"]"}]}]}

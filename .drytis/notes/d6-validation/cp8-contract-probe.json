@@ -1,0 +1,48 @@
+{
+  "appId": "app-3l9zqg",
+  "contractVersion": 1,
+  "deterministic": true,
+  "readOnly": true,
+  "actions": [
+    {
+      "target": "aurora wireless headphones",
+      "actionType": "Link",
+      "anchorViewId": "search-results",
+      "workflowPatternIds": [
+        "wf-pattern-d3392945"
+      ],
+      "workflowPatternAbsence": "linked",
+      "occurrenceCount": 2
+    },
+    {
+      "target": "drag area (no click handler, plain div)",
+      "actionType": "Unclassified",
+      "anchorViewId": null,
+      "workflowPatternIds": [
+        "wf-pattern-21ca2851"
+      ],
+      "workflowPatternAbsence": "linked",
+      "occurrenceCount": 1
+    },
+    {
+      "target": "add to cart",
+      "actionType": "Click",
+      "anchorViewId": "search-results",
+      "workflowPatternIds": [
+        "wf-pattern-d3392945"
+      ],
+      "workflowPatternAbsence": "linked",
+      "occurrenceCount": 2
+    },
+    {
+      "target": "aurora wireless headphones",
+      "actionType": "Click",
+      "anchorViewId": null,
+      "workflowPatternIds": [
+        "wf-pattern-d3392945"
+      ],
+      "workflowPatternAbsence": "linked",
+      "occurrenceCount": 2
+    }
+  ]
+}

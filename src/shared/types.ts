@@ -578,6 +578,18 @@ export type AppMessage =
   // ── Post-Navigation Capture (NAV pull model) ──
   // CS → SW: destination page asks for this tab's pending full-reload nav record
   | { type: 'NAV_PENDING_REQUEST' }
+  // SW → CS: force-close open provisional hover evidence windows NOW
+  // (B7-P2 STOP ordering — delivery lands before the SW stop pipeline).
+  | { type: 'STOP_EVIDENCE_DRAIN' }
+  // CS → SW: a hover's trigger element was removed from the DOM mid-gesture
+  // (B7-P2 §5.2.2 T4 — the SW completes the lifecycle, terminal
+  // 'target-removed'). lifecycleId is the join key when the window was
+  // LIFECYCLE_BOUND; triggerEventId is the R-2 fallback for unbound
+  // windows. Both null-safe.
+  | {
+      type: 'TRIGGER_REMOVED';
+      payload: { lifecycleId: string | null; triggerEventId: string };
+    }
   // SW → CS: the record, or null when absent/consumed/expired
   | { type: 'NAV_PENDING_RESPONSE'; payload: import('./post-nav-types').PostNavCaptureRecord | null }
   // ── Lifecycle-Driven Evidence (v3.1) ──
@@ -628,6 +640,8 @@ export function isAppMessage(value: unknown): value is AppMessage {
       'INTERACTION_EVIDENCE_UPDATE',
       'NAV_PENDING_REQUEST',
       'NAV_PENDING_RESPONSE',
+      'STOP_EVIDENCE_DRAIN',
+      'TRIGGER_REMOVED',
       'LIFECYCLE_BOUND',
       'FINALIZE_EVIDENCE',
     ].includes(msg['type'])

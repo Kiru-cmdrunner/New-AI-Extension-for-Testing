@@ -1,0 +1,11 @@
+=== BUILD IDENTITY ===
+350af71fdd034a9bd8492b40cc0f265039281603
+2026-08-20 08:59:34.434568061 +0000 dist/manifest.json
+"version": "10.9.0"
+1
+=== HARNESS BYTE-IDENTICAL TO BASELINE? ===
+2a85874bf8856c39c151c1fe08cb7e1e  .drytis/notes/evidence/defect1-2a-2c-gates/adanione-2b/harness-gate-2b.mjs
+2a85874bf8856c39c151c1fe08cb7e1e  .drytis/notes/evidence/adanione-2b-recheck-350af71/harness-gate-2b.mjs
+=== CLONE RESTORED ===
+24ee47ac01fe8ce95fdcdb5a298383d9  .drytis/notes/evidence/adanione-clone-audit/app.mjs
+24ee47ac01fe8ce95fdcdb5a298383d9  /tmp/adanione-clone/app.mjs

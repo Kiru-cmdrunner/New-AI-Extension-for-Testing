@@ -61,7 +61,13 @@ const mkClick = (eventId: string, sel: string, tag: string, name: string): Obser
 } as unknown as ObservedEvent);
 
 describe('lifecycle claim probe — plain-div click (evt-59 shape)', () => {
-  it('no definition starts a lifecycle on the dismissal click', () => {
+  it('the dismissal click (evt-59 shape) now CLAIMS Click — and no OTHER lifecycle starts (v1.2 flip)', () => {
+    // Click Qualification v1.2 §8.5: a trusted click on the plain
+    // #popover-backdrop div is a REAL action (B3 S4 click-away) — the RCA
+    // question "does a definition start a lifecycle on it?" now answers
+    // Click, and the Click is immediate (no lingering lifecycle). The
+    // probe's original purpose — no OTHER definition (Expander/Modal/etc.)
+    // parks the dismissal click — is preserved: only 'Click' may appear.
     const starts: string[] = [];
     const config: RuntimeConfig = {
       onEmit: () => {},
@@ -69,18 +75,19 @@ describe('lifecycle claim probe — plain-div click (evt-59 shape)', () => {
     };
     const runtime = createRuntime(ALL_DEFINITIONS, config);
     const emitted = runtime.process(mkClick('evt-B', 'body > div#popover-backdrop', 'DIV', ''));
-    expect(starts).toEqual([]);
-    expect(emitted).toEqual([]);
+    expect(starts.filter((s) => !s.startsWith('Click '))).toEqual([]);
+    expect(emitted.length).toBe(1);
+    expect(emitted[0].type).toBe('Click');
   });
 
-  it('no lifecycle starts on the plain-div/no-affordance click either (control)', () => {
+  it('plain-div/no-affordance click claims Click — no other lifecycle starts (v1.2 flip, control)', () => {
     const starts: string[] = [];
     const runtime = createRuntime(ALL_DEFINITIONS, {
       onEmit: () => {},
       onLifecycleStart: (ctx) => { starts.push(ctx.type); },
     });
     runtime.process(mkClick('evt-C', '#plain-div', 'DIV', 'plain div — no affordance'));
-    expect(starts).toEqual([]);
+    expect(starts.filter((s) => s !== 'Click')).toEqual([]);
   });
 
   it('a BUTTON click DOES start a Click lifecycle (positive control)', () => {

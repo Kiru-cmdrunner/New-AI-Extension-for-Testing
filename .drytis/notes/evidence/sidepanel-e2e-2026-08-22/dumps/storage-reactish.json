@@ -1,0 +1,22 @@
+[
+  {
+    "id": "int-2",
+    "rs": null
+  },
+  {
+    "id": "int-4",
+    "textValue": "Bengaluru",
+    "typedValue": "Bengaluru",
+    "rs": null
+  },
+  {
+    "id": "int-6",
+    "rs": [
+      "status-badge:Planningâ€¦:sel=[class*=\"pill\" i], [class*=\"ch"
+    ]
+  },
+  {
+    "id": "int-9",
+    "rs": null
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {
+    "type": "textMatch",
+    "exp": "In stock",
+    "act": "Searching…",
+    "msg": "Text \"Searching…\" did not match \"In stock\""
+  },
+  {
+    "type": "textMatch",
+    "exp": "In stock",
+    "act": "Searching…",
+    "msg": "Text \"Searching…\" did not match \"In stock\""
+  }
+]

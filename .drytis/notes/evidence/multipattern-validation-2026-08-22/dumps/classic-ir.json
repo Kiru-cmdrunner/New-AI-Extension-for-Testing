@@ -1,0 +1,26 @@
+{
+  "n": 3,
+  "steps": [
+    {
+      "a": "fill",
+      "desc": "Fill \"invoice\" in the Keyword",
+      "in": "invoice",
+      "loc": "#q",
+      "asr": []
+    },
+    {
+      "a": "select",
+      "desc": "Select \"Low\" from the Priority",
+      "in": "Low",
+      "loc": "#prio",
+      "asr": []
+    },
+    {
+      "a": "click",
+      "desc": "Click the Search",
+      "in": null,
+      "loc": "#btn-search",
+      "asr": []
+    }
+  ]
+}

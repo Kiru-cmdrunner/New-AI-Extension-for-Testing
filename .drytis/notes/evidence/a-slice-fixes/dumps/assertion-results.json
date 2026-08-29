@@ -1,0 +1,65 @@
+[
+  {
+    "step": "step-0002",
+    "actualValue": 3,
+    "expectedValue": 3,
+    "message": "Count matched",
+    "passed": true,
+    "severity": "soft",
+    "type": "count"
+  },
+  {
+    "step": "step-0002",
+    "actualValue": true,
+    "expectedValue": null,
+    "message": "Element is present",
+    "passed": true,
+    "severity": "soft",
+    "type": "presence"
+  },
+  {
+    "step": "step-0003",
+    "actualValue": "0 items",
+    "expectedValue": "0 items",
+    "message": "Text matched",
+    "passed": true,
+    "severity": "soft",
+    "type": "textMatch"
+  },
+  {
+    "step": "step-0004",
+    "actualValue": "1 items",
+    "expectedValue": "1 items",
+    "message": "Text matched",
+    "passed": true,
+    "severity": "soft",
+    "type": "textMatch"
+  },
+  {
+    "step": "step-0004",
+    "actualValue": 1,
+    "expectedValue": 1,
+    "message": "Count matched",
+    "passed": true,
+    "severity": "soft",
+    "type": "count"
+  },
+  {
+    "step": "step-0005",
+    "actualValue": "2 items",
+    "expectedValue": "2 items",
+    "message": "Text matched",
+    "passed": true,
+    "severity": "soft",
+    "type": "textMatch"
+  },
+  {
+    "step": "step-0005",
+    "actualValue": 2,
+    "expectedValue": 2,
+    "message": "Count matched",
+    "passed": true,
+    "severity": "soft",
+    "type": "count"
+  }
+]

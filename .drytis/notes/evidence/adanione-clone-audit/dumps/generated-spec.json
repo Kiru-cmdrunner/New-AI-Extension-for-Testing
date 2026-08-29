@@ -1,0 +1,11 @@
+{
+  "count": 5,
+  "names": [
+    "package.json",
+    "playwright.config.ts",
+    "tsconfig.json",
+    ".gitignore",
+    "tests/recorded-test.spec.ts"
+  ],
+  "spec": "import { test, expect } from '@playwright/test';\n\ntest.describe('Recorded Test', () => {\n  test('should complete recorded Test successfully', async ({ page }) => {\n    // Fill \"mum\" in the From\n    await page.locator('#origin').fill('mum')\n\n    // Click the BOM — Mumbai\n    await page.getByLabel('BOM — Mumbai').click()\n\n    // Click the Search flights\n    await page.locator('#go').click()\n\n    // Click the Add extras for flight AI-887\n    await page.getByLabel('Add extras for flight AI-887').click()\n\n    // Click the Add meal to flight AI-887\n    await page.getByLabel('Add meal to flight AI-887').click()\n\n    // Click the \"Cart\" link\n    await page.getByLabel('Cart').click()\n    await expect.soft(page.locator('#cart-root')).toBeAttached()\n\n    // Click the Increase quantity of MEAL\n    await page.getByLabel('Increase quantity of MEAL').click()\n    await expect.soft(page.locator('#cart-root')).toBeAttached()\n\n    // Click the Increase quantity of MEAL\n    await page.getByLabel('Increase quantity of MEAL').click()\n    await expect.soft(page.locator('#cart-root')).toBeAttached()\n  });\n});\n"
+}

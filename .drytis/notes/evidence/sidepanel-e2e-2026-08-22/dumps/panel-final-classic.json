@@ -1,0 +1,38 @@
+{
+  "viewHidden": false,
+  "cards": [
+    {
+      "id": "int-2",
+      "type": "⌨️ Text Entry",
+      "hasRS": false,
+      "rsHeader": null,
+      "rsRows": []
+    },
+    {
+      "id": "int-3",
+      "type": "📋 Dropdown",
+      "hasRS": false,
+      "rsHeader": null,
+      "rsRows": []
+    },
+    {
+      "id": "int-5",
+      "type": "🖱️ Click",
+      "hasRS": true,
+      "rsHeader": "📸 Resulting State (1 observed)",
+      "rsRows": [
+        "📦 collection: 2 items (body > main > table#results > tbody)"
+      ]
+    }
+  ],
+  "irSteps": [
+    "1. fill — Fill \"invoice\" in the KeywordTarget: Keyword (css: #q)Input: invoiceAssertions: equality equals invoice (Keyword)▶ IR Step JSON{ ",
+    "2. select — Select \"High\" from the PriorityTarget: Priority (css: #prio)Input: HighAssertions: none — not derived for this recording▶ IR Ste",
+    "3. click — Click the SearchTarget: Search (css: #btn-search)Assertions: count equals 2 (collection)▶ IR Step JSON{ \"action\": \"click\", \"a",
+    "📄 package.json▶ Show CodeCopy{ \"name\": \"recorded-test\", \"version\": \"1.0.0\", \"private\": true, \"description\": \"Playwright tests for R",
+    "📄 playwright.config.ts▶ Show CodeCopyimport { defineConfig, devices } from '@playwright/test'; /** * Playwright configuration for Recorde",
+    "📄 tsconfig.json▶ Show CodeCopy{ \"compilerOptions\": { \"target\": \"ES2020\", \"module\": \"commonjs\", \"moduleResolution\": \"node\", ",
+    "📄 .gitignore▶ Show CodeCopynode_modules/ test-results/ playwright-report/ playwright/.cache/ ",
+    "📋 tests/recorded-test.spec.ts▼ Hide CodeCopyimport { test, expect } from '@playwright/test'; test.describe('Recorded Test', () => { test"
+  ]
+}

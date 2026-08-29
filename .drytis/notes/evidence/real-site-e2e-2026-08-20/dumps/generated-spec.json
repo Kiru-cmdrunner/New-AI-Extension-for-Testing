@@ -1,0 +1,4 @@
+{
+  "count": 5,
+  "spec": "import { test, expect } from '@playwright/test';\n\ntest.describe('Recorded Test', () => {\n  test('should complete recorded Test successfully', async ({ page }) => {\n    // Navigate to https://www.amazon.com/s/ref=nb_sb_noss_1?url=search-alias%3Daps&field-keywords=wireless+mouse&crid=3DKFGL7CH67YO&sprefix=wireless+mouse%2Caps%2C122\n    await page.goto('https://www.amazon.com/s/ref=nb_sb_noss_1?url=search-alias%3Daps&field-keywords=wireless+mouse&crid=3DKFGL7CH67YO&sprefix=wireless+mouse%2Caps%2C122')\n    await expect.soft(page.locator('#sac-autocomplete-results-container > *')).toHaveCount(1)\n    await expect.soft(page.locator('#sac-autocomplete-results-container > *')).toHaveCount(2)\n    await expect.soft(page.locator('[data-asin=\"B004YAVF8I\"]')).toBeAttached()\n  });\n});\n"
+}

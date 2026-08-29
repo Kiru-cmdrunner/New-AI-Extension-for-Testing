@@ -279,7 +279,7 @@ describe('Hover Definition', () => {
     expect(hover!.metadata.dwellMs).toBe(1000);
   });
 
-  it('discards hover when dwell < 500ms (transit)', () => {
+  it('short dwell completes on leave (B7-P2: no transit threshold — DC-1)', () => {
     const { runtime, emitted } = setupRuntime();
     const target = { tag: 'BUTTON', stableId: 'btn2', accessibleName: 'Menu' };
 
@@ -288,7 +288,11 @@ describe('Hover Definition', () => {
 
     const hover = emitted.find((e) => e.type === 'Hover');
     expect(hover).toBeDefined();
-    expect(hover!.endState).toBe('discarded');
+    // The "left" terminal completes; dwell (300ms) is a recorded fact. The
+    // production filter rejects it later for lack of evidence classes —
+    // never for lack of dwell.
+    expect(hover!.endState).toBe('completed');
+    expect(hover!.metadata.terminal).toBe('left');
   });
 });
 

@@ -1,0 +1,89 @@
+{
+  "completedAt": "2026-08-20T03:59:30.192Z",
+  "durationMs": 28127.20000000298,
+  "errorSteps": 0,
+  "executionRunId": "d90e1efc-aa85-4a73-b470-c18cffa8f46f",
+  "failedSteps": 2,
+  "irStale": false,
+  "passedSteps": 6,
+  "skippedSteps": 0,
+  "startedAt": "2026-08-20T03:59:02.065Z",
+  "status": "failed",
+  "stepCount": 8,
+  "stepResults": [
+    {
+      "actualValue": "mum",
+      "assertionResults": [],
+      "durationMs": 1905.8999999985099,
+      "status": "passed",
+      "stepId": "step-0001"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 2000.7000000029802,
+      "status": "passed",
+      "stepId": "step-0002"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 7,
+      "status": "passed",
+      "stepId": "step-0003"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 1994.5999999940395,
+      "status": "passed",
+      "stepId": "step-0004"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 7.200000002980232,
+      "status": "passed",
+      "stepId": "step-0005"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": "",
+          "expectedValue": "1",
+          "message": "Text \"\" did not match \"1\"",
+          "passed": false,
+          "severity": "soft",
+          "type": "textMatch"
+        },
+        {
+          "actualValue": false,
+          "expectedValue": null,
+          "message": "Element is not present",
+          "passed": false,
+          "severity": "soft",
+          "type": "presence"
+        }
+      ],
+      "durationMs": 8.699999995529652,
+      "status": "passed",
+      "stepId": "step-0006"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 10980.70000000298,
+      "error": {
+        "message": "Element \"Increase quantity of MEAL\" not found",
+        "type": "ElementNotFound"
+      },
+      "status": "failed",
+      "stepId": "step-0007"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 10999.79999999702,
+      "error": {
+        "message": "Element \"Increase quantity of MEAL\" not found",
+        "type": "ElementNotFound"
+      },
+      "status": "failed",
+      "stepId": "step-0008"
+    }
+  ]
+}

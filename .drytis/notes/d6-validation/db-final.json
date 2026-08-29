@@ -1,0 +1,1063 @@
+{
+  "verno": 30,
+  "stores": {
+    "workflows": [
+      {
+        "key": "app-3l9zqg:wf-pattern-21ca2851",
+        "appId": "app-3l9zqg",
+        "patternId": "wf-pattern-21ca2851",
+        "label": "Drag area (no click handler, plain div)",
+        "canonicalSteps": [
+          "drag area (no click handler, plain div)"
+        ],
+        "viewSequence": [],
+        "sessionIds": [
+          "session-1786996929410"
+        ],
+        "occurrenceCount": 1,
+        "instances": [
+          "wf-session-1786996929410-0"
+        ],
+        "signatureIds": [
+          "app-3l9zqg:sig:73e1db48"
+        ],
+        "linkageState": "linked",
+        "instanceSignatureIds": {
+          "wf-session-1786996929410-0": [
+            "app-3l9zqg:sig:73e1db48"
+          ]
+        },
+        "firstSeenAt": 1786996929459,
+        "lastSeenAt": 1786996929459
+      },
+      {
+        "key": "app-3l9zqg:wf-pattern-d3392945",
+        "appId": "app-3l9zqg",
+        "patternId": "wf-pattern-d3392945",
+        "label": "Fetch data",
+        "canonicalSteps": [
+          "aurora wireless headphones",
+          "search products",
+          "navigate",
+          "/product.html?id=p100",
+          "/cart.html?added=p100"
+        ],
+        "viewSequence": [
+          "search-results",
+          "cart"
+        ],
+        "sessionIds": [
+          "session-1786996898277",
+          "session-1786996911870"
+        ],
+        "occurrenceCount": 2,
+        "instances": [
+          "wf-session-1786996898277-0",
+          "wf-session-1786996911870-0"
+        ],
+        "signatureIds": [
+          "app-3l9zqg:sig:60f2dfdb",
+          "app-3l9zqg:sig:e0e59cec",
+          "app-3l9zqg:sig:e1182f21"
+        ],
+        "linkageState": "linked",
+        "instanceSignatureIds": {
+          "wf-session-1786996898277-0": [
+            "app-3l9zqg:sig:60f2dfdb",
+            "app-3l9zqg:sig:e0e59cec",
+            "app-3l9zqg:sig:e1182f21"
+          ],
+          "wf-session-1786996911870-0": [
+            "app-3l9zqg:sig:60f2dfdb",
+            "app-3l9zqg:sig:e0e59cec",
+            "app-3l9zqg:sig:e1182f21"
+          ]
+        },
+        "firstSeenAt": 1786996898402,
+        "lastSeenAt": 1786996911963
+      }
+    ],
+    "signatures": [
+      {
+        "key": "app-3l9zqg:sig:60f2dfdb",
+        "appId": "app-3l9zqg",
+        "actionType": "Link",
+        "normalizedTarget": "aurora wireless headphones",
+        "anchorViewId": "search-results",
+        "firstSeenAtSession": "session-1786996898277",
+        "lastSeenAtSession": "session-1786996911870",
+        "firstSeenSeq": 1,
+        "lastSeenSeq": 2,
+        "firstSeenAtMs": 1786996898309,
+        "lastSeenAtMs": 1786996911878,
+        "occurrenceCount": 2,
+        "sessionsSinceSeen": 0,
+        "status": "active",
+        "source": "behavior",
+        "consequenceProfile": [
+          {
+            "identity": "T1-stamp|api|GET /product.html",
+            "tier": "T1-stamp",
+            "kind": "api",
+            "targetIdentity": "GET /product.html",
+            "occurrenceCount": 2,
+            "hitCount": 2,
+            "missedObservations": 0,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996911870",
+            "lastSeenSeq": 2,
+            "confidence": 0.7,
+            "status": "active",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-7-000"
+              },
+              {
+                "sessionId": "session-1786996911870",
+                "edgeKey": "app-3l9zqg:session-1786996911870:edge-ep-int-7-000"
+              }
+            ],
+            "observedVia": "behavior/webrequest"
+          },
+          {
+            "identity": "T1-stamp|api|GET /api/heartbeat",
+            "tier": "T1-stamp",
+            "kind": "api",
+            "targetIdentity": "GET /api/heartbeat",
+            "occurrenceCount": 2,
+            "hitCount": 2,
+            "missedObservations": 0,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996911870",
+            "lastSeenSeq": 2,
+            "confidence": 0.7,
+            "status": "active",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-7-001"
+              },
+              {
+                "sessionId": "session-1786996911870",
+                "edgeKey": "app-3l9zqg:session-1786996911870:edge-ep-int-7-001"
+              }
+            ],
+            "observedVia": "behavior/webrequest"
+          },
+          {
+            "identity": "T2-lineage|navigation|to:/product.html",
+            "tier": "T2-lineage",
+            "kind": "navigation",
+            "targetIdentity": "to:/product.html",
+            "occurrenceCount": 2,
+            "hitCount": 2,
+            "missedObservations": 0,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996911870",
+            "lastSeenSeq": 2,
+            "confidence": 0.7,
+            "status": "active",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-7-002"
+              },
+              {
+                "sessionId": "session-1786996911870",
+                "edgeKey": "app-3l9zqg:session-1786996911870:edge-ep-int-7-002"
+              }
+            ],
+            "observedVia": "behavior/nav-lineage"
+          },
+          {
+            "identity": "T4-window|ui|anchor-window",
+            "tier": "T4-window",
+            "kind": "ui",
+            "targetIdentity": "anchor-window",
+            "occurrenceCount": 2,
+            "hitCount": 2,
+            "missedObservations": 0,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996911870",
+            "lastSeenSeq": 2,
+            "confidence": 0.7,
+            "status": "active",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-7-003"
+              },
+              {
+                "sessionId": "session-1786996911870",
+                "edgeKey": "app-3l9zqg:session-1786996911870:edge-ep-int-7-003"
+              }
+            ],
+            "observedVia": "behavior/dom-window"
+          },
+          {
+            "identity": "T4-window|ui|post-anchor",
+            "tier": "T4-window",
+            "kind": "ui",
+            "targetIdentity": "post-anchor",
+            "occurrenceCount": 2,
+            "hitCount": 2,
+            "missedObservations": 0,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996911870",
+            "lastSeenSeq": 2,
+            "confidence": 0.7,
+            "status": "active",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-7-004"
+              },
+              {
+                "sessionId": "session-1786996911870",
+                "edgeKey": "app-3l9zqg:session-1786996911870:edge-ep-int-7-004"
+              }
+            ],
+            "observedVia": "behavior/dom-window"
+          }
+        ],
+        "divergenceFlags": []
+      },
+      {
+        "key": "app-3l9zqg:sig:73e1db48",
+        "appId": "app-3l9zqg",
+        "actionType": "Unclassified",
+        "normalizedTarget": "drag area (no click handler, plain div)",
+        "anchorViewId": null,
+        "firstSeenAtSession": "session-1786996929410",
+        "lastSeenAtSession": "session-1786996929410",
+        "firstSeenSeq": 3,
+        "lastSeenSeq": 3,
+        "firstSeenAtMs": 1786996929425,
+        "lastSeenAtMs": 1786996929425,
+        "occurrenceCount": 1,
+        "sessionsSinceSeen": 0,
+        "status": "active",
+        "source": "behavior",
+        "consequenceProfile": [
+          {
+            "identity": "T1-stamp|api|GET /api/heartbeat",
+            "tier": "T1-stamp",
+            "kind": "api",
+            "targetIdentity": "GET /api/heartbeat",
+            "occurrenceCount": 1,
+            "hitCount": 1,
+            "missedObservations": 0,
+            "firstSeenAtSession": "session-1786996929410",
+            "lastSeenAtSession": "session-1786996929410",
+            "lastSeenSeq": 3,
+            "confidence": 0.6,
+            "status": "active",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996929410",
+                "edgeKey": "app-3l9zqg:session-1786996929410:edge-ep-int-2-000"
+              }
+            ],
+            "observedVia": "behavior/webrequest"
+          }
+        ],
+        "divergenceFlags": []
+      },
+      {
+        "key": "app-3l9zqg:sig:e0e59cec",
+        "appId": "app-3l9zqg",
+        "actionType": "Click",
+        "normalizedTarget": "add to cart",
+        "anchorViewId": "search-results",
+        "firstSeenAtSession": "session-1786996898277",
+        "lastSeenAtSession": "session-1786996911870",
+        "firstSeenSeq": 1,
+        "lastSeenSeq": 2,
+        "firstSeenAtMs": 1786996898309,
+        "lastSeenAtMs": 1786996911878,
+        "occurrenceCount": 2,
+        "sessionsSinceSeen": 0,
+        "status": "active",
+        "source": "behavior",
+        "consequenceProfile": [
+          {
+            "identity": "T1-stamp|api|GET /cart.html",
+            "tier": "T1-stamp",
+            "kind": "api",
+            "targetIdentity": "GET /cart.html",
+            "occurrenceCount": 2,
+            "hitCount": 2,
+            "missedObservations": 0,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996911870",
+            "lastSeenSeq": 2,
+            "confidence": 0.7,
+            "status": "active",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-10-000"
+              },
+              {
+                "sessionId": "session-1786996911870",
+                "edgeKey": "app-3l9zqg:session-1786996911870:edge-ep-int-10-000"
+              }
+            ],
+            "observedVia": "behavior/webrequest"
+          },
+          {
+            "identity": "T1-stamp|api|GET /api/heartbeat",
+            "tier": "T1-stamp",
+            "kind": "api",
+            "targetIdentity": "GET /api/heartbeat",
+            "occurrenceCount": 2,
+            "hitCount": 2,
+            "missedObservations": 0,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996911870",
+            "lastSeenSeq": 2,
+            "confidence": 0.7,
+            "status": "active",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-10-001"
+              },
+              {
+                "sessionId": "session-1786996911870",
+                "edgeKey": "app-3l9zqg:session-1786996911870:edge-ep-int-10-001"
+              }
+            ],
+            "observedVia": "behavior/webrequest"
+          },
+          {
+            "identity": "T2-lineage|navigation|to:/cart.html",
+            "tier": "T2-lineage",
+            "kind": "navigation",
+            "targetIdentity": "to:/cart.html",
+            "occurrenceCount": 2,
+            "hitCount": 2,
+            "missedObservations": 0,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996911870",
+            "lastSeenSeq": 2,
+            "confidence": 0.7,
+            "status": "active",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-10-003"
+              },
+              {
+                "sessionId": "session-1786996911870",
+                "edgeKey": "app-3l9zqg:session-1786996911870:edge-ep-int-10-003"
+              }
+            ],
+            "observedVia": "behavior/nav-lineage"
+          },
+          {
+            "identity": "T1-stamp|entity|cart-item:create",
+            "tier": "T1-stamp",
+            "kind": "entity",
+            "targetIdentity": "cart-item:create",
+            "occurrenceCount": 1,
+            "hitCount": 1,
+            "missedObservations": 1,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996898277",
+            "lastSeenSeq": 1,
+            "confidence": 0.525,
+            "status": "stale",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-10-004"
+              }
+            ],
+            "observedVia": "behavior/entity-derivation"
+          },
+          {
+            "identity": "T3-transition|state|search-results→cart",
+            "tier": "T3-transition",
+            "kind": "state",
+            "targetIdentity": "search-results→cart",
+            "occurrenceCount": 2,
+            "hitCount": 2,
+            "missedObservations": 0,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996911870",
+            "lastSeenSeq": 2,
+            "confidence": 0.7,
+            "status": "active",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-10-005"
+              },
+              {
+                "sessionId": "session-1786996911870",
+                "edgeKey": "app-3l9zqg:session-1786996911870:edge-ep-int-10-004"
+              }
+            ],
+            "observedVia": "behavior/state-transition"
+          },
+          {
+            "identity": "T3-transition|entity|cart-item:create",
+            "tier": "T3-transition",
+            "kind": "entity",
+            "targetIdentity": "cart-item:create",
+            "occurrenceCount": 1,
+            "hitCount": 1,
+            "missedObservations": 1,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996898277",
+            "lastSeenSeq": 1,
+            "confidence": 0.525,
+            "status": "stale",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-10-006"
+              }
+            ],
+            "observedVia": "behavior/entity-derivation"
+          },
+          {
+            "identity": "T4-window|ui|anchor-window",
+            "tier": "T4-window",
+            "kind": "ui",
+            "targetIdentity": "anchor-window",
+            "occurrenceCount": 2,
+            "hitCount": 2,
+            "missedObservations": 0,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996911870",
+            "lastSeenSeq": 2,
+            "confidence": 0.7,
+            "status": "active",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-10-007"
+              },
+              {
+                "sessionId": "session-1786996911870",
+                "edgeKey": "app-3l9zqg:session-1786996911870:edge-ep-int-10-005"
+              }
+            ],
+            "observedVia": "behavior/dom-window"
+          }
+        ],
+        "divergenceFlags": []
+      },
+      {
+        "key": "app-3l9zqg:sig:e1182f21",
+        "appId": "app-3l9zqg",
+        "actionType": "Click",
+        "normalizedTarget": "aurora wireless headphones",
+        "anchorViewId": null,
+        "firstSeenAtSession": "session-1786996898277",
+        "lastSeenAtSession": "session-1786996911870",
+        "firstSeenSeq": 1,
+        "lastSeenSeq": 2,
+        "firstSeenAtMs": 1786996898309,
+        "lastSeenAtMs": 1786996911878,
+        "occurrenceCount": 2,
+        "sessionsSinceSeen": 0,
+        "status": "active",
+        "source": "behavior",
+        "consequenceProfile": [
+          {
+            "identity": "T1-stamp|api|GET /api/heartbeat",
+            "tier": "T1-stamp",
+            "kind": "api",
+            "targetIdentity": "GET /api/heartbeat",
+            "occurrenceCount": 2,
+            "hitCount": 2,
+            "missedObservations": 0,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996911870",
+            "lastSeenSeq": 2,
+            "confidence": 0.7,
+            "status": "active",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-4-000"
+              },
+              {
+                "sessionId": "session-1786996911870",
+                "edgeKey": "app-3l9zqg:session-1786996911870:edge-ep-int-4-000"
+              }
+            ],
+            "observedVia": "behavior/webrequest"
+          },
+          {
+            "identity": "T1-stamp|api|GET /api/suggest",
+            "tier": "T1-stamp",
+            "kind": "api",
+            "targetIdentity": "GET /api/suggest",
+            "occurrenceCount": 2,
+            "hitCount": 2,
+            "missedObservations": 0,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996911870",
+            "lastSeenSeq": 2,
+            "confidence": 0.7,
+            "status": "active",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-4-001"
+              },
+              {
+                "sessionId": "session-1786996911870",
+                "edgeKey": "app-3l9zqg:session-1786996911870:edge-ep-int-4-001"
+              }
+            ],
+            "observedVia": "behavior/webrequest"
+          },
+          {
+            "identity": "T1-stamp|api|GET /search.html",
+            "tier": "T1-stamp",
+            "kind": "api",
+            "targetIdentity": "GET /search.html",
+            "occurrenceCount": 2,
+            "hitCount": 2,
+            "missedObservations": 0,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996911870",
+            "lastSeenSeq": 2,
+            "confidence": 0.7,
+            "status": "active",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-4-013"
+              },
+              {
+                "sessionId": "session-1786996911870",
+                "edgeKey": "app-3l9zqg:session-1786996911870:edge-ep-int-4-013"
+              }
+            ],
+            "observedVia": "behavior/webrequest"
+          },
+          {
+            "identity": "T2-lineage|navigation|to:/search.html",
+            "tier": "T2-lineage",
+            "kind": "navigation",
+            "targetIdentity": "to:/search.html",
+            "occurrenceCount": 2,
+            "hitCount": 2,
+            "missedObservations": 0,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996911870",
+            "lastSeenSeq": 2,
+            "confidence": 0.7,
+            "status": "active",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-4-015"
+              },
+              {
+                "sessionId": "session-1786996911870",
+                "edgeKey": "app-3l9zqg:session-1786996911870:edge-ep-int-4-015"
+              }
+            ],
+            "observedVia": "behavior/nav-lineage"
+          },
+          {
+            "identity": "T3-transition|entity|search-query:create",
+            "tier": "T3-transition",
+            "kind": "entity",
+            "targetIdentity": "search-query:create",
+            "occurrenceCount": 1,
+            "hitCount": 1,
+            "missedObservations": 1,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996898277",
+            "lastSeenSeq": 1,
+            "confidence": 0.525,
+            "status": "stale",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-4-016"
+              }
+            ],
+            "observedVia": "behavior/entity-derivation"
+          },
+          {
+            "identity": "T3-transition|state|(none)→search-results",
+            "tier": "T3-transition",
+            "kind": "state",
+            "targetIdentity": "(none)→search-results",
+            "occurrenceCount": 2,
+            "hitCount": 2,
+            "missedObservations": 0,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996911870",
+            "lastSeenSeq": 2,
+            "confidence": 0.7,
+            "status": "active",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-4-017"
+              },
+              {
+                "sessionId": "session-1786996911870",
+                "edgeKey": "app-3l9zqg:session-1786996911870:edge-ep-int-4-016"
+              }
+            ],
+            "observedVia": "behavior/state-transition"
+          },
+          {
+            "identity": "T4-window|ui|anchor-window",
+            "tier": "T4-window",
+            "kind": "ui",
+            "targetIdentity": "anchor-window",
+            "occurrenceCount": 2,
+            "hitCount": 2,
+            "missedObservations": 0,
+            "firstSeenAtSession": "session-1786996898277",
+            "lastSeenAtSession": "session-1786996911870",
+            "lastSeenSeq": 2,
+            "confidence": 0.7,
+            "status": "active",
+            "evidenceSamples": [
+              {
+                "sessionId": "session-1786996898277",
+                "edgeKey": "app-3l9zqg:session-1786996898277:edge-ep-int-4-019"
+              },
+              {
+                "sessionId": "session-1786996911870",
+                "edgeKey": "app-3l9zqg:session-1786996911870:edge-ep-int-4-017"
+              }
+            ],
+            "observedVia": "behavior/dom-window"
+          }
+        ],
+        "divergenceFlags": []
+      }
+    ],
+    "sessions": [
+      {
+        "key": "app-3l9zqg:session-1786996898277",
+        "appId": "app-3l9zqg",
+        "sessionId": "session-1786996898277",
+        "seq": 1,
+        "generatedAtMs": 1786996898309,
+        "episodeCount": 3,
+        "edgeCount": 36,
+        "gapCount": 0,
+        "coverage": {
+          "totalInteractions": 7,
+          "anchoredInteractions": 3,
+          "memberInteractions": 4,
+          "malformedInteractions": 0,
+          "totalNetworkRows": 20,
+          "attributedNetworkRows": 20,
+          "totalObservations": 7,
+          "attributedObservations": 7,
+          "unattributedConsequences": 0,
+          "provenanceLinks": 0
+        },
+        "viewSetHash": "261010b6",
+        "signatureSetHash": "627d1ed1",
+        "warnings": []
+      },
+      {
+        "key": "app-3l9zqg:session-1786996911870",
+        "appId": "app-3l9zqg",
+        "sessionId": "session-1786996911870",
+        "seq": 2,
+        "generatedAtMs": 1786996911878,
+        "episodeCount": 3,
+        "edgeCount": 32,
+        "gapCount": 0,
+        "coverage": {
+          "totalInteractions": 7,
+          "anchoredInteractions": 3,
+          "memberInteractions": 4,
+          "malformedInteractions": 0,
+          "totalNetworkRows": 20,
+          "attributedNetworkRows": 20,
+          "totalObservations": 7,
+          "attributedObservations": 7,
+          "unattributedConsequences": 0,
+          "provenanceLinks": 0
+        },
+        "viewSetHash": "261010b6",
+        "signatureSetHash": "627d1ed1",
+        "warnings": []
+      },
+      {
+        "key": "app-3l9zqg:session-1786996929410",
+        "appId": "app-3l9zqg",
+        "sessionId": "session-1786996929410",
+        "seq": 3,
+        "generatedAtMs": 1786996929425,
+        "episodeCount": 2,
+        "edgeCount": 3,
+        "gapCount": 1,
+        "coverage": {
+          "totalInteractions": 2,
+          "anchoredInteractions": 2,
+          "memberInteractions": 0,
+          "malformedInteractions": 0,
+          "totalNetworkRows": 3,
+          "attributedNetworkRows": 3,
+          "totalObservations": 1,
+          "attributedObservations": 0,
+          "unattributedConsequences": 1,
+          "provenanceLinks": 0
+        },
+        "viewSetHash": "811c9dc5",
+        "signatureSetHash": "501d07a7",
+        "warnings": []
+      }
+    ],
+    "episodes": [
+      {
+        "key": "app-3l9zqg:session-1786996898277:ep-int-10",
+        "appId": "app-3l9zqg",
+        "sessionId": "session-1786996898277",
+        "episodeId": "ep-int-10",
+        "anchor": {
+          "interactionId": "int-10",
+          "actionType": "Click",
+          "actionTarget": "Add to Cart",
+          "triggerTimestamp": 1786996896017
+        },
+        "members": [
+          {
+            "interactionId": "int-10",
+            "role": "anchor"
+          },
+          {
+            "interactionId": "int-11",
+            "role": "navigation"
+          }
+        ],
+        "horizonAttribution": {
+          "openedAtMs": 1786996896017,
+          "closedAtMs": 1786996899080,
+          "closeReason": "all-stamped-settled"
+        },
+        "horizonUiOwnership": {
+          "openedAtMs": 1786996896017,
+          "closedAtMs": 1786996899080,
+          "closeReason": "stabilized"
+        },
+        "parameterInputs": [],
+        "episodeOutcome": {
+          "outcome": "success",
+          "confidence": 0.4,
+          "confidenceLevel": "inconclusive",
+          "derivation": "derived-episode-outcome"
+        },
+        "tabId": 48658466,
+        "signatureKey": "app-3l9zqg:sig:e0e59cec"
+      },
+      {
+        "key": "app-3l9zqg:session-1786996898277:ep-int-4",
+        "appId": "app-3l9zqg",
+        "sessionId": "session-1786996898277",
+        "episodeId": "ep-int-4",
+        "anchor": {
+          "interactionId": "int-4",
+          "actionType": "Click",
+          "actionTarget": "Aurora Wireless Headphones",
+          "triggerTimestamp": 1786996892694
+        },
+        "members": [
+          {
+            "interactionId": "int-4",
+            "role": "anchor"
+          },
+          {
+            "interactionId": "int-2",
+            "role": "parameter"
+          },
+          {
+            "interactionId": "int-5",
+            "role": "navigation"
+          }
+        ],
+        "horizonAttribution": {
+          "openedAtMs": 1786996892694,
+          "closedAtMs": 1786996894507,
+          "closeReason": "all-stamped-settled"
+        },
+        "horizonUiOwnership": {
+          "openedAtMs": 1786996892694,
+          "closedAtMs": 1786996894507,
+          "closeReason": "next-anchor"
+        },
+        "parameterInputs": [
+          {
+            "interactionId": "int-2",
+            "label": "Search Replica Bazaar",
+            "value": "headphones",
+            "link": "form-overlap"
+          }
+        ],
+        "episodeOutcome": {
+          "outcome": "success",
+          "confidence": 1,
+          "confidenceLevel": "confirmed",
+          "derivation": "derived-episode-outcome"
+        },
+        "tabId": 48658466,
+        "signatureKey": "app-3l9zqg:sig:e1182f21"
+      },
+      {
+        "key": "app-3l9zqg:session-1786996898277:ep-int-7",
+        "appId": "app-3l9zqg",
+        "sessionId": "session-1786996898277",
+        "episodeId": "ep-int-7",
+        "anchor": {
+          "interactionId": "int-7",
+          "actionType": "Link",
+          "actionTarget": "Aurora Wireless Headphones",
+          "triggerTimestamp": 1786996894507
+        },
+        "members": [
+          {
+            "interactionId": "int-7",
+            "role": "anchor"
+          },
+          {
+            "interactionId": "int-8",
+            "role": "navigation"
+          }
+        ],
+        "horizonAttribution": {
+          "openedAtMs": 1786996894507,
+          "closedAtMs": 1786996896017,
+          "closeReason": "all-stamped-settled"
+        },
+        "horizonUiOwnership": {
+          "openedAtMs": 1786996894507,
+          "closedAtMs": 1786996896017,
+          "closeReason": "next-anchor"
+        },
+        "parameterInputs": [],
+        "episodeOutcome": {
+          "outcome": "incomplete",
+          "confidence": 0,
+          "confidenceLevel": "inconclusive",
+          "derivation": "derived-episode-outcome"
+        },
+        "tabId": 48658466,
+        "signatureKey": "app-3l9zqg:sig:60f2dfdb"
+      },
+      {
+        "key": "app-3l9zqg:session-1786996911870:ep-int-10",
+        "appId": "app-3l9zqg",
+        "sessionId": "session-1786996911870",
+        "episodeId": "ep-int-10",
+        "anchor": {
+          "interactionId": "int-10",
+          "actionType": "Click",
+          "actionTarget": "Add to Cart",
+          "triggerTimestamp": 1786996909622
+        },
+        "members": [
+          {
+            "interactionId": "int-10",
+            "role": "anchor"
+          },
+          {
+            "interactionId": "int-11",
+            "role": "navigation"
+          }
+        ],
+        "horizonAttribution": {
+          "openedAtMs": 1786996909622,
+          "closedAtMs": 1786996912686,
+          "closeReason": "all-stamped-settled"
+        },
+        "horizonUiOwnership": {
+          "openedAtMs": 1786996909622,
+          "closedAtMs": 1786996912686,
+          "closeReason": "stabilized"
+        },
+        "parameterInputs": [],
+        "episodeOutcome": {
+          "outcome": "success",
+          "confidence": 0.4,
+          "confidenceLevel": "inconclusive",
+          "derivation": "derived-episode-outcome"
+        },
+        "tabId": 48658466,
+        "signatureKey": "app-3l9zqg:sig:e0e59cec"
+      },
+      {
+        "key": "app-3l9zqg:session-1786996911870:ep-int-4",
+        "appId": "app-3l9zqg",
+        "sessionId": "session-1786996911870",
+        "episodeId": "ep-int-4",
+        "anchor": {
+          "interactionId": "int-4",
+          "actionType": "Click",
+          "actionTarget": "Aurora Wireless Headphones",
+          "triggerTimestamp": 1786996906292
+        },
+        "members": [
+          {
+            "interactionId": "int-4",
+            "role": "anchor"
+          },
+          {
+            "interactionId": "int-2",
+            "role": "parameter"
+          },
+          {
+            "interactionId": "int-5",
+            "role": "navigation"
+          }
+        ],
+        "horizonAttribution": {
+          "openedAtMs": 1786996906292,
+          "closedAtMs": 1786996908108,
+          "closeReason": "all-stamped-settled"
+        },
+        "horizonUiOwnership": {
+          "openedAtMs": 1786996906292,
+          "closedAtMs": 1786996908108,
+          "closeReason": "next-anchor"
+        },
+        "parameterInputs": [
+          {
+            "interactionId": "int-2",
+            "label": "Search Replica Bazaar",
+            "value": "headphones",
+            "link": "form-overlap"
+          }
+        ],
+        "episodeOutcome": {
+          "outcome": "success",
+          "confidence": 1,
+          "confidenceLevel": "confirmed",
+          "derivation": "derived-episode-outcome"
+        },
+        "tabId": 48658466,
+        "signatureKey": "app-3l9zqg:sig:e1182f21"
+      },
+      {
+        "key": "app-3l9zqg:session-1786996911870:ep-int-7",
+        "appId": "app-3l9zqg",
+        "sessionId": "session-1786996911870",
+        "episodeId": "ep-int-7",
+        "anchor": {
+          "interactionId": "int-7",
+          "actionType": "Link",
+          "actionTarget": "Aurora Wireless Headphones",
+          "triggerTimestamp": 1786996908108
+        },
+        "members": [
+          {
+            "interactionId": "int-7",
+            "role": "anchor"
+          },
+          {
+            "interactionId": "int-8",
+            "role": "navigation"
+          }
+        ],
+        "horizonAttribution": {
+          "openedAtMs": 1786996908108,
+          "closedAtMs": 1786996909622,
+          "closeReason": "all-stamped-settled"
+        },
+        "horizonUiOwnership": {
+          "openedAtMs": 1786996908108,
+          "closedAtMs": 1786996909622,
+          "closeReason": "next-anchor"
+        },
+        "parameterInputs": [],
+        "episodeOutcome": {
+          "outcome": "incomplete",
+          "confidence": 0,
+          "confidenceLevel": "inconclusive",
+          "derivation": "derived-episode-outcome"
+        },
+        "tabId": 48658466,
+        "signatureKey": "app-3l9zqg:sig:60f2dfdb"
+      },
+      {
+        "key": "app-3l9zqg:session-1786996929410:ep-int-1",
+        "appId": "app-3l9zqg",
+        "sessionId": "session-1786996929410",
+        "episodeId": "ep-int-1",
+        "anchor": {
+          "interactionId": "int-1",
+          "actionType": "Unclassified",
+          "actionTarget": "Drag area (no click handler, plain div)",
+          "triggerTimestamp": 1786996927195
+        },
+        "members": [
+          {
+            "interactionId": "int-1",
+            "role": "anchor"
+          }
+        ],
+        "horizonAttribution": {
+          "openedAtMs": 1786996927195,
+          "closedAtMs": 1786996927195,
+          "closeReason": "all-stamped-settled"
+        },
+        "horizonUiOwnership": {
+          "openedAtMs": 1786996927195,
+          "closedAtMs": 1786996927195,
+          "closeReason": "stabilized"
+        },
+        "parameterInputs": [],
+        "episodeOutcome": null,
+        "tabId": 48658466,
+        "signatureKey": "app-3l9zqg:sig:73e1db48"
+      },
+      {
+        "key": "app-3l9zqg:session-1786996929410:ep-int-2",
+        "appId": "app-3l9zqg",
+        "sessionId": "session-1786996929410",
+        "episodeId": "ep-int-2",
+        "anchor": {
+          "interactionId": "int-2",
+          "actionType": "Unclassified",
+          "actionTarget": "Drag area (no click handler, plain div)",
+          "triggerTimestamp": 1786996927197
+        },
+        "members": [
+          {
+            "interactionId": "int-2",
+            "role": "anchor"
+          }
+        ],
+        "horizonAttribution": {
+          "openedAtMs": 1786996927197,
+          "closedAtMs": 1786996927197,
+          "closeReason": "all-stamped-settled"
+        },
+        "horizonUiOwnership": {
+          "openedAtMs": 1786996927197,
+          "closedAtMs": 1786996927197,
+          "closeReason": "stabilized"
+        },
+        "parameterInputs": [],
+        "episodeOutcome": {
+          "outcome": "incomplete",
+          "confidence": 0,
+          "confidenceLevel": "inconclusive",
+          "derivation": "derived-episode-outcome"
+        },
+        "tabId": 48658466,
+        "signatureKey": "app-3l9zqg:sig:73e1db48"
+      }
+    ]
+  }
+}

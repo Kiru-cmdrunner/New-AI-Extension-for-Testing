@@ -131,13 +131,17 @@ describe('Click Definition', () => {
     expect(emitted[0].type).toBe('Link');
   });
 
-  it('preserves non-interactive element clicks as Unclassified (bare div)', () => {
+  it('qualified bare-div click claims Click (v1.2 flip — qualification is capture-time)', () => {
+    // Click Qualification v1.2 §8.5: the vector-less event is legacy =
+    // qualified; the Click definition claims unconditionally. A truly
+    // invalid click (with a provably-invalid vector) is stopped by the
+    // runtime pre-gate and PROJECTED as Unclassified — pinned in
+    // tests/runtime/click-qualification-step2-wiring.test.ts S2-2.
     const { runtime, emitted, ledger } = setupRuntime();
     const event = makeEvent('e1', 'click', { tag: 'DIV', accessibleName: '' });
     const result = processFull(runtime, ledger, emitted, event);
-    // M5: capture guarantee via Projection Engine
     expect(result.length).toBe(1);
-    expect(result[0].type).toBe('Unclassified');
+    expect(result[0].type).toBe('Click');
   });
 
   it('captures interactive div via class pattern', () => {

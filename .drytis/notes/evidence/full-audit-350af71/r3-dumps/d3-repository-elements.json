@@ -1,0 +1,35 @@
+{
+  "repoDb": true,
+  "stores": [
+    "behavioralEvidence",
+    "elements",
+    "executionIRs",
+    "executionRuns",
+    "projects",
+    "recordingSessions",
+    "sourceArtifacts",
+    "testCaseVersions",
+    "testCases"
+  ],
+  "elementCount": 8,
+  "sample": [
+    {
+      "id": "11b9a429-3bbb-4682-989c-9802561c1e7f",
+      "name": "http://127.0.0.1:8177/order",
+      "loc": null,
+      "heal": null
+    },
+    {
+      "id": "1bdbdec9-e97d-4afb-9678-d3fecee17842",
+      "name": "Place order",
+      "loc": null,
+      "heal": null
+    },
+    {
+      "id": "41a5842e-f208-4a8e-8d32-1e659fdcd644",
+      "name": "Gift wrap",
+      "loc": null,
+      "heal": null
+    }
+  ]
+}

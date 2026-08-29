@@ -1,0 +1,101 @@
+{
+  "env": "http://127.0.0.1:8166",
+  "n": 8,
+  "steps": [
+    {
+      "id": "step-0001",
+      "action": "fill",
+      "src": "evt-pmt0zqe0z-6",
+      "loc": "#origin",
+      "assertions": []
+    },
+    {
+      "id": "step-0002",
+      "action": "click",
+      "src": "evt-pmt0zqe0z-21",
+      "loc": "BOM — Mumbai",
+      "assertions": []
+    },
+    {
+      "id": "step-0003",
+      "action": "click",
+      "src": "evt-pmt0zqe0z-29",
+      "loc": "#go",
+      "assertions": []
+    },
+    {
+      "id": "step-0004",
+      "action": "click",
+      "src": "evt-pmt0zqe0z-40",
+      "loc": "Add extras for flight AI-887",
+      "assertions": []
+    },
+    {
+      "id": "step-0005",
+      "action": "click",
+      "src": "evt-pmt0zqe0z-49",
+      "loc": "Add meal to flight AI-887",
+      "assertions": []
+    },
+    {
+      "id": "step-0006",
+      "action": "click",
+      "src": "evt-pmt0zqe0z-60",
+      "loc": "Cart",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "comp": "contains",
+          "exp": "1",
+          "loc": "#cart-root"
+        },
+        {
+          "type": "presence",
+          "comp": "isTrue",
+          "exp": null,
+          "loc": "[data-sku=\"MEAL\"]"
+        }
+      ]
+    },
+    {
+      "id": "step-0007",
+      "action": "click",
+      "src": "evt-pmt0zqe0z-71",
+      "loc": "Increase quantity of MEAL",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "comp": "contains",
+          "exp": "2",
+          "loc": "#cart-root"
+        },
+        {
+          "type": "presence",
+          "comp": "isTrue",
+          "exp": null,
+          "loc": "[data-sku=\"MEAL\"]"
+        }
+      ]
+    },
+    {
+      "id": "step-0008",
+      "action": "click",
+      "src": "evt-pmt0zqe0z-73",
+      "loc": "Increase quantity of MEAL",
+      "assertions": [
+        {
+          "type": "textMatch",
+          "comp": "contains",
+          "exp": "3",
+          "loc": "#cart-root"
+        },
+        {
+          "type": "presence",
+          "comp": "isTrue",
+          "exp": null,
+          "loc": "[data-sku=\"MEAL\"]"
+        }
+      ]
+    }
+  ]
+}

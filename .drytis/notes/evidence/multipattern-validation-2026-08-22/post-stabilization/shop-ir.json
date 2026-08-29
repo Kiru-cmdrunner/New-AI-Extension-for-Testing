@@ -1,0 +1,338 @@
+{
+  "environment": {
+    "baseUrl": "http://127.0.0.1:8177",
+    "browser": "chrome",
+    "startUrl": "http://127.0.0.1:8177/shop",
+    "viewport": {
+      "height": 437,
+      "width": 780
+    }
+  },
+  "steps": [
+    {
+      "action": "click",
+      "assertions": [
+        {
+          "comparison": "contains",
+          "expectedValue": "3",
+          "property": null,
+          "severity": "soft",
+          "target": {
+            "elementId": "obs-0-0",
+            "elementName": "Cart items",
+            "kind": "element",
+            "pageOrComponent": "main",
+            "resolvedLocators": [
+              {
+                "confidence": 0.7,
+                "priority": 1,
+                "type": "css",
+                "value": "[aria-label=\"Cart items\"]"
+              }
+            ]
+          },
+          "type": "textMatch"
+        },
+        {
+          "comparison": "isTrue",
+          "expectedValue": null,
+          "property": null,
+          "severity": "soft",
+          "target": {
+            "elementId": "obs-0-1",
+            "elementName": "product:SKU-A",
+            "kind": "element",
+            "pageOrComponent": "main",
+            "resolvedLocators": [
+              {
+                "confidence": 0.7,
+                "priority": 1,
+                "type": "css",
+                "value": "[data-sku=\"SKU-A\"]"
+              }
+            ]
+          },
+          "type": "presence"
+        },
+        {
+          "comparison": "isTrue",
+          "expectedValue": null,
+          "property": null,
+          "severity": "soft",
+          "target": {
+            "elementId": "obs-0-2",
+            "elementName": "product:SKU-B",
+            "kind": "element",
+            "pageOrComponent": "main",
+            "resolvedLocators": [
+              {
+                "confidence": 0.7,
+                "priority": 1,
+                "type": "css",
+                "value": "[data-sku=\"SKU-B\"]"
+              }
+            ]
+          },
+          "type": "presence"
+        }
+      ],
+      "description": "Click the Increase quantity of Notebook",
+      "executionParameters": {
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "timeoutMs": 30000,
+        "waitStrategy": "visible"
+      },
+      "id": "step-0001",
+      "input": null,
+      "order": 0,
+      "plainEnglish": "Click the Increase quantity of Notebook",
+      "sourceEventId": "evt-pmt3q9v7a-8",
+      "target": {
+        "elementId": "ce6b433f-310f-4b7f-9b81-9ac5912dbd0a",
+        "elementName": "Increase quantity of Notebook",
+        "kind": "element",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "confidence": 0.8,
+            "priority": 1,
+            "type": "accessibleName",
+            "value": "Increase quantity of Notebook"
+          },
+          {
+            "confidence": 0.35,
+            "priority": 2,
+            "type": "css",
+            "value": "main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(2)"
+          },
+          {
+            "confidence": 0.35,
+            "priority": 3,
+            "type": "xpath",
+            "value": "//body/main/div[1]/div[1]/div[2]/button[2]"
+          }
+        ]
+      }
+    },
+    {
+      "action": "click",
+      "assertions": [
+        {
+          "comparison": "contains",
+          "expectedValue": "4",
+          "property": null,
+          "severity": "soft",
+          "target": {
+            "elementId": "obs-1-0",
+            "elementName": "Cart items",
+            "kind": "element",
+            "pageOrComponent": "main",
+            "resolvedLocators": [
+              {
+                "confidence": 0.7,
+                "priority": 1,
+                "type": "css",
+                "value": "[aria-label=\"Cart items\"]"
+              }
+            ]
+          },
+          "type": "textMatch"
+        },
+        {
+          "comparison": "isTrue",
+          "expectedValue": null,
+          "property": null,
+          "severity": "soft",
+          "target": {
+            "elementId": "obs-1-1",
+            "elementName": "product:SKU-A",
+            "kind": "element",
+            "pageOrComponent": "main",
+            "resolvedLocators": [
+              {
+                "confidence": 0.7,
+                "priority": 1,
+                "type": "css",
+                "value": "[data-sku=\"SKU-A\"]"
+              }
+            ]
+          },
+          "type": "presence"
+        },
+        {
+          "comparison": "isTrue",
+          "expectedValue": null,
+          "property": null,
+          "severity": "soft",
+          "target": {
+            "elementId": "obs-1-2",
+            "elementName": "product:SKU-B",
+            "kind": "element",
+            "pageOrComponent": "main",
+            "resolvedLocators": [
+              {
+                "confidence": 0.7,
+                "priority": 1,
+                "type": "css",
+                "value": "[data-sku=\"SKU-B\"]"
+              }
+            ]
+          },
+          "type": "presence"
+        }
+      ],
+      "description": "Click the Increase quantity of Notebook",
+      "executionParameters": {
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "timeoutMs": 30000,
+        "waitStrategy": "visible"
+      },
+      "id": "step-0002",
+      "input": null,
+      "order": 1,
+      "plainEnglish": "Click the Increase quantity of Notebook",
+      "sourceEventId": "evt-pmt3q9v7a-10",
+      "target": {
+        "elementId": "ce6b433f-310f-4b7f-9b81-9ac5912dbd0a",
+        "elementName": "Increase quantity of Notebook",
+        "kind": "element",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "confidence": 0.8,
+            "priority": 1,
+            "type": "accessibleName",
+            "value": "Increase quantity of Notebook"
+          },
+          {
+            "confidence": 0.35,
+            "priority": 2,
+            "type": "css",
+            "value": "main > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(2)"
+          },
+          {
+            "confidence": 0.35,
+            "priority": 3,
+            "type": "xpath",
+            "value": "//body/main/div[1]/div[1]/div[2]/button[2]"
+          }
+        ]
+      }
+    },
+    {
+      "action": "click",
+      "assertions": [
+        {
+          "comparison": "contains",
+          "expectedValue": "5",
+          "property": null,
+          "severity": "soft",
+          "target": {
+            "elementId": "obs-2-0",
+            "elementName": "Cart items",
+            "kind": "element",
+            "pageOrComponent": "main",
+            "resolvedLocators": [
+              {
+                "confidence": 0.7,
+                "priority": 1,
+                "type": "css",
+                "value": "[aria-label=\"Cart items\"]"
+              }
+            ]
+          },
+          "type": "textMatch"
+        },
+        {
+          "comparison": "isTrue",
+          "expectedValue": null,
+          "property": null,
+          "severity": "soft",
+          "target": {
+            "elementId": "obs-2-1",
+            "elementName": "product:SKU-A",
+            "kind": "element",
+            "pageOrComponent": "main",
+            "resolvedLocators": [
+              {
+                "confidence": 0.7,
+                "priority": 1,
+                "type": "css",
+                "value": "[data-sku=\"SKU-A\"]"
+              }
+            ]
+          },
+          "type": "presence"
+        },
+        {
+          "comparison": "isTrue",
+          "expectedValue": null,
+          "property": null,
+          "severity": "soft",
+          "target": {
+            "elementId": "obs-2-2",
+            "elementName": "product:SKU-B",
+            "kind": "element",
+            "pageOrComponent": "main",
+            "resolvedLocators": [
+              {
+                "confidence": 0.7,
+                "priority": 1,
+                "type": "css",
+                "value": "[data-sku=\"SKU-B\"]"
+              }
+            ]
+          },
+          "type": "presence"
+        }
+      ],
+      "description": "Click the Increase quantity of Pen set",
+      "executionParameters": {
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "timeoutMs": 30000,
+        "waitStrategy": "visible"
+      },
+      "id": "step-0003",
+      "input": null,
+      "order": 2,
+      "plainEnglish": "Click the Increase quantity of Pen set",
+      "sourceEventId": "evt-pmt3q9v7a-20",
+      "target": {
+        "elementId": "5b2162cd-4a5d-4253-907f-aef43229ebc7",
+        "elementName": "Increase quantity of Pen set",
+        "kind": "element",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "confidence": 0.8,
+            "priority": 1,
+            "type": "accessibleName",
+            "value": "Increase quantity of Pen set"
+          },
+          {
+            "confidence": 0.35,
+            "priority": 2,
+            "type": "css",
+            "value": "main > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > button:nth-of-type(2)"
+          },
+          {
+            "confidence": 0.35,
+            "priority": 3,
+            "type": "xpath",
+            "value": "//body/main/div[1]/div[2]/div[2]/button[2]"
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    "shop"
+  ],
+  "testCaseId": "tc-f0171a3f",
+  "testCaseVersionId": "tcv-f0171a3f",
+  "testCaseVersionNumber": 1,
+  "title": "Recorded Test"
+}

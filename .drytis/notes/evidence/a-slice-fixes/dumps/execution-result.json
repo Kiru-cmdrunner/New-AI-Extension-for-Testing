@@ -1,0 +1,106 @@
+{
+  "completedAt": "2026-08-19T18:38:15.540Z",
+  "durationMs": 448.79999999981374,
+  "errorSteps": 0,
+  "executionRunId": "9409b5a9-ca6d-457d-b862-d0d2ffa7e409",
+  "failedSteps": 0,
+  "irStale": false,
+  "passedSteps": 5,
+  "skippedSteps": 0,
+  "startedAt": "2026-08-19T18:38:15.091Z",
+  "status": "passed",
+  "stepCount": 5,
+  "stepResults": [
+    {
+      "actualValue": "headphones",
+      "assertionResults": [],
+      "durationMs": 2.7000000001862645,
+      "status": "passed",
+      "stepId": "step-0001"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": 3,
+          "expectedValue": 3,
+          "message": "Count matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "count"
+        },
+        {
+          "actualValue": true,
+          "expectedValue": null,
+          "message": "Element is present",
+          "passed": true,
+          "severity": "soft",
+          "type": "presence"
+        }
+      ],
+      "durationMs": 6.3999999994412065,
+      "status": "passed",
+      "stepId": "step-0002"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": "0 items",
+          "expectedValue": "0 items",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        }
+      ],
+      "durationMs": 216.5,
+      "status": "passed",
+      "stepId": "step-0003"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": "1 items",
+          "expectedValue": "1 items",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        },
+        {
+          "actualValue": 1,
+          "expectedValue": 1,
+          "message": "Count matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "count"
+        }
+      ],
+      "durationMs": 2.7000000001862645,
+      "status": "passed",
+      "stepId": "step-0004"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": "2 items",
+          "expectedValue": "2 items",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        },
+        {
+          "actualValue": 2,
+          "expectedValue": 2,
+          "message": "Count matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "count"
+        }
+      ],
+      "durationMs": 2.400000000372529,
+      "status": "passed",
+      "stepId": "step-0005"
+    }
+  ]
+}

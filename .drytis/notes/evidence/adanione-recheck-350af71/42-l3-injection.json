@@ -1,0 +1,4 @@
+{
+  "evaluable": false,
+  "reason": "no DOM ever rendered (chrome-error page) — content-script injection not evaluable"
+}

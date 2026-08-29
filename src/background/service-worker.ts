@@ -29,11 +29,13 @@ import {
   stopRecording,
   processObservedEvent,
   getLiveInteractions,
+  getRuntimeLiveLifecycles,
   restoreFromStorage,
   resetState,
   storePendingEvidence,
   attachEvidenceToInteraction,
   persistLiveInteractions,
+  handleTriggerRemovedNotification,
 } from '../runtime/sw-integration';
 import {
   filterProductionInteractions,
@@ -61,6 +63,7 @@ import {
   resolveRecordingOrigin,
 } from '../understanding/persistence/recording-origin';
 import { isRecordingScopeTab } from '../background/network-observation';
+import { isInteractiveElement } from '../definitions/patterns';
 import type { NavigationEvidence, NetworkActivity } from '../shared/behavioral-evidence-types';
 
 // ── Singletons ──────────────────────────────────────────────────────────
@@ -352,6 +355,17 @@ async function handleStartRecording(): Promise<void> {
   resetState();
   initRecording();
 
+  // 7.4-B6.1 tier C: wire the STOP-time network-row collector — the
+  // completed-request ring rows that carry a trusted-action stamp. The
+  // reconcile pass joins them to terminal-Enter eventIds exactly.
+  {
+    const { getRecentRequests } = await import('./network-observation');
+    const { setTierCNetworkRowCollector } = await import('../runtime/sw-integration');
+    setTierCNetworkRowCollector(() =>
+      getRecentRequests(0).filter((r) => typeof r.sourceEventId === 'string'),
+    );
+  }
+
   // Session-end cleanup for the durable attribution ledger (INV session
   // scoping): stale entries from a prior session never join this session's
   // interactions.
@@ -418,8 +432,86 @@ async function handleStartRecording(): Promise<void> {
   await checkActiveTabHealth();
 }
 
+/**
+ * B7-P2: is a Hover lifecycle live right now? The runtime's live stack
+ * carries each lifecycle's interaction type (additive field) — a live
+ * 'Hover' is the only case where the drain round-trip is worth its cost;
+ * sessions without one skip it entirely (byte-identical STOP).
+ */
+function hasLiveHoverLifecycle(): boolean {
+  try {
+    const live = getRuntimeLiveLifecycles();
+    return live.some((lc) => lc.type === 'Hover');
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * B7-P2: force-close open provisional hover evidence windows in every
+ * recording tab BEFORE the stop pipeline runs, and settle for the
+ * delivered evidence. Delivery mechanics only — no semantics, no clock
+ * deciding meaning (the settle window is a bounded transport wait, the
+ * same class as FLUSH_EVENTS round-trips; the drain evidence joins via
+ * the normal pendingEvidence/onEmit paths either way).
+ *
+ * Settle signal: the hover's behavioral evidence attaching to its
+ * interaction (or landing in pendingEvidence). We poll the interactions'
+ * evidence presence with a short cap; anything slower than the cap still
+ * arrives and joins later via the standard recovery passes — the drain
+ * is an ordering optimization for the recording-end terminal, not a
+ * correctness gate on delivery.
+ */
+async function drainHoverEvidenceBeforeStop(): Promise<void> {
+  if (!hasLiveHoverLifecycle()) return;
+
+  const tabs = await chrome.tabs.query({}).catch(() => [] as chrome.tabs.Tab[]);
+  const sendAll: Array<Promise<unknown>> = [];
+  for (const tab of tabs) {
+    if (tab.id !== undefined) {
+      sendAll.push(
+        chrome.tabs.sendMessage(tab.id, { type: 'STOP_EVIDENCE_DRAIN' }).catch(() => undefined),
+      );
+    }
+  }
+  await Promise.all(sendAll);
+
+  // Bounded settle: poll until every hover lifecycle's evidence has
+  // landed (attached or pending), or the cap elapses. Structural inputs
+  // only — no clock participates in any semantic decision.
+  const HOVER_EVIDENCE_SETTLE_MS = 1500;
+  const POLL_MS = 100;
+  const deadline = Date.now() + HOVER_EVIDENCE_SETTLE_MS;
+  while (Date.now() < deadline) {
+    const hoverLive = getLiveInteractions().filter((i) => i.type === 'Hover');
+    const allEvidenced =
+      hoverLive.length > 0 &&
+      hoverLive.every((i) => i.behavioralEvidence != null);
+    if (hoverLive.length === 0) {
+      // The hover lifecycle has not emitted yet (it emits at flush) —
+      // evidence sits in pendingEvidence; nothing to wait on.
+      break;
+    }
+    if (allEvidenced) break;
+    await new Promise((r) => setTimeout(r, POLL_MS));
+  }
+}
+
 async function handleStopRecording(): Promise<void> {
   await ensureSessionRestored();
+
+  // ── B7-P2: pre-pipeline hover evidence drain ──────────────────────
+  // A no-leave hover completes via completesAtRecordingEnd at the flush
+  // below — but its provisional evidence window is still OPEN in the
+  // content script until STOP_RECORDING reaches it, which this function
+  // sends only AFTER the whole pipeline ran. That ordering stranded the
+  // S5 hover evidence: delivered after admission decided → not admitted.
+  // Fix: when a Hover lifecycle is live, ask every tab to force-close
+  // open provisional hover windows FIRST (delivery mechanics only), then
+  // settle for the delivered evidence before running the stop pipeline.
+  // Sessions without a live Hover lifecycle skip the round-trip entirely
+  // (no message, no wait) — byte-identical STOP for everything else.
+  await drainHoverEvidenceBeforeStop();
 
   // Flush runtime and get all interactions
   const allInteractions = stopRecording();
@@ -1747,7 +1839,22 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
         msg.payload?.isTrusted &&
         _sender?.tab?.id != null
       ) {
-        const cls = stampClass(msg.payload.eventType, msg.payload.key);
+        // B7-P2 §5.2.3 (R-4): the discovery gate for mouseenters is
+        // computed HERE — from the payload's own target fields via the
+        // shared isInteractiveElement predicate (patterns.ts, scalar
+        // 4-arg form; no vocabulary). Only a gated trusted mouseenter is
+        // classified secondary (create-only); all other mouseenters stay
+        // ineligible. The classifier itself cannot compute this (no
+        // identity) — the dispatcher owns the gate.
+        const gatedEnter =
+          msg.payload.eventType === 'mouseenter' &&
+          isInteractiveElement(
+            msg.payload.target?.tag,
+            msg.payload.target?.ariaRole,
+            msg.payload.target?.className,
+            msg.payload.domContext?.tabIndex ?? null,
+          );
+        const cls = stampClass(msg.payload.eventType, msg.payload.key, gatedEnter);
         if (cls === 'primary') {
           setLastTrustedAction(_sender.tab.id, _sender.frameId ?? 0, {
             eventId: msg.payload.eventId,
@@ -1814,6 +1921,25 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
       // consume). No-op when null.
       if (record) retainNavRecord(record);
       sendResponse({ type: 'NAV_PENDING_RESPONSE', payload: record });
+      return false;
+    }
+
+    case 'TRIGGER_REMOVED': {
+      // B7-P2 §5.2.2 T4: a hover's trigger element was removed from the
+      // DOM mid-gesture. Complete the lifecycle (terminal 'target-removed')
+      // through the runtime's structural terminal. Fire-and-forget — the
+      // runtime no-ops safely on unknown/already-completed ids, and the
+      // CS-side window close already ran. The seam broadcasts
+      // INTERACTION_CAPTURED itself (handleObservedEvent parity).
+      const msg = message as {
+        type: 'TRIGGER_REMOVED';
+        payload: { lifecycleId: string | null; triggerEventId: string };
+      };
+      try {
+        handleTriggerRemovedNotification(msg.payload ?? { lifecycleId: null, triggerEventId: '' });
+      } catch (err) {
+        console.warn('[CmdRunner] TRIGGER_REMOVED handling failed:', err);
+      }
       return false;
     }
 

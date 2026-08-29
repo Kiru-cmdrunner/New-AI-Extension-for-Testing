@@ -1,0 +1,16 @@
+{
+  "workflows": [
+    {
+      "workflowId": "wf-session-1786996911870-0",
+      "stepIntents": [
+        "Fetch data",
+        "Aurora Wireless Headphones",
+        "Search products",
+        "Navigate",
+        "http://127.0.0.1:8098/product.html?id=P100",
+        "Fetch data",
+        "http://127.0.0.1:8098/cart.html?added=P100"
+      ]
+    }
+  ]
+}

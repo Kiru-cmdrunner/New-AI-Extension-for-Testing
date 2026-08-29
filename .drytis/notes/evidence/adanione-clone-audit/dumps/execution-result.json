@@ -1,0 +1,100 @@
+{
+  "completedAt": "2026-08-20T01:19:20.212Z",
+  "durationMs": 254.8000000002794,
+  "errorSteps": 0,
+  "executionRunId": "cfdc83cd-7498-4465-ad67-94f1538d5397",
+  "failedSteps": 7,
+  "irStale": false,
+  "passedSteps": 1,
+  "skippedSteps": 0,
+  "startedAt": "2026-08-20T01:19:19.958Z",
+  "status": "failed",
+  "stepCount": 8,
+  "stepResults": [
+    {
+      "assertionResults": [],
+      "durationMs": 2.8999999999068677,
+      "error": {
+        "message": "Element \"From\" not found",
+        "type": "ElementNotFound"
+      },
+      "status": "failed",
+      "stepId": "step-0001"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 2.7000000001862645,
+      "error": {
+        "message": "Element \"BOM — Mumbai\" not found",
+        "type": "ElementNotFound"
+      },
+      "status": "failed",
+      "stepId": "step-0002"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 1.2999999998137355,
+      "error": {
+        "message": "Element \"Search flights\" not found",
+        "type": "ElementNotFound"
+      },
+      "status": "failed",
+      "stepId": "step-0003"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 1.5,
+      "error": {
+        "message": "Element \"Add extras for flight AI-887\" not found",
+        "type": "ElementNotFound"
+      },
+      "status": "failed",
+      "stepId": "step-0004"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 1.3000000002793968,
+      "error": {
+        "message": "Element \"Add meal to flight AI-887\" not found",
+        "type": "ElementNotFound"
+      },
+      "status": "failed",
+      "stepId": "step-0005"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": true,
+          "expectedValue": null,
+          "message": "Element is present",
+          "passed": true,
+          "severity": "soft",
+          "type": "presence"
+        }
+      ],
+      "durationMs": 14.5,
+      "status": "passed",
+      "stepId": "step-0006"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 5.2999999998137355,
+      "error": {
+        "message": "Element \"Increase quantity of MEAL\" not found",
+        "type": "ElementNotFound"
+      },
+      "status": "failed",
+      "stepId": "step-0007"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 2.2000000001862645,
+      "error": {
+        "message": "Element \"Increase quantity of MEAL\" not found",
+        "type": "ElementNotFound"
+      },
+      "status": "failed",
+      "stepId": "step-0008"
+    }
+  ]
+}

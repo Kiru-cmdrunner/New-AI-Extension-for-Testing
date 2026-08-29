@@ -1,0 +1,4 @@
+{
+  "count": 5,
+  "spec": "import { test, expect } from '@playwright/test';\n\ntest.describe('Recorded Test', () => {\n  test('should complete recorded Test successfully', async ({ page }) => {\n  });\n});\n"
+}

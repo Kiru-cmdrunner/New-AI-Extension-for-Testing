@@ -1,0 +1,12 @@
+{
+  "extensionTargetsPresent": true,
+  "finalState": {
+    "url": "chrome-error://chromewebdata/",
+    "readyState": "complete",
+    "hasDOM": true,
+    "nEls": 22
+  },
+  "netErrors": [
+    "net::ERR_HTTP2_PROTOCOL_ERROR"
+  ]
+}

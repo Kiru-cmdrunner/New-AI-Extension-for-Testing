@@ -113,7 +113,18 @@ const LIFECYCLE_IDLE_TIMEOUT_MS = 300_000;
  * Re-exported from evidence-ledger.ts (the canonical source).
  */
 export { DISCRETE_ACTION_TYPES } from './evidence-ledger';
-import { DISCRETE_ACTION_TYPES } from './evidence-ledger';
+import { DISCRETE_ACTION_TYPES, isGatedDiscoveryEnter } from './evidence-ledger';
+
+/**
+ * B7-P2 §5.2.5 (W-8): the runtime's disposition scope. A gated discovery
+ * mouseenter lives a ledger life exactly like a discrete action — absorbed
+ * at discovery, claimed on completion/fold, released on abandonment — but
+ * ONLY through the lifecycle path (never step-3 silent absorption of
+ * unrelated pointer events; ungated mouseenters never enter the ledger).
+ */
+function hasLedgerLife(event: ObservedEvent): boolean {
+  return DISCRETE_ACTION_TYPES.has(event.eventType) || isGatedDiscoveryEnter(event);
+}
 
 // ── Factory ───────────────────────────────────────────────────────────
 
@@ -187,6 +198,32 @@ export interface ComponentRuntime {
   /** Flush all active components as 'interrupted'. Returns emitted interactions. */
   flush(): ComponentInteraction[];
 
+  /**
+   * B6.1/B7-P2 §5.2.6: flush active components on a same-document
+   * navigation event. Two-pass commit-marker winner election — see the
+   * impl doc for the attribution invariant. Public (typed) so tests and
+   * the SW nav path can call the exact production path.
+   */
+  flushOnNavigation(navEvent: ObservedEvent): ComponentInteraction[];
+
+  /**
+   * B7-P2 §5.2.2 T4 (target-removed): complete the lifecycle whose trigger
+   * element was structurally removed from the DOM, on the CS notification.
+   * Returns the emitted interaction(s) — empty when no live lifecycle
+   * matches or the type doesn't declare completesOnTriggerRemoved.
+   */
+  completeTriggerRemoved(lifecycleId: string): ComponentInteraction[];
+
+  /**
+   * B7-P2 T4: resolve a TRIGGER_REMOVED notification to a live lifecycle
+   * id (lifecycleId exact join; triggerEventId fallback for the R-2
+   * unbound-window race). Null when nothing matches.
+   */
+  resolveTriggerRemovedLifecycle(payload: {
+    lifecycleId?: string;
+    triggerEventId?: string;
+  }): string | null;
+
   /** Get a serializable snapshot for MV3 recovery. */
   snapshot(): RuntimeSnapshot;
 
@@ -198,7 +235,7 @@ export interface ComponentRuntime {
    * SW-side episode trackers (typed-text sampling must not mint when a
    * definition mid-flight owns the element).
    */
-  getLiveLifecycles(): { id: string; trigger?: unknown }[];
+  getLiveLifecycles(): { id: string; trigger?: unknown; type?: string }[];
 
   /** Get the current active stack depth (for diagnostics). */
   get activeCount(): number;
@@ -303,7 +340,7 @@ class ComponentRuntimeImpl implements ComponentRuntime {
 
     // 2. Navigation flush — interrupt all active, then continue to discovery
     if (event.eventType === ('navigation' as string)) {
-      const flushed = this.flush();
+      const flushed = this.flushOnNavigation(event);
       emitted.push(...flushed);
       // Fall through to discovery — the Navigation definition will claim it
     }
@@ -346,6 +383,19 @@ class ComponentRuntimeImpl implements ComponentRuntime {
       if (inScope) {
         // Add event to member events
         ctx.memberEvents.push(event);
+        // B7-P1 (W-6): definition-local member policy runs immediately
+        // after the push — inside the definition's own call frame so the
+        // policy can pop/cap what the runtime just recorded (hover:
+        // mousemove pop + MAX_POINTER_PATH_FACTS drop-oldest with counted
+        // drops). Called on EVERY in-scope member push; policies are
+        // idempotent (re-capping a capped list is a no-op).
+        if (def.applyMemberPolicy) {
+          try {
+            def.applyMemberPolicy(ctx);
+          } catch (err) {
+            this.logError(def.type, 'applyMemberPolicy', err);
+          }
+        }
         // Update last activity time for idle-based stale eviction
         ctx.lastActivityTime = event.timestamp;
 
@@ -357,11 +407,43 @@ class ComponentRuntimeImpl implements ComponentRuntime {
         }
 
         if (completion) {
-          handled = true;
+          // B7-P2 §5.2.2 "consumed-by-click": a definition that does NOT
+          // retain discrete events (Hover) completes on the event WITHOUT
+          // absorbing it — the click is its OWN interaction and falls
+          // through to discovery below. The pop undoes the member push so
+          // the hover never claims the click's ledger entry; the Click
+          // lifecycle claims it instead. Non-discrete terminals (mouseleave)
+          // retain legacy semantics.
+          //
+          // REGRESSION FIX (B6/B6.1): the release only takes effect when
+          // this lifecycle is the event's FIRST owner in the pass — a
+          // higher lifecycle on the stack already absorbed the event
+          // (handled === true before this branch) and OWNS it; a lower
+          // non-retaining definition must not un-own it. Without the guard
+          // the classic focus-click into a text field double-counted: the
+          // TextEntry absorbed the click, then the Hover underneath
+          // completed 'consumed-by-click' and reset handled → discovery
+          // minted a spurious twin Click interaction (B6 harness:
+          // IR [click, fill, click, navigate] instead of [fill, click,
+          // navigate]). Stack order already guarantees the semantic: a
+          // consuming click completes the hover AS A FACT (terminal
+          // recorded), whether or not another lifecycle owns the click.
+          const retainCompletingEvent =
+            def.retainsDiscreteEvents !== false ||
+            !DISCRETE_ACTION_TYPES.has(event.eventType);
+          if (!retainCompletingEvent && !handled) {
+            ctx.memberEvents.pop(); // the consuming click is not our member
+          }
+          handled = handled || retainCompletingEvent;
           ctx.state = completion.endState;
+          // RESTORED (dropped in the B7-P2 rewrite): the completing event's
+          // timestamp is the lifecycle's end — dwellMs and dedup windows
+          // read ctx.endTime; without it every in-scope completion carried
+          // endTime 0 (unit: hover dwell 0 vs 1000; real Chrome only looked
+          // healthy because flush()/stale paths set it independently).
           ctx.endTime = event.timestamp;
           // Disposition: completion absorbs the event (completeComponent will set claimed/unclaimed)
-          if (DISCRETE_ACTION_TYPES.has(event.eventType)) {
+          if (retainCompletingEvent && hasLedgerLife(event)) {
             this.ledger?.setDisposition(event.eventId, 'absorbed', ctx.lifecycleId, ctx.type);
           }
           const interaction = this.completeComponent(ctx, def, completion);
@@ -377,6 +459,13 @@ class ComponentRuntimeImpl implements ComponentRuntime {
           // we must verify positive ownership before allowing silent absorption.
           // If ownership cannot be proven, the event falls through to discovery.
 
+          // B7-P2: pointer-path enters stay MEMBERS — a gated enter on a
+          // different element is exactly the pointer-path fact P1 records
+          // (a fact, not an ownership claim: the hover lifecycle does NOT
+          // own that element, it merely observed the pointer reach it).
+          // The positive-ownership gate below stays limited to genuine
+          // discrete actions; ledger claiming for member enters rides the
+          // completion path (completeComponent), per W-8.
           const isDiscrete = DISCRETE_ACTION_TYPES.has(event.eventType);
           // Use elementKey() instead of raw stableId comparison to avoid
           // null === null false positives when both elements lack IDs.
@@ -402,6 +491,9 @@ class ComponentRuntimeImpl implements ComponentRuntime {
             if (isDiscrete) {
               this.ledger?.setDisposition(event.eventId, 'absorbed', ctx.lifecycleId, ctx.type);
             }
+            // B7-P2: a same-element mouseenter member (pointer-path fact on
+            // the trigger element itself) lives a ledger life only if gated;
+            // ungated ones are not in the ledger and setDisposition no-ops.
           }
         }
       } else {
@@ -513,11 +605,22 @@ class ComponentRuntimeImpl implements ComponentRuntime {
 
     // 4. Discovery — no active component claimed it
     if (!handled) {
-      const newCtx = this.tryDiscovery(event);
+      // Capture-time click qualification v1.2 Step 2 — the universal
+      // pre-gate (§8.1): a trusted click/contextmenu whose capture-time
+      // verdict is 'provably-invalid' is claimed by NO definition — not
+      // the semantic definitions that run first, and not the Click
+      // fallback. The verdict is capture's alone (§10.7); this gate READS
+      // it, never re-derives it (§10.3). Undefined vector = legacy =
+      // qualified = not gated. The entry stays 'pending'; STOP projection
+      // mints the Unclassified card with invalidityCauses.
+      const cq = event.domContext?.clickQualification;
+      const clickFamily = event.eventType === 'click' || event.eventType === 'contextmenu';
+      if (!(clickFamily && cq?.verdict === 'provably-invalid')) {
+        const newCtx = this.tryDiscovery(event);
       if (newCtx) {
         this.activeStack.push(newCtx);
         // Disposition: trigger event absorbed by new lifecycle
-        if (DISCRETE_ACTION_TYPES.has(event.eventType)) {
+        if (hasLedgerLife(event)) {
           this.ledger?.setDisposition(event.eventId, 'absorbed', newCtx.lifecycleId, newCtx.type);
         }
         // Check if the definition completes immediately (e.g., Click, Checkbox)
@@ -548,10 +651,11 @@ class ComponentRuntimeImpl implements ComponentRuntime {
         // The Projection Engine surfaces unclaimed/pending entries as
         // Unclassified interactions at stopRecording time.
       } else {
-        // M5: No definition recognized this event. If it's a discrete action,
-        // it will be surfaced as an Unclassified interaction by the Projection
-        // Engine at stopRecording time. The ledger entry stays 'pending'.
-        // No runtime emission — the Projection Engine handles this.
+          // M5: No definition recognized this event. If it's a discrete action,
+          // it will be surfaced as an Unclassified interaction by the Projection
+          // Engine at stopRecording time. The ledger entry stays 'pending'.
+          // No runtime emission — the Projection Engine handles this.
+        }
       }
     }
 
@@ -565,7 +669,17 @@ class ComponentRuntimeImpl implements ComponentRuntime {
       const def = this.findDefForType(ctx.type);
       // Gesture components (Scroll) complete naturally on flush, not interrupt.
       // They accumulated their data and the gesture is done — it should be emitted.
-      const endState = def?.shouldCompleteOnOutside ? 'completed' : 'interrupted';
+      // B7-P2 §5.2.2: definitions may additionally declare
+      // completesAtRecordingEnd — STOP is a structural terminal for them
+      // (Hover). The idle path (cleanupStaleComponents) does NOT consult
+      // this declaration — B-2 endState/hook-truthiness split.
+      const endState =
+        def?.shouldCompleteOnOutside || def?.completesAtRecordingEnd
+          ? 'completed'
+          : 'interrupted';
+      if (def?.completesAtRecordingEnd && endState === 'completed') {
+        (ctx.data as Record<string, unknown>).terminal = 'recording-end';
+      }
       ctx.state = endState;
       ctx.endTime = Date.now();
       if (def) {
@@ -577,6 +691,196 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     }
     this.activeStack = [];
     return emitted;
+  }
+
+  /**
+   * 7.4-B6.1 tier N: navigation-aware flush. Called ONLY from process()
+   * step 2 (navigation events) instead of the blind flush(). Per active
+   * lifecycle, the definition's optional shouldCompleteOnNavigation hook
+   * is consulted: true → the lifecycle completes 'completed' (commit
+   * proven by the application's own route change — the definition set its
+   * commit metadata inside the hook), false/absent → interrupted exactly
+   * as the blind flush would. Only the navigation event itself is passed;
+   * no wall-clock, no DOM queries, no network state.
+   *
+   * 7.4-B6.1 attribution guard (spec §6 "stacked lifecycles"): when
+   * MULTIPLE lifecycles satisfy their commit predicate, only the one with
+   * the LATEST terminal Enter may complete as committed — the route change
+   * can causally belong to at most one typing episode's commit. Losers are
+   * interrupted honestly. Two-pass: hooks first (each sees its own ctx and
+   * records its own candidate), then the winner is chosen by the latest
+   * trigger-scoped Enter's captureSeq (browser event order, monotonic
+   * within the shared document — P5 guarantees one pageId, which makes
+   * captureSeq comparable ACROSS lifecycles, unlike memberEvents indexes).
+   */
+  flushOnNavigation(navEvent: ObservedEvent): ComponentInteraction[] {
+    // Pass 1: consult hooks on every active lifecycle.
+    const candidates: Array<{ ctx: ComponentContext; enterSeq: number; markerBearing: boolean }> = [];
+    for (const ctx of this.activeStack) {
+      const def = this.findDefForType(ctx.type);
+      if (!def?.shouldCompleteOnNavigation) continue;
+      let ok = false;
+      try {
+        ok = def.shouldCompleteOnNavigation(navEvent, ctx);
+      } catch (err) {
+        this.logError(def.type, 'shouldCompleteOnNavigation', err);
+        ok = false; // honest fallback: interrupt
+      }
+      if (!ok) continue;
+      // The hook guarantees a terminal Enter member event exists (P3/P4).
+      // Locate its recorded position for the winner election. Scoped to
+      // the lifecycle's OWN trigger element (same scope as the hook's
+      // terminal derivation) — a foreign-element Enter absorbed as a mere
+      // member must not become the election anchor. The Enter's captureSeq
+      // (browser event order, monotonic within the document — P5
+      // guarantees candidates share one document) is comparable ACROSS
+      // lifecycles, unlike a memberEvents array index.
+      // B7-P2 §5.2.6 (B-7): the ranking generalizes from Enter-specific
+      // to COMMIT-MARKER ranking. A candidate carries a commit marker when
+      // its ctx.data holds commitSignal (TextEntry: navigation/submit/
+      // network; Hover: navigation). The marker's recorded position is
+      // ctx.data.committedAt (the hook writes it — TextEntry the terminal
+      // Enter's captureSeq, Hover the discovery enter's captureSeq).
+      // Marker-LESS candidates keep the legacy Enter derivation (B6/B6.1
+      // TextEntry always sets committedAt, so the legacy path is inert in
+      // production; kept for synthetic streams and honest degradation).
+      const d = ctx.data as Record<string, unknown>;
+      let enterSeq = -1;
+      let markerBearing = false;
+      if (d.commitSignal != null) {
+        markerBearing = true;
+        enterSeq = typeof d.committedAt === 'number' ? d.committedAt : -1;
+      } else {
+        const triggerKey = elementKey(ctx.trigger);
+        for (const e of ctx.memberEvents) {
+          if (e.eventType !== 'keydown' || e.key !== 'Enter') continue;
+          if (elementKey(e.target) !== triggerKey) continue; // foreign target
+          const seq = e.captureSeq || e.timestamp;
+          if (seq > enterSeq) enterSeq = seq; // latest trigger-scoped Enter
+        }
+      }
+      candidates.push({ ctx, enterSeq, markerBearing });
+    }
+
+    // Attribution guard (B-7 generalized): only ONE lifecycle completes as
+    // committed. Marker-BEARING candidates rank strictly before marker-less
+    // ones (a lifecycle that recorded a commit cause outranks one that
+    // merely claims liveness); within a class the latest marker wins. Ties
+    // (equal captureSeq — synthetic streams) fall to the LATER lifecycle in
+    // stack order. A marker-less hover therefore deterministically loses to
+    // a marker-bearing TextEntry — B6/B6.1 outcomes preserved byte-for-byte.
+    let winnerCtx: ComponentContext | null = null;
+    let winnerSeq = -1;
+    let winnerMarker = false;
+    for (const c of candidates) {
+      const outranks =
+        (c.markerBearing && !winnerMarker) ||
+        (c.markerBearing === winnerMarker && c.enterSeq >= winnerSeq);
+      if (outranks) {
+        winnerSeq = c.enterSeq;
+        winnerCtx = c.ctx;
+        winnerMarker = c.markerBearing;
+      }
+    }
+
+    // Pass 2: finalize every lifecycle.
+    const emitted: ComponentInteraction[] = [];
+    for (let i = this.activeStack.length - 1; i >= 0; i--) {
+      const ctx = this.activeStack[i];
+      const def = this.findDefForType(ctx.type);
+      const isWinner = ctx === winnerCtx;
+      const endState = isWinner
+        ? 'completed'
+        : def?.shouldCompleteOnOutside ? 'completed' : 'interrupted';
+      if (!isWinner) {
+        // Losing candidates wrote tentative commit metadata inside their
+        // hook call — scrub it so the emitted interaction stays honest
+        // (no commit claim without winning attribution).
+        const d = ctx.data as Record<string, unknown>;
+        delete d.commitSignal;
+        delete d.committedValue;
+        delete d.enterCause;
+        delete d.enterEventId;
+        delete d.navType;
+      }
+      ctx.state = endState;
+      ctx.endTime = navEvent.timestamp;
+      if (def) {
+        const interaction = this.completeComponent(ctx, def, { endState });
+        if (interaction) emitted.push(interaction);
+      }
+    }
+    this.activeStack = [];
+    return emitted;
+  }
+
+  /**
+   * B7-P2 §5.2.2 T4 (target-removed): complete the lifecycle whose trigger
+   * element was removed from the DOM mid-gesture, on the content script's
+   * TRIGGER_REMOVED notification (spec §5.1 line 130).
+   *
+   * Called by the SW (sw-integration.ts handleTriggerRemovedNotification)
+   * — the CS join key is the lifecycleId when the evidence window was
+   * already LIFECYCLE_BOUND, with a triggerEvent.eventId fallback when
+   * the removal beat the binding round-trip (R-2 window: the collector
+   * opened the provisional window, the SW created the lifecycle, the
+   * binding was still in flight).
+   *
+   * Semantics:
+   *  - Only lifecycles whose definition declares completesOnTriggerRemoved
+   *    complete (Hover). Other types are no-ops — removal is NOT a
+   *    terminal for them.
+   *  - Completion: endState 'completed', metadata.terminal
+   *    'target-removed' (recorded fact via the definition's own
+   *    recordTerminal convention — ctx.data.terminal), emitted through
+   *    config.onEmit exactly like any structural terminal.
+   *  - endTime: the lifecycle's lastActivityTime (the removal is
+   *    structural, not an event; no wall-clock invention — the last
+   *    recorded member/trigger activity is the honest boundary).
+   *  - Unknown id: no-op (the notification may reference a lifecycle
+   *    that already completed another way — harmless).
+   */
+  completeTriggerRemoved(lifecycleId: string): ComponentInteraction[] {
+    const idx = this.activeStack.findIndex((c) => c.lifecycleId === lifecycleId);
+    if (idx === -1) return [];
+    const ctx = this.activeStack[idx];
+    const def = this.findDefForType(ctx.type);
+    if (!def?.completesOnTriggerRemoved) return [];
+    (ctx.data as Record<string, unknown>).terminal = 'target-removed';
+    ctx.state = 'completed';
+    ctx.endTime = ctx.lastActivityTime ?? ctx.endTime;
+    this.activeStack.splice(idx, 1);
+    let interaction: ComponentInteraction | null = null;
+    try {
+      interaction = this.completeComponent(ctx, def, { endState: 'completed' });
+    } catch (err) {
+      this.logError(def.type, 'completeTriggerRemoved', err);
+    }
+    return interaction ? [interaction] : [];
+  }
+
+  /**
+   * B7-P2 §5.2.2 T4 (target-removed): resolve the lifecycle id from the
+   * CS notification payload. The lifecycleId join is exact; the
+   * triggerEventId fallback covers the R-2 unbound-window race (binding
+   * in flight when the removal was observed). Returns null when no live
+   * lifecycle matches either key.
+   */
+  resolveTriggerRemovedLifecycle(payload: {
+    lifecycleId?: string;
+    triggerEventId?: string;
+  }): string | null {
+    if (payload.lifecycleId) {
+      const hit = this.activeStack.find((c) => c.lifecycleId === payload.lifecycleId);
+      if (hit) return hit.lifecycleId as string;
+    }
+    if (payload.triggerEventId) {
+      const hit = this.activeStack.find(
+        (c) => c.triggerEvent.eventId === payload.triggerEventId,
+      );
+      if (hit) return hit.lifecycleId as string;
+    }
+    return null;
   }
 
   /**
@@ -602,6 +906,10 @@ class ComponentRuntimeImpl implements ComponentRuntime {
       if (idleTime > LIFECYCLE_IDLE_TIMEOUT_MS) {
         const def = this.findDefForType(ctx.type);
         const endState = def?.shouldCompleteOnOutside ? 'completed' : 'abandoned';
+        if (endState === 'abandoned') {
+          // B7-P2: honest terminal fact for the projection twin floor.
+          (ctx.data as Record<string, unknown>).terminal = 'idle-timeout';
+        }
         ctx.state = endState;
         ctx.endTime = event.timestamp;
         if (def) {
@@ -638,10 +946,13 @@ class ComponentRuntimeImpl implements ComponentRuntime {
   /**
    * 7.4-B3 S3: read-only view of the live stack (trigger identity included).
    */
-  getLiveLifecycles(): { id: string; trigger?: unknown }[] {
+  getLiveLifecycles(): { id: string; trigger?: unknown; type?: string }[] {
     return this.activeStack.map((ctx) => ({
       id: ctx.lifecycleId as string,
       trigger: ctx.trigger as unknown,
+      // B7-P2: the lifecycle's interaction type ('Hover', 'TextEntry', …) —
+      // additive field for the SW's pre-STOP hover evidence drain gate.
+      type: ctx.type,
     }));
   }
 
@@ -806,9 +1117,11 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     // Evidence Ledger disposition: claim or release all discrete member events
     if (this.ledger) {
       if (completion.endState === 'completed') {
-        // Claim all discrete member events
+        // Claim all ledger-life member events (discrete actions + gated
+        // discovery enters — B7-P2 §5.2.5 W-8: the claim rides the
+        // lifecycle completion path, never runtime absorption).
         for (const ev of ctx.memberEvents) {
-          if (DISCRETE_ACTION_TYPES.has(ev.eventType)) {
+          if (hasLedgerLife(ev)) {
             this.ledger.setDisposition(ev.eventId, 'claimed', interaction.interactionId, ctx.type);
           }
         }
@@ -877,7 +1190,7 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     const memberIds = new Set((prior.memberEvents ?? []).map((e) => e.eventId));
 
     for (const ev of ctx.memberEvents) {
-      if (!DISCRETE_ACTION_TYPES.has(ev.eventType)) continue;
+      if (!hasLedgerLife(ev)) continue;
       if (!memberIds.has(ev.eventId)) {
         prior.memberEvents.push(ev);
         memberIds.add(ev.eventId);
@@ -977,6 +1290,15 @@ class ComponentRuntimeImpl implements ComponentRuntime {
     // prevents rapid-fire duplication. Two scroll gestures separated by
     // other interactions are always distinct, even on the same container.
     if (ctx.type === 'Scroll') return false;
+
+    // B7-P4 (F-5): Hover is exempt from CAPTURE-level dedup. Folding a
+    // hover into a prior row destroys its lifecycle/evidence (memberEvents
+    // appended to the prior, ledger claimed under the prior id, repeatCount
+    // incremented) — data loss the presentation layer cannot recover from.
+    // Gesture-only hovers are grouped presentation-only in the panel
+    // renderer (grouping never destruction — D4); admitted hovers never
+    // fold. The runtime now records every hover as its own row.
+    if (ctx.type === 'Hover') return false;
 
     return true;
   }

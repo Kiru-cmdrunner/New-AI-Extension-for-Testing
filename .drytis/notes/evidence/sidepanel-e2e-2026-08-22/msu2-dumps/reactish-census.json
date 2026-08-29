@@ -1,0 +1,14 @@
+{
+  "cards": 1,
+  "drills": 3,
+  "allCollapsed": true,
+  "raw": true,
+  "rawSummary": "Raw evidence JSON",
+  "itemDrills": 1,
+  "netDrills": 0,
+  "domDrills": 1,
+  "surfDrills": 0,
+  "winDrills": 0,
+  "firstItemText": "item detail · status-badgevia [class*=\"pill\" i], [class*=\"chip\" i] · unverified",
+  "bars": 0
+}

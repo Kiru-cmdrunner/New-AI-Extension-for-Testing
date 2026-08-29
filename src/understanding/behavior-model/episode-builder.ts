@@ -31,7 +31,7 @@
  *     Fix 2/4, or persistence.
  */
 
-import { DISCRETE_ACTION_TYPES } from '../../runtime/evidence-ledger';
+import { isAnchorEligibleInteraction } from '../../runtime/evidence-ledger';
 import { compareInteractionIds } from '../state-builder/interaction-ordering';
 import type { ComponentInteraction } from '../../shared/component-types';
 import type {
@@ -293,9 +293,12 @@ export function buildEpisodes(input: EpisodeBuilderInput): EpisodeBuilderResult 
     all.push(n);
   }
 
-  // ── 2. Anchors: trigger event type ∈ DISCRETE_ACTION_TYPES ───────────
+  // ── 2. Anchors: B7-P3 §5.3.1 — admission-keyed anchor gate ───────────
+  // ANCHOR_ELIGIBLE raw-event types anchor exactly as before; an ADMITTED
+  // Hover (completed + ≥1 recorded consequence class) anchors its own
+  // episode. Gesture-only/abandoned hovers never anchor (V4 honesty).
   const anchors = all
-    .filter((i) => !i.malformed && i.triggerEventType !== null && DISCRETE_ACTION_TYPES.has(i.triggerEventType))
+    .filter((i) => !i.malformed && isAnchorEligibleInteraction(i.raw))
     .sort(compareAnchors);
   const nonAnchors = all.filter((i) => !anchors.includes(i));
 

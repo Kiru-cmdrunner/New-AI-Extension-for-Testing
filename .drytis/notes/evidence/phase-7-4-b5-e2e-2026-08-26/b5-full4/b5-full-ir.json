@@ -1,0 +1,51 @@
+[
+ {
+  "action": "click",
+  "targetKind": "element",
+  "input": null,
+  "sourceEventId": "evt-pmt9v5qgf-6",
+  "description": "Open the Open Dialog dialog"
+ },
+ {
+  "action": "keyboardShortcut",
+  "targetKind": "none",
+  "input": "Escape",
+  "sourceEventId": "evt-pmt9v5qgf-11",
+  "description": "Press Escape to dismiss the Settings Dialog"
+ },
+ {
+  "action": "click",
+  "targetKind": "element",
+  "input": null,
+  "sourceEventId": "evt-pmt9v5qgf-17",
+  "description": "Open the Open Dialog dialog"
+ },
+ {
+  "action": "click",
+  "targetKind": "element",
+  "input": null,
+  "sourceEventId": "evt-pmt9v5qgf-27",
+  "description": "Click the Cancel"
+ },
+ {
+  "action": "click",
+  "targetKind": "element",
+  "input": null,
+  "sourceEventId": "evt-pmt9v5qgf-37",
+  "description": "Open the Open Nested Dialog dialog"
+ },
+ {
+  "action": "click",
+  "targetKind": "element",
+  "input": null,
+  "sourceEventId": "evt-pmt9v5qgf-47",
+  "description": "Open the Open Inner dialog"
+ },
+ {
+  "action": "keyboardShortcut",
+  "targetKind": "none",
+  "input": "Escape",
+  "sourceEventId": "evt-pmt9v5qgf-53",
+  "description": "Press Escape to dismiss the Inner Dialog"
+ }
+]

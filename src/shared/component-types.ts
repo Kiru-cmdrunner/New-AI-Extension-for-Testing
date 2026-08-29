@@ -93,14 +93,31 @@ export interface DomContext {
   /** Value of the `list` attribute on <input> (native datalist association). null if absent. */
   listId?: string | null;
 
+  // ── Owner-form join (7.4-B6) ──
+  // Captured at event time so downstream layers can join a form control to
+  // its owner <form> WITHOUT a live DOM query (purity: completion and IR
+  // decisions read recorded data only). Absent/null on legacy events and
+  // on targets with no <form> ancestor — null is an honest "no form".
+
+  /** elementKey of the closest ancestor <form> when the target is a form control; null otherwise. */
+  formElementKey?: string | null;
+  /** Owner-form action URL at event time; null when absent or no form. */
+  formAction?: string | null;
+  /** Owner-form method ('get'/'post'); null when absent or no form. */
+  formMethod?: string | null;
+  /** Owner-form DOM id; null when the form has no id or no form. */
+  formId?: string | null;
+  /** True when the target IS a form submit control (input[type=submit|image], button[type=submit or missing type]). Captured from the live DOM at event time — ground truth, never inferred downstream. */
+  isFormSubmitControl?: boolean | null;
+
+
   // ── ARIA value attributes (for custom sliders/spinbuttons) ──
   // Present only when the DOM attribute exists (conditionally set by captureDomContext).
 
   /** Value of aria-valuenow. Present only if the attribute exists on the element. */
   ariaValueNow?: string;
   /** Value of aria-valuetext. Present only if the attribute exists on the element. */
-  ariaValueText?: string;
-  /** Value of aria-valuemin. Present only if the attribute exists on the element. */
+  ariaValueText?: string;  /** Value of aria-valuemin. Present only if the attribute exists on the element. */
   ariaValueMin?: string;
   /** Value of aria-valuemax. Present only if the attribute exists on the element. */
   ariaValueMax?: string;
@@ -112,6 +129,75 @@ export interface DomContext {
   nativeMin?: string;
   /** Native el.max for range inputs. Present only for <input type="range">. */
   nativeMax?: string;
+
+  // ── Capture-time click qualification (v1.2, 2026-08-29) ──
+  // Click Qualification spec .drytis/specs/click-capture-qualification-v1.md.
+  // Computed ONCE at the EventTap capture-phase instant (dispatch moment,
+  // DOM frozen) for click/contextmenu events; undefined on every other
+  // event type and on legacy recordings (undefined = legacy = qualified,
+  // never pre-gated — Step 1 is inert: this field is recorded fact only,
+  // consumed by NO typing decision yet).
+  // Classification-input only — never identity, never locators, never replay.
+
+  /** Provable-invalidity verdict + causes for the trusted click. */
+  clickQualification?: ClickQualification;
+}
+
+/** Why a trusted click is provably invalid (spec §4). Platform-enforced tier first. */
+export type ClickInvalidityCause =
+  | 'disabled-native'          // hasAttribute('disabled') on a natively-disableable tag
+  | 'fieldset-disabled'        // form control inside fieldset[disabled], outside first legend
+  | 'inert-subtree'            // closest('[inert]') incl. self — defensive tier
+  | 'hit-test-miss'            // topmost hittable element ∉ raw composed path (only universal proof)
+  | 'pointer-events-none'      // app-declared; JOINT with hit-test-miss only (R-4)
+  | 'zero-size-lifted'         // auxiliary; JOINT with hit-test-miss only (R-5)
+  | 'aria-disabled'            // app-declared
+  | 'disabled-attr-non-native' // app-declared: disabled attr on a non-native tag (R-2)
+
+/** The frozen verdict record (immutable from the capture instant). */
+export interface ClickQualification {
+  verdict: 'provably-invalid' | 'qualified';
+  /** Empty iff verdict = qualified. */
+  causes: ClickInvalidityCause[];
+  /** Honesty marker on qualified clicks; consumed by no rule in this phase. */
+  insufficient: boolean;
+  /** The full immutable fact vector the verdict was computed from. */
+  facts: ClickQualificationFacts;
+}
+
+/** Capture-time fact vector (spec §3). All dispatch-instant DOM facts. */
+export interface ClickQualificationFacts {
+  // ── Invalidity facts (§3.1) ──
+  /** hasAttribute('disabled') AND tag ∈ natively-disableable set (R-2). */
+  disabledNative: boolean;
+  /** hasAttribute('disabled') on any other tag — app-declared tier (R-2). */
+  disabledAttrNonNative: boolean;
+  /** Form-associated control inside fieldset[disabled], outside its first legend (R-3). */
+  fieldsetDisabled: boolean;
+  /** aria-disabled="true" on the resolved target — app-declared. */
+  ariaDisabled: boolean;
+  /** closest('[inert]') on the resolved target (self or ancestor) — defensive tier. */
+  inertSubtree: boolean;
+  /** Computed pointer-events === 'none' on the resolved target. Cause only joint with miss (R-4). */
+  pointerEventsNone: boolean;
+  /** Resolved target rect empty AND lift occurred. Cause only joint with miss (R-5). */
+  zeroSizeLifted: boolean;
+  /** elementFromPoint probe result vs the raw element's composed path. */
+  hitTest: { checked: boolean; miss: boolean | null };
+
+  // ── Hit-target structure (§3.2) ──
+  hitTarget: {
+    /** raw BODY/HTML ⇒ 'canvas' (empty/background click). */
+    kind: 'canvas' | 'element';
+    /** Tag of the raw hit element (pre-lift). */
+    rawTag: string;
+    /** resolved ≠ raw. */
+    lifted: boolean;
+    /** Which resolveTarget strategy produced the resolved target. */
+    liftStrategy: 'path' | 'parent' | 'cursor' | 'raw';
+    /** Raw element passes the shared isInteractiveElement predicate (recorded fact only). */
+    rawInteractiveShaped: boolean;
+  };
 }
 
 // ── Observed Event ─────────────────────────────────────────────────────
@@ -416,6 +502,83 @@ export interface ComponentDefinition {
    * Optional — defaults to false. Most definitions don't need this.
    */
   shouldCompleteOnOutside?(event: ObservedEvent, ctx: ComponentContext): boolean;
+
+  /**
+   * 7.4-B6.1: Should this ACTIVE lifecycle complete (as 'completed') when
+   * a navigation event arrives, instead of being flush-interrupted?
+   *
+   * Called ONLY from the navigation-flush path (ComponentRuntime.process
+   * step 2) — the one instant where the cause (recorded lifecycle state)
+   * and the effect (the navigation event itself) coexist synchronously.
+   * Implementations MUST ground the decision in recorded data (member
+   * events + ctx.data) and never in wall-clock comparisons. The navigation
+   * event is NOT a ledger discrete action, so absorbing it has no
+   * disposition side effects.
+   *
+   * Return true → the lifecycle completes 'completed' (the definition
+   * should have set its commit metadata in ctx.data inside this call).
+   * Return false/undefined → interrupted exactly as the blind flush would.
+   *
+   * Optional — defaults to false (interrupt). Only TextEntry implements
+   * it today (form-less SPA Enter commit, tier N).
+   */
+  shouldCompleteOnNavigation?(event: ObservedEvent, ctx: ComponentContext): boolean;
+
+  /**
+   * B7-P2 §5.2.2: does this lifecycle complete at RECORDING STOP?
+   *
+   * Consulted by ComponentRuntime.flush() ONLY (the STOP path). The idle
+   * timeout (cleanupStaleComponents, 5 min) NEVER consults it — an idle
+   * lifecycle is 'abandoned' regardless, and the Unclassified twin is the
+   * honest floor (B-2 endState/hook-truthiness split).
+   *
+   * Optional — defaults to false (interrupt at STOP). Scroll keeps its
+   * existing shouldCompleteOnOutside semantics; Hover declares true.
+   */
+  completesAtRecordingEnd?: boolean;
+
+  /**
+   * B7-P2 §5.2.2 T4 (target-removed): does this lifecycle complete when the
+   * content script notifies the SW that its TRIGGER ELEMENT was removed
+   * from the DOM mid-gesture?
+   *
+   * Consulted by ComponentRuntime.completeTriggerRemoved(lifecycleId) —
+   * the SW-side consumer of the CS TRIGGER_REMOVED notification (spec
+   * §5.1 line 130). Only lifecycles that structurally own their target
+   * element (Hover's discovery enter) declare it. Completion sets
+   * endState 'completed' and metadata.terminal 'target-removed' (the
+   * recorded fact); all other lifecycle types are no-ops.
+   *
+   * Optional — defaults to false. Rationale: the element's removal is a
+   * structural terminal for a hover (the reveal has nowhere to live),
+   * but NOT for e.g. TextEntry (an input's removal mid-typing is an
+   * interruption, honestly 'abandoned'/'interrupted' via existing
+   * terminals — not a completed entry).
+   */
+  completesOnTriggerRemoved?: boolean;
+
+  /**
+   * B7-P1 (W-6): definition-local member-policy hook. Called by the
+   * runtime AFTER handleEvent returns null and the event was pushed to
+   * memberEvents — lets the definition curate its own member list
+   * (e.g. Hover pops mousemoves, caps pointer-path enters). Optional —
+   * defaults to no-op.
+   */
+  applyMemberPolicy?(ctx: ComponentContext): void;
+
+  /**
+   * B7-P2 §5.2.2 "consumed-by-click": may this definition RETAIN discrete
+   * events that complete it? Default true (legacy semantics — the
+   * completing event is absorbed and claimed by the lifecycle).
+   *
+   * Hover declares false: a click that completes the hover is NOT absorbed
+   * by it — the click falls through to discovery so it ALSO becomes its
+   * own Click interaction (the click is its own action; the hover merely
+   * records the terminal fact 'consumed-by-click'). The click is popped
+   * from the hover's memberEvents and never claimed by the hover ledger
+   * path; the Click lifecycle claims it instead.
+   */
+  retainsDiscreteEvents?: boolean;
 
   /**
    * Build the metadata for the emitted interaction.

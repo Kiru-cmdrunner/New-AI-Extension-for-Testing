@@ -121,9 +121,13 @@ describe('6D.1 W3 — options-list surface vocabulary', () => {
 // ── AC-W3b: negative space holds ───────────────────────────────────────
 
 describe('6D.1 W3 — honesty: non-surface ancestry still rejected', () => {
-  it('plain ul/li with no surface token anywhere → NOT a Click', () => {
-    expect(clickDefinition.detectTrigger(makeClickEvent([]))).toBeNull();
-    expect(clickDefinition.detectTrigger(makeClickEvent(['row', 'flex']))).toBeNull();
+  it('plain ul/li with no surface token anywhere → claims Click (v1.2 flip — surface ancestry no longer gates)', () => {
+    // Click Qualification v1.2 §8.5: the LP1 open-surface gate is DELETED;
+    // qualification is capture-time (src/tap/click-qualification.ts). The
+    // AC-W3a pin above (opt INSIDE an open surface) is unchanged in
+    // outcome — it claimed Click before and claims Click now.
+    expect(clickDefinition.detectTrigger(makeClickEvent([]))).toEqual({ type: 'Click' });
+    expect(clickDefinition.detectTrigger(makeClickEvent(['row', 'flex']))).toEqual({ type: 'Click' });
   });
 
   it('isInsideOpenSelectionSurface negative space unchanged (generic layout)', () => {

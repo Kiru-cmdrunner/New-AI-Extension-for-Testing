@@ -1,0 +1,55 @@
+{
+  "apps": [
+    {
+      "id": "app-eketi1",
+      "origin": "http://127.0.0.1:8177/",
+      "label": "127.0.0.1:8177",
+      "sig": 8,
+      "sessions": 1
+    }
+  ],
+  "sessions": [
+    "session-1787307872402"
+  ],
+  "actions": [
+    {
+      "name": null,
+      "wf": 1
+    },
+    {
+      "name": null,
+      "wf": 1
+    },
+    {
+      "name": null,
+      "wf": 1
+    },
+    {
+      "name": null,
+      "wf": 1
+    },
+    {
+      "name": null,
+      "wf": 1
+    },
+    {
+      "name": null,
+      "wf": 1
+    },
+    {
+      "name": null,
+      "wf": 1
+    },
+    {
+      "name": null,
+      "wf": 1
+    }
+  ],
+  "describe": {
+    "id": "app-eketi1",
+    "origin": "http://127.0.0.1:8177/",
+    "signatures": 8,
+    "sessions": 1,
+    "gaps": 4
+  }
+}

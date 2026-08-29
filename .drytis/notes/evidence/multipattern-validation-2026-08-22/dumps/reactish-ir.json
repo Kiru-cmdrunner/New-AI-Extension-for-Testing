@@ -1,0 +1,168 @@
+{
+  "environment": {
+    "baseUrl": "http://127.0.0.1:8177",
+    "browser": "chrome",
+    "startUrl": "http://127.0.0.1:8177/reactish",
+    "viewport": {
+      "height": 437,
+      "width": 780
+    }
+  },
+  "steps": [
+    {
+      "action": "selectDate",
+      "assertions": [],
+      "description": "Select Sat, 22 Aug in the Choose a date",
+      "executionParameters": {
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "timeoutMs": 30000,
+        "waitStrategy": "visible"
+      },
+      "id": "step-0001",
+      "input": "Sat, 22 Aug",
+      "order": 0,
+      "plainEnglish": "Select Sat, 22 Aug in the Choose a date",
+      "sourceEventId": "evt-pmt32g9ok-5",
+      "target": {
+        "elementId": "4f46596a-5e16-4f77-9ecc-c62bf8164dea",
+        "elementName": "Choose a date",
+        "kind": "element",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "confidence": 0.62,
+            "priority": 1,
+            "type": "accessibleName",
+            "value": "Choose a date"
+          },
+          {
+            "confidence": 0.62,
+            "priority": 2,
+            "type": "label",
+            "value": "Choose a date"
+          },
+          {
+            "confidence": 0.35,
+            "priority": 3,
+            "type": "css",
+            "value": "body > main > div:nth-of-type(1) > input"
+          }
+        ]
+      }
+    },
+    {
+      "action": "fill",
+      "assertions": [],
+      "description": "Fill \"Bengaluru\" in the Type a city",
+      "executionParameters": {
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "timeoutMs": 30000,
+        "waitStrategy": "visible"
+      },
+      "id": "step-0002",
+      "input": "Bengaluru",
+      "order": 1,
+      "plainEnglish": "Fill \"Bengaluru\" in the Type a city",
+      "sourceEventId": "evt-pmt32g9ok-36",
+      "target": {
+        "elementId": "ac0e9124-bf0f-472e-8bd1-98e49338cb17",
+        "elementName": "Type a city",
+        "kind": "element",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "confidence": 0.62,
+            "priority": 1,
+            "type": "accessibleName",
+            "value": "Type a city"
+          },
+          {
+            "confidence": 0.62,
+            "priority": 2,
+            "type": "label",
+            "value": "Type a city"
+          },
+          {
+            "confidence": 0.35,
+            "priority": 3,
+            "type": "css",
+            "value": "body > main > div:nth-of-type(2) > input"
+          }
+        ]
+      }
+    },
+    {
+      "action": "click",
+      "assertions": [
+        {
+          "comparison": "contains",
+          "expectedValue": "Planningâ€¦",
+          "property": null,
+          "severity": "soft",
+          "target": {
+            "elementId": "obs-2-0",
+            "elementName": "Planningâ€¦",
+            "kind": "element",
+            "pageOrComponent": "main",
+            "resolvedLocators": [
+              {
+                "confidence": 0.7,
+                "priority": 1,
+                "type": "css",
+                "value": "#app"
+              }
+            ]
+          },
+          "type": "textMatch"
+        }
+      ],
+      "description": "Click the Plan trip",
+      "executionParameters": {
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "timeoutMs": 30000,
+        "waitStrategy": "visible"
+      },
+      "id": "step-0003",
+      "input": null,
+      "order": 2,
+      "plainEnglish": "Click the Plan trip",
+      "sourceEventId": "evt-pmt32g9ok-57",
+      "target": {
+        "elementId": "7f6d5588-7dc4-4aa1-b830-cd465c1ec5d8",
+        "elementName": "Plan trip",
+        "kind": "element",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "confidence": 0.62,
+            "priority": 1,
+            "type": "accessibleName",
+            "value": "Plan trip"
+          },
+          {
+            "confidence": 0.35,
+            "priority": 2,
+            "type": "css",
+            "value": "body > main > button"
+          },
+          {
+            "confidence": 0.35,
+            "priority": 3,
+            "type": "xpath",
+            "value": "//body/main/button"
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    "reactish"
+  ],
+  "testCaseId": "tc-642d1b4b",
+  "testCaseVersionId": "tcv-642d1b4b",
+  "testCaseVersionNumber": 1,
+  "title": "Recorded Test"
+}

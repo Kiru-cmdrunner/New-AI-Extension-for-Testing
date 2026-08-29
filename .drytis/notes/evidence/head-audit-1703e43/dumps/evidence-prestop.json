@@ -1,0 +1,202 @@
+[
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "te": [
+      "after",
+      "before",
+      "focusMovement",
+      "identity",
+      "identityCapturedAt"
+    ],
+    "hasAE": true,
+    "net": 0,
+    "rs": null,
+    "surfaces": 0
+  },
+  {
+    "t": "TextEntry",
+    "end": "consequence-settled",
+    "te": [
+      "after",
+      "before",
+      "focusMovement",
+      "identity",
+      "identityCapturedAt"
+    ],
+    "hasAE": true,
+    "net": 0,
+    "rs": {
+      "url": "http://127.0.0.1:8121/",
+      "items": [
+        {
+          "k": "collection",
+          "n": 3,
+          "e": null,
+          "p": "body > ul#results"
+        },
+        {
+          "k": "entity",
+          "n": null,
+          "e": null,
+          "p": "body > ul#results > li"
+        }
+      ]
+    },
+    "surfaces": 0
+  },
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "te": [
+      "after",
+      "before",
+      "focusMovement",
+      "identity",
+      "identityCapturedAt"
+    ],
+    "hasAE": true,
+    "net": 0,
+    "rs": null,
+    "surfaces": 0
+  },
+  {
+    "t": "Click",
+    "end": "consequence-settled",
+    "te": [
+      "after",
+      "before",
+      "focusMovement",
+      "identity",
+      "identityCapturedAt"
+    ],
+    "hasAE": true,
+    "net": 1,
+    "rs": {
+      "url": "http://127.0.0.1:8121/",
+      "items": [
+        {
+          "k": "collection",
+          "n": 3,
+          "e": null,
+          "p": "body > ul#results"
+        },
+        {
+          "k": "entity",
+          "n": null,
+          "e": null,
+          "p": "body > ul#results > li"
+        }
+      ]
+    },
+    "surfaces": 0
+  },
+  {
+    "t": "Navigation",
+    "end": "stabilized",
+    "te": [
+      "after",
+      "before",
+      "focusMovement",
+      "identity",
+      "identityCapturedAt"
+    ],
+    "hasAE": true,
+    "net": 2,
+    "rs": {
+      "url": "http://127.0.0.1:8121/cart",
+      "items": [
+        {
+          "k": "counter",
+          "n": 0,
+          "e": null,
+          "p": "body > p > span#cart-count"
+        },
+        {
+          "k": "collection",
+          "n": null,
+          "e": null,
+          "p": "body > ul#cart-items"
+        }
+      ]
+    },
+    "surfaces": 0
+  },
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "te": [
+      "after",
+      "before",
+      "focusMovement",
+      "identity",
+      "identityCapturedAt"
+    ],
+    "hasAE": true,
+    "net": 0,
+    "rs": null,
+    "surfaces": 0
+  },
+  {
+    "t": "Click",
+    "end": "consequence-settled",
+    "te": [
+      "after",
+      "before",
+      "focusMovement",
+      "identity",
+      "identityCapturedAt"
+    ],
+    "hasAE": true,
+    "net": 0,
+    "rs": {
+      "url": "http://127.0.0.1:8121/cart",
+      "items": [
+        {
+          "k": "counter",
+          "n": 1,
+          "e": null,
+          "p": "body > p > span#cart-count"
+        },
+        {
+          "k": "collection",
+          "n": 1,
+          "e": null,
+          "p": "body > ul#cart-items"
+        }
+      ]
+    },
+    "surfaces": 0
+  },
+  {
+    "t": "Click",
+    "end": "consequence-settled",
+    "te": [
+      "after",
+      "before",
+      "focusMovement",
+      "identity",
+      "identityCapturedAt"
+    ],
+    "hasAE": true,
+    "net": 0,
+    "rs": {
+      "url": "http://127.0.0.1:8121/cart",
+      "items": [
+        {
+          "k": "counter",
+          "n": 2,
+          "e": null,
+          "p": "body > p > span#cart-count"
+        },
+        {
+          "k": "collection",
+          "n": 2,
+          "e": null,
+          "p": "body > ul#cart-items"
+        }
+      ]
+    },
+    "surfaces": 0
+  }
+]

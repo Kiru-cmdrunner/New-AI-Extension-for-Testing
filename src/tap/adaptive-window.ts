@@ -34,7 +34,9 @@ export type WindowEndReason =
   | 'displaced'
   | 'lifecycle-complete'
   | 'lifecycle-abandoned'
-  | 'page-reload';
+  | 'page-reload'
+  /** B7-P1: hover target removed mid-gesture (§5.1.4 terminal). */
+  | 'element-removed';
 
 // ── AdaptiveWindow ───────────────────────────────────────────────────
 
@@ -275,6 +277,33 @@ export class AdaptiveWindow {
       clearTimeout(this.stabilizationTimer);
       this.stabilizationTimer = null;
     }
+    this.scheduleStabilization();
+  }
+
+  /**
+   * B7-P1 (R-5): hover settle entry — identical to settleEntry EXCEPT the
+   * max-duration cap re-arms from SETTLE ENTRY (a fresh full budget),
+   * never measured from OPEN. A hover gesture that legitimately lasted
+   * longer than maxDuration (holdOpen suspends the cap during the gesture,
+   * by design) must not insta-close the moment it enters settle mode.
+   */
+  settleEntryFromNow(canClose?: () => boolean): void {
+    if (!this.isOpen) return;
+    // Release the hold WITHOUT the from-open re-arm, then install a fresh
+    // full-budget cap from NOW.
+    this.holdOpen = false;
+    if (this.maxDurationTimer) {
+      clearTimeout(this.maxDurationTimer);
+      this.maxDurationTimer = null;
+    }
+    if (canClose) this.canClose = canClose;
+    if (this.stabilizationTimer) {
+      clearTimeout(this.stabilizationTimer);
+      this.stabilizationTimer = null;
+    }
+    this.maxDurationTimer = setTimeout(() => {
+      this.close('max-duration');
+    }, this.maxDuration);
     this.scheduleStabilization();
   }
 

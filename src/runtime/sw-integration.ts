@@ -24,6 +24,10 @@ import type {
 } from '../shared/component-types';
 import type { BehavioralEvidence, NetworkActivity } from '../shared/behavioral-evidence-types';
 import { elementKey } from '../definitions/patterns';
+// 7.4-B6.1 tier C: the ONE canonical terminal-Enter derivation shared with
+// the TextEntry definition (audit m-1) — tier N (nav-flush hook) and tier C
+// (STOP rescue) must recognize the Enter through the same pure function.
+import { terminalEnterMemberOf } from '../definitions/text-entry';
 import type { ElementIdentity } from '../shared/types';
 import type { DomContext } from '../shared/component-types';
 import {
@@ -446,24 +450,37 @@ function cancelEvidenceTimeout(interactionId: string): void {
  * Sent via chrome.tabs.sendMessage to target the active tab's content script.
  */
 function sendLifecycleBound(ctx: ComponentContext): void {
-  chrome.tabs
-    .query({ active: true, currentWindow: true })
-    .then((tabs) => {
-      if (tabs.length === 0 || !tabs[0].id) return;
-      chrome.tabs.sendMessage(tabs[0].id, {
-        type: 'LIFECYCLE_BOUND',
-        payload: {
-          lifecycleId: ctx.lifecycleId,
-          triggerEventId: ctx.triggerEvent.eventId,
-          interactionType: ctx.type,
-        },
-      }).catch(() => {
-        // Content script may not be injected yet — non-fatal
-      });
-    })
-    .catch(() => {
-      // Tab query failed — non-fatal
+  // B7-P2: route to the lifecycle's OWN capture-origin tab. The active-tab
+  // query missed whenever the recording tab was not focused (sidepanel in
+  // another tab/window, multi-tab recording) — the binding then never
+  // arrived and the window lived until STOP (R-2 held-open), delivering
+  // evidence too late for the interaction's evidence attach.
+  const origin = ctx.triggerEvent?.captureOrigin as { tabId?: number } | undefined;
+  const send = (tabId: number) => {
+    chrome.tabs.sendMessage(tabId, {
+      type: 'LIFECYCLE_BOUND',
+      payload: {
+        lifecycleId: ctx.lifecycleId,
+        triggerEventId: ctx.triggerEvent.eventId,
+        interactionType: ctx.type,
+      },
+    }).catch(() => {
+      // Content script may not be injected yet — non-fatal
     });
+  };
+  if (typeof origin?.tabId === 'number') {
+    send(origin.tabId);
+  } else {
+    chrome.tabs
+      .query({ active: true, currentWindow: true })
+      .then((tabs) => {
+        if (tabs.length === 0 || !tabs[0].id) return;
+        send(tabs[0].id);
+      })
+      .catch(() => {
+        // Tab query failed — non-fatal
+      });
+  }
 }
 
 /**
@@ -483,28 +500,41 @@ function sendFinalizeEvidence(interaction: ComponentInteraction): void {
     }
   }
 
-  chrome.tabs
-    .query({ active: true, currentWindow: true })
-    .then((tabs) => {
-      if (tabs.length === 0 || !tabs[0].id) return;
-      chrome.tabs.sendMessage(tabs[0].id, {
-        type: 'FINALIZE_EVIDENCE',
-        payload: {
-          lifecycleId: interaction.lifecycleId,
-          interactionId: interaction.interactionId,
-          interactionType: interaction.type,
-          eventIds,
-          metadata: interaction.metadata ?? {},
-          endState: interaction.endState,
-          triggerIdentity: interaction.trigger ?? undefined,
-        },
-      }).catch(() => {
-        // Content script may have been destroyed (navigation) — non-fatal
-      });
-    })
-    .catch(() => {
-      // Tab query failed — non-fatal
+  // B7-P2: route to the interaction's OWN capture-origin tab (same fix as
+  // sendLifecycleBound). captureOrigin was stamped on the trigger event by
+  // the SW dispatcher (G4-B) and propagated onto metadata (onEmit) — the
+  // metadata copy is the durable form; the triggerEvent is the source.
+  const origin = (interaction.metadata?.captureOrigin ??
+    interaction.triggerEvent?.captureOrigin) as { tabId?: number } | undefined;
+  const send = (tabId: number) => {
+    chrome.tabs.sendMessage(tabId, {
+      type: 'FINALIZE_EVIDENCE',
+      payload: {
+        lifecycleId: interaction.lifecycleId,
+        interactionId: interaction.interactionId,
+        interactionType: interaction.type,
+        eventIds,
+        metadata: interaction.metadata ?? {},
+        endState: interaction.endState,
+        triggerIdentity: interaction.trigger ?? undefined,
+      },
+    }).catch(() => {
+      // Content script may have been destroyed (navigation) — non-fatal
     });
+  };
+  if (typeof origin?.tabId === 'number') {
+    send(origin.tabId);
+  } else {
+    chrome.tabs
+      .query({ active: true, currentWindow: true })
+      .then((tabs) => {
+        if (tabs.length === 0 || !tabs[0].id) return;
+        send(tabs[0].id);
+      })
+      .catch(() => {
+        // Tab query failed — non-fatal
+      });
+  }
 }
 
 /**
@@ -670,6 +700,30 @@ export function attachEvidenceToInteraction(
 
   // Helper: try to attach evidence to a specific interaction
   const tryAttach = (interaction: ComponentInteraction): boolean => {
+    /**
+     * B7-P4 provenance-regression amendment (C-2, 2026-08-29): replacement
+     * must never strip a delivered `window.openedBatch`. The ordinal is the
+     * ownership boundary rule (b) consumes in the shared ownership pass; a
+     * richer-but-ordinal-less incoming window (late network display
+     * supplement, synthetic re-delivery, any future thinner shape) carrying
+     * over the existing boundary preserves the fact-granularity guard for
+     * exactly the interactions that need it. Carried forward ONLY when the
+     * incoming window lacks the field — an incoming window WITH its own
+     * ordinal is authoritative for its own facts (it was stamped at its own
+     * open/click instant).
+     */
+    const carryOrdinal = (incoming: BehavioralEvidence): BehavioralEvidence =>
+      interaction.behavioralEvidence?.window?.openedBatch !== undefined &&
+      incoming.window?.openedBatch === undefined
+        ? {
+            ...incoming,
+            window: {
+              ...incoming.window,
+              openedBatch: interaction.behavioralEvidence.window.openedBatch,
+            },
+          }
+        : incoming;
+
     if (!interaction.behavioralEvidence) {
       // No existing evidence — attach directly
       interaction.behavioralEvidence = evidence;
@@ -708,7 +762,7 @@ export function attachEvidenceToInteraction(
       evidence.targetEvidence != null
     ) {
       interaction.behavioralEvidence = {
-        ...evidence,
+        ...carryOrdinal(evidence),
         applicationEvidence: {
           ...evidence.applicationEvidence,
           // G5-E: carry over any network rows the placeholder had
@@ -738,13 +792,15 @@ export function attachEvidenceToInteraction(
     const newScore = scoreEvidenceRichness(evidence);
     if (newScore > existingScore) {
       // But preserve any network activity from the existing evidence
-      // (G5-E: requestId-first dedup across both capture paths)
+      // (G5-E: requestId-first dedup across both capture paths) — and the
+      // ownership boundary (C-2), per carryOrdinal above.
       const merged = mergeNetworkActivity(
         interaction.behavioralEvidence.applicationEvidence?.networkActivity ?? [],
         evidence.applicationEvidence?.networkActivity ?? [],
       );
+      const replacement = carryOrdinal(evidence);
       interaction.behavioralEvidence = {
-        ...evidence,
+        ...replacement,
         applicationEvidence: {
           ...evidence.applicationEvidence,
           networkActivity: merged,
@@ -1026,6 +1082,18 @@ export function stopRecording(): ComponentInteraction[] {
     runtime.flush();
     persistLiveInteractions();
 
+    // ── 7.4-B6.1 tier C: form-less Enter commit reconciliation ──────
+    // Rescue STOP-interrupted form-less Enter TextEntries whose commit is
+    // proven by recorded application effects (exact network join + one
+    // corroboration class). Runs AFTER flush (the interruptions exist) and
+    // BEFORE projection (rescued interactions suppress their Unclassified
+    // twins via the normal coveredEventIds path — C-1, no ledger rewrite).
+    liveInteractions = reconcileFormlessEnterCommits(
+      liveInteractions,
+      collectStopNetworkRows(),
+    );
+    persistLiveInteractions();
+
     // ── M5: Projection Engine is now authoritative ──────────────────
     // The Projection Engine merges completed interactions (from the runtime)
     // with Unclassified interactions for unclaimed/pending ledger entries.
@@ -1143,6 +1211,143 @@ export function stopRecording(): ComponentInteraction[] {
 }
 
 /**
+ * 7.4-B6.1 tier C — STOP-time reconciliation of form-less Enter commits.
+ *
+ * Spec: .drytis/specs/phase-7-4-b6-1-formless-spa-enter-commit.md §4.3, §5.2.
+ *
+ * A TextEntry interrupted by the STOP flush is rescued to 'completed' ONLY
+ * when BOTH recorded effects exist:
+ *   E-C1 — a network row stamped exactly to the terminal Enter's eventId
+ *          (the Enter keydown is the only primary-class keydown, so an
+ *          app-initiated fetch rides this stamp);
+ *   E-C2 — one corroboration class from the interaction's own evidence:
+ *          viewConfirmation | notificationSurfaceChange | fieldRemoval.
+ *
+ * Purity: reads only recorded data (memberEvents, metadata, behavioral
+ * evidence, the injected network rows). Never re-runs detection, never
+ * touches the ledger (C-1: rescued interactions suppress their Unclassified
+ * twins through the projection's coveredEventIds path), never reorders.
+ *
+ * Returns a NEW array; input interactions are never mutated in place.
+ */
+
+/** Minimal network-row shape tier C needs (satisfied by CompletedWebRequest). */
+export interface TierCNetworkRow {
+  requestId: string;
+  sourceEventId?: string;
+}
+
+/** STOP-time collector: completed requests that carry a stamp. Overridden in tests. */
+let collectStopNetworkRows: () => TierCNetworkRow[] = () => [];
+
+/** Test seam: inject a row collector (default: none — SW wires the real one). */
+export function setTierCNetworkRowCollector(fn: () => TierCNetworkRow[]): void {
+  collectStopNetworkRows = fn;
+}
+
+export function reconcileFormlessEnterCommits(
+  interactions: ComponentInteraction[],
+  networkRows: TierCNetworkRow[],
+): ComponentInteraction[] {
+  // Index rows by their exact stamp — one lookup per candidate.
+  const rowsByStamp = new Map<string, TierCNetworkRow[]>();
+  for (const row of networkRows) {
+    if (!row.sourceEventId) continue;
+    const list = rowsByStamp.get(row.sourceEventId);
+    if (list) list.push(row);
+    else rowsByStamp.set(row.sourceEventId, [row]);
+  }
+
+  return interactions.map((interaction) => {
+    if (interaction.type !== 'TextEntry') return interaction;
+    if (interaction.endState !== 'interrupted') return interaction;
+    // Already committed (tier N at nav flush; B6 submit) — untouchable.
+    if (interaction.metadata?.['commitSignal']) return interaction;
+
+    // P1 — form-less (owner-form join on the trigger's own capture context).
+    const triggerDom = interaction.triggerEvent?.domContext as DomContext | undefined;
+    if (triggerDom?.formElementKey != null && triggerDom.formElementKey !== '') return interaction;
+
+    // P2 — user typed a non-empty value.
+    if (interaction.metadata?.['userTyped'] !== true) return interaction;
+    const typed = interaction.metadata['typedValue'] ?? interaction.metadata['textValue'];
+    if (typeof typed !== 'string' || typed === '') return interaction;
+
+    // P3/P4 — the ONE canonical terminal-Enter derivation (audit m-1:
+    // both tiers must recognize the Enter through the same pure recorded-
+    // data function). Includes the real-Chrome exemption for the browser's
+    // implicit `change` after Enter (Chrome fires change on the same
+    // element between the Enter keydown and the effect — carries the same
+    // value, never new typing; pinned by tests/definitions/…7-4-b6-1 AC1e2).
+    const enter = terminalEnterMemberOf(interaction.memberEvents ?? [], interaction.trigger);
+    if (!enter) return interaction;
+
+    // E-C1 — exact network join on the Enter's eventId.
+    const stamped = rowsByStamp.get(enter.eventId);
+    if (!stamped || stamped.length === 0) return interaction;
+
+    // E-C2 — one corroboration class from the interaction's own evidence.
+    const corroboration = corroborationClassOf(interaction);
+    if (!corroboration) return interaction;
+
+    // Rescue — a new object; the original stays untouched (input purity).
+    return {
+      ...interaction,
+      endState: 'completed',
+      metadata: {
+        ...interaction.metadata,
+        commitSignal: 'network',
+        committedValue: typed,
+        enterCause: true,
+        corroboration,
+        networkCommitRequestIds: stamped.slice(0, 5).map((r) => r.requestId),
+      },
+    };
+  });
+}
+
+/**
+ * E-C2 corroboration classes, checked in spec order. Each is a recorded
+ * evidence class on the interaction's own behavioral evidence — no DOM, no
+ * wall-clock, no interpretation beyond the class definitions in the spec.
+ */
+function corroborationClassOf(
+  interaction: ComponentInteraction,
+): 'viewConfirmation' | 'notificationSurfaceChange' | 'fieldRemoval' | null {
+  const app = interaction.behavioralEvidence?.applicationEvidence;
+  if (!app) return null;
+
+  // viewConfirmation — a recorded SPA navigation in the window (the
+  // NavigationSignalExtractor view-change evidence class).
+  if (app.navigation && app.navigation.length > 0) return 'viewConfirmation';
+
+  // notificationSurfaceChange — an alert/status/log surface appeared or
+  // disappeared in the window (NotificationSignalExtractor's class).
+  const notificationRole = (r: string | null | undefined) =>
+    r === 'alert' || r === 'status' || r === 'log';
+  if (
+    (app.newSurfaces ?? []).some((s) => notificationRole(s.ariaRole)) ||
+    (app.removedSurfaces ?? []).some((s) => notificationRole(s.ariaRole))
+  ) {
+    return 'notificationSurfaceChange';
+  }
+
+  // fieldRemoval — the field (or a container holding it) was removed from
+  // the DOM in the window (childList removal whose recorded target path
+  // mentions the field's id/class — DOM paths don't carry `#` selectors).
+  const css = interaction.trigger.cssSelector ?? '';
+  const idOrClass = css.replace(/^[#.]/, '').toLowerCase();
+  if (idOrClass && (app.domChanges ?? []).some(
+    (d) => d.types.includes('childList') && d.removedNodesCount > 0 &&
+      d.targetPath.toLowerCase().includes(idOrClass),
+  )) {
+    return 'fieldRemoval';
+  }
+
+  return null;
+}
+
+/**
  * Process an observed event from the content script.
  * Returns the interactions emitted by this event.
  */
@@ -1184,6 +1389,53 @@ export function processObservedEvent(
 /**
  * Get all live interactions accumulated so far.
  */
+/**
+ * B7-P2: live lifecycle stack (trigger-first) for the active runtime —
+ * read-only view used by the SW's pre-STOP hover evidence drain gate.
+ * Empty when no runtime exists (not recording / already stopped).
+ */
+export function getRuntimeLiveLifecycles(): Array<{ id: string; trigger?: unknown; type?: string }> {
+  return runtime?.getLiveLifecycles() ?? [];
+}
+
+/**
+ * B7-P2 §5.2.2 T4 (target-removed): SW-side consumer of the CS
+ * TRIGGER_REMOVED notification. Resolves the join (lifecycleId exact,
+ * triggerEventId fallback for the R-2 unbound-window race) and completes
+ * the lifecycle through the runtime's structural terminal — endState
+ * 'completed', metadata.terminal 'target-removed' — when the definition
+ * declares completesOnTriggerRemoved (Hover).
+ *
+ * The emitted interaction flows through config.onEmit (enrich → push to
+ * liveInteractions → persist → FINALIZE_EVIDENCE to the CS) exactly like
+ * any other terminal, so evidence delivery and panel broadcast are the
+ * standard path. Returns the number of interactions completed (0 or 1).
+ */
+export function handleTriggerRemovedNotification(payload: {
+  lifecycleId?: string | null;
+  triggerEventId?: string;
+}): number {
+  if (!runtime || !isRecording) return 0;
+  const resolved = runtime.resolveTriggerRemovedLifecycle({
+    lifecycleId: payload.lifecycleId ?? undefined,
+    triggerEventId: payload.triggerEventId ?? undefined,
+  });
+  if (!resolved) return 0;
+  const emitted = runtime.completeTriggerRemoved(resolved);
+  // Panel broadcast mirrors handleObservedEvent's emitted loop — onEmit
+  // already persisted/finalized; the live display update is the seam's
+  // responsibility so the SW switch case stays one line.
+  for (const interaction of emitted) {
+    chrome.runtime.sendMessage({
+      type: 'INTERACTION_CAPTURED',
+      interaction,
+    }).catch(() => {
+      // Side panel may not be open — ignore
+    });
+  }
+  return emitted.length;
+}
+
 export function getLiveInteractions(): ComponentInteraction[] {
   return [...liveInteractions];
 }

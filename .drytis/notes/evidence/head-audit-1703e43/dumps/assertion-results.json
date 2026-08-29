@@ -1,0 +1,47 @@
+[
+  {
+    "step": "step-0001",
+    "actualValue": 0,
+    "expectedValue": 3,
+    "message": "Count 0 did not match \"3\"",
+    "passed": false,
+    "severity": "soft",
+    "type": "count"
+  },
+  {
+    "step": "step-0001",
+    "actualValue": true,
+    "expectedValue": null,
+    "message": "Element is present",
+    "passed": true,
+    "severity": "soft",
+    "type": "presence"
+  },
+  {
+    "step": "step-0002",
+    "actualValue": 3,
+    "expectedValue": 3,
+    "message": "Count matched",
+    "passed": true,
+    "severity": "soft",
+    "type": "count"
+  },
+  {
+    "step": "step-0002",
+    "actualValue": true,
+    "expectedValue": null,
+    "message": "Element is present",
+    "passed": true,
+    "severity": "soft",
+    "type": "presence"
+  },
+  {
+    "step": "step-0003",
+    "actualValue": null,
+    "expectedValue": "0 items",
+    "message": "Element not found — cannot evaluate textMatch",
+    "passed": false,
+    "severity": "soft",
+    "type": "textMatch"
+  }
+]

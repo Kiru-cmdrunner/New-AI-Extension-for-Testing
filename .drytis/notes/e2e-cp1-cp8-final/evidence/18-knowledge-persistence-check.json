@@ -1,0 +1,220 @@
+{
+  "verno": 30,
+  "apps": [
+    {
+      "appId": "app-3l9zqg",
+      "origin": "http://127.0.0.1:8098/search.html",
+      "label": "127.0.0.1:8098",
+      "firstSeenAt": 1786952031358,
+      "lastActiveAt": 1786952066846,
+      "sessionCount": 3,
+      "lastSessionId": "session-1786952066785"
+    }
+  ],
+  "sessions": [
+    {
+      "key": "app-3l9zqg:session-1786952031337",
+      "appId": "app-3l9zqg",
+      "sessionId": "session-1786952031337",
+      "seq": 1,
+      "generatedAtMs": 1786952031358,
+      "episodeCount": 7,
+      "edgeCount": 21,
+      "gapCount": 2,
+      "coverage": {
+        "totalInteractions": 11,
+        "anchoredInteractions": 7,
+        "memberInteractions": 3,
+        "malformedInteractions": 0,
+        "totalNetworkRows": 11,
+        "attributedNetworkRows": 11,
+        "totalObservations": 7,
+        "attributedObservations": 5,
+        "unattributedConsequences": 2,
+        "provenanceLinks": 0
+      },
+      "viewSetHash": "261010b6",
+      "signatureSetHash": "d8435ab5",
+      "warnings": [
+        {
+          "code": "unknown-tab-resolution",
+          "message": "One or more anchors carry no captureOrigin.tabId; they were grouped into the shared null-tab scope. Membership decisions involving them may be coarser than tab-scoped ones.",
+          "refs": [
+            "ep-int-10",
+            "ep-int-11",
+            "ep-int-12",
+            "ep-int-13",
+            "ep-int-14"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "app-3l9zqg:session-1786952051298",
+      "appId": "app-3l9zqg",
+      "sessionId": "session-1786952051298",
+      "seq": 2,
+      "generatedAtMs": 1786952051305,
+      "episodeCount": 7,
+      "edgeCount": 20,
+      "gapCount": 2,
+      "coverage": {
+        "totalInteractions": 11,
+        "anchoredInteractions": 7,
+        "memberInteractions": 3,
+        "malformedInteractions": 0,
+        "totalNetworkRows": 11,
+        "attributedNetworkRows": 11,
+        "totalObservations": 7,
+        "attributedObservations": 5,
+        "unattributedConsequences": 2,
+        "provenanceLinks": 0
+      },
+      "viewSetHash": "261010b6",
+      "signatureSetHash": "d8435ab5",
+      "warnings": [
+        {
+          "code": "unknown-tab-resolution",
+          "message": "One or more anchors carry no captureOrigin.tabId; they were grouped into the shared null-tab scope. Membership decisions involving them may be coarser than tab-scoped ones.",
+          "refs": [
+            "ep-int-10",
+            "ep-int-11",
+            "ep-int-12",
+            "ep-int-13",
+            "ep-int-14"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "app-3l9zqg:session-1786952066785",
+      "appId": "app-3l9zqg",
+      "sessionId": "session-1786952066785",
+      "seq": 3,
+      "generatedAtMs": 1786952066792,
+      "episodeCount": 5,
+      "edgeCount": 14,
+      "gapCount": 2,
+      "coverage": {
+        "totalInteractions": 8,
+        "anchoredInteractions": 5,
+        "memberInteractions": 2,
+        "malformedInteractions": 0,
+        "totalNetworkRows": 10,
+        "attributedNetworkRows": 10,
+        "totalObservations": 5,
+        "attributedObservations": 3,
+        "unattributedConsequences": 2,
+        "provenanceLinks": 0
+      },
+      "viewSetHash": "c1c05972",
+      "signatureSetHash": "20af379d",
+      "warnings": [
+        {
+          "code": "unknown-tab-resolution",
+          "message": "One or more anchors carry no captureOrigin.tabId; they were grouped into the shared null-tab scope. Membership decisions involving them may be coarser than tab-scoped ones.",
+          "refs": [
+            "ep-int-7",
+            "ep-int-8",
+            "ep-int-9",
+            "ep-int-10"
+          ]
+        }
+      ]
+    }
+  ],
+  "workflows": [
+    {
+      "key": "app-3l9zqg:wf-pattern-33b86ae1",
+      "appId": "app-3l9zqg",
+      "patternId": "wf-pattern-33b86ae1",
+      "label": "Search products",
+      "canonicalSteps": [
+        "Search products",
+        "Fetch data",
+        "Search products",
+        "Go",
+        "Go",
+        "Aurora Wireless Headphones — $89.99\nOver-ear ANC headphones · ★4.5",
+        "Aurora Wireless Headphones — $89.99\nOver-ear ANC headphones · ★4.5",
+        "http://127.0.0.1:8098/product.html?id=P100",
+        "Add to cart",
+        "Submit form",
+        "http://127.0.0.1:8098/cart.html?added=P100"
+      ],
+      "viewSequence": [
+        "search-results",
+        "cart"
+      ],
+      "sessionIds": [
+        "session-1786952051298"
+      ],
+      "occurrenceCount": 1,
+      "instances": [
+        "wf-session-1786952051298-0"
+      ],
+      "firstSeenAt": 1786952051363,
+      "lastSeenAt": 1786952051363
+    },
+    {
+      "key": "app-3l9zqg:wf-pattern-840f683d",
+      "appId": "app-3l9zqg",
+      "patternId": "wf-pattern-840f683d",
+      "label": "Search products",
+      "canonicalSteps": [
+        "Search products",
+        "Search products",
+        "Fetch data",
+        "Go",
+        "Go",
+        "Aurora Wireless Headphones — $89.99\nOver-ear ANC headphones · ★4.5",
+        "Aurora Wireless Headphones — $89.99\nOver-ear ANC headphones · ★4.5",
+        "http://127.0.0.1:8098/product.html?id=P100",
+        "Add to cart",
+        "Fetch data",
+        "http://127.0.0.1:8098/cart.html?added=P100"
+      ],
+      "viewSequence": [
+        "search-results",
+        "cart"
+      ],
+      "sessionIds": [
+        "session-1786952031337"
+      ],
+      "occurrenceCount": 1,
+      "instances": [
+        "wf-session-1786952031337-0"
+      ],
+      "firstSeenAt": 1786952031422,
+      "lastSeenAt": 1786952031422
+    },
+    {
+      "key": "app-3l9zqg:wf-pattern-bb79e542",
+      "appId": "app-3l9zqg",
+      "patternId": "wf-pattern-bb79e542",
+      "label": "Search products",
+      "canonicalSteps": [
+        "Search products",
+        "Fetch data",
+        "Search products",
+        "Go",
+        "Go",
+        "Aurora Wireless Headphones — $89.99\nOver-ear ANC headphones · ★4.5",
+        "Aurora Wireless Headphones — $89.99\nOver-ear ANC headphones · ★4.5",
+        "http://127.0.0.1:8098/product.html?id=P100"
+      ],
+      "viewSequence": [
+        "search-results"
+      ],
+      "sessionIds": [
+        "session-1786952066785"
+      ],
+      "occurrenceCount": 1,
+      "instances": [
+        "wf-session-1786952066785-0"
+      ],
+      "firstSeenAt": 1786952066846,
+      "lastSeenAt": 1786952066846
+    }
+  ]
+}

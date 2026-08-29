@@ -87,19 +87,23 @@ describe('7.3 W-B AC3 — Click claim gate for QA auto-id targets', () => {
     expect(trigger).toEqual({ type: 'Click' });
   });
 
-  it('rejects a plain DIV with NO QA instrumentation (honest Unclassified)', () => {
+  it('claims a plain DIV with NO QA instrumentation (v1.2 flip — qualification is capture-time)', () => {
+    // Click Qualification v1.2 §8.5: appearance/instrumentation is no longer
+    // evidence of click validity. A qualified trusted click on a plain DIV
+    // is a Click. Invalid clicks are gated at capture
+    // (tests/runtime/click-qualification-step2-wiring.test.ts S2-1/S2-2).
     const trigger = clickDefinition.detectTrigger(eventOf(baseIdentity()));
-    expect(trigger).toBeNull();
+    expect(trigger).toEqual({ type: 'Click' });
   });
 
-  it('empty-string auto-id does NOT claim (normalized to null upstream)', () => {
-    // Honest-absence guard: identity layer normalizes '' → null; the claim
-    // gate treats null as absent. Simulating a raw '' field defensively
-    // should not claim either — presence means a real value.
+  it('empty-string auto-id → still claims Click (v1.2 — auto-id no longer gates)', () => {
+    // The ''-normalization guard is obsolete as a claim rule; kept as a
+    // stability check that degenerate identity fields don't crash the
+    // unconditional claim.
     const trigger = clickDefinition.detectTrigger(
       eventOf(baseIdentity({ autoId: '' } as Partial<ElementIdentity>)),
     );
-    expect(trigger).toBeNull();
+    expect(trigger).toEqual({ type: 'Click' });
   });
 
   it('interactive tag still claims via isInteractiveElement (untouched path)', () => {

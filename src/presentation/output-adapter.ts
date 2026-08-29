@@ -31,6 +31,152 @@
  */
 
 import type { ComponentInteraction, InteractionType } from '../shared/component-types';
+import { joinsRecordedSurface } from '../shared/surface-join';
+
+// ── B7-P2 §5.2.7: Hover admission — the single semantic gate ────────
+
+/**
+ * Consequence classes admitted for Hover (DC-3 replacement). Each class is
+ * a RECORDED FACT in the hover's own evidence — never a gesture judgment.
+ * The list is the tuning lever (add/remove classes), never a threshold.
+ */
+const HOVER_CONSEQUENCE_CLASSES = [
+  'reveal',
+  'insertion',
+  'removal',
+  'stamped-fetch',
+  'nav',
+  'revert',
+  'pointer-reach',
+] as const;
+
+export type HoverConsequenceClass = (typeof HOVER_CONSEQUENCE_CLASSES)[number];
+
+/**
+ * Derive the hover's consequence classes from its recorded evidence —
+ * B7-P2 §5.2.7 COMPAT BRIDGE. Pure: same evidence, same classes. The
+ * classes are written to metadata.consequenceClasses and drive the derived
+ * metadata.meaningful projection until P4 deletes it.
+ */
+export function deriveConsequenceClasses(
+  interaction: ComponentInteraction,
+): HoverConsequenceClass[] {
+  const ev = interaction.behavioralEvidence;
+  if (!ev) return [];
+  const app = ev.applicationEvidence ?? {
+    newSurfaces: [],
+    domChanges: [],
+    visibilityChanges: [],
+    networkActivity: [],
+    navigation: [],
+  };
+  const classes: HoverConsequenceClass[] = [];
+
+  // reveal — surface emergence 'revealed' OR attribute-driven reveal fact
+  // in this window (§5.2.7). The attribute-driven fact: a state attribute
+  // flipped open on an element — aria-expanded/aria-selected/aria-checked
+  // false→true, aria-hidden true→false, hidden→removed. Recorded shape:
+  // domChanges[].attributeDeltas. A transient flip that reverts before the
+  // window closes (old===new) is NOT a reveal fact — it left no state.
+  const attrReveal = (app.domChanges ?? []).some((c) => {
+    const d = c.attributeDeltas as Record<string, { old: string | null; new: string | null }> | undefined;
+    if (!d) return false;
+    return (
+      (d['aria-expanded']?.old === 'false' && d['aria-expanded']?.new === 'true') ||
+      (d['aria-selected']?.old === 'false' && d['aria-selected']?.new === 'true') ||
+      (d['aria-checked']?.old === 'false' && d['aria-checked']?.new === 'true') ||
+      (d['aria-hidden']?.old === 'true' && (d['aria-hidden']?.new === 'false' || d['aria-hidden']?.new === null)) ||
+      (d['hidden']?.old != null && d['hidden']?.new == null) ||
+      (d['open']?.old === 'false' && d['open']?.new === 'true')
+    );
+  });
+  const reveal = (app.newSurfaces ?? []).some(
+    (s) => s.emergence === 'revealed',
+  ) || attrReveal;
+  if (reveal) classes.push('reveal');
+
+  // insertion / removal — domChange childList counts
+  const insertion = (app.domChanges ?? []).some(
+    (c) => c.addedNodesCount > 0,
+  );
+  if (insertion) classes.push('insertion');
+  const removal = (app.domChanges ?? []).some(
+    (c) => c.removedNodesCount > 0,
+  );
+  if (removal) classes.push('removal');
+
+  // stamped-fetch — network row stamped (T1 secondary) or attributed (T4)
+  // to this lifecycle: a row whose sourceEventId joins the hover's own
+  // events (trigger enter + member enters) is stamped attribution; a row
+  // present in the hover's window with no competing source is attributed.
+  const ownEventIds = new Set<string>();
+  if (interaction.triggerEvent?.eventId) {
+    ownEventIds.add(interaction.triggerEvent.eventId);
+  }
+  for (const m of interaction.memberEvents ?? []) ownEventIds.add(m.eventId);
+  const stampedFetch = (app.networkActivity ?? []).some(
+    (r) => r.sourceEventId != null && ownEventIds.has(r.sourceEventId),
+  );
+  if (stampedFetch) classes.push('stamped-fetch');
+
+  // nav — navigation event recorded in this window
+  const nav = (app.navigation ?? []).length > 0;
+  if (nav) classes.push('nav');
+
+  // revert — settle-mode revert fact after leave: a visibility change
+  // flipping a revealed surface back to hidden is the DOM fact of "the
+  // surface closed". Recorded shape: VisibilityChange { property,
+  // oldValue, newValue }.
+  const revert = (app.visibilityChanges ?? []).some(
+    (v) => {
+      const oldV = v.oldValue;
+      const newV = v.newValue;
+      if (oldV == null || newV == null) return false;
+      return (
+        (v.property === 'display' && oldV !== 'none' && newV === 'none') ||
+        (v.property === 'visibility' && oldV === 'visible' && newV === 'hidden') ||
+        (v.property === 'aria-hidden' && oldV === 'false' && newV === 'true')
+      );
+    },
+  );
+  if (revert) classes.push('revert');
+
+  // pointer-reach — trusted enter on element E where E's identity matches
+  // an insertion/reveal fact recorded in this SAME window (B-3 degraded
+  // join). A raw enter on a pre-existing unrelated element is movement,
+  // not consequence — the false-positive boundary. Join sources: childList
+  // insertions, newSurfaces records, AND attribute-driven reveal facts
+  // (the element that revealed a surface — aria-expanded flip etc).
+  const enters = (interaction.metadata?.pointerPathEnters as
+    | Array<{ target: { cssSelector?: string; xPath?: string; ariaRole?: string } }>
+    | undefined) ?? [];
+  if (enters.length > 0) {
+    const joinTargets = [
+      ...(app.domChanges ?? [])
+        .filter((c) => c.addedNodesCount > 0)
+        .map((c) => ({ path: c.targetPath, ariaRole: null })),
+      ...(app.newSurfaces ?? []).map((s) => ({ path: s.path, ariaRole: s.ariaRole })),
+      ...(app.domChanges ?? [])
+        .filter((c) =>
+          (c.changedAttributes ?? []).includes('aria-expanded') &&
+          (c.attributeDeltas?.['aria-expanded'] as { old?: string; new?: string } | undefined)
+            ?.new === 'true')
+        .map((c) => ({ path: c.targetPath, ariaRole: null })),
+    ];
+    if (joinTargets.length > 0) {
+      // B7-P3 B-3 parity: the join consumes the shared surface-join module
+      // (identity form ↔ DOM-path form). The pre-P3 exact-equality matcher
+      // compared incompatible locator grammars and could never fire in real
+      // Chrome (css `#mega-products` vs path `body > div > div#mega-products`).
+      const reach = enters.some((e) =>
+        joinTargets.some((s) => joinsRecordedSurface(s, e.target).joined),
+      );
+      if (reach) classes.push('pointer-reach');
+    }
+  }
+
+  return classes;
+}
 
 // ── Production Interaction Filter ────────────────────────────────────
 
@@ -103,10 +249,12 @@ export function isProductionInteraction(
       return true;
 
     case 'Hover':
-      // Evidence-based hover: only meaningful hovers pass the production filter.
-      // Transit hovers, cosmetic hovers, and click-suppressed hovers are filtered.
-      if (metadata.meaningful !== true) return false;
-      return true;
+      // B7-P2 §5.2.7: evidence-keyed admission — the single semantic gate.
+      // admit ⇔ endState === 'completed' (checked above) ∧ consequence-
+      // bearing (≥1 recorded fact of class reveal | insertion | removal |
+      // stamped-fetch | nav | revert | pointer-reach). The old stored
+      // metadata.meaningful judgment is DEAD — never gates again.
+      return deriveConsequenceClasses(interaction).length > 0;
 
     case 'Unclassified':
       // Capture-guarantee v2: every deliberate physical action preserved.
@@ -122,11 +270,18 @@ export function isProductionInteraction(
 
 /**
  * Filter an array of interactions, keeping only production-worthy ones.
+ *
+ * B7-P4: the compat bridge is DELETED. The filter no longer writes
+ * `metadata.consequenceClasses` or `metadata.meaningful` — it is a pure
+ * filter again. Every consumer (ledger anchor gate, panel renderer)
+ * derives admission from the recorded evidence via
+ * `deriveConsequenceClasses` at read time; stored P2/P3-era
+ * `consequenceClasses`/`meaningful` values are inert history.
  */
 export function filterProductionInteractions(
   interactions: ComponentInteraction[],
 ): ComponentInteraction[] {
-  return interactions.filter(isProductionInteraction);
+  return interactions.filter((i) => isProductionInteraction(i));
 }
 
 // ── IR Action Mapping ────────────────────────────────────────────────

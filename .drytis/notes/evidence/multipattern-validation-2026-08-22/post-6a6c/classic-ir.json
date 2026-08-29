@@ -1,0 +1,42 @@
+{
+  "n": 3,
+  "steps": [
+    {
+      "a": "fill",
+      "desc": "Fill \"invoice\" in the Keyword",
+      "in": "invoice",
+      "loc": "#q",
+      "asr": [
+        {
+          "ty": "equality",
+          "c": "equals",
+          "exp": "invoice",
+          "prop": "value",
+          "loc": "#q"
+        }
+      ]
+    },
+    {
+      "a": "select",
+      "desc": "Select \"High\" from the Priority",
+      "in": "High",
+      "loc": "#prio",
+      "asr": []
+    },
+    {
+      "a": "click",
+      "desc": "Click the Search",
+      "in": null,
+      "loc": "#btn-search",
+      "asr": [
+        {
+          "ty": "count",
+          "c": "equals",
+          "exp": 2,
+          "prop": null,
+          "loc": "#results > *"
+        }
+      ]
+    }
+  ]
+}

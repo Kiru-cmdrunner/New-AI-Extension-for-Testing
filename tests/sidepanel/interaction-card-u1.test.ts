@@ -250,12 +250,29 @@ describe('P4 — understanding badge on the card', () => {
 // ── P7: show-hidden ─────────────────────────────────────────────────────
 
 describe('P7 — show-hidden suppression chips', () => {
+  // B7-P4 (bridge deletion): a hover is production-worthy when its
+  // RECORDED EVIDENCE derives ≥1 consequence class — the stored
+  // metadata.meaningful judgment no longer admits. This fixture's hover
+  // carries a revealed-surface fact, so it derives 'reveal'.
+  const admittedHoverEvidence = {
+    behavioralEvidence: {
+      applicationEvidence: {
+        newSurfaces: [
+          {
+            path: 'div#menu', tagName: 'DIV', ariaRole: 'menu', accessibleName: 'Menu',
+            shadowContext: null, descendantCount: 1, relativeTime: 10, batchIndex: 1,
+            kind: 'added', emergence: 'revealed',
+          },
+        ],
+      },
+    } as never,
+  };
   const mixed: ComponentInteraction[] = [
     interaction({ interactionId: 'int-1', type: 'TextEntry', metadata: { userTyped: true, textValue: 'hi' } }),
     interaction({ interactionId: 'int-2', type: 'Click', endState: 'abandoned' }),
     interaction({ interactionId: 'int-3', type: 'Dropdown', metadata: { noOpSelection: true } }),
     interaction({ interactionId: 'int-4', type: 'Scroll', metadata: { hasDelta: false } }),
-    interaction({ interactionId: 'int-5', type: 'Hover', metadata: { meaningful: true } }),
+    interaction({ interactionId: 'int-5', type: 'Hover', ...admittedHoverEvidence }),
   ];
 
   it('showHidden=true renders all 5 cards with suppression chips on suppressed only', () => {

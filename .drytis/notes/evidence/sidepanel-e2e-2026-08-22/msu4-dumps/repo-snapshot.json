@@ -1,0 +1,13 @@
+{
+  "title": "Test Repository — CmdRunner",
+  "tabActive": "knowledge",
+  "tabs": [
+    "knowledge",
+    "elements",
+    "classic"
+  ],
+  "text": " Test Repository ✕ Knowledge Elements Classic Tree + New Project Applicationchrome-extension://gndjidfncanlhlonpcabokbdhnikglpn/src/sidepanel/index.html — app-b24aev (1 session)Action signatures1Clicksearch×1activesession-1787404838916 → session-1787404838916 (seq 1–1) · anchor —Consequence profile (1)T4-window · ui · anchor-window — ×1 (hits 1, missed 0) · 60% · active · via behavior/dom-windowRecorded workflows1Keyword×1linked1. keyword2. search productsviews: — · 1 sessions · 1 signatures · 1 instances · last 2026-08-22 13:20Views & transitions0No views yet.Behavior sessions1#1 session-17874048389162026-08-22 13:201 episodes · 1 edges · 1 gap · 1/2 anchored · 1/2 observations attributed · 1 unattributedClick Search · 2 members · success (inconclusive) · sig eca2b05eT4-window · ui · UI observations on int-2: 3 DOM changes · 60% · 0ms · carrier int-2↳ dom ev-evt-pmt4eotdp-7Gaps backlog1no-live-horizon ×1uino-live-horizon2026-08-22 13:20evidence window ev-evt-pmt4eotdp-26 lies outside every uiOwnership horizon · session-1787404838916 · unattr-ui-int-4API seeds0No attributed API requests yet.Outcomes22 successTextEntryKeywordsuccess15%inconclusive · int-2 · session-1787404838916ClickSearchsuccess15%inconclusive · int-4 · session-1787404838916Entities0No entities yet.Collections & counters2collection:body > main > p#result-countunknown0 · max 0collection:body > main > table#results > tbodyunknown10 · max 10Notifications0No notifications yet. No projects yet. Click \"+ New Project\" to get started. ✕ No elements yet. Record a feature to discover elements. ✕ ",
+  "sectionHeaders": [],
+  "krRootChildren": 11,
+  "consoleMarker": "rendered"
+}

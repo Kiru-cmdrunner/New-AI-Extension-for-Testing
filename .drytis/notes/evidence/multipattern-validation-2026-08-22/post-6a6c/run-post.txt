@@ -1,0 +1,292 @@
+multi-pattern app on :8177
+extId = gndjidfncanlhlonpcabokbdhnikglpn
+
+════ PATTERN 1 — P-CLASSIC (server-rendered, #id-only, no data-*) ════
+START_RECORDING → ok
+  typed "invoice" into #q
+  options: [":Any","low:Low","high:High","urgent:Urgent"]
+  target index 2
+  selected high in #prio (target high)
+  clicked Search
+live state: {"count":"2 tickets","status":"Search complete","rows":2}
+STOP_RECORDING → ok
+
+— classic evidence —
+[{"t":"TextEntry","end":"stabilized","rs":"NONE","net":0,"dom":0},{"t":"Dropdown","end":"consequence-settled","rs":"NONE","net":0,"dom":3},{"t":"Click","end":"consequence-settled","rs":"1 items","net":0,"dom":3}]
+PASS — classic: interactions captured :: 3 interactions [TextEntry,Dropdown,Click]
+PASS — classic: select choice captured (Dropdown/selectedValue) :: [{"t":"TextEntry"},{"t":"Dropdown","sv":"High"},{"t":"Click"}]
+resultingStates w/ items: [{"t":"Click","items":[{"k":"collection","n":2,"t":"T-101Invoice not generatedopen","p":"body > main > table#results > tbody","sel":"changed-element-seed"}]}]
+PASS — classic: ≥1 resultingState with items :: 1 w/ RS items (O8: #id-only counters match no selector family)
+
+— classic IR —
+[
+ {
+  "a": "fill",
+  "desc": "Fill \"invoice\" in the Keyword",
+  "in": "invoice",
+  "loc": "#q",
+  "asr": [
+   {
+    "ty": "equality",
+    "c": "equals",
+    "exp": "invoice",
+    "prop": "value",
+    "loc": "#q"
+   }
+  ]
+ },
+ {
+  "a": "select",
+  "desc": "Select \"High\" from the Priority",
+  "in": "High",
+  "loc": "#prio",
+  "asr": []
+ },
+ {
+  "a": "click",
+  "desc": "Click the Search",
+  "in": null,
+  "loc": "#btn-search",
+  "asr": [
+   {
+    "ty": "count",
+    "c": "equals",
+    "exp": 2,
+    "prop": null,
+    "loc": "#results > *"
+   }
+  ]
+ }
+]
+PASS — classic IR: steps generated :: n=3
+PASS — classic IR: fill keeps typed intent :: [{"in":"invoice","desc":"Fill \"invoice\" in the Keyword"}]
+PASS — classic IR: assertions derived :: 2 assertions (equality,count)
+
+════ PATTERN 2 — P-REACTISH (className-only, controlled rewrite, typeahead) ════
+START_RECORDING → ok
+  typed "Sat, 22 Aug" into .date-input
+  typed "ben" into .origin-input
+typeahead options rendered: true
+  clicked typeahead option (Bengaluru)
+  clicked Plan trip
+live state: {"date":"Sat, 05 Sep","badge":"Trip planned","trips":2}
+STOP_RECORDING → ok
+
+— reactish evidence —
+[
+ {
+  "t": "DatePicker",
+  "end": "consequence-settled",
+  "rs": "NONE",
+  "dom": 0
+ },
+ {
+  "t": "TextEntry",
+  "end": "consequence-settled",
+  "text": "Bengaluru",
+  "rs": "NONE",
+  "dom": 1
+ },
+ {
+  "t": "Click",
+  "end": "consequence-settled",
+  "rs": "1 items",
+  "dom": 2
+ },
+ {
+  "t": "Unclassified",
+  "rs": "NONE",
+  "dom": 0
+ }
+]
+PASS — reactish: interactions captured :: 4 [DatePicker,TextEntry,Click,Unclassified]
+FAIL — reactish: controlled-rewrite divergence captured (typed vs committed) :: textValue=undefined (6C: typed "Sat, 22 Aug" is LOST today)
+resultingStates w/ items: [{"t":"Click","items":[{"k":"status-badge","n":null,"t":"Planningâ€¦","p":"body > main#app > p","sel":"[class*=\"pill\" i], [class*=\"chip\" i]"}]}]
+PASS — reactish: ≥1 resultingState with items :: 1 w/ RS items
+
+— reactish IR —
+[
+ {
+  "a": "selectDate",
+  "desc": "Select Sat, 22 Aug in the Choose a date",
+  "in": "Sat, 22 Aug",
+  "loc": "Choose a date",
+  "asr": []
+ },
+ {
+  "a": "fill",
+  "desc": "Fill \"Bengaluru\" in the Type a city",
+  "in": "Bengaluru",
+  "loc": "Type a city",
+  "asr": []
+ },
+ {
+  "a": "click",
+  "desc": "Click the Plan trip",
+  "in": null,
+  "loc": "Plan trip",
+  "asr": [
+   {
+    "ty": "textMatch",
+    "c": "contains",
+    "exp": "Planningâ€¦",
+    "prop": null,
+    "loc": "#app"
+   }
+  ]
+ }
+]
+PASS — reactish IR: date fill = typed intent ("Sat, 22 Aug") :: in=Sat, 22 Aug desc=Select Sat, 22 Aug in the Choose a date
+PASS — reactish IR: assertions derived :: 1 ([{"ty":"textMatch","c":"contains","exp":"Planningâ€¦","prop":null,"loc":"#app"}])
+
+════ PATTERN 3 — P-SHOP (aria icon buttons, steppers, cart state) ════
+START_RECORDING → ok
+  clicked qty+ Notebook (1st)
+  clicked qty+ Notebook (2nd)
+  clicked qty+ Pen
+live state: {"count":"5","total":"Total â‚¹ 520"}
+STOP_RECORDING → ok
+
+— shop evidence —
+[
+ {
+  "t": "Click",
+  "name": "Increase quantity of Notebook",
+  "rs": "counter:3|entity:NotebookSKU-A âˆ’ 2 +|entity:Pen setSKU-B âˆ’ 1 +",
+  "dom": 4
+ },
+ {
+  "t": "Click",
+  "name": "Increase quantity of Notebook",
+  "rs": "counter:4|entity:NotebookSKU-A âˆ’ 3 +|entity:Pen setSKU-B âˆ’ 1 +",
+  "dom": 4
+ },
+ {
+  "t": "Click",
+  "name": "Increase quantity of Pen set",
+  "rs": "counter:5|entity:NotebookSKU-A âˆ’ 3 +|entity:Pen setSKU-B âˆ’ 2 +",
+  "dom": 4
+ }
+]
+PASS — shop: stepper clicks captured w/ aria names :: [{"t":"Click","n":"Increase quantity of Notebook"},{"t":"Click","n":"Increase quantity of Notebook"},{"t":"Click","n":"Increase quantity of Pen set"}]
+resultingStates w/ items: [{"t":"Click","items":[{"k":"counter","n":3,"t":"3","p":"body > header > span","sel":"[data-testid*=\"cart-count\" i], [data-tes"},{"k":"entity","n":null,"t":"NotebookSKU-A âˆ’ 2 +","p":"body > main > div > div","sel":"[data-sku]:not([data-product-id]):not([d"},{"k":"entity","n":null,"t":"Pen setSKU-B âˆ’ 1 +","p":"body > main > div > div","sel":"[data-sku]:not([data-product-id]):not([d"}]},{"t":"Click","items":[{"k":"counter","n":4,"t":"4","p":"body > header > span","sel":"[data-testid*=\"cart-count\" i], [data-tes"},{"k":"entity","n":null,"t":"NotebookSKU-A âˆ’ 3 +","p":"body > main > div > div","sel":"[data-sku]:not([data-product-id]):not([d"},{"k":"entity","n":null,"t":"Pen setSKU-B âˆ’ 1 +","p":"body > main > div > div","sel":"[data-sku]:not([data-product-id]):not([d"}]},{"t":"Click","items":[{"k":"counter","n":5,"t":"5","p":"body > header > span","sel":"[data-testid*=\"cart-count\" i], [data-tes"},{"k":"entity","n":null,"t":"NotebookSKU-A âˆ’ 3 +","p":"body > main > div > div","sel":"[data-sku]:not([data-product-id]):not([d"},{"k":"entity","n":null,"t":"Pen setSKU-B âˆ’ 2 +","p":"body > main > div > div","sel":"[data-sku]:not([data-product-id]):not([d"}]}]
+PASS — shop: ≥1 resultingState with items :: 3 w/ RS items
+
+— shop IR —
+[
+ {
+  "a": "click",
+  "desc": "Click the Increase quantity of Notebook",
+  "in": null,
+  "loc": "Increase quantity of Notebook",
+  "asr": [
+   {
+    "ty": "textMatch",
+    "c": "contains",
+    "exp": "3",
+    "prop": null,
+    "loc": "[aria-label=\"Cart items\"]"
+   },
+   {
+    "ty": "presence",
+    "c": "isTrue",
+    "exp": null,
+    "prop": null,
+    "loc": "[data-sku=\"SKU-A\"]"
+   },
+   {
+    "ty": "presence",
+    "c": "isTrue",
+    "exp": null,
+    "prop": null,
+    "loc": "[data-sku=\"SKU-B\"]"
+   }
+  ]
+ },
+ {
+  "a": "click",
+  "desc": "Click the Increase quantity of Notebook",
+  "in": null,
+  "loc": "Increase quantity of Notebook",
+  "asr": [
+   {
+    "ty": "textMatch",
+    "c": "contains",
+    "exp": "4",
+    "prop": null,
+    "loc": "[aria-label=\"Cart items\"]"
+   },
+   {
+    "ty": "presence",
+    "c": "isTrue",
+    "exp": null,
+    "prop": null,
+    "loc": "[data-sku=\"SKU-A\"]"
+   },
+   {
+    "ty": "presence",
+    "c": "isTrue",
+    "exp": null,
+    "prop": null,
+    "loc": "[data-sku=\"SKU-B\"]"
+   }
+  ]
+ },
+ {
+  "a": "click",
+  "desc": "Click the Increase quantity of Pen set",
+  "in": null,
+  "loc": "Increase quantity of Pen set",
+  "asr": [
+   {
+    "ty": "textMatch",
+    "c": "contains",
+    "exp": "5",
+    "prop": null,
+    "loc": "[aria-label=\"Cart items\"]"
+   },
+   {
+    "ty": "presence",
+    "c": "isTrue",
+    "exp": null,
+    "prop": null,
+    "loc": "[data-sku=\"SKU-A\"]"
+   },
+   {
+    "ty": "presence",
+    "c": "isTrue",
+    "exp": null,
+    "prop": null,
+    "loc": "[data-sku=\"SKU-B\"]"
+   }
+  ]
+ }
+]
+PASS — shop IR: repeated identical qty clicks stay separate :: [{"l":"Increase quantity of Notebook","d":"Click the Increase quantity of Notebook"},{"l":"Increase quantity of Notebook","d":"Click the Increase quantity of Notebook"},{"l":"Increase quantity of Pen set","d":"Click the Increase quantity of Pen set"}]
+PASS — shop IR: assertions derived (cart count/total) :: 9 ([{"ty":"textMatch","loc":"[aria-label=\"Cart items\"]","exp":"3"},{"ty":"presence","loc":"[data-sku=\"SKU-A\"]","exp":null},{"ty":"presence","loc":"[data-sku=\"SKU-B\"]","exp":null},{"ty":"textMatch","loc":"[aria-label=\"Cart items\"]","exp":"4"},{"ty":"presence","loc":"[data-sku=\"SKU-A\"]","exp":null},{"ty":"presence","loc":"[data-sku=\"SKU-B\"]","exp":null},{"ty":"textMatch","loc":"[aria-label=\"Cart items\"]","exp":"5"},{"ty":"presence","loc":"[data-sku=\"SKU-A\"]","exp":null},{"ty":"presence","loc":"[data-sku=\"SKU-B\"]","exp":null}])
+
+— generated spec (last pattern) excerpt —
+import { test, expect } from '@playwright/test';
+
+test.describe('Recorded Test', () => {
+  test('should complete recorded Test successfully', async ({ page }) => {
+    // Click the Increase quantity of Notebook
+    await page.getByLabel('Increase quantity of Notebook').click()
+    await expect.soft(page.locator('[aria-label="Cart items"]')).toContainText('3')
+    await expect.soft(page.locator('[data-sku="SKU-A"]')).toBeAttached()
+    await expect.soft(page.locator('[data-sku="SKU-B"]')).toBeAttached()
+
+    // Click the Increase quantity of Notebook
+    await page.getByLabel('Increase quantity of Notebook').click()
+    await expect.soft(page.locator('[aria-label="Cart items"]')).toContainText('4')
+    await expect.soft(page.locator('[data-sku="SKU-A"]')).toBeAttached()
+    await expect.soft(page.locator('[data-sku="SKU-B"]')).toBeAttached()
+
+    // Click the Increase quantity of Pen set
+    await page.getByLabel('Increase quantity of Pen set').click()
+    await expect.soft(page.locator('[aria-label="Cart items"]')).toContainText('5')
+    await expect.soft(page.locator('[data-sku="SKU-A"]')).toBeAttached()
+    await expect.soft(page.locator('[data-sku="SKU-B"]')).toBeAttached()
+  })
+
+════ MULTI-PATTERN VALIDATION — 14 PASS / 1 FAIL ════

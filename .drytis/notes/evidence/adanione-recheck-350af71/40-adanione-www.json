@@ -1,0 +1,20 @@
+{
+  "label": "www.adanione.com",
+  "url": "https://www.adanione.com/",
+  "phase": "done",
+  "lastState": {
+    "url": "chrome-error://chromewebdata/",
+    "readyState": "complete",
+    "hasDOM": true,
+    "nEls": 22,
+    "title": "www.adanione.com"
+  },
+  "elapsedMs": 502,
+  "final": {
+    "url": "chrome-error://chromewebdata/",
+    "readyState": "complete",
+    "hasDOM": true,
+    "nEls": 22,
+    "title": "www.adanione.com"
+  }
+}

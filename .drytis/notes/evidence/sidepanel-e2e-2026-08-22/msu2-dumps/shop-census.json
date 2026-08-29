@@ -1,0 +1,14 @@
+{
+  "cards": 2,
+  "drills": 16,
+  "allCollapsed": true,
+  "raw": true,
+  "rawSummary": "Raw evidence JSON",
+  "itemDrills": 6,
+  "netDrills": 0,
+  "domDrills": 8,
+  "surfDrills": 0,
+  "winDrills": 0,
+  "firstItemText": "item detail · countervia [data-testid*=\"cart-count\" i], [data-testid*=\"cart-badge\" i], [aria-label*=\"cart\" i][class*=\"count\" i] · aria-label=\"Cart items\" · unique ✓",
+  "bars": 0
+}

@@ -1,0 +1,55 @@
+{
+  "viewHidden": false,
+  "count": 4,
+  "countLabel": "4",
+  "cards": [
+    {
+      "id": "int-2",
+      "type": "📅 Date Picker",
+      "endState": "completed",
+      "memberChip": "20 events · 974ms",
+      "understanding": "✓ DatePicker (prio 10)",
+      "footerChip": "1 dom change",
+      "assertionChip": "0 assertions",
+      "krChip": "◆ new signature",
+      "suppressedChip": null
+    },
+    {
+      "id": "int-4",
+      "type": "🖱️ Click",
+      "endState": "completed",
+      "memberChip": "1 event · 0ms",
+      "understanding": "✓ Click (prio 180)",
+      "footerChip": "1 dom change",
+      "assertionChip": "1 assertion",
+      "krChip": "◆ new signature",
+      "suppressedChip": null
+    },
+    {
+      "id": "int-6",
+      "type": "⌨️ Text Entry",
+      "endState": "completed",
+      "memberChip": "11 events · 1287ms",
+      "understanding": "✓ TextEntry (prio 50)",
+      "footerChip": "1 dom change",
+      "assertionChip": "0 assertions",
+      "krChip": null,
+      "suppressedChip": null
+    },
+    {
+      "id": "int-10",
+      "type": "❓ Unclassified",
+      "endState": "completed",
+      "memberChip": "1 event · 0ms",
+      "understanding": "❓ Unclassified — unclaimed-at-projection",
+      "footerChip": null,
+      "assertionChip": null,
+      "krChip": "◆ new signature",
+      "suppressedChip": null
+    }
+  ],
+  "toggle": {
+    "hidden": true,
+    "text": ""
+  }
+}

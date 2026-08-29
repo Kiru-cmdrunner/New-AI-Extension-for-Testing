@@ -1,0 +1,67 @@
+{
+  "completedAt": "2026-08-20T10:26:42.205Z",
+  "durationMs": 10278,
+  "errorSteps": 0,
+  "executionRunId": "ba466c99-10eb-4e2d-b69a-3f3d80d5d1b1",
+  "failedSteps": 0,
+  "irStale": false,
+  "passedSteps": 7,
+  "skippedSteps": 0,
+  "startedAt": "2026-08-20T10:26:31.927Z",
+  "status": "passed",
+  "stepCount": 7,
+  "stepResults": [
+    {
+      "actualValue": "wireless mouse",
+      "assertionResults": [],
+      "durationMs": 1217.1000000000931,
+      "status": "passed",
+      "stepId": "step-0001"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 112.89999999990687,
+      "status": "passed",
+      "stepId": "step-0002"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": true,
+          "expectedValue": null,
+          "message": "Element is present",
+          "passed": true,
+          "severity": "soft",
+          "type": "presence"
+        }
+      ],
+      "durationMs": 1615.5,
+      "status": "passed",
+      "stepId": "step-0003"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 133,
+      "status": "passed",
+      "stepId": "step-0004"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 4359.799999999814,
+      "status": "passed",
+      "stepId": "step-0005"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 125,
+      "status": "passed",
+      "stepId": "step-0006"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 1933.4000000003725,
+      "status": "passed",
+      "stepId": "step-0007"
+    }
+  ]
+}

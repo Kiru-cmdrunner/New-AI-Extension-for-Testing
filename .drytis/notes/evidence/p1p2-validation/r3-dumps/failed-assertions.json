@@ -1,0 +1,30 @@
+[
+  {
+    "step": "step-0003",
+    "type": "textMatch",
+    "exp": "In stock",
+    "act": "Searching…",
+    "msg": "Text \"Searching…\" did not match \"In stock\""
+  },
+  {
+    "step": "step-0004",
+    "type": "textMatch",
+    "exp": "In stock",
+    "act": "Searching…",
+    "msg": "Text \"Searching…\" did not match \"In stock\""
+  },
+  {
+    "step": "step-0005",
+    "type": "textMatch",
+    "exp": "1 items",
+    "act": "0 items",
+    "msg": "Text \"0 items\" did not match \"1 items\""
+  },
+  {
+    "step": "step-0005",
+    "type": "textMatch",
+    "exp": "In stock",
+    "act": "Searching…",
+    "msg": "Text \"Searching…\" did not match \"In stock\""
+  }
+]

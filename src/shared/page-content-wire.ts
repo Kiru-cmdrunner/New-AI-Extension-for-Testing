@@ -22,7 +22,7 @@
  * Wire twin of `ObservedItem`.
  */
 export interface WireObservedItem {
-  kind: 'counter' | 'notification' | 'collection' | 'entity' | 'status-badge' | 'entity-title';
+  kind: 'counter' | 'notification' | 'collection' | 'entity' | 'status-badge' | 'entity-title' | 'surface-visible';
   matchedSelector: string;
   /** ≤200 chars, whitespace-normalized. */
   text: string;

@@ -1,11 +1,16 @@
 /**
  * Phase 7.4-M1 — L3 pins: Click definition affordance claim gate.
  *
- * Spec .drytis/specs/phase-7-4-m1-affordance-capture.md (baseline aca8082):
- * fourth gate in the detectTrigger chain — isInteractiveElement → LP1
- * open-surface → 7.3 W-B auto-id → 7.4-M1 affordance
- * (pointerCursor || clickHandler). Truthiness so undefined (pre-7.4 persisted
- * sessions) stays inert. Computed-fact claims: no timing, no site vocabulary.
+ * RE-BASELINED by Click Qualification v1.2 §8.5 (Step 2): the four-gate
+ * cascade (isInteractiveElement → LP1 open-surface → 7.3 W-B auto-id →
+ * 7.4-M1 affordance) is DELETED as the qualification authority. The
+ * definition now claims every qualified click unconditionally; qualification
+ * moved to capture time (src/tap/click-qualification.ts + the universal
+ * pre-gate in ComponentRuntime.process). The B-series matrix below keeps its
+ * historical coverage labels but the assertions now pin the v1.2 claim rule:
+ * detectTrigger returns { type: 'Click' } for ANY event, qualified or not —
+ * the runtime pre-gate, not detectTrigger, is where invalid clicks are
+ * stopped (pinned in tests/runtime/click-qualification-step2-wiring.test.ts).
  */
 
 import { describe, it, expect } from 'vitest';
@@ -79,23 +84,28 @@ describe('7.4-M1 B-series — Click affordance claim matrix', () => {
     expect(trigger).toEqual({ type: 'Click' });
   });
 
-  it('B3: plain DIV with NEITHER → null (honest Unclassified — the honesty pin)', () => {
+  it('B3: plain DIV with NEITHER → claims Click (v1.2 flip — qualification is capture-time)', () => {
+    // v1.2: appearance is no longer evidence. A trusted, qualified click on
+    // a plain div is a Click; the vector-less event here is definitionally
+    // legacy/qualified. The honesty pin MOVED to the capture verdict
+    // (tests/tap/click-qualification-verdict.test.ts) and the runtime
+    // pre-gate (S2-1/S2-2).
     const trigger = clickDefinition.detectTrigger(eventOf(baseIdentity()));
-    expect(trigger).toBeNull();
+    expect(trigger).toEqual({ type: 'Click' });
   });
 
-  it('B4: pointerCursor EXPLICITLY false → null (explicit false ≠ absence, neither claims)', () => {
+  it('B4: pointerCursor EXPLICITLY false → still claims (v1.2 — affordance no longer gates)', () => {
     const trigger = clickDefinition.detectTrigger(
       eventOf(baseIdentity(), { pointerCursor: false, clickHandler: false }),
     );
-    expect(trigger).toBeNull();
+    expect(trigger).toEqual({ type: 'Click' });
   });
 
-  it('B5: pointerCursor undefined (pre-7.4 persisted session) → null (gate inert)', () => {
+  it('B5: pointerCursor undefined (pre-7.4 persisted session) → claims (v1.2 — undefined = legacy = qualified)', () => {
     const trigger = clickDefinition.detectTrigger(
       eventOf(baseIdentity(), { pointerCursor: undefined }),
     );
-    expect(trigger).toBeNull();
+    expect(trigger).toEqual({ type: 'Click' });
   });
 
   it('B6: semantic BUTTON with pointerCursor false → still claims (gate 1 wins, byte-identical)', () => {
@@ -145,11 +155,11 @@ describe('7.4-M1 B-series — Click affordance claim matrix', () => {
     expect(viaSurface).toEqual({ type: 'Click' });
   });
 
-  it('B11: empty-string className variants claim nothing new via affordance absence', () => {
+  it('B11: empty-string className variants → claims Click (v1.2 — no affordance gates)', () => {
     const trigger = clickDefinition.detectTrigger(
       eventOf(baseIdentity({ className: '' })),
     );
-    expect(trigger).toBeNull();
+    expect(trigger).toEqual({ type: 'Click' });
   });
 
   it('B12: contextmenu on pointer-styled div → claims (Click also triggers on contextmenu)', () => {

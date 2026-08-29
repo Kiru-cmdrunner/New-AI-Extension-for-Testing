@@ -1,0 +1,11 @@
+[
+  {
+    "step": "step-0006",
+    "actualValue": true,
+    "expectedValue": null,
+    "message": "Element is present",
+    "passed": true,
+    "severity": "soft",
+    "type": "presence"
+  }
+]

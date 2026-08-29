@@ -1,0 +1,163 @@
+[
+ {
+  "type": "Modal",
+  "action": "open",
+  "name": "Open Dialog",
+  "tag": "BUTTON",
+  "sel": "#open-modal",
+  "key": null,
+  "dialogInAncestry": null,
+  "physicalEventType": null,
+  "reason": null,
+  "hasEvidence": true,
+  "members": [
+   "click",
+   "click",
+   "mousedown"
+  ]
+ },
+ {
+  "type": "Click",
+  "action": null,
+  "name": "Cancel",
+  "tag": "BUTTON",
+  "sel": "#cancel-dialog",
+  "key": null,
+  "dialogInAncestry": null,
+  "physicalEventType": null,
+  "reason": null,
+  "hasEvidence": true,
+  "members": [
+   "click"
+  ]
+ },
+ {
+  "type": "Modal",
+  "action": "open",
+  "name": "Open Nested Dialog",
+  "tag": "BUTTON",
+  "sel": "#open-nested",
+  "key": null,
+  "dialogInAncestry": null,
+  "physicalEventType": null,
+  "reason": null,
+  "hasEvidence": true,
+  "members": [
+   "click"
+  ]
+ },
+ {
+  "type": "Modal",
+  "action": "open",
+  "name": "Open Inner",
+  "tag": "BUTTON",
+  "sel": "#open-inner",
+  "key": null,
+  "dialogInAncestry": null,
+  "physicalEventType": null,
+  "reason": null,
+  "hasEvidence": true,
+  "members": [
+   "click"
+  ]
+ },
+ {
+  "type": "Unclassified",
+  "action": null,
+  "name": "Modal Validation Fixture — 7.4-B5\nOpen Dialog Open Nested Dialog \nOuter Dialog\n\nOpen Inner\nClose\nOpen MUI Dialog Open Late Dialog Open Popover",
+  "tag": "BODY",
+  "sel": "body",
+  "key": null,
+  "dialogInAncestry": null,
+  "physicalEventType": "keydown",
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": false,
+  "members": []
+ },
+ {
+  "type": "Unclassified",
+  "action": null,
+  "name": "Outer Dialog",
+  "tag": "DIV",
+  "sel": "#nested-overlay",
+  "key": null,
+  "dialogInAncestry": null,
+  "physicalEventType": "click",
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": false,
+  "members": [
+   "mousedown"
+  ]
+ },
+ {
+  "type": "Unclassified",
+  "action": null,
+  "name": "Outer Dialog",
+  "tag": "DIV",
+  "sel": "#nested-overlay",
+  "key": null,
+  "dialogInAncestry": null,
+  "physicalEventType": "click",
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": true,
+  "members": [
+   "mousedown"
+  ]
+ },
+ {
+  "type": "Unclassified",
+  "action": null,
+  "name": "Outer Dialog",
+  "tag": "DIV",
+  "sel": "#nested-overlay",
+  "key": null,
+  "dialogInAncestry": null,
+  "physicalEventType": "click",
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": true,
+  "members": [
+   "mousedown"
+  ]
+ },
+ {
+  "type": "Unclassified",
+  "action": null,
+  "name": "Outer Dialog",
+  "tag": "DIV",
+  "sel": "#nested-overlay",
+  "key": null,
+  "dialogInAncestry": null,
+  "physicalEventType": "click",
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": true,
+  "members": [
+   "mousedown"
+  ]
+ },
+ {
+  "type": "Unclassified",
+  "action": null,
+  "name": "Modal Validation Fixture — 7.4-B5\nOpen Dialog Open Nested Dialog \nOuter Dialog\n\nOpen Inner\nClose\nOpen MUI Dialog Open Late Dialog Open Popover",
+  "tag": "BODY",
+  "sel": "body",
+  "key": null,
+  "dialogInAncestry": null,
+  "physicalEventType": "keydown",
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": false,
+  "members": []
+ },
+ {
+  "type": "Unclassified",
+  "action": null,
+  "name": "Modal Validation Fixture — 7.4-B5\nOpen Dialog Open Nested Dialog \nOuter Dialog\n\nOpen Inner\nClose\nOpen MUI Dialog Open Late Dialog Open Popover",
+  "tag": "BODY",
+  "sel": "body",
+  "key": null,
+  "dialogInAncestry": null,
+  "physicalEventType": "keydown",
+  "reason": "unclaimed-at-projection",
+  "hasEvidence": false,
+  "members": []
+ }
+]

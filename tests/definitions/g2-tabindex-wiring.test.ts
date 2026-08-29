@@ -142,34 +142,36 @@ describe('G2: tabIndex Wiring', () => {
       expect(emitted[0].type).toBe('Click');
     });
 
-    it('preserves bare div with tabIndex=null as Unclassified', () => {
+    it('bare div with tabIndex=null → Click (v1.2 flip — qualification is capture-time)', () => {
+      // Click Qualification v1.2 §8.5: tabIndex reachability is no longer
+      // claim evidence; the vector-less event is legacy = qualified.
       const { runtime, emitted, ledger } = setupRuntime();
       const event = makeEvent('e1', 'click',
         { tag: 'DIV', accessibleName: 'Container' },
         { tabIndex: null },
       );
-      // M5: capture guarantee via Projection Engine
       ledger.append(event);
       runtime.process(event);
       runtime.flush();
       const result = projectInteractions(ledger, emitted).interactions;
       expect(result.length).toBe(1);
-      expect(result[0].type).toBe('Unclassified');
+      expect(result[0].type).toBe('Click');
     });
 
-    it('preserves div[tabindex=-1] as Unclassified (not tab-reachable)', () => {
+    it('div[tabindex=-1] click → Click (v1.2 flip — not tab-reachable ≠ invalid)', () => {
+      // Click Qualification v1.2: tabIndex=-1 is a FOCUS-reachability fact,
+      // not click validity. A trusted click on it is qualified.
       const { runtime, emitted, ledger } = setupRuntime();
       const event = makeEvent('e1', 'click',
         { tag: 'DIV', accessibleName: 'Hidden Focus', stableId: 'hidden-focus' },
         { tabIndex: -1 },
       );
-      // M5: capture guarantee via Projection Engine
       ledger.append(event);
       runtime.process(event);
       runtime.flush();
       const result = projectInteractions(ledger, emitted).interactions;
       expect(result.length).toBe(1);
-      expect(result[0].type).toBe('Unclassified');
+      expect(result[0].type).toBe('Click');
     });
 
     it('higher-priority definition still wins (Checkbox on div[tabindex=0] with role=checkbox)', () => {

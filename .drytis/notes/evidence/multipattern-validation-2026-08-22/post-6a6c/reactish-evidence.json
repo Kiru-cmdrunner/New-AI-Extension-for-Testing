@@ -1,0 +1,86 @@
+[
+  {
+    "id": "int-2",
+    "t": "DatePicker",
+    "end": "consequence-settled",
+    "md": {
+      "targetName": "Choose a date"
+    },
+    "trig": {
+      "id": null,
+      "testId": null,
+      "name": "Choose a date",
+      "tag": "INPUT",
+      "cls": "field-input date-input"
+    },
+    "net": 0,
+    "dom": 0,
+    "rs": null
+  },
+  {
+    "id": "int-4",
+    "t": "TextEntry",
+    "end": "consequence-settled",
+    "md": {
+      "textValue": "Bengaluru",
+      "userTyped": true,
+      "targetName": "Type a city"
+    },
+    "trig": {
+      "id": null,
+      "testId": null,
+      "name": "Type a city",
+      "tag": "INPUT",
+      "cls": "field-input origin-input"
+    },
+    "net": 0,
+    "dom": 1,
+    "rs": null
+  },
+  {
+    "id": "int-6",
+    "t": "Click",
+    "end": "consequence-settled",
+    "md": {
+      "targetName": "Plan trip"
+    },
+    "trig": {
+      "id": null,
+      "testId": null,
+      "name": "Plan trip",
+      "tag": "BUTTON",
+      "cls": "btn btn-primary commit-btn"
+    },
+    "net": 0,
+    "dom": 2,
+    "rs": {
+      "url": "http://127.0.0.1:8177/reactish",
+      "items": [
+        {
+          "k": "status-badge",
+          "n": null,
+          "t": "Planningâ€¦",
+          "p": "body > main#app > p",
+          "sel": "[class*=\"pill\" i], [class*=\"chip\" i]"
+        }
+      ]
+    }
+  },
+  {
+    "id": "int-9",
+    "t": "Unclassified",
+    "md": {
+      "targetName": "Bengaluru"
+    },
+    "trig": {
+      "id": null,
+      "testId": null,
+      "name": "Bengaluru",
+      "tag": "LI",
+      "cls": "opt"
+    },
+    "net": 0,
+    "dom": 0,
+    "rs": null
+  }
+]

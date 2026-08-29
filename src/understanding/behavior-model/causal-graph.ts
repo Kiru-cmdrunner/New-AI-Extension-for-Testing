@@ -41,6 +41,7 @@
 import type {
   ActionEpisode,
   CausalEdge,
+  ProvenanceLink,
   RefDegradation,
   UnattributedConsequence,
   BehaviorModelWarning,
@@ -55,6 +56,8 @@ import {
 import { compareInteractionIds } from '../state-builder/interaction-ordering';
 import type { StateTransition } from '../state-builder/types';
 import type { EpisodeBuilderInteraction } from './episode-builder';
+import { joinsRecordedSurface, type ConsumerIdentity } from '../../shared/surface-join';
+import { deriveSurfaceFactOwnership } from '../../shared/surface-fact-ownership';
 
 // ═════════════════════════════════════════════════════════════════════════
 // Inputs (tolerant subsets of captured artifacts)
@@ -113,7 +116,7 @@ export interface CausalGraphInput {
 export interface CausalGraphResult {
   episodes: ActionEpisode[];
   unattributed: UnattributedConsequence[];
-  provenanceLinks: [];
+  provenanceLinks: ProvenanceLink[];
   warnings: BehaviorModelWarning[];
   /** Registry diagnostics: every claimed canonical ref key, sorted. */
   claimedRefKeys: string[];
@@ -433,23 +436,231 @@ export function deriveCausalGraph(input: CausalGraphInput): CausalGraphResult {
     });
   }
 
-  // ── Provenance links ─────────────────────────────────────────────────
-  // Case 7 (action on a surface created by an earlier episode) requires
-  // surface semantics that capture does not yet provide. CP3 emits NO
-  // provenance links rather than guess; the surface lineage surfaces via
-  // the model's per-episode T4/T3 edges instead. This is the documented
-  // capture insufficiency (plan §13), not a derivation gap.
+  // ── Provenance links (B7-P3 §5.3.2 — surface-reuse, degraded) ────────
+  // NON-CAUSAL: a hover episode (producer) whose evidence window recorded
+  // an insertion/reveal surface fact, joined to a later click episode
+  // (consumer) whose anchor identity matches that fact via surface-join.
+  // Emits NO CausalEdge and claims NO registry refs (links cite, edges
+  // own) — confidence and outcomes are untouched. Deterministic order:
+  // producer episodes in CER-5 order, then consumer T0.
+  const provenanceLinks: ProvenanceLink[] = [];
+  {
+    // Producer candidates: episodes anchored by an ADMITTED hover whose
+    // evidence window recorded insertion/reveal facts (spec §5.3.2 —
+    // "matching an insertion/reveal fact in the producer's window").
+    // Eligibility is anchored on ADMISSION (consequence-bearing, P2's
+    // filter outcome) + recorded facts, NOT on a producer self-join: the
+    // canonical menu case hovers the nav BUTTON while the revealed flyout
+    // is a DIFFERENT element with its own id.
+    //
+    // B7-P4: producer qualification runs through the SHARED adversarial
+    // ownership pass (src/shared/surface-fact-ownership — the same pass
+    // the surface-visible IR derivation consumes). Facts are OWNED, never
+    // merely contained: rule (a) rejects pre-open replay (batch boundary
+    // against the window's delivered openedBatch), rule (b) refuses a
+    // hover facts an in-window click-family anchor caused (Channel A
+    // Variant 1), rule (c) refuses facts under a surface an earlier
+    // interaction already owns (Channel A Variant 2).
+    //
+    // LEGACY compatibility (stored sessions recorded before P4): rows
+    // without a delivered openedBatch cannot be verified by the pass —
+    // the pass stays silent for them, so the P3 FIRST-REPORTER rule
+    // (earliest anchor reporting a fact path owns it; replay windows own
+    // nothing) continues to govern exactly those rows. Pinned behavior,
+    // no two-world drift for pre-P4 evidence.
+    const ownership = deriveSurfaceFactOwnership(input.interactions);
+    // P3 first-reporter registry — the LEGACY fallback (see above).
+    const factOwner = new Map<string, string>();
+
+    const hoverEpisodes = episodes.filter(
+      (ep) => ep.anchor.actionType === 'Hover',
+    );
+    for (const producer of hoverEpisodes) {
+      const producerRaw = rawById.get(producer.anchor.interactionId);
+      if (!producerRaw) continue;
+      // Recorded fact paths in the producer's own evidence window.
+      const factPaths = recordedSurfaceFacts(producerRaw);
+      if (factPaths.length === 0) continue;
+
+      // P4 path: the shared pass's owned fact set for this producer.
+      const ownedByPass =
+        ownership.ownedByInteraction.get(producer.anchor.interactionId) ??
+        [];
+      const ownedByPassPaths = new Set(ownedByPass.map((f) => f.path));
+      // Rule (a) verified (the window carries openedBatch): the pass's
+      // verdict is AUTHORITATIVE — empty owned set = no producer.
+      const p4Verified = ownedByPass.length > 0 || passVerifiedWindow(producerRaw);
+
+      // Only facts OWNED by this window (first recorded reporter) can
+      // qualify it as a producer — replay facts are other windows'
+      // history, not this hover's consequences. Hover episodes iterate
+      // in anchor (CER-5 / T0) order, so the EARLIEST anchor that
+      // reports a fact path claims it (legacy registry, input order).
+      const ownedFacts = factPaths.filter((fact) => {
+        if (p4Verified) return ownedByPassPaths.has(fact.path);
+        return (
+          !factOwner.has(fact.path) ||
+          factOwner.get(fact.path) === producer.anchor.interactionId
+        );
+      });
+      for (const fact of factPaths) {
+        if (!factOwner.has(fact.path)) factOwner.set(fact.path, producer.anchor.interactionId);
+      }
+      if (ownedFacts.length === 0) continue;
+
+      for (const consumer of episodes) {
+        if (consumer.id === producer.id) continue;
+        // §5.3.2: consumers are CLICK episodes — the anchor that
+        // operated on the revealed surface. Hover-episode "consumers"
+        // (pointer enters) are not surface-reuse in P3's sense.
+        const consumerRaw = rawById.get(consumer.anchor.interactionId);
+        if (!consumerRaw || consumerRaw.triggerEvent?.eventType !== 'click') continue;
+        // Recorded order: the consumer's anchor T0 must fall AFTER the
+        // producer's window opened (the surface must exist first).
+        if (consumer.anchor.triggerTimestamp < producer.horizon.uiOwnership.openedAtMs) continue;
+        // Tab compatibility (mirrors T4): a KNOWN mismatch never links;
+        // an unknown tab on either side is honest degradation, not a bar.
+        if (producer.tabId !== null && consumer.tabId !== null && producer.tabId !== consumer.tabId) continue;
+
+        // Join the consumer's anchor identity against every OWNED fact.
+        const identity = anchorIdentityOf(consumerRaw);
+        if (!identity) continue;
+        let bestDegraded = false;
+        let joinedSeq: number | null = null;
+        for (const fact of ownedFacts) {
+          const r = joinsRecordedSurface(fact, identity);
+          if (r.joined) {
+            bestDegraded = r.degraded; // first-join label (facts ordered)
+            joinedSeq = fact.batchIndex;
+            if (!r.degraded) break; // id-exact wins outright
+          }
+        }
+        if (joinedSeq === null) continue;
+
+        provenanceLinks.push({
+          id: `prov-${producer.id}-${consumer.id}`,
+          sourceEpisodeId: producer.id,
+          targetEpisodeId: consumer.id,
+          kind: 'surface-reuse',
+          // Cites the specific surface FACT (window + batch ordinal),
+          // never a copy of surface content (V2 honesty). The window-level
+          // ordinal 0 is owned by the T4 ui edge; citations do not claim.
+          evidenceRefs: [
+            {
+              kind: 'dom',
+              windowId: producerEvidenceWindowId(producerRaw),
+              sequence: joinedSeq,
+              ...(bestDegraded ? { degradation: ['degraded-chain-join' as const] } : {}),
+            },
+          ],
+        });
+      }
+    }
+  }
 
   return {
     episodes,
     unattributed: modelUnattributed,
-    provenanceLinks: [],
+    provenanceLinks,
     warnings,
     claimedRefKeys: registry.claimedKeys(),
   };
 }
 
 // ── helpers ─────────────────────────────────────────────────────────────
+
+/** Fact paths recorded in the carrier's own evidence window: inserted/
+ *  revealed surfaces, attribute-driven reveal facts (aria-expanded flip
+ *  etc.), and visibility reveal facts (display/visibility → shown) — B-3
+ *  parity with deriveConsequenceClasses, which treats all three as
+ *  `reveal`. */
+function recordedSurfaceFacts(
+  raw: EpisodeBuilderInteraction,
+): Array<{ path: string; ariaRole: string | null; batchIndex: number }> {
+  const ev = raw.behavioralEvidence as
+    | { applicationEvidence?: { newSurfaces?: Array<{ path: string; ariaRole: string | null; emergence?: string; batchIndex?: number }>; domChanges?: Array<DomChangeSummaryLike>; visibilityChanges?: Array<VisibilityChangeLike> } }
+    | undefined;
+  const app = ev?.applicationEvidence;
+  if (!app) return [];
+  const facts: Array<{ path: string; ariaRole: string | null; batchIndex: number }> = [];
+  for (const s of app.newSurfaces ?? []) {
+    if (s.path) facts.push({ path: s.path, ariaRole: s.ariaRole, batchIndex: s.batchIndex ?? 0 });
+  }
+  for (const c of app.domChanges ?? []) {
+    const d = c.attributeDeltas as Record<string, { old?: string | null; new?: string | null }> | undefined;
+    const reveal =
+      (d?.['aria-expanded']?.old === 'false' && d?.['aria-expanded']?.new === 'true') ||
+      (d?.['aria-selected']?.old === 'false' && d?.['aria-selected']?.new === 'true') ||
+      (d?.['aria-checked']?.old === 'false' && d?.['aria-checked']?.new === 'true') ||
+      (d?.['aria-hidden']?.old === 'true' && (d?.['aria-hidden']?.new === 'false' || d?.['aria-hidden']?.new == null)) ||
+      (d?.['hidden']?.old != null && d?.['hidden']?.new == null) ||
+      (d?.['open']?.old === 'false' && d?.['open']?.new === 'true');
+    const inserted = (c.addedNodesCount ?? 0) > 0;
+    if ((reveal || inserted) && c.targetPath) {
+      facts.push({ path: c.targetPath, ariaRole: null, batchIndex: c.firstBatchIndex ?? 0 });
+    }
+  }
+  for (const v of app.visibilityChanges ?? []) {
+    const shown =
+      (v.property === 'display' && v.newValue === 'block' && v.oldValue !== v.newValue) ||
+      (v.property === 'display' && v.newValue === 'flex') ||
+      (v.property === 'visibility' && v.newValue === 'visible') ||
+      (v.property === 'opacity' && v.newValue !== '' && v.newValue !== '0' && v.newValue !== v.oldValue);
+    if (shown && v.path) {
+      facts.push({ path: v.path, ariaRole: null, batchIndex: v.batchIndex ?? 0 });
+    }
+  }
+  return facts;
+}
+
+interface VisibilityChangeLike {
+  path?: string | null;
+  property?: string;
+  oldValue?: string;
+  newValue?: string;
+  batchIndex?: number;
+}
+
+interface DomChangeSummaryLike {
+  targetPath?: string | null;
+  addedNodesCount?: number;
+  firstBatchIndex?: number;
+  attributeDeltas?: Record<string, { old?: string | null; new?: string | null }>;
+}
+
+/** The anchor interaction's recorded element identity (join input). */
+function anchorIdentityOf(raw: EpisodeBuilderInteraction): ConsumerIdentity | null {
+  const t = raw.trigger as ElementIdentityLike | undefined | null;
+  if (!t) return null;
+  if (!t.cssSelector && !t.xPath && !t.stableId) return null;
+  return t;
+}
+
+interface ElementIdentityLike {
+  cssSelector?: string | null;
+  xPath?: string | null;
+  stableId?: string | null;
+  tag?: string | null;
+}
+
+/** The carrier's evidence window id (provenance citation). */
+function producerEvidenceWindowId(raw: EpisodeBuilderInteraction): string {
+  const ev = raw.behavioralEvidence as { windowId?: string } | undefined;
+  return ev?.windowId ?? 'unknown-window';
+}
+
+/**
+ * B7-P4: did the shared ownership pass VERIFY this window's rule (a)
+ * boundary (openedBatch delivered on the evidence)? Verified windows are
+ * governed by the pass's verdict — including "owns nothing"; unverified
+ * (legacy) windows fall back to the P3 first-reporter registry.
+ */
+function passVerifiedWindow(raw: EpisodeBuilderInteraction): boolean {
+  const openedBatch = (raw.behavioralEvidence as
+    | { window?: { openedBatch?: number } }
+    | undefined)?.window?.openedBatch;
+  return typeof openedBatch === 'number';
+}
 
 function epHasT1For(ep: ActionEpisode, interactionId: string): boolean {
   return ep.edges.some((e) => e.tier === 'T1-stamp' && e.from.interactionId === interactionId);

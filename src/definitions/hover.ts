@@ -1,341 +1,279 @@
 /**
- * Hover Definition — Confidence-Based Candidate (Priority 60)
+ * Hover Definition — B7 observe-only model (7.4-B7 P2, 2026-08-28)
  *
- * Unlike Click or TextEntry, a mouseenter alone does not represent user
- * intent. The pointer may be transiting through elements on its way to a
- * destination. Hover is therefore a CANDIDATE interaction — it starts on
- * mouseenter but is NOT emitted until accumulated evidence confidence
- * exceeds the promotion threshold.
+ * Supersedes the confidence-model definition (evidence-based-hover.md era).
+ * Spec: .drytis/specs/phase-7-4-b7-hover-evidence-observation.md §5.2.
  *
- * ## Confidence Model
+ * DOCTRINE (DC-1..DC-4): this definition OBSERVES a pointer gesture and
+ * records facts. It never JUDGES meaning. Meaning is derived after the
+ * fact from consequence evidence by the admission rule
+ * (output-adapter.ts) and, later, by episodes/KR.
  *
- * Evidence signals contribute weighted confidence:
+ * Deleted in P2 (never to return — DC-6):
+ *   - CONFIDENCE_THRESHOLD, HOVER_TRANSIT_THRESHOLD_MS, SUSTAINED_DWELL_MS,
+ *     POINTER_STATIONARY_RADIUS_PX — no clock, no radius, no threshold
+ *     decides anything.
+ *   - OVERLAY_TRIGGER_ROLES, HOVER_POPUP_TYPES, OVERLAY_CSS_RE,
+ *     NAV_ANCESTOR_RE — no site/class vocabulary.
+ *   - metadata.meaningful / evidenceReason / confidence — no stored
+ *     judgment. (The panel compat bridge re-derives `meaningful` in P2–P4.)
+ *   - shouldCancelOnOutside — a click no longer cancels a hover; the click
+ *     CONSUMES it (both are real user actions; both are recorded).
  *
- *   Signal                           Confidence
- *   ───────────────────────────────  ──────────
- *   aria-expanded false→true         100  (Very High)
- *   Overlay role + dwell ≥ 500ms      70  (High)
- *   CSS/structural overlay evidence   65  (High) ← NEW
- *   aria-haspopup + dwell ≥ 500ms     60  (High)
- *   Sustained dwell ≥3s + stationary  50  (Medium — fallback)
- *   Transit (< 500ms, no evidence)     0  (None)
+ * Kept from P1:
+ *   - Discovery gate: shared isInteractiveElement (structural, no vocab).
+ *   - One lifecycle at a time (mouseenter trigger set).
+ *   - applyMemberPolicy (W-6): mousemove members popped; pointer-path
+ *     enters capped at MAX_POINTER_PATH_FACTS=20 drop-oldest with counted
+ *     pointerPathDropped.
  *
- * Promotion threshold: confidence ≥ 50
+ * Six structural terminals (§5.2.2), zero clocks:
+ *   left              same-element mouseleave            → completed
+ *   consumed-by-click any click anywhere (in-scope)      → completed
+ *   navigation        shouldCompleteOnNavigation (P2)    → completed
+ *   target-removed    TRIGGER_REMOVED window close (P1)  → completed
+ *   recording-end     completesAtRecordingEnd → flush()  → completed
+ *   idle-timeout      5-min cleanupStaleComponents       → abandoned
  *
- * ## CSS/Structural Overlay Evidence (NEW)
- *
- * Many modern SPAs (React, Vue) render menu/submenu systems WITHOUT
- * ARIA attributes. They use CSS classes like "nav-item", "menu-link",
- * "has-submenu", "dropdown-trigger", "mega-menu", etc. and reveal
- * overlays via CSS :hover or JavaScript state. This signal detects
- * such elements by their CSS class patterns and contextual position.
+ * Recorded FACTS (never judgments): terminal, dwellMs (display only),
+ * pointer-path enters, revert fact (settle window, P1 evidence),
+ * pointerPathDropped count.
  */
 
 import type {
-  BrowserEventType,
   ComponentDefinition,
   ComponentTrigger,
-  ComponentContext,
-  ComponentCompletion,
   ObservedEvent,
+  ComponentCompletion,
+  ComponentContext,
+  ElementIdentity,
 } from '../shared/component-types';
-import {
-  isInteractiveElement,
-  bestName,
-  elementKey,
-  extractSemanticRoles,
-} from './patterns';
+import { elementKey, isInteractiveElement } from './patterns';
 
-// ── Confidence Weights ────────────────────────────────────────────────
+/** B7 §6: max pointer-path facts kept as memberEvents (drop-oldest). */
+export const MAX_POINTER_PATH_FACTS = 20;
 
-/** Direct proof the UI expanded — highest possible evidence. */
-const CONFIDENCE_ARIA_EXPANDED = 100;
-
-/** Element is part of an overlay system (menuitem, tooltip, tab) + dwell. */
-const CONFIDENCE_OVERLAY_ROLE = 70;
-
-/** CSS/structural cues indicate hover-revealed overlay (no ARIA needed). */
-const CONFIDENCE_OVERLAY_CSS = 65;
-
-/** Element declares popup capability via aria-haspopup + dwell. */
-const CONFIDENCE_HASPOPUP = 60;
-
-/** Fallback: sustained dwell + pointer stationarity. Weakest evidence. */
-const CONFIDENCE_SUSTAINED_DWELL = 50;
-
-/** Minimum accumulated confidence to promote hover to meaningful. */
-const CONFIDENCE_THRESHOLD = 50;
-
-// ── Timing & Movement Thresholds ──────────────────────────────────────
-
-/** Hovers shorter than this are always discarded (transit). */
-const HOVER_TRANSIT_THRESHOLD_MS = 500;
-
-/** Dwell duration required for fallback confidence (dwell alone is weak). */
-const SUSTAINED_DWELL_MS = 3000;
-
-/** Max pointer displacement (px) from initial position to count as "stationary". */
-const POINTER_STATIONARY_RADIUS_PX = 10;
-
-// ── Pattern Sets ──────────────────────────────────────────────────────
-
-/**
- * Roles that indicate an element participates in an overlay system.
- * Hovering these with sufficient dwell is strong evidence of intent.
- */
-const OVERLAY_TRIGGER_ROLES = new Set([
-  'menuitem', 'menuitemcheckbox', 'menuitemradio',
-  'tooltip', 'tab',
-]);
-
-/**
- * aria-haspopup values that indicate a hover-triggered overlay.
- */
-const HOVER_POPUP_TYPES = new Set([
-  'menu', 'listbox', 'dialog', 'tooltip', 'tree', 'grid',
-]);
-
-/**
- * CSS class patterns that indicate an element reveals an overlay on hover.
- * Covers nav menus, mega-menus, dropdowns, tooltips, and hover-revealed
- * sections from modern frameworks (React, Vue, Angular) that may lack ARIA.
- *
- * Examples: "has-submenu", "dropdown-trigger", "menu-link", "mega-menu",
- * "popover-trigger", "drawer-toggle", "with-dropdown"
- *
- * NOTE: Removed "expandable", "collapsible", "accordion-header" — these are
- * click-triggered components, not hover-triggered overlays. Including them
- * caused incidental hovers over accordions (Amazon filter sections) to be
- * promoted as meaningful when the user was just transiting the mouse.
- */
-const OVERLAY_CSS_RE =
-  /\b(?:has-submenu|has-children|submenu|mega-menu|nav-item|menu-link|menu-trigger|dropdown-trigger|popover-trigger|drawer-toggle|nav-link|with-dropdown)\b/i;
-
-/**
- * Ancestor CSS class patterns that suggest the hovered element is inside
- * a navigation/menu system where hover-revealed overlays are expected.
- */
-const NAV_ANCESTOR_RE =
-  /\b(?:navbar|navigation|header-nav|main-nav|primary-nav|top-nav|side-nav|main-menu|primary-menu)\b/i;
-
-/**
- * Events that belong to the hover lifecycle. Only these are claimed by
- * isInScope — click/mousedown/focus/blur/input/change are explicitly
- * excluded so they fall through to their own definitions.
- */
-const HOVER_LIFECYCLE_EVENTS = new Set<BrowserEventType>([
-  'mouseenter', 'mouseleave', 'mousemove',
-]);
-
-// ── Definition ────────────────────────────────────────────────────────
+/** Terminal names recorded as metadata.terminal (facts, not judgments). */
+export type HoverTerminal =
+  | 'left'
+  | 'consumed-by-click'
+  | 'navigation'
+  | 'target-removed'
+  | 'recording-end';
 
 export const hoverDefinition: ComponentDefinition = {
   type: 'Hover',
   priority: 60,
-  triggerEventTypes: new Set<BrowserEventType>(['mouseenter']),
+  triggerEventTypes: new Set(['mouseenter']),
 
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
+    // Structural discovery gate — the ONLY thing that starts a Hover.
+    // Shared affordance predicate; zero vocabulary (F-2 stays fixed).
     if (event.eventType !== 'mouseenter') return null;
-
     const { tag, ariaRole, className } = event.target;
-    if (!isInteractiveElement(tag, ariaRole, className, event.domContext.tabIndex ?? null)) {
-      return null;
-    }
-
+    const interactive = isInteractiveElement(
+      tag,
+      ariaRole,
+      className,
+      event.domContext?.tabIndex ?? null,
+    );
+    if (!interactive) return null;
     return { type: 'Hover' };
   },
 
-  isInScope(event: ObservedEvent, _ctx: ComponentContext): boolean {
-    // Only claim hover-lifecycle events. This is critical:
-    // click/mousedown/focus/blur must fall through to their own definitions.
-    return HOVER_LIFECYCLE_EVENTS.has(event.eventType);
-  },
-
-  handleEvent(event: ObservedEvent, ctx: ComponentContext): ComponentCompletion | null {
-    // ── Initialize pointer tracking on first event ──
-    if (ctx.data.pointerOriginX === undefined && event.clientX !== null) {
-      ctx.data.pointerOriginX = event.clientX;
-      ctx.data.pointerOriginY = event.clientY;
-      ctx.data.maxDisplacement = 0;
-    }
-
-    // ── Accumulate evidence on every in-scope event ──
-    accumulateEvidence(event, ctx);
-
-    // ── mouseleave: decide emit vs discard ──
-    if (event.eventType === 'mouseleave') {
-      const sameElement = elementKey(event.target) === elementKey(ctx.trigger);
-
-      if (sameElement) {
-        const dwell = event.timestamp - ctx.startTime;
-        ctx.data.dwellMs = dwell;
-
-        const confidence = (ctx.data.confidence as number) ?? 0;
-        if (confidence >= CONFIDENCE_THRESHOLD) {
-          ctx.data.meaningful = true;
-          return { endState: 'completed' };
-        }
-
-        // Not enough evidence — discard silently
-        return { endState: 'discarded' };
-      }
-      return null; // mouseleave on different element, ignore
-    }
-
-    // ── mousemove: track pointer stationarity ──
-    if (event.eventType === 'mousemove') {
-      trackPointerMovement(event, ctx);
-      // Re-check evidence after updating pointer state
-      accumulateEvidence(event, ctx);
-    }
-
-    return null; // still active
-  },
-
-  shouldCancelOnOutside(event: ObservedEvent, _ctx: ComponentContext): boolean {
-    // Click anywhere → discard the hover candidate.
-    // If on same element: Click takes precedence via discovery.
-    // If on different element: user moved on.
-    if (event.eventType === 'click') {
-      return true;
-    }
+  isInScope(event: ObservedEvent, ctx: ComponentContext): boolean {
+    // The gesture event family. P2 adds CLICK as an in-scope TERMINAL:
+    // the click that consumes the hover completes it here (inside the
+    // definition) instead of cancelling it from outside. The click still
+    // flows to its own discovery (Click fallback) — see handleEvent's
+    // fall-through note below.
+    if (HOVER_TERMINAL_EVENTS.has(event.eventType)) return true;
+    // Pointer-path fact: a discovery-gated enter on a nested interactive
+    // element while the hover is active (B7-P1 semantics).
+    if (event.eventType === 'mouseenter' && isHoverDiscoveryEnter(event)) return true;
+    void ctx;
     return false;
   },
 
-  buildResult(ctx: ComponentContext, _completion: ComponentCompletion) {
+  handleEvent(
+    event: ObservedEvent,
+    ctx: ComponentContext,
+  ): ComponentCompletion | null {
+    const triggerKey = elementKey(ctx.trigger as ElementIdentity);
+
+    if (event.eventType === 'mouseenter') {
+      // P1/W-6 member policy runs from the runtime's memberEvents; nothing
+      // to accumulate here — the enter IS the fact.
+      return null;
+    }
+
+    if (event.eventType === 'mouseleave') {
+      // Terminal "left": same-element leave. Foreign leaves are pointer
+      // noise (blur-like) — the lifecycle continues.
+      const leaveKey = elementKey(event.target);
+      if (leaveKey === triggerKey) {
+        recordTerminal(ctx, 'left');
+        return { endState: 'completed' };
+      }
+      return null;
+    }
+
+    if (event.eventType === 'click' || event.eventType === 'contextmenu') {
+      // Terminal "consumed-by-click": ANY click anywhere consumes the
+      // hover. Both the hover and the click are real user actions; both
+      // are recorded. The runtime's step-3 memberEvent push already
+      // attached this click as a member — the projection coveredEventIds
+      // suppression keys on memberEvents, so the click lifecycle claiming
+      // the same eventId later is a no-op (terminal dispositions).
+      recordTerminal(ctx, 'consumed-by-click');
+      return { endState: 'completed' };
+    }
+
+    // mousemove: pointer-tracking noise — applyMemberPolicy pops it from
+    // memberEvents after handleEvent returns (W-6).
+    return null;
+  },
+
+  /**
+   * B7-P2 §5.2.2: the consuming click is NOT retained — it falls through
+   * to discovery and becomes its own Click interaction.
+   */
+  retainsDiscreteEvents: false,
+
+  shouldCancelOnOutside(_event: ObservedEvent, _ctx: ComponentContext): boolean {
+    // B7-P2: DELETED semantics. No outside event cancels a hover — a click
+    // CONSUMES it (in-scope terminal), a leave completes it (in-scope
+    // terminal). The 5-min idle timeout is the only abandon path (leak
+    // protection, not semantics). Kept as an explicit always-false to
+    // honor the interface contract (callers consult hook EXISTENCE for
+    // endState in B-2-sensitive paths — hover must never flip those).
+    return false;
+  },
+
+  shouldCompleteOnNavigation(event: ObservedEvent, ctx: ComponentContext): boolean {
+    // Terminal "navigation" (B-2-safe: this hook fires ONLY from the nav
+    // flush path, never from idle cleanup or plain flush).
+    // Grounded in recorded state: the lifecycle existed and was live when
+    // the navigation committed. No wall-clock comparison (DC-3).
+    void event;
+    const hasEnter = ctx.triggerEvent != null;
+    if (!hasEnter) return false;
+    recordTerminal(ctx, 'navigation');
+    ctx.data.commitSignal = 'navigation';
+    ctx.data.committedAt = ctx.triggerEvent?.captureSeq ?? null;
+    return true;
+  },
+
+  /**
+   * B7-P2 §5.2.2: declaring completesAtRecordingEnd makes flush() (STOP)
+   * complete this lifecycle. The 5-min idle path does NOT consult this
+   * declaration (B-2 split) — idle stays 'abandoned' with the
+   * Unclassified twin as the honest floor.
+   */
+  completesAtRecordingEnd: true,
+
+  /**
+   * B7-P2 §5.2.2 T4 (target-removed): the trigger element's structural
+   * removal from the DOM completes this lifecycle ('completed', terminal
+   * 'target-removed'). The reveal's owner is gone — the hover has
+   * nowhere to live — so the removal is a genuine structural terminal,
+   * exactly like 'left'. Declared by Hover only; see
+   * ComponentDefinition.completesOnTriggerRemoved.
+   */
+  completesOnTriggerRemoved: true,
+
+  buildResult(
+    ctx: ComponentContext,
+    completion: ComponentCompletion,
+  ): { metadata: Record<string, unknown> } {
+    const enter = ctx.triggerEvent;
+    const start = enter?.timestamp ?? ctx.startTime;
+    const end = ctx.endTime;
+    const dwellMs = typeof end === 'number' && typeof start === 'number'
+      ? Math.max(0, end - start)
+      : 0;
+
+    const enters = (ctx.memberEvents ?? []).filter(
+      (e) => e.eventType === 'mouseenter',
+    );
+
     return {
       metadata: {
-        targetName: bestName(
-          ctx.trigger.accessibleName,
-          ctx.trigger.ariaLabel,
-          ctx.trigger.placeholder,
-        ),
-        dwellMs: (ctx.data.dwellMs as number) ?? 0,
-        meaningful: ctx.data.meaningful === true,
-        confidence: (ctx.data.confidence as number) ?? 0,
-        evidenceReason: (ctx.data.evidenceReason as string) ?? null,
+        targetName: nameOf(ctx.trigger as ElementIdentity),
+        dwellMs, // recorded FACT — display only, never a gate (§5.2.1)
+        terminal: (ctx.data.terminal as HoverTerminal | undefined) ?? null,
+        // commit metadata (nav terminal only — mirrors TextEntry B6.1)
+        ...(ctx.data.commitSignal === 'navigation'
+          ? { commitSignal: 'navigation' as const }
+          : {}),
+        pointerPathEnters: enters.map((e) => ({
+          eventId: e.eventId,
+          target: e.target,
+        })),
+        pointerPathDropped: ctx.data.pointerPathDropped ?? 0,
+        // endState fact for the P1 settle-metadata remap seam.
+        lifecycleEndState: completion.endState,
       },
     };
   },
+
+  /**
+   * B7-P1 (W-6): definition-local member policy. Called by the runtime
+   * AFTER memberEvents are pushed, inside the hover's own call frame:
+   *   - pops mousemove members (pointer noise; the gesture fact is the
+   *     enter/leave pair, not the jitter between them);
+   *   - caps pointer-path enters at MAX_POINTER_PATH_FACTS drop-oldest,
+   *     counting drops in ctx.data.pointerPathDropped (counted, never
+   *     silent).
+   */
+  applyMemberPolicy(ctx: ComponentContext): void {
+    const members = ctx.memberEvents ?? [];
+    // Pop mousemoves (the runtime pushed them before handleEvent).
+    for (let i = members.length - 1; i >= 0; i--) {
+      if (members[i].eventType === 'mousemove') members.splice(i, 1);
+    }
+    // Cap enters, drop-oldest, count the drops.
+    const enterIdx = [];
+    for (let i = 0; i < members.length; i++) {
+      if (members[i].eventType === 'mouseenter') enterIdx.push(i);
+    }
+    if (enterIdx.length > MAX_POINTER_PATH_FACTS) {
+      const overflow = enterIdx.length - MAX_POINTER_PATH_FACTS;
+      const drop = new Set(enterIdx.slice(0, overflow));
+      for (let i = members.length - 1; i >= 0; i--) {
+        if (drop.has(i)) members.splice(i, 1);
+      }
+      ctx.data.pointerPathDropped =
+        (typeof ctx.data.pointerPathDropped === 'number' ? ctx.data.pointerPathDropped : 0) + overflow;
+    }
+  },
 };
 
-// ── Evidence Accumulation ─────────────────────────────────────────────
+// ── Internal helpers ─────────────────────────────────────────────────
 
-/**
- * Evaluate evidence signals and accumulate confidence.
- * Called on every in-scope event (mouseenter, mousemove, mouseleave).
- *
- * Once a signal fires, its confidence is added permanently — it doesn't
- * decay. Multiple signals stack (e.g. aria-haspopup + sustained dwell).
- * However, each unique signal type only contributes once.
- */
-function accumulateEvidence(event: ObservedEvent, ctx: ComponentContext): void {
-  const confidence = (ctx.data.confidence as number) ?? 0;
-  const dwell = event.timestamp - ctx.startTime;
+const HOVER_TERMINAL_EVENTS = new Set<string>([
+  'mouseenter',
+  'mouseleave',
+  'click',
+  'contextmenu',
+]);
 
-  // ── Signal 1: aria-expanded transition (Very High = 100) ──
-  if (ctx.data.evidenceAriaExpanded !== true) {
-    if (event.domContext.ariaExpanded === true) {
-      const triggerExpanded = ctx.triggerEvent.domContext.ariaExpanded;
-      if (triggerExpanded !== true) {
-        ctx.data.confidence = confidence + CONFIDENCE_ARIA_EXPANDED;
-        ctx.data.evidenceAriaExpanded = true;
-        setReason(ctx, 'aria-expanded');
-        return; // 100 ≥ threshold, done
-      }
-    }
-  }
-
-  // ── Signal 2: overlay role + dwell ≥ threshold (High = 70) ──
-  if (ctx.data.evidenceOverlayRole !== true && dwell >= HOVER_TRANSIT_THRESHOLD_MS) {
-    const triggerRole = ctx.triggerEvent.target.ariaRole;
-    const ancestorRoles = ctx.triggerEvent.domContext.ancestorRoles ?? [];
-    // Phase 6D.0: semantic-role parse — capture stores `div[role=tooltip]`,
-    // the overlay set holds bare tokens ('menuitem', 'tooltip', 'tab').
-    const hasOverlayRole =
-      (triggerRole && OVERLAY_TRIGGER_ROLES.has(triggerRole)) ||
-      extractSemanticRoles(ancestorRoles).some((r) => OVERLAY_TRIGGER_ROLES.has(r));
-    if (hasOverlayRole) {
-      ctx.data.confidence = ((ctx.data.confidence as number) ?? 0) + CONFIDENCE_OVERLAY_ROLE;
-      ctx.data.evidenceOverlayRole = true;
-      setReason(ctx, 'overlay-role-dwell');
-      return;
-    }
-  }
-
-  // ── Signal 2b: CSS/structural overlay evidence (High = 65) ──
-  // Detects hover-revealed overlays in modern SPAs that lack ARIA markup.
-  // Checks the trigger element's CSS classes AND its ancestor classes for
-  // patterns indicating the element is part of a nav/menu/dropdown system.
-  if (ctx.data.evidenceOverlayCss !== true && dwell >= HOVER_TRANSIT_THRESHOLD_MS) {
-    const triggerClasses = ctx.triggerEvent.target.className ?? '';
-    const ancestorClassesStr = (ctx.triggerEvent.domContext.ancestorClasses ?? []).join(' ');
-    const allClasses = `${triggerClasses} ${ancestorClassesStr}`;
-
-    const hasOverlayCss = OVERLAY_CSS_RE.test(allClasses);
-    const hasNavAncestor = NAV_ANCESTOR_RE.test(ancestorClassesStr);
-
-    if (hasOverlayCss || hasNavAncestor) {
-      ctx.data.confidence = ((ctx.data.confidence as number) ?? 0) + CONFIDENCE_OVERLAY_CSS;
-      ctx.data.evidenceOverlayCss = true;
-      setReason(ctx, hasOverlayCss ? 'overlay-css' : 'nav-ancestor');
-      return;
-    }
-  }
-
-  // ── Signal 3: aria-haspopup + dwell ≥ threshold (High = 60) ──
-  if (ctx.data.evidenceHasPopup !== true && dwell >= HOVER_TRANSIT_THRESHOLD_MS) {
-    const hasPopup = ctx.triggerEvent.domContext.ariaHasPopup;
-    if (hasPopup && HOVER_POPUP_TYPES.has(hasPopup)) {
-      ctx.data.confidence = ((ctx.data.confidence as number) ?? 0) + CONFIDENCE_HASPOPUP;
-      ctx.data.evidenceHasPopup = true;
-      setReason(ctx, 'haspopup-dwell');
-      return;
-    }
-  }
-
-  // ── Signal 4: sustained dwell + pointer stationary (Medium = 50) ──
-  // This is FALLBACK evidence — the weakest signal. Only fires when:
-  //   - dwell ≥ SUSTAINED_DWELL_MS (3s)
-  //   - pointer stayed within POINTER_STATIONARY_RADIUS_PX of origin
-  if (ctx.data.evidenceSustainedDwell !== true && dwell >= SUSTAINED_DWELL_MS) {
-    const maxDisplacement = (ctx.data.maxDisplacement as number) ?? 999;
-    if (maxDisplacement <= POINTER_STATIONARY_RADIUS_PX) {
-      ctx.data.confidence = ((ctx.data.confidence as number) ?? 0) + CONFIDENCE_SUSTAINED_DWELL;
-      ctx.data.evidenceSustainedDwell = true;
-      setReason(ctx, 'sustained-dwell-stationary');
-      return;
-    }
-  }
+function isHoverDiscoveryEnter(event: ObservedEvent): boolean {
+  if (event.eventType !== 'mouseenter') return false;
+  const { tag, ariaRole, className } = event.target;
+  return isInteractiveElement(
+    tag,
+    ariaRole,
+    className,
+    event.domContext?.tabIndex ?? null,
+  );
 }
 
-/**
- * Track pointer displacement from the origin position.
- * Updates maxDisplacement if this mousemove is farther from origin.
- */
-function trackPointerMovement(event: ObservedEvent, ctx: ComponentContext): void {
-  if (event.clientX === null || event.clientY === null) return;
-
-  const originX = (ctx.data.pointerOriginX as number) ?? event.clientX;
-  const originY = (ctx.data.pointerOriginY as number) ?? event.clientY;
-
-  const dx = event.clientX - originX;
-  const dy = event.clientY - originY;
-  const displacement = Math.sqrt(dx * dx + dy * dy);
-
-  const prevMax = (ctx.data.maxDisplacement as number) ?? 0;
-  if (displacement > prevMax) {
-    ctx.data.maxDisplacement = displacement;
-  }
+function recordTerminal(ctx: ComponentContext, terminal: HoverTerminal): void {
+  ctx.data.terminal = terminal;
 }
 
-/**
- * Set the primary evidence reason (first signal that pushed confidence over threshold).
- */
-function setReason(ctx: ComponentContext, reason: string): void {
-  const confidence = (ctx.data.confidence as number) ?? 0;
-  if (confidence >= CONFIDENCE_THRESHOLD && !ctx.data.evidenceReason) {
-    ctx.data.evidenceReason = reason;
-    ctx.data.meaningful = true;
-  }
+function nameOf(t: ElementIdentity | null | undefined): string {
+  if (!t) return '';
+  return t.accessibleName || t.ariaLabel || t.tag || '';
 }

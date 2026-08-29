@@ -1,0 +1,175 @@
+{
+  "completedAt": "2026-08-20T11:14:20.344Z",
+  "durationMs": 9074.200000000186,
+  "errorSteps": 0,
+  "executionRunId": "ab657e32-426c-4630-9394-44db8bb595e9",
+  "failedSteps": 0,
+  "irStale": false,
+  "passedSteps": 8,
+  "skippedSteps": 0,
+  "startedAt": "2026-08-20T11:14:11.270Z",
+  "status": "passed",
+  "stepCount": 8,
+  "stepResults": [
+    {
+      "actualValue": "mum",
+      "assertionResults": [],
+      "durationMs": 1884.6000000000931,
+      "status": "passed",
+      "stepId": "step-0001"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": "0",
+          "expectedValue": "0",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        }
+      ],
+      "durationMs": 2008.6999999999534,
+      "status": "passed",
+      "stepId": "step-0002"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": "0",
+          "expectedValue": "0",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        }
+      ],
+      "durationMs": 109.5,
+      "status": "passed",
+      "stepId": "step-0003"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": "0",
+          "expectedValue": "0",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        }
+      ],
+      "durationMs": 1895.8999999999069,
+      "status": "passed",
+      "stepId": "step-0004"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": "1",
+          "expectedValue": "1",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        }
+      ],
+      "durationMs": 711.1000000000931,
+      "status": "passed",
+      "stepId": "step-0005"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": "1",
+          "expectedValue": "1",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        },
+        {
+          "actualValue": "1",
+          "expectedValue": "1",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        },
+        {
+          "actualValue": true,
+          "expectedValue": null,
+          "message": "Element is present",
+          "passed": true,
+          "severity": "soft",
+          "type": "presence"
+        }
+      ],
+      "durationMs": 610.3000000000466,
+      "status": "passed",
+      "stepId": "step-0006"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": "2",
+          "expectedValue": "2",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        },
+        {
+          "actualValue": "2",
+          "expectedValue": "2",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        },
+        {
+          "actualValue": true,
+          "expectedValue": null,
+          "message": "Element is present",
+          "passed": true,
+          "severity": "soft",
+          "type": "presence"
+        }
+      ],
+      "durationMs": 808.1999999999534,
+      "status": "passed",
+      "stepId": "step-0007"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": "3",
+          "expectedValue": "3",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        },
+        {
+          "actualValue": "3",
+          "expectedValue": "3",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        },
+        {
+          "actualValue": true,
+          "expectedValue": null,
+          "message": "Element is present",
+          "passed": true,
+          "severity": "soft",
+          "type": "presence"
+        }
+      ],
+      "durationMs": 817.8999999999069,
+      "status": "passed",
+      "stepId": "step-0008"
+    }
+  ]
+}

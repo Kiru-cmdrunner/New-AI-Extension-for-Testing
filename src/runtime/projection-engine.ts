@@ -87,6 +87,20 @@ function createUnclassifiedFromLedger(
     // to null — fall back to [] so the shape never diverges downstream.
     const ancestorRoles = entry.ancestorRoles ?? [];
     const ancestorClasses = entry.ancestorClasses ?? [];
+
+    // v1.2 Step 1 (projection truth fix): carry the PERSISTED invalidity
+    // facts instead of synthesizing disabled:false. DomContext.disabled is
+    // the legacy union (native | aria | fieldset) — derived honestly from
+    // the persisted qualification vector when present, false only on
+    // legacy rows (null vector = legacy = no facts = not disabled).
+    const cq = entry.clickQualification ?? null;
+    const derivedDisabled = cq
+      ? cq.facts.disabledNative ||
+        cq.facts.fieldsetDisabled ||
+        cq.facts.ariaDisabled ||
+        cq.facts.disabledAttrNonNative
+      : false;
+
     const triggerEvt = {
       eventId: entry.eventId,
       eventType: entry.eventType as any,
@@ -99,12 +113,16 @@ function createUnclassifiedFromLedger(
         ariaExpanded: null,
         ariaHasPopup: null,
         isContentEditable: false,
-        disabled: false,
+        disabled: derivedDisabled,
         readOnly: false,
         required: false,
         ancestorRoles,
         ancestorClasses,
         tabIndex: null,
+        // v1.2 Step 1: the frozen verdict record rides the projected twin's
+        // domContext exactly as it rode the live event (recorded fact only —
+        // no typing decision may consume it before Step 2).
+        clickQualification: cq ?? undefined,
       },
     valueBefore: null,
     valueAfter: null,
@@ -172,6 +190,11 @@ function createUnclassifiedFromLedger(
       // samples — the projected card must SHOW what the user typed,
       // not just that a 'change' happened.
       sampledValueAfter: entry.synthetic ? entry.sampledValueAfter : undefined,
+      // v1.2 Step 1: the recorded invalidity causes on the card (§7 —
+      // display carry only; no typing decision reads this before Step 2).
+      invalidityCauses: cq && cq.verdict === 'provably-invalid'
+        ? [...cq.causes]
+        : undefined,
     },
   };
 }
@@ -305,7 +328,17 @@ export function projectInteractions(
   const unclaimedEntries = ledger.getByDisposition('unclaimed');
   const pendingEntries = ledger.getByDisposition('pending');
   const toProject = [...unclaimedEntries, ...pendingEntries].filter(
-    (e) => !coveredEventIds.has(e.eventId),
+    (e) =>
+      !coveredEventIds.has(e.eventId) &&
+      // B7-P2 §5.2.5 (R-1): a PENDING gated hover discovery claim never
+      // mints an Unclassified twin — the hover lifecycle is either still
+      // live (its terminal undecided) or never formed; a live gesture is
+      // not an unrecognized action, and the F-3 backstop still fires if
+      // the lifecycle later ends abandoned (releaseClaims flips the
+      // disposition to 'unclaimed', which DOES mint). Pending clicks and
+      // keystrokes keep minting unchanged — the rule is keyed on the
+      // entry's hover-enter event type, not a blanket pending filter.
+      !(e.disposition === 'pending' && e.eventType === 'mouseenter'),
   );
 
   // Deduplicate (an entry could theoretically appear in both lists if

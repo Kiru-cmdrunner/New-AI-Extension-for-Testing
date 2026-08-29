@@ -240,33 +240,37 @@ describe('Bug 3: Click not absorbed by active Hover', () => {
     expect(click!.endState).toBe('completed');
   });
 
-  it('hover discarded without evidence (600ms dwell, no evidence signal)', () => {
+  it('hover completes on leave (B7-P2 terminal "left"; admission filters gesture-only)', () => {
     const { runtime, emitted } = setupRuntime();
     const target = { tag: 'BUTTON', ariaRole: 'button', stableId: 'hover1', accessibleName: 'Info', cssSelector: 'button#hover1' };
 
     runtime.process(makeEvent('me1', 'mouseenter', target, {}, { timestamp: 1000 }));
 
-    // mouseleave after 600ms — above transit threshold but no evidence
+    // mouseleave after 600ms — the "left" terminal completes the lifecycle.
+    // No dwell threshold exists (DC-1); admission happens downstream via the
+    // evidence rule (a gesture-only hover never enters production output).
     runtime.process(makeEvent('ml1', 'mouseleave', target, {}, { timestamp: 1600 }));
 
     const hover = emitted.find((e) => e.type === 'Hover');
     expect(hover).toBeDefined();
-    expect(hover!.endState).toBe('discarded');
+    expect(hover!.endState).toBe('completed');
+    expect(hover!.metadata.terminal).toBe('left');
     expect(hover!.metadata.dwellMs).toBe(600);
   });
 
-  it('hover discarded on quick mouseleave (below threshold)', () => {
+  it('hover completes on quick leave too — no transit threshold (DC-1)', () => {
     const { runtime, emitted } = setupRuntime();
     const target = { tag: 'BUTTON', ariaRole: 'button', stableId: 'hover2', accessibleName: 'Menu', cssSelector: 'button#hover2' };
 
     runtime.process(makeEvent('me1', 'mouseenter', target, {}, { timestamp: 1000 }));
 
-    // mouseleave after 200ms (below 500ms threshold)
+    // mouseleave after 200ms — completes identically; dwell is a FACT.
     runtime.process(makeEvent('ml1', 'mouseleave', target, {}, { timestamp: 1200 }));
 
     const hover = emitted.find((e) => e.type === 'Hover');
     expect(hover).toBeDefined();
-    expect(hover!.endState).toBe('discarded');
+    expect(hover!.endState).toBe('completed');
+    expect(hover!.metadata.terminal).toBe('left');
   });
 
   it('full login flow: hover Login → click Login does not lose the click', () => {
@@ -356,7 +360,7 @@ describe('Hover isInScope (unit)', () => {
     expect(hoverDefinition.isInScope(leave, ctx)).toBe(true);
   });
 
-  it('returns false for click on same element (critical fix)', () => {
+  it('returns true for click on same element (B7-P2: click is an in-scope TERMINAL)', () => {
     const enter = makeEvent('me1', 'mouseenter',
       { tag: 'BUTTON', stableId: 'btn', cssSelector: 'button#btn' }
     );
@@ -366,8 +370,10 @@ describe('Hover isInScope (unit)', () => {
       { tag: 'BUTTON', stableId: 'btn', cssSelector: 'button#btn' }
     );
 
-    // Click must NOT be in scope for Hover — must fall through to Click def
-    expect(hoverDefinition.isInScope(click, ctx)).toBe(false);
+    // B7-P2: click IS in scope as the consuming terminal; the click still
+    // reaches its own discovery afterwards (retainsDiscreteEvents: false —
+    // pinned by the Bug-3 runtime test above).
+    expect(hoverDefinition.isInScope(click, ctx)).toBe(true);
   });
 
   it('returns false for mousedown on same element', () => {
@@ -383,7 +389,7 @@ describe('Hover isInScope (unit)', () => {
     expect(hoverDefinition.isInScope(mousedown, ctx)).toBe(false);
   });
 
-  it('returns false for contextmenu on same element', () => {
+  it('returns true for contextmenu on same element (B7-P2 terminal)', () => {
     const enter = makeEvent('me1', 'mouseenter',
       { tag: 'BUTTON', stableId: 'btn', cssSelector: 'button#btn' }
     );
@@ -393,7 +399,7 @@ describe('Hover isInScope (unit)', () => {
       { tag: 'BUTTON', stableId: 'btn', cssSelector: 'button#btn' }
     );
 
-    expect(hoverDefinition.isInScope(ctxMenu, ctx)).toBe(false);
+    expect(hoverDefinition.isInScope(ctxMenu, ctx)).toBe(true);
   });
 });
 

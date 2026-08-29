@@ -1,0 +1,136 @@
+{
+  "checks": [
+    {
+      "name": "one full-workflow row",
+      "ok": true,
+      "detail": "1 full rows"
+    },
+    {
+      "name": "full workflow occurrenceCount=2",
+      "ok": true,
+      "detail": "occ=2"
+    },
+    {
+      "name": "full workflow patternId=d3392945",
+      "ok": true,
+      "detail": "wf-pattern-d3392945"
+    },
+    {
+      "name": "full workflow linkageState=linked",
+      "ok": true,
+      "detail": "linked"
+    },
+    {
+      "name": "full workflow signatureIds non-empty",
+      "ok": true,
+      "detail": "3 keys"
+    },
+    {
+      "name": "every signatureId exists in signature store",
+      "ok": true,
+      "detail": "3/3"
+    },
+    {
+      "name": "signatureIds == exact anchor set of its sessions",
+      "ok": true,
+      "detail": "3 vs 3"
+    },
+    {
+      "name": "instanceSignatureIds covers both instances",
+      "ok": true,
+      "detail": "2 entries"
+    },
+    {
+      "name": "both instances link the same set",
+      "ok": true,
+      "detail": "3 vs 3"
+    },
+    {
+      "name": "instance sets equal pattern set",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "shared signatures occ>=2 (counts not mutated by linkage)",
+      "ok": true,
+      "detail": "3 shared"
+    },
+    {
+      "name": "idle session created NO workflow row (nothing fabricated)",
+      "ok": true,
+      "detail": "1 other rows: 1"
+    },
+    {
+      "name": "drag workflow exists and is linked",
+      "ok": true,
+      "detail": "1 sigs"
+    },
+    {
+      "name": "drag workflow links ONLY the drag signature",
+      "ok": true,
+      "detail": "[\"sig:73e1db48\"]"
+    },
+    {
+      "name": "drag signature target is the dragzone",
+      "ok": true,
+      "detail": "drag area (no click handler, plain div)"
+    },
+    {
+      "name": "drag sig NOT in full workflow set",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "verno unchanged (30)",
+      "ok": true,
+      "detail": "30"
+    },
+    {
+      "name": "3 behavior sessions (idle has zero episodes → none)",
+      "ok": true,
+      "detail": "3"
+    },
+    {
+      "name": "raw stepIntents preserved verbatim (>=5 tokens incl. both URLs)",
+      "ok": true,
+      "detail": "7 tokens: [\"Fetch data\",\"Aurora Wireless Headphones\",\"Search products\",\"Navigate\",\"http://127.0.0.1:8098/product.html?id=P100\",\"Fetch data\",\"http://127.0.0.1:8098/cart.html?added=P100\"]"
+    },
+    {
+      "name": "CP8 probe ran (production contract)",
+      "ok": true,
+      "detail": "4 descriptors"
+    },
+    {
+      "name": "CP8 deterministic across calls",
+      "ok": true,
+      "detail": "true"
+    },
+    {
+      "name": "CP8 read-only (stores byte-identical)",
+      "ok": true,
+      "detail": "true"
+    },
+    {
+      "name": "CP8 shows linked signatures with pattern ids",
+      "ok": true,
+      "detail": "4 linked of 4"
+    },
+    {
+      "name": "CP8 linked set includes d3392945 on every linked full-flow sig",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "CP8 drag signature links ONLY drag pattern",
+      "ok": true,
+      "detail": "[\"wf-pattern-21ca2851\"]"
+    },
+    {
+      "name": "zero console errors (whole run, SW+panel+page)",
+      "ok": true,
+      "detail": "0 errors"
+    }
+  ],
+  "pass": 26,
+  "fail": 0
+}

@@ -12,6 +12,8 @@
  */
 
 import type { DomContext } from '../shared/component-types';
+import { extractIdentity } from '../tap/identity-extractor';
+import { elementKey } from './patterns';
 
 /** Maximum ancestor chain depth to capture. */
 const MAX_ANCESTOR_DEPTH = 10;
@@ -48,7 +50,66 @@ export function extractDomContext(el: Element): DomContext {
     // convention as ariaHasPopup above; never undefined from the live extractor.
     ariaAutoComplete: getAttributeString(el, 'aria-autocomplete'),
     listId: el instanceof HTMLInputElement ? (el.getAttribute('list') ?? null) : null,
+    // 7.4-B6: owner-form join — one bounded closest('form') walk at event
+    // time so downstream (definition completion, IR ordering) can join a
+    // form control to its owner <form> from RECORDED data, never a live DOM
+    // query. Null when the target has no <form> ancestor (honest absence,
+    // same convention as the fields above).
+    ...extractOwnerForm(el),
+    // 7.4-B6: ground-truth submit-control fact from the live DOM. HTML spec:
+    // <button> without a type attribute IS type=submit; input[type=submit]
+    // and input[type=image] submit. Captured here so IR ordering never has
+    // to infer it downstream (no heuristics on tag/role alone).
+    isFormSubmitControl: isFormSubmitControl(el),
   };
+}
+
+/**
+ * 7.4-B6: owner-form facts for the resolved target.
+ *
+ * Returns the four formJoin fields (all null) when the target has no
+ * <form> ancestor. The form's elementKey uses the SAME elementKey priority
+ * chain as classification (patterns.ts) — byte-stable with how the input
+ * and the submit button themselves are keyed, so the join is exact.
+ */
+function extractOwnerForm(el: Element): {
+  formElementKey: string | null;
+  formAction: string | null;
+  formMethod: string | null;
+  formId: string | null;
+} {
+  const form = el.closest('form');
+  if (!form) {
+    return { formElementKey: null, formAction: null, formMethod: null, formId: null };
+  }
+  return {
+    formElementKey: elementKey(extractIdentity(form)),
+    formAction: form.getAttribute('action') ?? null,
+    formMethod: form.getAttribute('method') ?? null,
+    formId: form.id || null,
+  };
+}
+
+/**
+ * 7.4-B6: ground-truth submit-control check (HTML semantics).
+ *  - input[type=submit] / input[type=image] → submit control
+ *  - button[type=submit] or <button> with NO type attr (HTML default
+ *    type=submit) → submit control
+ *  - button[type=button|reset] → NOT a submit control
+ * Elements outside a form can still be submit controls per HTML
+ * (form= attribute association); we stay honest: true only per the checks
+ * above regardless of form membership — the CALLER combines with the
+ * owner-form join.
+ */
+function isFormSubmitControl(el: Element): boolean {
+  if (el instanceof HTMLInputElement) {
+    return el.type === 'submit' || el.type === 'image';
+  }
+  if (el instanceof HTMLButtonElement) {
+    const t = el.getAttribute('type');
+    return t === null || t === '' || t === 'submit';
+  }
+  return false;
 }
 
 // ── Extractors ─────────────────────────────────────────────────────────

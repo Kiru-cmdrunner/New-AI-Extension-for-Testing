@@ -1,0 +1,44 @@
+{
+  "viewHidden": false,
+  "count": 3,
+  "countLabel": "3",
+  "cards": [
+    {
+      "id": "int-2",
+      "type": "⌨️ Text Entry",
+      "endState": "completed",
+      "memberChip": "18 events · 537ms",
+      "understanding": "✓ TextEntry (prio 50)",
+      "footerChip": null,
+      "assertionChip": "1 assertion",
+      "krChip": "◆ new signature",
+      "suppressedChip": null
+    },
+    {
+      "id": "int-3",
+      "type": "📋 Dropdown",
+      "endState": "completed",
+      "memberChip": "10 events · 1374ms",
+      "understanding": "✓ Dropdown (prio 20)",
+      "footerChip": "3 dom changes",
+      "assertionChip": "0 assertions",
+      "krChip": "◆ new signature",
+      "suppressedChip": null
+    },
+    {
+      "id": "int-5",
+      "type": "🖱️ Click",
+      "endState": "completed",
+      "memberChip": "1 event · 0ms",
+      "understanding": "✓ Click (prio 180)",
+      "footerChip": "3 dom changes",
+      "assertionChip": "1 assertion",
+      "krChip": "◆ new signature",
+      "suppressedChip": null
+    }
+  ],
+  "toggle": {
+    "hidden": true,
+    "text": ""
+  }
+}

@@ -1,0 +1,23 @@
+[
+  {
+    "id": "int-2",
+    "hasEv": true,
+    "endReason": "stabilized",
+    "rs": null,
+    "domChanges": 0
+  },
+  {
+    "id": "int-3",
+    "hasEv": true,
+    "endReason": "consequence-settled",
+    "rs": null,
+    "domChanges": 1
+  },
+  {
+    "id": "int-5",
+    "hasEv": true,
+    "endReason": "lifecycle-complete",
+    "rs": null,
+    "domChanges": 0
+  }
+]

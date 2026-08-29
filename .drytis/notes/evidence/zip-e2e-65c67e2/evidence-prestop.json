@@ -1,0 +1,276 @@
+[
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "dlg": null,
+    "open": null,
+    "net": 0,
+    "rs": null
+  },
+  {
+    "t": "TextEntry",
+    "end": "consequence-settled",
+    "dlg": null,
+    "open": null,
+    "net": 3,
+    "rs": null
+  },
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "dlg": null,
+    "open": null,
+    "net": 0,
+    "rs": null
+  },
+  {
+    "t": "Click",
+    "end": "consequence-settled",
+    "dlg": null,
+    "open": null,
+    "net": 2,
+    "rs": {
+      "url": "http://127.0.0.1:8177/",
+      "items": [
+        {
+          "k": "counter",
+          "n": 0,
+          "e": null,
+          "attrs": {
+            "aria-label": "Cart items",
+            "data-count": "0"
+          }
+        },
+        {
+          "k": "collection",
+          "n": 1,
+          "e": null,
+          "attrs": {}
+        }
+      ]
+    }
+  },
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "dlg": null,
+    "open": null,
+    "net": 0,
+    "rs": null
+  },
+  {
+    "t": "Click",
+    "end": "consequence-settled",
+    "dlg": null,
+    "open": null,
+    "net": 0,
+    "rs": {
+      "url": "http://127.0.0.1:8177/",
+      "items": [
+        {
+          "k": "counter",
+          "n": 0,
+          "e": null,
+          "attrs": {
+            "aria-label": "Cart items",
+            "data-count": "0"
+          }
+        },
+        {
+          "k": "collection",
+          "n": 1,
+          "e": null,
+          "attrs": {}
+        },
+        {
+          "k": "entity",
+          "n": null,
+          "e": "SKU-WAR",
+          "attrs": {
+            "data-sku": "SKU-WAR"
+          }
+        },
+        {
+          "k": "status-badge",
+          "n": null,
+          "e": null,
+          "attrs": {}
+        }
+      ]
+    }
+  },
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "dlg": null,
+    "open": null,
+    "net": 0,
+    "rs": null
+  },
+  {
+    "t": "Checkbox",
+    "end": "consequence-settled",
+    "dlg": null,
+    "open": null,
+    "net": 0,
+    "rs": {
+      "url": "http://127.0.0.1:8177/",
+      "items": [
+        {
+          "k": "counter",
+          "n": 0,
+          "e": null,
+          "attrs": {
+            "aria-label": "Cart items",
+            "data-count": "0"
+          }
+        },
+        {
+          "k": "collection",
+          "n": 1,
+          "e": null,
+          "attrs": {}
+        },
+        {
+          "k": "entity",
+          "n": null,
+          "e": "SKU-WAR",
+          "attrs": {
+            "data-sku": "SKU-WAR"
+          }
+        },
+        {
+          "k": "status-badge",
+          "n": null,
+          "e": null,
+          "attrs": {}
+        }
+      ]
+    }
+  },
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "dlg": null,
+    "open": null,
+    "net": 0,
+    "rs": null
+  },
+  {
+    "t": "Dropdown",
+    "end": "consequence-settled",
+    "dlg": null,
+    "open": null,
+    "net": 3,
+    "rs": null
+  },
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "dlg": null,
+    "open": null,
+    "net": 0,
+    "rs": null
+  },
+  {
+    "t": "Click",
+    "end": "sw-recovered-form-submit",
+    "dlg": null,
+    "open": null,
+    "net": 2,
+    "rs": null
+  },
+  {
+    "t": "Navigation",
+    "end": "stabilized",
+    "dlg": null,
+    "open": null,
+    "net": 0,
+    "rs": {
+      "url": "http://127.0.0.1:8177/order",
+      "items": [
+        {
+          "k": "counter",
+          "n": 0,
+          "e": null,
+          "attrs": {
+            "aria-label": "Cart items",
+            "data-count": "0"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "dlg": {
+      "message": "Order confirmed",
+      "result": null,
+      "type": "alert"
+    },
+    "open": null,
+    "net": 0,
+    "rs": null
+  },
+  {
+    "t": "Click",
+    "end": "consequence-settled",
+    "dlg": null,
+    "open": null,
+    "net": 0,
+    "rs": {
+      "url": "http://127.0.0.1:8177/order",
+      "items": [
+        {
+          "k": "counter",
+          "n": 1,
+          "e": null,
+          "attrs": {
+            "aria-label": "Cart items",
+            "data-count": "1"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "dlg": {
+      "message": "Discard order?",
+      "result": "OK",
+      "type": "confirm"
+    },
+    "open": null,
+    "net": 0,
+    "rs": null
+  },
+  {
+    "t": "Click",
+    "end": "consequence-settled",
+    "dlg": null,
+    "open": null,
+    "net": 0,
+    "rs": {
+      "url": "http://127.0.0.1:8177/order",
+      "items": [
+        {
+          "k": "counter",
+          "n": 1,
+          "e": null,
+          "attrs": {
+            "aria-label": "Cart items",
+            "data-count": "1"
+          }
+        },
+        {
+          "k": "notification",
+          "n": null,
+          "e": null,
+          "attrs": {}
+        }
+      ]
+    }
+  }
+]

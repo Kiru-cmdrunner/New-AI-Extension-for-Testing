@@ -1,0 +1,337 @@
+[
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "net": 0,
+    "rs": null
+  },
+  {
+    "t": "TextEntry",
+    "end": "consequence-settled",
+    "net": 5,
+    "rs": null
+  },
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "net": 0,
+    "rs": null
+  },
+  {
+    "t": "Click",
+    "end": "consequence-settled",
+    "net": 3,
+    "rs": {
+      "url": "http://127.0.0.1:8166/",
+      "items": [
+        {
+          "k": "counter",
+          "n": 0,
+          "e": null,
+          "p": "body > header > span",
+          "a": {
+            "aria-label": "Cart items",
+            "data-count": "0"
+          }
+        },
+        {
+          "k": "counter",
+          "n": 0,
+          "e": null,
+          "p": "body > header > span > span",
+          "a": {
+            "data-auto-id": "cart-count"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "net": 0,
+    "rs": null
+  },
+  {
+    "t": "Click",
+    "end": "consequence-settled",
+    "net": 7,
+    "rs": {
+      "url": "http://127.0.0.1:8166/flights?from=BOM&to=",
+      "items": [
+        {
+          "k": "counter",
+          "n": 0,
+          "e": null,
+          "p": "body > header > span",
+          "a": {
+            "aria-label": "Cart items",
+            "data-count": "0"
+          }
+        },
+        {
+          "k": "counter",
+          "n": 0,
+          "e": null,
+          "p": "body > header > span > span",
+          "a": {
+            "data-auto-id": "cart-count"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "net": 0,
+    "rs": null
+  },
+  {
+    "t": "Click",
+    "end": "consequence-settled",
+    "net": 2,
+    "rs": {
+      "url": "http://127.0.0.1:8166/flights?from=BOM&to=",
+      "items": [
+        {
+          "k": "counter",
+          "n": 0,
+          "e": null,
+          "p": "body > header > span",
+          "a": {
+            "aria-label": "Cart items",
+            "data-count": "0"
+          }
+        },
+        {
+          "k": "counter",
+          "n": 0,
+          "e": null,
+          "p": "body > header > span > span",
+          "a": {
+            "data-auto-id": "cart-count"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "net": 0,
+    "rs": null
+  },
+  {
+    "t": "Click",
+    "end": "consequence-settled",
+    "net": 6,
+    "rs": {
+      "url": "http://127.0.0.1:8166/flights?from=BOM&to=",
+      "items": [
+        {
+          "k": "counter",
+          "n": 1,
+          "e": null,
+          "p": "body > header > span",
+          "a": {
+            "aria-label": "Cart items",
+            "data-count": "1"
+          }
+        },
+        {
+          "k": "counter",
+          "n": 1,
+          "e": null,
+          "p": "body > header > span > span",
+          "a": {
+            "data-auto-id": "cart-count"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "net": 0,
+    "rs": null
+  },
+  {
+    "t": "Link",
+    "end": "consequence-settled",
+    "net": 9,
+    "rs": {
+      "url": "http://127.0.0.1:8166/cart",
+      "items": [
+        {
+          "k": "counter",
+          "n": 1,
+          "e": null,
+          "p": "body > header > span",
+          "a": {
+            "aria-label": "Cart items",
+            "data-count": "1"
+          }
+        },
+        {
+          "k": "counter",
+          "n": 1,
+          "e": null,
+          "p": "body > header > span > span",
+          "a": {
+            "data-auto-id": "cart-count"
+          }
+        },
+        {
+          "k": "counter",
+          "n": 1,
+          "e": null,
+          "p": "body > main#app-root > div#cart-root > div > span",
+          "a": {
+            "data-auto-id": "cart-total"
+          }
+        },
+        {
+          "k": "entity",
+          "n": null,
+          "e": null,
+          "p": "body > main#app-root > div#cart-root > div",
+          "a": {
+            "data-sku": "MEAL"
+          }
+        },
+        {
+          "k": "entity",
+          "n": null,
+          "e": "MEAL",
+          "p": "body > main#app-root > div#cart-root > div",
+          "a": {
+            "data-auto-id": "cart-item-MEAL",
+            "data-sku": "MEAL"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "t": "Hover",
+    "end": "lifecycle-abandoned",
+    "net": 0,
+    "rs": null
+  },
+  {
+    "t": "Click",
+    "end": "consequence-settled",
+    "net": 5,
+    "rs": {
+      "url": "http://127.0.0.1:8166/cart",
+      "items": [
+        {
+          "k": "counter",
+          "n": 2,
+          "e": null,
+          "p": "body > header > span",
+          "a": {
+            "aria-label": "Cart items",
+            "data-count": "2"
+          }
+        },
+        {
+          "k": "counter",
+          "n": 2,
+          "e": null,
+          "p": "body > header > span > span",
+          "a": {
+            "data-auto-id": "cart-count"
+          }
+        },
+        {
+          "k": "counter",
+          "n": 2,
+          "e": null,
+          "p": "body > main#app-root > div#cart-root > div > span",
+          "a": {
+            "data-auto-id": "cart-total"
+          }
+        },
+        {
+          "k": "entity",
+          "n": null,
+          "e": null,
+          "p": "body > main#app-root > div#cart-root > div",
+          "a": {
+            "data-sku": "MEAL"
+          }
+        },
+        {
+          "k": "entity",
+          "n": null,
+          "e": "MEAL",
+          "p": "body > main#app-root > div#cart-root > div",
+          "a": {
+            "data-auto-id": "cart-item-MEAL",
+            "data-sku": "MEAL"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "t": "Click",
+    "end": "consequence-settled",
+    "net": 8,
+    "rs": {
+      "url": "http://127.0.0.1:8166/cart",
+      "items": [
+        {
+          "k": "counter",
+          "n": 3,
+          "e": null,
+          "p": "body > header > span",
+          "a": {
+            "aria-label": "Cart items",
+            "data-count": "3"
+          }
+        },
+        {
+          "k": "counter",
+          "n": 3,
+          "e": null,
+          "p": "body > header > span > span",
+          "a": {
+            "data-auto-id": "cart-count"
+          }
+        },
+        {
+          "k": "counter",
+          "n": 3,
+          "e": null,
+          "p": "body > main#app-root > div#cart-root > div > span",
+          "a": {
+            "data-auto-id": "cart-total"
+          }
+        },
+        {
+          "k": "entity",
+          "n": null,
+          "e": null,
+          "p": "body > main#app-root > div#cart-root > div",
+          "a": {
+            "data-sku": "MEAL"
+          }
+        },
+        {
+          "k": "entity",
+          "n": null,
+          "e": "MEAL",
+          "p": "body > main#app-root > div#cart-root > div",
+          "a": {
+            "data-auto-id": "cart-item-MEAL",
+            "data-sku": "MEAL"
+          }
+        }
+      ]
+    }
+  }
+]

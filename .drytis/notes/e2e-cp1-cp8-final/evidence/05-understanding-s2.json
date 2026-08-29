@@ -1,0 +1,28 @@
+{
+  "sessionId": "session-1786952051298",
+  "generatedAt": "2026-08-17T07:34:11.394Z",
+  "schemaVersion": 2,
+  "appId": "app-3l9zqg",
+  "hasBehaviorModel": true,
+  "behaviorModelSummary": {
+    "sessionId": "session-1786952051298",
+    "episodes": 7,
+    "unattributed": 2,
+    "edges": 20,
+    "warnings": 1,
+    "coverage": {
+      "anchoredInteractions": 7,
+      "attributedNetworkRows": 11,
+      "attributedObservations": 5,
+      "malformedInteractions": 0,
+      "memberInteractions": 3,
+      "provenanceLinks": 0,
+      "totalInteractions": 11,
+      "totalNetworkRows": 11,
+      "totalObservations": 7,
+      "unattributedConsequences": 2
+    }
+  },
+  "outcomeCount": 7,
+  "transitionCount": 7
+}

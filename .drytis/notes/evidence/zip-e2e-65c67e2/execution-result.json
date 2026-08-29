@@ -1,0 +1,174 @@
+{
+  "completedAt": "2026-08-20T15:22:24.967Z",
+  "durationMs": 2070.7999999998137,
+  "errorSteps": 0,
+  "executionRunId": "c2622c9a-9689-4c64-b7a5-21be8f4f668b",
+  "failedSteps": 0,
+  "irStale": false,
+  "passedSteps": 9,
+  "skippedSteps": 0,
+  "startedAt": "2026-08-20T15:22:22.896Z",
+  "status": "passed",
+  "stepCount": 9,
+  "stepResults": [
+    {
+      "actualValue": "war",
+      "assertionResults": [],
+      "durationMs": 103.1999999997206,
+      "status": "passed",
+      "stepId": "step-0001"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": "0 items",
+          "expectedValue": "0 items",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        },
+        {
+          "actualValue": 1,
+          "expectedValue": 1,
+          "message": "Count matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "count"
+        }
+      ],
+      "durationMs": 407.29999999981374,
+      "status": "passed",
+      "stepId": "step-0002"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": "0 items",
+          "expectedValue": "0 items",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        },
+        {
+          "actualValue": 1,
+          "expectedValue": 1,
+          "message": "Count matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "count"
+        },
+        {
+          "actualValue": "Searching…",
+          "expectedValue": "In stock",
+          "message": "Text \"Searching…\" did not match \"In stock\"",
+          "passed": false,
+          "severity": "soft",
+          "type": "textMatch"
+        }
+      ],
+      "durationMs": 105.5,
+      "status": "passed",
+      "stepId": "step-0003"
+    },
+    {
+      "actualValue": true,
+      "assertionResults": [
+        {
+          "actualValue": "0 items",
+          "expectedValue": "0 items",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        },
+        {
+          "actualValue": 1,
+          "expectedValue": 1,
+          "message": "Count matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "count"
+        },
+        {
+          "actualValue": "Searching…",
+          "expectedValue": "In stock",
+          "message": "Text \"Searching…\" did not match \"In stock\"",
+          "passed": false,
+          "severity": "soft",
+          "type": "textMatch"
+        }
+      ],
+      "durationMs": 104.60000000009313,
+      "status": "passed",
+      "stepId": "step-0004"
+    },
+    {
+      "actualValue": "hc",
+      "assertionResults": [],
+      "durationMs": 102.39999999990687,
+      "status": "passed",
+      "stepId": "step-0005"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 505.5,
+      "status": "passed",
+      "stepId": "step-0006"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": "0 items",
+          "expectedValue": "0 items",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        }
+      ],
+      "durationMs": 309.79999999981374,
+      "status": "passed",
+      "stepId": "step-0007"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": "1 items",
+          "expectedValue": "1 items",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        }
+      ],
+      "durationMs": 103.89999999990687,
+      "status": "passed",
+      "stepId": "step-0008"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": "1 items",
+          "expectedValue": "1 items",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        },
+        {
+          "actualValue": true,
+          "expectedValue": null,
+          "message": "Element is present",
+          "passed": true,
+          "severity": "soft",
+          "type": "presence"
+        }
+      ],
+      "durationMs": 105.3000000002794,
+      "status": "passed",
+      "stepId": "step-0009"
+    }
+  ]
+}

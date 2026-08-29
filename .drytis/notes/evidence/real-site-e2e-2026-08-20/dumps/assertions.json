@@ -1,0 +1,20 @@
+[
+  {
+    "step": "step-0001",
+    "type": "count",
+    "loc": "",
+    "exp": 1
+  },
+  {
+    "step": "step-0001",
+    "type": "count",
+    "loc": "",
+    "exp": 2
+  },
+  {
+    "step": "step-0001",
+    "type": "presence",
+    "loc": "",
+    "exp": null
+  }
+]

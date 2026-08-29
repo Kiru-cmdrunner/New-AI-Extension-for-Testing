@@ -620,14 +620,21 @@ export type StampClass = 'primary' | 'secondary' | 'ineligible';
 const SECONDARY_STAMP_EVENT_TYPES = new Set<string>(['submit']);
 
 /**
- * G5-A: classify an event's stamping authority.
- *  - primary:   click / contextmenu / change / drop / keydown(Enter) —
- *               interaction-creating trusted actions; overwrite.
- *  - secondary: submit — create-only (INV-F2).
- *  - ineligible: everything else (mousemove/focus/blur/input/other keys).
+ * B7-P2 §5.2.3: gated discovery mouseenters stamp SECONDARY create-only.
+ * The classifier cannot compute the R-4 gate itself (it has no target
+ * identity) — the DISPATCHER call site computes isInteractiveElement from
+ * the payload and passes the result here. Only gated trusted mouseenters
+ * take this path; bare 'mouseenter' stays ineligible.
  */
-export function stampClass(eventType: string, key?: string | null): StampClass {
+export function stampClass(
+  eventType: string,
+  key?: string | null,
+  gatedEnter?: boolean,
+): StampClass {
   if (eventType === 'keydown') return key === 'Enter' ? 'primary' : 'ineligible';
+  if (eventType === 'mouseenter') {
+    return gatedEnter === true ? 'secondary' : 'ineligible';
+  }
   if (SECONDARY_STAMP_EVENT_TYPES.has(eventType)) return 'secondary';
   if (STAMP_ELIGIBLE_EVENT_TYPES.has(eventType)) return 'primary';
   return 'ineligible';
@@ -639,8 +646,12 @@ export function stampClass(eventType: string, key?: string | null): StampClass {
  * semantics are enforced by the dispatcher calling
  * `setLastTrustedActionIfAbsent` for secondary-class events.
  */
-export function stampEligible(eventType: string, key?: string | null): boolean {
-  return stampClass(eventType, key) !== 'ineligible';
+export function stampEligible(
+  eventType: string,
+  key?: string | null,
+  gatedEnter?: boolean,
+): boolean {
+  return stampClass(eventType, key, gatedEnter) !== 'ineligible';
 }
 
 /**

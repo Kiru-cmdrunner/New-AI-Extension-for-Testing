@@ -42,7 +42,7 @@ import {
   rankLocatorCandidates,
 } from '../domain/locator-ranking';
 import { LocatorStrategyType, ValidationType, ValidationComparison, ValidationSeverity } from '../domain/enums';
-import { isDropdownOption } from '../definitions/patterns';
+import { isDropdownOption, formJoinKey } from '../definitions/patterns';
 import type { ObservedEvent } from '../shared/component-types';
 import type { GenerationInput, GenerationEnrichment, StepScopedAssertion } from './generation-types';
 
@@ -497,6 +497,90 @@ function deriveAssertions(
  * the first step (a, a*, a* → one step) — the old pairwise `i += 2` turned
  * three clicks into two steps.
  */
+/**
+ * 7.4-B6: Is this interaction's trigger a form submit control? Uses the
+ * ground-truth DomContext flag captured at event time
+ * (isFormSubmitControl — HTML semantics: input[type=submit|image],
+ * button[type=submit or no type attr]) — never inferred from tag/role
+ * heuristics downstream. Legacy events without the flag are NOT submit
+ * controls (honest absence — no reorder fires).
+ */
+function isSubmitControlInteraction(interaction: ComponentInteraction): boolean {
+  return interaction.triggerEvent.domContext?.isFormSubmitControl === true;
+}
+
+/**
+ * 7.4-B6: FILL-before-submit-CLICK order restore.
+ *
+ * For every submit-completed TextEntry FILL step (commitSignal === 'submit')
+ * that sits AFTER a CLICK step whose interaction is a submit control joined
+ * to the SAME form, move the FILL to immediately before that CLICK.
+ * Deterministic from recorded data (formJoinKey equality); no other steps
+ * are reordered. Idempotent: a FILL already before its CLICK is untouched.
+ *
+ * Spec: .drytis/specs/phase-7-4-b6-enter-submit-commit.md §4.5
+ */
+function restoreSubmitFillOrder(steps: IRStep[], interactions: ComponentInteraction[]): void {
+  if (steps.length < 2) return;
+
+  // Map interactionId → interaction facts (recorded join/commit data).
+  // The form join is derived from each interaction's OWN trigger-event
+  // DomContext (captured at event time) — NOT from metadata, which only
+  // TextEntry emits. The Click definition writes no form fields, but its
+  // trigger event carries them; recorded data either way, no live DOM.
+  const formKeyByInteraction = new Map<string, { formKey: string | null; commit: boolean; submitCtl: boolean }>();
+  for (const it of interactions) {
+    formKeyByInteraction.set(it.interactionId, {
+      formKey: formJoinKey(it.trigger, it.triggerEvent?.domContext),
+      commit: it.metadata['commitSignal'] === 'submit',
+      submitCtl: isSubmitControlInteraction(it),
+    });
+  }
+
+  // IRStep carries sourceEventId; find the interaction each step came from.
+  // For TextEntry steps the sourceEventId is the trigger (focus) event id;
+  // the mapping below uses the interaction lookup by step sourceEventId.
+  const interactionBySourceEvent = new Map<string, ComponentInteraction>();
+  for (const it of interactions) {
+    interactionBySourceEvent.set(it.triggerEvent.eventId, it);
+  }
+
+  // Find fills needing reorder: fill with commit && an EARLIER same-form
+  // submit-control click. Emission order is click-then-fill (the TextEntry
+  // completes on the native submit event, which follows the click), so the
+  // click to jump back over is at j < i. Iterate left→right and move each
+  // committed FILL back before the LAST matching earlier click.
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
+    if (step.action !== IRAction.FILL) continue;
+    if (!step.sourceEventId) continue;
+    const it = interactionBySourceEvent.get(step.sourceEventId);
+    if (!it) continue;
+    const meta = formKeyByInteraction.get(it.interactionId);
+    if (!meta?.commit || !meta.formKey) continue;
+
+    // Find the LATEST earlier CLICK joined to the same form + submit control
+    let target = -1;
+    for (let j = i - 1; j >= 0; j--) {
+      const earlier = steps[j];
+      if (earlier.action !== IRAction.CLICK) continue;
+      if (!earlier.sourceEventId) continue;
+      const earlierIt = interactionBySourceEvent.get(earlier.sourceEventId);
+      if (!earlierIt) continue;
+      const earlierMeta = formKeyByInteraction.get(earlierIt.interactionId);
+      if (earlierMeta?.submitCtl && earlierMeta.formKey != null && earlierMeta.formKey === meta.formKey) {
+        target = j;
+        break;
+      }
+    }
+    if (target < 0) continue;
+
+    // Move the FILL to immediately before that CLICK
+    const [moved] = steps.splice(i, 1);
+    steps.splice(target, 0, moved);
+  }
+}
+
 function applyReadabilityRules(steps: IRStep[]): IRStep[] {
   if (steps.length <= 1) return steps;
 
@@ -771,6 +855,15 @@ export function build(input: GenerationInput): ExecutionIRPlan {
 
     stepCounter++;
   }
+
+  // 7.4-B6: submit-commit order restore — a submit-completed TextEntry is
+  // emitted AFTER the submit-control click that caused the commit (the
+  // synthetic implicit-submission click precedes the native submit event;
+  // a real mouse submit has the same shape). Chronological replay needs
+  // FILL before the CLICK that submits, else the fill lands on a page the
+  // submission already destroyed. Purely recorded-data join (formJoinKey
+  // metadata + submit-control shape); no clocks, no DOM.
+  restoreSubmitFillOrder(steps, interactions);
 
   // Apply readability rules (merge duplicates, re-number)
   const finalSteps = applyReadabilityRules(steps);

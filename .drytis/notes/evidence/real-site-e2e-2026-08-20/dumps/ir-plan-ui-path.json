@@ -1,0 +1,19 @@
+{
+  "environment": {
+    "baseUrl": "chrome-extension://gndjidfncanlhlonpcabokbdhnikglpn/src/sidepanel/index.html",
+    "browser": "chrome",
+    "startUrl": "chrome-extension://gndjidfncanlhlonpcabokbdhnikglpn/src/sidepanel/index.html",
+    "viewport": {
+      "height": 720,
+      "width": 1280
+    }
+  },
+  "steps": [],
+  "tags": [
+    "src"
+  ],
+  "testCaseId": "tc-3dd15c8e",
+  "testCaseVersionId": "tcv-3dd15c8e",
+  "testCaseVersionNumber": 1,
+  "title": "Recorded Test"
+}

@@ -351,6 +351,14 @@ if (chrome?.runtime?.onMessage) {
       // Don't sendResponse async — the listener must return synchronously
       return false;
     }
+    if (message?.type === 'STOP_EVIDENCE_DRAIN') {
+      // B7-P2: SW-driven pre-pipeline drain — force-close open provisional
+      // hover windows so their evidence lands BEFORE the SW's STOP pipeline
+      // (flush → admission) runs. Delivery mechanics only; the collector
+      // keeps running (STOP_RECORDING below still tears it down).
+      evidenceCollector?.drainHoverWindowsAtStop();
+      return false;
+    }
     if (message?.type === 'STOP_RECORDING') {
       stopRecording();
       return false;

@@ -1,0 +1,14 @@
+{
+  "completedAt": "2026-08-20T09:56:32.597Z",
+  "durationMs": 212.80000000004657,
+  "errorSteps": 0,
+  "executionRunId": "8c88aa76-e46b-48b8-a65f-66c28e58f719",
+  "failedSteps": 0,
+  "irStale": false,
+  "passedSteps": 0,
+  "skippedSteps": 0,
+  "startedAt": "2026-08-20T09:56:32.385Z",
+  "status": "error",
+  "stepCount": 0,
+  "stepResults": []
+}

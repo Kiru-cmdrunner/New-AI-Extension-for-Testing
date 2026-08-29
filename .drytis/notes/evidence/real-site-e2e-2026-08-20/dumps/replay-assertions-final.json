@@ -1,0 +1,10 @@
+[
+  {
+    "step": "step-0003",
+    "t": "presence",
+    "pass": true,
+    "exp": null,
+    "act": true,
+    "msg": "Element is present"
+  }
+]

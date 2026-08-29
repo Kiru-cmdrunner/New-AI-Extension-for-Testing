@@ -1,0 +1,1161 @@
+{
+  "appId": "app-3l9zqg",
+  "behaviorVersion": 2,
+  "workflows": {
+    "seq1": {
+      "contractVersion": 1,
+      "data": {
+        "appId": "app-3l9zqg",
+        "sessionId": "session-1786952031337",
+        "seq": 1,
+        "generatedAtMs": 1786952031358,
+        "steps": [
+          {
+            "order": 0,
+            "episodeId": "ep-int-10",
+            "signatureKey": "app-3l9zqg:sig:33337592",
+            "actionType": "Unclassified",
+            "actionTarget": "Search products",
+            "parameterInputs": [],
+            "episodeOutcome": null,
+            "edges": []
+          },
+          {
+            "order": 1,
+            "episodeId": "ep-int-11",
+            "signatureKey": "app-3l9zqg:sig:0c6130e2",
+            "actionType": "Unclassified",
+            "actionTarget": "Go",
+            "parameterInputs": [],
+            "episodeOutcome": null,
+            "edges": []
+          },
+          {
+            "order": 2,
+            "episodeId": "ep-int-5",
+            "signatureKey": "app-3l9zqg:sig:524daaea",
+            "actionType": "Click",
+            "actionTarget": "Go",
+            "parameterInputs": [
+              {
+                "interactionId": "int-3",
+                "label": "Search products",
+                "value": "headphones"
+              }
+            ],
+            "episodeOutcome": {
+              "outcome": "success",
+              "confidence": 1,
+              "derivation": "derived-episode-outcome"
+            },
+            "edges": [
+              {
+                "edgeId": "edge-ep-int-5-000",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=he initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-001",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=hea initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-002",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=head initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-003",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=headp initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-004",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=headph initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-005",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=headpho initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-006",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=headphon initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-007",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=headphone initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-008",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=headphones initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-009",
+                "tier": "T3-transition",
+                "kind": "entity",
+                "detail": "entity search-query:headphones (search-query) created",
+                "confidence": 0.7
+              },
+              {
+                "edgeId": "edge-ep-int-5-010",
+                "tier": "T4-window",
+                "kind": "ui",
+                "detail": "UI observations on int-3: 3 DOM changes, 2 visibility changes",
+                "confidence": 0.6
+              }
+            ]
+          },
+          {
+            "order": 3,
+            "episodeId": "ep-int-12",
+            "signatureKey": "app-3l9zqg:sig:cc57e64d",
+            "actionType": "Unclassified",
+            "actionTarget": "Aurora Wireless Headphones — $89.99\nOver-ear ANC headphones · ★4.5",
+            "parameterInputs": [],
+            "episodeOutcome": null,
+            "edges": []
+          },
+          {
+            "order": 4,
+            "episodeId": "ep-int-13",
+            "signatureKey": "app-3l9zqg:sig:2cebd020",
+            "actionType": "Unclassified",
+            "actionTarget": "Aurora Wireless Headphones — $89.99\nOver-ear ANC headphones · ★4.5",
+            "parameterInputs": [],
+            "episodeOutcome": {
+              "outcome": "incomplete",
+              "confidence": 0,
+              "derivation": "derived-episode-outcome"
+            },
+            "edges": [
+              {
+                "edgeId": "edge-ep-int-13-000",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/product.html?id=P100 initiated during ep-int-13",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-13-001",
+                "tier": "T2-lineage",
+                "kind": "navigation",
+                "detail": "navigation committed to http://127.0.0.1:8098/product.html?id=P100",
+                "confidence": 0.85
+              },
+              {
+                "edgeId": "edge-ep-int-13-002",
+                "tier": "T4-window",
+                "kind": "ui",
+                "detail": "UI observations on int-6: 0 DOM changes",
+                "confidence": 0.5
+              },
+              {
+                "edgeId": "edge-ep-int-13-003",
+                "tier": "T4-window",
+                "kind": "ui",
+                "detail": "UI observations on int-13: 0 DOM changes",
+                "confidence": 0.6
+              }
+            ]
+          },
+          {
+            "order": 5,
+            "episodeId": "ep-int-14",
+            "signatureKey": "app-3l9zqg:sig:7808fc38",
+            "actionType": "Unclassified",
+            "actionTarget": "Add to Cart",
+            "parameterInputs": [],
+            "episodeOutcome": {
+              "outcome": "incomplete",
+              "confidence": 0,
+              "derivation": "derived-episode-outcome"
+            },
+            "edges": [
+              {
+                "edgeId": "edge-ep-int-14-000",
+                "tier": "T2-lineage",
+                "kind": "navigation",
+                "detail": "navigation committed to http://127.0.0.1:8098/cart.html?added=P100",
+                "confidence": 0.85
+              },
+              {
+                "edgeId": "edge-ep-int-14-001",
+                "tier": "T3-transition",
+                "kind": "state",
+                "detail": "view search-results → cart",
+                "confidence": 0.7
+              },
+              {
+                "edgeId": "edge-ep-int-14-002",
+                "tier": "T4-window",
+                "kind": "ui",
+                "detail": "UI observations on int-8: 0 DOM changes",
+                "confidence": 0.5
+              },
+              {
+                "edgeId": "edge-ep-int-14-003",
+                "tier": "T4-window",
+                "kind": "ui",
+                "detail": "UI observations on int-9: 0 DOM changes",
+                "confidence": 0.6
+              }
+            ]
+          },
+          {
+            "order": 6,
+            "episodeId": "ep-int-8",
+            "signatureKey": "app-3l9zqg:sig:e0e59cec",
+            "actionType": "Click",
+            "actionTarget": "Add to Cart",
+            "parameterInputs": [],
+            "episodeOutcome": {
+              "outcome": "success",
+              "confidence": 0.4,
+              "derivation": "derived-episode-outcome"
+            },
+            "edges": [
+              {
+                "edgeId": "edge-ep-int-8-000",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/cart.html?added=P100 initiated during ep-int-8",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-8-001",
+                "tier": "T1-stamp",
+                "kind": "entity",
+                "detail": "entity cart-item:int-8 (cart-item) created from API",
+                "confidence": 0.9
+              }
+            ]
+          }
+        ],
+        "gaps": [
+          {
+            "gapId": "unattr-ui-int-1",
+            "observedKind": "ui",
+            "reason": "no-live-horizon",
+            "detail": "evidence window synthetic-nav-nav-1786952017198-pbn31f lies outside every uiOwnership horizon",
+            "observedAtMs": 1786952017204
+          },
+          {
+            "gapId": "unattr-ui-int-5",
+            "observedKind": "ui",
+            "reason": "no-live-horizon",
+            "detail": "evidence window ev-evt-pmswx3cxk-39 lies outside every uiOwnership horizon",
+            "observedAtMs": 1786952021399
+          }
+        ]
+      }
+    },
+    "seq2": {
+      "contractVersion": 1,
+      "data": {
+        "appId": "app-3l9zqg",
+        "sessionId": "session-1786952051298",
+        "seq": 2,
+        "generatedAtMs": 1786952051305,
+        "steps": [
+          {
+            "order": 0,
+            "episodeId": "ep-int-10",
+            "signatureKey": "app-3l9zqg:sig:33337592",
+            "actionType": "Unclassified",
+            "actionTarget": "Search products",
+            "parameterInputs": [],
+            "episodeOutcome": null,
+            "edges": []
+          },
+          {
+            "order": 1,
+            "episodeId": "ep-int-11",
+            "signatureKey": "app-3l9zqg:sig:0c6130e2",
+            "actionType": "Unclassified",
+            "actionTarget": "Go",
+            "parameterInputs": [],
+            "episodeOutcome": null,
+            "edges": []
+          },
+          {
+            "order": 2,
+            "episodeId": "ep-int-5",
+            "signatureKey": "app-3l9zqg:sig:524daaea",
+            "actionType": "Click",
+            "actionTarget": "Go",
+            "parameterInputs": [
+              {
+                "interactionId": "int-3",
+                "label": "Search products",
+                "value": "headphones"
+              }
+            ],
+            "episodeOutcome": {
+              "outcome": "success",
+              "confidence": 1,
+              "derivation": "derived-episode-outcome"
+            },
+            "edges": [
+              {
+                "edgeId": "edge-ep-int-5-000",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=he initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-001",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=hea initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-002",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=head initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-003",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=headp initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-004",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=headph initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-005",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=headpho initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-006",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=headphon initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-007",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=headphone initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-008",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=headphones initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-009",
+                "tier": "T4-window",
+                "kind": "ui",
+                "detail": "UI observations on int-3: 3 DOM changes, 2 visibility changes",
+                "confidence": 0.6
+              }
+            ]
+          },
+          {
+            "order": 3,
+            "episodeId": "ep-int-12",
+            "signatureKey": "app-3l9zqg:sig:cc57e64d",
+            "actionType": "Unclassified",
+            "actionTarget": "Aurora Wireless Headphones — $89.99\nOver-ear ANC headphones · ★4.5",
+            "parameterInputs": [],
+            "episodeOutcome": null,
+            "edges": []
+          },
+          {
+            "order": 4,
+            "episodeId": "ep-int-13",
+            "signatureKey": "app-3l9zqg:sig:2cebd020",
+            "actionType": "Unclassified",
+            "actionTarget": "Aurora Wireless Headphones — $89.99\nOver-ear ANC headphones · ★4.5",
+            "parameterInputs": [],
+            "episodeOutcome": {
+              "outcome": "incomplete",
+              "confidence": 0,
+              "derivation": "derived-episode-outcome"
+            },
+            "edges": [
+              {
+                "edgeId": "edge-ep-int-13-000",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/product.html?id=P100 initiated during ep-int-13",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-13-001",
+                "tier": "T2-lineage",
+                "kind": "navigation",
+                "detail": "navigation committed to http://127.0.0.1:8098/product.html?id=P100",
+                "confidence": 0.85
+              },
+              {
+                "edgeId": "edge-ep-int-13-002",
+                "tier": "T4-window",
+                "kind": "ui",
+                "detail": "UI observations on int-6: 0 DOM changes",
+                "confidence": 0.5
+              },
+              {
+                "edgeId": "edge-ep-int-13-003",
+                "tier": "T4-window",
+                "kind": "ui",
+                "detail": "UI observations on int-13: 0 DOM changes",
+                "confidence": 0.6
+              }
+            ]
+          },
+          {
+            "order": 5,
+            "episodeId": "ep-int-14",
+            "signatureKey": "app-3l9zqg:sig:7808fc38",
+            "actionType": "Unclassified",
+            "actionTarget": "Add to Cart",
+            "parameterInputs": [],
+            "episodeOutcome": {
+              "outcome": "incomplete",
+              "confidence": 0,
+              "derivation": "derived-episode-outcome"
+            },
+            "edges": [
+              {
+                "edgeId": "edge-ep-int-14-000",
+                "tier": "T2-lineage",
+                "kind": "navigation",
+                "detail": "navigation committed to http://127.0.0.1:8098/cart.html?added=P100",
+                "confidence": 0.85
+              },
+              {
+                "edgeId": "edge-ep-int-14-001",
+                "tier": "T3-transition",
+                "kind": "state",
+                "detail": "view search-results → cart",
+                "confidence": 0.7
+              },
+              {
+                "edgeId": "edge-ep-int-14-002",
+                "tier": "T4-window",
+                "kind": "ui",
+                "detail": "UI observations on int-8: 0 DOM changes",
+                "confidence": 0.5
+              },
+              {
+                "edgeId": "edge-ep-int-14-003",
+                "tier": "T4-window",
+                "kind": "ui",
+                "detail": "UI observations on int-9: 0 DOM changes",
+                "confidence": 0.6
+              }
+            ]
+          },
+          {
+            "order": 6,
+            "episodeId": "ep-int-8",
+            "signatureKey": "app-3l9zqg:sig:e0e59cec",
+            "actionType": "Click",
+            "actionTarget": "Add to Cart",
+            "parameterInputs": [],
+            "episodeOutcome": {
+              "outcome": "success",
+              "confidence": 0.4,
+              "derivation": "derived-episode-outcome"
+            },
+            "edges": [
+              {
+                "edgeId": "edge-ep-int-8-000",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "POST http://127.0.0.1:8098/cart/add initiated during ep-int-8",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-8-001",
+                "tier": "T1-stamp",
+                "kind": "entity",
+                "detail": "entity cart-item:P100 (cart-item) created from API",
+                "confidence": 0.9
+              }
+            ]
+          }
+        ],
+        "gaps": [
+          {
+            "gapId": "unattr-ui-int-1",
+            "observedKind": "ui",
+            "reason": "no-live-horizon",
+            "detail": "evidence window synthetic-nav-nav-1786952037330-jnjmb1 lies outside every uiOwnership horizon",
+            "observedAtMs": 1786952037335
+          },
+          {
+            "gapId": "unattr-ui-int-5",
+            "observedKind": "ui",
+            "reason": "no-live-horizon",
+            "detail": "evidence window ev-evt-pmswx3sh0-41 lies outside every uiOwnership horizon",
+            "observedAtMs": 1786952041517
+          }
+        ]
+      }
+    },
+    "seq3": {
+      "contractVersion": 1,
+      "data": {
+        "appId": "app-3l9zqg",
+        "sessionId": "session-1786952066785",
+        "seq": 3,
+        "generatedAtMs": 1786952066792,
+        "steps": [
+          {
+            "order": 0,
+            "episodeId": "ep-int-7",
+            "signatureKey": "app-3l9zqg:sig:33337592",
+            "actionType": "Unclassified",
+            "actionTarget": "Search products",
+            "parameterInputs": [],
+            "episodeOutcome": null,
+            "edges": []
+          },
+          {
+            "order": 1,
+            "episodeId": "ep-int-8",
+            "signatureKey": "app-3l9zqg:sig:0c6130e2",
+            "actionType": "Unclassified",
+            "actionTarget": "Go",
+            "parameterInputs": [],
+            "episodeOutcome": null,
+            "edges": []
+          },
+          {
+            "order": 2,
+            "episodeId": "ep-int-5",
+            "signatureKey": "app-3l9zqg:sig:524daaea",
+            "actionType": "Click",
+            "actionTarget": "Go",
+            "parameterInputs": [
+              {
+                "interactionId": "int-3",
+                "label": "Search products",
+                "value": "headphones"
+              }
+            ],
+            "episodeOutcome": {
+              "outcome": "success",
+              "confidence": 1,
+              "derivation": "derived-episode-outcome"
+            },
+            "edges": [
+              {
+                "edgeId": "edge-ep-int-5-000",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=he initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-001",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=hea initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-002",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=head initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-003",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=headp initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-004",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=headph initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-005",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=headpho initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-006",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=headphon initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-007",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=headphone initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-008",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/api/suggest?q=headphones initiated during ep-int-5",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-5-009",
+                "tier": "T4-window",
+                "kind": "ui",
+                "detail": "UI observations on int-3: 3 DOM changes, 2 visibility changes",
+                "confidence": 0.6
+              }
+            ]
+          },
+          {
+            "order": 3,
+            "episodeId": "ep-int-9",
+            "signatureKey": "app-3l9zqg:sig:cc57e64d",
+            "actionType": "Unclassified",
+            "actionTarget": "Aurora Wireless Headphones — $89.99\nOver-ear ANC headphones · ★4.5",
+            "parameterInputs": [],
+            "episodeOutcome": null,
+            "edges": []
+          },
+          {
+            "order": 4,
+            "episodeId": "ep-int-10",
+            "signatureKey": "app-3l9zqg:sig:ccb2c83d",
+            "actionType": "Unclassified",
+            "actionTarget": "Aurora Wireless Headphones — $89.99\nOver-ear ANC headphones · ★4.5",
+            "parameterInputs": [],
+            "episodeOutcome": {
+              "outcome": "incomplete",
+              "confidence": 0,
+              "derivation": "derived-episode-outcome"
+            },
+            "edges": [
+              {
+                "edgeId": "edge-ep-int-10-000",
+                "tier": "T1-stamp",
+                "kind": "api",
+                "detail": "GET http://127.0.0.1:8098/product.html?id=P100 initiated during ep-int-10",
+                "confidence": 0.9
+              },
+              {
+                "edgeId": "edge-ep-int-10-001",
+                "tier": "T2-lineage",
+                "kind": "navigation",
+                "detail": "navigation committed to http://127.0.0.1:8098/product.html?id=P100",
+                "confidence": 0.85
+              },
+              {
+                "edgeId": "edge-ep-int-10-002",
+                "tier": "T4-window",
+                "kind": "ui",
+                "detail": "UI observations on int-6: 0 DOM changes",
+                "confidence": 0.5
+              },
+              {
+                "edgeId": "edge-ep-int-10-003",
+                "tier": "T4-window",
+                "kind": "ui",
+                "detail": "UI observations on int-10: 0 DOM changes",
+                "confidence": 0.6
+              }
+            ]
+          }
+        ],
+        "gaps": [
+          {
+            "gapId": "unattr-ui-int-1",
+            "observedKind": "ui",
+            "reason": "no-live-horizon",
+            "detail": "evidence window synthetic-nav-nav-1786952057335-2c67xo lies outside every uiOwnership horizon",
+            "observedAtMs": 1786952057339
+          },
+          {
+            "gapId": "unattr-ui-int-5",
+            "observedKind": "ui",
+            "reason": "no-live-horizon",
+            "detail": "evidence window ev-evt-pmswx47wf-40 lies outside every uiOwnership horizon",
+            "observedAtMs": 1786952061506
+          }
+        ]
+      }
+    }
+  },
+  "navgraph": {
+    "contractVersion": 1,
+    "data": [
+      {
+        "from": "*",
+        "to": "/cart.html?added=P100",
+        "sessionCount": 2,
+        "evidenceSamples": [
+          {
+            "sessionId": "session-1786952031337",
+            "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-14-000",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952051298",
+            "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-14-000",
+            "resolvable": true
+          }
+        ]
+      },
+      {
+        "from": "*",
+        "to": "/product.html?id=P100",
+        "sessionCount": 3,
+        "evidenceSamples": [
+          {
+            "sessionId": "session-1786952031337",
+            "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-13-001",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952051298",
+            "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-13-001",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952066785",
+            "edgeKey": "app-3l9zqg:session-1786952066785:edge-ep-int-10-001",
+            "resolvable": true
+          }
+        ]
+      }
+    ]
+  },
+  "stategraph": {
+    "contractVersion": 1,
+    "data": [
+      {
+        "from": "search-results",
+        "to": "cart",
+        "sessionCount": 2,
+        "evidenceSamples": [
+          {
+            "sessionId": "session-1786952031337",
+            "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-14-001",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952051298",
+            "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-14-001",
+            "resolvable": true
+          }
+        ]
+      }
+    ]
+  },
+  "apisurface": {
+    "contractVersion": 1,
+    "data": [
+      {
+        "identity": "GET /api/suggest?q=he",
+        "method": "GET",
+        "path": "/api/suggest?q=he",
+        "sessionCount": 3,
+        "originActions": [
+          "app-3l9zqg:sig:524daaea"
+        ],
+        "evidenceSamples": [
+          {
+            "sessionId": "session-1786952031337",
+            "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-5-000",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952051298",
+            "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-5-000",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952066785",
+            "edgeKey": "app-3l9zqg:session-1786952066785:edge-ep-int-5-000",
+            "resolvable": true
+          }
+        ],
+        "payloadSchema": "unrecorded"
+      },
+      {
+        "identity": "GET /api/suggest?q=hea",
+        "method": "GET",
+        "path": "/api/suggest?q=hea",
+        "sessionCount": 3,
+        "originActions": [
+          "app-3l9zqg:sig:524daaea"
+        ],
+        "evidenceSamples": [
+          {
+            "sessionId": "session-1786952031337",
+            "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-5-001",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952051298",
+            "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-5-001",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952066785",
+            "edgeKey": "app-3l9zqg:session-1786952066785:edge-ep-int-5-001",
+            "resolvable": true
+          }
+        ],
+        "payloadSchema": "unrecorded"
+      },
+      {
+        "identity": "GET /api/suggest?q=head",
+        "method": "GET",
+        "path": "/api/suggest?q=head",
+        "sessionCount": 3,
+        "originActions": [
+          "app-3l9zqg:sig:524daaea"
+        ],
+        "evidenceSamples": [
+          {
+            "sessionId": "session-1786952031337",
+            "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-5-002",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952051298",
+            "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-5-002",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952066785",
+            "edgeKey": "app-3l9zqg:session-1786952066785:edge-ep-int-5-002",
+            "resolvable": true
+          }
+        ],
+        "payloadSchema": "unrecorded"
+      },
+      {
+        "identity": "GET /api/suggest?q=headp",
+        "method": "GET",
+        "path": "/api/suggest?q=headp",
+        "sessionCount": 3,
+        "originActions": [
+          "app-3l9zqg:sig:524daaea"
+        ],
+        "evidenceSamples": [
+          {
+            "sessionId": "session-1786952031337",
+            "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-5-003",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952051298",
+            "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-5-003",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952066785",
+            "edgeKey": "app-3l9zqg:session-1786952066785:edge-ep-int-5-003",
+            "resolvable": true
+          }
+        ],
+        "payloadSchema": "unrecorded"
+      },
+      {
+        "identity": "GET /api/suggest?q=headph",
+        "method": "GET",
+        "path": "/api/suggest?q=headph",
+        "sessionCount": 3,
+        "originActions": [
+          "app-3l9zqg:sig:524daaea"
+        ],
+        "evidenceSamples": [
+          {
+            "sessionId": "session-1786952031337",
+            "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-5-004",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952051298",
+            "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-5-004",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952066785",
+            "edgeKey": "app-3l9zqg:session-1786952066785:edge-ep-int-5-004",
+            "resolvable": true
+          }
+        ],
+        "payloadSchema": "unrecorded"
+      },
+      {
+        "identity": "GET /api/suggest?q=headpho",
+        "method": "GET",
+        "path": "/api/suggest?q=headpho",
+        "sessionCount": 3,
+        "originActions": [
+          "app-3l9zqg:sig:524daaea"
+        ],
+        "evidenceSamples": [
+          {
+            "sessionId": "session-1786952031337",
+            "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-5-005",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952051298",
+            "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-5-005",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952066785",
+            "edgeKey": "app-3l9zqg:session-1786952066785:edge-ep-int-5-005",
+            "resolvable": true
+          }
+        ],
+        "payloadSchema": "unrecorded"
+      },
+      {
+        "identity": "GET /api/suggest?q=headphon",
+        "method": "GET",
+        "path": "/api/suggest?q=headphon",
+        "sessionCount": 3,
+        "originActions": [
+          "app-3l9zqg:sig:524daaea"
+        ],
+        "evidenceSamples": [
+          {
+            "sessionId": "session-1786952031337",
+            "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-5-006",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952051298",
+            "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-5-006",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952066785",
+            "edgeKey": "app-3l9zqg:session-1786952066785:edge-ep-int-5-006",
+            "resolvable": true
+          }
+        ],
+        "payloadSchema": "unrecorded"
+      },
+      {
+        "identity": "GET /api/suggest?q=headphone",
+        "method": "GET",
+        "path": "/api/suggest?q=headphone",
+        "sessionCount": 3,
+        "originActions": [
+          "app-3l9zqg:sig:524daaea"
+        ],
+        "evidenceSamples": [
+          {
+            "sessionId": "session-1786952031337",
+            "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-5-007",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952051298",
+            "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-5-007",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952066785",
+            "edgeKey": "app-3l9zqg:session-1786952066785:edge-ep-int-5-007",
+            "resolvable": true
+          }
+        ],
+        "payloadSchema": "unrecorded"
+      },
+      {
+        "identity": "GET /api/suggest?q=headphones",
+        "method": "GET",
+        "path": "/api/suggest?q=headphones",
+        "sessionCount": 3,
+        "originActions": [
+          "app-3l9zqg:sig:524daaea"
+        ],
+        "evidenceSamples": [
+          {
+            "sessionId": "session-1786952031337",
+            "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-5-008",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952051298",
+            "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-5-008",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952066785",
+            "edgeKey": "app-3l9zqg:session-1786952066785:edge-ep-int-5-008",
+            "resolvable": true
+          }
+        ],
+        "payloadSchema": "unrecorded"
+      },
+      {
+        "identity": "GET /cart.html?added=P100",
+        "method": "GET",
+        "path": "/cart.html?added=P100",
+        "sessionCount": 1,
+        "originActions": [
+          "app-3l9zqg:sig:e0e59cec"
+        ],
+        "evidenceSamples": [
+          {
+            "sessionId": "session-1786952031337",
+            "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-8-000",
+            "resolvable": true
+          }
+        ],
+        "payloadSchema": "unrecorded"
+      },
+      {
+        "identity": "GET /product.html?id=P100",
+        "method": "GET",
+        "path": "/product.html?id=P100",
+        "sessionCount": 3,
+        "originActions": [
+          "app-3l9zqg:sig:2cebd020",
+          "app-3l9zqg:sig:ccb2c83d"
+        ],
+        "evidenceSamples": [
+          {
+            "sessionId": "session-1786952031337",
+            "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-13-000",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952051298",
+            "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-13-000",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952066785",
+            "edgeKey": "app-3l9zqg:session-1786952066785:edge-ep-int-10-000",
+            "resolvable": true
+          }
+        ],
+        "payloadSchema": "unrecorded"
+      },
+      {
+        "identity": "POST /cart/add",
+        "method": "POST",
+        "path": "/cart/add",
+        "sessionCount": 1,
+        "originActions": [
+          "app-3l9zqg:sig:e0e59cec"
+        ],
+        "evidenceSamples": [
+          {
+            "sessionId": "session-1786952051298",
+            "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-8-000",
+            "resolvable": true
+          }
+        ],
+        "payloadSchema": "unrecorded"
+      }
+    ]
+  },
+  "entities": {
+    "contractVersion": 1,
+    "data": [
+      {
+        "identity": "cart-item:create",
+        "sessionCount": 2,
+        "originActions": [
+          "app-3l9zqg:sig:e0e59cec"
+        ],
+        "evidenceSamples": [
+          {
+            "sessionId": "session-1786952031337",
+            "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-8-001",
+            "resolvable": true
+          },
+          {
+            "sessionId": "session-1786952051298",
+            "edgeKey": "app-3l9zqg:session-1786952051298:edge-ep-int-8-001",
+            "resolvable": true
+          }
+        ]
+      },
+      {
+        "identity": "search-query:create",
+        "sessionCount": 1,
+        "originActions": [
+          "app-3l9zqg:sig:524daaea"
+        ],
+        "evidenceSamples": [
+          {
+            "sessionId": "session-1786952031337",
+            "edgeKey": "app-3l9zqg:session-1786952031337:edge-ep-int-5-009",
+            "resolvable": true
+          }
+        ]
+      }
+    ]
+  },
+  "snapshotAfter": {
+    "applications": "{\"count\":1,\"digest\":\"b9ee132cb4241194\",\"rows\":[\"{\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"origin\\\":\\\"http://127.0.0.1:8098/search.html\\\",\\\"label\\\":\\\"127.0.0.1:8098\\\",\\\"firstSeenAt\\\":1786952031358,\\\"lastActiveAt\\\":1786952066846,\\\"sessionCount\\\":3,\\\"lastSessionId\\\":\\\"session-1786952066785\\\"}\"]}",
+    "knowledgeBehaviorSessions": "{\"count\":3,\"digest\":\"074e63ee72236f98\",\"rows\":[\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"seq\\\":1,\\\"generatedAtMs\\\":1786952031358,\\\"episodeCount\\\":7,\\\"edgeCount\\\":21,\\\"gapCount\\\":2,\\\"coverage\\\":{\\\"totalInteractions\\\":11,\\\"anchoredInteractions\\\":7,\\\"memberInteractions\\\":3,\\\"malformedInteractions\\\":0,\\\"totalNetworkRows\\\":11,\\\"attributedNetworkRows\\\":11,\\\"totalObservations\\\":7,\\\"attributedObservations\\\":5,\\\"unattributedConsequences\\\":2,\\\"provenanceLinks\\\":0},\\\"viewSetHash\\\":\\\"261010b6\\\",\\\"signatureSetHash\\\":\\\"d8435ab5\\\",\\\"warnings\\\":[{\\\"code\\\":\\\"unknown-tab-resolution\\\",\\\"message\\\":\\\"One or more anchors carry no captureOrigin.tabId; they were grouped into the shared null-tab scope. Membership decisions involving them may be coarser than tab-scoped ones.\\\",\\\"refs\\\":[\\\"ep-int-10\\\",\\\"ep-int-11\\\",\\\"ep-int-12\\\",\\\"ep-int-13\\\",\\\"ep-int-14\\\"]}]}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"seq\\\":2,\\\"generatedAtMs\\\":1786952051305,\\\"episodeCount\\\":7,\\\"edgeCount\\\":20,\\\"gapCount\\\":2,\\\"coverage\\\":{\\\"totalInteractions\\\":11,\\\"anchoredInteractions\\\":7,\\\"memberInteractions\\\":3,\\\"malformedInteractions\\\":0,\\\"totalNetworkRows\\\":11,\\\"attributedNetworkRows\\\":11,\\\"totalObservations\\\":7,\\\"attributedObservations\\\":5,\\\"unattributedConsequences\\\":2,\\\"provenanceLinks\\\":0},\\\"viewSetHash\\\":\\\"261010b6\\\",\\\"signatureSetHash\\\":\\\"d8435ab5\\\",\\\"warnings\\\":[{\\\"code\\\":\\\"unknown-tab-resolution\\\",\\\"message\\\":\\\"One or more anchors carry no captureOrigin.tabId; they were grouped into the shared null-tab scope. Membership decisions involving them may be coarser than tab-scoped ones.\\\",\\\"refs\\\":[\\\"ep-int-10\\\",\\\"ep-int-11\\\",\\\"ep-int-12\\\",\\\"ep-int-13\\\",\\\"ep-int-14\\\"]}]}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"seq\\\":3,\\\"generatedAtMs\\\":1786952066792,\\\"episodeCount\\\":5,\\\"edgeCount\\\":14,\\\"gapCount\\\":2,\\\"coverage\\\":{\\\"totalInteractions\\\":8,\\\"anchoredInteractions\\\":5,\\\"memberInteractions\\\":2,\\\"malformedInteractions\\\":0,\\\"totalNetworkRows\\\":10,\\\"attributedNetworkRows\\\":10,\\\"totalObservations\\\":5,\\\"attributedObservations\\\":3,\\\"unattributedConsequences\\\":2,\\\"provenanceLinks\\\":0},\\\"viewSetHash\\\":\\\"c1c05972\\\",\\\"signatureSetHash\\\":\\\"20af379d\\\",\\\"warnings\\\":[{\\\"code\\\":\\\"unknown-tab-resolution\\\",\\\"message\\\":\\\"One or more anchors carry no captureOrigin.tabId; they were grouped into the shared null-tab scope. Membership decisions involving them may be coarser than tab-scoped ones.\\\",\\\"refs\\\":[\\\"ep-int-7\\\",\\\"ep-int-8\\\",\\\"ep-int-9\\\",\\\"ep-int-10\\\"]}]}\"]}",
+    "knowledgeEpisodes": "{\"count\":19,\"digest\":\"9385c50e7f1a5dea\",\"rows\":[\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:ep-int-10\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-10\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-10\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"actionTarget\\\":\\\"Search products\\\",\\\"triggerTimestamp\\\":1786952019713},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-10\\\",\\\"role\\\":\\\"anchor\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952019713,\\\"closedAtMs\\\":1786952019713,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952019713,\\\"closedAtMs\\\":1786952019713,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[],\\\"episodeOutcome\\\":null,\\\"tabId\\\":null,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:33337592\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:ep-int-11\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-11\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-11\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"actionTarget\\\":\\\"Go\\\",\\\"triggerTimestamp\\\":1786952021373},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-11\\\",\\\"role\\\":\\\"anchor\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952021373,\\\"closedAtMs\\\":1786952021373,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952021373,\\\"closedAtMs\\\":1786952021373,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[],\\\"episodeOutcome\\\":null,\\\"tabId\\\":null,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:0c6130e2\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:ep-int-12\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-12\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-12\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"actionTarget\\\":\\\"Aurora Wireless Headphones — $89.99\\\\nOver-ear ANC headphones · ★4.5\\\",\\\"triggerTimestamp\\\":1786952022916},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-12\\\",\\\"role\\\":\\\"anchor\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952022916,\\\"closedAtMs\\\":1786952022916,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952022916,\\\"closedAtMs\\\":1786952022916,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[],\\\"episodeOutcome\\\":null,\\\"tabId\\\":null,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:cc57e64d\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:ep-int-13\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-13\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-13\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"actionTarget\\\":\\\"Aurora Wireless Headphones — $89.99\\\\nOver-ear ANC headphones · ★4.5\\\",\\\"triggerTimestamp\\\":1786952022919},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-13\\\",\\\"role\\\":\\\"anchor\\\"},{\\\"interactionId\\\":\\\"int-6\\\",\\\"role\\\":\\\"navigation\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952022919,\\\"closedAtMs\\\":1786952025957,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952022919,\\\"closedAtMs\\\":1786952025957,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[],\\\"episodeOutcome\\\":{\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"derivation\\\":\\\"derived-episode-outcome\\\"},\\\"tabId\\\":null,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:2cebd020\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:ep-int-14\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-14\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-14\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"actionTarget\\\":\\\"Add to Cart\\\",\\\"triggerTimestamp\\\":1786952026632},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-14\\\",\\\"role\\\":\\\"anchor\\\"},{\\\"interactionId\\\":\\\"int-9\\\",\\\"role\\\":\\\"navigation\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952026632,\\\"closedAtMs\\\":1786952029807,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952026632,\\\"closedAtMs\\\":1786952029807,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[],\\\"episodeOutcome\\\":{\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"derivation\\\":\\\"derived-episode-outcome\\\"},\\\"tabId\\\":null,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:7808fc38\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:ep-int-5\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-5\\\",\\\"actionType\\\":\\\"Click\\\",\\\"actionTarget\\\":\\\"Go\\\",\\\"triggerTimestamp\\\":1786952021399},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-5\\\",\\\"role\\\":\\\"anchor\\\"},{\\\"interactionId\\\":\\\"int-3\\\",\\\"role\\\":\\\"parameter\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952021399,\\\"closedAtMs\\\":1786952021399,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952021399,\\\"closedAtMs\\\":1786952021399,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[{\\\"interactionId\\\":\\\"int-3\\\",\\\"label\\\":\\\"Search products\\\",\\\"value\\\":\\\"headphones\\\",\\\"link\\\":\\\"form-overlap\\\"}],\\\"episodeOutcome\\\":{\\\"outcome\\\":\\\"success\\\",\\\"confidence\\\":1,\\\"confidenceLevel\\\":\\\"confirmed\\\",\\\"derivation\\\":\\\"derived-episode-outcome\\\"},\\\"tabId\\\":12119211,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:ep-int-8\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-8\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-8\\\",\\\"actionType\\\":\\\"Click\\\",\\\"actionTarget\\\":\\\"Add to Cart\\\",\\\"triggerTimestamp\\\":1786952026640},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-8\\\",\\\"role\\\":\\\"anchor\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952026640,\\\"closedAtMs\\\":1786952026640,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952026640,\\\"closedAtMs\\\":1786952026640,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[],\\\"episodeOutcome\\\":{\\\"outcome\\\":\\\"success\\\",\\\"confidence\\\":0.4,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"derivation\\\":\\\"derived-episode-outcome\\\"},\\\"tabId\\\":12119211,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:e0e59cec\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:ep-int-10\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-10\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-10\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"actionTarget\\\":\\\"Search products\\\",\\\"triggerTimestamp\\\":1786952039845},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-10\\\",\\\"role\\\":\\\"anchor\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952039845,\\\"closedAtMs\\\":1786952039845,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952039845,\\\"closedAtMs\\\":1786952039845,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[],\\\"episodeOutcome\\\":null,\\\"tabId\\\":null,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:33337592\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:ep-int-11\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-11\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-11\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"actionTarget\\\":\\\"Go\\\",\\\"triggerTimestamp\\\":1786952041507},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-11\\\",\\\"role\\\":\\\"anchor\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952041507,\\\"closedAtMs\\\":1786952041507,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952041507,\\\"closedAtMs\\\":1786952041507,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[],\\\"episodeOutcome\\\":null,\\\"tabId\\\":null,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:0c6130e2\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:ep-int-12\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-12\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-12\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"actionTarget\\\":\\\"Aurora Wireless Headphones — $89.99\\\\nOver-ear ANC headphones · ★4.5\\\",\\\"triggerTimestamp\\\":1786952043025},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-12\\\",\\\"role\\\":\\\"anchor\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952043025,\\\"closedAtMs\\\":1786952043025,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952043025,\\\"closedAtMs\\\":1786952043025,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[],\\\"episodeOutcome\\\":null,\\\"tabId\\\":null,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:cc57e64d\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:ep-int-13\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-13\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-13\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"actionTarget\\\":\\\"Aurora Wireless Headphones — $89.99\\\\nOver-ear ANC headphones · ★4.5\\\",\\\"triggerTimestamp\\\":1786952043028},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-13\\\",\\\"role\\\":\\\"anchor\\\"},{\\\"interactionId\\\":\\\"int-6\\\",\\\"role\\\":\\\"navigation\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952043028,\\\"closedAtMs\\\":1786952046059,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952043028,\\\"closedAtMs\\\":1786952046059,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[],\\\"episodeOutcome\\\":{\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"derivation\\\":\\\"derived-episode-outcome\\\"},\\\"tabId\\\":null,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:2cebd020\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:ep-int-14\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-14\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-14\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"actionTarget\\\":\\\"Add to Cart\\\",\\\"triggerTimestamp\\\":1786952046742},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-14\\\",\\\"role\\\":\\\"anchor\\\"},{\\\"interactionId\\\":\\\"int-9\\\",\\\"role\\\":\\\"navigation\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952046742,\\\"closedAtMs\\\":1786952049802,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952046742,\\\"closedAtMs\\\":1786952049802,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[],\\\"episodeOutcome\\\":{\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"derivation\\\":\\\"derived-episode-outcome\\\"},\\\"tabId\\\":null,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:7808fc38\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:ep-int-5\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-5\\\",\\\"actionType\\\":\\\"Click\\\",\\\"actionTarget\\\":\\\"Go\\\",\\\"triggerTimestamp\\\":1786952041517},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-5\\\",\\\"role\\\":\\\"anchor\\\"},{\\\"interactionId\\\":\\\"int-3\\\",\\\"role\\\":\\\"parameter\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952041517,\\\"closedAtMs\\\":1786952041517,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952041517,\\\"closedAtMs\\\":1786952041517,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[{\\\"interactionId\\\":\\\"int-3\\\",\\\"label\\\":\\\"Search products\\\",\\\"value\\\":\\\"headphones\\\",\\\"link\\\":\\\"form-overlap\\\"}],\\\"episodeOutcome\\\":{\\\"outcome\\\":\\\"success\\\",\\\"confidence\\\":1,\\\"confidenceLevel\\\":\\\"confirmed\\\",\\\"derivation\\\":\\\"derived-episode-outcome\\\"},\\\"tabId\\\":12119211,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:ep-int-8\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-8\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-8\\\",\\\"actionType\\\":\\\"Click\\\",\\\"actionTarget\\\":\\\"Add to Cart\\\",\\\"triggerTimestamp\\\":1786952046746},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-8\\\",\\\"role\\\":\\\"anchor\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952046746,\\\"closedAtMs\\\":1786952046746,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952046746,\\\"closedAtMs\\\":1786952046746,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[],\\\"episodeOutcome\\\":{\\\"outcome\\\":\\\"success\\\",\\\"confidence\\\":0.4,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"derivation\\\":\\\"derived-episode-outcome\\\"},\\\"tabId\\\":12119211,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:e0e59cec\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:ep-int-10\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-10\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-10\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"actionTarget\\\":\\\"Aurora Wireless Headphones — $89.99\\\\nOver-ear ANC headphones · ★4.5\\\",\\\"triggerTimestamp\\\":1786952063021},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-10\\\",\\\"role\\\":\\\"anchor\\\"},{\\\"interactionId\\\":\\\"int-6\\\",\\\"role\\\":\\\"navigation\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952063021,\\\"closedAtMs\\\":1786952066064,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952063021,\\\"closedAtMs\\\":1786952066064,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[],\\\"episodeOutcome\\\":{\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"derivation\\\":\\\"derived-episode-outcome\\\"},\\\"tabId\\\":null,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:ccb2c83d\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:ep-int-5\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-5\\\",\\\"actionType\\\":\\\"Click\\\",\\\"actionTarget\\\":\\\"Go\\\",\\\"triggerTimestamp\\\":1786952061506},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-5\\\",\\\"role\\\":\\\"anchor\\\"},{\\\"interactionId\\\":\\\"int-3\\\",\\\"role\\\":\\\"parameter\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952061506,\\\"closedAtMs\\\":1786952061506,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952061506,\\\"closedAtMs\\\":1786952061506,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[{\\\"interactionId\\\":\\\"int-3\\\",\\\"label\\\":\\\"Search products\\\",\\\"value\\\":\\\"headphones\\\",\\\"link\\\":\\\"form-overlap\\\"}],\\\"episodeOutcome\\\":{\\\"outcome\\\":\\\"success\\\",\\\"confidence\\\":1,\\\"confidenceLevel\\\":\\\"confirmed\\\",\\\"derivation\\\":\\\"derived-episode-outcome\\\"},\\\"tabId\\\":12119211,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:ep-int-7\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-7\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-7\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"actionTarget\\\":\\\"Search products\\\",\\\"triggerTimestamp\\\":1786952059843},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-7\\\",\\\"role\\\":\\\"anchor\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952059843,\\\"closedAtMs\\\":1786952059843,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952059843,\\\"closedAtMs\\\":1786952059843,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[],\\\"episodeOutcome\\\":null,\\\"tabId\\\":null,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:33337592\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:ep-int-8\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-8\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-8\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"actionTarget\\\":\\\"Go\\\",\\\"triggerTimestamp\\\":1786952061499},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-8\\\",\\\"role\\\":\\\"anchor\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952061499,\\\"closedAtMs\\\":1786952061499,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952061499,\\\"closedAtMs\\\":1786952061499,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[],\\\"episodeOutcome\\\":null,\\\"tabId\\\":null,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:0c6130e2\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:ep-int-9\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-9\\\",\\\"anchor\\\":{\\\"interactionId\\\":\\\"int-9\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"actionTarget\\\":\\\"Aurora Wireless Headphones — $89.99\\\\nOver-ear ANC headphones · ★4.5\\\",\\\"triggerTimestamp\\\":1786952063016},\\\"members\\\":[{\\\"interactionId\\\":\\\"int-9\\\",\\\"role\\\":\\\"anchor\\\"}],\\\"horizonAttribution\\\":{\\\"openedAtMs\\\":1786952063016,\\\"closedAtMs\\\":1786952063016,\\\"closeReason\\\":\\\"all-stamped-settled\\\"},\\\"horizonUiOwnership\\\":{\\\"openedAtMs\\\":1786952063016,\\\"closedAtMs\\\":1786952063016,\\\"closeReason\\\":\\\"stabilized\\\"},\\\"parameterInputs\\\":[],\\\"episodeOutcome\\\":null,\\\"tabId\\\":null,\\\"signatureKey\\\":\\\"app-3l9zqg:sig:cc57e64d\\\"}\"]}",
+    "knowledgeEdges": "{\"count\":55,\"digest\":\"1e1cbd66032b4926\",\"rows\":[\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-13-000\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-13\\\",\\\"edgeId\\\":\\\"edge-ep-int-13-000\\\",\\\"edgeSeq\\\":0,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/product.html?id=P100 initiated during ep-int-13\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-13\\\",\\\"fromInteractionId\\\":\\\"int-13\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"24\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"24\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:2cebd020\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-13-001\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-13\\\",\\\"edgeId\\\":\\\"edge-ep-int-13-001\\\",\\\"edgeSeq\\\":1,\\\"tier\\\":\\\"T2-lineage\\\",\\\"kind\\\":\\\"navigation\\\",\\\"detail\\\":\\\"navigation committed to http://127.0.0.1:8098/product.html?id=P100\\\",\\\"confidence\\\":0.85,\\\"latencyMs\\\":38,\\\"fromEpisodeId\\\":\\\"ep-int-13\\\",\\\"fromInteractionId\\\":\\\"int-6\\\",\\\"to\\\":{\\\"type\\\":\\\"navigation\\\",\\\"navEventId\\\":\\\"nav-1786952022946-czy0h3\\\",\\\"toUrl\\\":\\\"http://127.0.0.1:8098/product.html?id=P100\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"nav\\\\\\\",\\\\\\\"navEventId\\\\\\\":\\\\\\\"nav-1786952022946-czy0h3\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:2cebd020\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-13-002\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-13\\\",\\\"edgeId\\\":\\\"edge-ep-int-13-002\\\",\\\"edgeSeq\\\":2,\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"detail\\\":\\\"UI observations on int-6: 0 DOM changes\\\",\\\"confidence\\\":0.5,\\\"latencyMs\\\":29,\\\"fromEpisodeId\\\":\\\"ep-int-13\\\",\\\"fromInteractionId\\\":\\\"int-6\\\",\\\"to\\\":{\\\"type\\\":\\\"ui\\\",\\\"summary\\\":\\\"0 DOM changes\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"synthetic-nav-nav-1786952022946-czy0h3\\\\\\\",\\\\\\\"sequence\\\\\\\":0,\\\\\\\"degradation\\\\\\\":[\\\\\\\"synthesized-evidence\\\\\\\"]}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:2cebd020\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-13-003\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-13\\\",\\\"edgeId\\\":\\\"edge-ep-int-13-003\\\",\\\"edgeSeq\\\":3,\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"detail\\\":\\\"UI observations on int-13: 0 DOM changes\\\",\\\"confidence\\\":0.6,\\\"latencyMs\\\":0,\\\"fromEpisodeId\\\":\\\"ep-int-13\\\",\\\"fromInteractionId\\\":\\\"int-13\\\",\\\"to\\\":{\\\"type\\\":\\\"ui\\\",\\\"summary\\\":\\\"0 DOM changes\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"sw-evt-pmswx3cxk-47\\\\\\\",\\\\\\\"sequence\\\\\\\":0}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:2cebd020\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-14-000\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-14\\\",\\\"edgeId\\\":\\\"edge-ep-int-14-000\\\",\\\"edgeSeq\\\":0,\\\"tier\\\":\\\"T2-lineage\\\",\\\"kind\\\":\\\"navigation\\\",\\\"detail\\\":\\\"navigation committed to http://127.0.0.1:8098/cart.html?added=P100\\\",\\\"confidence\\\":0.85,\\\"latencyMs\\\":175,\\\"fromEpisodeId\\\":\\\"ep-int-14\\\",\\\"fromInteractionId\\\":\\\"int-9\\\",\\\"to\\\":{\\\"type\\\":\\\"navigation\\\",\\\"navEventId\\\":\\\"nav-1786952026681-cu9wdx\\\",\\\"toUrl\\\":\\\"http://127.0.0.1:8098/cart.html?added=P100\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"nav\\\\\\\",\\\\\\\"navEventId\\\\\\\":\\\\\\\"nav-1786952026681-cu9wdx\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:7808fc38\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-14-001\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-14\\\",\\\"edgeId\\\":\\\"edge-ep-int-14-001\\\",\\\"edgeSeq\\\":1,\\\"tier\\\":\\\"T3-transition\\\",\\\"kind\\\":\\\"state\\\",\\\"detail\\\":\\\"view search-results → cart\\\",\\\"confidence\\\":0.7,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-14\\\",\\\"fromInteractionId\\\":\\\"int-9\\\",\\\"to\\\":{\\\"type\\\":\\\"state\\\",\\\"from\\\":\\\"search-results\\\",\\\"to\\\":\\\"cart\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"transition\\\\\\\",\\\\\\\"transitionId\\\\\\\":\\\\\\\"st-int-9\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:7808fc38\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-14-002\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-14\\\",\\\"edgeId\\\":\\\"edge-ep-int-14-002\\\",\\\"edgeSeq\\\":2,\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"detail\\\":\\\"UI observations on int-8: 0 DOM changes\\\",\\\"confidence\\\":0.5,\\\"latencyMs\\\":8,\\\"fromEpisodeId\\\":\\\"ep-int-14\\\",\\\"fromInteractionId\\\":\\\"int-8\\\",\\\"to\\\":{\\\"type\\\":\\\"ui\\\",\\\"summary\\\":\\\"0 DOM changes\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"ev-evt-pmswx3hhq-7\\\\\\\",\\\\\\\"sequence\\\\\\\":0}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:7808fc38\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-14-003\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-14\\\",\\\"edgeId\\\":\\\"edge-ep-int-14-003\\\",\\\"edgeSeq\\\":3,\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"detail\\\":\\\"UI observations on int-9: 0 DOM changes\\\",\\\"confidence\\\":0.6,\\\"latencyMs\\\":77,\\\"fromEpisodeId\\\":\\\"ep-int-14\\\",\\\"fromInteractionId\\\":\\\"int-9\\\",\\\"to\\\":{\\\"type\\\":\\\"ui\\\",\\\"summary\\\":\\\"0 DOM changes\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"synthetic-nav-nav-1786952026681-cu9wdx\\\\\\\",\\\\\\\"sequence\\\\\\\":0,\\\\\\\"degradation\\\\\\\":[\\\\\\\"synthesized-evidence\\\\\\\"]}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:7808fc38\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-5-000\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-000\\\",\\\"edgeSeq\\\":0,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=he initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"15\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"15\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-5-001\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-001\\\",\\\"edgeSeq\\\":1,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=hea initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"16\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"16\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-5-002\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-002\\\",\\\"edgeSeq\\\":2,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=head initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"17\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"17\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-5-003\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-003\\\",\\\"edgeSeq\\\":3,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=headp initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"18\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"18\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-5-004\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-004\\\",\\\"edgeSeq\\\":4,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=headph initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"19\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"19\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-5-005\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-005\\\",\\\"edgeSeq\\\":5,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=headpho initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"20\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"20\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-5-006\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-006\\\",\\\"edgeSeq\\\":6,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=headphon initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"21\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"21\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-5-007\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-007\\\",\\\"edgeSeq\\\":7,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=headphone initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"22\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"22\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-5-008\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-008\\\",\\\"edgeSeq\\\":8,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=headphones initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"23\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"23\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-5-009\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-009\\\",\\\"edgeSeq\\\":9,\\\"tier\\\":\\\"T3-transition\\\",\\\"kind\\\":\\\"entity\\\",\\\"detail\\\":\\\"entity search-query:headphones (search-query) created\\\",\\\"confidence\\\":0.7,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"entity\\\",\\\"entityId\\\":\\\"search-query:headphones\\\",\\\"operation\\\":\\\"create\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"entity\\\\\\\",\\\\\\\"entityId\\\\\\\":\\\\\\\"search-query:headphones\\\\\\\",\\\\\\\"interactionId\\\\\\\":\\\\\\\"int-3\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-5-010\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-010\\\",\\\"edgeSeq\\\":10,\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"detail\\\":\\\"UI observations on int-3: 3 DOM changes, 2 visibility changes\\\",\\\"confidence\\\":0.6,\\\"latencyMs\\\":0,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"ui\\\",\\\"summary\\\":\\\"3 DOM changes, 2 visibility changes\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"ev-evt-pmswx3cxk-8\\\\\\\",\\\\\\\"sequence\\\\\\\":0}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-8-000\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-8\\\",\\\"edgeId\\\":\\\"edge-ep-int-8-000\\\",\\\"edgeSeq\\\":0,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/cart.html?added=P100 initiated during ep-int-8\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-8\\\",\\\"fromInteractionId\\\":\\\"int-8\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"26\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"26\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:e0e59cec\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-8-001\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"episodeId\\\":\\\"ep-int-8\\\",\\\"edgeId\\\":\\\"edge-ep-int-8-001\\\",\\\"edgeSeq\\\":1,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"entity\\\",\\\"detail\\\":\\\"entity cart-item:int-8 (cart-item) created from API\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-8\\\",\\\"fromInteractionId\\\":\\\"int-8\\\",\\\"to\\\":{\\\"type\\\":\\\"entity\\\",\\\"entityId\\\":\\\"cart-item:int-8\\\",\\\"operation\\\":\\\"create\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"entity\\\\\\\",\\\\\\\"entityId\\\\\\\":\\\\\\\"cart-item:int-8\\\\\\\",\\\\\\\"interactionId\\\\\\\":\\\\\\\"int-8\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:e0e59cec\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-13-000\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-13\\\",\\\"edgeId\\\":\\\"edge-ep-int-13-000\\\",\\\"edgeSeq\\\":0,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/product.html?id=P100 initiated during ep-int-13\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-13\\\",\\\"fromInteractionId\\\":\\\"int-13\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"41\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"41\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:2cebd020\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-13-001\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-13\\\",\\\"edgeId\\\":\\\"edge-ep-int-13-001\\\",\\\"edgeSeq\\\":1,\\\"tier\\\":\\\"T2-lineage\\\",\\\"kind\\\":\\\"navigation\\\",\\\"detail\\\":\\\"navigation committed to http://127.0.0.1:8098/product.html?id=P100\\\",\\\"confidence\\\":0.85,\\\"latencyMs\\\":31,\\\"fromEpisodeId\\\":\\\"ep-int-13\\\",\\\"fromInteractionId\\\":\\\"int-6\\\",\\\"to\\\":{\\\"type\\\":\\\"navigation\\\",\\\"navEventId\\\":\\\"nav-1786952043051-wy0lga\\\",\\\"toUrl\\\":\\\"http://127.0.0.1:8098/product.html?id=P100\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"nav\\\\\\\",\\\\\\\"navEventId\\\\\\\":\\\\\\\"nav-1786952043051-wy0lga\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:2cebd020\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-13-002\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-13\\\",\\\"edgeId\\\":\\\"edge-ep-int-13-002\\\",\\\"edgeSeq\\\":2,\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"detail\\\":\\\"UI observations on int-6: 0 DOM changes\\\",\\\"confidence\\\":0.5,\\\"latencyMs\\\":27,\\\"fromEpisodeId\\\":\\\"ep-int-13\\\",\\\"fromInteractionId\\\":\\\"int-6\\\",\\\"to\\\":{\\\"type\\\":\\\"ui\\\",\\\"summary\\\":\\\"0 DOM changes\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"ev-nav-1786952043051-wy0lga\\\\\\\",\\\\\\\"sequence\\\\\\\":0}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:2cebd020\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-13-003\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-13\\\",\\\"edgeId\\\":\\\"edge-ep-int-13-003\\\",\\\"edgeSeq\\\":3,\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"detail\\\":\\\"UI observations on int-13: 0 DOM changes\\\",\\\"confidence\\\":0.6,\\\"latencyMs\\\":0,\\\"fromEpisodeId\\\":\\\"ep-int-13\\\",\\\"fromInteractionId\\\":\\\"int-13\\\",\\\"to\\\":{\\\"type\\\":\\\"ui\\\",\\\"summary\\\":\\\"0 DOM changes\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"sw-evt-pmswx3sh0-49\\\\\\\",\\\\\\\"sequence\\\\\\\":0}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:2cebd020\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-14-000\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-14\\\",\\\"edgeId\\\":\\\"edge-ep-int-14-000\\\",\\\"edgeSeq\\\":0,\\\"tier\\\":\\\"T2-lineage\\\",\\\"kind\\\":\\\"navigation\\\",\\\"detail\\\":\\\"navigation committed to http://127.0.0.1:8098/cart.html?added=P100\\\",\\\"confidence\\\":0.85,\\\"latencyMs\\\":60,\\\"fromEpisodeId\\\":\\\"ep-int-14\\\",\\\"fromInteractionId\\\":\\\"int-9\\\",\\\"to\\\":{\\\"type\\\":\\\"navigation\\\",\\\"navEventId\\\":\\\"nav-1786952046786-t0jccb\\\",\\\"toUrl\\\":\\\"http://127.0.0.1:8098/cart.html?added=P100\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"nav\\\\\\\",\\\\\\\"navEventId\\\\\\\":\\\\\\\"nav-1786952046786-t0jccb\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:7808fc38\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-14-001\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-14\\\",\\\"edgeId\\\":\\\"edge-ep-int-14-001\\\",\\\"edgeSeq\\\":1,\\\"tier\\\":\\\"T3-transition\\\",\\\"kind\\\":\\\"state\\\",\\\"detail\\\":\\\"view search-results → cart\\\",\\\"confidence\\\":0.7,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-14\\\",\\\"fromInteractionId\\\":\\\"int-9\\\",\\\"to\\\":{\\\"type\\\":\\\"state\\\",\\\"from\\\":\\\"search-results\\\",\\\"to\\\":\\\"cart\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"transition\\\\\\\",\\\\\\\"transitionId\\\\\\\":\\\\\\\"st-int-9\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:7808fc38\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-14-002\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-14\\\",\\\"edgeId\\\":\\\"edge-ep-int-14-002\\\",\\\"edgeSeq\\\":2,\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"detail\\\":\\\"UI observations on int-8: 0 DOM changes\\\",\\\"confidence\\\":0.5,\\\"latencyMs\\\":4,\\\"fromEpisodeId\\\":\\\"ep-int-14\\\",\\\"fromInteractionId\\\":\\\"int-8\\\",\\\"to\\\":{\\\"type\\\":\\\"ui\\\",\\\"summary\\\":\\\"0 DOM changes\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"ev-evt-pmswx3wvs-7\\\\\\\",\\\\\\\"sequence\\\\\\\":0}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:7808fc38\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-14-003\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-14\\\",\\\"edgeId\\\":\\\"edge-ep-int-14-003\\\",\\\"edgeSeq\\\":3,\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"detail\\\":\\\"UI observations on int-9: 0 DOM changes\\\",\\\"confidence\\\":0.6,\\\"latencyMs\\\":51,\\\"fromEpisodeId\\\":\\\"ep-int-14\\\",\\\"fromInteractionId\\\":\\\"int-9\\\",\\\"to\\\":{\\\"type\\\":\\\"ui\\\",\\\"summary\\\":\\\"0 DOM changes\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"synthetic-nav-nav-1786952046786-t0jccb\\\\\\\",\\\\\\\"sequence\\\\\\\":0,\\\\\\\"degradation\\\\\\\":[\\\\\\\"synthesized-evidence\\\\\\\"]}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:7808fc38\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-5-000\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-000\\\",\\\"edgeSeq\\\":0,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=he initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"32\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"32\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-5-001\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-001\\\",\\\"edgeSeq\\\":1,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=hea initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"33\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"33\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-5-002\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-002\\\",\\\"edgeSeq\\\":2,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=head initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"34\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"34\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-5-003\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-003\\\",\\\"edgeSeq\\\":3,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=headp initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"35\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"35\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-5-004\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-004\\\",\\\"edgeSeq\\\":4,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=headph initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"36\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"36\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-5-005\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-005\\\",\\\"edgeSeq\\\":5,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=headpho initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"37\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"37\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-5-006\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-006\\\",\\\"edgeSeq\\\":6,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=headphon initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"38\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"38\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-5-007\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-007\\\",\\\"edgeSeq\\\":7,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=headphone initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"39\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"39\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-5-008\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-008\\\",\\\"edgeSeq\\\":8,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=headphones initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"40\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"40\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-5-009\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-009\\\",\\\"edgeSeq\\\":9,\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"detail\\\":\\\"UI observations on int-3: 3 DOM changes, 2 visibility changes\\\",\\\"confidence\\\":0.6,\\\"latencyMs\\\":0,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"ui\\\",\\\"summary\\\":\\\"3 DOM changes, 2 visibility changes\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"ev-evt-pmswx3sh0-8\\\\\\\",\\\\\\\"sequence\\\\\\\":0}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-8-000\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-8\\\",\\\"edgeId\\\":\\\"edge-ep-int-8-000\\\",\\\"edgeSeq\\\":0,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"POST http://127.0.0.1:8098/cart/add initiated during ep-int-8\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-8\\\",\\\"fromInteractionId\\\":\\\"int-8\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"43\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"43\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:e0e59cec\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-8-001\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"episodeId\\\":\\\"ep-int-8\\\",\\\"edgeId\\\":\\\"edge-ep-int-8-001\\\",\\\"edgeSeq\\\":1,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"entity\\\",\\\"detail\\\":\\\"entity cart-item:P100 (cart-item) created from API\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-8\\\",\\\"fromInteractionId\\\":\\\"int-8\\\",\\\"to\\\":{\\\"type\\\":\\\"entity\\\",\\\"entityId\\\":\\\"cart-item:P100\\\",\\\"operation\\\":\\\"create\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"entity\\\\\\\",\\\\\\\"entityId\\\\\\\":\\\\\\\"cart-item:P100\\\\\\\",\\\\\\\"interactionId\\\\\\\":\\\\\\\"int-8\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:e0e59cec\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-10-000\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-10\\\",\\\"edgeId\\\":\\\"edge-ep-int-10-000\\\",\\\"edgeSeq\\\":0,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/product.html?id=P100 initiated during ep-int-10\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-10\\\",\\\"fromInteractionId\\\":\\\"int-10\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"58\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"58\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:ccb2c83d\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-10-001\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-10\\\",\\\"edgeId\\\":\\\"edge-ep-int-10-001\\\",\\\"edgeSeq\\\":1,\\\"tier\\\":\\\"T2-lineage\\\",\\\"kind\\\":\\\"navigation\\\",\\\"detail\\\":\\\"navigation committed to http://127.0.0.1:8098/product.html?id=P100\\\",\\\"confidence\\\":0.85,\\\"latencyMs\\\":43,\\\"fromEpisodeId\\\":\\\"ep-int-10\\\",\\\"fromInteractionId\\\":\\\"int-6\\\",\\\"to\\\":{\\\"type\\\":\\\"navigation\\\",\\\"navEventId\\\":\\\"nav-1786952063048-zn0g9z\\\",\\\"toUrl\\\":\\\"http://127.0.0.1:8098/product.html?id=P100\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"nav\\\\\\\",\\\\\\\"navEventId\\\\\\\":\\\\\\\"nav-1786952063048-zn0g9z\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:ccb2c83d\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-10-002\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-10\\\",\\\"edgeId\\\":\\\"edge-ep-int-10-002\\\",\\\"edgeSeq\\\":2,\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"detail\\\":\\\"UI observations on int-6: 0 DOM changes\\\",\\\"confidence\\\":0.5,\\\"latencyMs\\\":30,\\\"fromEpisodeId\\\":\\\"ep-int-10\\\",\\\"fromInteractionId\\\":\\\"int-6\\\",\\\"to\\\":{\\\"type\\\":\\\"ui\\\",\\\"summary\\\":\\\"0 DOM changes\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"ev-nav-1786952063048-zn0g9z\\\\\\\",\\\\\\\"sequence\\\\\\\":0}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:ccb2c83d\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-10-003\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-10\\\",\\\"edgeId\\\":\\\"edge-ep-int-10-003\\\",\\\"edgeSeq\\\":3,\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"detail\\\":\\\"UI observations on int-10: 0 DOM changes\\\",\\\"confidence\\\":0.6,\\\"latencyMs\\\":0,\\\"fromEpisodeId\\\":\\\"ep-int-10\\\",\\\"fromInteractionId\\\":\\\"int-10\\\",\\\"to\\\":{\\\"type\\\":\\\"ui\\\",\\\"summary\\\":\\\"0 DOM changes\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"sw-evt-pmswx47wf-48\\\\\\\",\\\\\\\"sequence\\\\\\\":0}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:ccb2c83d\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-5-000\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-000\\\",\\\"edgeSeq\\\":0,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=he initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"49\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"49\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-5-001\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-001\\\",\\\"edgeSeq\\\":1,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=hea initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"50\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"50\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-5-002\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-002\\\",\\\"edgeSeq\\\":2,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=head initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"51\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"51\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-5-003\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-003\\\",\\\"edgeSeq\\\":3,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=headp initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"52\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"52\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-5-004\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-004\\\",\\\"edgeSeq\\\":4,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=headph initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"53\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"53\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-5-005\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-005\\\",\\\"edgeSeq\\\":5,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=headpho initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"54\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"54\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-5-006\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-006\\\",\\\"edgeSeq\\\":6,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=headphon initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"55\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"55\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-5-007\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-007\\\",\\\"edgeSeq\\\":7,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=headphone initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"56\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"56\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-5-008\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-008\\\",\\\"edgeSeq\\\":8,\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"detail\\\":\\\"GET http://127.0.0.1:8098/api/suggest?q=headphones initiated during ep-int-5\\\",\\\"confidence\\\":0.9,\\\"latencyMs\\\":null,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"api\\\",\\\"requestId\\\":\\\"57\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"request\\\\\\\",\\\\\\\"requestId\\\\\\\":\\\\\\\"57\\\\\\\"}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-5-009\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"episodeId\\\":\\\"ep-int-5\\\",\\\"edgeId\\\":\\\"edge-ep-int-5-009\\\",\\\"edgeSeq\\\":9,\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"detail\\\":\\\"UI observations on int-3: 3 DOM changes, 2 visibility changes\\\",\\\"confidence\\\":0.6,\\\"latencyMs\\\":0,\\\"fromEpisodeId\\\":\\\"ep-int-5\\\",\\\"fromInteractionId\\\":\\\"int-3\\\",\\\"to\\\":{\\\"type\\\":\\\"ui\\\",\\\"summary\\\":\\\"3 DOM changes, 2 visibility changes\\\"},\\\"refJson\\\":\\\"[{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"ev-evt-pmswx47wf-8\\\\\\\",\\\\\\\"sequence\\\\\\\":0}]\\\",\\\"signatureKey\\\":\\\"app-3l9zqg:sig:524daaea\\\"}\"]}",
+    "knowledgeGaps": "{\"count\":6,\"digest\":\"a55f6e2aa1a35316\",\"rows\":[\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:unattr-ui-int-1\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"gapId\\\":\\\"unattr-ui-int-1\\\",\\\"observedKind\\\":\\\"ui\\\",\\\"reason\\\":\\\"no-live-horizon\\\",\\\"detail\\\":\\\"evidence window synthetic-nav-nav-1786952017198-pbn31f lies outside every uiOwnership horizon\\\",\\\"observedAtMs\\\":1786952017204,\\\"tabId\\\":null,\\\"windowRefJson\\\":\\\"{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"synthetic-nav-nav-1786952017198-pbn31f\\\\\\\",\\\\\\\"sequence\\\\\\\":0}\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952031337:unattr-ui-int-5\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"gapId\\\":\\\"unattr-ui-int-5\\\",\\\"observedKind\\\":\\\"ui\\\",\\\"reason\\\":\\\"no-live-horizon\\\",\\\"detail\\\":\\\"evidence window ev-evt-pmswx3cxk-39 lies outside every uiOwnership horizon\\\",\\\"observedAtMs\\\":1786952021399,\\\"tabId\\\":12119211,\\\"windowRefJson\\\":\\\"{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"ev-evt-pmswx3cxk-39\\\\\\\",\\\\\\\"sequence\\\\\\\":0}\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:unattr-ui-int-1\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"gapId\\\":\\\"unattr-ui-int-1\\\",\\\"observedKind\\\":\\\"ui\\\",\\\"reason\\\":\\\"no-live-horizon\\\",\\\"detail\\\":\\\"evidence window synthetic-nav-nav-1786952037330-jnjmb1 lies outside every uiOwnership horizon\\\",\\\"observedAtMs\\\":1786952037335,\\\"tabId\\\":null,\\\"windowRefJson\\\":\\\"{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"synthetic-nav-nav-1786952037330-jnjmb1\\\\\\\",\\\\\\\"sequence\\\\\\\":0}\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952051298:unattr-ui-int-5\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"gapId\\\":\\\"unattr-ui-int-5\\\",\\\"observedKind\\\":\\\"ui\\\",\\\"reason\\\":\\\"no-live-horizon\\\",\\\"detail\\\":\\\"evidence window ev-evt-pmswx3sh0-41 lies outside every uiOwnership horizon\\\",\\\"observedAtMs\\\":1786952041517,\\\"tabId\\\":12119211,\\\"windowRefJson\\\":\\\"{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"ev-evt-pmswx3sh0-41\\\\\\\",\\\\\\\"sequence\\\\\\\":0}\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:unattr-ui-int-1\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"gapId\\\":\\\"unattr-ui-int-1\\\",\\\"observedKind\\\":\\\"ui\\\",\\\"reason\\\":\\\"no-live-horizon\\\",\\\"detail\\\":\\\"evidence window synthetic-nav-nav-1786952057335-2c67xo lies outside every uiOwnership horizon\\\",\\\"observedAtMs\\\":1786952057339,\\\"tabId\\\":null,\\\"windowRefJson\\\":\\\"{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"synthetic-nav-nav-1786952057335-2c67xo\\\\\\\",\\\\\\\"sequence\\\\\\\":0}\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:session-1786952066785:unattr-ui-int-5\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"gapId\\\":\\\"unattr-ui-int-5\\\",\\\"observedKind\\\":\\\"ui\\\",\\\"reason\\\":\\\"no-live-horizon\\\",\\\"detail\\\":\\\"evidence window ev-evt-pmswx47wf-40 lies outside every uiOwnership horizon\\\",\\\"observedAtMs\\\":1786952061506,\\\"tabId\\\":12119211,\\\"windowRefJson\\\":\\\"{\\\\\\\"kind\\\\\\\":\\\\\\\"dom\\\\\\\",\\\\\\\"windowId\\\\\\\":\\\\\\\"ev-evt-pmswx47wf-40\\\\\\\",\\\\\\\"sequence\\\\\\\":0}\\\"}\"]}",
+    "knowledgeSignatures": "{\"count\":8,\"digest\":\"7c105e8055a29f20\",\"rows\":[\"{\\\"key\\\":\\\"app-3l9zqg:sig:0c6130e2\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"normalizedTarget\\\":\\\"go\\\",\\\"anchorViewId\\\":null,\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952066785\\\",\\\"firstSeenSeq\\\":1,\\\"lastSeenSeq\\\":3,\\\"firstSeenAtMs\\\":1786952031358,\\\"lastSeenAtMs\\\":1786952066792,\\\"occurrenceCount\\\":3,\\\"sessionsSinceSeen\\\":0,\\\"status\\\":\\\"active\\\",\\\"source\\\":\\\"behavior\\\",\\\"consequenceProfile\\\":[],\\\"divergenceFlags\\\":[]}\",\"{\\\"key\\\":\\\"app-3l9zqg:sig:2cebd020\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"normalizedTarget\\\":\\\"aurora wireless headphones — $89.99 over-ear anc headphones · ★4.5\\\",\\\"anchorViewId\\\":\\\"cart\\\",\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952051298\\\",\\\"firstSeenSeq\\\":1,\\\"lastSeenSeq\\\":2,\\\"firstSeenAtMs\\\":1786952031358,\\\"lastSeenAtMs\\\":1786952051305,\\\"occurrenceCount\\\":2,\\\"sessionsSinceSeen\\\":0,\\\"status\\\":\\\"active\\\",\\\"source\\\":\\\"behavior\\\",\\\"consequenceProfile\\\":[{\\\"identity\\\":\\\"T1-stamp|api|GET /product.html\\\",\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"targetIdentity\\\":\\\"GET /product.html\\\",\\\"occurrenceCount\\\":2,\\\"hitCount\\\":2,\\\"missedObservations\\\":0,\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952051298\\\",\\\"lastSeenSeq\\\":2,\\\"confidence\\\":0.7,\\\"status\\\":\\\"active\\\",\\\"evidenceSamples\\\":[{\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-13-000\\\"},{\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-13-000\\\"}],\\\"observedVia\\\":\\\"behavior/webrequest\\\"},{\\\"identity\\\":\\\"T2-lineage|navigation|to:/product.html\\\",\\\"tier\\\":\\\"T2-lineage\\\",\\\"kind\\\":\\\"navigation\\\",\\\"targetIdentity\\\":\\\"to:/product.html\\\",\\\"occurrenceCount\\\":2,\\\"hitCount\\\":2,\\\"missedObservations\\\":0,\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952051298\\\",\\\"lastSeenSeq\\\":2,\\\"confidence\\\":0.7,\\\"status\\\":\\\"active\\\",\\\"evidenceSamples\\\":[{\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-13-001\\\"},{\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-13-001\\\"}],\\\"observedVia\\\":\\\"behavior/nav-lineage\\\"},{\\\"identity\\\":\\\"T4-window|ui|post-anchor\\\",\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"targetIdentity\\\":\\\"post-anchor\\\",\\\"occurrenceCount\\\":2,\\\"hitCount\\\":2,\\\"missedObservations\\\":0,\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952051298\\\",\\\"lastSeenSeq\\\":2,\\\"confidence\\\":0.7,\\\"status\\\":\\\"active\\\",\\\"evidenceSamples\\\":[{\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-13-002\\\"},{\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-13-002\\\"}],\\\"observedVia\\\":\\\"behavior/dom-window\\\"},{\\\"identity\\\":\\\"T4-window|ui|anchor-window\\\",\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"targetIdentity\\\":\\\"anchor-window\\\",\\\"occurrenceCount\\\":2,\\\"hitCount\\\":2,\\\"missedObservations\\\":0,\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952051298\\\",\\\"lastSeenSeq\\\":2,\\\"confidence\\\":0.7,\\\"status\\\":\\\"active\\\",\\\"evidenceSamples\\\":[{\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-13-003\\\"},{\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-13-003\\\"}],\\\"observedVia\\\":\\\"behavior/dom-window\\\"}],\\\"divergenceFlags\\\":[]}\",\"{\\\"key\\\":\\\"app-3l9zqg:sig:33337592\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"normalizedTarget\\\":\\\"search products\\\",\\\"anchorViewId\\\":null,\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952066785\\\",\\\"firstSeenSeq\\\":1,\\\"lastSeenSeq\\\":3,\\\"firstSeenAtMs\\\":1786952031358,\\\"lastSeenAtMs\\\":1786952066792,\\\"occurrenceCount\\\":3,\\\"sessionsSinceSeen\\\":0,\\\"status\\\":\\\"active\\\",\\\"source\\\":\\\"behavior\\\",\\\"consequenceProfile\\\":[],\\\"divergenceFlags\\\":[]}\",\"{\\\"key\\\":\\\"app-3l9zqg:sig:524daaea\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"actionType\\\":\\\"Click\\\",\\\"normalizedTarget\\\":\\\"go\\\",\\\"anchorViewId\\\":\\\"search-results\\\",\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952066785\\\",\\\"firstSeenSeq\\\":1,\\\"lastSeenSeq\\\":3,\\\"firstSeenAtMs\\\":1786952031358,\\\"lastSeenAtMs\\\":1786952066792,\\\"occurrenceCount\\\":3,\\\"sessionsSinceSeen\\\":0,\\\"status\\\":\\\"active\\\",\\\"source\\\":\\\"behavior\\\",\\\"consequenceProfile\\\":[{\\\"identity\\\":\\\"T1-stamp|api|GET /api/suggest\\\",\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"targetIdentity\\\":\\\"GET /api/suggest\\\",\\\"occurrenceCount\\\":3,\\\"hitCount\\\":3,\\\"missedObservations\\\":0,\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952066785\\\",\\\"lastSeenSeq\\\":3,\\\"confidence\\\":0.8,\\\"status\\\":\\\"active\\\",\\\"evidenceSamples\\\":[{\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-5-000\\\"},{\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-5-000\\\"},{\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-5-000\\\"}],\\\"observedVia\\\":\\\"behavior/webrequest\\\"},{\\\"identity\\\":\\\"T3-transition|entity|search-query:create\\\",\\\"tier\\\":\\\"T3-transition\\\",\\\"kind\\\":\\\"entity\\\",\\\"targetIdentity\\\":\\\"search-query:create\\\",\\\"occurrenceCount\\\":1,\\\"hitCount\\\":1,\\\"missedObservations\\\":2,\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenSeq\\\":1,\\\"confidence\\\":0.45,\\\"status\\\":\\\"stale\\\",\\\"evidenceSamples\\\":[{\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-5-009\\\"}],\\\"observedVia\\\":\\\"behavior/entity-derivation\\\"},{\\\"identity\\\":\\\"T4-window|ui|anchor-window\\\",\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"targetIdentity\\\":\\\"anchor-window\\\",\\\"occurrenceCount\\\":3,\\\"hitCount\\\":3,\\\"missedObservations\\\":0,\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952066785\\\",\\\"lastSeenSeq\\\":3,\\\"confidence\\\":0.8,\\\"status\\\":\\\"active\\\",\\\"evidenceSamples\\\":[{\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-5-010\\\"},{\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-5-009\\\"},{\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-5-009\\\"}],\\\"observedVia\\\":\\\"behavior/dom-window\\\"}],\\\"divergenceFlags\\\":[]}\",\"{\\\"key\\\":\\\"app-3l9zqg:sig:7808fc38\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"normalizedTarget\\\":\\\"add to cart\\\",\\\"anchorViewId\\\":null,\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952051298\\\",\\\"firstSeenSeq\\\":1,\\\"lastSeenSeq\\\":2,\\\"firstSeenAtMs\\\":1786952031358,\\\"lastSeenAtMs\\\":1786952051305,\\\"occurrenceCount\\\":2,\\\"sessionsSinceSeen\\\":0,\\\"status\\\":\\\"active\\\",\\\"source\\\":\\\"behavior\\\",\\\"consequenceProfile\\\":[{\\\"identity\\\":\\\"T2-lineage|navigation|to:/cart.html\\\",\\\"tier\\\":\\\"T2-lineage\\\",\\\"kind\\\":\\\"navigation\\\",\\\"targetIdentity\\\":\\\"to:/cart.html\\\",\\\"occurrenceCount\\\":2,\\\"hitCount\\\":2,\\\"missedObservations\\\":0,\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952051298\\\",\\\"lastSeenSeq\\\":2,\\\"confidence\\\":0.7,\\\"status\\\":\\\"active\\\",\\\"evidenceSamples\\\":[{\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-14-000\\\"},{\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-14-000\\\"}],\\\"observedVia\\\":\\\"behavior/nav-lineage\\\"},{\\\"identity\\\":\\\"T3-transition|state|search-results→cart\\\",\\\"tier\\\":\\\"T3-transition\\\",\\\"kind\\\":\\\"state\\\",\\\"targetIdentity\\\":\\\"search-results→cart\\\",\\\"occurrenceCount\\\":2,\\\"hitCount\\\":2,\\\"missedObservations\\\":0,\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952051298\\\",\\\"lastSeenSeq\\\":2,\\\"confidence\\\":0.7,\\\"status\\\":\\\"active\\\",\\\"evidenceSamples\\\":[{\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-14-001\\\"},{\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-14-001\\\"}],\\\"observedVia\\\":\\\"behavior/state-transition\\\"},{\\\"identity\\\":\\\"T4-window|ui|post-anchor\\\",\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"targetIdentity\\\":\\\"post-anchor\\\",\\\"occurrenceCount\\\":2,\\\"hitCount\\\":2,\\\"missedObservations\\\":0,\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952051298\\\",\\\"lastSeenSeq\\\":2,\\\"confidence\\\":0.7,\\\"status\\\":\\\"active\\\",\\\"evidenceSamples\\\":[{\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-14-002\\\"},{\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-14-002\\\"}],\\\"observedVia\\\":\\\"behavior/dom-window\\\"},{\\\"identity\\\":\\\"T4-window|ui|anchor-window\\\",\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"targetIdentity\\\":\\\"anchor-window\\\",\\\"occurrenceCount\\\":2,\\\"hitCount\\\":2,\\\"missedObservations\\\":0,\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952051298\\\",\\\"lastSeenSeq\\\":2,\\\"confidence\\\":0.7,\\\"status\\\":\\\"active\\\",\\\"evidenceSamples\\\":[{\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-14-003\\\"},{\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-14-003\\\"}],\\\"observedVia\\\":\\\"behavior/dom-window\\\"}],\\\"divergenceFlags\\\":[]}\",\"{\\\"key\\\":\\\"app-3l9zqg:sig:cc57e64d\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"normalizedTarget\\\":\\\"aurora wireless headphones — $89.99 over-ear anc headphones · ★4.5\\\",\\\"anchorViewId\\\":null,\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952066785\\\",\\\"firstSeenSeq\\\":1,\\\"lastSeenSeq\\\":3,\\\"firstSeenAtMs\\\":1786952031358,\\\"lastSeenAtMs\\\":1786952066792,\\\"occurrenceCount\\\":3,\\\"sessionsSinceSeen\\\":0,\\\"status\\\":\\\"active\\\",\\\"source\\\":\\\"behavior\\\",\\\"consequenceProfile\\\":[],\\\"divergenceFlags\\\":[]}\",\"{\\\"key\\\":\\\"app-3l9zqg:sig:ccb2c83d\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"normalizedTarget\\\":\\\"aurora wireless headphones — $89.99 over-ear anc headphones · ★4.5\\\",\\\"anchorViewId\\\":\\\"search-results\\\",\\\"firstSeenAtSession\\\":\\\"session-1786952066785\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952066785\\\",\\\"firstSeenSeq\\\":3,\\\"lastSeenSeq\\\":3,\\\"firstSeenAtMs\\\":1786952066792,\\\"lastSeenAtMs\\\":1786952066792,\\\"occurrenceCount\\\":1,\\\"sessionsSinceSeen\\\":0,\\\"status\\\":\\\"active\\\",\\\"source\\\":\\\"behavior\\\",\\\"consequenceProfile\\\":[{\\\"identity\\\":\\\"T1-stamp|api|GET /product.html\\\",\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"targetIdentity\\\":\\\"GET /product.html\\\",\\\"occurrenceCount\\\":1,\\\"hitCount\\\":1,\\\"missedObservations\\\":0,\\\"firstSeenAtSession\\\":\\\"session-1786952066785\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952066785\\\",\\\"lastSeenSeq\\\":3,\\\"confidence\\\":0.6,\\\"status\\\":\\\"active\\\",\\\"evidenceSamples\\\":[{\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-10-000\\\"}],\\\"observedVia\\\":\\\"behavior/webrequest\\\"},{\\\"identity\\\":\\\"T2-lineage|navigation|to:/product.html\\\",\\\"tier\\\":\\\"T2-lineage\\\",\\\"kind\\\":\\\"navigation\\\",\\\"targetIdentity\\\":\\\"to:/product.html\\\",\\\"occurrenceCount\\\":1,\\\"hitCount\\\":1,\\\"missedObservations\\\":0,\\\"firstSeenAtSession\\\":\\\"session-1786952066785\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952066785\\\",\\\"lastSeenSeq\\\":3,\\\"confidence\\\":0.6,\\\"status\\\":\\\"active\\\",\\\"evidenceSamples\\\":[{\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-10-001\\\"}],\\\"observedVia\\\":\\\"behavior/nav-lineage\\\"},{\\\"identity\\\":\\\"T4-window|ui|post-anchor\\\",\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"targetIdentity\\\":\\\"post-anchor\\\",\\\"occurrenceCount\\\":1,\\\"hitCount\\\":1,\\\"missedObservations\\\":0,\\\"firstSeenAtSession\\\":\\\"session-1786952066785\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952066785\\\",\\\"lastSeenSeq\\\":3,\\\"confidence\\\":0.6,\\\"status\\\":\\\"active\\\",\\\"evidenceSamples\\\":[{\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-10-002\\\"}],\\\"observedVia\\\":\\\"behavior/dom-window\\\"},{\\\"identity\\\":\\\"T4-window|ui|anchor-window\\\",\\\"tier\\\":\\\"T4-window\\\",\\\"kind\\\":\\\"ui\\\",\\\"targetIdentity\\\":\\\"anchor-window\\\",\\\"occurrenceCount\\\":1,\\\"hitCount\\\":1,\\\"missedObservations\\\":0,\\\"firstSeenAtSession\\\":\\\"session-1786952066785\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952066785\\\",\\\"lastSeenSeq\\\":3,\\\"confidence\\\":0.6,\\\"status\\\":\\\"active\\\",\\\"evidenceSamples\\\":[{\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952066785:edge-ep-int-10-003\\\"}],\\\"observedVia\\\":\\\"behavior/dom-window\\\"}],\\\"divergenceFlags\\\":[]}\",\"{\\\"key\\\":\\\"app-3l9zqg:sig:e0e59cec\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"actionType\\\":\\\"Click\\\",\\\"normalizedTarget\\\":\\\"add to cart\\\",\\\"anchorViewId\\\":\\\"search-results\\\",\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952051298\\\",\\\"firstSeenSeq\\\":1,\\\"lastSeenSeq\\\":2,\\\"firstSeenAtMs\\\":1786952031358,\\\"lastSeenAtMs\\\":1786952051305,\\\"occurrenceCount\\\":2,\\\"sessionsSinceSeen\\\":0,\\\"status\\\":\\\"active\\\",\\\"source\\\":\\\"behavior\\\",\\\"consequenceProfile\\\":[{\\\"identity\\\":\\\"T1-stamp|api|GET /cart.html\\\",\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"targetIdentity\\\":\\\"GET /cart.html\\\",\\\"occurrenceCount\\\":1,\\\"hitCount\\\":1,\\\"missedObservations\\\":1,\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenSeq\\\":1,\\\"confidence\\\":0.525,\\\"status\\\":\\\"stale\\\",\\\"evidenceSamples\\\":[{\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-8-000\\\"}],\\\"observedVia\\\":\\\"behavior/webrequest\\\"},{\\\"identity\\\":\\\"T1-stamp|entity|cart-item:create\\\",\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"entity\\\",\\\"targetIdentity\\\":\\\"cart-item:create\\\",\\\"occurrenceCount\\\":2,\\\"hitCount\\\":2,\\\"missedObservations\\\":0,\\\"firstSeenAtSession\\\":\\\"session-1786952031337\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952051298\\\",\\\"lastSeenSeq\\\":2,\\\"confidence\\\":0.7,\\\"status\\\":\\\"active\\\",\\\"evidenceSamples\\\":[{\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952031337:edge-ep-int-8-001\\\"},{\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-8-001\\\"}],\\\"observedVia\\\":\\\"behavior/entity-derivation\\\"},{\\\"identity\\\":\\\"T1-stamp|api|POST /cart/add\\\",\\\"tier\\\":\\\"T1-stamp\\\",\\\"kind\\\":\\\"api\\\",\\\"targetIdentity\\\":\\\"POST /cart/add\\\",\\\"occurrenceCount\\\":1,\\\"hitCount\\\":1,\\\"missedObservations\\\":0,\\\"firstSeenAtSession\\\":\\\"session-1786952051298\\\",\\\"lastSeenAtSession\\\":\\\"session-1786952051298\\\",\\\"lastSeenSeq\\\":2,\\\"confidence\\\":0.6,\\\"status\\\":\\\"active\\\",\\\"evidenceSamples\\\":[{\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"edgeKey\\\":\\\"app-3l9zqg:session-1786952051298:edge-ep-int-8-000\\\"}],\\\"observedVia\\\":\\\"behavior/webrequest\\\"}],\\\"divergenceFlags\\\":[]}\"]}",
+    "knowledgeRecordedWorkflows": "{\"count\":3,\"digest\":\"ef2040420c5b2540\",\"rows\":[\"{\\\"key\\\":\\\"app-3l9zqg:wf-pattern-33b86ae1\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"patternId\\\":\\\"wf-pattern-33b86ae1\\\",\\\"label\\\":\\\"Search products\\\",\\\"canonicalSteps\\\":[\\\"Search products\\\",\\\"Fetch data\\\",\\\"Search products\\\",\\\"Go\\\",\\\"Go\\\",\\\"Aurora Wireless Headphones — $89.99\\\\nOver-ear ANC headphones · ★4.5\\\",\\\"Aurora Wireless Headphones — $89.99\\\\nOver-ear ANC headphones · ★4.5\\\",\\\"http://127.0.0.1:8098/product.html?id=P100\\\",\\\"Add to cart\\\",\\\"Submit form\\\",\\\"http://127.0.0.1:8098/cart.html?added=P100\\\"],\\\"viewSequence\\\":[\\\"search-results\\\",\\\"cart\\\"],\\\"sessionIds\\\":[\\\"session-1786952051298\\\"],\\\"occurrenceCount\\\":1,\\\"instances\\\":[\\\"wf-session-1786952051298-0\\\"],\\\"firstSeenAt\\\":1786952051363,\\\"lastSeenAt\\\":1786952051363}\",\"{\\\"key\\\":\\\"app-3l9zqg:wf-pattern-840f683d\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"patternId\\\":\\\"wf-pattern-840f683d\\\",\\\"label\\\":\\\"Search products\\\",\\\"canonicalSteps\\\":[\\\"Search products\\\",\\\"Search products\\\",\\\"Fetch data\\\",\\\"Go\\\",\\\"Go\\\",\\\"Aurora Wireless Headphones — $89.99\\\\nOver-ear ANC headphones · ★4.5\\\",\\\"Aurora Wireless Headphones — $89.99\\\\nOver-ear ANC headphones · ★4.5\\\",\\\"http://127.0.0.1:8098/product.html?id=P100\\\",\\\"Add to cart\\\",\\\"Fetch data\\\",\\\"http://127.0.0.1:8098/cart.html?added=P100\\\"],\\\"viewSequence\\\":[\\\"search-results\\\",\\\"cart\\\"],\\\"sessionIds\\\":[\\\"session-1786952031337\\\"],\\\"occurrenceCount\\\":1,\\\"instances\\\":[\\\"wf-session-1786952031337-0\\\"],\\\"firstSeenAt\\\":1786952031422,\\\"lastSeenAt\\\":1786952031422}\",\"{\\\"key\\\":\\\"app-3l9zqg:wf-pattern-bb79e542\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"patternId\\\":\\\"wf-pattern-bb79e542\\\",\\\"label\\\":\\\"Search products\\\",\\\"canonicalSteps\\\":[\\\"Search products\\\",\\\"Fetch data\\\",\\\"Search products\\\",\\\"Go\\\",\\\"Go\\\",\\\"Aurora Wireless Headphones — $89.99\\\\nOver-ear ANC headphones · ★4.5\\\",\\\"Aurora Wireless Headphones — $89.99\\\\nOver-ear ANC headphones · ★4.5\\\",\\\"http://127.0.0.1:8098/product.html?id=P100\\\"],\\\"viewSequence\\\":[\\\"search-results\\\"],\\\"sessionIds\\\":[\\\"session-1786952066785\\\"],\\\"occurrenceCount\\\":1,\\\"instances\\\":[\\\"wf-session-1786952066785-0\\\"],\\\"firstSeenAt\\\":1786952066846,\\\"lastSeenAt\\\":1786952066846}\"]}",
+    "knowledgeViews": "{\"count\":2,\"digest\":\"7eeaa45b91810415\",\"rows\":[\"{\\\"key\\\":\\\"app-3l9zqg:cart\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"viewId\\\":\\\"cart\\\",\\\"label\\\":\\\"Cart\\\",\\\"detectedFrom\\\":\\\"url-pattern\\\",\\\"firstSeenAt\\\":1786952031358,\\\"lastSeenAt\\\":1786952051363,\\\"visitCount\\\":2,\\\"lastSessionId\\\":\\\"session-1786952051298\\\"}\",\"{\\\"key\\\":\\\"app-3l9zqg:search-results\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"viewId\\\":\\\"search-results\\\",\\\"label\\\":\\\"Search Results\\\",\\\"detectedFrom\\\":\\\"url-pattern\\\",\\\"firstSeenAt\\\":1786952031358,\\\"lastSeenAt\\\":1786952066846,\\\"visitCount\\\":3,\\\"lastSessionId\\\":\\\"session-1786952066785\\\"}\"]}",
+    "knowledgeViewTransitions": "{\"count\":1,\"digest\":\"db106424674db232\",\"rows\":[\"{\\\"key\\\":\\\"app-3l9zqg:search-results->cart\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"fromViewId\\\":\\\"search-results\\\",\\\"toViewId\\\":\\\"cart\\\",\\\"count\\\":2,\\\"firstSeenAt\\\":1786952031358,\\\"lastSeenAt\\\":1786952051363,\\\"lastSessionId\\\":\\\"session-1786952051298\\\"}\"]}",
+    "knowledgeEntities": "{\"count\":3,\"digest\":\"751df07695056eba\",\"rows\":[\"{\\\"key\\\":\\\"app-3l9zqg:cart-item:P100\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"entityId\\\":\\\"cart-item:P100\\\",\\\"type\\\":\\\"cart-item\\\",\\\"attributes\\\":{\\\"addedAt\\\":\\\"int-8\\\",\\\"via\\\":\\\"http://127.0.0.1:8098/cart/add\\\",\\\"productId\\\":\\\"P100\\\",\\\"quantity\\\":\\\"2\\\"},\\\"source\\\":\\\"inferred\\\",\\\"firstSeenAt\\\":1786952051305,\\\"lastSeenAt\\\":1786952066792,\\\"revision\\\":2,\\\"lastSessionId\\\":\\\"session-1786952066785\\\",\\\"viewIds\\\":[\\\"search-results\\\"]}\",\"{\\\"key\\\":\\\"app-3l9zqg:cart-item:int-8\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"entityId\\\":\\\"cart-item:int-8\\\",\\\"type\\\":\\\"cart-item\\\",\\\"attributes\\\":{\\\"addedAt\\\":\\\"int-8\\\",\\\"via\\\":\\\"http://127.0.0.1:8098/cart/add\\\"},\\\"source\\\":\\\"inferred\\\",\\\"firstSeenAt\\\":1786952031358,\\\"lastSeenAt\\\":1786952066792,\\\"revision\\\":3,\\\"lastSessionId\\\":\\\"session-1786952066785\\\",\\\"viewIds\\\":[\\\"search-results\\\"]}\",\"{\\\"key\\\":\\\"app-3l9zqg:search-query:headphones\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"entityId\\\":\\\"search-query:headphones\\\",\\\"type\\\":\\\"search-query\\\",\\\"attributes\\\":{\\\"term\\\":\\\"headphones\\\",\\\"field\\\":\\\"#twotabsearchtextbox\\\"},\\\"source\\\":\\\"target-derived\\\",\\\"firstSeenAt\\\":1786952031358,\\\"lastSeenAt\\\":1786952066792,\\\"revision\\\":3,\\\"lastSessionId\\\":\\\"session-1786952066785\\\",\\\"viewIds\\\":[\\\"search-results\\\"]}\"]}",
+    "knowledgeCollections": "{\"count\":1,\"digest\":\"498ed9d2f2b2cbb4\",\"rows\":[\"{\\\"key\\\":\\\"app-3l9zqg:collection:body > main > div#results\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"collectionId\\\":\\\"collection:body > main > div#results\\\",\\\"entityType\\\":\\\"unknown\\\",\\\"currentCount\\\":0,\\\"maxCount\\\":0,\\\"lastUpdated\\\":1786952066846,\\\"lastSessionId\\\":\\\"session-1786952066785\\\"}\"]}",
+    "knowledgeCounters": "{\"count\":0,\"digest\":\"empty\",\"rows\":[]}",
+    "knowledgeNotifications": "{\"count\":0,\"digest\":\"empty\",\"rows\":[]}",
+    "knowledgeOutcomes": "{\"count\":19,\"digest\":\"edda5b67c42d4a23\",\"rows\":[\"{\\\"key\\\":\\\"session-1786952031337:int-1\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"interactionId\\\":\\\"int-1\\\",\\\"actionType\\\":\\\"Navigation\\\",\\\"actionTarget\\\":\\\"http://127.0.0.1:8098/search.html\\\",\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"evidence\\\":[],\\\"resultingEntities\\\":[],\\\"persistedAt\\\":1786952031422}\",\"{\\\"key\\\":\\\"session-1786952031337:int-13\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"interactionId\\\":\\\"int-13\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"actionTarget\\\":\\\"Aurora Wireless Headphones — $89.99\\\\nOver-ear ANC headphones · ★4.5\\\",\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"evidence\\\":[],\\\"resultingEntities\\\":[],\\\"persistedAt\\\":1786952031422}\",\"{\\\"key\\\":\\\"session-1786952031337:int-3\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"interactionId\\\":\\\"int-3\\\",\\\"actionType\\\":\\\"TextEntry\\\",\\\"actionTarget\\\":\\\"Search products\\\",\\\"outcome\\\":\\\"success\\\",\\\"confidence\\\":1,\\\"confidenceLevel\\\":\\\"confirmed\\\",\\\"evidence\\\":[{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=he -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=he -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=hea -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=hea -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=head -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=head -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=headp -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=headph -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=headpho -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=headp -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=headph -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=headphon -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=headphone -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=headpho -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=headphones -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=headphon -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=headphone -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=headphones -> 200\\\"}],\\\"resultingEntities\\\":[\\\"search-query:headphones\\\"],\\\"persistedAt\\\":1786952031422}\",\"{\\\"key\\\":\\\"session-1786952031337:int-5\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"interactionId\\\":\\\"int-5\\\",\\\"actionType\\\":\\\"Click\\\",\\\"actionTarget\\\":\\\"Go\\\",\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"evidence\\\":[],\\\"resultingEntities\\\":[],\\\"persistedAt\\\":1786952031422}\",\"{\\\"key\\\":\\\"session-1786952031337:int-6\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"interactionId\\\":\\\"int-6\\\",\\\"actionType\\\":\\\"Navigation\\\",\\\"actionTarget\\\":\\\"http://127.0.0.1:8098/product.html?id=P100\\\",\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"evidence\\\":[],\\\"resultingEntities\\\":[],\\\"persistedAt\\\":1786952031422}\",\"{\\\"key\\\":\\\"session-1786952031337:int-8\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"interactionId\\\":\\\"int-8\\\",\\\"actionType\\\":\\\"Click\\\",\\\"actionTarget\\\":\\\"Add to Cart\\\",\\\"outcome\\\":\\\"success\\\",\\\"confidence\\\":0.4,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"evidence\\\":[{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"add-to-cart API GET http://127.0.0.1:8098/cart.html?added=P100 -> 200\\\"}],\\\"resultingEntities\\\":[\\\"cart-item:int-8\\\"],\\\"persistedAt\\\":1786952031422}\",\"{\\\"key\\\":\\\"session-1786952031337:int-9\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"interactionId\\\":\\\"int-9\\\",\\\"actionType\\\":\\\"Navigation\\\",\\\"actionTarget\\\":\\\"http://127.0.0.1:8098/cart.html?added=P100\\\",\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"evidence\\\":[],\\\"resultingEntities\\\":[],\\\"persistedAt\\\":1786952031422}\",\"{\\\"key\\\":\\\"session-1786952051298:int-1\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"interactionId\\\":\\\"int-1\\\",\\\"actionType\\\":\\\"Navigation\\\",\\\"actionTarget\\\":\\\"http://127.0.0.1:8098/search.html\\\",\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"evidence\\\":[],\\\"resultingEntities\\\":[],\\\"persistedAt\\\":1786952051363}\",\"{\\\"key\\\":\\\"session-1786952051298:int-13\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"interactionId\\\":\\\"int-13\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"actionTarget\\\":\\\"Aurora Wireless Headphones — $89.99\\\\nOver-ear ANC headphones · ★4.5\\\",\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"evidence\\\":[],\\\"resultingEntities\\\":[],\\\"persistedAt\\\":1786952051363}\",\"{\\\"key\\\":\\\"session-1786952051298:int-3\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"interactionId\\\":\\\"int-3\\\",\\\"actionType\\\":\\\"TextEntry\\\",\\\"actionTarget\\\":\\\"Search products\\\",\\\"outcome\\\":\\\"success\\\",\\\"confidence\\\":1,\\\"confidenceLevel\\\":\\\"confirmed\\\",\\\"evidence\\\":[{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=he -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=he -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=hea -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=head -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=hea -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=headp -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=headph -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=head -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=headpho -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=headp -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=headphon -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=headphone -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=headphones -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=headph -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=headpho -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=headphon -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=headphone -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=headphones -> 200\\\"}],\\\"resultingEntities\\\":[],\\\"persistedAt\\\":1786952051363}\",\"{\\\"key\\\":\\\"session-1786952051298:int-5\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"interactionId\\\":\\\"int-5\\\",\\\"actionType\\\":\\\"Click\\\",\\\"actionTarget\\\":\\\"Go\\\",\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"evidence\\\":[],\\\"resultingEntities\\\":[],\\\"persistedAt\\\":1786952051363}\",\"{\\\"key\\\":\\\"session-1786952051298:int-6\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"interactionId\\\":\\\"int-6\\\",\\\"actionType\\\":\\\"Navigation\\\",\\\"actionTarget\\\":\\\"http://127.0.0.1:8098/product.html?id=P100\\\",\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"evidence\\\":[],\\\"resultingEntities\\\":[],\\\"persistedAt\\\":1786952051363}\",\"{\\\"key\\\":\\\"session-1786952051298:int-8\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"interactionId\\\":\\\"int-8\\\",\\\"actionType\\\":\\\"Click\\\",\\\"actionTarget\\\":\\\"Add to Cart\\\",\\\"outcome\\\":\\\"success\\\",\\\"confidence\\\":0.4,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"evidence\\\":[{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"add-to-cart API POST http://127.0.0.1:8098/cart/add -> 200\\\"}],\\\"resultingEntities\\\":[\\\"cart-item:P100\\\"],\\\"persistedAt\\\":1786952051363}\",\"{\\\"key\\\":\\\"session-1786952051298:int-9\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"interactionId\\\":\\\"int-9\\\",\\\"actionType\\\":\\\"Navigation\\\",\\\"actionTarget\\\":\\\"http://127.0.0.1:8098/cart.html?added=P100\\\",\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"evidence\\\":[],\\\"resultingEntities\\\":[],\\\"persistedAt\\\":1786952051363}\",\"{\\\"key\\\":\\\"session-1786952066785:int-1\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"interactionId\\\":\\\"int-1\\\",\\\"actionType\\\":\\\"Navigation\\\",\\\"actionTarget\\\":\\\"http://127.0.0.1:8098/search.html\\\",\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"evidence\\\":[],\\\"resultingEntities\\\":[],\\\"persistedAt\\\":1786952066846}\",\"{\\\"key\\\":\\\"session-1786952066785:int-10\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"interactionId\\\":\\\"int-10\\\",\\\"actionType\\\":\\\"Unclassified\\\",\\\"actionTarget\\\":\\\"Aurora Wireless Headphones — $89.99\\\\nOver-ear ANC headphones · ★4.5\\\",\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"evidence\\\":[],\\\"resultingEntities\\\":[],\\\"persistedAt\\\":1786952066846}\",\"{\\\"key\\\":\\\"session-1786952066785:int-3\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"interactionId\\\":\\\"int-3\\\",\\\"actionType\\\":\\\"TextEntry\\\",\\\"actionTarget\\\":\\\"Search products\\\",\\\"outcome\\\":\\\"success\\\",\\\"confidence\\\":1,\\\"confidenceLevel\\\":\\\"confirmed\\\",\\\"evidence\\\":[{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=he -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=hea -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=he -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=head -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=hea -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=headp -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=head -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=headph -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=headp -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=headpho -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=headph -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=headpho -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=headphon -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=headphone -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET /api/suggest?q=headphones -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=headphon -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=headphone -> 200\\\"},{\\\"kind\\\":\\\"api-operation\\\",\\\"result\\\":\\\"success\\\",\\\"weight\\\":0.4,\\\"detail\\\":\\\"search-autocomplete API GET http://127.0.0.1:8098/api/suggest?q=headphones -> 200\\\"}],\\\"resultingEntities\\\":[],\\\"persistedAt\\\":1786952066846}\",\"{\\\"key\\\":\\\"session-1786952066785:int-5\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"interactionId\\\":\\\"int-5\\\",\\\"actionType\\\":\\\"Click\\\",\\\"actionTarget\\\":\\\"Go\\\",\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"evidence\\\":[],\\\"resultingEntities\\\":[],\\\"persistedAt\\\":1786952066846}\",\"{\\\"key\\\":\\\"session-1786952066785:int-6\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"interactionId\\\":\\\"int-6\\\",\\\"actionType\\\":\\\"Navigation\\\",\\\"actionTarget\\\":\\\"http://127.0.0.1:8098/product.html?id=P100\\\",\\\"outcome\\\":\\\"incomplete\\\",\\\"confidence\\\":0,\\\"confidenceLevel\\\":\\\"inconclusive\\\",\\\"evidence\\\":[],\\\"resultingEntities\\\":[],\\\"persistedAt\\\":1786952066846}\"]}",
+    "knowledgeStateTransitions": "{\"count\":19,\"digest\":\"5635a5cffa475427\",\"rows\":[\"{\\\"key\\\":\\\"session-1786952031337:int-1\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"interactionId\\\":\\\"int-1\\\",\\\"changes\\\":[\\\"view → search-results\\\"],\\\"fromViewId\\\":null,\\\"toViewId\\\":\\\"search-results\\\",\\\"affectedEntities\\\":[],\\\"timestamp\\\":1786952031422}\",\"{\\\"key\\\":\\\"session-1786952031337:int-13\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"interactionId\\\":\\\"int-13\\\",\\\"changes\\\":[],\\\"fromViewId\\\":\\\"cart\\\",\\\"toViewId\\\":\\\"cart\\\",\\\"affectedEntities\\\":[],\\\"timestamp\\\":1786952031422}\",\"{\\\"key\\\":\\\"session-1786952031337:int-3\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"interactionId\\\":\\\"int-3\\\",\\\"changes\\\":[\\\"list: body > main > div#results (-4 items)\\\",\\\"search query: \\\\\\\"headphones\\\\\\\"\\\"],\\\"fromViewId\\\":\\\"search-results\\\",\\\"toViewId\\\":\\\"search-results\\\",\\\"affectedEntities\\\":[\\\"search-query:headphones\\\"],\\\"timestamp\\\":1786952031422}\",\"{\\\"key\\\":\\\"session-1786952031337:int-5\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"interactionId\\\":\\\"int-5\\\",\\\"changes\\\":[\\\"list: body > main > div#results (-4 items)\\\"],\\\"fromViewId\\\":\\\"search-results\\\",\\\"toViewId\\\":\\\"search-results\\\",\\\"affectedEntities\\\":[],\\\"timestamp\\\":1786952031422}\",\"{\\\"key\\\":\\\"session-1786952031337:int-6\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"interactionId\\\":\\\"int-6\\\",\\\"changes\\\":[],\\\"fromViewId\\\":\\\"search-results\\\",\\\"toViewId\\\":\\\"search-results\\\",\\\"affectedEntities\\\":[],\\\"timestamp\\\":1786952031422}\",\"{\\\"key\\\":\\\"session-1786952031337:int-8\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"interactionId\\\":\\\"int-8\\\",\\\"changes\\\":[\\\"cart-item entity (from API)\\\"],\\\"fromViewId\\\":\\\"search-results\\\",\\\"toViewId\\\":\\\"search-results\\\",\\\"affectedEntities\\\":[\\\"cart-item:int-8\\\"],\\\"timestamp\\\":1786952031422}\",\"{\\\"key\\\":\\\"session-1786952031337:int-9\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952031337\\\",\\\"interactionId\\\":\\\"int-9\\\",\\\"changes\\\":[\\\"view → cart\\\"],\\\"fromViewId\\\":\\\"search-results\\\",\\\"toViewId\\\":\\\"cart\\\",\\\"affectedEntities\\\":[],\\\"timestamp\\\":1786952031422}\",\"{\\\"key\\\":\\\"session-1786952051298:int-1\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"interactionId\\\":\\\"int-1\\\",\\\"changes\\\":[\\\"view → search-results\\\"],\\\"fromViewId\\\":null,\\\"toViewId\\\":\\\"search-results\\\",\\\"affectedEntities\\\":[],\\\"timestamp\\\":1786952051363}\",\"{\\\"key\\\":\\\"session-1786952051298:int-13\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"interactionId\\\":\\\"int-13\\\",\\\"changes\\\":[],\\\"fromViewId\\\":\\\"cart\\\",\\\"toViewId\\\":\\\"cart\\\",\\\"affectedEntities\\\":[],\\\"timestamp\\\":1786952051363}\",\"{\\\"key\\\":\\\"session-1786952051298:int-3\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"interactionId\\\":\\\"int-3\\\",\\\"changes\\\":[\\\"list: body > main > div#results (-4 items)\\\",\\\"search query: \\\\\\\"headphones\\\\\\\"\\\"],\\\"fromViewId\\\":\\\"search-results\\\",\\\"toViewId\\\":\\\"search-results\\\",\\\"affectedEntities\\\":[],\\\"timestamp\\\":1786952051363}\",\"{\\\"key\\\":\\\"session-1786952051298:int-5\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"interactionId\\\":\\\"int-5\\\",\\\"changes\\\":[\\\"list: body > main > div#results (-4 items)\\\"],\\\"fromViewId\\\":\\\"search-results\\\",\\\"toViewId\\\":\\\"search-results\\\",\\\"affectedEntities\\\":[],\\\"timestamp\\\":1786952051363}\",\"{\\\"key\\\":\\\"session-1786952051298:int-6\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"interactionId\\\":\\\"int-6\\\",\\\"changes\\\":[],\\\"fromViewId\\\":\\\"search-results\\\",\\\"toViewId\\\":\\\"search-results\\\",\\\"affectedEntities\\\":[],\\\"timestamp\\\":1786952051363}\",\"{\\\"key\\\":\\\"session-1786952051298:int-8\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"interactionId\\\":\\\"int-8\\\",\\\"changes\\\":[\\\"cart-item entity (from API)\\\",\\\"cart-item entity (from API, productId=P100)\\\"],\\\"fromViewId\\\":\\\"search-results\\\",\\\"toViewId\\\":\\\"search-results\\\",\\\"affectedEntities\\\":[\\\"cart-item:P100\\\"],\\\"timestamp\\\":1786952051363}\",\"{\\\"key\\\":\\\"session-1786952051298:int-9\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952051298\\\",\\\"interactionId\\\":\\\"int-9\\\",\\\"changes\\\":[\\\"view → cart\\\"],\\\"fromViewId\\\":\\\"search-results\\\",\\\"toViewId\\\":\\\"cart\\\",\\\"affectedEntities\\\":[],\\\"timestamp\\\":1786952051363}\",\"{\\\"key\\\":\\\"session-1786952066785:int-1\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"interactionId\\\":\\\"int-1\\\",\\\"changes\\\":[\\\"view → search-results\\\"],\\\"fromViewId\\\":null,\\\"toViewId\\\":\\\"search-results\\\",\\\"affectedEntities\\\":[],\\\"timestamp\\\":1786952066846}\",\"{\\\"key\\\":\\\"session-1786952066785:int-10\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"interactionId\\\":\\\"int-10\\\",\\\"changes\\\":[],\\\"fromViewId\\\":\\\"search-results\\\",\\\"toViewId\\\":\\\"search-results\\\",\\\"affectedEntities\\\":[],\\\"timestamp\\\":1786952066846}\",\"{\\\"key\\\":\\\"session-1786952066785:int-3\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"interactionId\\\":\\\"int-3\\\",\\\"changes\\\":[\\\"list: body > main > div#results (-4 items)\\\",\\\"search query: \\\\\\\"headphones\\\\\\\"\\\"],\\\"fromViewId\\\":\\\"search-results\\\",\\\"toViewId\\\":\\\"search-results\\\",\\\"affectedEntities\\\":[],\\\"timestamp\\\":1786952066846}\",\"{\\\"key\\\":\\\"session-1786952066785:int-5\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"interactionId\\\":\\\"int-5\\\",\\\"changes\\\":[\\\"list: body > main > div#results (-4 items)\\\"],\\\"fromViewId\\\":\\\"search-results\\\",\\\"toViewId\\\":\\\"search-results\\\",\\\"affectedEntities\\\":[],\\\"timestamp\\\":1786952066846}\",\"{\\\"key\\\":\\\"session-1786952066785:int-6\\\",\\\"appId\\\":\\\"app-3l9zqg\\\",\\\"sessionId\\\":\\\"session-1786952066785\\\",\\\"interactionId\\\":\\\"int-6\\\",\\\"changes\\\":[],\\\"fromViewId\\\":\\\"search-results\\\",\\\"toViewId\\\":\\\"search-results\\\",\\\"affectedEntities\\\":[],\\\"timestamp\\\":1786952066846}\"]}"
+  }
+}

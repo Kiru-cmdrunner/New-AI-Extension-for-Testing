@@ -63,7 +63,12 @@ export type RefDegradation =
   | 'malformed-trigger'
   /** The evidence lived past the episode's attribution tail cap
    *  (ATTRIBUTION_TAIL_MS) — owner is provable but proof is time-expired. */
-  | 'tail-capped';
+  | 'tail-capped'
+  /** The relationship was joined across locator grammars (identity form ↔
+   *  DOM-path form) via chain containment rather than exact id agreement —
+   *  B7-P3 surface-reuse provenance. The match is real; the bridging is
+   *  imperfect. */
+  | 'degraded-chain-join';
 
 /**
  * EvidenceRef — a stable, typed pointer to ONE captured artifact.

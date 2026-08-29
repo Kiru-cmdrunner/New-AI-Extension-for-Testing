@@ -79,7 +79,10 @@ describe('7.4-M1 C-series — EventTap affordance integration', () => {
     chip.className = '';
     const evt2 = captureClick(chip);
     expect(evt2.domContext.pointerCursor).toBe(false);
-    expect(clickDefinition.detectTrigger(evt2)).toBeNull();
+    // v1.2 §8.5: affordance no longer gates detectTrigger — the click is
+    // still claimed; qualification is capture-time
+    // (evt2.domContext.clickQualification carries the facts).
+    expect(clickDefinition.detectTrigger(evt2)).toEqual({ type: 'Click' });
   });
 
   it('C4: child-click lift — inner span with cursor:auto resolves to the pointer parent', () => {

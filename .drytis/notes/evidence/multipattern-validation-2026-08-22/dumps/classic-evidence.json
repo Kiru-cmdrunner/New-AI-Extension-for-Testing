@@ -1,0 +1,125 @@
+[
+  {
+    "id": "int-2",
+    "t": "TextEntry",
+    "end": "stabilized",
+    "members": [
+      "focus",
+      "click",
+      "keydown",
+      "input=i",
+      "keydown",
+      "input=in",
+      "keydown",
+      "input=inv",
+      "keydown",
+      "input=invo",
+      "keydown",
+      "input=invoi",
+      "keydown",
+      "input=invoic",
+      "keydown",
+      "input=invoice",
+      "change=invoice",
+      "blur=invoice"
+    ],
+    "md": {
+      "textValue": "invoice",
+      "userTyped": true,
+      "targetName": "Keyword"
+    },
+    "trig": {
+      "id": "q",
+      "testId": null,
+      "name": "Keyword",
+      "tag": "INPUT",
+      "cls": ""
+    },
+    "net": 0,
+    "dom": 0,
+    "rs": null
+  },
+  {
+    "id": "int-3",
+    "t": "Dropdown",
+    "end": "consequence-settled",
+    "members": [
+      "focus",
+      "keydown",
+      "keydown",
+      "input=Low",
+      "change=Low"
+    ],
+    "md": {
+      "targetName": "Priority",
+      "selectedValue": "Low"
+    },
+    "trig": {
+      "id": "prio",
+      "testId": null,
+      "name": "Priority",
+      "tag": "SELECT",
+      "cls": ""
+    },
+    "net": 0,
+    "dom": 0,
+    "rs": null
+  },
+  {
+    "id": "int-5",
+    "t": "Click",
+    "end": "consequence-settled",
+    "members": [
+      "click"
+    ],
+    "md": {
+      "targetName": "Search"
+    },
+    "trig": {
+      "id": "btn-search",
+      "testId": null,
+      "name": "Search",
+      "tag": "BUTTON",
+      "cls": "primary"
+    },
+    "net": 0,
+    "dom": 3,
+    "rs": null
+  },
+  {
+    "id": "int-7",
+    "t": "Unclassified",
+    "members": [],
+    "md": {
+      "targetName": "Priority"
+    },
+    "trig": {
+      "id": "prio",
+      "testId": null,
+      "name": "Priority",
+      "tag": "SELECT",
+      "cls": ""
+    },
+    "net": 0,
+    "dom": 0,
+    "rs": null
+  },
+  {
+    "id": "int-8",
+    "t": "Unclassified",
+    "members": [],
+    "md": {
+      "targetName": "Priority"
+    },
+    "trig": {
+      "id": "prio",
+      "testId": null,
+      "name": "Priority",
+      "tag": "SELECT",
+      "cls": ""
+    },
+    "net": 0,
+    "dom": 0,
+    "rs": null
+  }
+]

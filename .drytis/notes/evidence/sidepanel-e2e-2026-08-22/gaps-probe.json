@@ -1,0 +1,27 @@
+{
+  "understandingSessionId": "session-1787398412129",
+  "episodes": 2,
+  "unattributedInResult": 2,
+  "behaviorSessionRows": [
+    {
+      "key": "app-b24aev:session-1787398412129",
+      "appId": "app-b24aev",
+      "sessionId": "session-1787398412129",
+      "gapCount": 2
+    }
+  ],
+  "gapRows": [
+    {
+      "key": "app-b24aev:session-1787398412129:unattr-ui-int-2",
+      "gapId": "unattr-ui-int-2",
+      "observedKind": "ui",
+      "reason": "no-live-horizon"
+    },
+    {
+      "key": "app-b24aev:session-1787398412129:unattr-ui-int-3",
+      "gapId": "unattr-ui-int-3",
+      "observedKind": "ui",
+      "reason": "no-live-horizon"
+    }
+  ]
+}

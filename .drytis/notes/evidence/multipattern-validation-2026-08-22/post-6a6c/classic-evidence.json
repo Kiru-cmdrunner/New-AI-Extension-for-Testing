@@ -1,0 +1,70 @@
+[
+  {
+    "id": "int-2",
+    "t": "TextEntry",
+    "end": "stabilized",
+    "md": {
+      "textValue": "invoice",
+      "userTyped": true,
+      "targetName": "Keyword"
+    },
+    "trig": {
+      "id": "q",
+      "testId": null,
+      "name": "Keyword",
+      "tag": "INPUT",
+      "cls": ""
+    },
+    "net": 0,
+    "dom": 0,
+    "rs": null
+  },
+  {
+    "id": "int-3",
+    "t": "Dropdown",
+    "end": "consequence-settled",
+    "md": {
+      "targetName": "Priority",
+      "selectedValue": "High"
+    },
+    "trig": {
+      "id": "prio",
+      "testId": null,
+      "name": "Priority",
+      "tag": "SELECT",
+      "cls": ""
+    },
+    "net": 0,
+    "dom": 3,
+    "rs": null
+  },
+  {
+    "id": "int-5",
+    "t": "Click",
+    "end": "consequence-settled",
+    "md": {
+      "targetName": "Search"
+    },
+    "trig": {
+      "id": "btn-search",
+      "testId": null,
+      "name": "Search",
+      "tag": "BUTTON",
+      "cls": "primary"
+    },
+    "net": 0,
+    "dom": 3,
+    "rs": {
+      "url": "http://127.0.0.1:8177/",
+      "items": [
+        {
+          "k": "collection",
+          "n": 2,
+          "t": "T-101Invoice not generatedopen",
+          "p": "body > main > table#results > tbody",
+          "sel": "changed-element-seed"
+        }
+      ]
+    }
+  }
+]

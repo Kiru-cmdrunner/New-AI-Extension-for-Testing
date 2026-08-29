@@ -1,0 +1,18 @@
+{
+  "n": 1,
+  "atc": {
+    "loc": "#add1",
+    "assertions": [
+      {
+        "t": "textMatch",
+        "e": "3 items",
+        "l": "#cart-count"
+      },
+      {
+        "t": "count",
+        "e": 3,
+        "l": "#cart-items > *"
+      }
+    ]
+  }
+}

@@ -1,0 +1,262 @@
+{
+  "environment": {
+    "baseUrl": "https://www.amazon.com",
+    "browser": "chrome",
+    "startUrl": "https://www.amazon.com/",
+    "viewport": {
+      "height": 437,
+      "width": 780
+    }
+  },
+  "steps": [
+    {
+      "action": "fill",
+      "assertions": [],
+      "description": "Fill \"wireless mouse\" in the Search Amazon",
+      "executionParameters": {
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "timeoutMs": 30000,
+        "waitStrategy": "visible"
+      },
+      "id": "step-0001",
+      "input": "wireless mouse",
+      "order": 0,
+      "plainEnglish": "Fill \"wireless mouse\" in the Search Amazon",
+      "sourceEventId": "evt-pmt1dkoet-12",
+      "target": {
+        "elementId": "3d8300c8-2b44-4eaf-acd1-2abb64392238",
+        "elementName": "Search Amazon",
+        "kind": "element",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "confidence": 0.8,
+            "priority": 1,
+            "type": "accessibleName",
+            "value": "Search Amazon"
+          },
+          {
+            "confidence": 0.72,
+            "priority": 2,
+            "type": "css",
+            "value": "#twotabsearchtextbox"
+          },
+          {
+            "confidence": 0.72,
+            "priority": 3,
+            "type": "label",
+            "value": "field-keywords"
+          }
+        ]
+      }
+    },
+    {
+      "action": "click",
+      "assertions": [],
+      "description": "Click the Go",
+      "executionParameters": {
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "timeoutMs": 30000,
+        "waitStrategy": "visible"
+      },
+      "id": "step-0002",
+      "input": null,
+      "order": 1,
+      "plainEnglish": "Click the Go",
+      "sourceEventId": "evt-pmt1dkoet-53",
+      "target": {
+        "elementId": "683cdb20-1620-44df-ad3b-a18acc026d05",
+        "elementName": "Go",
+        "kind": "element",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "confidence": 0.72,
+            "priority": 1,
+            "type": "css",
+            "value": "#nav-search-submit-button"
+          },
+          {
+            "confidence": 0.62,
+            "priority": 2,
+            "type": "accessibleName",
+            "value": "Go"
+          },
+          {
+            "confidence": 0.35,
+            "priority": 3,
+            "type": "xpath",
+            "value": "//input[@id='nav-search-submit-button']"
+          }
+        ]
+      }
+    },
+    {
+      "action": "navigate",
+      "assertions": [
+        {
+          "comparison": "isTrue",
+          "expectedValue": null,
+          "property": null,
+          "severity": "soft",
+          "target": {
+            "elementId": "obs-2-0",
+            "elementName": "product:",
+            "kind": "element",
+            "pageOrComponent": "main",
+            "resolvedLocators": [
+              {
+                "confidence": 0.7,
+                "priority": 1,
+                "type": "css",
+                "value": "#search"
+              }
+            ]
+          },
+          "type": "presence"
+        }
+      ],
+      "description": "Navigate to https://www.amazon.com/s/ref=nb_sb_noss_1?url=search-alias%3Daps&field-keywords=wireless+mouse&crid=3RXO60XUCNMA6&sprefix=wireless+mouse%2Caps%2C122",
+      "executionParameters": {
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "timeoutMs": 30000,
+        "waitStrategy": "visible"
+      },
+      "id": "step-0003",
+      "input": "https://www.amazon.com/s/ref=nb_sb_noss_1?url=search-alias%3Daps&field-keywords=wireless+mouse&crid=3RXO60XUCNMA6&sprefix=wireless+mouse%2Caps%2C122",
+      "order": 2,
+      "plainEnglish": "Navigate to https://www.amazon.com/s/ref=nb_sb_noss_1?url=search-alias%3Daps&field-keywords=wireless+mouse&crid=3RXO60XUCNMA6&sprefix=wireless+mouse%2Caps%2C122",
+      "sourceEventId": "nav-1787221566725-gapn4p",
+      "target": {
+        "kind": "url",
+        "url": "https://www.amazon.com/s/ref=nb_sb_noss_1?url=search-alias%3Daps&field-keywords=wireless+mouse&crid=3RXO60XUCNMA6&sprefix=wireless+mouse%2Caps%2C122"
+      }
+    },
+    {
+      "action": "click",
+      "assertions": [],
+      "description": "Click the \"A\" link",
+      "executionParameters": {
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "timeoutMs": 30000,
+        "waitStrategy": "visible"
+      },
+      "id": "step-0004",
+      "input": null,
+      "order": 3,
+      "plainEnglish": "Click the \"A\" link",
+      "sourceEventId": "evt-pmt1dkqpx-26",
+      "target": {
+        "elementId": "bf8f09b5-d940-462d-bef6-3e6a861d2633",
+        "elementName": "A",
+        "kind": "element",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "confidence": 0.35,
+            "priority": 1,
+            "type": "css",
+            "value": "div > div:nth-of-type(2) > div > span > a"
+          },
+          {
+            "confidence": 0.35,
+            "priority": 2,
+            "type": "xpath",
+            "value": "//span/div/div/div/div[1]/div/div[2]/div/span/a"
+          }
+        ]
+      }
+    },
+    {
+      "action": "navigate",
+      "assertions": [],
+      "description": "Navigate to https://www.amazon.com/Logitech-Wireless-Mouse-M185-Swift/dp/B004YAVF8I/ref=sr_1_1?crid=3RXO60XUCNMA6&dib=eyJ2IjoiMSJ9.0P4JRjoVwDFJUHZ3_u9cSpzFJDzJ1s8bn1LQ_HDr7CPsoBlt5pzh-xytSwPZPvfXBLbtNWPLfrF1OQsmVHpPIsp4HI7_T4DK69aqzAAhIYNWeXtpkho4RPkEil_pZv_6tg4dCchQpnaMyCWPJqZL1cvy2FkSdeLq-yz-J1gTlE1wENCDwTqsyrCaOeILPYwdtBaBw0bkpx0ouUNrqOZT-1r3teNKxSDju21LsqzPRcY.kl7ujeSP3QUoMQ9Qk8wRfr0yuvRJq1HRZq0_kgXQpuQ&dib_tag=se&keywords=wireless+mouse&qid=1787221566&sprefix=wireless+mouse%2Caps%2C122&sr=8-1",
+      "executionParameters": {
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "timeoutMs": 30000,
+        "waitStrategy": "visible"
+      },
+      "id": "step-0005",
+      "input": "https://www.amazon.com/Logitech-Wireless-Mouse-M185-Swift/dp/B004YAVF8I/ref=sr_1_1?crid=3RXO60XUCNMA6&dib=eyJ2IjoiMSJ9.0P4JRjoVwDFJUHZ3_u9cSpzFJDzJ1s8bn1LQ_HDr7CPsoBlt5pzh-xytSwPZPvfXBLbtNWPLfrF1OQsmVHpPIsp4HI7_T4DK69aqzAAhIYNWeXtpkho4RPkEil_pZv_6tg4dCchQpnaMyCWPJqZL1cvy2FkSdeLq-yz-J1gTlE1wENCDwTqsyrCaOeILPYwdtBaBw0bkpx0ouUNrqOZT-1r3teNKxSDju21LsqzPRcY.kl7ujeSP3QUoMQ9Qk8wRfr0yuvRJq1HRZq0_kgXQpuQ&dib_tag=se&keywords=wireless+mouse&qid=1787221566&sprefix=wireless+mouse%2Caps%2C122&sr=8-1",
+      "order": 4,
+      "plainEnglish": "Navigate to https://www.amazon.com/Logitech-Wireless-Mouse-M185-Swift/dp/B004YAVF8I/ref=sr_1_1?crid=3RXO60XUCNMA6&dib=eyJ2IjoiMSJ9.0P4JRjoVwDFJUHZ3_u9cSpzFJDzJ1s8bn1LQ_HDr7CPsoBlt5pzh-xytSwPZPvfXBLbtNWPLfrF1OQsmVHpPIsp4HI7_T4DK69aqzAAhIYNWeXtpkho4RPkEil_pZv_6tg4dCchQpnaMyCWPJqZL1cvy2FkSdeLq-yz-J1gTlE1wENCDwTqsyrCaOeILPYwdtBaBw0bkpx0ouUNrqOZT-1r3teNKxSDju21LsqzPRcY.kl7ujeSP3QUoMQ9Qk8wRfr0yuvRJq1HRZq0_kgXQpuQ&dib_tag=se&keywords=wireless+mouse&qid=1787221566&sprefix=wireless+mouse%2Caps%2C122&sr=8-1",
+      "sourceEventId": "nav-1787221572141-u3lnns",
+      "target": {
+        "kind": "url",
+        "url": "https://www.amazon.com/Logitech-Wireless-Mouse-M185-Swift/dp/B004YAVF8I/ref=sr_1_1?crid=3RXO60XUCNMA6&dib=eyJ2IjoiMSJ9.0P4JRjoVwDFJUHZ3_u9cSpzFJDzJ1s8bn1LQ_HDr7CPsoBlt5pzh-xytSwPZPvfXBLbtNWPLfrF1OQsmVHpPIsp4HI7_T4DK69aqzAAhIYNWeXtpkho4RPkEil_pZv_6tg4dCchQpnaMyCWPJqZL1cvy2FkSdeLq-yz-J1gTlE1wENCDwTqsyrCaOeILPYwdtBaBw0bkpx0ouUNrqOZT-1r3teNKxSDju21LsqzPRcY.kl7ujeSP3QUoMQ9Qk8wRfr0yuvRJq1HRZq0_kgXQpuQ&dib_tag=se&keywords=wireless+mouse&qid=1787221566&sprefix=wireless+mouse%2Caps%2C122&sr=8-1"
+      }
+    },
+    {
+      "action": "click",
+      "assertions": [],
+      "description": "Click the Add to cart",
+      "executionParameters": {
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "timeoutMs": 30000,
+        "waitStrategy": "visible"
+      },
+      "id": "step-0006",
+      "input": null,
+      "order": 5,
+      "plainEnglish": "Click the Add to cart",
+      "sourceEventId": "evt-pmt1dkux3-28",
+      "target": {
+        "elementId": "9bc582ff-82da-4fdd-903c-f3197f906b7c",
+        "elementName": "Add to cart",
+        "kind": "element",
+        "pageOrComponent": "main",
+        "resolvedLocators": [
+          {
+            "confidence": 0.8,
+            "priority": 1,
+            "type": "accessibleName",
+            "value": "submit.add-to-cart-announce"
+          },
+          {
+            "confidence": 0.72,
+            "priority": 2,
+            "type": "css",
+            "value": "#add-to-cart-button"
+          },
+          {
+            "confidence": 0.72,
+            "priority": 3,
+            "type": "label",
+            "value": "submit.add-to-cart"
+          }
+        ]
+      }
+    },
+    {
+      "action": "navigate",
+      "assertions": [],
+      "description": "Navigate to https://www.amazon.com/cart/add-to-cart/ref=dp_start-bbf_1_glance",
+      "executionParameters": {
+        "retryCount": 0,
+        "retryDelayMs": 1000,
+        "timeoutMs": 30000,
+        "waitStrategy": "visible"
+      },
+      "id": "step-0007",
+      "input": "https://www.amazon.com/cart/add-to-cart/ref=dp_start-bbf_1_glance",
+      "order": 6,
+      "plainEnglish": "Navigate to https://www.amazon.com/cart/add-to-cart/ref=dp_start-bbf_1_glance",
+      "sourceEventId": "nav-1787221579190-v34b6i",
+      "target": {
+        "kind": "url",
+        "url": "https://www.amazon.com/cart/add-to-cart/ref=dp_start-bbf_1_glance"
+      }
+    }
+  ],
+  "tags": [],
+  "testCaseId": "tc-9a497d14",
+  "testCaseVersionId": "tcv-9a497d14",
+  "testCaseVersionNumber": 1,
+  "title": "Recorded Test"
+}

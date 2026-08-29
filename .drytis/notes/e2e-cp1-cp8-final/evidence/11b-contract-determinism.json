@@ -1,0 +1,34 @@
+[
+  {
+    "op": "apps",
+    "byteIdentical": true
+  },
+  {
+    "op": "actions",
+    "byteIdentical": true
+  },
+  {
+    "op": "gaps",
+    "byteIdentical": true
+  },
+  {
+    "op": "apisurface",
+    "byteIdentical": true
+  },
+  {
+    "op": "navgraph",
+    "byteIdentical": true
+  },
+  {
+    "op": "stategraph",
+    "byteIdentical": true
+  },
+  {
+    "op": "entities",
+    "byteIdentical": true
+  },
+  {
+    "op": "app",
+    "byteIdentical": true
+  }
+]

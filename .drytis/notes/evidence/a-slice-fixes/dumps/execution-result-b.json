@@ -1,0 +1,38 @@
+{
+  "completedAt": "2026-08-19T18:38:41.718Z",
+  "durationMs": 221.3999999994412,
+  "errorSteps": 0,
+  "executionRunId": "20e8755d-387c-42a4-bc53-f57d628d5049",
+  "failedSteps": 0,
+  "irStale": false,
+  "passedSteps": 1,
+  "skippedSteps": 0,
+  "startedAt": "2026-08-19T18:38:41.496Z",
+  "status": "passed",
+  "stepCount": 1,
+  "stepResults": [
+    {
+      "assertionResults": [
+        {
+          "actualValue": "3 items",
+          "expectedValue": "3 items",
+          "message": "Text matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "textMatch"
+        },
+        {
+          "actualValue": 3,
+          "expectedValue": 3,
+          "message": "Count matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "count"
+        }
+      ],
+      "durationMs": 3.900000000372529,
+      "status": "passed",
+      "stepId": "step-0001"
+    }
+  ]
+}

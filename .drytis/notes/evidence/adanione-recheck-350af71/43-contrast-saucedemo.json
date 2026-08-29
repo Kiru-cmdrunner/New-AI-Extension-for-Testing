@@ -1,0 +1,28 @@
+{
+  "nav": {
+    "label": "contrast saucedemo.com",
+    "url": "https://www.saucedemo.com/",
+    "phase": "done",
+    "lastState": {
+      "url": "https://www.saucedemo.com/",
+      "readyState": "complete",
+      "hasDOM": true,
+      "nEls": 27,
+      "title": "Swag Labs"
+    },
+    "elapsedMs": 561,
+    "final": {
+      "url": "https://www.saucedemo.com/",
+      "readyState": "complete",
+      "hasDOM": true,
+      "nEls": 27,
+      "title": "Swag Labs"
+    }
+  },
+  "dom": {
+    "url": "https://www.saucedemo.com/",
+    "nEls": 27,
+    "inputs": 3,
+    "readyState": "complete"
+  }
+}

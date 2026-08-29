@@ -1,0 +1,16 @@
+[
+  {
+    "step": "step-0003",
+    "type": "textMatch",
+    "exp": "In stock",
+    "act": "Searching…",
+    "msg": "Text \"Searching…\" did not match \"In stock\""
+  },
+  {
+    "step": "step-0004",
+    "type": "textMatch",
+    "exp": "In stock",
+    "act": "Searching…",
+    "msg": "Text \"Searching…\" did not match \"In stock\""
+  }
+]

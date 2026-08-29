@@ -1,0 +1,87 @@
+{
+  "completedAt": "2026-08-19T16:34:52.486Z",
+  "durationMs": 235.70000000006985,
+  "errorSteps": 0,
+  "executionRunId": "af2c5692-0f1b-4f8e-ba91-0353ba4a37ce",
+  "failedSteps": 1,
+  "irStale": false,
+  "passedSteps": 3,
+  "skippedSteps": 0,
+  "startedAt": "2026-08-19T16:34:52.250Z",
+  "status": "failed",
+  "stepCount": 4,
+  "stepResults": [
+    {
+      "actualValue": "headphones",
+      "assertionResults": [
+        {
+          "actualValue": 0,
+          "expectedValue": 3,
+          "message": "Count 0 did not match \"3\"",
+          "passed": false,
+          "severity": "soft",
+          "type": "count"
+        },
+        {
+          "actualValue": true,
+          "expectedValue": null,
+          "message": "Element is present",
+          "passed": true,
+          "severity": "soft",
+          "type": "presence"
+        }
+      ],
+      "durationMs": 5.900000000023283,
+      "status": "passed",
+      "stepId": "step-0001"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": 3,
+          "expectedValue": 3,
+          "message": "Count matched",
+          "passed": true,
+          "severity": "soft",
+          "type": "count"
+        },
+        {
+          "actualValue": true,
+          "expectedValue": null,
+          "message": "Element is present",
+          "passed": true,
+          "severity": "soft",
+          "type": "presence"
+        }
+      ],
+      "durationMs": 5.800000000046566,
+      "status": "passed",
+      "stepId": "step-0002"
+    },
+    {
+      "assertionResults": [
+        {
+          "actualValue": null,
+          "expectedValue": "0 items",
+          "message": "Element not found — cannot evaluate textMatch",
+          "passed": false,
+          "severity": "soft",
+          "type": "textMatch"
+        }
+      ],
+      "durationMs": 2.299999999930151,
+      "status": "passed",
+      "stepId": "step-0003"
+    },
+    {
+      "assertionResults": [],
+      "durationMs": 4.5,
+      "error": {
+        "message": "Element \"Add to cart\" not found",
+        "type": "ElementNotFound"
+      },
+      "status": "failed",
+      "stepId": "step-0004"
+    }
+  ]
+}

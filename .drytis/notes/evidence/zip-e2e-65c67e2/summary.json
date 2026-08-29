@@ -1,0 +1,16 @@
+{
+  "zip_sha256": "8a89bf35ee8deda266b89de8384b6584f41358faf972b9d959e9f6db9162d943",
+  "extId": "hipnbibfoaddannihhocabogcgaofhpb",
+  "pass": 46,
+  "fail": 0,
+  "dialogs": [
+    {
+      "type": "alert",
+      "message": "Order confirmed"
+    },
+    {
+      "type": "confirm",
+      "message": "Discard order?"
+    }
+  ]
+}

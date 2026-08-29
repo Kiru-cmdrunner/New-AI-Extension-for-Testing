@@ -1,0 +1,290 @@
+[
+  {
+    "id": "int-1",
+    "type": "navigation",
+    "target": null,
+    "url": "/search.html",
+    "ts": 1786952057339,
+    "params": null,
+    "net": [],
+    "dom": 0,
+    "domDetail": [],
+    "nav": 1,
+    "navDetail": [
+      "full-reload → /search.html"
+    ],
+    "visChanges": 0,
+    "windowId": "synthetic-nav-nav-1786952057335-2c67xo",
+    "endReason": "page-reload-synthetic"
+  },
+  {
+    "id": "int-3",
+    "type": "focus",
+    "target": "Search products",
+    "url": "/search.html",
+    "ts": 1786952059843,
+    "params": null,
+    "net": [
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=he"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=he"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=hea"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=he"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=head"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=hea"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=headp"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=head"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=headph"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=headp"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=headpho"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=headp"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=headph"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=head"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=hea"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=headpho"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=headph"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=headpho"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=headphon"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=headphone"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=headphon"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=headphones"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=headphone"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=headphon"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=headphones"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=headphone"
+      },
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/api/suggest?q=headphones"
+      }
+    ],
+    "dom": 3,
+    "domDetail": [
+      "{\"addedNodesCount\":10,\"attributeDeltas\":{\"style\":{\"new\":\"display: block;\",\"old\":",
+      "{\"addedNodesCount\":1,\"attributeDeltas\":{},\"changedAttributes\":[],\"characterDataD",
+      "{\"addedNodesCount\":1,\"attributeDeltas\":{},\"changedAttributes\":[],\"characterDataD"
+    ],
+    "nav": 0,
+    "navDetail": [],
+    "visChanges": 2,
+    "windowId": "ev-evt-pmswx47wf-8",
+    "endReason": "lifecycle-complete"
+  },
+  {
+    "id": "int-5",
+    "type": "click",
+    "target": null,
+    "url": "/search.html",
+    "ts": 1786952061506,
+    "params": null,
+    "net": [],
+    "dom": 3,
+    "domDetail": [
+      "{\"addedNodesCount\":10,\"attributeDeltas\":{\"style\":{\"new\":\"display: block;\",\"old\":",
+      "{\"addedNodesCount\":1,\"attributeDeltas\":{},\"changedAttributes\":[],\"characterDataD",
+      "{\"addedNodesCount\":1,\"attributeDeltas\":{},\"changedAttributes\":[],\"characterDataD"
+    ],
+    "nav": 0,
+    "navDetail": [],
+    "visChanges": 2,
+    "windowId": "ev-evt-pmswx47wf-40",
+    "endReason": "lifecycle-complete"
+  },
+  {
+    "id": "int-6",
+    "type": "navigation",
+    "target": null,
+    "url": "/product.html?id=P100",
+    "ts": 1786952063051,
+    "params": null,
+    "net": [
+      {
+        "id": "?",
+        "m": "GET",
+        "u": "/product.html?id=P100"
+      }
+    ],
+    "dom": 0,
+    "domDetail": [],
+    "nav": 1,
+    "navDetail": [
+      "link → /product.html?id=P100"
+    ],
+    "visChanges": 0,
+    "windowId": "ev-nav-1786952063048-zn0g9z",
+    "endReason": "stabilized"
+  },
+  {
+    "id": "int-7",
+    "type": "mousedown",
+    "target": null,
+    "url": "",
+    "ts": 1786952059843,
+    "params": null,
+    "net": [],
+    "dom": 0,
+    "domDetail": [],
+    "nav": 0,
+    "navDetail": [],
+    "visChanges": 0,
+    "windowId": null,
+    "endReason": null
+  },
+  {
+    "id": "int-8",
+    "type": "mousedown",
+    "target": null,
+    "url": "",
+    "ts": 1786952061499,
+    "params": null,
+    "net": [],
+    "dom": 0,
+    "domDetail": [],
+    "nav": 0,
+    "navDetail": [],
+    "visChanges": 0,
+    "windowId": null,
+    "endReason": null
+  },
+  {
+    "id": "int-9",
+    "type": "mousedown",
+    "target": null,
+    "url": "",
+    "ts": 1786952063016,
+    "params": null,
+    "net": [],
+    "dom": 0,
+    "domDetail": [],
+    "nav": 0,
+    "navDetail": [],
+    "visChanges": 0,
+    "windowId": null,
+    "endReason": null
+  },
+  {
+    "id": "int-10",
+    "type": "click",
+    "target": null,
+    "url": "",
+    "ts": 1786952063021,
+    "params": null,
+    "net": [
+      {
+        "id": "58",
+        "m": "GET",
+        "u": "/product.html?id=P100"
+      }
+    ],
+    "dom": 0,
+    "domDetail": [],
+    "nav": 0,
+    "navDetail": [],
+    "visChanges": 0,
+    "windowId": "sw-evt-pmswx47wf-48",
+    "endReason": "sw-recovered-form-submit"
+  }
+]

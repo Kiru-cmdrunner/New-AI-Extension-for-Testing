@@ -1,0 +1,64 @@
+{
+  "cardTitles": [
+    "⌨️ Text Entryint-2Enter \"invoice\" in \"Keyword\"Window: 1147ms · displaced🎯Target EvidenceElementINPUT #q [role=textbox] \"Keyword\"type=textState Changesvalue: (e",
+    "📋 Dropdownint-3Select \"High\" from \"Priority\"Window: 911ms · stabilized🎯Target EvidenceElementSELECT #prio [role=listbox] \"Priority\"type=select-oneState Change",
+    "🖱️ Clickint-5Click \"Search\"Window: 1480ms · stabilized🎯Target EvidenceElementBUTTON #btn-search [role=button] \"Search\"primaryNo observable state changesFocus ",
+    "❓ Unclassifiedint-6Unclassified on \"Priority\"physical: click⏳ Collecting behavioral evidence…",
+    "❓ Unclassifiedint-8Unclassified on \"Priority\"physical: click⏳ Collecting behavioral evidence…"
+  ],
+  "cardTypes": [
+    "⌨️ Text Entry",
+    "📋 Dropdown",
+    "🖱️ Click",
+    "❓ Unclassified",
+    "❓ Unclassified"
+  ],
+  "resultingStateHeaders": [
+    "Element",
+    "State Changes",
+    "Focus Movement",
+    "Performance",
+    "Element",
+    "State Changes",
+    "Focus Movement",
+    "DOM Changes (1)",
+    "Performance",
+    "Element",
+    "Focus Movement",
+    "DOM Changes (3)",
+    "Performance"
+  ],
+  "allEvidenceRows": [
+    "value: (empty) → invoice",
+    "(unknown) → SELECT \"Any Low High Urgent\"",
+    "0 batches · longest: 0ms",
+    "value: low → high",
+    "(unknown) → BUTTON \"Search\"",
+    "childList · <div> · +1 nodes · -1 nodes",
+    "1 batches · longest: 0ms",
+    "No observable state changes",
+    "(unknown) → BUTTON \"Search\"",
+    "childList · <div> · +2 nodes · -2 nodes",
+    "childList · <tbody> · +2 nodes",
+    "childList · <p> · +1 nodes · -1 nodes",
+    "2 batches · longest: 0ms"
+  ],
+  "windowMeta": [
+    "Window: 1147ms · displaced",
+    "Window: 911ms · stabilized",
+    "Window: 1480ms · stabilized"
+  ],
+  "irSteps": [
+    "1. fill — Fill \"invoice\" in the KeywordTarget: Keyword (css: #q)Input: invoiceAssertions: equality equals invoice (Keyword)▶ IR Step JSON{ \"action\": \"fill\", ",
+    "2. select — Select \"High\" from the PriorityTarget: Priority (css: #prio)Input: HighAssertions: none — not derived for this recording▶ IR Step JSON{ \"action\": ",
+    "3. click — Click the SearchTarget: Search (css: #btn-search)Assertions: none — not derived for this recording▶ IR Step JSON{ \"action\": \"click\", \"assertions\"",
+    "📄 package.json▶ Show CodeCopy{ \"name\": \"recorded-test\", \"version\": \"1.0.0\", \"private\": true, \"description\": \"Playwright tests for Recorded Test\", \"sc",
+    "📄 playwright.config.ts▶ Show CodeCopyimport { defineConfig, devices } from '@playwright/test'; /** * Playwright configuration for Recorded Test. * Generated",
+    "📄 tsconfig.json▶ Show CodeCopy{ \"compilerOptions\": { \"target\": \"ES2020\", \"module\": \"commonjs\", \"moduleResolution\": \"node\", \"strict\": true, ",
+    "📄 .gitignore▶ Show CodeCopynode_modules/ test-results/ playwright-report/ playwright/.cache/ ",
+    "📋 tests/recorded-test.spec.ts▼ Hide CodeCopyimport { test, expect } from '@playwright/test'; test.describe('Recorded Test', () => { test('should complete re"
+  ],
+  "bodyHasResultingState": false,
+  "bodyTextLength": 10332,
+  "detectedSectionHidden": false
+}

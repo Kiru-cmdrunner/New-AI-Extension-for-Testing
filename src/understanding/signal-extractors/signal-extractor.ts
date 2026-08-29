@@ -38,6 +38,12 @@ export class SignalExtractionCoordinator {
 
     if (!interaction.behavioralEvidence) return result;
 
+    // B7-P2: the P1 containment gate is REMOVED. Admitted hovers enter
+    // productionInteractions with real evidence; the generic extractors
+    // and the OutcomeDeterminer now see them (outcome voting on real
+    // evidence — §5.2.7 intended state). Gesture-only hovers never reach
+    // here (the admission filter rejected them upstream).
+
     for (const extractor of this.extractors) {
       const signals = extractor.extract(interaction);
       for (const signal of signals) {

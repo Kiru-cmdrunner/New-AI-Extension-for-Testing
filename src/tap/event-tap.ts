@@ -13,7 +13,7 @@
  * Principle: AP1 (Separation of evidence and classification)
  */
 
-import type { BrowserEventType, ObservedEvent, DomContext } from '../shared/component-types';
+import type { BrowserEventType, ObservedEvent, DomContext, ClickQualification } from '../shared/component-types';
 import type { ElementIdentity } from '../shared/types';
 import {
   extractIdentity,
@@ -22,6 +22,7 @@ import {
   captureCheckedState,
 } from './identity-extractor';
 import { extractDomContext } from '../definitions/dom-context-extractor';
+import { captureClickQualification, defaultHitTestProbe } from './click-qualification';
 
 /** Minimum interval between scroll events (ms) — rate limiting. */
 const SCROLL_MIN_INTERVAL_MS = 16;
@@ -233,11 +234,25 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
     const targetEl = resolveTarget(rawEvent);
     if (!targetEl) return;
 
+    // Capture-time click qualification (v1.2 Step 1, inert): compute the
+    // provable-invalidity fact vector ONCE at the dispatch instant, on the
+    // RAW hit element (threaded before resolveTarget consumed it) plus the
+    // resolved element. Attached additively to DomContext; consumed by NO
+    // typing decision yet (Step 2 wires the pre-gate + claim rule).
+    const rawEl = (rawEvent.target instanceof Element ? rawEvent.target : null);
+    let clickQualification: ClickQualification | undefined;
+    if (rawEl && (eventType === 'click' || eventType === 'contextmenu')) {
+      clickQualification = captureClickQualification(
+        rawEvent, targetEl, defaultHitTestProbe, rawEl,
+      ) ?? undefined;
+    }
+
     // Extract identity at capture time (immutable snapshot)
     const identity = extractIdentity(targetEl);
 
     // Extract DOM context
     const domContext = extractDomContext(targetEl);
+    if (clickQualification) domContext.clickQualification = clickQualification;
 
     // Build the observed event
     const observed = assembleObservedEvent(rawEvent, eventType, identity, domContext);
