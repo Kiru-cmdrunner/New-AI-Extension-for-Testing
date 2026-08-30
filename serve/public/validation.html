@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interaction Type Validation — Real DOM</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #f8fafc; color: #1e293b; }
+    h1 { font-size: 20px; }
+    .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 16px 0; }
+    .summary-card { padding: 12px; border-radius: 8px; text-align: center; }
+    .summary-pass { background: #dcfce7; color: #166534; }
+    .summary-fail { background: #fee2e2; color: #991b1b; }
+    .summary-skip { background: #fef9c3; color: #854d0e; }
+    .results { margin-top: 16px; }
+    .result-row { display: flex; align-items: center; padding: 8px 12px; margin: 4px 0; border-radius: 6px; border: 1px solid #e2e8f0; }
+    .result-pass { background: #f0fdf4; border-color: #bbf7d0; }
+    .result-fail { background: #fef2f2; border-color: #fecaca; }
+    .result-skip { background: #fefce8; border-color: #fef08a; }
+    .result-icon { font-size: 18px; margin-right: 8px; }
+    .result-type { font-weight: 600; min-width: 180px; }
+    .result-detail { color: #64748b; font-size: 13px; flex: 1; }
+    .result-conf { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+    .conf-high { background: #dcfce7; color: #166534; }
+    .conf-low { background: #fee2e2; color: #991b1b; }
+
+    /* Test widgets */
+    .test-widgets { margin: 24px 0; padding: 16px; background: white; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .test-widgets h2 { margin-top: 0; font-size: 14px; color: #64748b; }
+    .checkbox-modern { width: 20px; height: 20px; border: 2px solid #666; border-radius: 4px; cursor: pointer; display: inline-block; vertical-align: middle; }
+    .checkbox-modern.checked { background: #7c3aed; border-color: #7c3aed; }
+    .toggle-modern { width: 44px; height: 24px; background: #ccc; border-radius: 12px; cursor: pointer; position: relative; display: inline-block; vertical-align: middle; transition: background 0.2s; }
+    .toggle-modern.on { background: #10b981; }
+    .toggle-modern::after { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%; background: white; top: 2px; left: 2px; transition: left 0.2s; }
+    .toggle-modern.on::after { left: 22px; }
+    .dropdown-trigger { padding: 8px 12px; border: 1px solid #999; border-radius: 4px; cursor: pointer; display: inline-block; background: white; }
+    .dropdown-menu { display: none; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: absolute; background: white; z-index: 100; }
+    .dropdown-menu.open { display: block; }
+    .dropdown-option { padding: 8px 12px; cursor: pointer; }
+    .dropdown-option:hover { background: #f0f0f0; }
+    .tab-list { display: flex; border-bottom: 2px solid #ddd; }
+    .tab { padding: 8px 16px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .tab.active { border-bottom-color: #7c3aed; color: #7c3aed; font-weight: 600; }
+    .menu-bar { display: flex; gap: 8px; background: #333; padding: 4px; border-radius: 4px; }
+    .menu-item { color: white; padding: 6px 12px; cursor: pointer; border-radius: 4px; }
+    .scroll-container { height: 80px; overflow-y: scroll; border: 1px solid #ddd; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Interaction Type Validation — Real DOM Elements</h1>
+  <p id="status">Running tests...</p>
+
+  <div class="summary" id="summary"></div>
+  <div class="results" id="results"></div>
+
+  <!-- Hidden test widgets (rendered but offscreen for real DOM interaction) -->
+  <div class="test-widgets" style="position: absolute; left: -9999px; top: 0;">
+    <h2>Test DOM Elements (hidden)</h2>
+
+    <!-- Traditional -->
+    <input type="text" id="t-text" name="username" placeholder="Enter username" />
+    <textarea id="t-textarea" name="description" placeholder="Description"></textarea>
+    <select id="t-select" name="country">
+      <option value="">Select...</option>
+      <option value="us">United States</option>
+      <option value="uk">United Kingdom</option>
+    </select>
+    <label><input type="checkbox" id="t-checkbox" name="agree" /> Agree</label>
+    <input type="radio" id="t-radio" name="plan" value="basic" />
+    <input type="file" id="t-file" name="fileUpload" />
+    <a href="#" id="t-link">Learn more</a>
+    <button id="t-button">Submit</button>
+
+    <!-- Modern ARIA -->
+    <div id="t-aria-checkbox" role="checkbox" aria-checked="false" aria-label="Enable notifications" tabindex="0">Checkbox</div>
+    <div id="t-toggle" role="switch" aria-checked="false" aria-label="Dark mode" tabindex="0">Toggle</div>
+    <div id="t-aria-radio" role="radio" aria-checked="false" aria-label="High priority" tabindex="0">High</div>
+
+    <!-- Custom dropdown -->
+    <div id="t-dropdown-trigger" role="combobox" aria-haspopup="listbox" aria-expanded="false" tabindex="0">Choose...</div>
+    <div id="t-dropdown-menu" role="listbox" style="display:none;">
+      <div role="option" data-value="a">Alpha</div>
+      <div role="option" data-value="b">Beta</div>
+    </div>
+
+    <!-- Tabs -->
+    <div role="tablist">
+      <div id="t-tab" role="tab" aria-selected="false" tabindex="0">Settings</div>
+    </div>
+
+    <!-- Menu -->
+    <div role="menu">
+      <div id="t-menu" role="menuitem" tabindex="0">Delete</div>
+    </div>
+
+    <!-- Other -->
+    <div id="t-dblclick" tabindex="0">Double click me</div>
+    <div id="t-rightclick" tabindex="0">Right click me</div>
+    <div id="t-hover" title="Hover info">Hover target</div>
+    <div id="t-drag" draggable="true">Drag me</div>
+    <div id="t-drop">Drop here</div>
+    <div class="scroll-container" id="t-scroll"><div style="height:200px;">Scrollable</div></div>
+  </div>
+
+  <script type="module">
+    // Detect whether we're running from the built dist/ folder (production)
+    // or from the Vite dev server (development). In built mode, the unbundled
+    // .ts source files are not available, so we skip the classifier import.
+    let detectInteractions = null;
+    const isDevMode = window.location.port === '5173' || window.location.hostname === 'localhost';
+    if (isDevMode) {
+      try {
+        const mod = await import('/src/classifier/interaction-detector.ts');
+        detectInteractions = mod.detectInteractions;
+      } catch (e) {
+        console.warn('validation.html: classifier module could not be loaded.');
+      }
+    } else {
+      console.info('validation.html: running in built mode — classifier tests skipped. DOM elements are still present for manual testing.');
+    }
+
+    // ── Element identity extraction (inline, matching recorder) ──────────
+
+    function extractIdentity(el) {
+      const ariaLabel = el.getAttribute('aria-label');
+      const labelledBy = el.getAttribute('aria-labelledby');
+      const placeholder = el.getAttribute('placeholder') || el.getAttribute('aria-placeholder');
+      const className = el.className || null;
+
+      // Accessible name cascade
+      let accessibleName = '';
+      if (ariaLabel) accessibleName = ariaLabel;
+      else if (labelledBy) {
+        const target = document.getElementById(labelledBy);
+        if (target) accessibleName = target.textContent?.trim() || '';
+      }
+      if (!accessibleName) {
+        const id = el.id;
+        if (id) {
+          const label = document.querySelector(`label[for="${id}"]`);
+          if (label) accessibleName = label.textContent?.trim() || '';
+        }
+      }
+      if (!accessibleName && el instanceof HTMLInputElement && el.type !== 'text') {
+        accessibleName = '';
+      }
+      if (!accessibleName) accessibleName = el.textContent?.trim() || placeholder || '';
+      if (!accessibleName && el instanceof HTMLInputElement) accessibleName = el.value || '';
+
+      // Role
+      let ariaRole = el.getAttribute('role');
+      if (!ariaRole) {
+        const tagRoles = { A:'link', BUTTON:'button', SELECT:'listbox', TEXTAREA:'textbox', OPTION:'option' };
+        ariaRole = tagRoles[el.tagName] || null;
+        if (el.tagName === 'INPUT') {
+          const typeRoles = { checkbox:'checkbox', radio:'radio', text:'textbox', email:'textbox', password:'textbox', file:'textbox', submit:'button', button:'button' };
+          ariaRole = typeRoles[el.type] || null;
+        }
+      }
+
+      const id = el.id;
+      return {
+        accessibleName: accessibleName.slice(0, 200),
+        ariaRole,
+        ariaLabel,
+        ariaLabelledBy: labelledBy,
+        placeholder: placeholder ?? null,
+        tag: el.tagName,
+        className,
+        name: el.getAttribute('name'),
+        stableId: id || null,
+        testId: el.getAttribute('data-testid'),
+        dataCy: el.getAttribute('data-cy'),
+        dataQa: el.getAttribute('data-qa'),
+        cssSelector: id ? `#${id}` : el.tagName.toLowerCase(),
+        xPath: id ? `//${el.tagName.toLowerCase()}[@id='${id}']` : `//${el.tagName.toLowerCase()}`,
+        inIframe: false,
+        shadowDom: false,
+        elementId: '',
+      };
+    }
+
+    function captureValue(el) {
+      if (el instanceof HTMLSelectElement) {
+        return el.options[el.selectedIndex]?.text || '';
+      }
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+        return el.value ?? '';
+      }
+      return undefined;
+    }
+
+    function captureCheckedState(el) {
+      if (el instanceof HTMLInputElement && (el.type === 'checkbox' || el.type === 'radio')) return el.checked;
+      const ariaChecked = el.getAttribute('aria-checked');
+      if (ariaChecked !== null) return ariaChecked === 'true';
+      const ariaPressed = el.getAttribute('aria-pressed');
+      if (ariaPressed !== null) return ariaPressed === 'true';
+      return undefined;
+    }
+
+    // ── Event factory ───────────────────────────────────────────────────
+
+    let eventCounter = 0;
+    function makeEvent(eventType, el, extras = {}) {
+      const target = extractIdentity(el);
+      const value = captureValue(el);
+      const checked = captureCheckedState(el);
+      return {
+        eventId: `evt-${String(++eventCounter).padStart(4, '0')}`,
+        eventType,
+        timestamp: new Date(Date.now() + eventCounter).toISOString(),
+        target,
+        valueBefore: extras.valueBefore ?? (value !== undefined ? value : null),
+        valueAfter: extras.valueAfter ?? (value !== undefined ? value : null),
+        checkedBefore: extras.checkedBefore ?? (checked !== undefined ? checked : null),
+        checkedAfter: extras.checkedAfter ?? (checked !== undefined ? checked : null),
+      };
+    }
+
+    function makeNav(url, title, transitionType) {
+      const evt = { eventId: `evt-${String(++eventCounter).padStart(4, '0')}`, eventType: 'navigation', timestamp: new Date().toISOString(), url, title };
+      if (transitionType) evt.transitionType = transitionType;
+      return evt;
+    }
+
+    // ── Test Cases ───────────────────────────────────────────────────────
+
+    const tests = [];
+
+    function test(name, type, events, extraChecks = {}) {
+      tests.push({ name, expectedType: type, events, extraChecks });
+    }
+
+    // ── Navigation tests
+    test('Page Navigation', 'PageNavigation', [
+      makeNav('https://example.com', 'Example'),
+    ]);
+    test('Back Button', 'Back', [
+      makeNav('https://example.com', 'Example', 'forward_back'),
+    ]);
+    test('Forward Button', 'Forward', [
+      makeNav('https://example.com', 'Example', 'forward'),
+    ]);
+    test('Page Refresh', 'Refresh', [
+      makeNav('https://example.com', 'Example', 'reload'),
+    ]);
+
+    // ── Click
+    test('Click on Button', 'Click', [
+      makeEvent('click', document.getElementById('t-button')),
+    ]);
+
+    // ── Link
+    test('Link Click', 'Link', [
+      makeEvent('click', document.getElementById('t-link')),
+    ]);
+
+    // ── Double Click
+    test('Double Click', 'DoubleClick', [
+      makeEvent('dblclick', document.getElementById('t-dblclick')),
+    ]);
+
+    // ── Right Click
+    test('Right Click', 'RightClick', [
+      makeEvent('contextmenu', document.getElementById('t-rightclick')),
+    ]);
+
+    // ── Text Entry (native input)
+    const textEl = document.getElementById('t-text');
+    test('Text Entry (native input)', 'TextEntry', [
+      makeEvent('focus', textEl, { valueBefore: null, valueAfter: '' }),
+      makeEvent('input', textEl, { valueBefore: '', valueAfter: 'john@example.com' }),
+      makeEvent('blur', textEl, { valueBefore: 'john@example.com', valueAfter: 'john@example.com' }),
+    ], { textValue: 'john@example.com' });
+
+    // ── Text Entry (textarea)
+    const taEl = document.getElementById('t-textarea');
+    test('Text Entry (textarea)', 'TextEntry', [
+      makeEvent('focus', taEl, { valueBefore: null, valueAfter: '' }),
+      makeEvent('input', taEl, { valueBefore: '', valueAfter: 'A description' }),
+    ], { textValue: 'A description' });
+
+    // ── Native Select
+    const selectEl = document.getElementById('t-select');
+    test('Native Dropdown (select)', 'NativeDropdown', [
+      makeEvent('focus', selectEl, { valueBefore: null, valueAfter: 'Select...' }),
+      makeEvent('change', selectEl, { valueBefore: 'Select...', valueAfter: 'United Kingdom' }),
+    ], { selectedValue: 'United Kingdom' });
+
+    // ── Native Checkbox
+    const cbEl = document.getElementById('t-checkbox');
+    test('Native Checkbox', 'Checkbox', [
+      makeEvent('click', cbEl, { checkedBefore: false, checkedAfter: true }),
+    ], { checked: true });
+
+    // ── Native Radio
+    const radioEl = document.getElementById('t-radio');
+    test('Native Radio Button', 'RadioButton', [
+      makeEvent('click', radioEl, { checkedBefore: false, checkedAfter: true }),
+    ], { checked: true });
+
+    // ── ARIA Checkbox
+    const ariaCb = document.getElementById('t-aria-checkbox');
+    test('ARIA Checkbox (div)', 'Checkbox', [
+      makeEvent('click', ariaCb, { checkedBefore: false, checkedAfter: true }),
+    ], { checked: true });
+
+    // ── Toggle Switch
+    const toggleEl = document.getElementById('t-toggle');
+    test('Toggle Switch (role=switch)', 'ToggleSwitch', [
+      makeEvent('click', toggleEl, { checkedBefore: false, checkedAfter: true }),
+    ], { checked: true });
+
+    // ── ARIA Radio
+    const ariaRadio = document.getElementById('t-aria-radio');
+    test('ARIA Radio Button', 'RadioButton', [
+      makeEvent('click', ariaRadio, { checkedBefore: false, checkedAfter: true }),
+    ], { checked: true });
+
+    // ── File Upload
+    const fileEl = document.getElementById('t-file');
+    test('File Upload', 'FileUpload', [
+      makeEvent('change', fileEl),
+    ]);
+
+    // ── Tab
+    test('Tab Click', 'Tab', [
+      makeEvent('click', document.getElementById('t-tab')),
+    ]);
+
+    // ── Menu
+    test('Menu Item Click', 'Menu', [
+      makeEvent('click', document.getElementById('t-menu')),
+    ]);
+
+    // ── Custom Dropdown (trigger click)
+    test('Custom Dropdown (trigger)', 'Click', [
+      makeEvent('click', document.getElementById('t-dropdown-trigger')),
+    ]);
+
+    // ── Hover
+    test('Hover', 'Hover', [
+      makeEvent('mouseenter', document.getElementById('t-hover')),
+    ]);
+
+    // ── Scroll (page)
+    test('Page Scroll', 'PageScroll', [
+      makeEvent('scroll', document.documentElement, {}),
+    ]);
+
+    // ── Scroll (container)
+    test('Container Scroll', 'ContainerScroll', [
+      makeEvent('scroll', document.getElementById('t-scroll')),
+    ]);
+
+    // ── Drag & Drop
+    test('Drag & Drop', 'DragDrop', [
+      makeEvent('dragstart', document.getElementById('t-drag')),
+      makeEvent('drop', document.getElementById('t-drop')),
+    ]);
+
+    // ── Run all tests
+    const results = [];
+    let passCount = 0, failCount = 0;
+
+    if (!detectInteractions) {
+      document.getElementById('status').textContent = 'Running in built mode — DOM elements present for manual testing. Run via Vite dev server for classifier tests.';
+      document.getElementById('summary').innerHTML = '<div class="summary-card" style="background:#f3f4f6;color:#6b7280;">ℹ️ Built mode — classifier tests skipped</div>';
+    } else {
+    for (const testCase of tests) {
+      const interactions = detectInteractions(testCase.events);
+      const detected = interactions[0];
+      const passed = detected.type === testCase.expectedType;
+
+      // Check metadata
+      let metaPass = true;
+      const metaDetails = [];
+      if (testCase.extraChecks.textValue !== undefined) {
+        const match = detected.metadata.textValue === testCase.extraChecks.textValue;
+        metaPass = metaPass && match;
+        metaDetails.push(`textValue="${detected.metadata.textValue}"`);
+      }
+      if (testCase.extraChecks.checked !== undefined) {
+        const match = detected.metadata.checked === testCase.extraChecks.checked;
+        metaPass = metaPass && match;
+        metaDetails.push(`checked=${detected.metadata.checked}`);
+      }
+      if (testCase.extraChecks.selectedValue !== undefined) {
+        const match = detected.metadata.selectedValue === testCase.extraChecks.selectedValue;
+        metaPass = metaPass && match;
+        metaDetails.push(`selectedValue="${detected.metadata.selectedValue}"`);
+      }
+
+      const allPassed = passed && metaPass;
+      if (allPassed) passCount++; else failCount++;
+
+      results.push({
+        name: testCase.name,
+        expected: testCase.expectedType,
+        detected: detected.type,
+        confidence: detected.confidence,
+        passed: allPassed,
+        metaDetails: metaDetails.join(', '),
+        eventCount: testCase.events.length,
+      });
+    }
+    }
+
+    // ── Render results
+    if (detectInteractions) {
+    document.getElementById('status').textContent = `${passCount}/${tests.length} passed, ${failCount} failed`;
+
+    const summary = document.getElementById('summary');
+    summary.innerHTML = `
+      <div class="summary-card summary-pass">✅ ${passCount} Passed</div>
+      <div class="summary-card summary-fail">❌ ${failCount} Failed</div>
+    `;
+
+    const resultsEl = document.getElementById('results');
+    resultsEl.innerHTML = '';
+    for (const r of results) {
+      const row = document.createElement('div');
+      row.className = `result-row ${r.passed ? 'result-pass' : 'result-fail'}`;
+      const confClass = r.confidence >= 1.0 ? 'conf-high' : 'conf-low';
+      const metaText = r.metaDetails ? ` · ${r.metaDetails}` : '';
+      const expectedText = r.passed ? '' : ` (expected ${r.expectedType})`;
+      row.innerHTML = `
+        <span class="result-icon">${r.passed ? '✅' : '❌'}</span>
+        <span class="result-type">${r.name}</span>
+        <span class="result-detail">${r.detected}${expectedText}${metaText} · ${r.eventCount} events</span>
+        <span class="result-conf ${confClass}">${(r.confidence * 100).toFixed(0)}%</span>
+      `;
+      resultsEl.appendChild(row);
+    }
+    }
+
+    // Make available globally for the tester agent
+    window.__testResults = { passCount, failCount, total: tests.length, results };
+  </script>
+</body>
+</html>

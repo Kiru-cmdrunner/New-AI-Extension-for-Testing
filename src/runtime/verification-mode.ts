@@ -23,7 +23,11 @@ export interface Difference {
    *  'extra' = projection has it, runtime doesn't.
    *  'type-mismatch' = both have an interaction for the same eventId but types differ.
    */
-  kind: 'missing' | 'extra' | 'type-mismatch';
+  /**
+   * 'hover-sole-carrier' — HEC-G (HEC v1 §12 AC-6): a click/contextmenu
+   * ledger row represented solely by a Hover in the projected output.
+   */
+  kind: 'missing' | 'extra' | 'type-mismatch' | 'hover-sole-carrier';
   /** The eventId at the center of the difference. */
   eventId: string;
   /** Runtime interaction type (if applicable). */

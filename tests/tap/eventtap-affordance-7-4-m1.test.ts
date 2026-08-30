@@ -110,12 +110,17 @@ describe('7.4-M1 C-series — EventTap affordance integration', () => {
     expect(clickDefinition.detectTrigger(evt)).toEqual({ type: 'Click' });
   });
 
-  it('C4b: inherited-pointer leaf (Chrome truth) is claimed on ITSELF with pointerCursor=true', () => {
+  it('C4b: inherited-pointer leaf (Chrome truth) is claimed on ITSELF; pointerCursor is OWN-BOUNDARY', () => {
     const chip = mountChip();
     // jsdom does not cascade cursor into children — emulate the inherited
     // computed style a real browser reports for a bare span under a
     // cursor:pointer parent. This is the E2E V3 observation, unit-pinned:
-    // the leaf is a legitimate affordance target; no parent lift required.
+    // the leaf is a legitimate capture target; no parent lift required.
+    // Hover-capture generic fix v1 (cursor-inheritance amendment): the
+    // pointerCursor FACT is now own-boundary — inherited pointer is NOT an
+    // affordance signal (glyphs inside links poisoned shape/naming in real
+    // Chrome). The leaf claims on itself regardless (CQ v1.2: claim is
+    // unconditional; the old gate-4 reason for this pin is gone).
     chip.innerHTML = '<span class="chip-label">Sort</span>';
     const span = chip.querySelector('span')!;
     const getCS = window.getComputedStyle;
@@ -126,7 +131,9 @@ describe('7.4-M1 C-series — EventTap affordance integration', () => {
     try {
       const evt = captureClick(span);
       expect(evt.target.tag).toBe('SPAN');
-      expect(evt.domContext.pointerCursor).toBe(true);
+      // Own-boundary: parent (.chip) is already pointer → inherited ≠ fact.
+      expect(evt.domContext.pointerCursor).toBe(false);
+      // v1.2: click claim is unconditional — still claims.
       expect(clickDefinition.detectTrigger(evt)).toEqual({ type: 'Click' });
     } finally {
       (window as any).getComputedStyle = getCS;

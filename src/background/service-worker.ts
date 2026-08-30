@@ -29,7 +29,6 @@ import {
   stopRecording,
   processObservedEvent,
   getLiveInteractions,
-  getRuntimeLiveLifecycles,
   restoreFromStorage,
   resetState,
   storePendingEvidence,
@@ -63,7 +62,7 @@ import {
   resolveRecordingOrigin,
 } from '../understanding/persistence/recording-origin';
 import { isRecordingScopeTab } from '../background/network-observation';
-import { isInteractiveElement } from '../definitions/patterns';
+import { isHoverDiscoveryShape } from '../definitions/patterns';
 import type { NavigationEvidence, NetworkActivity } from '../shared/behavioral-evidence-types';
 
 // ── Singletons ──────────────────────────────────────────────────────────
@@ -433,70 +432,68 @@ async function handleStartRecording(): Promise<void> {
 }
 
 /**
- * B7-P2: is a Hover lifecycle live right now? The runtime's live stack
- * carries each lifecycle's interaction type (additive field) — a live
- * 'Hover' is the only case where the drain round-trip is worth its cost;
- * sessions without one skip it entirely (byte-identical STOP).
- */
-function hasLiveHoverLifecycle(): boolean {
-  try {
-    const live = getRuntimeLiveLifecycles();
-    return live.some((lc) => lc.type === 'Hover');
-  } catch {
-    return false;
-  }
-}
-
-/**
- * B7-P2: force-close open provisional hover evidence windows in every
- * recording tab BEFORE the stop pipeline runs, and settle for the
- * delivered evidence. Delivery mechanics only — no semantics, no clock
- * deciding meaning (the settle window is a bounded transport wait, the
- * same class as FLUSH_EVENTS round-trips; the drain evidence joins via
- * the normal pendingEvidence/onEmit paths either way).
+ * B7-P2 + M4c: force-close open provisional hover evidence windows in every
+ * recording tab BEFORE the stop pipeline runs, and settle for the delivered
+ * evidence. Delivery mechanics only — no semantics, no clock deciding
+ * meaning (the settle window is a bounded transport wait, the same class
+ * as FLUSH_EVENTS round-trips; the drain evidence joins via the normal
+ * pendingEvidence/onEmit paths either way).
  *
- * Settle signal: the hover's behavioral evidence attaching to its
- * interaction (or landing in pendingEvidence). We poll the interactions'
- * evidence presence with a short cap; anything slower than the cap still
- * arrives and joins later via the standard recovery passes — the drain
- * is an ordering optimization for the recording-end terminal, not a
- * correctness gate on delivery.
+ * M4c amendment (liveness-INDEPENDENT drain): the drain must run even when
+ * no Hover lifecycle is LIVE on the runtime stack. A hover completed at
+ * leave ('left' terminal) is already popped from the active stack — but
+ * its card is in liveInteractions and its provisional evidence window can
+ * still be parked in settle mode, held open by page churn resetting the
+ * quiescence timer. Skipping the drain there lost an already-earned hover:
+ * the window delivered its (evidenced) qualification only at the later
+ * STOP_RECORDING teardown — after admission had already dropped the
+ * evidence-less card. The verdict itself is still computed AT WINDOW CLOSE
+ * from recorded facts (capture-time classification, R-Q1); STOP only
+ * transports it before projecting. No reclassification, no new semantics.
+ *
+ * Settle signal: the hover interactions' behavioral evidence attaching
+ * (or landing in pendingEvidence) — leave-completed hovers poll to
+ * attachment, never-completed hovers break at the flush emission point.
+ * Sessions with no hover windows pay one no-op round-trip.
  */
 async function drainHoverEvidenceBeforeStop(): Promise<void> {
-  if (!hasLiveHoverLifecycle()) return;
-
+  // Amendment A §17.3 (P1): closed-loop handshake. Each recording tab's
+  // content script force-closes its open provisional hover windows, awaits
+  // the SW's per-delivery ACKs (R-ED1), and only then ACKs the drain. The
+  // stop pipeline runs when every tab has ACKed — verified state, not a
+  // hoped-for 1500ms.
+  //
+  // Failure signals are EVENTS, not clocks:
+  //  - a rejected sendMessage = no content script in that tab (nothing to
+  //    drain there — proceed);
+  //  - a hung channel is bounded by the liveness guard below: logged
+  //    honestly (R-SD3), never silent, never the happy path.
+  const DRAIN_LIVENESS_GUARD_MS = 10_000;
   const tabs = await chrome.tabs.query({}).catch(() => [] as chrome.tabs.Tab[]);
   const sendAll: Array<Promise<unknown>> = [];
   for (const tab of tabs) {
     if (tab.id !== undefined) {
-      sendAll.push(
-        chrome.tabs.sendMessage(tab.id, { type: 'STOP_EVIDENCE_DRAIN' }).catch(() => undefined),
-      );
+      const acked = chrome.tabs
+        .sendMessage(tab.id, { type: 'STOP_EVIDENCE_DRAIN' })
+        .catch(() => ({ ok: true, skipped: true })); // no CS → nothing to drain
+      // Liveness guard ONLY (§17.1): a hung renderer must not wedge STOP.
+      // Expiry logs and proceeds — the evidence for that tab remains in
+      // its page buffer (R-ED2) for START-time recovery.
+      const guarded = Promise.race([
+        acked,
+        new Promise((resolve) => setTimeout(() => resolve({ ok: false, timeout: true }), DRAIN_LIVENESS_GUARD_MS)),
+      ]);
+      sendAll.push(guarded);
     }
   }
-  await Promise.all(sendAll);
-
-  // Bounded settle: poll until every hover lifecycle's evidence has
-  // landed (attached or pending), or the cap elapses. Structural inputs
-  // only — no clock participates in any semantic decision.
-  const HOVER_EVIDENCE_SETTLE_MS = 1500;
-  const POLL_MS = 100;
-  const deadline = Date.now() + HOVER_EVIDENCE_SETTLE_MS;
-  while (Date.now() < deadline) {
-    const hoverLive = getLiveInteractions().filter((i) => i.type === 'Hover');
-    const allEvidenced =
-      hoverLive.length > 0 &&
-      hoverLive.every((i) => i.behavioralEvidence != null);
-    if (hoverLive.length === 0) {
-      // The hover lifecycle has not emitted yet (it emits at flush) —
-      // evidence sits in pendingEvidence; nothing to wait on.
-      break;
+  const results = (await Promise.all(sendAll)) as Array<{ ok?: boolean; timeout?: boolean }>;
+  for (const r of results) {
+    if (r?.timeout) {
+      // R-SD3: honest, observable liveness-guard trip — not silent loss.
+      console.error('[hover-drain] tab did not ACK STOP_EVIDENCE_DRAIN within liveness guard; proceeding (evidence stays buffered for START-time recovery)');
     }
-    if (allEvidenced) break;
-    await new Promise((r) => setTimeout(r, POLL_MS));
   }
 }
-
 async function handleStopRecording(): Promise<void> {
   await ensureSessionRestored();
 
@@ -974,7 +971,7 @@ async function handleObservedEvent(payload: ObservedEvent): Promise<void> {
  */
 function handleBehavioralEvidence(
   evidence: import('../shared/behavioral-evidence-types').BehavioralEvidence,
-): void {
+): string | null {
   // Try to match to a live interaction
   const interactionId = attachEvidenceToInteraction(
     evidence.sourceEventId,
@@ -1008,6 +1005,7 @@ function handleBehavioralEvidence(
     // No match — store for later drain when interaction is emitted
     storePendingEvidence(evidence);
   }
+  return interactionId;
 }
 
 // ── RUN_TEST handler (Phase 12.5) ──────────────────────────────────────
@@ -1841,19 +1839,22 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
       ) {
         // B7-P2 §5.2.3 (R-4): the discovery gate for mouseenters is
         // computed HERE — from the payload's own target fields via the
-        // shared isInteractiveElement predicate (patterns.ts, scalar
-        // 4-arg form; no vocabulary). Only a gated trusted mouseenter is
-        // classified secondary (create-only); all other mouseenters stay
-        // ineligible. The classifier itself cannot compute this (no
-        // identity) — the dispatcher owns the gate.
+        // shared structural predicate (patterns.ts, scalar
+        // Hover-capture generic fix v1 (RC-8): same SHARED structural gate
+        // as hover.ts detectTrigger / evidence-ledger isGatedDiscoveryEnter
+        // (one predicate, three call sites, no vocabulary; class substrings
+        // no longer gate). Only a gated trusted mouseenter is classified
+        // secondary (create-only); others stay ineligible.
         const gatedEnter =
           msg.payload.eventType === 'mouseenter' &&
-          isInteractiveElement(
-            msg.payload.target?.tag,
-            msg.payload.target?.ariaRole,
-            msg.payload.target?.className,
-            msg.payload.domContext?.tabIndex ?? null,
-          );
+          (isHoverDiscoveryShape({
+            tag: msg.payload.target?.tag,
+            ariaRole: msg.payload.target?.ariaRole,
+            tabIndex: msg.payload.domContext?.tabIndex ?? null,
+            ariaHasPopup: msg.payload.domContext?.ariaHasPopup ?? null,
+            clickHandler: msg.payload.domContext?.clickHandler ?? null,
+            pointerCursor: msg.payload.domContext?.pointerCursor ?? null,
+          }) || msg.payload.domContext?.hoverReveal === true);
         const cls = stampClass(msg.payload.eventType, msg.payload.key, gatedEnter);
         if (cls === 'primary') {
           setLastTrustedAction(_sender.tab.id, _sender.frameId ?? 0, {
@@ -1900,8 +1901,21 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
       // G4-A (INV-G4): evidence traffic proves the sender's tab is
       // recording — forward-eligibility grows deterministically.
       if (_sender?.tab?.id != null) noteRecordingScopeTab(_sender.tab.id);
-      handleBehavioralEvidence(msg.payload);
-      sendResponse({ ok: true });
+      // Amendment A §17.2 (P2/R-ED1): the handler is synchronous through
+      // attach/persist (handleBehavioralEvidence stores to pendingEvidence
+      // and attaches to any already-emitted interaction synchronously), so
+      // the ACK confirms receipt+attachment. attached reports where it
+      // landed (interactionId | 'pending') — informational, never gates
+      // correctness on the CS side beyond the ok flag.
+      let attached: string = 'pending';
+      try {
+        const interactionId = handleBehavioralEvidence(msg.payload);
+        attached = interactionId ?? 'pending';
+      } catch {
+        sendResponse({ ok: false, attached: 'error' });
+        return true;
+      }
+      sendResponse({ ok: true, attached });
       return true;
     }
 

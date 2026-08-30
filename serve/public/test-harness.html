@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interaction Detection Test Harness</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .test-section { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; background: #fafafa; }
+    .test-section h2 { margin-top: 0; font-size: 16px; color: #333; }
+    .test-section .category { font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 0.5px; }
+    label { display: block; margin: 8px 0 4px; font-size: 14px; }
+    input, select, textarea, button { padding: 8px 12px; margin: 4px 0; font-size: 14px; }
+    .modern-widget { display: inline-block; }
+    .checkbox-modern { width: 20px; height: 20px; border: 2px solid #666; border-radius: 4px; cursor: pointer; display: inline-block; vertical-align: middle; }
+    .checkbox-modern.checked { background: #7c3aed; border-color: #7c3aed; }
+    .toggle-modern { width: 44px; height: 24px; background: #ccc; border-radius: 12px; cursor: pointer; position: relative; display: inline-block; vertical-align: middle; transition: background 0.2s; }
+    .toggle-modern.on { background: #10b981; }
+    .toggle-modern::after { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%; background: white; top: 2px; left: 2px; transition: left 0.2s; }
+    .toggle-modern.on::after { left: 22px; }
+    .dropdown-trigger { padding: 8px 12px; border: 1px solid #999; border-radius: 4px; cursor: pointer; display: inline-block; background: white; }
+    .dropdown-menu { display: none; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: absolute; background: white; z-index: 100; }
+    .dropdown-menu.open { display: block; }
+    .dropdown-option { padding: 8px 12px; cursor: pointer; }
+    .dropdown-option:hover { background: #f0f0f0; }
+    .tab-list { display: flex; border-bottom: 2px solid #ddd; }
+    .tab { padding: 8px 16px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .tab.active { border-bottom-color: #7c3aed; color: #7c3aed; font-weight: 600; }
+    .tab-panel { display: none; padding: 16px 0; }
+    .tab-panel.active { display: block; }
+    .menu-bar { display: flex; gap: 8px; background: #333; padding: 4px; }
+    .menu-item { color: white; padding: 6px 12px; cursor: pointer; border-radius: 4px; }
+    .menu-item:hover { background: #555; }
+    .drag-container { display: flex; gap: 12px; }
+    .drag-item { width: 80px; height: 80px; background: #ddd; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: grab; user-select: none; }
+    .drag-item:active { cursor: grabbing; }
+    .drop-zone { width: 100px; height: 100px; border: 2px dashed #999; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #999; }
+    .scroll-container { height: 120px; overflow-y: scroll; border: 1px solid #ddd; border-radius: 4px; }
+    .scroll-content { height: 400px; padding: 8px; }
+    .breadcrumb { display: flex; gap: 4px; align-items: center; }
+    .breadcrumb a { color: #3b82f6; text-decoration: none; }
+    .breadcrumb span { color: #999; }
+    .hover-target { display: inline-block; padding: 12px; background: #f0f0f0; border-radius: 4px; cursor: help; }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; }
+    .modal-overlay.open { display: flex; align-items: center; justify-content: center; }
+    .modal { background: white; padding: 24px; border-radius: 8px; min-width: 300px; }
+  </style>
+</head>
+<body>
+  <h1>Interaction Detection Test Harness</h1>
+  <p>All interaction types — modern + traditional patterns</p>
+
+  <!-- ═══ TRADITIONAL FORM ELEMENTS ═══ -->
+  <div class="test-section">
+    <div class="category">Traditional · Text Entry</div>
+    <h2>Text Input (native)</h2>
+    <label for="text-input">Username</label>
+    <input type="text" id="text-input" name="username" placeholder="Enter username" />
+  </div>
+
+  <div class="test-section">
+    <div class="category">Traditional · Text Entry</div>
+    <h2>Textarea (native)</h2>
+    <label for="textarea">Description</label>
+    <textarea id="textarea" name="description" rows="3" placeholder="Enter description"></textarea>
+  </div>
+
+  <div class="test-section">
+    <div class="category">Traditional · Selection</div>
+    <h2>Native Select Dropdown</h2>
+    <label for="native-select">Country</label>
+    <select id="native-select" name="country">
+      <option value="">Select...</option>
+      <option value="us">United States</option>
+      <option value="uk">United Kingdom</option>
+      <option value="ca">Canada</option>
+    </select>
+  </div>
+
+  <div class="test-section">
+    <div class="category">Traditional · Selection Controls</div>
+    <h2>Native Checkbox</h2>
+    <label><input type="checkbox" id="checkbox-1" name="agree" /> I agree to terms</label>
+  </div>
+
+  <div class="test-section">
+    <div class="category">Traditional · Selection Controls</div>
+    <h2>Native Radio Buttons</h2>
+    <label><input type="radio" id="radio-1" name="plan" value="basic" /> Basic</label>
+    <label><input type="radio" id="radio-2" name="plan" value="pro" /> Pro</label>
+    <label><input type="radio" id="radio-3" name="plan" value="enterprise" /> Enterprise</label>
+  </div>
+
+  <div class="test-section">
+    <div class="category">Traditional · File Upload</div>
+    <h2>File Input</h2>
+    <input type="file" id="file-upload" name="fileUpload" />
+  </div>
+
+  <div class="test-section">
+    <div class="category">Traditional · Navigation</div>
+    <h2>Link</h2>
+    <a href="#link-target" id="test-link">Click here to learn more</a>
+  </div>
+
+  <div class="test-section">
+    <div class="category">Traditional · Button</div>
+    <h2>Submit Button</h2>
+    <button id="submit-btn" type="button">Submit Form</button>
+  </div>
+
+  <!-- ═══ MODERN ARIA WIDGETS ═══ -->
+  <div class="test-section">
+    <div class="category">Modern · ARIA Checkbox</div>
+    <h2>Custom Checkbox (div + role=checkbox)</h2>
+    <div class="modern-widget">
+      <span>Enable notifications</span>
+      <div class="checkbox-modern" id="aria-checkbox" role="checkbox" aria-checked="false" aria-label="Enable notifications" tabindex="0"></div>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <div class="category">Modern · Toggle Switch</div>
+    <h2>Toggle Switch (role=switch)</h2>
+    <div class="modern-widget">
+      <span>Dark Mode</span>
+      <div class="toggle-modern" id="toggle-switch" role="switch" aria-checked="false" aria-label="Dark mode" tabindex="0"></div>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <div class="category">Modern · Radio (ARIA)</div>
+    <h2>ARIA Radio Group</h2>
+    <div role="radiogroup" aria-label="Priority">
+      <div role="radio" id="aria-radio-1" aria-checked="false" tabindex="0" aria-label="Low">⚪ Low</div>
+      <div role="radio" id="aria-radio-2" aria-checked="true" tabindex="0" aria-label="High">⚪ High</div>
+    </div>
+  </div>
+
+  <!-- ═══ CUSTOM DROPDOWN ═══ -->
+  <div class="test-section">
+    <div class="category">Modern · Custom Dropdown</div>
+    <h2>Custom Dropdown (div-based)</h2>
+    <div style="position: relative; display: inline-block;">
+      <div class="dropdown-trigger" id="dropdown-trigger" role="combobox" aria-haspopup="listbox" aria-expanded="false" tabindex="0">Choose option...</div>
+      <div class="dropdown-menu" id="dropdown-menu" role="listbox">
+        <div class="dropdown-option" role="option" data-value="alpha" tabindex="0">Alpha</div>
+        <div class="dropdown-option" role="option" data-value="beta" tabindex="0">Beta</div>
+        <div class="dropdown-option" role="option" data-value="gamma" tabindex="0">Gamma</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TABS ═══ -->
+  <div class="test-section">
+    <div class="category">Modern · Tab Navigation</div>
+    <h2>Tab Interface</h2>
+    <div class="tab-list" role="tablist">
+      <div class="tab active" id="tab-1" role="tab" aria-selected="true" tabindex="0">Profile</div>
+      <div class="tab" id="tab-2" role="tab" aria-selected="false" tabindex="0">Settings</div>
+      <div class="tab" id="tab-3" role="tab" aria-selected="false" tabindex="0">Security</div>
+    </div>
+    <div class="tab-panel active" id="panel-1" role="tabpanel">Profile content</div>
+    <div class="tab-panel" id="panel-2" role="tabpanel">Settings content</div>
+    <div class="tab-panel" id="panel-3" role="tabpanel">Security content</div>
+  </div>
+
+  <!-- ═══ MENU ═══ -->
+  <div class="test-section">
+    <div class="category">Modern · Menu</div>
+    <h2>Menu Bar</h2>
+    <div class="menu-bar" role="menu">
+      <div class="menu-item" id="menu-file" role="menuitem" tabindex="0">File</div>
+      <div class="menu-item" id="menu-edit" role="menuitem" tabindex="0">Edit</div>
+      <div class="menu-item" id="menu-view" role="menuitem" tabindex="0">View</div>
+    </div>
+  </div>
+
+  <!-- ═══ DRAG & DROP ═══ -->
+  <div class="test-section">
+    <div class="category">Modern · Drag & Drop</div>
+    <h2>Drag and Drop</h2>
+    <div class="drag-container">
+      <div class="drag-item" id="drag-item" draggable="true">Drag Me</div>
+      <div class="drop-zone" id="drop-zone">Drop Here</div>
+    </div>
+  </div>
+
+  <!-- ═══ SCROLL ═══ -->
+  <div class="test-section">
+    <div class="category">Scrolling</div>
+    <h2>Scrollable Container</h2>
+    <div class="scroll-container" id="scroll-container">
+      <div class="scroll-content">
+        <p>Line 1</p><p>Line 2</p><p>Line 3</p><p>Line 4</p><p>Line 5</p>
+        <p>Line 6</p><p>Line 7</p><p>Line 8</p><p>Line 9</p><p>Line 10</p>
+        <p>Line 11</p><p>Line 12</p><p>Line 13</p><p>Line 14</p><p>Line 15</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ HOVER ═══ -->
+  <div class="test-section">
+    <div class="category">Mouse · Hover</div>
+    <h2>Hover Target</h2>
+    <div class="hover-target" id="hover-target" title="Hover info">Hover over me</div>
+  </div>
+
+  <!-- ═══ DOUBLE CLICK ═══ -->
+  <div class="test-section">
+    <div class="category">Mouse · Double Click</div>
+    <h2>Double Click Target</h2>
+    <div id="dblclick-target" style="padding: 12px; background: #e0e7ff; border-radius: 4px; cursor: pointer; user-select: none;">Double-click to edit</div>
+  </div>
+
+  <!-- ═══ RIGHT CLICK ═══ -->
+  <div class="test-section">
+    <div class="category">Mouse · Right Click</div>
+    <h2>Right Click Target</h2>
+    <div id="rightclick-target" style="padding: 12px; background: #fee2e2; border-radius: 4px;">Right-click for context menu</div>
+  </div>
+
+  <!-- ═══ BREADCRUMB ═══ -->
+  <div class="test-section">
+    <div class="category">Navigation UI · Breadcrumb</div>
+    <h2>Breadcrumb Navigation</h2>
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="#home">Home</a>
+      <span>/</span>
+      <a href="#products">Products</a>
+      <span>/</span>
+      <a href="#detail" aria-current="page">Product Detail</a>
+    </nav>
+  </div>
+
+  <script>
+    // ARIA checkbox toggle
+    document.getElementById('aria-checkbox').addEventListener('click', function() {
+      const checked = this.getAttribute('aria-checked') === 'true';
+      this.setAttribute('aria-checked', String(!checked));
+      this.classList.toggle('checked');
+    });
+
+    // Toggle switch
+    document.getElementById('toggle-switch').addEventListener('click', function() {
+      const checked = this.getAttribute('aria-checked') === 'true';
+      this.setAttribute('aria-checked', String(!checked));
+      this.classList.toggle('on');
+    });
+
+    // ARIA radio
+    document.querySelectorAll('[role="radio"]').forEach(function(radio) {
+      radio.addEventListener('click', function() {
+        document.querySelectorAll('[role="radio"]').forEach(function(r) {
+          r.setAttribute('aria-checked', 'false');
+        });
+        this.setAttribute('aria-checked', 'true');
+      });
+    });
+
+    // Custom dropdown
+    const trigger = document.getElementById('dropdown-trigger');
+    const menu = document.getElementById('dropdown-menu');
+    trigger.addEventListener('click', function() {
+      const open = menu.classList.contains('open');
+      menu.classList.toggle('open');
+      trigger.setAttribute('aria-expanded', String(!open));
+    });
+    document.querySelectorAll('.dropdown-option').forEach(function(opt) {
+      opt.addEventListener('click', function() {
+        trigger.textContent = this.textContent;
+        menu.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+      });
+    });
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.tab').forEach(function(t) {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+        });
+        document.querySelectorAll('.tab-panel').forEach(function(p) {
+          p.classList.remove('active');
+        });
+        this.classList.add('active');
+        this.setAttribute('aria-selected', 'true');
+        const panel = document.getElementById('panel-' + this.id.split('-')[1]);
+        if (panel) panel.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+{
+  "runAt": "2026-08-30T07:36:16.369Z",
+  "source": "cmdrunner-extension.zip",
+  "results": [
+    {
+      "name": "S1 slow reveal (+2.5s) while hovering EVIDENCE-EARNS",
+      "pass": true,
+      "detail": "hovers=1 verdict=evidenced class=reveal reason=reveal: aria flip aria-expanded false→true on joined element"
+    },
+    {
+      "name": "S1 hover target preserved (Slow Services)",
+      "pass": true,
+      "detail": "target=Slow Services"
+    },
+    {
+      "name": "S2 churn + immediate STOP (still hovering) keeps evidenced Hover",
+      "pass": true,
+      "detail": "hovers=1 verdict=evidenced class=reveal"
+    },
+    {
+      "name": "S2 churn actually ran (non-vacuous)",
+      "pass": true,
+      "detail": "churnTicks=9"
+    },
+    {
+      "name": "S3 Hover(Services) + Click(Book Flight) BOTH present (80ms gap)",
+      "pass": true,
+      "detail": "cards=Hover,Link,Navigation hoverTarget=Services Section clickTarget=Book Flight"
+    },
+    {
+      "name": "S3 click keeps its own carrier (never absorbed into Hover)",
+      "pass": true,
+      "detail": "carrier=Link"
+    },
+    {
+      "name": "S4 reveal AFTER leave NEVER mints evidenced (honest)",
+      "pass": true,
+      "detail": "hovers=0 verdict=undefined"
+    },
+    {
+      "name": "S4 no evidenced verdict leaked",
+      "pass": true,
+      "detail": "evidencedCount=0"
+    },
+    {
+      "name": "S5 late reveal after leave (parked, +2.2s) stays honest",
+      "pass": true,
+      "detail": "hovers=0 verdict=undefined"
+    },
+    {
+      "name": "S6 STOP before slow reveal (+6s) keeps hover honest (no fabrication)",
+      "pass": true,
+      "detail": "hovers=0 verdict=undefined"
+    }
+  ]
+}

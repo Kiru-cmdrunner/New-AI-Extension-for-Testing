@@ -698,6 +698,28 @@ export function attachEvidenceToInteraction(
     };
   };
 
+  // HEC v1 §11 (hover.ts change map): project the capture-time
+  // HoverQualification from the attached evidence envelope into the
+  // interaction's metadata — metadata.hoverQualification (full record) and
+  // the flat metadata.evidenceReason (revives the sidepanel renderer seam).
+  // Copy ONLY (STOP never computes/decides — §9): if the interaction
+  // already carries a recorded qualification it is immutable (R-Q6).
+  const projectHoverQualificationIntoMetadata = (
+    interaction: ComponentInteraction,
+    evidence: BehavioralEvidence,
+  ): void => {
+    if (interaction.type !== 'Hover') return;
+    const incoming = evidence.hoverQualification;
+    if (incoming == null) return;
+    const existing = (interaction.metadata ?? {}) as Record<string, unknown>;
+    if (existing.hoverQualification != null) return; // immutable once recorded
+    interaction.metadata = {
+      ...existing,
+      hoverQualification: incoming,
+      evidenceReason: incoming.evidenceReason,
+    };
+  };
+
   // Helper: try to attach evidence to a specific interaction
   const tryAttach = (interaction: ComponentInteraction): boolean => {
     /**
@@ -712,21 +734,43 @@ export function attachEvidenceToInteraction(
      * ordinal is authoritative for its own facts (it was stamped at its own
      * open/click instant).
      */
-    const carryOrdinal = (incoming: BehavioralEvidence): BehavioralEvidence =>
-      interaction.behavioralEvidence?.window?.openedBatch !== undefined &&
-      incoming.window?.openedBatch === undefined
-        ? {
-            ...incoming,
-            window: {
-              ...incoming.window,
-              openedBatch: interaction.behavioralEvidence.window.openedBatch,
-            },
-          }
-        : incoming;
+    const carryOrdinal = (incoming: BehavioralEvidence): BehavioralEvidence => {
+      let out = incoming;
+      // Ordinal (C-2) — see comment above.
+      if (
+        interaction.behavioralEvidence?.window?.openedBatch !== undefined &&
+        incoming.window?.openedBatch === undefined
+      ) {
+        out = {
+          ...out,
+          window: {
+            ...out.window,
+            openedBatch: interaction.behavioralEvidence.window.openedBatch,
+          },
+        };
+      }
+      // HEC v1 §5 R-Q6: a replacement evidence must never strip the
+      // capture-time HoverQualification from an interaction that has one.
+      // The qualification is computed ONCE at hover-window close from
+      // recorded facts; supplements and thinner replacements never carry
+      // their own. Only an incoming window WITH its own qualification is
+      // authoritative for itself (same precedence as the ordinal).
+      if (
+        interaction.behavioralEvidence?.hoverQualification !== undefined &&
+        incoming.hoverQualification === undefined
+      ) {
+        out = {
+          ...out,
+          hoverQualification: interaction.behavioralEvidence.hoverQualification,
+        };
+      }
+      return out;
+    };
 
     if (!interaction.behavioralEvidence) {
       // No existing evidence — attach directly
       interaction.behavioralEvidence = evidence;
+      projectHoverQualificationIntoMetadata(interaction, evidence);
       persistLiveInteractions();
       cancelEvidenceTimeout(interaction.interactionId);
       return true;
@@ -738,6 +782,7 @@ export function attachEvidenceToInteraction(
         interaction.behavioralEvidence,
         evidence,
       );
+      projectHoverQualificationIntoMetadata(interaction, interaction.behavioralEvidence);
       persistLiveInteractions();
       return true;
     }
@@ -772,6 +817,7 @@ export function attachEvidenceToInteraction(
           ),
         },
       };
+      projectHoverQualificationIntoMetadata(interaction, interaction.behavioralEvidence);
       persistLiveInteractions();
       return true;
     }
@@ -806,6 +852,7 @@ export function attachEvidenceToInteraction(
           networkActivity: merged,
         },
       };
+      projectHoverQualificationIntoMetadata(interaction, interaction.behavioralEvidence);
       persistLiveInteractions();
       return true;
     }
@@ -919,6 +966,19 @@ function drainPendingEvidence(interaction: ComponentInteraction): void {  if (in
   }
 
   interaction.behavioralEvidence = best;
+  // HEC v1 §11: project capture-time qualification into metadata (copy
+  // only — see projectHoverQualificationIntoMetadata in attachEvidenceToInteraction).
+  if (interaction.type === 'Hover') {
+    const incoming = best.hoverQualification;
+    const existing = (interaction.metadata ?? {}) as Record<string, unknown>;
+    if (incoming != null && existing.hoverQualification == null) {
+      interaction.metadata = {
+        ...existing,
+        hoverQualification: incoming,
+        evidenceReason: incoming.evidenceReason,
+      };
+    }
+  }
 
   // Clean up all matched pending entries
   for (const key of matchedKeys) {
@@ -1173,14 +1233,46 @@ export function stopRecording(): ComponentInteraction[] {
         .filter((e) => !representedIds.has(e.eventId))
         .map((e) => ({ eventId: e.eventId, eventType: e.eventType }));
 
+      // ── HEC-G (HEC v1 §12 AC-6): STOP self-consistency — a click or
+      // contextmenu row is NEVER represented solely by a Hover. It must
+      // appear as trigger/member of a completed NON-Hover interaction, be
+      // claimed by a gesture record, or survive as an Unclassified card.
+      // Detection-only check (like M5): it reports, never rewrites — STOP
+      // does not repair capture (§9).
+      const nonHoverCarrierIds = new Set<string>();
+      for (const interaction of projection.interactions) {
+        if (interaction.type !== 'Hover') nonHoverCarrierIds.add(interaction.interactionId);
+      }
+      const hoverSoleCarriers = ledgerEntries.filter(
+        (e) =>
+          (e.eventType === 'click' || e.eventType === 'contextmenu') &&
+          e.claimedBy != null &&
+          !nonHoverCarrierIds.has(e.claimedBy) &&
+          !representedIds.has(e.eventId),
+      );
+      if (hoverSoleCarriers.length > 0) {
+        console.error(
+          '[HEC-G] click/contextmenu rows represented solely by a Hover:',
+          hoverSoleCarriers.map((e) => ({ eventId: e.eventId, eventType: e.eventType, claimedBy: e.claimedBy })),
+        );
+      }
+
       const verificationResult = {
-        match: unrepresented.length === 0,
-        differences: unrepresented.map((u) => ({
-          kind: 'missing' as const,
-          eventId: u.eventId,
-          description: `Discrete ${u.eventType} event not represented in projection`,
-          ledgerEntries: ledger.get(u.eventId) ? [ledger.get(u.eventId)!] : [],
-        })),
+        match: unrepresented.length === 0 && hoverSoleCarriers.length === 0,
+        differences: [
+          ...unrepresented.map((u) => ({
+            kind: 'missing' as const,
+            eventId: u.eventId,
+            description: `Discrete ${u.eventType} event not represented in projection`,
+            ledgerEntries: ledger.get(u.eventId) ? [ledger.get(u.eventId)!] : [],
+          })),
+          ...hoverSoleCarriers.map((e) => ({
+            kind: 'hover-sole-carrier' as const,
+            eventId: e.eventId,
+            description: `Discrete ${e.eventType} event represented solely by a Hover (HEC-G violation)`,
+            ledgerEntries: ledger.get(e.eventId) ? [ledger.get(e.eventId)!] : [],
+          })),
+        ],
         runtimeOutput: liveInteractions,
         projectedOutput: projection.interactions,
         ledgerSnapshot: ledger.snapshot(),

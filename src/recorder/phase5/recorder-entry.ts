@@ -352,12 +352,23 @@ if (chrome?.runtime?.onMessage) {
       return false;
     }
     if (message?.type === 'STOP_EVIDENCE_DRAIN') {
-      // B7-P2: SW-driven pre-pipeline drain — force-close open provisional
-      // hover windows so their evidence lands BEFORE the SW's STOP pipeline
-      // (flush → admission) runs. Delivery mechanics only; the collector
-      // keeps running (STOP_RECORDING below still tears it down).
-      evidenceCollector?.drainHoverWindowsAtStop();
-      return false;
+      // B7-P2 + Amendment A §17.3 (P1): SW-driven pre-pipeline drain —
+      // force-close open provisional hover windows so their evidence lands
+      // BEFORE the SW's STOP pipeline runs, and ACK the drain when every
+      // delivery has been confirmed by the SW (closed-loop handshake — no
+      // clock). Delivery mechanics only; the collector keeps running
+      // (STOP_RECORDING below still tears it down).
+      void (async () => {
+        let delivered = 0;
+        try {
+          delivered = (await evidenceCollector?.drainHoverWindowsAtStop()) ?? 0;
+        } catch {
+          delivered = 0;
+        }
+        sendResponse({ ok: true, delivered });
+      })();
+      // Hold the message channel open for the async ACK.
+      return true;
     }
     if (message?.type === 'STOP_RECORDING') {
       stopRecording();

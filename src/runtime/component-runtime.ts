@@ -431,7 +431,15 @@ class ComponentRuntimeImpl implements ComponentRuntime {
           const retainCompletingEvent =
             def.retainsDiscreteEvents !== false ||
             !DISCRETE_ACTION_TYPES.has(event.eventType);
-          if (!retainCompletingEvent && !handled) {
+          // HEC v1 §8 R-C3: the pop is UNCONDITIONAL for a non-retaining
+          // definition completing on a discrete event — the event is never
+          // that definition's property, so the member push is always undone
+          // (a Click must never live inside a Hover; RC-A root cause). B6
+          // twin-prevention is preserved: `handled` is still only ever
+          // OR-ed below, never reset — a lifecycle above that already
+          // absorbed the click keeps handled === true and discovery never
+          // runs for it (spec §10, pinned by the B6 harness).
+          if (!retainCompletingEvent) {
             ctx.memberEvents.pop(); // the consuming click is not our member
           }
           handled = handled || retainCompletingEvent;

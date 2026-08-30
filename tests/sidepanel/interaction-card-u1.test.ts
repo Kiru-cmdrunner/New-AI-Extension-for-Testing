@@ -250,12 +250,28 @@ describe('P4 — understanding badge on the card', () => {
 // ── P7: show-hidden ─────────────────────────────────────────────────────
 
 describe('P7 — show-hidden suppression chips', () => {
-  // B7-P4 (bridge deletion): a hover is production-worthy when its
-  // RECORDED EVIDENCE derives ≥1 consequence class — the stored
-  // metadata.meaningful judgment no longer admits. This fixture's hover
-  // carries a revealed-surface fact, so it derives 'reveal'.
+  // HEC v1 re-baseline: a hover is production-worthy when its RECORDED
+  // capture-time verdict is 'evidenced' (metadata.hoverQualification or the
+  // evidence envelope). This fixture's hover carries a revealed-surface
+  // fact + the recorded qualification, so it derives 'reveal' for display.
   const admittedHoverEvidence = {
+    metadata: {
+      hoverQualification: {
+        verdict: 'evidenced',
+        evidenceClass: 'reveal',
+        evidenceReason: 'reveal: surface emerged joined to anchor',
+        anchorFacts: {},
+        factSummary: {},
+      },
+    },
     behavioralEvidence: {
+      hoverQualification: {
+        verdict: 'evidenced',
+        evidenceClass: 'reveal',
+        evidenceReason: 'reveal: surface emerged joined to anchor',
+        anchorFacts: {},
+        factSummary: {},
+      },
       applicationEvidence: {
         newSurfaces: [
           {

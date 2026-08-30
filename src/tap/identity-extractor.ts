@@ -17,6 +17,10 @@
  */
 
 import type { ElementIdentity, IframeContext } from '../shared/types';
+import {
+  subtreeTextNameEligibility,
+  isHoverDiscoveryShape,
+} from '../definitions/patterns';
 
 // ── Utilities ──────────────────────────────────────────────────────────
 
@@ -185,15 +189,33 @@ export function computeAccessibleName(el: Element): string {
     }
   }
 
-  // Tier 6: innerText
+  // Tier 6: innerText — RC-2 (hover-capture generic fix v1): subtree text is
+  // a NAME only for a single text-bearing shape. A container's whole-subtree
+  // text is not a name (banner DIV named "12345678"; UL named "One WayRound
+  // Trip"). Eligibility decision is the pure policy in patterns.ts; the DOM
+  // measurement happens here at the capture instant. Cursor-inheritance
+  // amendment: the measured text is VISIBLE-only (aria-hidden stripped) and
+  // the descendant shape scan uses own-boundary cursor facts, so an icon
+  // glyph inside a link no longer poisons the anchor's own name.
   if (el instanceof HTMLElement) {
-    const inner = el.innerText?.trim();
-    if (inner) return truncate(inner, 200);
+    const visible = visibleSubtreeText(el).trim();
+    if (visible && subtreeTextNameEligibility(measureSubtreeText(el, visible))) {
+      return truncate(visible, 200);
+    }
   }
 
-  // Tier 7: textContent
-  const textContent = el.textContent?.trim();
-  if (textContent) return truncate(textContent, 200);
+  // Tier 7: textContent — same RC-2 gating (textContent is the same subtree
+  // text without rendering semantics). Cursor-inheritance amendment: skip if
+  // the element HAS innerText (tier 6 already measured the visible text —
+  // do not name from the less-honest serialization).
+  {
+    const visible = visibleSubtreeText(el).trim();
+    const hasInnerText = el instanceof HTMLElement
+      && typeof el.innerText === 'string' && el.innerText.length > 0;
+    if (visible && !hasInnerText && subtreeTextNameEligibility(measureSubtreeText(el, visible))) {
+      return truncate(visible, 200);
+    }
+  }
 
   // Tier 8: placeholder / aria-placeholder
   const placeholder = el.getAttribute('placeholder') || el.getAttribute('aria-placeholder');
@@ -221,6 +243,308 @@ export function computeAccessibleName(el: Element): string {
   if (title && title.trim()) return truncate(title.trim(), 200);
 
   return '';
+}
+
+// ── Hover capture generic fix v1 (RC-1/RC-2/RC-3) ──────────────────────
+// Spec: `.drytis/specs/hover-capture-generic-fix-v1.md` §5 G1, G2a, G3.
+
+/** aria-hidden="true" subtree boundary (DOM ownership fact, no vocabulary). */
+function isAriaHidden(el: Element): boolean {
+  return el.getAttribute('aria-hidden') === 'true';
+}
+
+/**
+ * Visible-subtree text: innerText when available (rendering semantics), with
+ * aria-hidden subtree text REMOVED (accname conformance — hidden content is
+ * not a name source). Falls back to textContent-derived visible text when
+ * innerText is unavailable (non-rendered jsdom nodes).
+ */
+function visibleSubtreeText(el: Element): string {
+  if (el instanceof HTMLElement && typeof el.innerText === 'string' && el.innerText.length > 0) {
+    // innerText is already visible-only for display:none subtrees; strip
+    // aria-hidden descendants explicitly (they can still be visually shown).
+    const clone = el.cloneNode(true) as Element;
+    for (const h of Array.from(clone.querySelectorAll('[aria-hidden="true"]'))) {
+      h.remove();
+    }
+    return clone.textContent ?? '';
+  }
+  // textContent path (no layout): same aria-hidden strip.
+  const clone = el.cloneNode(true) as Element;
+  for (const h of Array.from(clone.querySelectorAll('[aria-hidden="true"]'))) {
+    h.remove();
+  }
+  return clone.textContent ?? '';
+}
+
+/**
+ * Measure the subtree-text naming facts for RC-2 eligibility. DOM
+ * measurement only — the eligibility DECISION is the pure policy
+ * (subtreeTextNameEligibility in definitions/patterns.ts).
+ */
+function measureSubtreeText(el: Element, text: string): {
+  elementChildCount: number;
+  textBearingElementDescendantCount: number;
+  textLength: number;
+  hasNewline: boolean;
+  hasInteractiveShapedDescendant: boolean;
+} {
+  let textBearing = 0;
+  let interactiveShaped = false;
+  // DOM ownership: descendants beyond an aria-hidden boundary are HIDDEN
+  // content — they contribute neither text nor shape evidence (accname
+  // conformance: hidden content is not a name source).
+  const subtree = isAriaHidden(el) ? [] : Array.from(el.querySelectorAll('*'));
+  for (const d of subtree) {
+    if (isAriaHidden(d)) continue;
+    const ownText = Array.from(d.childNodes).some(
+      (n) => n.nodeType === Node.TEXT_NODE && (n.textContent ?? '').trim() !== '',
+    );
+    if (ownText) textBearing++;
+    if (!interactiveShaped && isHoverDiscoveryShape(domShapeOf(d))) {
+      interactiveShaped = true;
+    }
+  }
+  return {
+    elementChildCount: el.children.length,
+    textBearingElementDescendantCount: textBearing,
+    textLength: text.length,
+    hasNewline: text.includes('\n'),
+    hasInteractiveShapedDescendant: interactiveShaped,
+  };
+}
+
+/**
+ * pointerCursor as an OWN-BOUNDARY fact (hover-capture generic fix v1,
+ * cursor-inheritance amendment). `cursor` is an INHERITED CSS property:
+ * Chrome's UA stylesheet puts `cursor: pointer` on `a[href]`, so every
+ * child of a link (icon glyphs, spans) inherits pointer and would look
+ * "interactive-shaped" under the raw computed-style read. The cursor only
+ * signals an affordance when it CHANGES at the element boundary.
+ *
+ * This is pure CSS semantics — no vocabulary, no site knowledge. Applied
+ * uniformly to both DOM-edge producers of the shape facts
+ * (domShapeOf here and DomContext.pointerCursor in
+ * definitions/dom-context-extractor.ts — T3 sync point).
+ */
+export function ownBoundaryPointerCursor(el: Element): boolean | null {
+  try {
+    if (typeof window === 'undefined' || !(el instanceof Element)) return null;
+    const own = window.getComputedStyle(el).cursor;
+    if (own !== 'pointer') return false;
+    // Pointer at the element; true only if the parent is not already
+    // pointer (inherited ≠ own affordance signal).
+    const parent = el.parentElement;
+    if (!parent) return true;
+    return window.getComputedStyle(parent).cursor !== 'pointer';
+  } catch {
+    return null;
+  }
+}
+
+/** DomContext-style shape facts for a live element (G3 shape test, DOM form). */
+export function domShapeOf(el: Element): {
+  tag: string;
+  ariaRole: string | null;
+  tabIndex: number | null;
+  ariaHasPopup: string | null;
+  clickHandler: boolean | null;
+  pointerCursor: boolean | null;
+} {
+  const html = el as HTMLElement;
+  let role: string | null = el.getAttribute('role');
+  if (!role) {
+    const tag = el.tagName;
+    if (tag === 'A' && el.getAttribute('href')) role = 'link';
+    else if (tag === 'BUTTON' || tag === 'SUMMARY') role = 'button';
+    else if (tag === 'SELECT') role = 'listbox';
+  }
+  const pointer = ownBoundaryPointerCursor(el);
+  return {
+    tag: el.tagName,
+    ariaRole: role,
+    tabIndex: html.tabIndex ?? null,
+    ariaHasPopup: el.getAttribute('aria-haspopup'),
+    clickHandler: el.hasAttribute('onclick'),
+    pointerCursor: pointer,
+  };
+}
+
+/**
+ * G1: resolve the HOVER anchor — the element under the pointer.
+ *
+ * Unlike resolveTarget (click-lifting, nearest interactive/cursor ancestor,
+ * kept for clicks per CQ v1.2), the hover anchor lifts only to the enclosing
+ * interactive control, never into unnamed wrappers:
+ *   1. raw is hover-shaped → raw;
+ *   2. nearest hover-shaped ancestor (path/parent walk, stop at BODY);
+ *   3. optional caller-provided fallback (e.g. scoped hoverReveal probe
+ *      result) when nothing else shaped exists;
+ *   4. else the raw element (honest pointer element — discovery decides).
+ * Never returns HTML/BODY.
+ */
+export type HoverAnchorResolution =
+  | 'self'
+  | 'ancestor-lift'
+  | 'reveal-target'
+  | 'body';
+
+export interface ResolvedHoverAnchor {
+  /** The hover anchor element (G1 outcome). */
+  target: Element;
+  /** Which G1 branch produced it — recorded fact (HEC v1 R-A4). */
+  resolution: HoverAnchorResolution;
+}
+
+/**
+ * G1: resolve the HOVER anchor — the element under the pointer.
+ *
+ * Unlike resolveTarget (click-lifting, nearest interactive/cursor ancestor,
+ * kept for clicks per CQ v1.2), the hover anchor lifts only to the enclosing
+ * interactive control, never into unnamed wrappers:
+ *   1. raw is hover-shaped → raw;
+ *   2. nearest hover-shaped ancestor (path/parent walk, stop at BODY);
+ *   3. optional caller-provided fallback (e.g. scoped hoverReveal probe
+ *      result) when nothing else shaped exists;
+ *   4. else the raw element (honest pointer element — discovery decides).
+ * Never returns HTML/BODY.
+ *
+ * HEC v1 R-A4: also reports WHICH branch resolved, so the capture layer can
+ * record the honest resolution fact (never re-derived downstream).
+ */
+export function resolveHoverAnchor(
+  raw: Element,
+  hoverRevealTarget: Element | null,
+): ResolvedHoverAnchor {
+  const isBody =
+    raw === document.body || raw === document.documentElement;
+  if (isBody) return { target: raw, resolution: 'body' };
+
+  if (isHoverDiscoveryShape(domShapeOf(raw))) {
+    return { target: raw, resolution: 'self' };
+  }
+
+  // Nearest shaped ancestor — bounded walk, stop at BODY.
+  let cur: Element | null = raw.parentElement;
+  while (cur && cur !== document.body && cur !== document.documentElement) {
+    if (isHoverDiscoveryShape(domShapeOf(cur))) {
+      return { target: cur, resolution: 'ancestor-lift' };
+    }
+    cur = cur.parentElement;
+  }
+
+  if (hoverRevealTarget) {
+    return { target: hoverRevealTarget, resolution: 'reveal-target' };
+  }
+  return { target: raw, resolution: 'self' };
+}
+
+/**
+ * G1 (legacy signature): resolve the HOVER anchor element alone.
+ * Kept for existing call sites; new callers should prefer
+ * {@link resolveHoverAnchor} to also obtain the R-A4 resolution fact.
+ */
+export function resolveHoverTarget(
+  raw: Element,
+  hoverRevealTarget: Element | null,
+): Element {
+  return resolveHoverAnchor(raw, hoverRevealTarget).target;
+}
+
+/** Reveal properties that make a :hover rule a reveal rule (G3). */
+const HOVER_REVEAL_PROBE_PROPS = new Set([
+  'display', 'visibility', 'opacity', 'transform', 'height', 'max-height',
+  'width', 'max-width', 'pointer-events', 'top', 'left', 'right', 'bottom',
+  'clip', 'clip-path', 'overflow',
+]);
+
+/** Result cache per element (WeakMap — dead elements are collected). */
+const hoverRevealCache = new WeakMap<Element, boolean>();
+
+function collectRules(group: CSSRuleList, out: CSSStyleRule[]): void {
+  for (let i = 0; i < group.length; i++) {
+    const rule = group[i];
+    if (rule instanceof CSSStyleRule) out.push(rule);
+    else if ('cssRules' in rule && (rule as CSSGroupingRule).cssRules) {
+      try { collectRules((rule as CSSGroupingRule).cssRules, out); } catch { /* CORS */ }
+    }
+  }
+}
+
+function selectorHasHover(selector: string): boolean {
+  // Paren-aware scan for the `:hover` pseudo-class at top level.
+  let depth = 0;
+  for (let i = 0; i < selector.length - 6; i++) {
+    const ch = selector[i];
+    if (ch === '(') { depth++; continue; }
+    if (ch === ')') { depth--; continue; }
+    if (depth === 0 && ch === ':' && selector.startsWith(':hover', i)) return true;
+  }
+  return false;
+}
+
+function ruleReveals(rule: CSSStyleRule): boolean {
+  for (const prop of ['display', 'visibility', 'opacity', 'transform', 'height', 'max-height', 'width', 'max-width', 'pointer-events', 'top', 'left', 'right', 'bottom', 'clip', 'clip-path', 'overflow']) {
+    const v = rule.style.getPropertyValue(prop);
+    if (v && v !== '' && HOVER_REVEAL_PROBE_PROPS.has(prop)) {
+      // A :hover rule that SETS a reveal property (vs inheriting the
+      // base-state) counts; opaque values like `transform` also count.
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * G3: scoped `:hover`-reveal CSS fact. True when a `:hover` rule on the
+ * element or an ancestor (<=5) changes a reveal property for a descendant or
+ * self. Pure DOM+CSS read; WeakMap-cached per element. Recorded at the
+ * capture instant only when G1 reaches the fallback path (rare) — the SW
+ * discovery gate ORs it with the shape test.
+ */
+export function computeHoverReveal(el: Element): boolean {
+  const cached = hoverRevealCache.get(el);
+  if (cached !== undefined) return cached;
+  let result = false;
+  try {
+    const ancestors: Element[] = [];
+    let cur: Element | null = el;
+    let depth = 0;
+    while (cur && depth < 5) {
+      ancestors.push(cur);
+      cur = cur.parentElement;
+      depth++;
+    }
+    const rules: CSSStyleRule[] = [];
+    for (const sheet of Array.from(document.styleSheets)) {
+      try { collectRules(sheet.cssRules, rules); } catch { /* CORS sheet */ }
+    }
+    for (const rule of rules) {
+      if (!selectorHasHover(rule.selectorText)) continue;
+      if (!ruleReveals(rule)) continue;
+      // Does the :hover subject (selector prefix before :hover) match the
+      // element or one of its probed ancestors? A bare `:hover` matches
+      // anything. The reveal TARGET often does not exist in the DOM yet
+      // (inserted on hover, or hidden) — matching the subject is the
+      // honest, DOM-state-independent evidence of a hover-reveal rule.
+      const selectors = rule.selectorText.split(',').map((s) => s.trim()).filter(Boolean);
+      for (const sel of selectors) {
+        const hoverIdx = sel.indexOf(':hover');
+        if (hoverIdx === -1) continue;
+        const base = sel.slice(0, hoverIdx).trim();
+        let baseMatches: boolean;
+        try {
+          baseMatches = base === '' || el.matches(base) || ancestors.some((a) => {
+            try { return a.matches(base); } catch { return false; }
+          });
+        } catch { continue; }
+        if (baseMatches) { result = true; break; }
+      }
+      if (result) break;
+    }
+  } catch { result = false; }
+  hoverRevealCache.set(el, result);
+  return result;
 }
 
 // ── CSS Selector & XPath Generation ────────────────────────────────────

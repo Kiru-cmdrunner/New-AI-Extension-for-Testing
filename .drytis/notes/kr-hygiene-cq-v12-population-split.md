@@ -93,3 +93,38 @@ Consequences, all verified read-only 2026-08-29:
 No migration, no version bump, no eviction, no anchoring change, no IR change
 (`NOISE_TYPES` still drops all `Unclassified` from IR under D2). This note changes no
 code; it exists so the two populations are diagnosable from the store alone.
+
+## 7. Addendum 2026-08-29 — hover-capture generic fix (third population split)
+
+The hover-capture generic fix (`.drytis/specs/hover-capture-generic-fix-v1.md`) changes
+hover capture honesty, which changes `normalizedTarget` values for NEW hover
+signatures:
+
+1. **Container-text hover signatures are dormant from the fix date.** Signatures whose
+   `normalizedTarget` is a container's whole-subtree text (e.g. "12345678",
+   multi-item joins like "onewayround trip") will not recur — `computeAccessibleName`
+   no longer accepts subtree text for multi-text containers, and hover naming gains
+   placeholder/icon tiers + a structural-noun fallback. Treat pre-fix
+   `Hover`-actionType signatures named by obvious subtree text exactly like
+   population A: ignore for behavior-change analysis, do not "clean" them.
+2. **Class-only discovery deaths are silent negatives, not divergence.** Hovers on
+   class-only custom widgets (no shape facts, no `:hover` CSS) no longer START
+   lifecycles, so they can no longer anchor/mint at all. Missing hover signatures on
+   such widgets after the fix date are the R-1 honesty trade-off, not app regression.
+3. **`stamped-fetch`-admitted hover signatures are dormant.** Hovers previously
+   admitted solely by telemetry fetches (analytics pages) minted signatures whose
+   consequence profiles lean on `stamped-fetch` edges. The class no longer admits, so
+   those profiles age (stale → diverged on fetch-edges) exactly like population A.
+   This is the documented tuning-lever change, not behavior change.
+4. **Read rule:** a `Hover` signature's `firstSeenAtMs` < fix date and
+   `normalizedTarget` matching subtree-text/garbage patterns, OR a profile whose edges
+   are dominated by `stamped-fetch` → dormant-by-fix. `firstSeenAtMs` ≥ fix date →
+   the new honest population (shape-declared affordances, honest names). Same
+   diagnostic shape as populations A/B: the split is readable from the store alone.
+5. **Cursor-inheritance addendum (same day, §9 amendment log of the spec):**
+   with `pointerCursor` now an OWN-BOUNDARY fact, glyph children inside
+   pointer-cursor ancestors no longer look interactive-shaped. Net KR effect:
+   hover signatures anchored on raw glyphs (normalizedTarget derived from
+   icon text like "▾") stop recurring; anchors lift to the enclosing control,
+   whose honest name ("Products", not "▾") feeds the signature. Pre-fix
+   glyph-anchored Hover signatures → dormant-by-fix, same read rule as (4).

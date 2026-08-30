@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>M9 Form-Submit Recovery — Validation</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+    .btn { padding: 14px 28px; font-size: 16px; background: #ff9900; color: #0f1111; border: 1px solid #b12704; border-radius: 8px; cursor: pointer; }
+    .btn:hover { background: #ffa733; }
+    pre { background: #f6f8fa; padding: 12px; border-radius: 6px; overflow-x: auto; }
+    .ok { color: #067d62; } .bad { color: #b12704; }
+  </style>
+</head>
+<body>
+  <h1>M9 Form-Submit Recovery — Validation Page</h1>
+  <p>Amazon-shape fast form-submit: click → main_frame POST → immediate navigation (unload).</p>
+  <p>Steps: Start recording → click <strong>Add to cart</strong> (form POST navigates to cart.html, &lt;500 ms) →
+     Stop → inspect side panel: the click interaction must show a <strong>Network</strong> section with the POST
+     (method POST, ASIN body); the synthetic navigation must show <em>no</em> network rows.</p>
+
+  <form id="atc-form" action="m9-cart-landed.html" method="GET">
+    <!-- GET navigation keeps the test hermetic (no server). The production
+         path under test (stamping → durable ledger → identity join) is
+         method-agnostic; unit/integration suites cover POST shapes. -->
+    <input type="hidden" name="ASIN" value="B08KGRVW2S">
+    <input type="hidden" name="quantity" value="1">
+    <input type="hidden" name="submit.addToCart" value="1">
+    <button id="add-to-cart-button" type="submit" class="btn">Add to cart</button>
+  </form>
+
+  <h2>Expected panel outcome</h2>
+  <ul>
+    <li>Click interaction (#add-to-cart-button): Network section present, contains the navigation entry with query <code>ASIN=B08KGRVW2S</code>; end-reason <code>page-reload</code> (content-script) or <code>sw-recovered-form-submit</code> (SW-recovered).</li>
+    <li>Navigation interaction (m9-cart-landed.html): full-reload navigation; <strong>no</strong> duplicate network row; <code>causedByInteractionId</code> → click's interactionId.</li>
+  </ul>
+</body>
+</html>

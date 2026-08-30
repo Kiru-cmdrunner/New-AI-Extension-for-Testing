@@ -12,7 +12,7 @@
  */
 
 import type { DomContext } from '../shared/component-types';
-import { extractIdentity } from '../tap/identity-extractor';
+import { extractIdentity, ownBoundaryPointerCursor } from '../tap/identity-extractor';
 import { elementKey } from './patterns';
 
 /** Maximum ancestor chain depth to capture. */
@@ -41,7 +41,14 @@ export function extractDomContext(el: Element): DomContext {
     // PERSISTED for classification instead of discarded. Boolean by
     // construction ('' and undefined both fail === 'pointer'). Classification
     // input only — never identity/locators.
-    pointerCursor: window.getComputedStyle(el).cursor === 'pointer',
+    // Hover-capture generic fix v1 (cursor-inheritance amendment): cursor is
+    // an INHERITED property — children of a pointer-cursor link inherit
+    // pointer and would look interactive-shaped. The fact is meaningful only
+    // when the cursor CHANGES at this element boundary. In sync with
+    // domShapeOf/ownBoundaryPointerCursor in tap/identity-extractor.ts (T3
+    // sync point). CQ v1.2 never reads this field (frozen: Step 2 deleted
+    // gate authority); only the hover discovery gate consumes it.
+    pointerCursor: ownBoundaryPointerCursor(el) ?? undefined,
     clickHandler: el.hasAttribute('onclick'),
     // 7.4-B2 S1: combobox autocomplete signals — declared in DomContext but
     // never populated by the live capture path (the "declared-but-unfilled"

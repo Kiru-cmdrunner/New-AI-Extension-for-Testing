@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interaction Coverage Test Suite</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5;padding:20px}
+h1{margin-bottom:8px;color:#333}
+h2{margin:30px 0 15px;color:#444;border-bottom:2px solid #ddd;padding-bottom:5px}
+.section{background:#fff;border-radius:8px;padding:20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:12px}
+label{font-weight:500;min-width:160px}
+input[type=text],input[type=password],input[type=email],input[type=number],input[type=search],input[type=date],input[type=time],input[type=datetime-local],textarea,select{padding:8px 12px;border:1px solid #ccc;border-radius:4px;font-size:14px;outline:none}
+input:focus,textarea:focus,select:focus{border-color:#1976d2;box-shadow:0 0 0 2px rgba(25,118,210,.2)}
+button{padding:8px 16px;border:none;border-radius:4px;background:#1976d2;color:#fff;cursor:pointer;font-size:14px}
+button:hover{background:#1565c0}
+a{color:#1976d2;text-decoration:none}
+a:hover{text-decoration:underline}
+.tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:12px;background:#e0e0e0;color:#555}
+.divider{height:1px;background:#eee;margin:15px 0}
+table{border-collapse:collapse;width:100%;margin-top:10px}
+th,td{border:1px solid #ddd;padding:8px 12px;text-align:left}
+th{background:#f5f5f5;font-weight:600}
+th.sortable{cursor:pointer}
+.accordion-item{border:1px solid #ddd;margin-bottom:4px;border-radius:4px;overflow:hidden}
+.accordion-header{padding:12px 16px;background:#f5f5f5;cursor:pointer;font-weight:500}
+.accordion-content{padding:12px 16px;display:none}
+.accordion-item.open .accordion-content{display:block}
+.custom-dropdown{position:relative;display:inline-block}
+.dropdown-trigger{padding:8px 12px;border:1px solid #ccc;border-radius:4px;cursor:pointer;background:#fff}
+.dropdown-menu{position:absolute;top:100%;left:0;min-width:200px;background:#fff;border:1px solid #ddd;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:100;display:none}
+.dropdown-menu.open{display:block}
+.dropdown-option{padding:8px 12px;cursor:pointer}
+.dropdown-option:hover{background:#f5f5f5}
+.dropdown-option.selected{background:#e3f2fd;color:#1976d2}
+.toggle-switch{position:relative;display:inline-block;width:44px;height:24px}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#ccc;transition:.3s;border-radius:24px}
+.toggle-slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;transition:.3s;border-radius:50%}
+input:checked+.toggle-slider{background:#4caf50}
+input:checked+.toggle-slider:before{transform:translateX(20px)}
+.tab-list{display:flex;border-bottom:2px solid #ddd}
+.tab{padding:10px 20px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+.tab.active{border-bottom-color:#1976d2;color:#1976d2;font-weight:500}
+.tab-panel{padding:16px 0;display:none}
+.tab-panel.active{display:block}
+.tree-item{margin-left:20px}
+.tree-node{display:flex;align-items:center;gap:4px;padding:4px 0;cursor:pointer}
+.tree-expand{width:16px;text-align:center;user-select:none}
+.tree-label{padding:2px 8px;border-radius:3px}
+.tree-label.selected{background:#e3f2fd}
+.calendar{display:none;position:absolute;z-index:200;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:16px}
+.calendar.open{display:block}
+.calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.calendar-day{width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:4px;font-size:13px}
+.calendar-day:hover{background:#e3f2fd}
+.calendar-day.selected{background:#1976d2;color:#fff;font-weight:600}
+.calendar-day.other-month{color:#ccc}
+.dnd-container{display:flex;gap:20px;min-height:100px}
+.dnd-column{flex:1;background:#f5f5f5;border:2px dashed #ccc;border-radius:8px;padding:10px;min-height:120px}
+.dnd-item{background:#fff;border:1px solid #ddd;border-radius:4px;padding:10px;margin-bottom:8px;cursor:grab}
+.autocomplete-container{position:relative}
+.autocomplete-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #ddd;box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:100;display:none}
+.autocomplete-list.open{display:block}
+.autocomplete-item{padding:8px 12px;cursor:pointer}
+.autocomplete-item:hover,.autocomplete-item.active{background:#f5f5f5}
+.segmented{display:inline-flex;border:1px solid #ccc;border-radius:4px;overflow:hidden}
+.segmented button{border-radius:0;background:#fff;color:#333}
+.segmented button.active{background:#1976d2;color:#fff}
+.rte-toolbar{display:flex;gap:4px;padding:8px;background:#f5f5f5;border:1px solid #ddd;border-bottom:none;border-radius:4px 4px 0 0}
+.rte-content{min-height:100px;padding:12px;border:1px solid #ddd;border-radius:0 0 4px 4px;outline:none}
+.virtualized-container{height:200px;overflow-y:auto;border:1px solid #ddd;border-radius:4px}
+.virtualized-item{padding:8px 12px;border-bottom:1px solid #eee;height:40px}
+</style>
+</head>
+<body>
+
+<h1>Interaction Coverage Test Suite</h1>
+
+<!-- 1: HTML5 Standard Controls -->
+<h2>1. HTML5 Standard Controls</h2>
+<div class="section">
+  <div class="row">
+    <button id="btn-primary" data-testid="btn-primary">Primary Button</button>
+    <button id="btn-secondary" style="background:#757575" data-testid="btn-secondary">Secondary Button</button>
+    <button id="btn-disabled" disabled data-testid="btn-disabled">Disabled Button</button>
+  </div>
+  <div class="row">
+    <a href="#hyperlink-test" id="link-internal" data-testid="link-internal">Internal Hyperlink</a>
+    <a href="https://example.com" target="_blank" id="link-external" data-testid="link-external">External Hyperlink</a>
+  </div>
+  <div class="row">
+    <label for="input-text">Text:</label>
+    <input type="text" id="input-text" placeholder="Enter text..." data-testid="input-text">
+    <label for="input-password">Password:</label>
+    <input type="password" id="input-password" placeholder="Password" data-testid="input-password">
+    <label for="input-email">Email:</label>
+    <input type="email" id="input-email" placeholder="email@example.com" data-testid="input-email">
+  </div>
+  <div class="row">
+    <label for="input-number">Number:</label>
+    <input type="number" id="input-number" data-testid="input-number">
+    <label for="input-search">Search:</label>
+    <input type="search" id="input-search" placeholder="Search..." data-testid="input-search">
+    <label for="textarea">Textarea:</label>
+    <textarea id="textarea" rows="2" placeholder="Multi-line..." data-testid="textarea"></textarea>
+  </div>
+</div>
+
+<!-- 2: Form Controls -->
+<h2>2. Form Controls</h2>
+<div class="section">
+  <div class="row">
+    <label><input type="checkbox" id="cb-1" data-testid="cb-1"> Checkbox 1</label>
+    <label><input type="checkbox" id="cb-2" data-testid="cb-2"> Checkbox 2</label>
+    <label><input type="checkbox" id="cb-3" data-testid="cb-3"> Checkbox 3</label>
+  </div>
+  <div class="row">
+    <label><input type="radio" name="rg1" id="rb-1" value="opt1" data-testid="rb-1"> Option 1</label>
+    <label><input type="radio" name="rg1" id="rb-2" value="opt2" data-testid="rb-2"> Option 2</label>
+    <label><input type="radio" name="rg1" id="rb-3" value="opt3" data-testid="rb-3"> Option 3</label>
+  </div>
+  <div class="row">
+    <label for="select-native">Native Select:</label>
+    <select id="select-native" data-testid="select-native">
+      <option value="">Select...</option>
+      <option value="apple">Apple</option>
+      <option value="banana">Banana</option>
+      <option value="cherry">Cherry</option>
+    </select>
+    <label for="select-multi">Multi-select:</label>
+    <select id="select-multi" multiple size="4" data-testid="select-multi">
+      <option value="red">Red</option>
+      <option value="green">Green</option>
+      <option value="blue">Blue</option>
+      <option value="yellow">Yellow</option>
+    </select>
+  </div>
+  <div class="row">
+    <label for="input-file">File Upload:</label>
+    <input type="file" id="input-file" data-testid="input-file">
+    <label for="input-range">Range:</label>
+    <input type="range" id="input-range" min="0" max="100" value="50" data-testid="input-range">
+    <span id="range-value">50</span>
+    <label for="input-color">Color:</label>
+    <input type="color" id="input-color" value="#ff0000" data-testid="input-color">
+  </div>
+  <div class="row">
+    <form id="form-submit" data-testid="form-submit">
+      <input type="text" id="form-input" placeholder="Form field" data-testid="form-input">
+      <button type="submit">Submit Form</button>
+    </form>
+  </div>
+</div>
+
+<!-- 3: Date & Time -->
+<h2>3. Date &amp; Time Controls</h2>
+<div class="section">
+  <div class="row">
+    <label for="date-native">Date:</label>
+    <input type="date" id="date-native" data-testid="date-native">
+    <label for="time-native">Time:</label>
+    <input type="time" id="time-native" data-testid="time-native">
+    <label for="datetime-native">DateTime:</label>
+    <input type="datetime-local" id="datetime-native" data-testid="datetime-native">
+    <label for="month-native">Month:</label>
+    <input type="month" id="month-native" data-testid="month-native">
+  </div>
+  <div class="divider"></div>
+  <div class="row">
+    <label>Custom Calendar:</label>
+    <div class="custom-dropdown">
+      <div class="dropdown-trigger" id="calendar-trigger" data-testid="calendar-trigger"
+           role="combobox" aria-expanded="false" aria-haspopup="dialog" tabindex="0">
+        <span id="calendar-display">Select a date</span><span>&#9660;</span>
+      </div>
+      <div class="calendar" id="calendar" role="dialog" aria-label="Date picker">
+        <div class="calendar-header">
+          <button id="cal-prev" aria-label="Previous month">&#8249;</button>
+          <span id="cal-month-year">January 2025</span>
+          <button id="cal-next" aria-label="Next month">&#8250;</button>
+        </div>
+        <div class="calendar-grid" id="cal-grid"></div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <label>Date Range:</label>
+    <input type="date" id="date-range-start" data-testid="date-range-start">
+    <span>to</span>
+    <input type="date" id="date-range-end" data-testid="date-range-end">
+  </div>
+</div>
+
+<!-- 4: Custom Widgets (ARIA) -->
+<h2>4. Custom Widgets (ARIA Compliant)</h2>
+<div class="section">
+  <div class="row">
+    <label>ARIA Combobox:</label>
+    <div class="custom-dropdown">
+      <div class="dropdown-trigger" id="aria-dd-trigger" role="combobox" aria-expanded="false" aria-haspopup="listbox" tabindex="0">
+        <span id="aria-dd-label">Choose option...</span><span>&#9660;</span>
+      </div>
+      <div class="dropdown-menu" id="aria-dd-menu" role="listbox">
+        <div class="dropdown-option" role="option" aria-selected="false" tabindex="0" data-value="alpha">Alpha</div>
+        <div class="dropdown-option" role="option" aria-selected="false" tabindex="0" data-value="beta">Beta</div>
+        <div class="dropdown-option" role="option" aria-selected="false" tabindex="0" data-value="gamma">Gamma</div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <label>CSS-Only Dropdown:</label>
+    <div class="custom-dropdown">
+      <div class="dropdown-trigger" id="css-dd-trigger" tabindex="0">
+        <span id="css-dd-value">Select...</span><span>&#9660;</span>
+      </div>
+      <div class="dropdown-menu" id="css-dd-menu">
+        <div class="dropdown-option" data-value="red" data-testid="css-dd-red">Red</div>
+        <div class="dropdown-option" data-value="green" data-testid="css-dd-green">Green</div>
+        <div class="dropdown-option" data-value="blue" data-testid="css-dd-blue">Blue</div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div id="aria-cb" role="checkbox" aria-checked="false" tabindex="0" data-testid="aria-cb"
+         style="cursor:pointer;padding:4px 12px;border:1px solid #ccc;border-radius:4px">&#9744; ARIA Checkbox</div>
+  </div>
+  <div class="row">
+    <label>ARIA Radio Group:</label>
+    <div role="radiogroup" style="display:flex;gap:12px">
+      <div role="radio" aria-checked="true" tabindex="0" data-testid="aria-rb-1" style="cursor:pointer;padding:4px 8px">&#9679; Option A</div>
+      <div role="radio" aria-checked="false" tabindex="-1" data-testid="aria-rb-2" style="cursor:pointer;padding:4px 8px">&#9675; Option B</div>
+      <div role="radio" aria-checked="false" tabindex="-1" data-testid="aria-rb-3" style="cursor:pointer;padding:4px 8px">&#9675; Option C</div>
+    </div>
+  </div>
+  <div class="row">
+    <label>Toggle Switch:</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggle-native" data-testid="toggle-native">
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+  <div class="row">
+    <label>Segmented Control:</label>
+    <div class="segmented" id="segmented-control">
+      <button aria-pressed="true" data-testid="seg-1">List</button>
+      <button aria-pressed="false" data-testid="seg-2">Grid</button>
+      <button aria-pressed="false" data-testid="seg-3">Table</button>
+    </div>
+  </div>
+  <div class="row">
+    <label>ARIA Slider:</label>
+    <div id="aria-slider" role="slider" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" tabindex="0" data-testid="aria-slider"
+         style="width:200px;height:8px;background:#e0e0e0;border-radius:4px;cursor:pointer">
+      <div style="width:50%;height:100%;background:#1976d2;border-radius:4px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 5: Tabs & Accordions -->
+<h2>5. Tabs &amp; Accordions</h2>
+<div class="section">
+  <div class="tab-list" role="tablist">
+    <div class="tab active" role="tab" id="tab1" aria-selected="true" tabindex="0" data-testid="tab1">Tab 1</div>
+    <div class="tab" role="tab" id="tab2" aria-selected="false" tabindex="-1" data-testid="tab2">Tab 2</div>
+    <div class="tab" role="tab" id="tab3" aria-selected="false" tabindex="-1" data-testid="tab3">Tab 3</div>
+  </div>
+  <div class="tab-panel active" role="tabpanel" id="panel1">Content for Tab 1</div>
+  <div class="tab-panel" role="tabpanel" id="panel2">Content for Tab 2</div>
+  <div class="tab-panel" role="tabpanel" id="panel3">Content for Tab 3</div>
+  <div class="divider"></div>
+  <details data-testid="details-1">
+    <summary data-testid="summary-1">Native Details Section</summary>
+    <p>Content for native details section.</p>
+  </details>
+  <div style="margin-top:10px">
+    <div class="accordion-item" data-accordion>
+      <div class="accordion-header" data-testid="acc-h1" aria-expanded="false" role="button" tabindex="0">
+        Custom Accordion 1 <span class="acc-arrow">&#9660;</span>
+      </div>
+      <div class="accordion-content"><p>Content for accordion item 1.</p></div>
+    </div>
+    <div class="accordion-item" data-accordion>
+      <div class="accordion-header" data-testid="acc-h2" aria-expanded="false" role="button" tabindex="0">
+        Custom Accordion 2 <span class="acc-arrow">&#9660;</span>
+      </div>
+      <div class="accordion-content"><p>Content for accordion item 2.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- 6: Hover Menu -->
+<h2>6. Hover Menu</h2>
+<div class="section">
+  <div class="custom-dropdown" style="position:relative">
+    <div class="dropdown-trigger" id="hover-menu-trigger" data-testid="hover-menu-trigger" tabindex="0">
+      Hover Menu <span>&#9660;</span>
+    </div>
+    <div class="dropdown-menu" id="hover-menu" style="position:absolute;top:100%;left:0;min-width:200px;z-index:100">
+      <div class="dropdown-option" data-testid="hover-item-1">Menu Item 1</div>
+      <div class="dropdown-option" data-testid="hover-item-2">Menu Item 2</div>
+      <div class="dropdown-option" data-testid="hover-item-3">Menu Item 3</div>
+    </div>
+  </div>
+</div>
+
+<!-- 7: Autocomplete -->
+<h2>7. Autocomplete</h2>
+<div class="section">
+  <div class="autocomplete-container">
+    <input type="text" id="autocomplete-input" placeholder="Type a country..." data-testid="autocomplete-input"
+           role="combobox" aria-expanded="false" aria-controls="autocomplete-list">
+    <div class="autocomplete-list" id="autocomplete-list" role="listbox"></div>
+  </div>
+</div>
+
+<!-- 8: Tree View -->
+<h2>8. Tree View</h2>
+<div class="section">
+  <div role="tree" data-testid="tree-view">
+    <div class="tree-item">
+      <div class="tree-node" role="treeitem" aria-expanded="true" aria-selected="false" tabindex="0" data-testid="tree-1">
+        <span class="tree-expand">&#9660;</span><span class="tree-label">Documents</span>
+      </div>
+      <div class="tree-item">
+        <div class="tree-node" role="treeitem" aria-expanded="false" aria-selected="false" tabindex="-1" data-testid="tree-1-1">
+          <span class="tree-expand">&#9654;</span><span class="tree-label">Reports</span>
+        </div>
+      </div>
+      <div class="tree-item">
+        <div class="tree-node" role="treeitem" aria-selected="false" tabindex="-1" data-testid="tree-1-2">
+          <span class="tree-expand">&nbsp;</span><span class="tree-label">Resume.pdf</span>
+        </div>
+      </div>
+    </div>
+    <div class="tree-item">
+      <div class="tree-node" role="treeitem" aria-expanded="false" aria-selected="false" tabindex="-1" data-testid="tree-2">
+        <span class="tree-expand">&#9654;</span><span class="tree-label">Images</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 9: Interactive Table -->
+<h2>9. Interactive Table</h2>
+<div class="section">
+  <table data-testid="interactive-table">
+    <thead><tr>
+      <th class="sortable" data-column="name" data-testid="th-name">Name &#9660;</th>
+      <th class="sortable" data-column="age" data-testid="th-age">Age</th>
+      <th><input type="checkbox" id="select-all" data-testid="select-all"></th>
+    </tr></thead>
+    <tbody id="table-body">
+      <tr data-testid="row-1"><td>Alice</td><td>30</td><td><input type="checkbox" checked data-testid="row-1-cb"></td></tr>
+      <tr data-testid="row-2"><td>Bob</td><td>25</td><td><input type="checkbox" data-testid="row-2-cb"></td></tr>
+      <tr data-testid="row-3"><td>Charlie</td><td>35</td><td><input type="checkbox" data-testid="row-3-cb"></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 10: Dialogs -->
+<h2>10. Dialogs &amp; Modals</h2>
+<div class="section">
+  <button id="open-modal-btn" data-testid="open-modal-btn">Open Modal</button>
+  <button id="open-dialog-btn" data-testid="open-dialog-btn">Open Native Dialog</button>
+</div>
+
+<!-- 11: Drag & Drop -->
+<h2>11. Drag &amp; Drop</h2>
+<div class="section">
+  <div class="dnd-container" data-testid="dnd-container">
+    <div class="dnd-column" id="dnd-col-1">
+      <div class="dnd-item" draggable="true" data-testid="dnd-item-1">Item A</div>
+      <div class="dnd-item" draggable="true" data-testid="dnd-item-2">Item B</div>
+    </div>
+    <div class="dnd-column" id="dnd-col-2">
+      <div class="dnd-item" draggable="true" data-testid="dnd-item-3">Item C</div>
+    </div>
+  </div>
+</div>
+
+<!-- 12: Rich Text Editor -->
+<h2>12. Rich Text Editor</h2>
+<div class="section">
+  <div class="rte-toolbar">
+    <button id="rte-bold" data-testid="rte-bold"><b>B</b></button>
+    <button id="rte-italic" data-testid="rte-italic"><i>I</i></button>
+    <button id="rte-underline" data-testid="rte-underline"><u>U</u></button>
+  </div>
+  <div class="rte-content" id="rte-editor" contenteditable="true" data-testid="rte-editor" role="textbox" aria-multiline="true" aria-label="Rich text editor"><p>Start typing...</p></div>
+</div>
+
+<!-- 13: Shadow DOM -->
+<h2>13. Shadow DOM Component</h2>
+<div class="section"><div id="shadow-host"></div></div>
+
+<!-- 14: Virtualized List -->
+<h2>14. Virtualized List</h2>
+<div class="section"><div class="virtualized-container" id="virtualized-list" data-testid="virtualized-list"></div></div>
+
+<!-- 15: Canvas -->
+<h2>15. Canvas Control</h2>
+<div class="section">
+  <canvas id="canvas-test" width="300" height="100" data-testid="canvas-test" style="border:1px solid #ddd;border-radius:4px;cursor:crosshair"></canvas>
+  <p style="margin-top:5px;color:#999">Click to draw dots</p>
+</div>
+
+<!-- 16: Iframe -->
+<h2>16. Same-origin Iframe</h2>
+<div class="section">
+  <iframe src="about:blank" id="test-iframe" data-testid="test-iframe" style="width:100%;height:120px;border:1px solid #ddd;border-radius:4px" title="Test iframe"></iframe>
+</div>
+
+<!-- Modal -->
+<div id="modal-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;padding:24px;border-radius:8px;max-width:400px;width:90%" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <h3 id="modal-title">Modal Dialog</h3><p>This is a modal dialog.</p>
+    <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:8px">
+      <button id="modal-cancel" data-testid="modal-cancel" style="background:#757575">Cancel</button>
+      <button id="modal-ok" data-testid="modal-ok">OK</button>
+    </div>
+  </div>
+</div>
+
+<dialog id="native-dialog" data-testid="native-dialog">
+  <h3>Native Dialog</h3><p>Native dialog element.</p>
+  <button id="dialog-close" data-testid="dialog-close">Close</button>
+</dialog>
+
+<script>
+(function(){
+  // Calendar
+  var trigger=document.getElementById('calendar-trigger');
+  var cal=document.getElementById('calendar');
+  var grid=document.getElementById('cal-grid');
+  var my=document.getElementById('cal-month-year');
+  var disp=document.getElementById('calendar-display');
+  var cur=new Date(2025,0,1);
+  var mn=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  function render(){
+    var y=cur.getFullYear(),m=cur.getMonth();
+    my.textContent=mn[m]+' '+y;grid.innerHTML='';
+    var fd=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate();
+    for(var i=0;i<fd;i++){var c=document.createElement('div');c.className='calendar-day other-month';c.textContent=new Date(y,m,0).getDate()-fd+i+1;grid.appendChild(c);}
+    for(var d=1;d<=dim;d++){(function(day){
+      var c=document.createElement('div');c.className='calendar-day';c.textContent=day;
+      c.setAttribute('role','gridcell');c.setAttribute('aria-label',mn[m]+' '+day+', '+y);
+      c.dataset.date=y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+      c.onclick=function(){grid.querySelectorAll('.selected').forEach(function(x){x.classList.remove('selected')});c.classList.add('selected');disp.textContent=mn[m]+' '+day+', '+y;cal.classList.remove('open');trigger.setAttribute('aria-expanded','false');};
+      grid.appendChild(c);
+    })(d);}
+  }
+  trigger.onclick=function(){var o=cal.classList.toggle('open');trigger.setAttribute('aria-expanded',o?'true':'false');if(o)render();};
+  document.getElementById('cal-prev').onclick=function(e){e.stopPropagation();cur.setMonth(cur.getMonth()-1);render();};
+  document.getElementById('cal-next').onclick=function(e){e.stopPropagation();cur.setMonth(cur.getMonth()+1);render();};
+  render();
+})();
+
+(function(){
+  // ARIA Dropdown
+  var t=document.getElementById('aria-dd-trigger'),m=document.getElementById('aria-dd-menu'),l=document.getElementById('aria-dd-label');
+  t.onclick=function(){var o=m.classList.toggle('open');t.setAttribute('aria-expanded',o?'true':'false');};
+  m.querySelectorAll('[role="option"]').forEach(function(o){
+    o.onclick=function(){m.querySelectorAll('[role="option"]').forEach(function(x){x.setAttribute('aria-selected','false');x.classList.remove('selected');});o.setAttribute('aria-selected','true');o.classList.add('selected');l.textContent=o.textContent;m.classList.remove('open');t.setAttribute('aria-expanded','false');};
+  });
+})();
+
+(function(){
+  // CSS-Only Dropdown
+  var t=document.getElementById('css-dd-trigger'),m=document.getElementById('css-dd-menu'),v=document.getElementById('css-dd-value');
+  t.onclick=function(){m.classList.toggle('open');};
+  m.querySelectorAll('.dropdown-option').forEach(function(o){
+    o.onclick=function(){m.querySelectorAll('.dropdown-option').forEach(function(x){x.classList.remove('selected');});o.classList.add('selected');v.textContent=o.textContent;m.classList.remove('open');};
+  });
+})();
+
+(function(){
+  // ARIA Checkbox
+  var cb=document.getElementById('aria-cb');
+  cb.onclick=function(){var c=cb.getAttribute('aria-checked')==='true';cb.setAttribute('aria-checked',!c);cb.textContent=(!c?'\u2611':'\u2610')+' ARIA Checkbox';};
+})();
+
+(function(){
+  // ARIA Radio
+  document.querySelectorAll('[role="radio"]').forEach(function(r){
+    r.onclick=function(e){e.stopPropagation();
+      r.parentNode.querySelectorAll('[role="radio"]').forEach(function(o){o.setAttribute('aria-checked','false');o.innerHTML=o.innerHTML.replace('\u25CF','\u25CB');o.setAttribute('tabindex','-1');});
+      r.setAttribute('aria-checked','true');r.innerHTML=r.innerHTML.replace('\u25CB','\u25CF');r.setAttribute('tabindex','0');
+    };
+  });
+})();
+
+(function(){
+  // Segmented
+  var c=document.getElementById('segmented-control');
+  c.querySelectorAll('button').forEach(function(b){
+    b.onclick=function(){c.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed','false');x.classList.remove('active');});b.setAttribute('aria-pressed','true');b.classList.add('active');};
+  });
+})();
+
+(function(){
+  // Tabs
+  var tabs=document.querySelectorAll('.tab[role="tab"]');
+  tabs.forEach(function(t){
+    t.onclick=function(){tabs.forEach(function(x){x.classList.remove('active');x.setAttribute('aria-selected','false');x.setAttribute('tabindex','-1');});t.classList.add('active');t.setAttribute('aria-selected','true');t.setAttribute('tabindex','0');
+    document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});var pn=document.getElementById(t.getAttribute('aria-controls'));if(pn)pn.classList.add('active');};
+  });
+})();
+
+(function(){
+  // Accordion
+  document.querySelectorAll('[data-accordion]').forEach(function(item){
+    var h=item.querySelector('.accordion-header');
+    h.onclick=function(){var o=item.classList.toggle('open');h.setAttribute('aria-expanded',o?'true':'false');var a=h.querySelector('.acc-arrow');if(a)a.textContent=o?'\u25B2':'\u25BC';};
+  });
+})();
+
+(function(){
+  // Hover menu
+  var t=document.getElementById('hover-menu-trigger'),m=document.getElementById('hover-menu');
+  t.addEventListener('mouseenter',function(){m.style.display='block';});
+  m.addEventListener('mouseleave',function(){m.style.display='none';});
+  t.addEventListener('mouseleave',function(){setTimeout(function(){if(!m.matches(':hover'))m.style.display='none';},300);});
+})();
+
+(function(){
+  // Autocomplete
+  var inp=document.getElementById('autocomplete-input'),list=document.getElementById('autocomplete-list');
+  var countries=['United States','United Kingdom','Canada','Australia','Germany','France','Japan','India','Brazil','Mexico'];
+  inp.addEventListener('input',function(){
+    var v=inp.value.toLowerCase(),f=countries.filter(function(c){return c.toLowerCase().indexOf(v)>=0;});
+    list.innerHTML='';f.forEach(function(c){
+      var item=document.createElement('div');item.className='autocomplete-item';item.setAttribute('role','option');item.textContent=c;
+      item.onclick=function(){inp.value=c;list.classList.remove('open');inp.setAttribute('aria-expanded','false');};
+      list.appendChild(item);
+    });
+    if(f.length>0&&v){list.classList.add('open');inp.setAttribute('aria-expanded','true');}else{list.classList.remove('open');inp.setAttribute('aria-expanded','false');}
+  });
+})();
+
+(function(){
+  // Tree
+  document.querySelectorAll('[role="treeitem"]').forEach(function(n){
+    n.onclick=function(e){
+      e.stopPropagation();var exp=n.querySelector('.tree-expand');
+      if(exp&&n.getAttribute('aria-expanded')){var isOpen=n.getAttribute('aria-expanded')==='true';n.setAttribute('aria-expanded',!isOpen);exp.textContent=!isOpen?'\u25BC':'\u25B6';}
+      document.querySelectorAll('.tree-label.selected').forEach(function(l){l.classList.remove('selected');});
+      var lbl=n.querySelector('.tree-label');if(lbl)lbl.classList.add('selected');
+    };
+  });
+})();
+
+(function(){
+  // Table sort
+  document.querySelectorAll('th.sortable').forEach(function(th){
+    th.onclick=function(){document.querySelectorAll('th.sortable').forEach(function(h){h.innerHTML=h.innerHTML.replace(/ [\u2191\u2193]/,'');});var isDesc=th.textContent.indexOf('\u2193')>=0;th.textContent=th.dataset.column.charAt(0).toUpperCase()+th.dataset.column.slice(1)+(isDesc?' \u2191':' \u2193');};
+  });
+})();
+
+(function(){
+  // Modal
+  var b=document.getElementById('open-modal-btn'),o=document.getElementById('modal-overlay');
+  b.onclick=function(){o.style.display='flex';};
+  document.getElementById('modal-cancel').onclick=function(){o.style.display='none';};
+  document.getElementById('modal-ok').onclick=function(){o.style.display='none';};
+})();
+
+(function(){
+  // Native Dialog
+  var b=document.getElementById('open-dialog-btn'),d=document.getElementById('native-dialog');
+  b.onclick=function(){d.showModal();};
+  document.getElementById('dialog-close').onclick=function(){d.close();};
+})();
+
+(function(){
+  // Drag & Drop
+  var dragged=null;
+  document.querySelectorAll('.dnd-item').forEach(function(item){
+    item.addEventListener('dragstart',function(e){dragged=item;item.classList.add('dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',item.textContent);});
+    item.addEventListener('dragend',function(){item.classList.remove('dragging');});
+  });
+  document.querySelectorAll('.dnd-column').forEach(function(col){
+    col.addEventListener('dragover',function(e){e.preventDefault();e.dataTransfer.dropEffect='move';});
+    col.addEventListener('drop',function(e){e.preventDefault();if(dragged){col.appendChild(dragged);dragged=null;}});
+  });
+})();
+
+(function(){
+  // Shadow DOM
+  var host=document.getElementById('shadow-host');
+  var shadow=host.attachShadow({mode:'open'});
+  shadow.innerHTML='<style>.sc{padding:16px;border:2px solid #9c27b0;border-radius:8px;background:#fce4fc}.sc button{padding:8px 16px;border:none;border-radius:4px;background:#9c27b0;color:#fff;cursor:pointer;margin:4px}.sc input{padding:8px;border:1px solid #9c27b0;border-radius:4px;margin:4px}</style><div class="sc"><h4>Shadow DOM Component</h4><input type="text" id="si" placeholder="Shadow input" data-testid="shadow-input"><br><button id="sb1" data-testid="shadow-btn-1">Shadow Button 1</button><button id="sb2" data-testid="shadow-btn-2">Shadow Button 2</button><br><label><input type="checkbox" id="scb" data-testid="shadow-cb"> Shadow Checkbox</label></div>';
+})();
+
+(function(){
+  // Virtualized List
+  var c=document.getElementById('virtualized-list');
+  var IH=40,VC=6;
+  function render(){var st=c.scrollTop,vs=Math.floor(st/IH),ve=Math.min(vs+VC,1000);c.innerHTML='';for(var i=vs;i<ve;i++){var el=document.createElement('div');el.className='virtualized-item';el.textContent='Item '+(i+1);el.dataset.id=i+1;c.appendChild(el);}}
+  c.addEventListener('scroll',render);render();
+})();
+
+(function(){
+  // Canvas
+  var cv=document.getElementById('canvas-test'),ctx=cv.getContext('2d');
+  ctx.fillStyle='#f5f5f5';ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.font='12px sans-serif';ctx.fillStyle='#999';ctx.fillText('Click to draw',5,cv.height/2);
+  cv.addEventListener('click',function(e){var r=cv.getBoundingClientRect();ctx.beginPath();ctx.arc(e.clientX-r.left,e.clientY-r.top,5,0,2*Math.PI);ctx.fillStyle='#1976d2';ctx.fill();});
+})();
+
+(function(){
+  // Range display
+  var r=document.getElementById('input-range'),d=document.getElementById('range-value');
+  r.addEventListener('input',function(){d.textContent=r.value;});
+})();
+
+(function(){
+  // Iframe
+  var iframe=document.getElementById('test-iframe');
+  iframe.addEventListener('load',function(){try{var doc=iframe.contentDocument;doc.body.innerHTML='<div style="padding:20px;font-family:sans-serif"><h4>Same-origin iframe</h4><button id="iframe-btn" data-testid="iframe-btn" style="padding:8px 16px;background:#4caf50;color:#fff;border:none;border-radius:4px;cursor:pointer">Iframe Button</button></div>';}catch(e){}});
+  iframe.src='about:blank';
+})();
+
+console.log('[Test Page] All components initialized');
+</script>
+</body>
+</html>

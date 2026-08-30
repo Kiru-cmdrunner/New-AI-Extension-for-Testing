@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"/><title>Formless debounce rider</title>
+<style>body{font:15px/1.5 system-ui;max-width:560px;margin:3rem auto;padding:0 1rem}.wrap{margin-top:1.5rem;display:flex;gap:.5rem}input{flex:1;padding:.5rem .75rem}</style>
+</head>
+<body>
+  <h1>Formless debounce rider</h1>
+  <p>No &lt;form&gt;. Enter does nothing itself, but a 500ms debounce timer fires a <em>settlement fetch</em> (no view/surface/DOM effect). The fetch IS stamped to the Enter — but with no corroboration class the commit must NOT be claimed (tier-C negative).</p>
+  <div class="wrap">
+    <input id="q" placeholder="Search products" aria-label="Search products" data-auto-id="search-input" />
+  </div>
+  <script>
+    const input = document.getElementById('q');
+    let timer = null;
+    // Debounce "search-as-you-type": after typing settles, fire an analytics /
+    // settlement fetch. The fetch lands in the Enter's evidence window and is
+    // stamped to the Enter (last trusted action) — the classic rider.
+    input.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        // Rider fetch: NO view change, NO notification surface, NO field removal.
+        fetch('/search-results.html?q=' + encodeURIComponent(input.value)).then(() => {});
+      }, 500);
+    });
+    // NO Enter keydown handler — Enter itself does nothing.
+  </script>
+</body>
+</html>

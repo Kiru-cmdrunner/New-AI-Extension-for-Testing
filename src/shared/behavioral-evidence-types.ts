@@ -48,6 +48,46 @@ export interface BehavioralEvidence {
 
   /** What happened across the application. */
   applicationEvidence: ApplicationEvidence;
+
+  /**
+   * HEC v1 (.drytis/specs/hover-capture-evidence-contract-v1.md §5, R-Q5):
+   * the capture-time HoverQualification — computed ONCE at hover-window
+   * close from the T1b baseline + recorded window facts, deep-frozen,
+   * carried on the envelope (the only content-script → interaction
+   * vehicle). Present ONLY on hover-enter windows; absent elsewhere.
+   * STOP/admission READS it; nothing rewrites it (D-HEC-6).
+   *
+   * INV-BEHAV-1 scope note: this field is a DERIVED VERDICT, not raw
+   * evidence — it is the frozen output of the pure qualification function
+   * over raw evidence, exactly like ClickQualification on DomContext.
+   */
+  hoverQualification?: HoverQualificationEnvelope;
+}
+
+/**
+ * HEC v1 §5: the frozen capture-time hover verdict + recorded reason.
+ * Structural shape mirrored from src/tap/hover-qualification.ts (the
+ * content-script authority); duplicated here so the shared types module
+ * stays dependency-free for the SW/presentation worlds.
+ */
+export interface HoverQualificationEnvelope {
+  verdict: 'evidenced' | 'gesture-only';
+  evidenceClass: 'reveal' | 'pointer-reach' | 'revert' | null;
+  evidenceReason: string;
+  anchorFacts: {
+    resolution: string;
+    anchorKey: string;
+    clickAnchorKey: string;
+    hoverReveal: boolean;
+    shaped: boolean;
+  };
+  factSummary: {
+    domChangesInOwnedSet: number;
+    domChangesTotal: number;
+    newSurfacesJoined: number;
+    pointerPathEnters: number;
+    networkRows: number;
+  };
 }
 
 // ── Evidence Window ─────────────────────────────────────────────────────

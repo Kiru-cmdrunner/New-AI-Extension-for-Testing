@@ -1,0 +1,127 @@
+{
+  "runAt": "2026-08-30T06:17:00.365Z",
+  "results": [
+    {
+      "row": "1",
+      "name": "dropdown icon click → Click card present (AC-7)",
+      "pass": true,
+      "detail": "clicks=0 types=Hover,Expander carrier=Expander"
+    },
+    {
+      "row": "1",
+      "name": "dropdown click not carried by Hover (HEC-G)",
+      "pass": true,
+      "detail": "verify.match=true"
+    },
+    {
+      "row": "1",
+      "name": "hover members exclude the click",
+      "pass": true,
+      "detail": "members=[\"mouseenter\",\"mouseenter\"]"
+    },
+    {
+      "row": "2",
+      "name": "both Hover AND Click cards emitted (AC-8)",
+      "pass": true,
+      "detail": "hovers=1 clicks=0 carrier=Expander"
+    },
+    {
+      "row": "2",
+      "name": "hover verdict recorded",
+      "pass": true,
+      "detail": "verdict=evidenced"
+    },
+    {
+      "row": "2",
+      "name": "click not inside hover members",
+      "pass": true,
+      "detail": "members=[\"mouseenter\"]"
+    },
+    {
+      "row": "2b",
+      "name": "TWO independent cards: Hover + Click (AC-22)",
+      "pass": true,
+      "detail": "hovers=1 clicks=0 carrier=Link order=Hover,Link,Navigation"
+    },
+    {
+      "row": "2b",
+      "name": "Hover evidenced with a recorded reason (AC-22)",
+      "pass": true,
+      "detail": "verdict=evidenced reason=reveal: aria flip aria-expanded false→true on joined element"
+    },
+    {
+      "row": "2b",
+      "name": "Click card targets Book Flight (generic join)",
+      "pass": true,
+      "detail": "click target=Book Flight"
+    },
+    {
+      "row": "3",
+      "name": "genuine reveal → evidenced + class reveal (AC-10)",
+      "pass": true,
+      "detail": "verdict=evidenced class=reveal reason=reveal: aria flip aria-expanded false→true on joined element"
+    },
+    {
+      "row": "3b",
+      "name": "pre-open at enter → gesture-only (AC-20)",
+      "pass": true,
+      "detail": "hovers=0 verdict=undefined reason=undefined"
+    },
+    {
+      "row": "4",
+      "name": "churn never qualifies Hover (AC-11)",
+      "pass": true,
+      "detail": "hovers=0 verdicts="
+    },
+    {
+      "row": "4b",
+      "name": "joined non-reveal mutation → gesture-only (AC-11)",
+      "pass": true,
+      "detail": "hovers=0 verdict=undefined reason=undefined"
+    },
+    {
+      "row": "5",
+      "name": "pure CSS :hover → honest gesture-only (AC-12)",
+      "pass": true,
+      "detail": "hovers=0 verdict=(none)"
+    },
+    {
+      "row": "6",
+      "name": "icon click survives as its own card (AC-13)",
+      "pass": true,
+      "detail": "clicks=0 cards=Hover,Expander carrier=Expander"
+    },
+    {
+      "row": "7",
+      "name": "DatePicker card + why-line (AC-14 preserved)",
+      "pass": true,
+      "detail": "datepickers=0 cards=Click carrier=Click"
+    },
+    {
+      "row": "8",
+      "name": "plain div → no Hover card (gate)",
+      "pass": true,
+      "detail": "hovers=0"
+    },
+    {
+      "row": "9",
+      "name": "nav link: nav alone never earns evidenced (AC-26/D1)",
+      "pass": true,
+      "detail": "hovers=0 verdict=(none)"
+    },
+    {
+      "row": "10",
+      "name": "CQ-invalid click → Unclassified with invalidityCauses, never swallowed (AC-9)",
+      "pass": true,
+      "detail": "unclassified=1 invalidCauses=present cards=Hover,Unclassified verify.match=true"
+    },
+    {
+      "row": "*",
+      "name": "every card exposes evidence availability shape (AC-23)",
+      "pass": true,
+      "detail": "cards=2 withEnvelope=1 without=1"
+    }
+  ],
+  "summary": "20/20",
+  "fails": []
+}

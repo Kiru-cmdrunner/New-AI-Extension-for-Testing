@@ -55,7 +55,9 @@ import { readPageWorldSignals } from './page-world-signals';
 import type { DialogSignal, WindowOpenSignal } from '../shared/behavioral-evidence-types';
 // B7-P1: shared structural Hover discovery gate (definitions/patterns.ts —
 // imports shared types only, safe in the content-script world).
-import { isInteractiveElement } from '../definitions/patterns';
+
+import { elementKey, isHoverDiscoveryShape } from '../definitions/patterns';
+import { computeHoverQualification, type HoverBaseline, type HoverAnchorFacts, type HoverQualification } from './hover-qualification';
 
 /**
  * B7-P1 (§5.1.1): is this mouseenter a gated Hover discovery enter?
@@ -68,8 +70,21 @@ export function isHoverDiscoveryEnter(observedEvent?: ObservedEvent | null): boo
   if (!observedEvent) return false;
   if (observedEvent.eventType !== 'mouseenter') return false;
   if (observedEvent.isTrusted !== true) return false;
-  const { tag, ariaRole, className } = observedEvent.target;
-  return isInteractiveElement(tag, ariaRole, className, observedEvent.domContext?.tabIndex ?? null);
+  // G3 (hover-capture-generic-fix-v1 §5): discovery is SHAPE OR REVEAL —
+  // never class vocabulary. The enter is gated on the SAME structural
+  // predicate the definitions use (isHoverDiscoveryShape over the
+  // recorded DOM-shape facts) OR the recorded scoped :hover-reveal CSS
+  // fact. Class names never start discovery (RC-8).
+  const domContext = observedEvent.domContext ?? {};
+  const shaped = isHoverDiscoveryShape({
+    tag: observedEvent.target.tag,
+    ariaRole: observedEvent.target.ariaRole,
+    tabIndex: domContext.tabIndex ?? null,
+    ariaHasPopup: domContext.ariaHasPopup ?? null,
+    clickHandler: domContext.clickHandler ?? null,
+    pointerCursor: domContext.pointerCursor ?? null,
+  });
+  return shaped || domContext.hoverReveal === true;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────
@@ -165,13 +180,120 @@ export function finalizeAtPagehide(
 const TYPING_EVENTS = new Set(['input']);
 
 /**
- * A-Slice fix 1: companion window (ms). Events firing within this interval
- * of an interaction's window open are companions of the SAME physical
- * action (native form 'submit' after the submit-button 'click', 'change'
- * during typing). Mirrors the 300ms companionSuppressUntil threshold used
- * for companion window suppression.
+ * Amendment A §17.4 (P3/R-IC1+R-IC2): COMPANION tests, by RECORDED
+ * IDENTITY and CAUSAL LINK — never by elapsed milliseconds.
+ *
+ * Two events belong to the SAME physical action when their anchors JOIN
+ * (same elementKey, or DOM containment: the native form 'submit' fires
+ * on the FORM the clicked BUTTON lives in) AND the newer event is the
+ * browser-derived trailing event of the older's act:
+ *   (a) same recorded batch ordinal — both captured synchronously inside
+ *       one MutationObserver batch (C-1 clickOrdinals / openedBatch), or
+ *   (b) the newer event type is BROWSER_DERIVED — submit / change /
+ *       focus / blur / input are synthesized browser default actions of
+ *       physical acts, never independent acts themselves.
+ * A physical click / contextmenu / keydown is NEVER a companion of
+ * anything — each is its own act with its own consequences. A derived
+ * event only companions the act whose anchor it joins or whose batch it
+ * shares. No clock participates in any decision.
  */
-const COMPANION_WINDOW_MS = 300;
+const BROWSER_DERIVED_EVENT_TYPES = new Set(['submit', 'change', 'focus', 'blur', 'input']);
+
+/** Recorded anchor identity for one event/window. */
+interface CompanionAnchor {
+  anchorKey: string;
+  el: Element;
+  batch: number;
+  sourceEventType?: string;
+}
+
+/** Do the two anchors JOIN as one physical act (key or containment)? */
+function anchorsJoin(a: CompanionAnchor, b: CompanionAnchor): boolean {
+  if (a.anchorKey === b.anchorKey) return true;
+  // Structural containment read at capture time (both elements alive at
+  // the decision moment): form ⊃ submit-button, label ⊃ input.
+  return a.el.contains(b.el) || b.el.contains(a.el);
+}
+
+/**
+ * Is the NEWER window a companion (same-act trailing window) of the
+ * OLDER? Joining anchors required; then either same batch ordinal, or
+ * the newer's type is browser-derived (a synthesized default action of
+ * the physical act, e.g. native 'submit' after the button's 'click').
+ */
+function isCompanionWindow(newer: CompanionAnchor, older: CompanionAnchor): boolean {
+  if (!anchorsJoin(newer, older)) return false;
+  if (newer.batch === older.batch) return true;
+  const newerType = newer.sourceEventType ?? '';
+  return BROWSER_DERIVED_EVENT_TYPES.has(newerType);
+}
+
+/**
+ * R-IC1: is this incoming event the companion of the just-finalized
+ * physical act? Same batch ordinal + joining anchors ⇒ trailing event
+ * of that act (suppress its orphan window). Anything else ⇒ its own
+ * window, always. (Focus/blur are CAPTURE_ONLY — never tested here.)
+ */
+function isCompanionEvent(
+  finalized: { anchorKey: string; el: Element; batch: number },
+  incomingEl: Element,
+  incomingBatch: number,
+): boolean {
+  const incIdentity = extractIdentity(incomingEl);
+  return (
+    incomingBatch === finalized.batch &&
+    anchorsJoin(finalized, { anchorKey: elementKey(incIdentity), el: incomingEl, batch: incomingBatch })
+  );
+}
+
+/**
+ * HEC v1 §7 R-A1: the anchor facts the collector records on a hover
+ * window at the enter instant. Alias of {@link HoverAnchorFacts} — the
+ * collector stores them verbatim from the recorded ObservedEvent
+ * domContext; it never re-derives them from the live DOM.
+ */
+type PreparedHoverAnchorFacts = HoverAnchorFacts;
+
+/**
+ * HEC v1 §4 T1b: enter-time baseline — the anchor's reveal-state
+ * attributes captured AT the enter instant. Recorded fact (R-Q8's
+ * honest gesture-only when absent); never re-read later.
+ */
+function captureHoverBaseline(targetEl: Element): HoverBaseline {
+  return {
+    anchor: {
+      ariaExpanded: targetEl.getAttribute('aria-expanded'),
+      ariaHidden: targetEl.getAttribute('aria-hidden'),
+      hidden: targetEl.hasAttribute('hidden'),
+    },
+  };
+}
+
+/**
+ * HEC v1 §7 R-A1: read the anchor facts recorded by EventTap on the
+ * gated enter (domContext.hoverAnchorKey / hoverClickAnchorKey /
+ * hoverAnchorResolution). Falls back to empty-string keys + 'self' +
+ * unprobed reveal when the event lacks them (legacy/marginal paths) —
+ * an HONEST degraded record, never a fabricated one.
+ */
+function hoverAnchorFactsOf(
+  observedEvent: ObservedEvent | null,
+  identity: ElementIdentity | null,
+): PreparedHoverAnchorFacts {
+  const domContext = (observedEvent?.domContext ?? {}) as Partial<{
+    hoverAnchorKey: string;
+    hoverClickAnchorKey: string;
+    hoverAnchorResolution: PreparedHoverAnchorFacts['resolution'];
+    hoverReveal: boolean;
+  }>;
+  return {
+    resolution: domContext.hoverAnchorResolution ?? 'self',
+    anchorKey: domContext.hoverAnchorKey ?? (identity ? elementKey(identity) : ''),
+    clickAnchorKey: domContext.hoverClickAnchorKey ?? (identity ? elementKey(identity) : ''),
+    hoverReveal: domContext.hoverReveal === true,
+    shaped: false,
+  };
+}
 
 /** Event types that are throttled. */
 const THROTTLED_EVENTS = new Set(['scroll']);
@@ -204,6 +326,16 @@ const CAPTURE_ONLY_EVENTS = new Set([
 interface ObservationWindowState {
   /** B7-P1: provisional hover window (gated discovery enter, R-2 holdOpen). */
   isHoverProvisional?: boolean;
+  /** HEC v1 §4 T1b: enter-time owned-surface baseline (hover windows only). */
+  hoverBaseline?: HoverBaseline | null;
+  /** HEC v1 §7 R-A1: anchor-resolution facts recorded at the gated enter. */
+  hoverAnchorFacts?: PreparedHoverAnchorFacts | null;
+  /**
+   * HEC v1 §4 T3 pointer-reach inputs: gated enters recorded inside this
+   * hover window (eventId + identity), accumulated as member pointer-path
+   * facts arrive.
+   */
+  hoverPointerPathEnters?: Array<{ eventId: string; identity: ElementIdentity | null }>;
   windowId: string;
   sourceEventId: string;
   sourceEventType: string;
@@ -358,7 +490,12 @@ export class EvidenceCollector {
   }>();
 
   /** Companion event suppression: prevents orphan evidence windows. */
-  private companionSuppressUntil = 0;
+  /**
+   * Amendment A §17.4 (P3): the just-finalized window's companion facts —
+   * recorded at finalization, compared by identity + batch ordinal. No
+   * clock participates (R-IC1). Cleared at start().
+   */
+  private companionCandidate: { anchorKey: string; el: Element; batch: number; eventId: string } | null = null;
 
   /**
    * B7-P4 provenance-regression amendment (C-1, 2026-08-29): the DOM-observer
@@ -413,6 +550,9 @@ export class EvidenceCollector {
     this.activeTypingWindow = null;
     this.lastScrollWindowTime = -Infinity;
     this.clickOrdinals.clear();
+    // Amendment A §17.4 (P3): companion facts reset with the session.
+    this.companionCandidate = null;
+    this.pendingDeliveryAcks = [];
     this.lastKnownUrl = typeof location !== 'undefined' ? location.href : '';
     // Resulting Application State (Phase 1): build the scanner lazily here —
     // never in the ctor — so pure-unit collectors without a live document
@@ -451,15 +591,6 @@ export class EvidenceCollector {
    * events continue to flow until STOP_RECORDING arrives.
    *
    * Delivery mechanics only — no clock, no vocabulary, no semantics. See
-   * the S5 harness note in .drytis/zz-b7-p2-validate.mjs.
-   */
-  drainHoverWindowsAtStop(): void {
-    for (const win of [...this.activeWindows]) {
-      if (!win.isClosed && win.isHoverProvisional) {
-        win.adaptiveWindow.close('recording-stopped');
-      }
-    }
-  }
 
   /**
    * Stop evidence collection. Force-close all open windows.
@@ -520,14 +651,17 @@ export class EvidenceCollector {
     }
 
     // Lifecycle-Driven Evidence: Companion event suppression.
-    // After a lifecycle finalizes, the companion click (e.g., click after
-    // mousedown completion) should not create an orphan evidence window.
-    // We suppress window creation for WINDOW_OPEN events within 300ms of
-    // the last finalization.
+    // Amendment A §17.4 (P3/R-IC1): a post-finalization click/contextmenu
+    // is a companion of the JUST-FINALIZED physical act IFF same anchor
+    // identity (elementKey join) AND the same recorded batch ordinal
+    // (C-1 clickOrdinals — both captured synchronously, zero clock). A
+    // different anchor, or a later batch, ALWAYS opens its own window.
+    // (Was: any WINDOW_OPEN event within 300ms of the last finalization —
+    // a timing heuristic that could orphan a genuinely distinct click.)
     if (
-      this.companionSuppressUntil > 0 &&
-      Date.now() < this.companionSuppressUntil &&
-      WINDOW_OPEN_EVENTS.has(eventType)
+      WINDOW_OPEN_EVENTS.has(eventType) &&
+      this.companionCandidate !== null &&
+      isCompanionEvent(this.companionCandidate, targetEl, this.domObserver.getBatchCounter())
     ) {
       return;
     }
@@ -540,6 +674,20 @@ export class EvidenceCollector {
     // evidence window. All other capture-only events (mousemove,
     // mouseleave, focus, blur, mousedown) still open nothing.
     if (eventType === 'mouseenter' && isHoverDiscoveryEnter(observedEvent)) {
+      // HEC v1 §4 T3 pointer-reach input: a gated enter while a hover
+      // window is open on a DIFFERENT anchor records as a pointer-path
+      // fact on that window (the reach evidence — the join happens at
+      // close via the same surface-join module).
+      if (observedEvent) {
+        for (const w of this.activeWindows) {
+          if (w.isClosed || !w.isHoverProvisional) continue;
+          if (w.sourceEventId === eventId) continue;
+          (w.hoverPointerPathEnters ??= []).push({
+            eventId,
+            identity: identity ?? null,
+          });
+        }
+      }
       this.openHoverWindow(targetEl, eventId, identity ?? null, observedEvent ?? null);
       return;
     }
@@ -586,7 +734,13 @@ export class EvidenceCollector {
     identity: ElementIdentity | null = null,
     observedEvent: ObservedEvent | null = null,
     maxDurationMs?: number,
-    hoverOpts?: { isHoverProvisional: boolean },
+    hoverOpts?: {
+      isHoverProvisional: boolean;
+      /** HEC v1 T1b: enter-time owned-surface baseline. */
+      hoverBaseline?: HoverBaseline | null;
+      /** HEC v1 §7 R-A1: anchor-resolution facts recorded at the enter. */
+      hoverAnchorFacts?: PreparedHoverAnchorFacts | null;
+    },
   ): void {
     // Enforce max concurrent windows with displacement
     this.enforceMaxConcurrent();
@@ -664,6 +818,11 @@ export class EvidenceCollector {
       // B7-P1: provisional hover window — holdOpen from birth (R-2), never
       // settles closed while unbound; preferred displacement victim (R-5).
       isHoverProvisional: hoverOpts?.isHoverProvisional === true,
+      // HEC v1 §4 T1b + §7: recorded at the enter instant, read once at
+      // hover-window close by the qualification computation (R-Q1).
+      hoverBaseline: hoverOpts?.hoverBaseline ?? null,
+      hoverAnchorFacts: hoverOpts?.hoverAnchorFacts ?? null,
+      hoverPointerPathEnters: [],
       navEvents: [],
       isClosed: false,
       isNavigationWindow: false,
@@ -705,12 +864,29 @@ export class EvidenceCollector {
 
     this.activeWindows.push(state);
 
-    // A-Slice fix 1: a new interaction window supersedes any OPEN window
-    // already in settle mode — later DOM mutations (this new interaction's
-    // consequence) must not be claimed by the older settling window's
-    // settlement scan. The new window itself is excluded (not yet settling).
+    // A-Slice fix 1 + Amendment A §17.4 (R-IC2): a new interaction window
+    // supersedes any OPEN window already in settle mode — later DOM
+    // mutations (this new interaction's consequence) must not be claimed by
+    // the older settling window's settlement scan — UNLESS the new window
+    // is the COMPANION of that settling window (same physical act: joining
+    // anchors + same batch ordinal, or browser-derived trailing type). A
+    // companion never owns later consequences, so it must not suppress the
+    // act's own scan either. No clock participates.
     for (const w of this.activeWindows) {
-      if (w !== state && !w.isClosed && w.settleMode) {
+      if (w === state || w.isClosed || !w.settleMode) continue;
+      const newAnchor: CompanionAnchor = {
+        anchorKey: elementKey(extractIdentity(state.targetEl)),
+        el: state.targetEl,
+        batch: state.openedBatch,
+        sourceEventType: state.sourceEventType,
+      };
+      const oldAnchor: CompanionAnchor = {
+        anchorKey: elementKey(extractIdentity(w.targetEl)),
+        el: w.targetEl,
+        batch: w.openedBatch,
+        sourceEventType: w.sourceEventType,
+      };
+      if (!isCompanionWindow(newAnchor, oldAnchor)) {
         w.settleSuperseded = true;
       }
     }
@@ -811,6 +987,14 @@ export class EvidenceCollector {
   ): void {
     this.openWindow(targetEl, eventId, 'mouseenter', identity, observedEvent, undefined, {
       isHoverProvisional: true,
+      // HEC v1 §4 T1b: enter-time baseline — owned-surface state captured
+      // AT the enter instant so every later earning fact is compared
+      // against it (T1b-R). Recorded fact, never re-derived.
+      hoverBaseline: captureHoverBaseline(targetEl),
+      // HEC v1 §7 R-A1: anchor-resolution facts recorded at the enter —
+      // elementKey of the hover anchor plus the click-policy anchor key so
+      // one physical act joins reliably (R-A2 join set).
+      hoverAnchorFacts: hoverAnchorFactsOf(observedEvent, identity),
     });
   }
 
@@ -1232,6 +1416,17 @@ export class EvidenceCollector {
     if (dialog) applicationEvidence.triggeredDialog = dialog;
     if (windowOpen) applicationEvidence.openedWindow = windowOpen;
 
+    // HEC v1 §5 (R-Q1) — capture-time qualification for provisional hover
+    // windows, identical in BOTH delivery paths (settle branch via
+    // buildAndDeliverEvidence and this regular close branch). Computed once
+    // at close; pure function of recorded facts; deep-frozen.
+    const hoverQualification = this.computeHoverQualificationFor(state, {
+      domChanges,
+      newSurfaces,
+      visibilityChanges: visibilityChanges.slice(0, 50),
+      networkRows: networkActivity.length,
+    });
+
     // Build BehavioralEvidence
     const evidence: BehavioralEvidence = {
       sourceEventId: state.sourceEventId,
@@ -1244,6 +1439,8 @@ export class EvidenceCollector {
       window: { ...evidenceWindow, openedBatch: state.openedBatch },
       targetEvidence,
       applicationEvidence,
+      // HEC v1 §5 R-Q5: rides the envelope; STOP never mutates it.
+      hoverQualification,
     };
 
     // Deliver to service worker
@@ -1501,23 +1698,73 @@ export class EvidenceCollector {
    * Deliver evidence to the service worker.
    * Uses chrome.runtime.sendMessage with BEHAVIORAL_EVIDENCE message type.
    * Also buffers in sessionStorage for SW restart recovery (§9).
+   *
+   * Amendment A §17.2 (P2): the delivery is AWAITED — the promise resolves
+   * when the SW ACKs ({ ok: true }). The caller (window close, drain) may
+   * therefore know the evidence has actually landed; no clock is involved.
+   * Returns true iff the SW confirmed receipt. On failure the evidence
+   * stays in the page buffer for START-time re-flush (R-ED2 — no silent
+   * loss). Idempotence on the SW side is keyed by sourceEventId (R-ED3).
    */
-  private deliverEvidence(evidence: BehavioralEvidence): void {
-    // Buffer in sessionStorage for SW restart recovery
+  private deliverEvidenceAck(evidence: BehavioralEvidence): Promise<boolean> {
+    // Buffer FIRST for SW restart recovery (unchanged mechanics)
     this.bufferEvidence(evidence);
 
-    // Send to service worker
-    if (chrome?.runtime?.sendMessage) {
+    const ack = new Promise<boolean>((resolve) => {
+      if (!chrome?.runtime?.sendMessage) {
+        resolve(false);
+        return;
+      }
       try {
         chrome.runtime.sendMessage(
           { type: 'BEHAVIORAL_EVIDENCE', payload: evidence },
-          () => { void chrome.runtime.lastError; },
+          (response: { ok?: boolean } | undefined) => {
+            void chrome.runtime.lastError;
+            resolve(response?.ok === true);
+          },
         );
       } catch {
-        // SW may be dead — evidence stays in buffer
+        // SW may be dead — evidence stays in buffer (R-ED2)
+        resolve(false);
+      }
+    });
+    // Register so the STOP drain can await exactly these ACKs (P1).
+    this.pendingDeliveryAcks.push(ack);
+    return ack;
+  }
+
+  /**
+   * Fire-path delivery: closeWindow and friends deliver without awaiting
+   * (mid-session windows; the ACKed variant is awaited by the STOP drain).
+   * Buffering still guarantees R-ED2 recovery for these.
+   */
+  private deliverEvidence(evidence: BehavioralEvidence): void {
+    void this.deliverEvidenceAck(evidence);
+  }
+
+  /**
+   * B7-P2 §5.2.2 + Amendment A §17.3 (P1): force-close open provisional
+   * hover windows AND await their delivery ACKs. Resolves only when every
+   * force-closed window's evidence has been ACKed by the SW (or its channel
+   * failed — an event signal, not a clock). A slow SW delays resolution;
+   * it can never cause a silent loss. Returns the ACKed-delivery count.
+   * The synchronous prefix (close + buffer + send) runs before the first
+   * await, preserving the B7-P2 CS-side contract for sync callers.
+   */
+  async drainHoverWindowsAtStop(): Promise<number> {
+    for (const win of [...this.activeWindows]) {
+      if (!win.isClosed && win.isHoverProvisional) {
+        // close() synchronously triggers closeWindow →
+        // buildAndDeliverEvidence → deliverEvidenceAck (registered above).
+        win.adaptiveWindow.close('recording-stopped');
       }
     }
+    const acks = await Promise.all(this.pendingDeliveryAcks.splice(0));
+    return acks.filter(Boolean).length;
   }
+
+  /** P1: in-flight delivery ACKs awaiting the drain. Bounded by open windows. */
+  private pendingDeliveryAcks: Array<Promise<boolean>> = [];
 
   /**
    * Buffer evidence in sessionStorage for SW restart recovery.
@@ -1719,9 +1966,6 @@ export class EvidenceCollector {
       // and create evidence targeting it.
       this.finalizeWithoutWindow(payload, settleDelay);
     }
-
-    // Set companion event suppression
-    this.companionSuppressUntil = Date.now() + 300;
   }
 
   /**
@@ -1738,6 +1982,18 @@ export class EvidenceCollector {
   ): void {
     const endReason: 'lifecycle-complete' | 'lifecycle-abandoned' =
       payload.endState === 'completed' ? 'lifecycle-complete' : 'lifecycle-abandoned';
+
+    // Amendment A §17.4 (P3/R-IC1): record the finalized act's companion
+    // facts — the WINDOW's anchor identity + the CURRENT batch ordinal at
+    // finalization (recorded facts, zero clock). A trailing click-family
+    // event on the same anchor in the same batch is the same physical
+    // act's companion; anything else opens its own window.
+    this.companionCandidate = {
+      anchorKey: elementKey(extractIdentity(win.targetEl)),
+      el: win.targetEl,
+      batch: this.domObserver.getBatchCounter(),
+      eventId: win.sourceEventId,
+    };
 
     // If page is unloading, finalize immediately (no settle delay) — the
     // INV-4 form-submit recovery path. UNCHANGED by consequence-settling.
@@ -1834,19 +2090,35 @@ export class EvidenceCollector {
     // not yet settling. Any DOM mutations from here on belong to the newer
     // interaction — the settle scan must not photograph them here.
     //
-    // Claimant rule: only a DISTINCT later interaction disqualifies this
-    // window. Windows opened within the companion window (300ms, the same
-    // threshold as companionSuppressUntil) of this window's open are
-    // companions of the SAME physical action (e.g. the native form 'submit'
-    // firing ~0.4ms after the submit-button 'click') — they never own later
-    // consequences and must not suppress this window's scan. Companion
-    // windows are also excluded when themselves superseded (chain safety).
+    // Claimant rule (Amendment A §17.4 R-IC2): only a DISTINCT later
+    // interaction disqualifies this window. A window opened by the SAME
+    // physical action — same anchor identity + same open batch ordinal
+    // (e.g. the native 'submit' firing ~0.4ms after the submit-button
+    // 'click', same batch) — is a companion: it never owns later
+    // consequences and must not suppress this window's scan. A different
+    // anchor or a later batch is a distinct act and DOES supersede.
+    // Companion windows are also excluded when themselves superseded
+    // (chain safety). No clock participates.
+    const olderAnchor: CompanionAnchor = {
+      anchorKey: elementKey(extractIdentity(win.targetEl)),
+      el: win.targetEl,
+      batch: win.openedBatch,
+      sourceEventType: win.sourceEventType,
+    };
     const newerLiveClaimant = this.activeWindows.some(
-      (w) =>
-        w !== win &&
-        !w.isClosed &&
-        !w.settleSuperseded &&
-        w.openedAt - win.openedAt >= COMPANION_WINDOW_MS,
+      (w) => {
+        if (w === win || w.isClosed || w.settleSuperseded) return false;
+        if (!(w.openedAt > win.openedAt)) return false;
+        // (newer, older) — the derived-type test applies to the NEWER
+        // window's sourceEventType only.
+        const newerAnchor: CompanionAnchor = {
+          anchorKey: elementKey(extractIdentity(w.targetEl)),
+          el: w.targetEl,
+          batch: w.openedBatch,
+          sourceEventType: w.sourceEventType,
+        };
+        return !isCompanionWindow(newerAnchor, olderAnchor);
+      },
     );
     if (newerLiveClaimant) {
       win.settleSuperseded = true;
@@ -1992,6 +2264,51 @@ export class EvidenceCollector {
   }
 
   /**
+   * HEC v1 §5 R-Q1: compute the capture-time HoverQualification for a
+   * provisional hover window — the single shared implementation used by
+   * BOTH delivery paths (regular closeWindow branch and settle-mode
+   * buildAndDeliverEvidence branch). Non-hover windows return undefined.
+   * Pure function of recorded facts; the result is deep-frozen by
+   * computeHoverQualification itself.
+   */
+  private computeHoverQualificationFor(
+    state: ObservationWindowState,
+    facts: {
+      domChanges: _DomChangeSummary[];
+      newSurfaces: _SurfaceChange[];
+      visibilityChanges: _VisibilityChange[];
+      networkRows: number;
+    },
+  ): HoverQualification | undefined {
+    if (state.isHoverProvisional !== true) return undefined;
+    const anchorFacts = state.hoverAnchorFacts ?? {
+      resolution: 'self' as const,
+      anchorKey: '',
+      clickAnchorKey: '',
+      hoverReveal: false,
+      shaped: false,
+    };
+    return computeHoverQualification({
+      anchorIdentity: (state.identity ?? null) as never,
+      anchorKey: anchorFacts.anchorKey,
+      clickAnchorKey: anchorFacts.clickAnchorKey,
+      resolution: anchorFacts.resolution,
+      hoverReveal: anchorFacts.hoverReveal,
+      shaped: anchorFacts.shaped,
+      baseline: state.hoverBaseline ?? null,
+      domChanges: facts.domChanges,
+      newSurfaces: facts.newSurfaces,
+      visibilityChanges: facts.visibilityChanges,
+      pointerPathEnters: (state.hoverPointerPathEnters ?? []).map((p) => ({
+        identity: p.identity as never,
+      })),
+      networkRows: facts.networkRows,
+      navigationCount: state.navEvents.length,
+      openedBatch: state.openedBatch,
+    });
+  }
+
+  /**
    * Build and deliver BehavioralEvidence from a finalized window.
    * Reuses the same logic as closeWindow for consistency.
    */
@@ -2100,6 +2417,17 @@ export class EvidenceCollector {
     if (dialog) applicationEvidence.triggeredDialog = dialog;
     if (windowOpen) applicationEvidence.openedWindow = windowOpen;
 
+    // HEC v1 §5 (R-Q1): compute the capture-time HoverQualification ONCE at
+    // hover-window close — the terminal instant where baseline + window
+    // facts are all recorded. Shared helper (identical in both delivery
+    // paths). Non-hover windows carry none.
+    const hoverQualification = this.computeHoverQualificationFor(state, {
+      domChanges,
+      newSurfaces,
+      visibilityChanges: visibilityChanges.slice(0, 50),
+      networkRows: networkActivity.length,
+    });
+
     // Build and deliver BehavioralEvidence
     const evidence: BehavioralEvidence = {
       sourceEventId: state.sourceEventId,
@@ -2130,6 +2458,9 @@ export class EvidenceCollector {
       },
       targetEvidence,
       applicationEvidence,
+      // HEC v1 §5 R-Q5: the qualification rides the envelope (the only
+      // content-script → interaction vehicle). Frozen; STOP never mutates.
+      hoverQualification,
     };
 
     this.deliverEvidence(evidence);

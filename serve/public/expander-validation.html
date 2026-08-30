@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Expander Validation — Generic Accordion</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 2rem; }
+  .panel { border: 1px solid #ccc; border-radius: 6px; margin-bottom: .5rem; max-width: 32rem; }
+  .head { padding: .75rem 1rem; background: #f7f7f7; cursor: pointer; user-select: none; }
+  .head:hover { background: #eee; }
+  .body { padding: 0 1rem; overflow: hidden; height: 0; }
+  .body.open { height: auto; padding: .75rem 1rem; }
+  .btn { cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>Expander Validation</h1>
+<p>Three generic disclosure shapes. No site vocabulary, no test attributes.</p>
+
+<!-- Shape 1: native <button aria-expanded> (W3C disclosure pattern) -->
+<div class="panel">
+  <button class="head btn" id="s1" aria-expanded="false" aria-controls="b1">Section One</button>
+  <div class="body" id="b1">
+    <p>First section body.</p>
+  </div>
+</div>
+
+<!-- Shape 2: div role=button + aria-expanded (custom control) -->
+<div class="panel">
+  <div class="head" id="s2" role="button" tabindex="0" aria-expanded="false" aria-controls="b2">Section Two</div>
+  <div class="body" id="b2">
+    <p>Second section body.</p>
+  </div>
+</div>
+
+<!-- Shape 3: bare div + aria-expanded (affordance carries it) -->
+<div class="panel">
+  <div class="head" id="s3" aria-expanded="false" aria-controls="b3">Section Three</div>
+  <div class="body" id="b3">
+    <p>Third section body.</p>
+  </div>
+</div>
+
+<script>
+  for (const headId of ['s1', 's2', 's3']) {
+    const head = document.getElementById(headId);
+    const body = document.getElementById(head.getAttribute('aria-controls'));
+    const toggle = () => {
+      const open = head.getAttribute('aria-expanded') === 'true';
+      head.setAttribute('aria-expanded', String(!open));
+      body.classList.toggle('open', !open);
+    };
+    head.addEventListener('click', toggle);
+    if (head.getAttribute('role') === 'button') {
+      head.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+      });
+    }
+  }
+</script>
+</body>
+</html>

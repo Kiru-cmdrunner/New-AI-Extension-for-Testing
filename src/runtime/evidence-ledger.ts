@@ -15,7 +15,7 @@
  */
 
 import type { ObservedEvent, InteractionType, ElementIdentity, ClickQualification, ClickInvalidityCause, ComponentInteraction } from '../shared/component-types';
-import { isInteractiveElement } from '../definitions/patterns';
+import { isHoverDiscoveryShape } from '../definitions/patterns';
 import { deriveConsequenceClasses } from '../presentation/output-adapter';
 
 /**
@@ -113,19 +113,24 @@ export function isAnchorEligibleInteraction(interaction: {
 /**
  * Is this event a gated hover discovery enter?
  * The SHARED structural predicate — same gate as the definition's
- * detectTrigger and the SW stamp site (one predicate, three call sites,
- * no vocabulary). patterns.ts is dependency-free (shared types only), so
- * this import introduces no cycle.
+ * detectTrigger (hover.ts) and evidence-collector isHoverDiscoveryEnter
+ * (one predicate, three call sites, no vocabulary). Hover-capture generic
+ * fix v1 (RC-8): the class-substring contribution is removed — the gate
+ * is isHoverDiscoveryShape (DECLARED affordance) OR the recorded
+ * hoverReveal CSS fact. isInteractiveElement remains the CQ v1.2 frozen
+ * fact source and is no longer a hover gate anywhere.
  */
 export function isGatedDiscoveryEnter(event: ObservedEvent): boolean {
   if (event.eventType !== 'mouseenter') return false;
   if (event.isTrusted !== true) return false;
-  return isInteractiveElement(
-    event.target.tag,
-    event.target.ariaRole,
-    event.target.className,
-    event.domContext?.tabIndex ?? null,
-  );
+  return isHoverDiscoveryShape({
+    tag: event.target.tag,
+    ariaRole: event.target.ariaRole,
+    tabIndex: event.domContext?.tabIndex ?? null,
+    ariaHasPopup: event.domContext?.ariaHasPopup ?? null,
+    clickHandler: event.domContext?.clickHandler ?? null,
+    pointerCursor: event.domContext?.pointerCursor ?? null,
+  }) || event.domContext?.hoverReveal === true;
 }
 
 /**

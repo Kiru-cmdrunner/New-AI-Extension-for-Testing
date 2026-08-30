@@ -75,7 +75,17 @@ function gestureOnlyHover(interactionId: string) {
 
 describe('B7-P4 T4: compat-bridge deletion', () => {
   it('filterProductionInteractions no longer mutates hover metadata (no bridge writes)', () => {
+    // HEC v1 re-baseline: admission requires the recorded capture-time
+    // verdict (§9/D2) — give the fixture an evidenced qualification; the
+    // assertion under test (no metadata mutation) is unchanged.
     const hover = admittedHover('int-1', { meaningful: true }); // legacy stored judgment
+    (
+      (hover as { behavioralEvidence: { hoverQualification?: unknown } }).behavioralEvidence
+    ).hoverQualification = {
+      verdict: 'evidenced', evidenceClass: 'reveal',
+      evidenceReason: 'reveal: aria-expanded false→true on joined element',
+      anchorFacts: {}, factSummary: {},
+    };
     const out = filterProductionInteractions([hover]);
     expect(out.length).toBe(1);
     expect((out[0] as { metadata: Record<string, unknown> }).metadata).toEqual({

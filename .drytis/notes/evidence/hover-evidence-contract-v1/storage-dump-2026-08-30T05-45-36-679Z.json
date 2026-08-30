@@ -1,0 +1,4091 @@
+{
+  "cmdrunner_evidence_ledger": [
+    {
+      "ancestorClasses": [
+        "",
+        "",
+        ""
+      ],
+      "ancestorRoles": [
+        "nav",
+        "body",
+        "html"
+      ],
+      "captureOrigin": {
+        "frameId": 0,
+        "tabId": 636191009
+      },
+      "captureSeq": 2715.2999999970198,
+      "claimType": "Hover",
+      "claimedBy": "int-1",
+      "clickQualification": null,
+      "disposition": "claimed",
+      "eventId": "evt-pmtfdyexm-4",
+      "eventType": "mouseenter",
+      "pageId": "pmtfdyexm",
+      "targetIdentity": {
+        "accessibleName": "Services Section",
+        "ariaLabel": null,
+        "ariaLabelledBy": null,
+        "ariaRole": "button",
+        "autoId": null,
+        "className": null,
+        "cssSelector": "#services",
+        "dataAutoId": null,
+        "dataCy": null,
+        "dataQa": null,
+        "elementId": "",
+        "href": null,
+        "inIframe": false,
+        "inputType": null,
+        "name": null,
+        "placeholder": null,
+        "shadowDom": false,
+        "stableId": "services",
+        "tag": "DIV",
+        "testId": null,
+        "xPath": "//div[@id='services']"
+      },
+      "targetName": "Services Section",
+      "targetRole": "button",
+      "targetTag": "DIV",
+      "timestamp": 1788068732360
+    },
+    {
+      "ancestorClasses": [
+        "",
+        ""
+      ],
+      "ancestorRoles": [
+        "body",
+        "html"
+      ],
+      "captureOrigin": {
+        "frameId": 0,
+        "tabId": 636191009
+      },
+      "captureSeq": 3327.2999999970198,
+      "claimType": "Hover",
+      "claimedBy": "int-2",
+      "clickQualification": null,
+      "disposition": "claimed",
+      "eventId": "evt-pmtfdyexm-8",
+      "eventType": "mouseenter",
+      "pageId": "pmtfdyexm",
+      "targetIdentity": {
+        "accessibleName": "CQ Invalid Target",
+        "ariaLabel": null,
+        "ariaLabelledBy": null,
+        "ariaRole": "button",
+        "autoId": null,
+        "className": null,
+        "cssSelector": "#ariadis",
+        "dataAutoId": null,
+        "dataCy": null,
+        "dataQa": null,
+        "elementId": "",
+        "href": null,
+        "inIframe": false,
+        "inputType": null,
+        "name": null,
+        "placeholder": null,
+        "shadowDom": false,
+        "stableId": "ariadis",
+        "tag": "DIV",
+        "testId": null,
+        "xPath": "//div[@id='ariadis']"
+      },
+      "targetName": "CQ Invalid Target",
+      "targetRole": "button",
+      "targetTag": "DIV",
+      "timestamp": 1788068732969
+    },
+    {
+      "ancestorClasses": [
+        "",
+        ""
+      ],
+      "ancestorRoles": [
+        "body",
+        "html"
+      ],
+      "captureOrigin": {
+        "frameId": 0,
+        "tabId": 636191009
+      },
+      "captureSeq": 3531.699999999255,
+      "clickQualification": null,
+      "disposition": "pending",
+      "eventId": "evt-pmtfdyexm-10",
+      "eventType": "mousedown",
+      "pageId": "pmtfdyexm",
+      "targetIdentity": {
+        "accessibleName": "CQ Invalid Target",
+        "ariaLabel": null,
+        "ariaLabelledBy": null,
+        "ariaRole": "button",
+        "autoId": null,
+        "className": null,
+        "cssSelector": "#ariadis",
+        "dataAutoId": null,
+        "dataCy": null,
+        "dataQa": null,
+        "elementId": "",
+        "href": null,
+        "inIframe": false,
+        "inputType": null,
+        "name": null,
+        "placeholder": null,
+        "shadowDom": false,
+        "stableId": "ariadis",
+        "tag": "DIV",
+        "testId": null,
+        "xPath": "//div[@id='ariadis']"
+      },
+      "targetName": "CQ Invalid Target",
+      "targetRole": "button",
+      "targetTag": "DIV",
+      "timestamp": 1788068733173
+    },
+    {
+      "ancestorClasses": [
+        "",
+        ""
+      ],
+      "ancestorRoles": [
+        "body",
+        "html"
+      ],
+      "captureOrigin": {
+        "frameId": 0,
+        "tabId": 636191009
+      },
+      "captureSeq": 3615.39999999851,
+      "clickQualification": {
+        "causes": [
+          "aria-disabled"
+        ],
+        "facts": {
+          "ariaDisabled": true,
+          "disabledAttrNonNative": false,
+          "disabledNative": false,
+          "fieldsetDisabled": false,
+          "hitTarget": {
+            "kind": "element",
+            "liftStrategy": "raw",
+            "lifted": false,
+            "rawInteractiveShaped": true,
+            "rawTag": "DIV"
+          },
+          "hitTest": {
+            "checked": true,
+            "miss": false
+          },
+          "inertSubtree": false,
+          "pointerEventsNone": false,
+          "zeroSizeLifted": false
+        },
+        "insufficient": false,
+        "verdict": "provably-invalid"
+      },
+      "disposition": "pending",
+      "eventId": "evt-pmtfdyexm-12",
+      "eventType": "click",
+      "pageId": "pmtfdyexm",
+      "targetIdentity": {
+        "accessibleName": "CQ Invalid Target",
+        "ariaLabel": null,
+        "ariaLabelledBy": null,
+        "ariaRole": "button",
+        "autoId": null,
+        "className": null,
+        "cssSelector": "#ariadis",
+        "dataAutoId": null,
+        "dataCy": null,
+        "dataQa": null,
+        "elementId": "",
+        "href": null,
+        "inIframe": false,
+        "inputType": null,
+        "name": null,
+        "placeholder": null,
+        "shadowDom": false,
+        "stableId": "ariadis",
+        "tag": "DIV",
+        "testId": null,
+        "xPath": "//div[@id='ariadis']"
+      },
+      "targetName": "CQ Invalid Target",
+      "targetRole": "button",
+      "targetTag": "DIV",
+      "timestamp": 1788068733256
+    }
+  ],
+  "cmdrunner_live_interactions": [
+    {
+      "behavioralEvidence": {
+        "applicationEvidence": {
+          "coarseMode": false,
+          "domChangeOverflow": 0,
+          "domChanges": [
+            {
+              "addedNodesCount": 0,
+              "attributeDeltas": {
+                "aria-hidden": {
+                  "new": "false",
+                  "old": "true"
+                },
+                "style": {
+                  "new": "display: block;",
+                  "old": null
+                }
+              },
+              "changedAttributes": [
+                "style",
+                "aria-hidden"
+              ],
+              "characterDataDelta": null,
+              "firstBatchIndex": 0,
+              "firstMutationAt": 0.6999999992549419,
+              "lastBatchIndex": 0,
+              "lastMutationAt": 0.6999999992549419,
+              "rawMutationCount": 2,
+              "removedNodesCount": 0,
+              "shadowContext": null,
+              "targetPath": "body > nav#appnav > div#flyout",
+              "targetTag": "div",
+              "types": [
+                "attributes"
+              ]
+            },
+            {
+              "addedNodesCount": 0,
+              "attributeDeltas": {
+                "aria-expanded": {
+                  "new": "true",
+                  "old": "false"
+                }
+              },
+              "changedAttributes": [
+                "aria-expanded"
+              ],
+              "characterDataDelta": null,
+              "firstBatchIndex": 0,
+              "firstMutationAt": 0.6999999992549419,
+              "lastBatchIndex": 0,
+              "lastMutationAt": 0.6999999992549419,
+              "rawMutationCount": 1,
+              "removedNodesCount": 0,
+              "shadowContext": null,
+              "targetPath": "body > nav#appnav > div#services",
+              "targetTag": "div",
+              "types": [
+                "attributes"
+              ]
+            }
+          ],
+          "navigation": [],
+          "networkActivity": [],
+          "newSurfaces": [
+            {
+              "accessibleName": "Book Flight",
+              "ariaRole": "menu",
+              "batchIndex": 0,
+              "descendantCount": 1,
+              "emergence": "revealed",
+              "kind": "added",
+              "path": "body > nav#appnav > div#flyout",
+              "relativeTime": 0.6999999992549419,
+              "shadowContext": null,
+              "tagName": "div"
+            }
+          ],
+          "performanceCondition": {
+            "highChurnMode": false,
+            "longestBatchMs": 0.8000000007450581,
+            "mainThreadBlocked": false,
+            "totalBatches": 1
+          },
+          "removedSurfaces": [],
+          "visibilityChanges": [
+            {
+              "batchIndex": 0,
+              "newValue": "block",
+              "oldValue": "",
+              "path": "body > nav#appnav > div#flyout",
+              "property": "display",
+              "relativeTime": 0.6999999992549419
+            },
+            {
+              "batchIndex": 0,
+              "newValue": "false",
+              "oldValue": "true",
+              "path": "body > nav#appnav > div#flyout",
+              "property": "aria-hidden",
+              "relativeTime": 0.6999999992549419
+            }
+          ]
+        },
+        "frameId": "main",
+        "hoverQualification": {
+          "anchorFacts": {
+            "anchorKey": "id:services",
+            "clickAnchorKey": "id:services",
+            "hoverReveal": false,
+            "resolution": "self",
+            "shaped": true
+          },
+          "evidenceClass": "reveal",
+          "evidenceReason": "reveal: aria flip aria-expanded false→true on joined element",
+          "factSummary": {
+            "domChangesInOwnedSet": 1,
+            "domChangesTotal": 2,
+            "networkRows": 0,
+            "newSurfacesJoined": 0,
+            "pointerPathEnters": 1
+          },
+          "verdict": "evidenced"
+        },
+        "sourceEventId": "evt-pmtfdyexm-4",
+        "sourceEventType": "mouseenter",
+        "targetEvidence": {
+          "after": {
+            "ariaChecked": null,
+            "ariaExpanded": true,
+            "ariaPressed": null,
+            "capturedAt": 3632.099999997765,
+            "checked": null,
+            "childCount": 2,
+            "className": "",
+            "controlledValue": null,
+            "disabled": false,
+            "scrollLeft": null,
+            "scrollTop": null,
+            "selectedValues": null,
+            "textContent": "\n    Services Section\n    \n  ",
+            "value": "Services Section"
+          },
+          "before": null,
+          "focusMovement": {
+            "after": {
+              "accessibleName": "CQ Invalid Target",
+              "ariaRole": "button",
+              "tagName": "DIV"
+            },
+            "before": null,
+            "detectedAt": 3632.099999997765
+          },
+          "identity": {
+            "accessibleName": "Services Section",
+            "ariaLabel": null,
+            "ariaLabelledBy": null,
+            "ariaRole": "button",
+            "autoId": null,
+            "className": null,
+            "cssSelector": "#services",
+            "dataAutoId": null,
+            "dataCy": null,
+            "dataQa": null,
+            "elementId": "",
+            "href": null,
+            "inIframe": false,
+            "inputType": null,
+            "name": null,
+            "placeholder": null,
+            "shadowDom": false,
+            "stableId": "services",
+            "tag": "DIV",
+            "testId": null,
+            "xPath": "//div[@id='services']"
+          },
+          "identityCapturedAt": 2720.5
+        },
+        "window": {
+          "closedAt": 3632.2999999970198,
+          "durationMs": 911.7999999970198,
+          "endReason": "consequence-settled",
+          "openedAt": 2720.5,
+          "openedBatch": 0,
+          "stabilityTrace": [
+            {
+              "globalBatchCount": 0,
+              "msSinceLastMutation": 300,
+              "timestamp": 2720.699999999255
+            },
+            {
+              "globalBatchCount": 0,
+              "msSinceLastMutation": 0,
+              "timestamp": 2721.699999999255
+            },
+            {
+              "globalBatchCount": 0,
+              "msSinceLastMutation": 300,
+              "timestamp": 3021.89999999851
+            },
+            {
+              "globalBatchCount": 0,
+              "msSinceLastMutation": 300,
+              "timestamp": 3322.099999997765
+            },
+            {
+              "globalBatchCount": 0,
+              "msSinceLastMutation": 300,
+              "timestamp": 3632
+            },
+            {
+              "globalBatchCount": 0,
+              "msSinceLastMutation": 300,
+              "timestamp": 3632
+            }
+          ]
+        },
+        "windowId": "ev-evt-pmtfdyexm-4"
+      },
+      "businessMeaning": "Hover over \"Services Section\"",
+      "componentFramework": "Generic",
+      "componentType": "Generic",
+      "endState": "completed",
+      "endTime": 1788068732969,
+      "interactionId": "int-1",
+      "lifecycleId": "lc-1",
+      "memberEvents": [
+        {
+          "altKey": false,
+          "captureOrigin": {
+            "frameId": 0,
+            "tabId": 636191009
+          },
+          "captureSeq": 2715.2999999970198,
+          "checkedAfter": null,
+          "checkedBefore": null,
+          "clientX": 390,
+          "clientY": 17,
+          "code": null,
+          "ctrlKey": false,
+          "domContext": {
+            "ancestorClasses": [
+              "",
+              "",
+              ""
+            ],
+            "ancestorRoles": [
+              "nav",
+              "body",
+              "html"
+            ],
+            "ariaAutoComplete": null,
+            "ariaExpanded": false,
+            "ariaHasPopup": "true",
+            "clickHandler": false,
+            "disabled": false,
+            "formAction": null,
+            "formElementKey": null,
+            "formId": null,
+            "formMethod": null,
+            "hoverAnchorKey": "id:services",
+            "hoverAnchorResolution": "self",
+            "hoverClickAnchorKey": "id:services",
+            "inputType": null,
+            "isContentEditable": false,
+            "isFormSubmitControl": false,
+            "listId": null,
+            "pointerCursor": false,
+            "readOnly": false,
+            "required": false,
+            "tabIndex": 0
+          },
+          "eventId": "evt-pmtfdyexm-4",
+          "eventType": "mouseenter",
+          "isTrusted": true,
+          "key": null,
+          "metaKey": false,
+          "pageTitle": "",
+          "pageUrl": "http://127.0.0.1:8807/matrix.html",
+          "scrollDeltaX": null,
+          "scrollDeltaY": null,
+          "shiftKey": false,
+          "target": {
+            "accessibleName": "Services Section",
+            "ariaLabel": null,
+            "ariaLabelledBy": null,
+            "ariaRole": "button",
+            "autoId": null,
+            "className": null,
+            "cssSelector": "#services",
+            "dataAutoId": null,
+            "dataCy": null,
+            "dataQa": null,
+            "elementId": "",
+            "href": null,
+            "inIframe": false,
+            "inputType": null,
+            "name": null,
+            "placeholder": null,
+            "shadowDom": false,
+            "stableId": "services",
+            "tag": "DIV",
+            "testId": null,
+            "xPath": "//div[@id='services']"
+          },
+          "timestamp": 1788068732360,
+          "valueAfter": null,
+          "valueBefore": null
+        },
+        {
+          "altKey": false,
+          "captureOrigin": {
+            "frameId": 0,
+            "tabId": 636191009
+          },
+          "captureSeq": 3327.2999999970198,
+          "checkedAfter": null,
+          "checkedBefore": null,
+          "clientX": 390,
+          "clientY": 110,
+          "code": null,
+          "ctrlKey": false,
+          "domContext": {
+            "ancestorClasses": [
+              "",
+              "",
+              ""
+            ],
+            "ancestorRoles": [
+              "nav",
+              "body",
+              "html"
+            ],
+            "ariaAutoComplete": null,
+            "ariaExpanded": true,
+            "ariaHasPopup": "true",
+            "clickHandler": false,
+            "disabled": false,
+            "formAction": null,
+            "formElementKey": null,
+            "formId": null,
+            "formMethod": null,
+            "inputType": null,
+            "isContentEditable": false,
+            "isFormSubmitControl": false,
+            "listId": null,
+            "pointerCursor": false,
+            "readOnly": false,
+            "required": false,
+            "tabIndex": 0
+          },
+          "eventId": "evt-pmtfdyexm-6",
+          "eventType": "mouseleave",
+          "isTrusted": true,
+          "key": null,
+          "metaKey": false,
+          "pageTitle": "",
+          "pageUrl": "http://127.0.0.1:8807/matrix.html",
+          "scrollDeltaX": null,
+          "scrollDeltaY": null,
+          "shiftKey": false,
+          "target": {
+            "accessibleName": "Services Section",
+            "ariaLabel": null,
+            "ariaLabelledBy": null,
+            "ariaRole": "button",
+            "autoId": null,
+            "className": null,
+            "cssSelector": "#services",
+            "dataAutoId": null,
+            "dataCy": null,
+            "dataQa": null,
+            "elementId": "",
+            "href": null,
+            "inIframe": false,
+            "inputType": null,
+            "name": null,
+            "placeholder": null,
+            "shadowDom": false,
+            "stableId": "services",
+            "tag": "DIV",
+            "testId": null,
+            "xPath": "//div[@id='services']"
+          },
+          "timestamp": 1788068732969,
+          "valueAfter": null,
+          "valueBefore": null
+        }
+      ],
+      "metadata": {
+        "captureOrigin": {
+          "frameId": 0,
+          "tabId": 636191009
+        },
+        "dwellMs": 609,
+        "evidenceReason": "reveal: aria flip aria-expanded false→true on joined element",
+        "hoverQualification": {
+          "anchorFacts": {
+            "anchorKey": "id:services",
+            "clickAnchorKey": "id:services",
+            "hoverReveal": false,
+            "resolution": "self",
+            "shaped": true
+          },
+          "evidenceClass": "reveal",
+          "evidenceReason": "reveal: aria flip aria-expanded false→true on joined element",
+          "factSummary": {
+            "domChangesInOwnedSet": 1,
+            "domChangesTotal": 2,
+            "networkRows": 0,
+            "newSurfacesJoined": 0,
+            "pointerPathEnters": 1
+          },
+          "verdict": "evidenced"
+        },
+        "lifecycleEndState": "completed",
+        "pointerPathDropped": 0,
+        "pointerPathEnters": [
+          {
+            "eventId": "evt-pmtfdyexm-4",
+            "target": {
+              "accessibleName": "Services Section",
+              "ariaLabel": null,
+              "ariaLabelledBy": null,
+              "ariaRole": "button",
+              "autoId": null,
+              "className": null,
+              "cssSelector": "#services",
+              "dataAutoId": null,
+              "dataCy": null,
+              "dataQa": null,
+              "elementId": "",
+              "href": null,
+              "inIframe": false,
+              "inputType": null,
+              "name": null,
+              "placeholder": null,
+              "shadowDom": false,
+              "stableId": "services",
+              "tag": "DIV",
+              "testId": null,
+              "xPath": "//div[@id='services']"
+            }
+          }
+        ],
+        "targetName": "Services Section",
+        "terminal": "left"
+      },
+      "startTime": 1788068732360,
+      "trigger": {
+        "accessibleName": "Services Section",
+        "ariaLabel": null,
+        "ariaLabelledBy": null,
+        "ariaRole": "button",
+        "autoId": null,
+        "className": null,
+        "cssSelector": "#services",
+        "dataAutoId": null,
+        "dataCy": null,
+        "dataQa": null,
+        "elementId": "",
+        "href": null,
+        "inIframe": false,
+        "inputType": null,
+        "name": null,
+        "placeholder": null,
+        "shadowDom": false,
+        "stableId": "services",
+        "tag": "DIV",
+        "testId": null,
+        "xPath": "//div[@id='services']"
+      },
+      "triggerEvent": {
+        "altKey": false,
+        "captureOrigin": {
+          "frameId": 0,
+          "tabId": 636191009
+        },
+        "captureSeq": 2715.2999999970198,
+        "checkedAfter": null,
+        "checkedBefore": null,
+        "clientX": 390,
+        "clientY": 17,
+        "code": null,
+        "ctrlKey": false,
+        "domContext": {
+          "ancestorClasses": [
+            "",
+            "",
+            ""
+          ],
+          "ancestorRoles": [
+            "nav",
+            "body",
+            "html"
+          ],
+          "ariaAutoComplete": null,
+          "ariaExpanded": false,
+          "ariaHasPopup": "true",
+          "clickHandler": false,
+          "disabled": false,
+          "formAction": null,
+          "formElementKey": null,
+          "formId": null,
+          "formMethod": null,
+          "hoverAnchorKey": "id:services",
+          "hoverAnchorResolution": "self",
+          "hoverClickAnchorKey": "id:services",
+          "inputType": null,
+          "isContentEditable": false,
+          "isFormSubmitControl": false,
+          "listId": null,
+          "pointerCursor": false,
+          "readOnly": false,
+          "required": false,
+          "tabIndex": 0
+        },
+        "eventId": "evt-pmtfdyexm-4",
+        "eventType": "mouseenter",
+        "isTrusted": true,
+        "key": null,
+        "metaKey": false,
+        "pageTitle": "",
+        "pageUrl": "http://127.0.0.1:8807/matrix.html",
+        "scrollDeltaX": null,
+        "scrollDeltaY": null,
+        "shiftKey": false,
+        "target": {
+          "accessibleName": "Services Section",
+          "ariaLabel": null,
+          "ariaLabelledBy": null,
+          "ariaRole": "button",
+          "autoId": null,
+          "className": null,
+          "cssSelector": "#services",
+          "dataAutoId": null,
+          "dataCy": null,
+          "dataQa": null,
+          "elementId": "",
+          "href": null,
+          "inIframe": false,
+          "inputType": null,
+          "name": null,
+          "placeholder": null,
+          "shadowDom": false,
+          "stableId": "services",
+          "tag": "DIV",
+          "testId": null,
+          "xPath": "//div[@id='services']"
+        },
+        "timestamp": 1788068732360,
+        "valueAfter": null,
+        "valueBefore": null
+      },
+      "type": "Hover"
+    },
+    {
+      "businessMeaning": "Unclassified on \"CQ Invalid Target\"",
+      "componentFramework": "Generic",
+      "componentType": "Generic",
+      "endState": "completed",
+      "endTime": 1788068733256,
+      "interactionId": "int-3",
+      "memberEvents": [
+        {
+          "altKey": false,
+          "captureOrigin": {
+            "frameId": 0,
+            "tabId": 636191009
+          },
+          "captureSeq": 3531.699999999255,
+          "checkedAfter": null,
+          "checkedBefore": null,
+          "clientX": null,
+          "clientY": null,
+          "code": null,
+          "ctrlKey": false,
+          "domContext": {
+            "ancestorClasses": [
+              "",
+              ""
+            ],
+            "ancestorRoles": [
+              "body",
+              "html"
+            ],
+            "ariaExpanded": null,
+            "ariaHasPopup": null,
+            "clickQualification": {
+              "causes": [
+                "aria-disabled"
+              ],
+              "facts": {
+                "ariaDisabled": true,
+                "disabledAttrNonNative": false,
+                "disabledNative": false,
+                "fieldsetDisabled": false,
+                "hitTarget": {
+                  "kind": "element",
+                  "liftStrategy": "raw",
+                  "lifted": false,
+                  "rawInteractiveShaped": true,
+                  "rawTag": "DIV"
+                },
+                "hitTest": {
+                  "checked": true,
+                  "miss": false
+                },
+                "inertSubtree": false,
+                "pointerEventsNone": false,
+                "zeroSizeLifted": false
+              },
+              "insufficient": false,
+              "verdict": "provably-invalid"
+            },
+            "disabled": true,
+            "inputType": null,
+            "isContentEditable": false,
+            "readOnly": false,
+            "required": false,
+            "tabIndex": null
+          },
+          "eventId": "evt-pmtfdyexm-10",
+          "eventType": "mousedown",
+          "isTrusted": true,
+          "key": null,
+          "metaKey": false,
+          "pageTitle": "",
+          "pageUrl": "",
+          "scrollDeltaX": null,
+          "scrollDeltaY": null,
+          "shiftKey": false,
+          "target": {
+            "accessibleName": "CQ Invalid Target",
+            "ariaLabel": null,
+            "ariaLabelledBy": null,
+            "ariaRole": "button",
+            "autoId": null,
+            "className": null,
+            "cssSelector": "#ariadis",
+            "dataAutoId": null,
+            "dataCy": null,
+            "dataQa": null,
+            "elementId": "",
+            "href": null,
+            "inIframe": false,
+            "inputType": null,
+            "name": null,
+            "placeholder": null,
+            "shadowDom": false,
+            "stableId": "ariadis",
+            "tag": "DIV",
+            "testId": null,
+            "xPath": "//div[@id='ariadis']"
+          },
+          "timestamp": 1788068733173,
+          "valueAfter": null,
+          "valueBefore": null
+        }
+      ],
+      "metadata": {
+        "actionabilityEvidence": false,
+        "captureOrigin": {
+          "frameId": 0,
+          "tabId": 636191009
+        },
+        "invalidityCauses": [
+          "aria-disabled"
+        ],
+        "pairedAtProjection": true,
+        "physicalEventType": "click",
+        "physicalEvents": [
+          "mousedown",
+          "click"
+        ],
+        "reason": "unclaimed-at-projection",
+        "recognized": false,
+        "targetName": "CQ Invalid Target",
+        "targetRole": "button",
+        "targetTag": "DIV"
+      },
+      "startTime": 1788068733256,
+      "trigger": {
+        "accessibleName": "CQ Invalid Target",
+        "ariaLabel": null,
+        "ariaLabelledBy": null,
+        "ariaRole": "button",
+        "autoId": null,
+        "className": null,
+        "cssSelector": "#ariadis",
+        "dataAutoId": null,
+        "dataCy": null,
+        "dataQa": null,
+        "elementId": "",
+        "href": null,
+        "inIframe": false,
+        "inputType": null,
+        "name": null,
+        "placeholder": null,
+        "shadowDom": false,
+        "stableId": "ariadis",
+        "tag": "DIV",
+        "testId": null,
+        "xPath": "//div[@id='ariadis']"
+      },
+      "triggerEvent": {
+        "altKey": false,
+        "captureOrigin": {
+          "frameId": 0,
+          "tabId": 636191009
+        },
+        "captureSeq": 3615.39999999851,
+        "checkedAfter": null,
+        "checkedBefore": null,
+        "clientX": null,
+        "clientY": null,
+        "code": null,
+        "ctrlKey": false,
+        "domContext": {
+          "ancestorClasses": [
+            "",
+            ""
+          ],
+          "ancestorRoles": [
+            "body",
+            "html"
+          ],
+          "ariaExpanded": null,
+          "ariaHasPopup": null,
+          "clickQualification": {
+            "causes": [
+              "aria-disabled"
+            ],
+            "facts": {
+              "ariaDisabled": true,
+              "disabledAttrNonNative": false,
+              "disabledNative": false,
+              "fieldsetDisabled": false,
+              "hitTarget": {
+                "kind": "element",
+                "liftStrategy": "raw",
+                "lifted": false,
+                "rawInteractiveShaped": true,
+                "rawTag": "DIV"
+              },
+              "hitTest": {
+                "checked": true,
+                "miss": false
+              },
+              "inertSubtree": false,
+              "pointerEventsNone": false,
+              "zeroSizeLifted": false
+            },
+            "insufficient": false,
+            "verdict": "provably-invalid"
+          },
+          "disabled": true,
+          "inputType": null,
+          "isContentEditable": false,
+          "readOnly": false,
+          "required": false,
+          "tabIndex": null
+        },
+        "eventId": "evt-pmtfdyexm-12",
+        "eventType": "click",
+        "isTrusted": true,
+        "key": null,
+        "metaKey": false,
+        "pageTitle": "",
+        "pageUrl": "",
+        "scrollDeltaX": null,
+        "scrollDeltaY": null,
+        "shiftKey": false,
+        "target": {
+          "accessibleName": "CQ Invalid Target",
+          "ariaLabel": null,
+          "ariaLabelledBy": null,
+          "ariaRole": "button",
+          "autoId": null,
+          "className": null,
+          "cssSelector": "#ariadis",
+          "dataAutoId": null,
+          "dataCy": null,
+          "dataQa": null,
+          "elementId": "",
+          "href": null,
+          "inIframe": false,
+          "inputType": null,
+          "name": null,
+          "placeholder": null,
+          "shadowDom": false,
+          "stableId": "ariadis",
+          "tag": "DIV",
+          "testId": null,
+          "xPath": "//div[@id='ariadis']"
+        },
+        "timestamp": 1788068733256,
+        "valueAfter": null,
+        "valueBefore": null
+      },
+      "type": "Unclassified"
+    }
+  ],
+  "cmdrunner_net_last_action": {},
+  "cmdrunner_net_observing_tabs": [],
+  "cmdrunner_pending_evidence": [],
+  "cmdrunner_pending_nav_docs": {},
+  "cmdrunner_recording_active": false,
+  "cmdrunner_runtime_snapshot": {
+    "dedupRecords": [
+      {
+        "elementKey": "id:ariadis",
+        "endTime": 1788068733256,
+        "interactionId": "int-2",
+        "metadata": {
+          "dwellMs": 287,
+          "lifecycleEndState": "completed",
+          "pointerPathDropped": 0,
+          "pointerPathEnters": [
+            {
+              "eventId": "evt-pmtfdyexm-8",
+              "target": {
+                "accessibleName": "CQ Invalid Target",
+                "ariaLabel": null,
+                "ariaLabelledBy": null,
+                "ariaRole": "button",
+                "autoId": null,
+                "className": null,
+                "cssSelector": "#ariadis",
+                "dataAutoId": null,
+                "dataCy": null,
+                "dataQa": null,
+                "elementId": "",
+                "href": null,
+                "inIframe": false,
+                "inputType": null,
+                "name": null,
+                "placeholder": null,
+                "shadowDom": false,
+                "stableId": "ariadis",
+                "tag": "DIV",
+                "testId": null,
+                "xPath": "//div[@id='ariadis']"
+              }
+            }
+          ],
+          "targetName": "CQ Invalid Target",
+          "terminal": "consumed-by-click"
+        },
+        "type": "Hover"
+      }
+    ],
+    "interactionCounter": 2,
+    "seenEventIds": [
+      "evt-pmtfdyexm-1",
+      "evt-pmtfdyexm-2",
+      "evt-pmtfdyexm-3",
+      "evt-pmtfdyexm-4",
+      "evt-pmtfdyexm-5",
+      "evt-pmtfdyexm-6",
+      "evt-pmtfdyexm-7",
+      "evt-pmtfdyexm-8",
+      "evt-pmtfdyexm-9",
+      "evt-pmtfdyexm-10",
+      "evt-pmtfdyexm-11",
+      "evt-pmtfdyexm-12"
+    ]
+  },
+  "cmdrunner_verification_result": {
+    "differences": [],
+    "ledgerSnapshot": [
+      {
+        "ancestorClasses": [
+          "",
+          "",
+          ""
+        ],
+        "ancestorRoles": [
+          "nav",
+          "body",
+          "html"
+        ],
+        "captureOrigin": {
+          "frameId": 0,
+          "tabId": 636191009
+        },
+        "captureSeq": 2715.2999999970198,
+        "claimType": "Hover",
+        "claimedBy": "int-1",
+        "clickQualification": null,
+        "disposition": "claimed",
+        "eventId": "evt-pmtfdyexm-4",
+        "eventType": "mouseenter",
+        "pageId": "pmtfdyexm",
+        "targetIdentity": {
+          "accessibleName": "Services Section",
+          "ariaLabel": null,
+          "ariaLabelledBy": null,
+          "ariaRole": "button",
+          "autoId": null,
+          "className": null,
+          "cssSelector": "#services",
+          "dataAutoId": null,
+          "dataCy": null,
+          "dataQa": null,
+          "elementId": "",
+          "href": null,
+          "inIframe": false,
+          "inputType": null,
+          "name": null,
+          "placeholder": null,
+          "shadowDom": false,
+          "stableId": "services",
+          "tag": "DIV",
+          "testId": null,
+          "xPath": "//div[@id='services']"
+        },
+        "targetName": "Services Section",
+        "targetRole": "button",
+        "targetTag": "DIV",
+        "timestamp": 1788068732360
+      },
+      {
+        "ancestorClasses": [
+          "",
+          ""
+        ],
+        "ancestorRoles": [
+          "body",
+          "html"
+        ],
+        "captureOrigin": {
+          "frameId": 0,
+          "tabId": 636191009
+        },
+        "captureSeq": 3327.2999999970198,
+        "claimType": "Hover",
+        "claimedBy": "int-2",
+        "clickQualification": null,
+        "disposition": "claimed",
+        "eventId": "evt-pmtfdyexm-8",
+        "eventType": "mouseenter",
+        "pageId": "pmtfdyexm",
+        "targetIdentity": {
+          "accessibleName": "CQ Invalid Target",
+          "ariaLabel": null,
+          "ariaLabelledBy": null,
+          "ariaRole": "button",
+          "autoId": null,
+          "className": null,
+          "cssSelector": "#ariadis",
+          "dataAutoId": null,
+          "dataCy": null,
+          "dataQa": null,
+          "elementId": "",
+          "href": null,
+          "inIframe": false,
+          "inputType": null,
+          "name": null,
+          "placeholder": null,
+          "shadowDom": false,
+          "stableId": "ariadis",
+          "tag": "DIV",
+          "testId": null,
+          "xPath": "//div[@id='ariadis']"
+        },
+        "targetName": "CQ Invalid Target",
+        "targetRole": "button",
+        "targetTag": "DIV",
+        "timestamp": 1788068732969
+      },
+      {
+        "ancestorClasses": [
+          "",
+          ""
+        ],
+        "ancestorRoles": [
+          "body",
+          "html"
+        ],
+        "captureOrigin": {
+          "frameId": 0,
+          "tabId": 636191009
+        },
+        "captureSeq": 3531.699999999255,
+        "clickQualification": null,
+        "disposition": "pending",
+        "eventId": "evt-pmtfdyexm-10",
+        "eventType": "mousedown",
+        "pageId": "pmtfdyexm",
+        "targetIdentity": {
+          "accessibleName": "CQ Invalid Target",
+          "ariaLabel": null,
+          "ariaLabelledBy": null,
+          "ariaRole": "button",
+          "autoId": null,
+          "className": null,
+          "cssSelector": "#ariadis",
+          "dataAutoId": null,
+          "dataCy": null,
+          "dataQa": null,
+          "elementId": "",
+          "href": null,
+          "inIframe": false,
+          "inputType": null,
+          "name": null,
+          "placeholder": null,
+          "shadowDom": false,
+          "stableId": "ariadis",
+          "tag": "DIV",
+          "testId": null,
+          "xPath": "//div[@id='ariadis']"
+        },
+        "targetName": "CQ Invalid Target",
+        "targetRole": "button",
+        "targetTag": "DIV",
+        "timestamp": 1788068733173
+      },
+      {
+        "ancestorClasses": [
+          "",
+          ""
+        ],
+        "ancestorRoles": [
+          "body",
+          "html"
+        ],
+        "captureOrigin": {
+          "frameId": 0,
+          "tabId": 636191009
+        },
+        "captureSeq": 3615.39999999851,
+        "clickQualification": {
+          "causes": [
+            "aria-disabled"
+          ],
+          "facts": {
+            "ariaDisabled": true,
+            "disabledAttrNonNative": false,
+            "disabledNative": false,
+            "fieldsetDisabled": false,
+            "hitTarget": {
+              "kind": "element",
+              "liftStrategy": "raw",
+              "lifted": false,
+              "rawInteractiveShaped": true,
+              "rawTag": "DIV"
+            },
+            "hitTest": {
+              "checked": true,
+              "miss": false
+            },
+            "inertSubtree": false,
+            "pointerEventsNone": false,
+            "zeroSizeLifted": false
+          },
+          "insufficient": false,
+          "verdict": "provably-invalid"
+        },
+        "disposition": "pending",
+        "eventId": "evt-pmtfdyexm-12",
+        "eventType": "click",
+        "pageId": "pmtfdyexm",
+        "targetIdentity": {
+          "accessibleName": "CQ Invalid Target",
+          "ariaLabel": null,
+          "ariaLabelledBy": null,
+          "ariaRole": "button",
+          "autoId": null,
+          "className": null,
+          "cssSelector": "#ariadis",
+          "dataAutoId": null,
+          "dataCy": null,
+          "dataQa": null,
+          "elementId": "",
+          "href": null,
+          "inIframe": false,
+          "inputType": null,
+          "name": null,
+          "placeholder": null,
+          "shadowDom": false,
+          "stableId": "ariadis",
+          "tag": "DIV",
+          "testId": null,
+          "xPath": "//div[@id='ariadis']"
+        },
+        "targetName": "CQ Invalid Target",
+        "targetRole": "button",
+        "targetTag": "DIV",
+        "timestamp": 1788068733256
+      }
+    ],
+    "match": true,
+    "projectedOutput": [
+      {
+        "behavioralEvidence": {
+          "applicationEvidence": {
+            "coarseMode": false,
+            "domChangeOverflow": 0,
+            "domChanges": [
+              {
+                "addedNodesCount": 0,
+                "attributeDeltas": {
+                  "aria-hidden": {
+                    "new": "false",
+                    "old": "true"
+                  },
+                  "style": {
+                    "new": "display: block;",
+                    "old": null
+                  }
+                },
+                "changedAttributes": [
+                  "style",
+                  "aria-hidden"
+                ],
+                "characterDataDelta": null,
+                "firstBatchIndex": 0,
+                "firstMutationAt": 0.6999999992549419,
+                "lastBatchIndex": 0,
+                "lastMutationAt": 0.6999999992549419,
+                "rawMutationCount": 2,
+                "removedNodesCount": 0,
+                "shadowContext": null,
+                "targetPath": "body > nav#appnav > div#flyout",
+                "targetTag": "div",
+                "types": [
+                  "attributes"
+                ]
+              },
+              {
+                "addedNodesCount": 0,
+                "attributeDeltas": {
+                  "aria-expanded": {
+                    "new": "true",
+                    "old": "false"
+                  }
+                },
+                "changedAttributes": [
+                  "aria-expanded"
+                ],
+                "characterDataDelta": null,
+                "firstBatchIndex": 0,
+                "firstMutationAt": 0.6999999992549419,
+                "lastBatchIndex": 0,
+                "lastMutationAt": 0.6999999992549419,
+                "rawMutationCount": 1,
+                "removedNodesCount": 0,
+                "shadowContext": null,
+                "targetPath": "body > nav#appnav > div#services",
+                "targetTag": "div",
+                "types": [
+                  "attributes"
+                ]
+              }
+            ],
+            "navigation": [],
+            "networkActivity": [],
+            "newSurfaces": [
+              {
+                "accessibleName": "Book Flight",
+                "ariaRole": "menu",
+                "batchIndex": 0,
+                "descendantCount": 1,
+                "emergence": "revealed",
+                "kind": "added",
+                "path": "body > nav#appnav > div#flyout",
+                "relativeTime": 0.6999999992549419,
+                "shadowContext": null,
+                "tagName": "div"
+              }
+            ],
+            "performanceCondition": {
+              "highChurnMode": false,
+              "longestBatchMs": 0.8000000007450581,
+              "mainThreadBlocked": false,
+              "totalBatches": 1
+            },
+            "removedSurfaces": [],
+            "visibilityChanges": [
+              {
+                "batchIndex": 0,
+                "newValue": "block",
+                "oldValue": "",
+                "path": "body > nav#appnav > div#flyout",
+                "property": "display",
+                "relativeTime": 0.6999999992549419
+              },
+              {
+                "batchIndex": 0,
+                "newValue": "false",
+                "oldValue": "true",
+                "path": "body > nav#appnav > div#flyout",
+                "property": "aria-hidden",
+                "relativeTime": 0.6999999992549419
+              }
+            ]
+          },
+          "frameId": "main",
+          "hoverQualification": {
+            "anchorFacts": {
+              "anchorKey": "id:services",
+              "clickAnchorKey": "id:services",
+              "hoverReveal": false,
+              "resolution": "self",
+              "shaped": true
+            },
+            "evidenceClass": "reveal",
+            "evidenceReason": "reveal: aria flip aria-expanded false→true on joined element",
+            "factSummary": {
+              "domChangesInOwnedSet": 1,
+              "domChangesTotal": 2,
+              "networkRows": 0,
+              "newSurfacesJoined": 0,
+              "pointerPathEnters": 1
+            },
+            "verdict": "evidenced"
+          },
+          "sourceEventId": "evt-pmtfdyexm-4",
+          "sourceEventType": "mouseenter",
+          "targetEvidence": {
+            "after": {
+              "ariaChecked": null,
+              "ariaExpanded": true,
+              "ariaPressed": null,
+              "capturedAt": 3632.099999997765,
+              "checked": null,
+              "childCount": 2,
+              "className": "",
+              "controlledValue": null,
+              "disabled": false,
+              "scrollLeft": null,
+              "scrollTop": null,
+              "selectedValues": null,
+              "textContent": "\n    Services Section\n    \n  ",
+              "value": "Services Section"
+            },
+            "before": null,
+            "focusMovement": {
+              "after": {
+                "accessibleName": "CQ Invalid Target",
+                "ariaRole": "button",
+                "tagName": "DIV"
+              },
+              "before": null,
+              "detectedAt": 3632.099999997765
+            },
+            "identity": {
+              "accessibleName": "Services Section",
+              "ariaLabel": null,
+              "ariaLabelledBy": null,
+              "ariaRole": "button",
+              "autoId": null,
+              "className": null,
+              "cssSelector": "#services",
+              "dataAutoId": null,
+              "dataCy": null,
+              "dataQa": null,
+              "elementId": "",
+              "href": null,
+              "inIframe": false,
+              "inputType": null,
+              "name": null,
+              "placeholder": null,
+              "shadowDom": false,
+              "stableId": "services",
+              "tag": "DIV",
+              "testId": null,
+              "xPath": "//div[@id='services']"
+            },
+            "identityCapturedAt": 2720.5
+          },
+          "window": {
+            "closedAt": 3632.2999999970198,
+            "durationMs": 911.7999999970198,
+            "endReason": "consequence-settled",
+            "openedAt": 2720.5,
+            "openedBatch": 0,
+            "stabilityTrace": [
+              {
+                "globalBatchCount": 0,
+                "msSinceLastMutation": 300,
+                "timestamp": 2720.699999999255
+              },
+              {
+                "globalBatchCount": 0,
+                "msSinceLastMutation": 0,
+                "timestamp": 2721.699999999255
+              },
+              {
+                "globalBatchCount": 0,
+                "msSinceLastMutation": 300,
+                "timestamp": 3021.89999999851
+              },
+              {
+                "globalBatchCount": 0,
+                "msSinceLastMutation": 300,
+                "timestamp": 3322.099999997765
+              },
+              {
+                "globalBatchCount": 0,
+                "msSinceLastMutation": 300,
+                "timestamp": 3632
+              },
+              {
+                "globalBatchCount": 0,
+                "msSinceLastMutation": 300,
+                "timestamp": 3632
+              }
+            ]
+          },
+          "windowId": "ev-evt-pmtfdyexm-4"
+        },
+        "businessMeaning": "Hover over \"Services Section\"",
+        "componentFramework": "Generic",
+        "componentType": "Generic",
+        "endState": "completed",
+        "endTime": 1788068732969,
+        "interactionId": "int-1",
+        "lifecycleId": "lc-1",
+        "memberEvents": [
+          {
+            "altKey": false,
+            "captureOrigin": {
+              "frameId": 0,
+              "tabId": 636191009
+            },
+            "captureSeq": 2715.2999999970198,
+            "checkedAfter": null,
+            "checkedBefore": null,
+            "clientX": 390,
+            "clientY": 17,
+            "code": null,
+            "ctrlKey": false,
+            "domContext": {
+              "ancestorClasses": [
+                "",
+                "",
+                ""
+              ],
+              "ancestorRoles": [
+                "nav",
+                "body",
+                "html"
+              ],
+              "ariaAutoComplete": null,
+              "ariaExpanded": false,
+              "ariaHasPopup": "true",
+              "clickHandler": false,
+              "disabled": false,
+              "formAction": null,
+              "formElementKey": null,
+              "formId": null,
+              "formMethod": null,
+              "hoverAnchorKey": "id:services",
+              "hoverAnchorResolution": "self",
+              "hoverClickAnchorKey": "id:services",
+              "inputType": null,
+              "isContentEditable": false,
+              "isFormSubmitControl": false,
+              "listId": null,
+              "pointerCursor": false,
+              "readOnly": false,
+              "required": false,
+              "tabIndex": 0
+            },
+            "eventId": "evt-pmtfdyexm-4",
+            "eventType": "mouseenter",
+            "isTrusted": true,
+            "key": null,
+            "metaKey": false,
+            "pageTitle": "",
+            "pageUrl": "http://127.0.0.1:8807/matrix.html",
+            "scrollDeltaX": null,
+            "scrollDeltaY": null,
+            "shiftKey": false,
+            "target": {
+              "accessibleName": "Services Section",
+              "ariaLabel": null,
+              "ariaLabelledBy": null,
+              "ariaRole": "button",
+              "autoId": null,
+              "className": null,
+              "cssSelector": "#services",
+              "dataAutoId": null,
+              "dataCy": null,
+              "dataQa": null,
+              "elementId": "",
+              "href": null,
+              "inIframe": false,
+              "inputType": null,
+              "name": null,
+              "placeholder": null,
+              "shadowDom": false,
+              "stableId": "services",
+              "tag": "DIV",
+              "testId": null,
+              "xPath": "//div[@id='services']"
+            },
+            "timestamp": 1788068732360,
+            "valueAfter": null,
+            "valueBefore": null
+          },
+          {
+            "altKey": false,
+            "captureOrigin": {
+              "frameId": 0,
+              "tabId": 636191009
+            },
+            "captureSeq": 3327.2999999970198,
+            "checkedAfter": null,
+            "checkedBefore": null,
+            "clientX": 390,
+            "clientY": 110,
+            "code": null,
+            "ctrlKey": false,
+            "domContext": {
+              "ancestorClasses": [
+                "",
+                "",
+                ""
+              ],
+              "ancestorRoles": [
+                "nav",
+                "body",
+                "html"
+              ],
+              "ariaAutoComplete": null,
+              "ariaExpanded": true,
+              "ariaHasPopup": "true",
+              "clickHandler": false,
+              "disabled": false,
+              "formAction": null,
+              "formElementKey": null,
+              "formId": null,
+              "formMethod": null,
+              "inputType": null,
+              "isContentEditable": false,
+              "isFormSubmitControl": false,
+              "listId": null,
+              "pointerCursor": false,
+              "readOnly": false,
+              "required": false,
+              "tabIndex": 0
+            },
+            "eventId": "evt-pmtfdyexm-6",
+            "eventType": "mouseleave",
+            "isTrusted": true,
+            "key": null,
+            "metaKey": false,
+            "pageTitle": "",
+            "pageUrl": "http://127.0.0.1:8807/matrix.html",
+            "scrollDeltaX": null,
+            "scrollDeltaY": null,
+            "shiftKey": false,
+            "target": {
+              "accessibleName": "Services Section",
+              "ariaLabel": null,
+              "ariaLabelledBy": null,
+              "ariaRole": "button",
+              "autoId": null,
+              "className": null,
+              "cssSelector": "#services",
+              "dataAutoId": null,
+              "dataCy": null,
+              "dataQa": null,
+              "elementId": "",
+              "href": null,
+              "inIframe": false,
+              "inputType": null,
+              "name": null,
+              "placeholder": null,
+              "shadowDom": false,
+              "stableId": "services",
+              "tag": "DIV",
+              "testId": null,
+              "xPath": "//div[@id='services']"
+            },
+            "timestamp": 1788068732969,
+            "valueAfter": null,
+            "valueBefore": null
+          }
+        ],
+        "metadata": {
+          "captureOrigin": {
+            "frameId": 0,
+            "tabId": 636191009
+          },
+          "dwellMs": 609,
+          "evidenceReason": "reveal: aria flip aria-expanded false→true on joined element",
+          "hoverQualification": {
+            "anchorFacts": {
+              "anchorKey": "id:services",
+              "clickAnchorKey": "id:services",
+              "hoverReveal": false,
+              "resolution": "self",
+              "shaped": true
+            },
+            "evidenceClass": "reveal",
+            "evidenceReason": "reveal: aria flip aria-expanded false→true on joined element",
+            "factSummary": {
+              "domChangesInOwnedSet": 1,
+              "domChangesTotal": 2,
+              "networkRows": 0,
+              "newSurfacesJoined": 0,
+              "pointerPathEnters": 1
+            },
+            "verdict": "evidenced"
+          },
+          "lifecycleEndState": "completed",
+          "pointerPathDropped": 0,
+          "pointerPathEnters": [
+            {
+              "eventId": "evt-pmtfdyexm-4",
+              "target": {
+                "accessibleName": "Services Section",
+                "ariaLabel": null,
+                "ariaLabelledBy": null,
+                "ariaRole": "button",
+                "autoId": null,
+                "className": null,
+                "cssSelector": "#services",
+                "dataAutoId": null,
+                "dataCy": null,
+                "dataQa": null,
+                "elementId": "",
+                "href": null,
+                "inIframe": false,
+                "inputType": null,
+                "name": null,
+                "placeholder": null,
+                "shadowDom": false,
+                "stableId": "services",
+                "tag": "DIV",
+                "testId": null,
+                "xPath": "//div[@id='services']"
+              }
+            }
+          ],
+          "targetName": "Services Section",
+          "terminal": "left"
+        },
+        "startTime": 1788068732360,
+        "trigger": {
+          "accessibleName": "Services Section",
+          "ariaLabel": null,
+          "ariaLabelledBy": null,
+          "ariaRole": "button",
+          "autoId": null,
+          "className": null,
+          "cssSelector": "#services",
+          "dataAutoId": null,
+          "dataCy": null,
+          "dataQa": null,
+          "elementId": "",
+          "href": null,
+          "inIframe": false,
+          "inputType": null,
+          "name": null,
+          "placeholder": null,
+          "shadowDom": false,
+          "stableId": "services",
+          "tag": "DIV",
+          "testId": null,
+          "xPath": "//div[@id='services']"
+        },
+        "triggerEvent": {
+          "altKey": false,
+          "captureOrigin": {
+            "frameId": 0,
+            "tabId": 636191009
+          },
+          "captureSeq": 2715.2999999970198,
+          "checkedAfter": null,
+          "checkedBefore": null,
+          "clientX": 390,
+          "clientY": 17,
+          "code": null,
+          "ctrlKey": false,
+          "domContext": {
+            "ancestorClasses": [
+              "",
+              "",
+              ""
+            ],
+            "ancestorRoles": [
+              "nav",
+              "body",
+              "html"
+            ],
+            "ariaAutoComplete": null,
+            "ariaExpanded": false,
+            "ariaHasPopup": "true",
+            "clickHandler": false,
+            "disabled": false,
+            "formAction": null,
+            "formElementKey": null,
+            "formId": null,
+            "formMethod": null,
+            "hoverAnchorKey": "id:services",
+            "hoverAnchorResolution": "self",
+            "hoverClickAnchorKey": "id:services",
+            "inputType": null,
+            "isContentEditable": false,
+            "isFormSubmitControl": false,
+            "listId": null,
+            "pointerCursor": false,
+            "readOnly": false,
+            "required": false,
+            "tabIndex": 0
+          },
+          "eventId": "evt-pmtfdyexm-4",
+          "eventType": "mouseenter",
+          "isTrusted": true,
+          "key": null,
+          "metaKey": false,
+          "pageTitle": "",
+          "pageUrl": "http://127.0.0.1:8807/matrix.html",
+          "scrollDeltaX": null,
+          "scrollDeltaY": null,
+          "shiftKey": false,
+          "target": {
+            "accessibleName": "Services Section",
+            "ariaLabel": null,
+            "ariaLabelledBy": null,
+            "ariaRole": "button",
+            "autoId": null,
+            "className": null,
+            "cssSelector": "#services",
+            "dataAutoId": null,
+            "dataCy": null,
+            "dataQa": null,
+            "elementId": "",
+            "href": null,
+            "inIframe": false,
+            "inputType": null,
+            "name": null,
+            "placeholder": null,
+            "shadowDom": false,
+            "stableId": "services",
+            "tag": "DIV",
+            "testId": null,
+            "xPath": "//div[@id='services']"
+          },
+          "timestamp": 1788068732360,
+          "valueAfter": null,
+          "valueBefore": null
+        },
+        "type": "Hover"
+      },
+      {
+        "behavioralEvidence": {
+          "applicationEvidence": {
+            "coarseMode": false,
+            "domChangeOverflow": 0,
+            "domChanges": [
+              {
+                "addedNodesCount": 0,
+                "attributeDeltas": {
+                  "aria-hidden": {
+                    "new": "false",
+                    "old": "true"
+                  },
+                  "style": {
+                    "new": "display: block;",
+                    "old": null
+                  }
+                },
+                "changedAttributes": [
+                  "style",
+                  "aria-hidden"
+                ],
+                "characterDataDelta": null,
+                "firstBatchIndex": 0,
+                "firstMutationAt": 0.6999999992549419,
+                "lastBatchIndex": 0,
+                "lastMutationAt": 0.6999999992549419,
+                "rawMutationCount": 2,
+                "removedNodesCount": 0,
+                "shadowContext": null,
+                "targetPath": "body > nav#appnav > div#flyout",
+                "targetTag": "div",
+                "types": [
+                  "attributes"
+                ]
+              },
+              {
+                "addedNodesCount": 0,
+                "attributeDeltas": {
+                  "aria-expanded": {
+                    "new": "true",
+                    "old": "false"
+                  }
+                },
+                "changedAttributes": [
+                  "aria-expanded"
+                ],
+                "characterDataDelta": null,
+                "firstBatchIndex": 0,
+                "firstMutationAt": 0.6999999992549419,
+                "lastBatchIndex": 0,
+                "lastMutationAt": 0.6999999992549419,
+                "rawMutationCount": 1,
+                "removedNodesCount": 0,
+                "shadowContext": null,
+                "targetPath": "body > nav#appnav > div#services",
+                "targetTag": "div",
+                "types": [
+                  "attributes"
+                ]
+              }
+            ],
+            "navigation": [],
+            "networkActivity": [],
+            "newSurfaces": [
+              {
+                "accessibleName": "Book Flight",
+                "ariaRole": "menu",
+                "batchIndex": 0,
+                "descendantCount": 1,
+                "emergence": "revealed",
+                "kind": "added",
+                "path": "body > nav#appnav > div#flyout",
+                "relativeTime": 0.6999999992549419,
+                "shadowContext": null,
+                "tagName": "div"
+              }
+            ],
+            "performanceCondition": {
+              "highChurnMode": false,
+              "longestBatchMs": 0.8000000007450581,
+              "mainThreadBlocked": false,
+              "totalBatches": 1
+            },
+            "removedSurfaces": [],
+            "visibilityChanges": [
+              {
+                "batchIndex": 0,
+                "newValue": "block",
+                "oldValue": "",
+                "path": "body > nav#appnav > div#flyout",
+                "property": "display",
+                "relativeTime": 0.6999999992549419
+              },
+              {
+                "batchIndex": 0,
+                "newValue": "false",
+                "oldValue": "true",
+                "path": "body > nav#appnav > div#flyout",
+                "property": "aria-hidden",
+                "relativeTime": 0.6999999992549419
+              }
+            ]
+          },
+          "frameId": "main",
+          "hoverQualification": {
+            "anchorFacts": {
+              "anchorKey": "id:ariadis",
+              "clickAnchorKey": "id:ariadis",
+              "hoverReveal": false,
+              "resolution": "self",
+              "shaped": true
+            },
+            "evidenceClass": null,
+            "evidenceReason": "gesture-only: no target-local consequence in enter window (mutations unjoined)",
+            "factSummary": {
+              "domChangesInOwnedSet": 0,
+              "domChangesTotal": 2,
+              "networkRows": 0,
+              "newSurfacesJoined": 0,
+              "pointerPathEnters": 0
+            },
+            "verdict": "gesture-only"
+          },
+          "sourceEventId": "evt-pmtfdyexm-8",
+          "sourceEventType": "mouseenter",
+          "targetEvidence": {
+            "after": {
+              "ariaChecked": null,
+              "ariaExpanded": null,
+              "ariaPressed": null,
+              "capturedAt": 3919.2999999970198,
+              "checked": null,
+              "childCount": 0,
+              "className": "",
+              "controlledValue": null,
+              "disabled": false,
+              "scrollLeft": null,
+              "scrollTop": null,
+              "selectedValues": null,
+              "textContent": "CQ Invalid Target",
+              "value": null
+            },
+            "before": null,
+            "focusMovement": {
+              "after": {
+                "accessibleName": "CQ Invalid Target",
+                "ariaRole": "button",
+                "tagName": "DIV"
+              },
+              "before": null,
+              "detectedAt": 3919.5
+            },
+            "identity": {
+              "accessibleName": "CQ Invalid Target",
+              "ariaLabel": null,
+              "ariaLabelledBy": null,
+              "ariaRole": "button",
+              "autoId": null,
+              "className": null,
+              "cssSelector": "#ariadis",
+              "dataAutoId": null,
+              "dataCy": null,
+              "dataQa": null,
+              "elementId": "",
+              "href": null,
+              "inIframe": false,
+              "inputType": null,
+              "name": null,
+              "placeholder": null,
+              "shadowDom": false,
+              "stableId": "ariadis",
+              "tag": "DIV",
+              "testId": null,
+              "xPath": "//div[@id='ariadis']"
+            },
+            "identityCapturedAt": 3329.699999999255
+          },
+          "window": {
+            "closedAt": 3919.699999999255,
+            "durationMs": 590,
+            "endReason": "consequence-settled",
+            "openedAt": 3329.699999999255,
+            "openedBatch": 1,
+            "stabilityTrace": [
+              {
+                "globalBatchCount": 0,
+                "msSinceLastMutation": 300,
+                "timestamp": 3329.7999999970198
+              },
+              {
+                "globalBatchCount": 0,
+                "msSinceLastMutation": 300,
+                "timestamp": 3919.099999997765
+              },
+              {
+                "globalBatchCount": 0,
+                "msSinceLastMutation": 300,
+                "timestamp": 3919.099999997765
+              }
+            ]
+          },
+          "windowId": "ev-evt-pmtfdyexm-8"
+        },
+        "businessMeaning": "Hover over \"CQ Invalid Target\"",
+        "componentFramework": "Generic",
+        "componentType": "Generic",
+        "endState": "completed",
+        "endTime": 1788068733256,
+        "interactionId": "int-2",
+        "lifecycleId": "lc-2",
+        "memberEvents": [
+          {
+            "altKey": false,
+            "captureOrigin": {
+              "frameId": 0,
+              "tabId": 636191009
+            },
+            "captureSeq": 3327.2999999970198,
+            "checkedAfter": null,
+            "checkedBefore": null,
+            "clientX": 390,
+            "clientY": 110,
+            "code": null,
+            "ctrlKey": false,
+            "domContext": {
+              "ancestorClasses": [
+                "",
+                ""
+              ],
+              "ancestorRoles": [
+                "body",
+                "html"
+              ],
+              "ariaAutoComplete": null,
+              "ariaExpanded": null,
+              "ariaHasPopup": null,
+              "clickHandler": false,
+              "disabled": true,
+              "formAction": null,
+              "formElementKey": null,
+              "formId": null,
+              "formMethod": null,
+              "hoverAnchorKey": "id:ariadis",
+              "hoverAnchorResolution": "self",
+              "hoverClickAnchorKey": "id:ariadis",
+              "inputType": null,
+              "isContentEditable": false,
+              "isFormSubmitControl": false,
+              "listId": null,
+              "pointerCursor": false,
+              "readOnly": false,
+              "required": false,
+              "tabIndex": 0
+            },
+            "eventId": "evt-pmtfdyexm-8",
+            "eventType": "mouseenter",
+            "isTrusted": true,
+            "key": null,
+            "metaKey": false,
+            "pageTitle": "",
+            "pageUrl": "http://127.0.0.1:8807/matrix.html",
+            "scrollDeltaX": null,
+            "scrollDeltaY": null,
+            "shiftKey": false,
+            "target": {
+              "accessibleName": "CQ Invalid Target",
+              "ariaLabel": null,
+              "ariaLabelledBy": null,
+              "ariaRole": "button",
+              "autoId": null,
+              "className": null,
+              "cssSelector": "#ariadis",
+              "dataAutoId": null,
+              "dataCy": null,
+              "dataQa": null,
+              "elementId": "",
+              "href": null,
+              "inIframe": false,
+              "inputType": null,
+              "name": null,
+              "placeholder": null,
+              "shadowDom": false,
+              "stableId": "ariadis",
+              "tag": "DIV",
+              "testId": null,
+              "xPath": "//div[@id='ariadis']"
+            },
+            "timestamp": 1788068732969,
+            "valueAfter": null,
+            "valueBefore": null
+          }
+        ],
+        "metadata": {
+          "captureOrigin": {
+            "frameId": 0,
+            "tabId": 636191009
+          },
+          "dwellMs": 287,
+          "evidenceReason": "gesture-only: no target-local consequence in enter window (mutations unjoined)",
+          "hoverQualification": {
+            "anchorFacts": {
+              "anchorKey": "id:ariadis",
+              "clickAnchorKey": "id:ariadis",
+              "hoverReveal": false,
+              "resolution": "self",
+              "shaped": true
+            },
+            "evidenceClass": null,
+            "evidenceReason": "gesture-only: no target-local consequence in enter window (mutations unjoined)",
+            "factSummary": {
+              "domChangesInOwnedSet": 0,
+              "domChangesTotal": 2,
+              "networkRows": 0,
+              "newSurfacesJoined": 0,
+              "pointerPathEnters": 0
+            },
+            "verdict": "gesture-only"
+          },
+          "lifecycleEndState": "completed",
+          "pointerPathDropped": 0,
+          "pointerPathEnters": [
+            {
+              "eventId": "evt-pmtfdyexm-8",
+              "target": {
+                "accessibleName": "CQ Invalid Target",
+                "ariaLabel": null,
+                "ariaLabelledBy": null,
+                "ariaRole": "button",
+                "autoId": null,
+                "className": null,
+                "cssSelector": "#ariadis",
+                "dataAutoId": null,
+                "dataCy": null,
+                "dataQa": null,
+                "elementId": "",
+                "href": null,
+                "inIframe": false,
+                "inputType": null,
+                "name": null,
+                "placeholder": null,
+                "shadowDom": false,
+                "stableId": "ariadis",
+                "tag": "DIV",
+                "testId": null,
+                "xPath": "//div[@id='ariadis']"
+              }
+            }
+          ],
+          "targetName": "CQ Invalid Target",
+          "terminal": "consumed-by-click"
+        },
+        "startTime": 1788068732969,
+        "trigger": {
+          "accessibleName": "CQ Invalid Target",
+          "ariaLabel": null,
+          "ariaLabelledBy": null,
+          "ariaRole": "button",
+          "autoId": null,
+          "className": null,
+          "cssSelector": "#ariadis",
+          "dataAutoId": null,
+          "dataCy": null,
+          "dataQa": null,
+          "elementId": "",
+          "href": null,
+          "inIframe": false,
+          "inputType": null,
+          "name": null,
+          "placeholder": null,
+          "shadowDom": false,
+          "stableId": "ariadis",
+          "tag": "DIV",
+          "testId": null,
+          "xPath": "//div[@id='ariadis']"
+        },
+        "triggerEvent": {
+          "altKey": false,
+          "captureOrigin": {
+            "frameId": 0,
+            "tabId": 636191009
+          },
+          "captureSeq": 3327.2999999970198,
+          "checkedAfter": null,
+          "checkedBefore": null,
+          "clientX": 390,
+          "clientY": 110,
+          "code": null,
+          "ctrlKey": false,
+          "domContext": {
+            "ancestorClasses": [
+              "",
+              ""
+            ],
+            "ancestorRoles": [
+              "body",
+              "html"
+            ],
+            "ariaAutoComplete": null,
+            "ariaExpanded": null,
+            "ariaHasPopup": null,
+            "clickHandler": false,
+            "disabled": true,
+            "formAction": null,
+            "formElementKey": null,
+            "formId": null,
+            "formMethod": null,
+            "hoverAnchorKey": "id:ariadis",
+            "hoverAnchorResolution": "self",
+            "hoverClickAnchorKey": "id:ariadis",
+            "inputType": null,
+            "isContentEditable": false,
+            "isFormSubmitControl": false,
+            "listId": null,
+            "pointerCursor": false,
+            "readOnly": false,
+            "required": false,
+            "tabIndex": 0
+          },
+          "eventId": "evt-pmtfdyexm-8",
+          "eventType": "mouseenter",
+          "isTrusted": true,
+          "key": null,
+          "metaKey": false,
+          "pageTitle": "",
+          "pageUrl": "http://127.0.0.1:8807/matrix.html",
+          "scrollDeltaX": null,
+          "scrollDeltaY": null,
+          "shiftKey": false,
+          "target": {
+            "accessibleName": "CQ Invalid Target",
+            "ariaLabel": null,
+            "ariaLabelledBy": null,
+            "ariaRole": "button",
+            "autoId": null,
+            "className": null,
+            "cssSelector": "#ariadis",
+            "dataAutoId": null,
+            "dataCy": null,
+            "dataQa": null,
+            "elementId": "",
+            "href": null,
+            "inIframe": false,
+            "inputType": null,
+            "name": null,
+            "placeholder": null,
+            "shadowDom": false,
+            "stableId": "ariadis",
+            "tag": "DIV",
+            "testId": null,
+            "xPath": "//div[@id='ariadis']"
+          },
+          "timestamp": 1788068732969,
+          "valueAfter": null,
+          "valueBefore": null
+        },
+        "type": "Hover"
+      },
+      {
+        "businessMeaning": "Unclassified on \"CQ Invalid Target\"",
+        "componentFramework": "Generic",
+        "componentType": "Generic",
+        "endState": "completed",
+        "endTime": 1788068733256,
+        "interactionId": "int-3",
+        "memberEvents": [
+          {
+            "altKey": false,
+            "captureOrigin": {
+              "frameId": 0,
+              "tabId": 636191009
+            },
+            "captureSeq": 3531.699999999255,
+            "checkedAfter": null,
+            "checkedBefore": null,
+            "clientX": null,
+            "clientY": null,
+            "code": null,
+            "ctrlKey": false,
+            "domContext": {
+              "ancestorClasses": [
+                "",
+                ""
+              ],
+              "ancestorRoles": [
+                "body",
+                "html"
+              ],
+              "ariaExpanded": null,
+              "ariaHasPopup": null,
+              "clickQualification": {
+                "causes": [
+                  "aria-disabled"
+                ],
+                "facts": {
+                  "ariaDisabled": true,
+                  "disabledAttrNonNative": false,
+                  "disabledNative": false,
+                  "fieldsetDisabled": false,
+                  "hitTarget": {
+                    "kind": "element",
+                    "liftStrategy": "raw",
+                    "lifted": false,
+                    "rawInteractiveShaped": true,
+                    "rawTag": "DIV"
+                  },
+                  "hitTest": {
+                    "checked": true,
+                    "miss": false
+                  },
+                  "inertSubtree": false,
+                  "pointerEventsNone": false,
+                  "zeroSizeLifted": false
+                },
+                "insufficient": false,
+                "verdict": "provably-invalid"
+              },
+              "disabled": true,
+              "inputType": null,
+              "isContentEditable": false,
+              "readOnly": false,
+              "required": false,
+              "tabIndex": null
+            },
+            "eventId": "evt-pmtfdyexm-10",
+            "eventType": "mousedown",
+            "isTrusted": true,
+            "key": null,
+            "metaKey": false,
+            "pageTitle": "",
+            "pageUrl": "",
+            "scrollDeltaX": null,
+            "scrollDeltaY": null,
+            "shiftKey": false,
+            "target": {
+              "accessibleName": "CQ Invalid Target",
+              "ariaLabel": null,
+              "ariaLabelledBy": null,
+              "ariaRole": "button",
+              "autoId": null,
+              "className": null,
+              "cssSelector": "#ariadis",
+              "dataAutoId": null,
+              "dataCy": null,
+              "dataQa": null,
+              "elementId": "",
+              "href": null,
+              "inIframe": false,
+              "inputType": null,
+              "name": null,
+              "placeholder": null,
+              "shadowDom": false,
+              "stableId": "ariadis",
+              "tag": "DIV",
+              "testId": null,
+              "xPath": "//div[@id='ariadis']"
+            },
+            "timestamp": 1788068733173,
+            "valueAfter": null,
+            "valueBefore": null
+          }
+        ],
+        "metadata": {
+          "actionabilityEvidence": false,
+          "captureOrigin": {
+            "frameId": 0,
+            "tabId": 636191009
+          },
+          "invalidityCauses": [
+            "aria-disabled"
+          ],
+          "pairedAtProjection": true,
+          "physicalEventType": "click",
+          "physicalEvents": [
+            "mousedown",
+            "click"
+          ],
+          "reason": "unclaimed-at-projection",
+          "recognized": false,
+          "targetName": "CQ Invalid Target",
+          "targetRole": "button",
+          "targetTag": "DIV"
+        },
+        "startTime": 1788068733256,
+        "trigger": {
+          "accessibleName": "CQ Invalid Target",
+          "ariaLabel": null,
+          "ariaLabelledBy": null,
+          "ariaRole": "button",
+          "autoId": null,
+          "className": null,
+          "cssSelector": "#ariadis",
+          "dataAutoId": null,
+          "dataCy": null,
+          "dataQa": null,
+          "elementId": "",
+          "href": null,
+          "inIframe": false,
+          "inputType": null,
+          "name": null,
+          "placeholder": null,
+          "shadowDom": false,
+          "stableId": "ariadis",
+          "tag": "DIV",
+          "testId": null,
+          "xPath": "//div[@id='ariadis']"
+        },
+        "triggerEvent": {
+          "altKey": false,
+          "captureOrigin": {
+            "frameId": 0,
+            "tabId": 636191009
+          },
+          "captureSeq": 3615.39999999851,
+          "checkedAfter": null,
+          "checkedBefore": null,
+          "clientX": null,
+          "clientY": null,
+          "code": null,
+          "ctrlKey": false,
+          "domContext": {
+            "ancestorClasses": [
+              "",
+              ""
+            ],
+            "ancestorRoles": [
+              "body",
+              "html"
+            ],
+            "ariaExpanded": null,
+            "ariaHasPopup": null,
+            "clickQualification": {
+              "causes": [
+                "aria-disabled"
+              ],
+              "facts": {
+                "ariaDisabled": true,
+                "disabledAttrNonNative": false,
+                "disabledNative": false,
+                "fieldsetDisabled": false,
+                "hitTarget": {
+                  "kind": "element",
+                  "liftStrategy": "raw",
+                  "lifted": false,
+                  "rawInteractiveShaped": true,
+                  "rawTag": "DIV"
+                },
+                "hitTest": {
+                  "checked": true,
+                  "miss": false
+                },
+                "inertSubtree": false,
+                "pointerEventsNone": false,
+                "zeroSizeLifted": false
+              },
+              "insufficient": false,
+              "verdict": "provably-invalid"
+            },
+            "disabled": true,
+            "inputType": null,
+            "isContentEditable": false,
+            "readOnly": false,
+            "required": false,
+            "tabIndex": null
+          },
+          "eventId": "evt-pmtfdyexm-12",
+          "eventType": "click",
+          "isTrusted": true,
+          "key": null,
+          "metaKey": false,
+          "pageTitle": "",
+          "pageUrl": "",
+          "scrollDeltaX": null,
+          "scrollDeltaY": null,
+          "shiftKey": false,
+          "target": {
+            "accessibleName": "CQ Invalid Target",
+            "ariaLabel": null,
+            "ariaLabelledBy": null,
+            "ariaRole": "button",
+            "autoId": null,
+            "className": null,
+            "cssSelector": "#ariadis",
+            "dataAutoId": null,
+            "dataCy": null,
+            "dataQa": null,
+            "elementId": "",
+            "href": null,
+            "inIframe": false,
+            "inputType": null,
+            "name": null,
+            "placeholder": null,
+            "shadowDom": false,
+            "stableId": "ariadis",
+            "tag": "DIV",
+            "testId": null,
+            "xPath": "//div[@id='ariadis']"
+          },
+          "timestamp": 1788068733256,
+          "valueAfter": null,
+          "valueBefore": null
+        },
+        "type": "Unclassified"
+      }
+    ],
+    "runtimeOutput": [
+      {
+        "behavioralEvidence": {
+          "applicationEvidence": {
+            "coarseMode": false,
+            "domChangeOverflow": 0,
+            "domChanges": [
+              {
+                "addedNodesCount": 0,
+                "attributeDeltas": {
+                  "aria-hidden": {
+                    "new": "false",
+                    "old": "true"
+                  },
+                  "style": {
+                    "new": "display: block;",
+                    "old": null
+                  }
+                },
+                "changedAttributes": [
+                  "style",
+                  "aria-hidden"
+                ],
+                "characterDataDelta": null,
+                "firstBatchIndex": 0,
+                "firstMutationAt": 0.6999999992549419,
+                "lastBatchIndex": 0,
+                "lastMutationAt": 0.6999999992549419,
+                "rawMutationCount": 2,
+                "removedNodesCount": 0,
+                "shadowContext": null,
+                "targetPath": "body > nav#appnav > div#flyout",
+                "targetTag": "div",
+                "types": [
+                  "attributes"
+                ]
+              },
+              {
+                "addedNodesCount": 0,
+                "attributeDeltas": {
+                  "aria-expanded": {
+                    "new": "true",
+                    "old": "false"
+                  }
+                },
+                "changedAttributes": [
+                  "aria-expanded"
+                ],
+                "characterDataDelta": null,
+                "firstBatchIndex": 0,
+                "firstMutationAt": 0.6999999992549419,
+                "lastBatchIndex": 0,
+                "lastMutationAt": 0.6999999992549419,
+                "rawMutationCount": 1,
+                "removedNodesCount": 0,
+                "shadowContext": null,
+                "targetPath": "body > nav#appnav > div#services",
+                "targetTag": "div",
+                "types": [
+                  "attributes"
+                ]
+              }
+            ],
+            "navigation": [],
+            "networkActivity": [],
+            "newSurfaces": [
+              {
+                "accessibleName": "Book Flight",
+                "ariaRole": "menu",
+                "batchIndex": 0,
+                "descendantCount": 1,
+                "emergence": "revealed",
+                "kind": "added",
+                "path": "body > nav#appnav > div#flyout",
+                "relativeTime": 0.6999999992549419,
+                "shadowContext": null,
+                "tagName": "div"
+              }
+            ],
+            "performanceCondition": {
+              "highChurnMode": false,
+              "longestBatchMs": 0.8000000007450581,
+              "mainThreadBlocked": false,
+              "totalBatches": 1
+            },
+            "removedSurfaces": [],
+            "visibilityChanges": [
+              {
+                "batchIndex": 0,
+                "newValue": "block",
+                "oldValue": "",
+                "path": "body > nav#appnav > div#flyout",
+                "property": "display",
+                "relativeTime": 0.6999999992549419
+              },
+              {
+                "batchIndex": 0,
+                "newValue": "false",
+                "oldValue": "true",
+                "path": "body > nav#appnav > div#flyout",
+                "property": "aria-hidden",
+                "relativeTime": 0.6999999992549419
+              }
+            ]
+          },
+          "frameId": "main",
+          "hoverQualification": {
+            "anchorFacts": {
+              "anchorKey": "id:services",
+              "clickAnchorKey": "id:services",
+              "hoverReveal": false,
+              "resolution": "self",
+              "shaped": true
+            },
+            "evidenceClass": "reveal",
+            "evidenceReason": "reveal: aria flip aria-expanded false→true on joined element",
+            "factSummary": {
+              "domChangesInOwnedSet": 1,
+              "domChangesTotal": 2,
+              "networkRows": 0,
+              "newSurfacesJoined": 0,
+              "pointerPathEnters": 1
+            },
+            "verdict": "evidenced"
+          },
+          "sourceEventId": "evt-pmtfdyexm-4",
+          "sourceEventType": "mouseenter",
+          "targetEvidence": {
+            "after": {
+              "ariaChecked": null,
+              "ariaExpanded": true,
+              "ariaPressed": null,
+              "capturedAt": 3632.099999997765,
+              "checked": null,
+              "childCount": 2,
+              "className": "",
+              "controlledValue": null,
+              "disabled": false,
+              "scrollLeft": null,
+              "scrollTop": null,
+              "selectedValues": null,
+              "textContent": "\n    Services Section\n    \n  ",
+              "value": "Services Section"
+            },
+            "before": null,
+            "focusMovement": {
+              "after": {
+                "accessibleName": "CQ Invalid Target",
+                "ariaRole": "button",
+                "tagName": "DIV"
+              },
+              "before": null,
+              "detectedAt": 3632.099999997765
+            },
+            "identity": {
+              "accessibleName": "Services Section",
+              "ariaLabel": null,
+              "ariaLabelledBy": null,
+              "ariaRole": "button",
+              "autoId": null,
+              "className": null,
+              "cssSelector": "#services",
+              "dataAutoId": null,
+              "dataCy": null,
+              "dataQa": null,
+              "elementId": "",
+              "href": null,
+              "inIframe": false,
+              "inputType": null,
+              "name": null,
+              "placeholder": null,
+              "shadowDom": false,
+              "stableId": "services",
+              "tag": "DIV",
+              "testId": null,
+              "xPath": "//div[@id='services']"
+            },
+            "identityCapturedAt": 2720.5
+          },
+          "window": {
+            "closedAt": 3632.2999999970198,
+            "durationMs": 911.7999999970198,
+            "endReason": "consequence-settled",
+            "openedAt": 2720.5,
+            "openedBatch": 0,
+            "stabilityTrace": [
+              {
+                "globalBatchCount": 0,
+                "msSinceLastMutation": 300,
+                "timestamp": 2720.699999999255
+              },
+              {
+                "globalBatchCount": 0,
+                "msSinceLastMutation": 0,
+                "timestamp": 2721.699999999255
+              },
+              {
+                "globalBatchCount": 0,
+                "msSinceLastMutation": 300,
+                "timestamp": 3021.89999999851
+              },
+              {
+                "globalBatchCount": 0,
+                "msSinceLastMutation": 300,
+                "timestamp": 3322.099999997765
+              },
+              {
+                "globalBatchCount": 0,
+                "msSinceLastMutation": 300,
+                "timestamp": 3632
+              },
+              {
+                "globalBatchCount": 0,
+                "msSinceLastMutation": 300,
+                "timestamp": 3632
+              }
+            ]
+          },
+          "windowId": "ev-evt-pmtfdyexm-4"
+        },
+        "businessMeaning": "Hover over \"Services Section\"",
+        "componentFramework": "Generic",
+        "componentType": "Generic",
+        "endState": "completed",
+        "endTime": 1788068732969,
+        "interactionId": "int-1",
+        "lifecycleId": "lc-1",
+        "memberEvents": [
+          {
+            "altKey": false,
+            "captureOrigin": {
+              "frameId": 0,
+              "tabId": 636191009
+            },
+            "captureSeq": 2715.2999999970198,
+            "checkedAfter": null,
+            "checkedBefore": null,
+            "clientX": 390,
+            "clientY": 17,
+            "code": null,
+            "ctrlKey": false,
+            "domContext": {
+              "ancestorClasses": [
+                "",
+                "",
+                ""
+              ],
+              "ancestorRoles": [
+                "nav",
+                "body",
+                "html"
+              ],
+              "ariaAutoComplete": null,
+              "ariaExpanded": false,
+              "ariaHasPopup": "true",
+              "clickHandler": false,
+              "disabled": false,
+              "formAction": null,
+              "formElementKey": null,
+              "formId": null,
+              "formMethod": null,
+              "hoverAnchorKey": "id:services",
+              "hoverAnchorResolution": "self",
+              "hoverClickAnchorKey": "id:services",
+              "inputType": null,
+              "isContentEditable": false,
+              "isFormSubmitControl": false,
+              "listId": null,
+              "pointerCursor": false,
+              "readOnly": false,
+              "required": false,
+              "tabIndex": 0
+            },
+            "eventId": "evt-pmtfdyexm-4",
+            "eventType": "mouseenter",
+            "isTrusted": true,
+            "key": null,
+            "metaKey": false,
+            "pageTitle": "",
+            "pageUrl": "http://127.0.0.1:8807/matrix.html",
+            "scrollDeltaX": null,
+            "scrollDeltaY": null,
+            "shiftKey": false,
+            "target": {
+              "accessibleName": "Services Section",
+              "ariaLabel": null,
+              "ariaLabelledBy": null,
+              "ariaRole": "button",
+              "autoId": null,
+              "className": null,
+              "cssSelector": "#services",
+              "dataAutoId": null,
+              "dataCy": null,
+              "dataQa": null,
+              "elementId": "",
+              "href": null,
+              "inIframe": false,
+              "inputType": null,
+              "name": null,
+              "placeholder": null,
+              "shadowDom": false,
+              "stableId": "services",
+              "tag": "DIV",
+              "testId": null,
+              "xPath": "//div[@id='services']"
+            },
+            "timestamp": 1788068732360,
+            "valueAfter": null,
+            "valueBefore": null
+          },
+          {
+            "altKey": false,
+            "captureOrigin": {
+              "frameId": 0,
+              "tabId": 636191009
+            },
+            "captureSeq": 3327.2999999970198,
+            "checkedAfter": null,
+            "checkedBefore": null,
+            "clientX": 390,
+            "clientY": 110,
+            "code": null,
+            "ctrlKey": false,
+            "domContext": {
+              "ancestorClasses": [
+                "",
+                "",
+                ""
+              ],
+              "ancestorRoles": [
+                "nav",
+                "body",
+                "html"
+              ],
+              "ariaAutoComplete": null,
+              "ariaExpanded": true,
+              "ariaHasPopup": "true",
+              "clickHandler": false,
+              "disabled": false,
+              "formAction": null,
+              "formElementKey": null,
+              "formId": null,
+              "formMethod": null,
+              "inputType": null,
+              "isContentEditable": false,
+              "isFormSubmitControl": false,
+              "listId": null,
+              "pointerCursor": false,
+              "readOnly": false,
+              "required": false,
+              "tabIndex": 0
+            },
+            "eventId": "evt-pmtfdyexm-6",
+            "eventType": "mouseleave",
+            "isTrusted": true,
+            "key": null,
+            "metaKey": false,
+            "pageTitle": "",
+            "pageUrl": "http://127.0.0.1:8807/matrix.html",
+            "scrollDeltaX": null,
+            "scrollDeltaY": null,
+            "shiftKey": false,
+            "target": {
+              "accessibleName": "Services Section",
+              "ariaLabel": null,
+              "ariaLabelledBy": null,
+              "ariaRole": "button",
+              "autoId": null,
+              "className": null,
+              "cssSelector": "#services",
+              "dataAutoId": null,
+              "dataCy": null,
+              "dataQa": null,
+              "elementId": "",
+              "href": null,
+              "inIframe": false,
+              "inputType": null,
+              "name": null,
+              "placeholder": null,
+              "shadowDom": false,
+              "stableId": "services",
+              "tag": "DIV",
+              "testId": null,
+              "xPath": "//div[@id='services']"
+            },
+            "timestamp": 1788068732969,
+            "valueAfter": null,
+            "valueBefore": null
+          }
+        ],
+        "metadata": {
+          "captureOrigin": {
+            "frameId": 0,
+            "tabId": 636191009
+          },
+          "dwellMs": 609,
+          "evidenceReason": "reveal: aria flip aria-expanded false→true on joined element",
+          "hoverQualification": {
+            "anchorFacts": {
+              "anchorKey": "id:services",
+              "clickAnchorKey": "id:services",
+              "hoverReveal": false,
+              "resolution": "self",
+              "shaped": true
+            },
+            "evidenceClass": "reveal",
+            "evidenceReason": "reveal: aria flip aria-expanded false→true on joined element",
+            "factSummary": {
+              "domChangesInOwnedSet": 1,
+              "domChangesTotal": 2,
+              "networkRows": 0,
+              "newSurfacesJoined": 0,
+              "pointerPathEnters": 1
+            },
+            "verdict": "evidenced"
+          },
+          "lifecycleEndState": "completed",
+          "pointerPathDropped": 0,
+          "pointerPathEnters": [
+            {
+              "eventId": "evt-pmtfdyexm-4",
+              "target": {
+                "accessibleName": "Services Section",
+                "ariaLabel": null,
+                "ariaLabelledBy": null,
+                "ariaRole": "button",
+                "autoId": null,
+                "className": null,
+                "cssSelector": "#services",
+                "dataAutoId": null,
+                "dataCy": null,
+                "dataQa": null,
+                "elementId": "",
+                "href": null,
+                "inIframe": false,
+                "inputType": null,
+                "name": null,
+                "placeholder": null,
+                "shadowDom": false,
+                "stableId": "services",
+                "tag": "DIV",
+                "testId": null,
+                "xPath": "//div[@id='services']"
+              }
+            }
+          ],
+          "targetName": "Services Section",
+          "terminal": "left"
+        },
+        "startTime": 1788068732360,
+        "trigger": {
+          "accessibleName": "Services Section",
+          "ariaLabel": null,
+          "ariaLabelledBy": null,
+          "ariaRole": "button",
+          "autoId": null,
+          "className": null,
+          "cssSelector": "#services",
+          "dataAutoId": null,
+          "dataCy": null,
+          "dataQa": null,
+          "elementId": "",
+          "href": null,
+          "inIframe": false,
+          "inputType": null,
+          "name": null,
+          "placeholder": null,
+          "shadowDom": false,
+          "stableId": "services",
+          "tag": "DIV",
+          "testId": null,
+          "xPath": "//div[@id='services']"
+        },
+        "triggerEvent": {
+          "altKey": false,
+          "captureOrigin": {
+            "frameId": 0,
+            "tabId": 636191009
+          },
+          "captureSeq": 2715.2999999970198,
+          "checkedAfter": null,
+          "checkedBefore": null,
+          "clientX": 390,
+          "clientY": 17,
+          "code": null,
+          "ctrlKey": false,
+          "domContext": {
+            "ancestorClasses": [
+              "",
+              "",
+              ""
+            ],
+            "ancestorRoles": [
+              "nav",
+              "body",
+              "html"
+            ],
+            "ariaAutoComplete": null,
+            "ariaExpanded": false,
+            "ariaHasPopup": "true",
+            "clickHandler": false,
+            "disabled": false,
+            "formAction": null,
+            "formElementKey": null,
+            "formId": null,
+            "formMethod": null,
+            "hoverAnchorKey": "id:services",
+            "hoverAnchorResolution": "self",
+            "hoverClickAnchorKey": "id:services",
+            "inputType": null,
+            "isContentEditable": false,
+            "isFormSubmitControl": false,
+            "listId": null,
+            "pointerCursor": false,
+            "readOnly": false,
+            "required": false,
+            "tabIndex": 0
+          },
+          "eventId": "evt-pmtfdyexm-4",
+          "eventType": "mouseenter",
+          "isTrusted": true,
+          "key": null,
+          "metaKey": false,
+          "pageTitle": "",
+          "pageUrl": "http://127.0.0.1:8807/matrix.html",
+          "scrollDeltaX": null,
+          "scrollDeltaY": null,
+          "shiftKey": false,
+          "target": {
+            "accessibleName": "Services Section",
+            "ariaLabel": null,
+            "ariaLabelledBy": null,
+            "ariaRole": "button",
+            "autoId": null,
+            "className": null,
+            "cssSelector": "#services",
+            "dataAutoId": null,
+            "dataCy": null,
+            "dataQa": null,
+            "elementId": "",
+            "href": null,
+            "inIframe": false,
+            "inputType": null,
+            "name": null,
+            "placeholder": null,
+            "shadowDom": false,
+            "stableId": "services",
+            "tag": "DIV",
+            "testId": null,
+            "xPath": "//div[@id='services']"
+          },
+          "timestamp": 1788068732360,
+          "valueAfter": null,
+          "valueBefore": null
+        },
+        "type": "Hover"
+      },
+      {
+        "behavioralEvidence": {
+          "applicationEvidence": {
+            "coarseMode": false,
+            "domChangeOverflow": 0,
+            "domChanges": [
+              {
+                "addedNodesCount": 0,
+                "attributeDeltas": {
+                  "aria-hidden": {
+                    "new": "false",
+                    "old": "true"
+                  },
+                  "style": {
+                    "new": "display: block;",
+                    "old": null
+                  }
+                },
+                "changedAttributes": [
+                  "style",
+                  "aria-hidden"
+                ],
+                "characterDataDelta": null,
+                "firstBatchIndex": 0,
+                "firstMutationAt": 0.6999999992549419,
+                "lastBatchIndex": 0,
+                "lastMutationAt": 0.6999999992549419,
+                "rawMutationCount": 2,
+                "removedNodesCount": 0,
+                "shadowContext": null,
+                "targetPath": "body > nav#appnav > div#flyout",
+                "targetTag": "div",
+                "types": [
+                  "attributes"
+                ]
+              },
+              {
+                "addedNodesCount": 0,
+                "attributeDeltas": {
+                  "aria-expanded": {
+                    "new": "true",
+                    "old": "false"
+                  }
+                },
+                "changedAttributes": [
+                  "aria-expanded"
+                ],
+                "characterDataDelta": null,
+                "firstBatchIndex": 0,
+                "firstMutationAt": 0.6999999992549419,
+                "lastBatchIndex": 0,
+                "lastMutationAt": 0.6999999992549419,
+                "rawMutationCount": 1,
+                "removedNodesCount": 0,
+                "shadowContext": null,
+                "targetPath": "body > nav#appnav > div#services",
+                "targetTag": "div",
+                "types": [
+                  "attributes"
+                ]
+              }
+            ],
+            "navigation": [],
+            "networkActivity": [],
+            "newSurfaces": [
+              {
+                "accessibleName": "Book Flight",
+                "ariaRole": "menu",
+                "batchIndex": 0,
+                "descendantCount": 1,
+                "emergence": "revealed",
+                "kind": "added",
+                "path": "body > nav#appnav > div#flyout",
+                "relativeTime": 0.6999999992549419,
+                "shadowContext": null,
+                "tagName": "div"
+              }
+            ],
+            "performanceCondition": {
+              "highChurnMode": false,
+              "longestBatchMs": 0.8000000007450581,
+              "mainThreadBlocked": false,
+              "totalBatches": 1
+            },
+            "removedSurfaces": [],
+            "visibilityChanges": [
+              {
+                "batchIndex": 0,
+                "newValue": "block",
+                "oldValue": "",
+                "path": "body > nav#appnav > div#flyout",
+                "property": "display",
+                "relativeTime": 0.6999999992549419
+              },
+              {
+                "batchIndex": 0,
+                "newValue": "false",
+                "oldValue": "true",
+                "path": "body > nav#appnav > div#flyout",
+                "property": "aria-hidden",
+                "relativeTime": 0.6999999992549419
+              }
+            ]
+          },
+          "frameId": "main",
+          "hoverQualification": {
+            "anchorFacts": {
+              "anchorKey": "id:ariadis",
+              "clickAnchorKey": "id:ariadis",
+              "hoverReveal": false,
+              "resolution": "self",
+              "shaped": true
+            },
+            "evidenceClass": null,
+            "evidenceReason": "gesture-only: no target-local consequence in enter window (mutations unjoined)",
+            "factSummary": {
+              "domChangesInOwnedSet": 0,
+              "domChangesTotal": 2,
+              "networkRows": 0,
+              "newSurfacesJoined": 0,
+              "pointerPathEnters": 0
+            },
+            "verdict": "gesture-only"
+          },
+          "sourceEventId": "evt-pmtfdyexm-8",
+          "sourceEventType": "mouseenter",
+          "targetEvidence": {
+            "after": {
+              "ariaChecked": null,
+              "ariaExpanded": null,
+              "ariaPressed": null,
+              "capturedAt": 3919.2999999970198,
+              "checked": null,
+              "childCount": 0,
+              "className": "",
+              "controlledValue": null,
+              "disabled": false,
+              "scrollLeft": null,
+              "scrollTop": null,
+              "selectedValues": null,
+              "textContent": "CQ Invalid Target",
+              "value": null
+            },
+            "before": null,
+            "focusMovement": {
+              "after": {
+                "accessibleName": "CQ Invalid Target",
+                "ariaRole": "button",
+                "tagName": "DIV"
+              },
+              "before": null,
+              "detectedAt": 3919.5
+            },
+            "identity": {
+              "accessibleName": "CQ Invalid Target",
+              "ariaLabel": null,
+              "ariaLabelledBy": null,
+              "ariaRole": "button",
+              "autoId": null,
+              "className": null,
+              "cssSelector": "#ariadis",
+              "dataAutoId": null,
+              "dataCy": null,
+              "dataQa": null,
+              "elementId": "",
+              "href": null,
+              "inIframe": false,
+              "inputType": null,
+              "name": null,
+              "placeholder": null,
+              "shadowDom": false,
+              "stableId": "ariadis",
+              "tag": "DIV",
+              "testId": null,
+              "xPath": "//div[@id='ariadis']"
+            },
+            "identityCapturedAt": 3329.699999999255
+          },
+          "window": {
+            "closedAt": 3919.699999999255,
+            "durationMs": 590,
+            "endReason": "consequence-settled",
+            "openedAt": 3329.699999999255,
+            "openedBatch": 1,
+            "stabilityTrace": [
+              {
+                "globalBatchCount": 0,
+                "msSinceLastMutation": 300,
+                "timestamp": 3329.7999999970198
+              },
+              {
+                "globalBatchCount": 0,
+                "msSinceLastMutation": 300,
+                "timestamp": 3919.099999997765
+              },
+              {
+                "globalBatchCount": 0,
+                "msSinceLastMutation": 300,
+                "timestamp": 3919.099999997765
+              }
+            ]
+          },
+          "windowId": "ev-evt-pmtfdyexm-8"
+        },
+        "businessMeaning": "Hover over \"CQ Invalid Target\"",
+        "componentFramework": "Generic",
+        "componentType": "Generic",
+        "endState": "completed",
+        "endTime": 1788068733256,
+        "interactionId": "int-2",
+        "lifecycleId": "lc-2",
+        "memberEvents": [
+          {
+            "altKey": false,
+            "captureOrigin": {
+              "frameId": 0,
+              "tabId": 636191009
+            },
+            "captureSeq": 3327.2999999970198,
+            "checkedAfter": null,
+            "checkedBefore": null,
+            "clientX": 390,
+            "clientY": 110,
+            "code": null,
+            "ctrlKey": false,
+            "domContext": {
+              "ancestorClasses": [
+                "",
+                ""
+              ],
+              "ancestorRoles": [
+                "body",
+                "html"
+              ],
+              "ariaAutoComplete": null,
+              "ariaExpanded": null,
+              "ariaHasPopup": null,
+              "clickHandler": false,
+              "disabled": true,
+              "formAction": null,
+              "formElementKey": null,
+              "formId": null,
+              "formMethod": null,
+              "hoverAnchorKey": "id:ariadis",
+              "hoverAnchorResolution": "self",
+              "hoverClickAnchorKey": "id:ariadis",
+              "inputType": null,
+              "isContentEditable": false,
+              "isFormSubmitControl": false,
+              "listId": null,
+              "pointerCursor": false,
+              "readOnly": false,
+              "required": false,
+              "tabIndex": 0
+            },
+            "eventId": "evt-pmtfdyexm-8",
+            "eventType": "mouseenter",
+            "isTrusted": true,
+            "key": null,
+            "metaKey": false,
+            "pageTitle": "",
+            "pageUrl": "http://127.0.0.1:8807/matrix.html",
+            "scrollDeltaX": null,
+            "scrollDeltaY": null,
+            "shiftKey": false,
+            "target": {
+              "accessibleName": "CQ Invalid Target",
+              "ariaLabel": null,
+              "ariaLabelledBy": null,
+              "ariaRole": "button",
+              "autoId": null,
+              "className": null,
+              "cssSelector": "#ariadis",
+              "dataAutoId": null,
+              "dataCy": null,
+              "dataQa": null,
+              "elementId": "",
+              "href": null,
+              "inIframe": false,
+              "inputType": null,
+              "name": null,
+              "placeholder": null,
+              "shadowDom": false,
+              "stableId": "ariadis",
+              "tag": "DIV",
+              "testId": null,
+              "xPath": "//div[@id='ariadis']"
+            },
+            "timestamp": 1788068732969,
+            "valueAfter": null,
+            "valueBefore": null
+          }
+        ],
+        "metadata": {
+          "captureOrigin": {
+            "frameId": 0,
+            "tabId": 636191009
+          },
+          "dwellMs": 287,
+          "evidenceReason": "gesture-only: no target-local consequence in enter window (mutations unjoined)",
+          "hoverQualification": {
+            "anchorFacts": {
+              "anchorKey": "id:ariadis",
+              "clickAnchorKey": "id:ariadis",
+              "hoverReveal": false,
+              "resolution": "self",
+              "shaped": true
+            },
+            "evidenceClass": null,
+            "evidenceReason": "gesture-only: no target-local consequence in enter window (mutations unjoined)",
+            "factSummary": {
+              "domChangesInOwnedSet": 0,
+              "domChangesTotal": 2,
+              "networkRows": 0,
+              "newSurfacesJoined": 0,
+              "pointerPathEnters": 0
+            },
+            "verdict": "gesture-only"
+          },
+          "lifecycleEndState": "completed",
+          "pointerPathDropped": 0,
+          "pointerPathEnters": [
+            {
+              "eventId": "evt-pmtfdyexm-8",
+              "target": {
+                "accessibleName": "CQ Invalid Target",
+                "ariaLabel": null,
+                "ariaLabelledBy": null,
+                "ariaRole": "button",
+                "autoId": null,
+                "className": null,
+                "cssSelector": "#ariadis",
+                "dataAutoId": null,
+                "dataCy": null,
+                "dataQa": null,
+                "elementId": "",
+                "href": null,
+                "inIframe": false,
+                "inputType": null,
+                "name": null,
+                "placeholder": null,
+                "shadowDom": false,
+                "stableId": "ariadis",
+                "tag": "DIV",
+                "testId": null,
+                "xPath": "//div[@id='ariadis']"
+              }
+            }
+          ],
+          "targetName": "CQ Invalid Target",
+          "terminal": "consumed-by-click"
+        },
+        "startTime": 1788068732969,
+        "trigger": {
+          "accessibleName": "CQ Invalid Target",
+          "ariaLabel": null,
+          "ariaLabelledBy": null,
+          "ariaRole": "button",
+          "autoId": null,
+          "className": null,
+          "cssSelector": "#ariadis",
+          "dataAutoId": null,
+          "dataCy": null,
+          "dataQa": null,
+          "elementId": "",
+          "href": null,
+          "inIframe": false,
+          "inputType": null,
+          "name": null,
+          "placeholder": null,
+          "shadowDom": false,
+          "stableId": "ariadis",
+          "tag": "DIV",
+          "testId": null,
+          "xPath": "//div[@id='ariadis']"
+        },
+        "triggerEvent": {
+          "altKey": false,
+          "captureOrigin": {
+            "frameId": 0,
+            "tabId": 636191009
+          },
+          "captureSeq": 3327.2999999970198,
+          "checkedAfter": null,
+          "checkedBefore": null,
+          "clientX": 390,
+          "clientY": 110,
+          "code": null,
+          "ctrlKey": false,
+          "domContext": {
+            "ancestorClasses": [
+              "",
+              ""
+            ],
+            "ancestorRoles": [
+              "body",
+              "html"
+            ],
+            "ariaAutoComplete": null,
+            "ariaExpanded": null,
+            "ariaHasPopup": null,
+            "clickHandler": false,
+            "disabled": true,
+            "formAction": null,
+            "formElementKey": null,
+            "formId": null,
+            "formMethod": null,
+            "hoverAnchorKey": "id:ariadis",
+            "hoverAnchorResolution": "self",
+            "hoverClickAnchorKey": "id:ariadis",
+            "inputType": null,
+            "isContentEditable": false,
+            "isFormSubmitControl": false,
+            "listId": null,
+            "pointerCursor": false,
+            "readOnly": false,
+            "required": false,
+            "tabIndex": 0
+          },
+          "eventId": "evt-pmtfdyexm-8",
+          "eventType": "mouseenter",
+          "isTrusted": true,
+          "key": null,
+          "metaKey": false,
+          "pageTitle": "",
+          "pageUrl": "http://127.0.0.1:8807/matrix.html",
+          "scrollDeltaX": null,
+          "scrollDeltaY": null,
+          "shiftKey": false,
+          "target": {
+            "accessibleName": "CQ Invalid Target",
+            "ariaLabel": null,
+            "ariaLabelledBy": null,
+            "ariaRole": "button",
+            "autoId": null,
+            "className": null,
+            "cssSelector": "#ariadis",
+            "dataAutoId": null,
+            "dataCy": null,
+            "dataQa": null,
+            "elementId": "",
+            "href": null,
+            "inIframe": false,
+            "inputType": null,
+            "name": null,
+            "placeholder": null,
+            "shadowDom": false,
+            "stableId": "ariadis",
+            "tag": "DIV",
+            "testId": null,
+            "xPath": "//div[@id='ariadis']"
+          },
+          "timestamp": 1788068732969,
+          "valueAfter": null,
+          "valueBefore": null
+        },
+        "type": "Hover"
+      }
+    ]
+  },
+  "execution_ir_plan": {
+    "environment": {
+      "baseUrl": "http://127.0.0.1:8807",
+      "browser": "chrome",
+      "startUrl": "http://127.0.0.1:8807/matrix.html",
+      "viewport": {
+        "height": 437,
+        "width": 780
+      }
+    },
+    "steps": [
+      {
+        "action": "hover",
+        "assertions": [],
+        "description": "Hover over the Services Section",
+        "executionParameters": {
+          "retryCount": 0,
+          "retryDelayMs": 1000,
+          "timeoutMs": 30000,
+          "waitStrategy": "visible"
+        },
+        "id": "step-0001",
+        "input": null,
+        "order": 0,
+        "plainEnglish": "Hover over the Services Section",
+        "sourceEventId": "evt-pmtfdyexm-4",
+        "target": {
+          "elementId": "8286a4c7-63c8-4b64-a544-95c253114570",
+          "elementName": "Services Section",
+          "kind": "element",
+          "pageOrComponent": "main",
+          "resolvedLocators": [
+            {
+              "confidence": 0.72,
+              "priority": 1,
+              "type": "css",
+              "value": "#services"
+            },
+            {
+              "confidence": 0.62,
+              "priority": 2,
+              "type": "accessibleName",
+              "value": "Services Section"
+            },
+            {
+              "confidence": 0.35,
+              "priority": 3,
+              "type": "xpath",
+              "value": "//div[@id='services']"
+            }
+          ]
+        }
+      }
+    ],
+    "tags": [
+      "matrix.html"
+    ],
+    "testCaseId": "tc-9c64fe10",
+    "testCaseVersionId": "tcv-9c64fe10",
+    "testCaseVersionNumber": 1,
+    "title": "Recorded Test"
+  },
+  "execution_ir_plan_generated_at": "2026-08-30T05:45:33.906Z",
+  "generated_files": {
+    "files": [
+      {
+        "content": "{\n  \"name\": \"recorded-test\",\n  \"version\": \"1.0.0\",\n  \"private\": true,\n  \"description\": \"Playwright tests for Recorded Test\",\n  \"scripts\": {\n    \"test\": \"npx playwright test\",\n    \"test:headed\": \"npx playwright test --headed\",\n    \"test:ui\": \"npx playwright test --ui\",\n    \"report\": \"npx playwright show-report\"\n  },\n  \"devDependencies\": {\n    \"@playwright/test\": \"^1.52.0\"\n  }\n}\n",
+        "path": "package.json"
+      },
+      {
+        "content": "import { defineConfig, devices } from '@playwright/test';\n\n/**\n * Playwright configuration for Recorded Test.\n * Generated by CmdRunner from the Execution IR.\n */\nexport default defineConfig({\n  testDir: './tests',\n  fullyParallel: true,\n  forbidOnly: !!process.env.CI,\n  retries: process.env.CI ? 2 : 0,\n  workers: process.env.CI ? 1 : undefined,\n  reporter: 'html',\n  use: {\n    baseURL: 'http://127.0.0.1:8807',\n    viewport: { width: 780, height: 437 },\n    trace: 'on-first-retry',\n  },\n  projects: [\n    {\n      name: 'chromium',\n      use: { ...devices['Desktop Chrome'] },\n    },\n  ],\n});\n",
+        "path": "playwright.config.ts"
+      },
+      {
+        "content": "{\n  \"compilerOptions\": {\n    \"target\": \"ES2020\",\n    \"module\": \"commonjs\",\n    \"moduleResolution\": \"node\",\n    \"strict\": true,\n    \"esModuleInterop\": true,\n    \"skipLibCheck\": true,\n    \"forceConsistentCasingInFileNames\": true,\n    \"outDir\": \"./test-out\"\n  },\n  \"include\": [\n    \"tests/**/*.ts\"\n  ]\n}\n",
+        "path": "tsconfig.json"
+      },
+      {
+        "content": "node_modules/\ntest-results/\nplaywright-report/\nplaywright/.cache/\n",
+        "path": ".gitignore"
+      },
+      {
+        "content": "import { test, expect } from '@playwright/test';\n\ntest.describe('Recorded Test', () => {\n  test('should complete recorded Test successfully', async ({ page }) => {\n    // NOTE: No assertions generated — assertion derivation is not available. This test replays actions only.\n\n    // Hover over the Services Section\n    await page.locator('#services').hover()\n  });\n});\n",
+        "path": "tests/recorded-test.spec.ts"
+      }
+    ],
+    "projectMetadata": {
+      "engine": "playwright",
+      "fileCount": 5,
+      "language": "typescript",
+      "pattern": "flat"
+    }
+  },
+  "repo_session_id": "c39db6b1-f516-4295-a5cd-67f21a5c973f",
+  "session_context": {
+    "capturedAt": "2026-08-30T05:45:31.153Z",
+    "startTitle": "127.0.0.1:8807/matrix.html",
+    "startUrl": "http://127.0.0.1:8807/matrix.html",
+    "viewport": {
+      "height": 437,
+      "width": 780
+    }
+  },
+  "ui_state": {
+    "lastChanged": "2026-08-30T05:45:33.909Z",
+    "recordingState": "stopped"
+  },
+  "understanding_result": {
+    "appId": "app-vlwuie",
+    "applicationKnowledge": {
+      "appId": "app-vlwuie",
+      "collections": [],
+      "counters": [],
+      "entities": [],
+      "firstSeenAt": 1788068647150,
+      "label": "127.0.0.1:8807",
+      "lastActiveAt": 1788068726846,
+      "notifications": [],
+      "origin": "http://127.0.0.1:8807",
+      "outcomePattern": {
+        "ambiguousCount": 0,
+        "failureCount": 0,
+        "incompleteCount": 12,
+        "successCount": 0,
+        "topActionTypes": [
+          {
+            "actionType": "Hover",
+            "count": 5
+          },
+          {
+            "actionType": "Expander",
+            "count": 3
+          },
+          {
+            "actionType": "Click",
+            "count": 2
+          },
+          {
+            "actionType": "Link",
+            "count": 1
+          },
+          {
+            "actionType": "Navigation",
+            "count": 1
+          }
+        ],
+        "totalActions": 12
+      },
+      "sessionCount": 7,
+      "totalRows": 24,
+      "viewGraph": {
+        "edges": [],
+        "nodes": []
+      },
+      "views": []
+    },
+    "behaviorModel": {
+      "coverage": {
+        "anchoredInteractions": 2,
+        "attributedNetworkRows": 0,
+        "attributedObservations": 1,
+        "malformedInteractions": 0,
+        "memberInteractions": 0,
+        "provenanceLinks": 0,
+        "totalInteractions": 2,
+        "totalNetworkRows": 0,
+        "totalObservations": 1,
+        "unattributedConsequences": 0
+      },
+      "episodes": [
+        {
+          "anchor": {
+            "actionTarget": "Services Section",
+            "actionType": "Hover",
+            "interactionId": "int-1",
+            "triggerTimestamp": 1788068732360
+          },
+          "edges": [],
+          "episodeOutcome": {
+            "confidence": 0,
+            "confidenceLevel": "inconclusive",
+            "contributingMembers": [],
+            "derivation": "derived-episode-outcome",
+            "outcome": "incomplete"
+          },
+          "horizon": {
+            "attribution": {
+              "closeReason": "all-stamped-settled",
+              "closedAtMs": 1788068732969,
+              "openedAtMs": 1788068732360,
+              "pendingRequestIds": []
+            },
+            "uiOwnership": {
+              "closeReason": "stabilized",
+              "closedAtMs": 1788068732969,
+              "openedAtMs": 1788068732360
+            }
+          },
+          "id": "ep-int-1",
+          "members": [
+            {
+              "interactionId": "int-1",
+              "role": "anchor"
+            }
+          ],
+          "parameterInputs": [],
+          "provenanceLinks": [],
+          "tabId": 636191009,
+          "unattributed": []
+        },
+        {
+          "anchor": {
+            "actionTarget": "CQ Invalid Target",
+            "actionType": "Unclassified",
+            "interactionId": "int-3",
+            "triggerTimestamp": 1788068733256
+          },
+          "edges": [
+            {
+              "confidence": 0.5,
+              "detail": "UI observations on int-1: 2 DOM changes, 1 new surfaces, 2 visibility changes",
+              "evidenceRefs": [
+                {
+                  "kind": "dom",
+                  "sequence": 0,
+                  "windowId": "ev-evt-pmtfdyexm-4"
+                }
+              ],
+              "from": {
+                "episodeId": "ep-int-3",
+                "interactionId": "int-1"
+              },
+              "id": "edge-ep-int-3-000",
+              "kind": "ui",
+              "latencyMs": 0,
+              "tier": "T4-window",
+              "to": {
+                "summary": "2 DOM changes, 1 new surfaces, 2 visibility changes",
+                "type": "ui"
+              }
+            }
+          ],
+          "episodeOutcome": null,
+          "horizon": {
+            "attribution": {
+              "closeReason": "all-stamped-settled",
+              "closedAtMs": 1788068733256,
+              "openedAtMs": 1788068733256,
+              "pendingRequestIds": []
+            },
+            "uiOwnership": {
+              "closeReason": "stabilized",
+              "closedAtMs": 1788068733256,
+              "openedAtMs": 1788068733256
+            }
+          },
+          "id": "ep-int-3",
+          "members": [
+            {
+              "interactionId": "int-3",
+              "role": "anchor"
+            }
+          ],
+          "parameterInputs": [],
+          "provenanceLinks": [],
+          "tabId": 636191009,
+          "unattributed": []
+        }
+      ],
+      "generatedAtMs": 1788068733866,
+      "id": "abm-session-1788068733866",
+      "provenanceLinks": [],
+      "sessionId": "session-1788068733866",
+      "unattributed": [],
+      "warnings": []
+    },
+    "generatedAt": "2026-08-30T05:45:33.891Z",
+    "outcomes": [
+      {
+        "actionTarget": "Services Section",
+        "actionType": "Hover",
+        "confidence": 0,
+        "confidenceLevel": "inconclusive",
+        "interactionId": "int-1",
+        "outcome": "incomplete",
+        "resultingEntities": [],
+        "stateChanges": [],
+        "supportingEvidence": []
+      }
+    ],
+    "schemaVersion": 2,
+    "semanticKnowledge": {
+      "appId": "app-vlwuie",
+      "components": [
+        {
+          "ariaRole": "button",
+          "businessMeaning": "Hover over \"Services Section\"",
+          "componentFramework": "Generic",
+          "componentType": "Generic",
+          "detectedBy": "enrichment",
+          "interactionId": "int-1",
+          "label": "Services Section",
+          "viewId": null
+        },
+        {
+          "ariaRole": "button",
+          "businessMeaning": "Unclassified on \"CQ Invalid Target\"",
+          "componentFramework": "Generic",
+          "componentType": "Generic",
+          "detectedBy": "enrichment",
+          "interactionId": "int-3",
+          "label": "CQ Invalid Target",
+          "viewId": null
+        }
+      ],
+      "contracts": [
+        {
+          "checked": null,
+          "disabled": false,
+          "elementPath": "//div[@id='services']",
+          "elementType": "other",
+          "expanded": true,
+          "format": null,
+          "inputType": null,
+          "interactionId": "int-1",
+          "label": "Services Section",
+          "optionCount": null,
+          "placeholder": null,
+          "required": false,
+          "tag": "DIV"
+        },
+        {
+          "checked": null,
+          "disabled": true,
+          "elementPath": "//div[@id='ariadis']",
+          "elementType": "other",
+          "expanded": null,
+          "format": null,
+          "inputType": null,
+          "interactionId": "int-3",
+          "label": "CQ Invalid Target",
+          "optionCount": null,
+          "placeholder": null,
+          "required": false,
+          "tag": "DIV"
+        }
+      ],
+      "domain": {
+        "alternative": null,
+        "confidence": 0,
+        "domain": "unknown",
+        "evidence": {
+          "apiOperationScore": 0,
+          "entityTypeScore": 0,
+          "matchedSignals": [],
+          "notificationKeywordScore": 0,
+          "urlStructureScore": 0,
+          "viewPatternScore": 0
+        },
+        "margin": 0
+      },
+      "intents": [
+        {
+          "confidence": 0.3,
+          "intent": "Services Section",
+          "interactionId": "int-1",
+          "resolutionPath": "context"
+        },
+        {
+          "confidence": 0.3,
+          "intent": "CQ Invalid Target",
+          "interactionId": "int-3",
+          "resolutionPath": "context"
+        }
+      ],
+      "metadata": {
+        "coverage": {
+          "componentCoverage": 1,
+          "contractCoverage": 1,
+          "intentCoverage": 0
+        },
+        "enricherVersion": "m9.7-deterministic-v3-ddc",
+        "generatedAt": 1788068733885,
+        "interactionCount": 2,
+        "viewCount": 0,
+        "workflowCount": 1
+      },
+      "recordedWorkflows": [
+        {
+          "canonicalSteps": [
+            "services section"
+          ],
+          "instanceSignatureIds": {
+            "wf-session-1788068654272-0": [],
+            "wf-session-1788068668817-0": []
+          },
+          "instances": [
+            "wf-session-1788068654272-0",
+            "wf-session-1788068668817-0"
+          ],
+          "label": "Services Section",
+          "linkageState": "linkage-pending",
+          "occurrenceCount": 2,
+          "patternId": "wf-pattern-3f7d175e",
+          "sessionIds": [
+            "session-1788068654272",
+            "session-1788068668817"
+          ],
+          "signatureIds": [],
+          "viewSequence": []
+        },
+        {
+          "canonicalSteps": [
+            "hover",
+            "expander"
+          ],
+          "instanceSignatureIds": {
+            "wf-session-1788068647135-0": [],
+            "wf-session-1788068705634-0": []
+          },
+          "instances": [
+            "wf-session-1788068647135-0",
+            "wf-session-1788068705634-0"
+          ],
+          "label": "Hover",
+          "linkageState": "linkage-pending",
+          "occurrenceCount": 2,
+          "patternId": "wf-pattern-5451d2d2",
+          "sessionIds": [
+            "session-1788068647135",
+            "session-1788068705634"
+          ],
+          "signatureIds": [],
+          "viewSequence": []
+        }
+      ],
+      "surface": {
+        "navigationEdges": [],
+        "views": []
+      },
+      "workflows": [
+        {
+          "effects": {
+            "collectionChanges": [],
+            "counterDeltas": [],
+            "entitiesCreated": [],
+            "entitiesModified": [],
+            "notificationsEmitted": [],
+            "viewTransitions": []
+          },
+          "label": "Services Section",
+          "overallOutcome": "unknown",
+          "sessionId": "session-1788068733866",
+          "stepIds": [
+            "int-1",
+            "int-3"
+          ],
+          "stepIntents": [
+            "Services Section",
+            "CQ Invalid Target"
+          ],
+          "viewIds": [],
+          "workflowId": "wf-session-1788068733866-0"
+        }
+      ]
+    },
+    "sessionId": "session-1788068733866",
+    "transitions": [
+      {
+        "after": {
+          "collections": {},
+          "counters": {},
+          "currentUrl": null,
+          "currentView": null,
+          "entities": {},
+          "interactionCount": 1,
+          "lastInteractionId": "int-1",
+          "notifications": []
+        },
+        "before": {
+          "collections": {},
+          "counters": {},
+          "currentUrl": null,
+          "currentView": null,
+          "entities": {},
+          "interactionCount": 0,
+          "lastInteractionId": null,
+          "notifications": []
+        },
+        "changes": [],
+        "interactionId": "int-1"
+      }
+    ]
+  }
+}

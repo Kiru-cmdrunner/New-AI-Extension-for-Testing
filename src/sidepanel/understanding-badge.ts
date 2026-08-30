@@ -120,7 +120,15 @@ export function buildWhyBlock(
 
   switch (interaction.type) {
     case 'Hover': {
+      // HEC v1 §5/§9b: the recorded capture-time reason is the ONLY
+      // explanation — capture evidence, never a STOP-time re-derivation.
+      // Verdict + class ride the qualification record; the flat reason is
+      // the frozen string computed at window close (≤200 chars, D3).
       const reason = typeof metadata.evidenceReason === 'string' ? metadata.evidenceReason : null;
+      const verdict = (metadata.hoverQualification as { verdict?: string } | undefined)?.verdict;
+      if (reason && verdict) {
+        return `why: hover ${verdict} — ${reason}`;
+      }
       return reason ? `why: hover evidence — ${reason}` : null;
     }
 

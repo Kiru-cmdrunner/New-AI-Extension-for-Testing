@@ -20,9 +20,14 @@ import {
   resolveTarget,
   captureValue,
   captureCheckedState,
+  computeHoverReveal,
+  resolveHoverAnchor,
+  domShapeOf,
 } from './identity-extractor';
+import { elementKey } from '../definitions/patterns';
 import { extractDomContext } from '../definitions/dom-context-extractor';
 import { captureClickQualification, defaultHitTestProbe } from './click-qualification';
+import { isHoverDiscoveryShape } from '../definitions/patterns';
 
 /** Minimum interval between scroll events (ms) — rate limiting. */
 const SCROLL_MIN_INTERVAL_MS = 16;
@@ -230,8 +235,44 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
       lastMouseMoveTime = now;
     }
 
-    // Resolve target (pierces Shadow DOM via composedPath)
-    const targetEl = resolveTarget(rawEvent);
+    // Resolve target (pierces Shadow DOM via composedPath).
+    // Hover-capture generic fix v1 (RC-1): mouseenter uses its OWN anchor
+    // resolution — the element under the pointer with a bounded lift to the
+    // enclosing control. Click keeps resolveTarget (click-lifting) — CQ v1.2
+    // typing depends on it (spec §5 G1).
+    const rawEl = (rawEvent.target instanceof Element ? rawEvent.target : null);
+    let targetEl: Element | null;
+    let hoverRevealFact: boolean | undefined;
+    // HEC v1 §7 R-A1/R-A4: the enter records BOTH anchor keys (hover anchor
+    // elementKey + click-policy anchor elementKey) and the honest resolution
+    // branch, so one physical act joins reliably (R-A2) and the record never
+    // fabricates a fact about how the anchor was derived.
+    let hoverAnchorFacts: {
+      anchorKey: string;
+      clickAnchorKey: string;
+      resolution: 'self' | 'ancestor-lift' | 'reveal-target' | 'body';
+    } | undefined;
+    if (eventType === 'mouseenter' && rawEl) {
+      let revealTarget: Element | null = null;
+      if (!isHoverDiscoveryShape(domShapeOf(rawEl))) {
+        const reveal = computeHoverReveal(rawEl);
+        if (reveal) {
+          hoverRevealFact = true;
+          revealTarget = rawEl;
+        }
+      }
+      const anchor = resolveHoverAnchor(rawEl, revealTarget);
+      targetEl = anchor.target;
+      const hoverKey = elementKey(extractIdentity(anchor.target));
+      const clickKey = elementKey(extractIdentity(resolveTarget(rawEvent) ?? rawEl));
+      hoverAnchorFacts = {
+        anchorKey: hoverKey,
+        clickAnchorKey: clickKey,
+        resolution: anchor.resolution,
+      };
+    } else {
+      targetEl = resolveTarget(rawEvent);
+    }
     if (!targetEl) return;
 
     // Capture-time click qualification (v1.2 Step 1, inert): compute the
@@ -239,7 +280,6 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
     // RAW hit element (threaded before resolveTarget consumed it) plus the
     // resolved element. Attached additively to DomContext; consumed by NO
     // typing decision yet (Step 2 wires the pre-gate + claim rule).
-    const rawEl = (rawEvent.target instanceof Element ? rawEvent.target : null);
     let clickQualification: ClickQualification | undefined;
     if (rawEl && (eventType === 'click' || eventType === 'contextmenu')) {
       clickQualification = captureClickQualification(
@@ -253,6 +293,17 @@ export function createEventTap(config: EventTapConfig): EventTapHandle {
     // Extract DOM context
     const domContext = extractDomContext(targetEl);
     if (clickQualification) domContext.clickQualification = clickQualification;
+    // Hover-capture generic fix v1 (G3): the scoped :hover-reveal CSS fact,
+    // recorded ONLY on the mouseenter capture path when probed (undefined =
+    // not probed = false; no message-shape change — rides DomContext).
+    if (hoverRevealFact !== undefined) domContext.hoverReveal = hoverRevealFact;
+    // HEC v1 §7: attach the recorded anchor facts (R-A1/R-A4). Additive —
+    // undefined on legacy events and every non-mouseenter path.
+    if (hoverAnchorFacts) {
+      domContext.hoverAnchorKey = hoverAnchorFacts.anchorKey;
+      domContext.hoverClickAnchorKey = hoverAnchorFacts.clickAnchorKey;
+      domContext.hoverAnchorResolution = hoverAnchorFacts.resolution;
+    }
 
     // Build the observed event
     const observed = assembleObservedEvent(rawEvent, eventType, identity, domContext);

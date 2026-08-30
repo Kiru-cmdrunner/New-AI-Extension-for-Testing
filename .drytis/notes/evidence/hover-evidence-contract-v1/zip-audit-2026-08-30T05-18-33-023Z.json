@@ -1,0 +1,79 @@
+{
+  "runAt": "2026-08-30T05:18:33.028Z",
+  "source": "cmdrunner-extension.zip",
+  "results": [
+    {
+      "id": "A1",
+      "name": "bare enter on non-shaped subtree emits NO Hover card (candidate-only)",
+      "pass": true,
+      "detail": "hovers=0 cards="
+    },
+    {
+      "id": "A1b",
+      "name": "baseline-before-evidence ordering earns reveal (pre-open state held at enter)",
+      "pass": true,
+      "detail": "verdict=evidenced class=reveal"
+    },
+    {
+      "id": "M1a",
+      "name": "hover Services → click Book Flight: TWO independent cards",
+      "pass": true,
+      "detail": "hovers=1 carrier=Link order=Hover,Link,Navigation"
+    },
+    {
+      "id": "M1b",
+      "name": "Hover card targets SERVICES (not renamed to the click target)",
+      "pass": true,
+      "detail": "hoverTarget=Services Section"
+    },
+    {
+      "id": "M1c",
+      "name": "Click carrier targets BOOK FLIGHT",
+      "pass": true,
+      "detail": "clickTarget=Book Flight"
+    },
+    {
+      "id": "M1d",
+      "name": "no absorption: hover members exclude click; verify.match=true",
+      "pass": true,
+      "detail": "hoverMembers=[\"mouseenter\",\"mouseleave\"] match=true"
+    },
+    {
+      "id": "M2",
+      "name": "icon click keeps its own non-Hover carrier; never becomes/absorbed into Hover",
+      "pass": true,
+      "detail": "carrier=Expander target=element cards=Hover,Expander match=true"
+    },
+    {
+      "id": "M3",
+      "name": "same-element hover+click → BOTH cards; click keeps own carrier",
+      "pass": true,
+      "detail": "hovers=1 carrier=Expander hoverMembers=[\"mouseenter\"]"
+    },
+    {
+      "id": "M4a",
+      "name": "global carousel/badge/log churn NEVER qualifies Hover",
+      "pass": true,
+      "detail": "hovers=0 evidenced=0 churnTicks=6"
+    },
+    {
+      "id": "M4b",
+      "name": "honest gesture-only reason recorded under churn",
+      "pass": true,
+      "detail": "verdict=undefined reason=undefined"
+    },
+    {
+      "id": "M4c",
+      "name": "real target-local reveal STILL earns under concurrent churn",
+      "pass": false,
+      "detail": "verdict=undefined class=undefined reason=undefined"
+    },
+    {
+      "id": "Q1",
+      "name": "all recorded reasons ≤200 chars (D3) and present",
+      "pass": true,
+      "detail": "reasons=0 maxLen=0"
+    }
+  ],
+  "summary": "11/12"
+}

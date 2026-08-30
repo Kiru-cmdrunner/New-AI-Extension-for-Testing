@@ -1,0 +1,56 @@
+{
+  "runAt": "2026-08-30T08:24:30.725Z",
+  "source": "cmdrunner-extension.zip",
+  "results": [
+    {
+      "name": "M4c: Hover(Services) SURVIVES immediate STOP under churn",
+      "pass": true,
+      "detail": "hovers=1 cards=Hover"
+    },
+    {
+      "name": "M4c: verdict is evidenced/reveal (frozen capture-time verdict)",
+      "pass": true,
+      "detail": "verdict=evidenced class=reveal"
+    },
+    {
+      "name": "M4c: reason recorded from target-local facts",
+      "pass": true,
+      "detail": "reason=reveal: aria flip aria-expanded false→true on joined element"
+    },
+    {
+      "name": "M4c: hover targets Services (identity preserved)",
+      "pass": true,
+      "detail": "target=Services Section"
+    },
+    {
+      "name": "M4c: no STOP-side reclassification minted junk (churn never earned anything)",
+      "pass": true,
+      "detail": "totalCards=1"
+    }
+  ],
+  "hoverQualification": {
+    "anchorFacts": {
+      "anchorKey": "id:services",
+      "clickAnchorKey": "id:services",
+      "hoverReveal": false,
+      "resolution": "self",
+      "shaped": false
+    },
+    "evidenceClass": "reveal",
+    "evidenceReason": "reveal: aria flip aria-expanded false→true on joined element",
+    "factSummary": {
+      "domChangesInOwnedSet": 1,
+      "domChangesTotal": 5,
+      "networkRows": 0,
+      "newSurfacesJoined": 0,
+      "pointerPathEnters": 0
+    },
+    "verdict": "evidenced"
+  },
+  "cards": [
+    {
+      "type": "Hover",
+      "target": "Services Section"
+    }
+  ]
+}

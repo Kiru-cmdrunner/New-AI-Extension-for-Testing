@@ -21,7 +21,10 @@
  *     CONSUMES it (both are real user actions; both are recorded).
  *
  * Kept from P1:
- *   - Discovery gate: shared isInteractiveElement (structural, no vocab).
+ *   - Discovery gate: shared structural predicate — shape OR hoverReveal CSS
+ *     fact since the hover-capture generic fix v1 (RC-8: class vocabulary
+ *     removed; isInteractiveElement untouched — it remains the CQ
+ *     rawInteractiveShaped fact source).
  *   - One lifecycle at a time (mouseenter trigger set).
  *   - applyMemberPolicy (W-6): mousemove members popped; pointer-path
  *     enters capped at MAX_POINTER_PATH_FACTS=20 drop-oldest with counted
@@ -48,7 +51,7 @@ import type {
   ComponentContext,
   ElementIdentity,
 } from '../shared/component-types';
-import { elementKey, isInteractiveElement } from './patterns';
+import { bestName, elementKey, isHoverDiscoveryShape } from './patterns';
 
 /** B7 §6: max pointer-path facts kept as memberEvents (drop-oldest). */
 export const MAX_POINTER_PATH_FACTS = 20;
@@ -68,16 +71,22 @@ export const hoverDefinition: ComponentDefinition = {
 
   detectTrigger(event: ObservedEvent): ComponentTrigger | null {
     // Structural discovery gate — the ONLY thing that starts a Hover.
-    // Shared affordance predicate; zero vocabulary (F-2 stays fixed).
+    // Hover-capture generic fix v1 (RC-8): declared affordance (shape) OR
+    // the recorded hoverReveal CSS fact — class vocabulary no longer starts
+    // lifecycles. Spec: hover-capture-generic-fix-v1.md §5 G3. MUST stay in
+    // sync with evidence-collector isHoverDiscoveryEnter (T3 sync point).
     if (event.eventType !== 'mouseenter') return null;
-    const { tag, ariaRole, className } = event.target;
-    const interactive = isInteractiveElement(
+    const { tag, ariaRole } = event.target;
+    const domContext = event.domContext;
+    const shaped = isHoverDiscoveryShape({
       tag,
       ariaRole,
-      className,
-      event.domContext?.tabIndex ?? null,
-    );
-    if (!interactive) return null;
+      tabIndex: domContext?.tabIndex ?? null,
+      ariaHasPopup: domContext?.ariaHasPopup ?? null,
+      clickHandler: domContext?.clickHandler ?? null,
+      pointerCursor: domContext?.pointerCursor ?? null,
+    });
+    if (!shaped && domContext?.hoverReveal !== true) return null;
     return { type: 'Hover' };
   },
 
@@ -260,20 +269,44 @@ const HOVER_TERMINAL_EVENTS = new Set<string>([
 
 function isHoverDiscoveryEnter(event: ObservedEvent): boolean {
   if (event.eventType !== 'mouseenter') return false;
-  const { tag, ariaRole, className } = event.target;
-  return isInteractiveElement(
+  const { tag, ariaRole } = event.target;
+  const domContext = event.domContext;
+  const shaped = isHoverDiscoveryShape({
     tag,
     ariaRole,
-    className,
-    event.domContext?.tabIndex ?? null,
-  );
+    tabIndex: domContext?.tabIndex ?? null,
+    ariaHasPopup: domContext?.ariaHasPopup ?? null,
+    clickHandler: domContext?.clickHandler ?? null,
+    pointerCursor: domContext?.pointerCursor ?? null,
+  });
+  if (shaped) return true;
+  return domContext?.hoverReveal === true;
 }
 
 function recordTerminal(ctx: ComponentContext, terminal: HoverTerminal): void {
   ctx.data.terminal = terminal;
 }
 
+/**
+ * Hover-capture generic fix v1 (RC-3): hover naming unifies with Click's
+ * bestName cascade (accessibleName → ariaLabel → placeholder → icon-class),
+ * then falls back to the honest structural noun (role or tag, lowercase)
+ * instead of the bare tag. Never subtree garbage ("12345678", "I").
+ * Spec: hover-capture-generic-fix-v1.md §5 G2b.
+ */
 function nameOf(t: ElementIdentity | null | undefined): string {
   if (!t) return '';
-  return t.accessibleName || t.ariaLabel || t.tag || '';
+  const best = bestName(
+    t.accessibleName ?? '',
+    t.ariaLabel,
+    t.placeholder,
+    t.className,
+  );
+  if (best && best !== 'element') return best;
+  return structuralNoun(t);
+}
+
+function structuralNoun(t: ElementIdentity): string {
+  if (t.ariaRole && t.ariaRole.trim()) return t.ariaRole.trim().toLowerCase();
+  return (t.tag || 'element').toLowerCase();
 }

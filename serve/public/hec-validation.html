@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>HEC v2.1 Validation</title>
+<style>
+  body { font-family: sans-serif; padding: 16px; }
+  .menuwrap { position: relative; display: inline-block; }
+  #menu { display: none; }
+  #menu.open { display: block; position: absolute; top: 100%; left: 0; background: #fff; border: 1px solid #ccc; padding: 4px; z-index: 10; }
+  .purecss #pure-menu { opacity: 0; visibility: hidden; transition: none; }
+  .purecss:hover #pure-menu { opacity: 1; visibility: visible; }
+  #invis { visibility: hidden; }
+  .datepicker .dp-grid { display: none; }
+  .datepicker.dp-open .dp-grid { display: block; }
+</style>
+</head>
+<body>
+  <h1>HEC v2.1 Validation Page</h1>
+
+  <div class="menuwrap">
+    <button id="services" aria-expanded="false" aria-haspopup="true">Services
+      <svg id="services-icon" width="10" height="10" aria-hidden="true"><rect width="10" height="10"/></svg>
+    </button>
+    <div id="menu" role="menu">
+      <a id="bookflight" role="menuitem" href="javascript:void(0)">Book Flight</a>
+      <a id="cars" role="menuitem" href="javascript:void(0)">Cars</a>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="menuwrap" id="hovercard">
+    <button id="hovercard-btn">Hover Card</button>
+    <div id="hovercard-panel" style="display:none">Panel content</div>
+  </div>
+
+  <hr>
+
+  <div class="menuwrap purecss" id="pure-wrap">
+    <button id="pure-btn">Pure CSS</button>
+    <div id="pure-menu"><a href="javascript:void(0)" id="pure-link">Pure link</a></div>
+  </div>
+
+  <hr>
+
+  <div class="datepicker" id="dp-wrap">
+    <button id="dp-trigger" aria-expanded="false" aria-label="Select date">
+      <svg width="12" height="12" aria-hidden="true"><rect width="12" height="12"/></svg>
+    </button>
+    <div class="dp-grid" id="dp-grid" role="grid">
+      <div role="row"><span role="gridcell">1</span><span role="gridcell">2</span></div>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="menuwrap">
+    <button id="icon-btn" class="iconbtn" aria-label="Settings">
+      <svg width="16" height="16" aria-hidden="true"><rect width="16" height="16"/></svg>
+    </button>
+    <div id="icon-menu" style="display:none"><a href="javascript:void(0)" id="icon-link">Icon menu link</a></div>
+  </div>
+
+  <hr>
+
+  <div id="plain" tabindex="0">Plain div target</div>
+  <nav><a id="navlink" href="javascript:void(0)">Nav link</a></nav>
+  <div id="invis" aria-hidden="true">Invisible CQ-invalid</div>
+
+  <hr>
+  <div id="churn-area">Churn happens elsewhere</div>
+
+  <script>
+    document.getElementById('services').addEventListener('mouseenter', function () {
+      document.getElementById('menu').classList.add('open');
+      document.getElementById('services').setAttribute('aria-expanded', 'true');
+    });
+    document.getElementById('services').addEventListener('mouseleave', function () {
+      document.getElementById('menu').classList.remove('open');
+      document.getElementById('services').setAttribute('aria-expanded', 'false');
+    });
+    document.getElementById('hovercard-btn').addEventListener('mouseenter', function () {
+      document.getElementById('hovercard-panel').style.display = 'block';
+    });
+    document.getElementById('dp-trigger').addEventListener('click', function () {
+      var w = document.getElementById('dp-wrap');
+      w.classList.toggle('dp-open');
+      document.getElementById('dp-trigger').setAttribute('aria-expanded', w.classList.contains('dp-open') ? 'true' : 'false');
+    });
+    document.getElementById('icon-btn').addEventListener('click', function () {
+      var m = document.getElementById('icon-menu');
+      m.style.display = m.style.display === 'none' ? 'block' : 'none';
+    });
+  </script>
+</body>
+</html>

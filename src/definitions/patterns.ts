@@ -254,6 +254,86 @@ export function isInteractiveElement(
   return false;
 }
 
+// ── Hover capture generic fix v1 (RC-8 / RC-2) ──────────────────────────
+// Spec: `.drytis/specs/hover-capture-generic-fix-v1.md` §5 G3 / G2a.
+// PURE policy only — DOM-free, no timing, no vocabulary.
+
+/**
+ * Hover discovery shape (RC-8): a DECLARED affordance, not class vocabulary.
+ *
+ * The discovery gate (both synced call sites: evidence-collector
+ * isHoverDiscoveryEnter AND hover.ts detectTrigger) accepts
+ * `isHoverDiscoveryShape(...) || domContext.hoverReveal === true`.
+ *
+ * `isInteractiveElement` itself is UNCHANGED — it remains the CQ v1.2
+ * `rawInteractiveShaped` fact source (frozen behavior). The class-substring
+ * contribution is removed for HOVER discovery only: 'custom-arrow',
+ * 'icon-arrow-down', 'tripType-dropDown' matched INTERACTIVE_CLASS_RE and
+ * started hover lifecycles on class-only containers (manual-testing RCA).
+ */
+export interface HoverDiscoveryShapeInput {
+  tag: string;
+  ariaRole?: string | null;
+  /** DomContext.tabIndex (null for non-HTMLElement). */
+  tabIndex?: number | null;
+  /** DomContext.ariaHasPopup (raw attribute value or null). */
+  ariaHasPopup?: string | null;
+  /** DomContext.clickHandler — onclick attribute fact. */
+  clickHandler?: boolean | null;
+  /** DomContext.pointerCursor — computed-style fact. */
+  pointerCursor?: boolean | null;
+  /** Present to prove shape ignores it (test-only reachability). */
+  className?: string | null;
+  hoverReveal?: boolean | null;
+}
+
+export function isHoverDiscoveryShape(input: HoverDiscoveryShapeInput): boolean {
+  if (INTERACTIVE_TAGS.has(input.tag)) return true;
+  if (input.ariaRole && INTERACTIVE_ROLES.has(input.ariaRole)) return true;
+  if (input.tabIndex != null && input.tabIndex >= 0) return true;
+  if (input.ariaHasPopup != null && input.ariaHasPopup !== '') return true;
+  if (input.clickHandler === true) return true;
+  if (input.pointerCursor === true) return true;
+  return false;
+}
+
+/**
+ * Subtree-text name eligibility (RC-2): may innerText/textContent serve as
+ * this element's accessible NAME?
+ *
+ * A container's whole-subtree text is not a name: hero-banner DIVs named
+ * "12345678" (promo text), UL[role=list] named "One WayRound Trip" (joined
+ * menu items, separator lost). Eligible only when the subtree is a single
+ * text-bearing shape:
+ *   - at most ONE descendant element carrying non-empty text, AND
+ *   - no interactive-shaped descendant (a container of controls is never
+ *     named by text), AND
+ *   - total text length <= 80, AND
+ *   - no newline (block layouts concatenate visually separate content).
+ *
+ * Pure eligibility DECISION — the DOM measurement lives at the capture
+ * instant (identity-extractor), which owns the DOM. Exported for unit tests.
+ */
+export interface SubtreeTextNameEligibilityInput {
+  elementChildCount: number;
+  textBearingElementDescendantCount: number;
+  textLength: number;
+  hasNewline: boolean;
+  hasInteractiveShapedDescendant: boolean;
+}
+
+const SUBTREE_NAME_MAX_TEXT_LENGTH = 80;
+
+export function subtreeTextNameEligibility(
+  input: SubtreeTextNameEligibilityInput,
+): boolean {
+  if (input.hasInteractiveShapedDescendant) return false;
+  if (input.textBearingElementDescendantCount > 1) return false;
+  if (input.textLength > SUBTREE_NAME_MAX_TEXT_LENGTH) return false;
+  if (input.hasNewline) return false;
+  return true;
+}
+
 // ── Dropdown Patterns ──────────────────────────────────────────────────
 
 /**

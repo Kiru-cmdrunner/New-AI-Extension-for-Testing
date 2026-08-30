@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>7.4-M1 Affordance Validation (generic)</title>
+<style>
+  /* Generic utility shapes — NO test attributes, NO roles, NO site tokens. */
+  body { font: 14px/1.5 system-ui, sans-serif; margin: 24px; color: #111; }
+  h1 { font-size: 18px; }
+  .card { border: 1px solid #ccc; border-radius: 8px; padding: 12px 16px; margin: 8px 0; background: #fff; }
+  /* THE affordance under test: interactivity expressed ONLY in CSS. */
+  .pointer-chip { cursor: pointer; }
+  .plain { /* deliberately no cursor rule */ }
+  .card-head { display: flex; align-items: center; gap: 8px; }
+</style>
+</head>
+<body>
+<h1>7.4-M1 — Affordance capture validation</h1>
+<p>Click each target once. Expect: pointer chips &rarr; Click cards; plain divs &rarr; honest Unclassified; span-inside-chip &rarr; parent Click; onclick div &rarr; Click.</p>
+
+<div class="card">
+  <div class="card-head"><b>1. Pointer chip (stylesheet rule)</b></div>
+  <div class="pointer-chip" id="chip-1">
+    <span class="chip-label">Select departure 06:30</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><b>2. Plain div (honest Unclassified expected)</b></div>
+  <div class="plain" id="plain-1">
+    <span class="chip-label">Not clickable styling</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><b>3. Child-click lift (span inside pointer chip)</b></div>
+  <div class="pointer-chip" id="chip-2">
+    <span class="chip-label" id="chip-2-label">Inner label — click ME</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><b>4. onclick attribute div (no pointer style)</b></div>
+  <div class="plain" id="onclick-1" onclick="this.dataset.fired='1'">Attribute handler</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><b>5. Inline pointer style (not a class)</b></div>
+  <div id="inline-1" style="cursor: pointer">Inline-styled target</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><b>6. Explicit cursor:default (must stay Unclassified)</b></div>
+  <div id="default-1" style="cursor: default">Explicit default cursor</div>
+  <div id="state"></div>
+</div>
+
+<script>
+  // Minimal state echo so the run is human-observable; no framework.
+  var state = document.getElementById('state');
+  document.addEventListener('click', function (e) {
+    state.textContent = 'clicked: ' + (e.target.id || e.target.className || e.target.tagName);
+  }, true);
+</script>
+</body>
+</html>

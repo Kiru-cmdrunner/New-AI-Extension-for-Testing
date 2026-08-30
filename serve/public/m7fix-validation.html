@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>M7-Fix Validation: Evidence Correlation</title>
+<style>
+body { font-family: system-ui; padding: 20px; max-width: 1200px; margin: 0 auto; }
+.test-card { border: 1px solid #ddd; padding: 12px; margin: 8px 0; border-radius: 4px; }
+.btn { padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 4px; }
+.btn:hover { background: #2563eb; }
+.checkbox-row { padding: 4px 0; }
+#dropdown-menu { display: none; border: 1px solid #ccc; padding: 8px; margin: 4px 0; }
+#dropdown-menu.open { display: block; }
+.dropdown-option { padding: 4px 8px; cursor: pointer; }
+.dropdown-option:hover { background: #e0e0e0; }
+#results { font-family: monospace; font-size: 12px; white-space: pre-wrap; margin-top: 20px; }
+.interaction-card { border-left: 3px solid #3b82f6; padding: 8px; margin: 4px 0; }
+.evidence-mock { border-left: 3px solid #10b981; padding: 4px 8px; margin: 4px 0; font-size: 11px; color: #4b5563; }
+.placeholder-mock { font-style: italic; color: #9ca3af; font-size: 11px; }
+</style>
+</head>
+<body>
+<h1>M7-Fix Validation: Evidence Correlation</h1>
+<p>This page simulates the interaction → evidence correlation pipeline.</p>
+
+<div>
+  <button class="btn" id="login-btn">Login</button>
+  <input type="text" id="search-input" placeholder="Search..." />
+  <label class="checkbox-row"><input type="checkbox" id="notif-checkbox" /> Enable notifications</label>
+  <button class="btn" id="dropdown-trigger">Status ▼</button>
+  <div id="dropdown-menu">
+    <div class="dropdown-option" data-value="active">Active</div>
+    <div class="dropdown-option" data-value="inactive">Inactive</div>
+    <div class="dropdown-option" data-value="pending">Pending</div>
+  </div>
+</div>
+
+<div id="timeline-mock" style="margin-top: 20px;">
+  <h3>Simulated Side Panel Timeline</h3>
+</div>
+
+<div id="results"></div>
+
+<script>
+// ── Simulated SW state ──────────────────────────────────────
+const liveInteractions = [];
+const pendingEvidence = new Map();
+const results = [];
+
+function log(msg) {
+  results.push(msg);
+  document.getElementById('results').textContent = results.join('\n');
+}
+
+// ── Simulated ID generation ─────────────────────────────────
+let evtCounter = 0;
+let intCounter = 0;
+function nextEventId() { return `evt-page1-${++evtCounter}`; }
+function nextInteractionId() { return `int-${++intCounter}`; }
+
+// ── Simulated interaction emission (ComponentRuntime) ──────
+function emitInteraction(triggerEventId, memberEventIds = [], type = 'Click') {
+  const interaction = {
+    interactionId: nextInteractionId(),
+    type,
+    triggerEvent: { eventId: triggerEventId },
+    memberEvents: [
+      { eventId: triggerEventId },
+      ...memberEventIds.map(id => ({ eventId: id }))
+    ],
+    behavioralEvidence: undefined,
+  };
+  liveInteractions.push(interaction);
+  log(`[SW] Emitted interaction ${interaction.interactionId} (trigger: ${triggerEventId})`);
+  renderTimelineMock();
+  return interaction;
+}
+
+// ── Simulated evidence delivery (EvidenceCollector) ────────
+function deliverEvidence(sourceEventId) {
+  const evidence = {
+    sourceEventId,
+    sourceEventType: 'click',
+    targetEvidence: { identity: { tag: 'BUTTON' } },
+    applicationEvidence: { domChanges: [{ type: 'test' }] },
+  };
+  log(`[Content Script] Delivered evidence (sourceEventId: ${sourceEventId})`);
+
+  // SW: handleBehavioralEvidence
+  const interactionId = attachEvidenceToInteraction(sourceEventId, evidence);
+  if (interactionId) {
+    log(`[SW] MATCHED → interaction ${interactionId}, evidence attached ✅`);
+  } else {
+    log(`[SW] NO MATCH → stored in pendingEvidence`);
+    pendingEvidence.set(sourceEventId, evidence);
+  }
+  renderTimelineMock();
+}
+
+// ── Two-tier matching (same as production code) ────────────
+function attachEvidenceToInteraction(sourceEventId, evidence) {
+  // Tier 1: trigger match
+  for (const interaction of liveInteractions) {
+    if (interaction.triggerEvent?.eventId === sourceEventId) {
+      if (!interaction.behavioralEvidence) {
+        interaction.behavioralEvidence = evidence;
+      }
+      return interaction.interactionId;
+    }
+  }
+  // Tier 2: member event match
+  for (const interaction of liveInteractions) {
+    if (interaction.memberEvents?.some(e => e.eventId === sourceEventId)) {
+      if (!interaction.behavioralEvidence) {
+        interaction.behavioralEvidence = evidence;
+      }
+      return interaction.interactionId;
+    }
+  }
+  return null;
+}
+
+// ── Simulated side panel rendering ─────────────────────────
+function renderTimelineMock() {
+  const container = document.getElementById('timeline-mock');
+  container.innerHTML = '<h3>Simulated Side Panel Timeline</h3>';
+  for (const interaction of liveInteractions) {
+    const card = document.createElement('div');
+    card.className = 'interaction-card';
+    const idBadge = document.createElement('span');
+    idBadge.className = 'timeline-event__id';
+    idBadge.textContent = interaction.interactionId;
+    idBadge.style.cssText = 'font-size:10px;background:#e5e7eb;padding:2px 4px;border-radius:2px;margin-right:8px;';
+    card.appendChild(idBadge);
+    card.appendChild(document.createTextNode(`${interaction.type} (trigger: ${interaction.triggerEvent.eventId})`));
+
+    if (interaction.behavioralEvidence) {
+      const ev = document.createElement('div');
+      ev.className = 'evidence-mock';
+      ev.textContent = `🎯 Target Evidence: ${JSON.stringify(interaction.behavioralEvidence.targetEvidence)} | 🌐 App Evidence: ${JSON.stringify(interaction.behavioralEvidence.applicationEvidence)}`;
+      card.appendChild(ev);
+    } else {
+      const ph = document.createElement('div');
+      ph.className = 'placeholder-mock';
+      ph.textContent = '⏳ Collecting behavioral evidence…';
+      card.appendChild(ph);
+    }
+    container.appendChild(card);
+  }
+}
+
+// ── Test Scenarios ─────────────────────────────────────────
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function runTests() {
+  results.length = 0;
+  log('=== M7-Fix Evidence Correlation Validation ===\n');
+
+  // Scenario 1: Simple Click
+  log('--- Scenario 1: Simple Click ---');
+  const evt1 = nextEventId();
+  emitInteraction(evt1);
+  await sleep(100);
+  deliverEvidence(evt1);
+  await sleep(100);
+  const int1 = liveInteractions.find(i => i.triggerEvent.eventId === evt1);
+  log(`Result: ${int1?.behavioralEvidence ? 'PASS ✅' : 'FAIL ❌'} — evidence attached: ${!!int1?.behavioralEvidence}\n`);
+
+  // Scenario 2: Typing Session (trigger = focus, evidence = input)
+  log('--- Scenario 2: Typing Session ---');
+  const focusEvt = nextEventId();
+  const inputEvt = nextEventId();
+  emitInteraction(focusEvt, [inputEvt], 'TextEntry');
+  await sleep(100);
+  // Evidence for the INPUT event, not the focus event
+  deliverEvidence(inputEvt);
+  await sleep(100);
+  const int2 = liveInteractions.find(i => i.triggerEvent.eventId === focusEvt);
+  log(`Result: ${int2?.behavioralEvidence ? 'PASS ✅' : 'FAIL ❌'} — Tier 2 match via memberEvents\n`);
+
+  // Scenario 3: Navigation
+  log('--- Scenario 3: Navigation ---');
+  const navEvt = nextEventId();
+  emitInteraction(navEvt, [], 'Navigation');
+  await sleep(100);
+  deliverEvidence(navEvt);
+  await sleep(100);
+  const int3 = liveInteractions.find(i => i.triggerEvent.eventId === navEvt);
+  log(`Result: ${int3?.behavioralEvidence ? 'PASS ✅' : 'FAIL ❌'} — evidence attached\n`);
+
+  // Scenario 4: Multi-member (trigger evidence wins, first-write-only)
+  log('--- Scenario 4: Dropdown (multi-member) ---');
+  const openEvt = nextEventId();
+  const selectEvt = nextEventId();
+  emitInteraction(openEvt, [selectEvt], 'Dropdown');
+  await sleep(100);
+  deliverEvidence(openEvt);  // trigger evidence
+  await sleep(100);
+  deliverEvidence(selectEvt); // member evidence
+  await sleep(100);
+  const int4 = liveInteractions.find(i => i.triggerEvent.eventId === openEvt);
+  log(`Result: ${int4?.behavioralEvidence ? 'PASS ✅' : 'FAIL ❌'} — trigger evidence preserved (first-write-only)\n`);
+
+  // Scenario 5: Rapid consecutive interactions
+  log('--- Scenario 5: Rapid Consecutive Interactions ---');
+  const rapidEvts = [];
+  for (let i = 0; i < 5; i++) {
+    const e = nextEventId();
+    rapidEvts.push(e);
+    emitInteraction(e);
+  }
+  await sleep(100);
+  for (const e of rapidEvts) {
+    deliverEvidence(e);
+  }
+  await sleep(100);
+  let allMatched = true;
+  for (let i = 0; i < 5; i++) {
+    const int = liveInteractions.find(x => x.triggerEvent.eventId === rapidEvts[i]);
+    if (!int?.behavioralEvidence) allMatched = false;
+  }
+  log(`Result: ${allMatched ? 'PASS ✅' : 'FAIL ❌'} — all 5 interactions have evidence\n`);
+
+  // Scenario 6: Late evidence (after card rendered)
+  log('--- Scenario 6: Late Evidence ---');
+  const lateEvt = nextEventId();
+  const lateInt = emitInteraction(lateEvt);
+  await sleep(500); // Simulate 300ms+ window stabilization
+  log('(Card rendered with placeholder, evidence arrives now)');
+  deliverEvidence(lateEvt);
+  await sleep(100);
+  log(`Result: ${lateInt.behavioralEvidence ? 'PASS ✅' : 'FAIL ❌'} — late evidence attached\n`);
+
+  // Scenario 7: Re-render preserves evidence
+  log('--- Scenario 7: Re-render Preserves Evidence ---');
+  const reInt = liveInteractions.find(i => i.triggerEvent.eventId === evt1);
+  const beforeRender = !!reInt?.behavioralEvidence;
+  renderTimelineMock(); // Force re-render
+  const afterRender = !!reInt?.behavioralEvidence;
+  log(`Result: ${beforeRender && afterRender ? 'PASS ✅' : 'FAIL ❌'} — evidence survives re-render\n`);
+
+  // Scenario 8: Unmatched evidence
+  log('--- Scenario 8: Unmatched Evidence ---');
+  const unmatchedCountBefore = pendingEvidence.size;
+  deliverEvidence('evt-page1-99999');
+  const unmatchedCountAfter = pendingEvidence.size;
+  const noWrongAttachment = liveInteractions.every(i =>
+    !i.behavioralEvidence || i.behavioralEvidence.sourceEventId !== 'evt-page1-99999'
+  );
+  log(`Result: ${unmatchedCountAfter > unmatchedCountBefore && noWrongAttachment ? 'PASS ✅' : 'FAIL ❌'} — stored in pending, no wrong attachment\n`);
+
+  // Summary
+  log('=== SUMMARY ===');
+  const attached = liveInteractions.filter(i => i.behavioralEvidence).length;
+  log(`Interactions: ${liveInteractions.length}`);
+  log(`With evidence: ${attached}`);
+  log(`Pending (unmatched): ${pendingEvidence.size}`);
+  log(`Placeholder showing: ${liveInteractions.length - attached}`);
+  log(allMatched && attached > 0 ? '\nOVERALL: PASS ✅' : '\nOVERALL: FAIL ❌');
+}
+
+// Auto-run tests
+runTests();
+</script>
+</body>
+</html>

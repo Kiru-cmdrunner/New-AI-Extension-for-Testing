@@ -16,15 +16,33 @@
 Always download **`cmdrunner-extension.zip`** from this directory (the
 unversioned name is kept current; versioned files are archived and 404).
 
-- **Current build:** manifest **10.9.0**, packed **2026-08-29 ~12:22 UTC**
-  (7.4-B7-P4 + provenance-regression fix build) from working tree on
-  `capability-surgical-removal` (B6/B6.1 Enter commits + B7-P1/P2/P3/P4
-  Hover evidence-observation + Click Qualification v1.2 Steps 1–2 +
-  C-1…C-6 click-ordinal completeness fix).
-- **MD5:** `fe8d3e98ef7fc4eb660b61957b8398fe`
-- **SHA-256:** `fe32682f18e81dc66cc8c8487cdb7207062f5b44c845661f782265b0c8f89d34`
-- **Size:** 320,819 bytes / 40 files
+- **Current build:** manifest **10.9.0**, packed **2026-08-30 ~07:55 UTC**
+  (HEC v2.1 + Amendment A delivery-integrity build) from working tree on
+  `capability-surgical-removal` (B6/B6.1 Enter commits + B7-P1..P4 Hover
+  evidence-observation + Click Qualification v1.2 Steps 1–2 + C-1…C-6 fix
+  + hover-capture generic fix v1 + Hover Evidence Contract v2.1 with the
+  M4c STOP-drain fix and Amendment A timing-free delivery: ACK-based
+  evidence delivery, closed-loop STOP drain, identity-based companions —
+  no millisecond gates classification, ownership, separation, or
+  admission).
+- **MD5:** `1403622a5365cd6d030bb841f584724a`
+- **SHA-256:** `6a677563bf8274282fc08279fd0329481a723ce250b0de41b7596bfef6dff453`
+- **Size:** 326,151 bytes / 41 files
 - **What this build contains beyond the Aug-28 7.4-B7-P3 build:**
+- **Hover-capture generic fix v1 (incl. cursor-inheritance amendment):**
+  hover anchors resolve to the element under the pointer (bounded lift to
+  the enclosing control — never banner/wrapper containers); container
+  subtree text is no longer used as a hover name ("12345678"-style names
+  are gone); hover naming gains placeholder/icon tiers + a structural-noun
+  fallback; telemetry fetches no longer admit hovers; hover lifecycles
+  start only on DECLARED affordances (tag/role/tabIndex/aria-haspopup/
+  onclick/own-boundary pointer cursor) or a recorded `:hover`-reveal CSS
+  fact — CSS class substrings like "custom-arrow" no longer start hovers;
+  `cursor:pointer` counts only when it CHANGES at the element (inherited
+  pointer from a link no longer makes icon glyphs look interactive);
+  aria-hidden subtrees are excluded from names; hover→click pairs fold
+  presentation-only. All generic, zero site-specific logic.
+
   - Click Qualification v1.2 (Steps 1+2): capture-time click
     qualification — immutable invalidity facts captured at the dispatch
     instant (disabled-native, fieldset-disabled, inert-subtree,

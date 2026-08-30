@@ -582,6 +582,28 @@ reintroduced threshold.
 
 ## 13. Amendment log
 
+**2026-08-29 hover-capture generic-fix amendment (post-P4 manual testing):** manual
+testing on a real marketing/booking site exposed generic capture defects OUTSIDE this
+spec's shipped scope: hover anchors lifted into unnamed containers by the click-lifting
+resolver (RC-1), containers named by whole-subtree text ("12345678" — RC-2), icon-only
+targets named by bare tag ("I" — RC-3), telemetry fetches admitting hovers on
+instrumented pages (RC-4/RC-7), and the discovery gate's unbounded class-vocabulary
+substring list starting lifecycles on class-only containers (RC-8). Fixed in
+`.drytis/specs/hover-capture-generic-fix-v1.md` under this amendment's authority:
+**DC-2 note** — this amendment does NOT reintroduce vocabulary; it REMOVES the
+INTERACTIVE_CLASS_RE contribution for hover discovery only (hover discovery becomes the
+structural shape test OR a recorded `hoverReveal` CSS fact; `isInteractiveElement`
+itself is untouched and remains the CQ `rawInteractiveShaped` fact source). **DC-3
+tuning lever** — `stamped-fetch` is removed from HOVER_CONSEQUENCE_CLASSES per §6's
+"the list is the tuning lever" clause (telemetry is not a user-visible consequence);
+the class remains recorded evidence and stays admitted for non-Hover types. Discovery
+gate change applies to BOTH synced call sites (`evidence-collector.isHoverDiscoveryEnter`
+and `hover.ts` detectTrigger). No change to CQ, ownership pass, KR grammar, IR
+derivation, or P1–P4 shipped contracts; the C-6 standing gate now also includes the
+hover-fix matrix. Residual honesty trade-off (R-1) documented there: class-only custom
+widgets with no declared affordance and no `:hover` CSS no longer start hover
+lifecycles — silent negative, watch metric named.
+
 **2026-08-29 grounding-audit amendment (P4 blocker):** `surface-visible` made
 ownership-safe. The revealed-surface fact must be OWNED by the hover's window, not merely
 contained in it. The P3 `factOwner` first-window pass (§5.3.2) is extended from

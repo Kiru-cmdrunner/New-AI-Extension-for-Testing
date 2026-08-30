@@ -39,12 +39,18 @@ import { joinsRecordedSurface } from '../shared/surface-join';
  * Consequence classes admitted for Hover (DC-3 replacement). Each class is
  * a RECORDED FACT in the hover's own evidence — never a gesture judgment.
  * The list is the tuning lever (add/remove classes), never a threshold.
+ *
+ * Hover-capture generic fix v1 (RC-4/G4): `stamped-fetch` is REMOVED —
+ * telemetry is not a user-visible consequence and it admitted every gesture
+ * on instrumented pages. The recorded network evidence remains (network
+ * rows in the window; CER-2 stamp join intact) — it simply derives no
+ * consequence CLASS. Non-Hover admission never consulted these classes.
+ * Spec: `.drytis/specs/hover-capture-generic-fix-v1.md` §5 G4.
  */
 const HOVER_CONSEQUENCE_CLASSES = [
   'reveal',
   'insertion',
   'removal',
-  'stamped-fetch',
   'nav',
   'revert',
   'pointer-reach',
@@ -105,19 +111,12 @@ export function deriveConsequenceClasses(
   );
   if (removal) classes.push('removal');
 
-  // stamped-fetch — network row stamped (T1 secondary) or attributed (T4)
-  // to this lifecycle: a row whose sourceEventId joins the hover's own
-  // events (trigger enter + member enters) is stamped attribution; a row
-  // present in the hover's window with no competing source is attributed.
-  const ownEventIds = new Set<string>();
-  if (interaction.triggerEvent?.eventId) {
-    ownEventIds.add(interaction.triggerEvent.eventId);
-  }
-  for (const m of interaction.memberEvents ?? []) ownEventIds.add(m.eventId);
-  const stampedFetch = (app.networkActivity ?? []).some(
-    (r) => r.sourceEventId != null && ownEventIds.has(r.sourceEventId),
-  );
-  if (stampedFetch) classes.push('stamped-fetch');
+  // stamped-fetch — REMOVED for Hover (RC-4/G4): telemetry is not a
+  // user-visible consequence; it admitted every gesture on instrumented
+  // pages. The network rows remain recorded evidence; the class remains
+  // admitted for non-Hover types. (ownEventIds join retained for other
+  // consumers of this function's shape only if needed — hover admission no
+  // longer consults it.)
 
   // nav — navigation event recorded in this window
   const nav = (app.navigation ?? []).length > 0;
@@ -249,12 +248,25 @@ export function isProductionInteraction(
       return true;
 
     case 'Hover':
-      // B7-P2 §5.2.7: evidence-keyed admission — the single semantic gate.
-      // admit ⇔ endState === 'completed' (checked above) ∧ consequence-
-      // bearing (≥1 recorded fact of class reveal | insertion | removal |
-      // stamped-fetch | nav | revert | pointer-reach). The old stored
-      // metadata.meaningful judgment is DEAD — never gates again.
-      return deriveConsequenceClasses(interaction).length > 0;
+      // HEC v1 (.drytis/specs/hover-capture-evidence-contract-v1.md §9):
+      // admission reads ONLY the recorded capture-time verdict — attached by
+      // the content script to the evidence envelope and projected into
+      // metadata at attach time (sw-integration). Either location is the
+      // same frozen record (R-Q1/R-Q6); read both defensively for
+      // pre-attach display paths.
+      //   admit ⇔ endState === 'completed' (checked above)
+      //          ∧ recorded verdict === 'evidenced'
+      // Legacy rows without the record (Decision D2) are NOT admitted —
+      // no retroactive reconstruction, no consequence-class fallback.
+      // STOP never decides whether something was a Hover (D-HEC-6); it
+      // projects the frozen capture-time classification.
+      {
+        const fromMetadata = (metadata as { hoverQualification?: { verdict?: string } })
+          .hoverQualification;
+        const fromEnvelope = interaction.behavioralEvidence?.hoverQualification;
+        const verdict = fromMetadata?.verdict ?? fromEnvelope?.verdict;
+        return verdict === 'evidenced';
+      }
 
     case 'Unclassified':
       // Capture-guarantee v2: every deliberate physical action preserved.
@@ -277,11 +289,67 @@ export function isProductionInteraction(
  * derives admission from the recorded evidence via
  * `deriveConsequenceClasses` at read time; stored P2/P3-era
  * `consequenceClasses`/`meaningful` values are inert history.
+ *
+ * HEC v1: Hover admission additionally requires the frozen capture-time
+ * `hoverQualification.verdict === 'evidenced'` (§9) — recorded at
+ * hover-window close, never derived here.
  */
 export function filterProductionInteractions(
   interactions: ComponentInteraction[],
 ): ComponentInteraction[] {
   return interactions.filter((i) => isProductionInteraction(i));
+}
+
+// ── HEC v1 §9b: Universal Evidence Disclosure (presentation-only) ────
+
+/** Spec §15 Decision D3 (locked): max recorded-reason length. */
+export const HOVER_REASON_MAX_CHARS = 200;
+
+export interface EvidenceDisclosureEntry {
+  available: boolean;
+  count: number;
+}
+
+export interface EvidenceDisclosures {
+  domChanges: EvidenceDisclosureEntry;
+  visibilityChanges: EvidenceDisclosureEntry;
+  newSurfaces: EvidenceDisclosureEntry;
+  collections: EvidenceDisclosureEntry;
+  counters: EvidenceDisclosureEntry;
+  network: EvidenceDisclosureEntry;
+  navigation: EvidenceDisclosureEntry;
+}
+
+function entry(count: number): EvidenceDisclosureEntry {
+  return { available: count > 0, count };
+}
+
+/**
+ * HEC v1 §9b (D-HEC-9): expose what evidence EXISTS and what does NOT for
+ * ANY interaction type — honest availability flags + counts, read ONLY
+ * from recorded facts (behavioralEvidence.applicationEvidence). Never
+ * influences classification, admission, IR, or KR semantics (R-E4/AC-25).
+ */
+export function buildEvidenceDisclosures(
+  interaction: ComponentInteraction,
+): EvidenceDisclosures {
+  const app = interaction.behavioralEvidence?.applicationEvidence;
+  const domChanges = app?.domChanges?.length ?? 0;
+  const domChangeOverflow = app?.domChangeOverflow ?? 0;
+  const visibilityChanges = app?.visibilityChanges?.length ?? 0;
+  const newSurfaces = app?.newSurfaces?.length ?? 0;
+  const navigation = app?.navigation?.length ?? 0;
+  const network = app?.networkActivity?.length ?? 0;
+
+  return Object.freeze({
+    domChanges: entry(domChanges + domChangeOverflow),
+    visibilityChanges: entry(visibilityChanges),
+    newSurfaces: entry(newSurfaces),
+    collections: entry(0), // reserved: structured collections not yet recorded per-window
+    counters: entry(0),    // reserved: aggregated counters not yet recorded per-window
+    network: entry(network),
+    navigation: entry(navigation),
+  });
 }
 
 // ── IR Action Mapping ────────────────────────────────────────────────

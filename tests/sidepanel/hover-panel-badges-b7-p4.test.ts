@@ -6,6 +6,11 @@
  * (grouping never destruction — D4); unattributedConsequences surfaced
  * (V1 honest floor); dedup folds become presentation-only for gesture-only
  * hovers and are disabled for admitted ones (F-5's data loss scoped away)."
+ *
+ * HEC v1 re-baseline (2026-08-30): admission and chips now read the
+ * RECORDED capture-time verdict/class (metadata.hoverQualification or the
+ * evidence envelope) — the fixture below carries one. Legacy no-record
+ * rows render the derived display classes (display only).
  */
 import { describe, expect, it } from 'vitest';
 import { renderProductionInteractions } from '../../src/sidepanel/interaction-renderer';
@@ -13,7 +18,7 @@ import type { ComponentInteraction } from '../../src/shared/component-types';
 
 function makeHover(
   interactionId: string,
-  opts: { evidence?: object; endState?: string } = {},
+  opts: { evidence?: object; endState?: string; qualified?: boolean } = {},
 ): ComponentInteraction {
   return {
     interactionId,
@@ -24,7 +29,17 @@ function makeHover(
       eventType: 'mouseenter',
     },
     memberEvents: [],
-    metadata: {},
+    metadata: opts.qualified === false ? {} : {
+      hoverQualification: {
+        verdict: opts.evidence ? 'evidenced' : 'gesture-only',
+        evidenceClass: opts.evidence ? 'reveal' : null,
+        evidenceReason: opts.evidence
+          ? 'reveal: surface emerged joined to anchor'
+          : 'gesture-only: no target-local consequence in enter window',
+        anchorFacts: {},
+        factSummary: {},
+      },
+    },
     behavioralEvidence: {
       sourceEventId: `e-${interactionId}`,
       windowId: `w-${interactionId}`,

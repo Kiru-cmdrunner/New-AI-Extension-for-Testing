@@ -1,0 +1,42 @@
+<!doctype html>
+<!--
+  7.1-W2 fixture: second full-reload DESTINATION. Filename deliberately
+  matches DEFAULT_VIEW_PATTERNS entry '/cart' → viewId 'cart'
+  (confidence 0.9).
+
+  Landed on via GET /cart.html?ASIN=… after the add-to-cart form submit:
+  the view layer must persist a 'cart' view row AND the
+  search-results → cart view transition.
+
+  The back-link performs a third full reload (link transition) to
+  /search-form.html — which matches no pattern, so it honestly yields no
+  view row (graceful degradation, same rule as the m9 fixture).
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cart — 7.1-W2 destination</title>
+  <style>
+    body { font: 15px/1.5 system-ui, sans-serif; max-width: 560px; margin: 3rem auto; padding: 0 1rem; }
+    .cart-row { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-top: 1rem; }
+    a { display: inline-block; margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Your cart</h1>
+  <p id="asin-echo" data-auto-id="asin-echo"></p>
+
+  <div class="cart-row" id="cart-landed-note" data-auto-id="cart-landed-note">
+    <strong>Item added:</strong> FL-6E-231 (flight hold) · qty 1
+  </div>
+
+  <a href="search-results.html" data-auto-id="back-to-results">← back to results</a>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const asin = params.get('ASIN') ?? '(no ASIN)';
+    document.getElementById('asin-echo').textContent = 'ASIN: ' + asin;
+  </script>
+</body>
+</html>

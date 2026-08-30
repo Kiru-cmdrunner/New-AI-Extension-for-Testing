@@ -27,7 +27,8 @@ import {
 } from './understanding-badge';
 import { buildEvidenceFooter } from './evidence-footer';
 import { getAssertionCountFor } from './assertion-chip';
-import { deriveConsequenceClasses } from '../presentation/output-adapter';
+import { deriveConsequenceClasses, buildEvidenceDisclosures } from '../presentation/output-adapter';
+import { foldHoverClickPairs } from './hover-pair-fold';
 
 // ── Layer 1: Type Display Config ──────────────────────────────────────
 
@@ -257,9 +258,12 @@ function suppressionReason(interaction: ComponentInteraction): string | null {
     case 'Scroll':
       return interaction.metadata.hasDelta !== true ? '0px scroll' : null;
     case 'Hover':
-      // B7-P4 (bridge deletion): admission derives from recorded evidence
-      // at render time — metadata.meaningful is inert P2/P3-era history.
-      return deriveConsequenceClasses(interaction).length > 0 ? null : 'not meaningful';
+      // HEC v1 (§9): the recorded capture-time verdict is authoritative.
+      // Gesture-only/unqualified rows surface the honest recorded reason
+      // (AC-16: the classification is explained from recorded evidence —
+      // 'not meaningful' alone never replaces the why-line).
+      if (hoverRecordedVerdict(interaction) === 'evidenced') return null;
+      return 'not meaningful';
     default:
       return null;
   }
@@ -275,6 +279,23 @@ export function buildHiddenSummary(interactions: ComponentInteraction[]): string
     .filter((r): r is string => r !== null);
   if (reasons.length === 0) return null;
   return `Show all ${interactions.length} (${reasons.length} hidden: ${reasons.join(' · ')})`;
+}
+
+/**
+ * HEC v1 §9: the recorded capture-time Hover verdict (either location —
+ * metadata projection or the evidence envelope; same frozen record).
+ * Null when nothing was recorded (legacy rows render honestly as
+ * not-evidenced).
+ */
+function hoverRecordedVerdict(
+  interaction: ComponentInteraction,
+): 'evidenced' | 'gesture-only' | null {
+  const meta = (interaction.metadata ?? {}) as Record<string, unknown>;
+  const fromMeta = (meta.hoverQualification as { verdict?: string } | undefined)?.verdict;
+  const fromEnv = interaction.behavioralEvidence?.hoverQualification?.verdict;
+  const verdict = fromMeta ?? fromEnv;
+  if (verdict === 'evidenced' || verdict === 'gesture-only') return verdict;
+  return null;
 }
 
 function appendChip(el: HTMLElement, text: string, cls: string, color?: string): void {
@@ -363,13 +384,20 @@ export function createInteractionElement(interaction: ComponentInteraction): HTM
     appendChip(el, projected.text, 'interaction-chip interaction-chip--understanding', '#94a3b8');
   }
 
-  // B7-P4: evidence-derived per-class badge chips for admitted hovers —
-  // the derived consequence classes rendered directly (reveal, insertion,
-  // removal, stamped-fetch, nav, revert, pointer-reach). One chip per
-  // class; gesture-only hovers have no classes and render none.
+  // HEC v1 §9b: chip from the RECORDED capture-time evidence class (when a
+  // qualification exists) — never a STOP-time re-derivation. Legacy rows
+  // without a record render the derived display classes (display only).
   if (interaction.type === 'Hover') {
-    for (const cls of deriveConsequenceClasses(interaction)) {
-      appendChip(el, cls, 'interaction-chip interaction-chip--consequence', '#6366f1');
+    const recorded = hoverRecordedVerdict(interaction);
+    const meta = (interaction.metadata ?? {}) as Record<string, unknown>;
+    const recordedClass = (meta.hoverQualification as { evidenceClass?: string | null } | undefined)
+      ?.evidenceClass;
+    if (recorded === 'evidenced' && recordedClass) {
+      appendChip(el, recordedClass, 'interaction-chip interaction-chip--consequence', '#6366f1');
+    } else if (recorded == null) {
+      for (const cls of deriveConsequenceClasses(interaction)) {
+        appendChip(el, cls, 'interaction-chip interaction-chip--consequence', '#6366f1');
+      }
     }
   }
 
@@ -380,6 +408,30 @@ export function createInteractionElement(interaction: ComponentInteraction): HTM
     whyEl.textContent = why;
     el.appendChild(whyEl);
   }
+
+  // ── HEC v1 §9b (D-HEC-9): evidence disclosure — what evidence EXISTS
+  // and what does NOT, for EVERY interaction type. Read only from recorded
+  // facts via buildEvidenceDisclosures; presentation-only (AC-25/R-E4 —
+  // never a classification, admission, IR, or KR input).
+  const disclosure = buildEvidenceDisclosures(interaction);
+  const disclosureParts: string[] = [];
+  const disclosureOrder: Array<[keyof typeof disclosure, string]> = [
+    ['domChanges', 'DOM'],
+    ['visibilityChanges', 'visibility'],
+    ['newSurfaces', 'surfaces'],
+    ['network', 'network'],
+    ['navigation', 'navigation'],
+    ['collections', 'collections'],
+    ['counters', 'counters'],
+  ];
+  for (const [key, label] of disclosureOrder) {
+    const e = disclosure[key];
+    disclosureParts.push(`${label}: ${e.available ? String(e.count) : 'not captured'}`);
+  }
+  const disclosureEl = document.createElement('p');
+  disclosureEl.className = 'timeline-event__value interaction-disclosure';
+  disclosureEl.textContent = `evidence — ${disclosureParts.join(' · ')}`;
+  el.appendChild(disclosureEl);
 
   const footer = buildEvidenceFooter(interaction.behavioralEvidence);
   if (footer) {
@@ -526,6 +578,11 @@ export function renderInteractions(
  * MS-U1: optional `options.showHidden` renders ALL interactions with a
  * suppression-reason chip on each suppressed card (show-and-mark, D3/D8).
  * Default (no options) preserves pre-MS-U1 behavior exactly.
+ *
+ * Hover-capture generic fix v1 (G5): in the STOPPED view, a completed
+ * consumed-by-click hover whose trigger identity matches the following
+ * click folds under that click card — one user action, one card. The live
+ * timeline is unchanged (recording order remains visible while recording).
  */
 export interface RenderOptions {
   showHidden?: boolean;
@@ -550,11 +607,91 @@ export function renderProductionInteractions(
     }
     return;
   }
-  renderInteractions(
-    container,
-    interactions.filter(isProductionInteraction),
-    options?.view ?? 'live',
-  );
+  const production = interactions.filter(isProductionInteraction);
+  if (options?.view === 'stopped') {
+    renderStoppedWithFoldedPairs(container, production);
+    return;
+  }
+  renderInteractions(container, production, options?.view ?? 'live');
+}
+
+/**
+ * G5: stopped view with hover→click pair folding. Folded hovers render as a
+ * nested detail row inside their click card (collapsed by default) instead
+ * of a separate card.
+ */
+function renderStoppedWithFoldedPairs(
+  container: HTMLElement,
+  interactions: ComponentInteraction[],
+): void {
+  const fold = foldHoverClickPairs(interactions);
+  const byId = new Map(interactions.map((i) => [i.interactionId, i]));
+  container.innerHTML = '';
+
+  if (interactions.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'timeline__empty';
+    empty.textContent = 'No interactions captured.';
+    container.appendChild(empty);
+    return;
+  }
+
+  for (const interactionId of fold.order) {
+    const interaction = byId.get(interactionId);
+    if (!interaction) continue;
+    try {
+      const el = createInteractionElement(interaction);
+      attachEvidenceDisplay(el, interaction, 'stopped');
+      const pairIdx = fold.foldedUnder.get(interaction.interactionId);
+      if (pairIdx !== undefined) {
+        for (const foldedHover of fold.pairs[pairIdx].folded) {
+          el.appendChild(buildFoldedHoverRow(foldedHover));
+        }
+      }
+      container.appendChild(el);
+    } catch (err) {
+      console.warn('[Interaction] render failed for', interaction?.interactionId, err);
+      const fallback = document.createElement('div');
+      fallback.className = 'timeline-event interaction-event';
+      const idBadge = document.createElement('span');
+      idBadge.className = 'timeline-event__id';
+      idBadge.textContent = interaction.interactionId;
+      fallback.appendChild(idBadge);
+      const desc = document.createElement('p');
+      desc.className = 'timeline-event__title interaction-action-text';
+      desc.textContent = `${interaction.type ?? 'Unknown'} (render error)`;
+      fallback.appendChild(desc);
+      container.appendChild(fallback);
+    }
+  }
+}
+
+/** G5: the nested row for a folded hover inside its click card. */
+function buildFoldedHoverRow(hover: ComponentInteraction): HTMLElement {
+  const row = document.createElement('details');
+  row.className = 'interaction-folded-hover';
+  const summary = document.createElement('summary');
+  // HEC v1 §9b/AC-16: the nested row carries the RECORDED verdict + reason
+  // — the folded hover's classification is still explained from capture
+  // evidence, never just a duration line.
+  const meta = (hover.metadata ?? {}) as Record<string, unknown>;
+  const verdict = (meta.hoverQualification as { verdict?: string } | undefined)?.verdict;
+  const reason = typeof meta.evidenceReason === 'string' ? meta.evidenceReason : null;
+  const dwell = String(meta.dwellMs ?? 0);
+  const verdictNote = verdict
+    ? ` — hover ${verdict}${reason ? `: ${reason}` : ''}`
+    : '';
+  summary.textContent = `↳ hovered before click (${dwell}ms)${verdictNote}`;
+  row.appendChild(summary);
+  const inner = document.createElement('div');
+  inner.className = 'interaction-folded-hover__body';
+  try {
+    attachEvidenceDisplay(inner, hover, 'stopped');
+  } catch {
+    // Folded hover evidence failed to render — keep the row honest but empty.
+  }
+  row.appendChild(inner);
+  return row;
 }
 
 function findCardById(container: HTMLElement, interactionId: string): HTMLElement | null {
@@ -580,9 +717,9 @@ function isProductionInteraction(i: ComponentInteraction): boolean {  if (i.endS
     case 'Scroll':
       return i.metadata.hasDelta === true;
     case 'Hover':
-      // B7-P4 (bridge deletion): same derived admission as the suppression
-      // reason — a single derivation source for the panel.
-      return deriveConsequenceClasses(i).length > 0;
+      // HEC v1 §9: same recorded-verdict admission as suppressionReason —
+      // a single derivation source for the panel.
+      return hoverRecordedVerdict(i) === 'evidenced';
     default:
       return true;
   }

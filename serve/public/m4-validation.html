@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>M4 EvidenceCollector Validation</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 1200px; margin: 20px auto; padding: 20px; }
+    fieldset { margin: 16px 0; padding: 16px; border: 2px solid #4a90d9; border-radius: 8px; }
+    legend { font-weight: bold; padding: 0 8px; color: #4a90d9; }
+    label { display: block; margin: 8px 0; }
+    button, input[type="text"], input[type="email"], select, textarea {
+      padding: 6px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;
+    }
+    button { cursor: pointer; background: #4a90d9; color: white; border: none; }
+    button:hover { background: #3a7ac0; }
+    .status { font-size: 12px; color: #666; margin-top: 4px; }
+
+    /* Custom dropdown */
+    .custom-dropdown { position: relative; display: inline-block; }
+    .custom-dropdown-btn {
+      padding: 8px 16px; background: white; border: 1px solid #ccc; cursor: pointer;
+    }
+    .custom-dropdown-menu {
+      display: none; position: absolute; top: 100%; left: 0; background: white;
+      border: 1px solid #ccc; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000;
+      min-width: 200px;
+    }
+    .custom-dropdown-menu.open { display: block; }
+    .custom-dropdown-item { padding: 8px 16px; cursor: pointer; }
+    .custom-dropdown-item:hover { background: #e8f0fe; }
+
+    /* Modal */
+    .modal-backdrop {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: white; padding: 24px; border-radius: 12px; max-width: 400px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+    }
+    .modal h3 { margin-top: 0; }
+
+    /* Dynamic content */
+    #dynamic-area { min-height: 50px; padding: 8px; border: 1px dashed #ccc; border-radius: 4px; margin-top: 8px; }
+    .dynamic-item { padding: 4px 8px; margin: 4px 0; background: #f0f7ff; border-radius: 4px; }
+
+    /* Toast/notification */
+    .toast {
+      position: fixed; bottom: 20px; right: 20px; padding: 12px 24px;
+      background: #333; color: white; border-radius: 8px; opacity: 0;
+      transition: opacity 0.3s; z-index: 10000;
+    }
+    .toast.show { opacity: 1; }
+
+    /* Autocomplete */
+    .autocomplete-wrapper { position: relative; }
+    .autocomplete-results {
+      display: none; position: absolute; top: 100%; left: 0; background: white;
+      border: 1px solid #ccc; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000;
+      min-width: 300px; max-height: 200px; overflow-y: auto;
+    }
+    .autocomplete-results.show { display: block; }
+    .autocomplete-item { padding: 8px 16px; cursor: pointer; }
+    .autocomplete-item:hover, .autocomplete-item.selected { background: #e8f0fe; }
+  </style>
+</head>
+<body>
+  <h1>M4 EvidenceCollector Validation</h1>
+  <p>This page exercises all M4 scenarios. Each interaction should produce BehavioralEvidence containing both TargetEvidence (before/after target state) and ApplicationEvidence (DOM mutations, surface/visibility changes).</p>
+
+  <!-- 1. Checkbox -->
+  <fieldset>
+    <legend>1. Checkbox</legend>
+    <label><input type="checkbox" id="chk-1"> Toggle me</label>
+    <label><input type="checkbox" id="chk-2" checked> Pre-checked</label>
+    <div class="status" id="chk-status">Unchecked</div>
+  </fieldset>
+
+  <!-- 2. Radio -->
+  <fieldset>
+    <legend>2. Radio Buttons</legend>
+    <label><input type="radio" name="grp-radio" id="radio-a" value="A"> Option A</label>
+    <label><input type="radio" name="grp-radio" id="radio-b" value="B"> Option B</label>
+    <label><input type="radio" name="grp-radio" id="radio-c" value="C"> Option C</label>
+    <div class="status" id="radio-status">No selection</div>
+  </fieldset>
+
+  <!-- 3. Native Select -->
+  <fieldset>
+    <legend>3. Native Select</legend>
+    <select id="native-select">
+      <option value="">Choose...</option>
+    </select>
+  </fieldset>
+
+  <!-- 4. Custom Dropdown -->
+  <fieldset>
+    <legend>4. Custom Dropdown (DOM Mutation)</legend>
+    <div class="custom-dropdown">
+      <button class="custom-dropdown-btn" id="dd-btn">Select Option ▾</button>
+      <div class="custom-dropdown-menu" id="dd-menu">
+        <div class="custom-dropdown-item" data-value="apple">Apple</div>
+        <div class="custom-dropdown-item" data-value="banana">Banana</div>
+        <div class="custom-dropdown-item" data-value="cherry">Cherry</div>
+      </div>
+    </div>
+    <div class="status" id="dd-status">No selection</div>
+  </fieldset>
+
+  <!-- 5. Text Entry -->
+  <fieldset>
+    <legend>5. Text Entry (Typing → Extend-on-Input)</legend>
+    <label>Text input: <input type="text" id="txt-input" placeholder="Type something..."></label>
+    <label>Email input: <input type="email" id="email-input" placeholder="email@example.com"></label>
+    <label>Textarea: <textarea id="txt-area" rows="3" placeholder="Multi-line text..."></textarea></label>
+  </fieldset>
+
+  <!-- 6. Multiple Rapid Clicks -->
+  <fieldset>
+    <legend>6. Multiple Rapid Clicks</legend>
+    <button id="btn-counter">Click count: 0</button>
+    <button id="btn-toggle-color">Toggle Color</button>
+    <div id="counter-status" style="margin-top: 8px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">Background: default</div>
+  </fieldset>
+
+  <!-- 7. Navigation -->
+  <fieldset>
+    <legend>7. Navigation (SPA-style)</legend>
+    <button id="btn-nav-hash">Navigate via hash</button>
+    <button id="btn-nav-history">Navigate via history.pushState</button>
+    <div class="status" id="nav-status">URL: <span id="nav-url"></span></div>
+  </fieldset>
+
+  <!-- 8. DOM Changes Elsewhere -->
+  <fieldset>
+    <legend>8. DOM Changes Elsewhere (button click mutates another area)</legend>
+    <button id="btn-add-item">Add Dynamic Item</button>
+    <button id="btn-remove-item">Remove Last Item</button>
+    <button id="btn-show-toast">Show Toast</button>
+    <div id="dynamic-area">Dynamic items will appear here</div>
+  </fieldlset>
+
+  <!-- 9. Modal -->
+  <fieldset>
+    <legend>9. Modal (Surface + Visibility Change)</legend>
+    <button id="btn-open-modal">Open Modal</button>
+  </fieldset>
+
+  <!-- 10. Autocomplete -->
+  <fieldset>
+    <legend>10. Autocomplete (Input + DOM mutations)</legend>
+    <div class="autocomplete-wrapper">
+      <input type="text" id="ac-input" placeholder="Type to search (apple, banana, cherry)..." style="width: 300px;">
+      <div class="autocomplete-results" id="ac-results"></div>
+    </div>
+  </fieldset>
+
+  <!-- Modal backdrop -->
+  <div class="modal-backdrop" id="modal-backdrop">
+    <div class="modal">
+      <h3>Modal Dialog</h3>
+      <p>This modal creates surface and visibility evidence.</p>
+      <button id="btn-close-modal">Close</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ── Checkbox ──────────────────────────────────────────
+    document.getElementById('chk-1').addEventListener('change', function() {
+      document.getElementById('chk-status').textContent = this.checked ? 'Checked' : 'Unchecked';
+    });
+
+    // ── Radio ─────────────────────────────────────────────
+    document.querySelectorAll('input[name="grp-radio"]').forEach(function(r) {
+      r.addEventListener('change', function() {
+        document.getElementById('radio-status').textContent = 'Selected: ' + this.value;
+      });
+    });
+
+    // ── Native Select ─────────────────────────────────────
+    var select = document.getElementById('native-select');
+    ['Apple', 'Banana', 'Cherry', 'Date'].forEach(function(f) {
+      var opt = document.createElement('option');
+      opt.value = f.toLowerCase(); opt.textContent = f;
+      select.appendChild(opt);
+    });
+
+    // ── Custom Dropdown ───────────────────────────────────
+    var ddBtn = document.getElementById('dd-btn');
+    var ddMenu = document.getElementById('dd-menu');
+    ddBtn.addEventListener('click', function() {
+      ddMenu.classList.toggle('open');
+    });
+    ddMenu.querySelectorAll('.custom-dropdown-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        document.getElementById('dd-status').textContent = 'Selected: ' + this.dataset.value;
+        ddBtn.textContent = this.textContent + ' ▾';
+        ddMenu.classList.remove('open');
+      });
+    });
+
+    // ── Text Entry ────────────────────────────────────────
+    // Typing into these inputs tests the extend-on-input model
+
+    // ── Multiple Rapid Clicks ─────────────────────────────
+    var clickCount = 0;
+    var counterBtn = document.getElementById('btn-counter');
+    counterBtn.addEventListener('click', function() {
+      clickCount++;
+      counterBtn.textContent = 'Click count: ' + clickCount;
+    });
+
+    var colorState = false;
+    document.getElementById('btn-toggle-color').addEventListener('click', function() {
+      colorState = !colorState;
+      document.getElementById('counter-status').style.background = colorState ? '#d4edda' : 'transparent';
+      document.getElementById('counter-status').textContent = 'Background: ' + (colorState ? 'green' : 'default');
+    });
+
+    // ── Navigation ────────────────────────────────────────
+    document.getElementById('btn-nav-hash').addEventListener('click', function() {
+      location.hash = 'page-' + Date.now();
+      document.getElementById('nav-url').textContent = location.href;
+    });
+    document.getElementById('btn-nav-history').addEventListener('click', function() {
+      history.pushState({ page: 'custom' }, '', '?page=' + Date.now());
+      document.getElementById('nav-url').textContent = location.href;
+    });
+    document.getElementById('nav-url').textContent = location.href;
+
+    // ── DOM Changes Elsewhere ─────────────────────────────
+    var dynamicArea = document.getElementById('dynamic-area');
+    var itemCount = 0;
+    document.getElementById('btn-add-item').addEventListener('click', function() {
+      itemCount++;
+      var item = document.createElement('div');
+      item.className = 'dynamic-item';
+      item.textContent = 'Item #' + itemCount + ' (created at ' + new Date().toLocaleTimeString() + ')';
+      dynamicArea.appendChild(item);
+    });
+    document.getElementById('btn-remove-item').addEventListener('click', function() {
+      var items = dynamicArea.querySelectorAll('.dynamic-item');
+      if (items.length > 0) items[items.length - 1].remove();
+    });
+
+    // ── Toast ─────────────────────────────────────────────
+    var toastEl = document.getElementById('toast');
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      setTimeout(function() { toastEl.classList.remove('show'); }, 2000);
+    }
+    document.getElementById('btn-show-toast').addEventListener('click', function() {
+      showToast('Toast notification at ' + new Date().toLocaleTimeString());
+    });
+
+    // ── Modal ─────────────────────────────────────────────
+    document.getElementById('btn-open-modal').addEventListener('click', function() {
+      document.getElementById('modal-backdrop').classList.add('open');
+    });
+    document.getElementById('btn-close-modal').addEventListener('click', function() {
+      document.getElementById('modal-backdrop').classList.remove('open');
+    });
+
+    // ── Autocomplete ──────────────────────────────────────
+    var acData = ['apple', 'apricot', 'avocado', 'banana', 'blackberry', 'blueberry', 'cherry', 'cranberry'];
+    var acInput = document.getElementById('ac-input');
+    var acResults = document.getElementById('ac-results');
+    acInput.addEventListener('input', function() {
+      var query = this.value.toLowerCase().trim();
+      acResults.innerHTML = '';
+      if (query.length < 1) {
+        acResults.classList.remove('show');
+        return;
+      }
+      var matches = acData.filter(function(d) { return d.startsWith(query); });
+      matches.slice(0, 5).forEach(function(m) {
+        var div = document.createElement('div');
+        div.className = 'autocomplete-item';
+        div.textContent = m;
+        div.addEventListener('click', function() {
+          acInput.value = m;
+          acResults.classList.remove('show');
+        });
+        acResults.appendChild(div);
+      });
+      if (matches.length > 0) acResults.classList.add('show');
+      else acResults.classList.remove('show');
+    });
+  </script>
+</body>
+</html>

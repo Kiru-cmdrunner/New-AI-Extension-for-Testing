@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>M1 Behavioral Observer — Real-World Pattern Test</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; color: #1e293b; }
+    .section { margin: 30px 0; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .section h2 { margin-top: 0; font-size: 1.1em; color: #475569; }
+    
+    /* Bootstrap-style dropdown */
+    .dropdown { position: relative; }
+    .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; background: white; border: 1px solid #cbd5e1; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 4px 0; min-width: 180px; z-index: 100; }
+    .dropdown.open .dropdown-menu { display: block; }
+    .dropdown-item { padding: 8px 16px; cursor: pointer; }
+    .dropdown-item:hover { background: #f1f5f9; }
+    
+    /* Accordion */
+    .accordion-item { border: 1px solid #e2e8f0; border-radius: 4px; margin: 4px 0; }
+    .accordion-header { padding: 12px 16px; cursor: pointer; background: #f8fafc; }
+    .accordion-body { display: none; padding: 12px 16px; }
+    .accordion-item.active .accordion-body { display: block; }
+    .accordion-item.active .accordion-header { background: #e0f2fe; }
+    
+    /* Modal */
+    .modal-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+    .modal-backdrop.open { display: flex; align-items: center; justify-content: center; }
+    .modal { background: white; border-radius: 8px; padding: 24px; max-width: 400px; width: 90%; }
+    
+    /* Tabs */
+    .tabs { display: flex; border-bottom: 2px solid #e2e8f0; }
+    .tab { padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .tab.active { border-bottom-color: #3b82f6; color: #3b82f6; font-weight: 600; }
+    .tab-content { display: none; padding: 16px; }
+    .tab-content.active { display: block; }
+    
+    /* Checkbox toggle (Amazon-style) */
+    .checkbox-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .checkbox-toggle i.a-icon-checkbox { width: 16px; height: 16px; border: 2px solid #cbd5e1; border-radius: 3px; display: inline-block; position: relative; }
+    .checkbox-toggle.checked i.a-icon-checkbox { background: #3b82f6; border-color: #3b82f6; }
+    .checkbox-toggle.checked i.a-icon-checkbox::after { content: '✓'; color: white; font-size: 12px; position: absolute; top: -2px; left: 2px; }
+    
+    /* React-style state update with async delay */
+    .react-toggle .react-indicator { display: inline-block; width: 44px; height: 24px; border-radius: 12px; background: #cbd5e1; position: relative; transition: background 0.2s; }
+    .react-toggle .react-indicator::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: white; transition: transform 0.2s; }
+    .react-toggle.on .react-indicator { background: #3b82f6; }
+    .react-toggle.on .react-indicator::after { transform: translateX(20px); }
+    
+    /* Tooltip */
+    .tooltip-trigger { position: relative; display: inline-block; }
+    .tooltip { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.85em; white-space: nowrap; }
+    .tooltip-trigger:hover .tooltip { display: block; }
+    
+    /* Loading spinner */
+    .loading-spinner { display: none; }
+    .loading-spinner.active { display: inline-block; }
+    .loading-spinner::after { content: ''; display: inline-block; width: 16px; height: 16px; border: 2px solid #cbd5e1; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* Toast notification */
+    .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; }
+    .toast { display: none; background: #1e293b; color: white; padding: 12px 20px; border-radius: 8px; margin: 4px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .toast.show { display: block; }
+    
+    /* Form */
+    input[type="text"], input[type="email"], textarea, select {
+      width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px;
+    }
+    label { display: block; margin: 8px 0 4px; font-size: 0.9em; color: #64748b; }
+    .validation-error { display: none; color: #ef4444; font-size: 0.8em; margin-top: 4px; }
+    .input-group.error input { border-color: #ef4444; }
+    .input-group.error .validation-error { display: block; }
+    
+    .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+    .btn-primary { background: #3b82f6; color: white; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn:hover { opacity: 0.9; }
+    
+    /* List that updates dynamically */
+    .dynamic-list { list-style: none; padding: 0; }
+    .dynamic-list li { padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 4px; margin: 4px 0; display: flex; justify-content: space-between; align-items: center; }
+    .item-complete { text-decoration: line-through; opacity: 0.6; }
+  </style>
+</head>
+<body>
+  <h1>M1 Behavioral Observer — Real-World Pattern Test</h1>
+  <p>Each pattern below simulates a common web application interaction. The observer is injected on click/change and records DOM mutations.</p>
+  
+  <div id="results-container" style="position:fixed; top:20px; right:20px; width:450px; max-height:80vh; overflow-y:auto; background:white; border:2px solid #3b82f6; border-radius:8px; padding:12px; z-index:9999; font-size:11px;">
+    <h3 style="margin:0 0 8px;">🔬 Observer Results <button onclick="document.getElementById('results-container').querySelector('.results-body').innerHTML=''">Clear</button></h3>
+    <div class="results-body"></div>
+  </div>
+
+  <!-- 1. Bootstrap-style Dropdown -->
+  <div class="section">
+    <h2>1. Bootstrap Dropdown (class toggle on parent container)</h2>
+    <div class="dropdown" id="dropdown1">
+      <button class="btn btn-primary" id="dropdown-toggle">Options ▾</button>
+      <div class="dropdown-menu" id="dropdown-menu">
+        <div class="dropdown-item" data-value="opt1">Option 1</div>
+        <div class="dropdown-item" data-value="opt2">Option 2</div>
+        <div class="dropdown-item" data-value="opt3">Option 3</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Accordion -->
+  <div class="section">
+    <h2>2. Accordion (class toggle on ancestor + aria-expanded)</h2>
+    <div class="accordion-item" id="acc1">
+      <div class="accordion-header" id="acc-header1">Section 1 ▸</div>
+      <div class="accordion-body">Content for section 1</div>
+    </div>
+  </div>
+
+  <!-- 3. Modal Dialog -->
+  <div class="section">
+    <h2>3. Modal Dialog (child added to body/backdrop)</h2>
+    <button class="btn btn-primary" id="modal-trigger">Open Modal</button>
+  </div>
+  <div class="modal-backdrop" id="modal-backdrop">
+    <div class="modal" id="modal-content">
+      <h3>Modal Title</h3>
+      <p>This is modal content.</p>
+      <button class="btn btn-danger" id="modal-close">Close</button>
+    </div>
+  </div>
+
+  <!-- 4. Tabs -->
+  <div class="section">
+    <h2>4. Tabs (class shuffle between siblings)</h2>
+    <div class="tabs" id="tab-container">
+      <div class="tab active" data-tab="t1">Tab 1</div>
+      <div class="tab" data-tab="t2">Tab 2</div>
+      <div class="tab" data-tab="t3">Tab 3</div>
+    </div>
+    <div class="tab-content active" id="t1">Tab 1 content</div>
+    <div class="tab-content" id="t2">Tab 2 content</div>
+    <div class="tab-content" id="t3">Tab 3 content</div>
+  </div>
+
+  <!-- 5. Amazon-style checkbox (icon inside &lt;a&gt; tag) -->
+  <div class="section">
+    <h2>5. Amazon-Style Checkbox (child &lt;i class="a-icon-checkbox"&gt; checked state)</h2>
+    <a href="#" class="checkbox-toggle" id="amazon-checkbox">
+      <i class="a-icon-checkbox"></i>
+      <span>Filter option</span>
+    </a>
+  </div>
+
+  <!-- 6. React-style async toggle (delayed state update) -->
+  <div class="section">
+    <h2>6. React Async Toggle (300ms delayed state update)</h2>
+    <div class="react-toggle" id="react-toggle">
+      <span class="react-indicator"></span>
+      <span class="react-label">Off</span>
+    </div>
+  </div>
+
+  <!-- 7. Dynamic list (add/remove items) -->
+  <div class="section">
+    <h2>7. Dynamic To-Do List (childList add/remove)</h2>
+    <input type="text" id="todo-input" placeholder="Add item...">
+    <button class="btn btn-primary" id="todo-add">Add</button>
+    <ul class="dynamic-list" id="todo-list">
+      <li id="todo-0">Item 1 <button class="btn-remove" onclick="this.parentElement.remove()">✕</button></li>
+    </ul>
+  </div>
+
+  <!-- 8. Form with validation -->
+  <div class="section">
+    <h2>8. Form Validation (blur triggers error class)</h2>
+    <div class="input-group" id="email-group">
+      <label>Email</label>
+      <input type="email" id="email-input" placeholder="enter email">
+      <div class="validation-error">Please enter a valid email</div>
+    </div>
+  </div>
+
+  <!-- 9. Tooltip on hover -->
+  <div class="section">
+    <h2>9. Tooltip (CSS-only hover, no DOM mutation)</h2>
+    <div class="tooltip-trigger" id="tooltip-host">
+      <span>Hover for tooltip</span>
+      <div class="tooltip">This is helpful info</div>
+    </div>
+  </div>
+
+  <!-- 10. Loading state after click -->
+  <div class="section">
+    <h2>10. Loading Spinner + Delayed Content Update (800ms async)</h2>
+    <button class="btn btn-primary" id="loading-btn">
+      <span class="btn-text">Load Data</span>
+      <span class="loading-spinner"></span>
+    </button>
+    <div id="loading-result" style="margin-top: 8px;"></div>
+  </div>
+
+  <!-- 11. Toast notification (child added to container) -->
+  <div class="section">
+    <h2>11. Toast Notification (child added to fixed container)</h2>
+    <button class="btn btn-primary" id="toast-btn">Show Toast</button>
+  </div>
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- 12. Select dropdown (native &lt;select&gt; change event) -->
+  <div class="section">
+    <h2>12. Native Select (change event triggers DOM update)</h2>
+    <select id="native-select">
+      <option value="">Choose...</option>
+      <option value="red">Red</option>
+      <option value="blue">Blue</option>
+      <option value="green">Green</option>
+    </select>
+    <div id="select-result" style="margin-top:8px;">No selection</div>
+  </div>
+
+  <script>
+    // ============================================================
+    // INLINE BEHAVIORAL OBSERVER (adapted from behavioral-observer.ts)
+    // ============================================================
+    
+    const MAX_TEXT_LENGTH = 200;
+    const MAX_CHILD_SUMMARY_LENGTH = 50;
+    
+    function takeSnapshot(el) {
+      return {
+        className: el.getAttribute('class'),
+        ariaExpanded: el.getAttribute('aria-expanded'),
+        ariaChecked: el.getAttribute('aria-checked'),
+        ariaSelected: el.getAttribute('aria-selected'),
+        ariaPressed: el.getAttribute('aria-pressed'),
+        ariaDisabled: el.getAttribute('aria-disabled'),
+        value: 'value' in el ? String(el.value ?? '') : null,
+        checked: 'checked' in el ? Boolean(el.checked) : null,
+        textContent: el.textContent?.slice(0, MAX_TEXT_LENGTH) ?? null,
+        childCount: el.childElementCount,
+        isConnected: el.isConnected,
+      };
+    }
+    
+    function summarizeNode(node) {
+      const name = node.nodeName.toLowerCase();
+      if (node.textContent && node.textContent.trim()) {
+        return name + ': "' + node.textContent.trim().slice(0, MAX_CHILD_SUMMARY_LENGTH) + '"';
+      }
+      return name;
+    }
+    
+    function observeBehavior(targetEl, sourceEventId, eventTimestamp, config) {
+      const stabilityMs = config.stabilityMs || 200;
+      const maxTimeoutMs = config.maxTimeoutMs || 3000;
+      const preSnapshot = takeSnapshot(targetEl);
+      const effects = [];
+      let finalized = false;
+      let stabilityTimer = null;
+      let maxTimer = null;
+      
+      function finalize(endReason) {
+        if (finalized) return;
+        finalized = true;
+        subtreeObserver.disconnect();
+        if (parentObserver) parentObserver.disconnect();
+        if (stabilityTimer) clearTimeout(stabilityTimer);
+        if (maxTimer) clearTimeout(maxTimer);
+        
+        const finalSnapshot = targetEl.isConnected ? takeSnapshot(targetEl) : null;
+        const actualReason = (!targetEl.isConnected && endReason === 'stabilized') ? 'element-removed' : endReason;
+        
+        config.onComplete({
+          sourceEventId,
+          observationStartOffset: 0,
+          observationEndOffset: Date.now() - eventTimestamp,
+          endReason: actualReason,
+          effects,
+          preSnapshot,
+          finalSnapshot,
+        });
+      }
+      
+      const subtreeObserver = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          const offsetMs = Date.now() - eventTimestamp;
+          if (mutation.type === 'attributes') {
+            effects.push({
+              type: 'attribute-change',
+              attributeName: mutation.attributeName,
+              oldValue: mutation.oldValue,
+              newValue: mutation.target.getAttribute(mutation.attributeName),
+              offsetMs,
+            });
+          } else if (mutation.type === 'childList') {
+            for (const node of Array.from(mutation.addedNodes)) {
+              effects.push({ type: 'child-added', attributeName: null, oldValue: null, newValue: summarizeNode(node), offsetMs });
+            }
+            for (const node of Array.from(mutation.removedNodes)) {
+              effects.push({ type: 'child-removed', attributeName: null, oldValue: summarizeNode(node), newValue: null, offsetMs });
+            }
+          } else if (mutation.type === 'characterData') {
+            effects.push({
+              type: 'character-data',
+              attributeName: null,
+              oldValue: mutation.oldValue,
+              newValue: mutation.target.textContent?.slice(0, MAX_TEXT_LENGTH),
+              offsetMs,
+            });
+          }
+        }
+        if (stabilityTimer) clearTimeout(stabilityTimer);
+        stabilityTimer = setTimeout(() => finalize('stabilized'), stabilityMs);
+      });
+      
+      subtreeObserver.observe(targetEl, {
+        attributes: true, attributeOldValue: true,
+        characterData: true, characterDataOldValue: true,
+        childList: true, subtree: true,
+      });
+      
+      let parentObserver = null;
+      const parent = targetEl.parentElement;
+      if (parent) {
+        parentObserver = new MutationObserver((mutations) => {
+          for (const mutation of mutations) {
+            if (mutation.type === 'childList') {
+              for (const node of Array.from(mutation.removedNodes)) {
+                if (node === targetEl) { finalize('element-removed'); return; }
+              }
+            }
+          }
+        });
+        parentObserver.observe(parent, { childList: true });
+      }
+      
+      function resetStability() {
+        if (stabilityTimer) clearTimeout(stabilityTimer);
+        stabilityTimer = setTimeout(() => finalize('stabilized'), stabilityMs);
+      }
+      maxTimer = setTimeout(() => finalize('timeout'), maxTimeoutMs);
+      resetStability();
+    }
+    
+    // ============================================================
+    // RESULT DISPLAY
+    // ============================================================
+    
+    function displayResult(label, observation) {
+      const container = document.querySelector('.results-body');
+      const div = document.createElement('div');
+      div.style.cssText = 'border-bottom:1px solid #e2e8f0; padding:8px 0;';
+      
+      const title = document.createElement('strong');
+      title.textContent = label;
+      title.style.color = '#3b82f6';
+      div.appendChild(title);
+      
+      const meta = document.createElement('div');
+      meta.style.color = '#64748b';
+      meta.textContent = `endReason: ${observation.endReason} · duration: ${observation.observationEndOffset}ms · effects: ${observation.effects.length}`;
+      div.appendChild(meta);
+      
+      // Effects
+      if (observation.effects.length > 0) {
+        const effectsTitle = document.createElement('div');
+        effectsTitle.textContent = 'Effects:';
+        effectsTitle.style.fontWeight = '600';
+        div.appendChild(effectsTitle);
+        
+        for (const effect of observation.effects) {
+          const line = document.createElement('div');
+          line.style.marginLeft = '12px';
+          line.style.color = '#475569';
+          if (effect.type === 'attribute-change') {
+            line.textContent = `⚡ ${effect.attributeName}: "${effect.oldValue}" → "${effect.newValue}" (+${effect.offsetMs}ms)`;
+          } else if (effect.type === 'child-added') {
+            line.textContent = `➕ added: ${effect.newValue} (+${effect.offsetMs}ms)`;
+          } else if (effect.type === 'child-removed') {
+            line.textContent = `➖ removed: ${effect.oldValue} (+${effect.offsetMs}ms)`;
+          } else if (effect.type === 'character-data') {
+            line.textContent = `📝 text: "${effect.oldValue}" → "${effect.newValue}" (+${effect.offsetMs}ms)`;
+          }
+          div.appendChild(line);
+        }
+      } else {
+        const empty = document.createElement('div');
+        empty.style.color = '#94a3b8';
+        empty.style.marginLeft = '12px';
+        empty.textContent = 'No DOM mutations detected';
+        div.appendChild(empty);
+      }
+      
+      // Snapshot diff
+      if (observation.finalSnapshot) {
+        const changes = [];
+        if (observation.preSnapshot.checked !== observation.finalSnapshot.checked)
+          changes.push(`checked: ${observation.preSnapshot.checked} → ${observation.finalSnapshot.checked}`);
+        if (observation.preSnapshot.value !== observation.finalSnapshot.value)
+          changes.push(`value: "${observation.preSnapshot.value}" → "${observation.finalSnapshot.value}"`);
+        if (observation.preSnapshot.className !== observation.finalSnapshot.className)
+          changes.push(`class changed`);
+        if (observation.preSnapshot.childCount !== observation.finalSnapshot.childCount)
+          changes.push(`children: ${observation.preSnapshot.childCount} → ${observation.finalSnapshot.childCount}`);
+        if (observation.preSnapshot.ariaExpanded !== observation.finalSnapshot.ariaExpanded)
+          changes.push(`aria-expanded: ${observation.preSnapshot.ariaExpanded} → ${observation.finalSnapshot.ariaExpanded}`);
+        
+        if (changes.length > 0) {
+          const snap = document.createElement('div');
+          snap.style.cssText = 'margin-top:4px; color:#94a3b8; font-style:italic;';
+          snap.textContent = `Snapshot: ${changes.join(', ')}`;
+          div.appendChild(snap);
+        }
+      }
+      
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+    
+    // ============================================================
+    // AUTO-TEST RUNNER
+    // ============================================================
+    
+    // This function wraps a click handler with behavioral observation
+    function withObservation(label, elementId, handler) {
+      const el = document.getElementById(elementId);
+      if (!el) { console.warn('Element not found:', elementId); return; }
+      
+      el.addEventListener('click', function(e) {
+        e.preventDefault();
+        const timestamp = Date.now();
+        const eventId = 'evt-' + Math.random().toString(36).slice(2, 8);
+        
+        // Observe the element
+        observeBehavior(el, eventId, timestamp, {
+          onComplete: (obs) => displayResult(label, obs),
+          stabilityMs: 200,
+          maxTimeoutMs: 3000,
+        });
+        
+        // Trigger the actual interaction handler
+        handler(el, e);
+      });
+    }
+    
+    function withObservationChange(label, elementId, handler) {
+      const el = document.getElementById(elementId);
+      if (!el) { console.warn('Element not found:', elementId); return; }
+      
+      el.addEventListener('change', function(e) {
+        const timestamp = Date.now();
+        const eventId = 'evt-' + Math.random().toString(36).slice(2, 8);
+        
+        observeBehavior(el, eventId, timestamp, {
+          onComplete: (obs) => displayResult(label, obs),
+          stabilityMs: 200,
+          maxTimeoutMs: 3000,
+        });
+        
+        handler(el, e);
+      });
+    }
+    
+    // ============================================================
+    // PATTERN HANDLERS
+    // ============================================================
+    
+    // 1. Dropdown toggle
+    withObservation('Dropdown Toggle', 'dropdown-toggle', (el) => {
+      const dropdown = document.getElementById('dropdown1');
+      const isOpen = dropdown.classList.contains('open');
+      if (isOpen) {
+        dropdown.classList.remove('open');
+        el.textContent = 'Options ▾';
+      } else {
+        dropdown.classList.add('open');
+        el.textContent = 'Options ▴';
+      }
+    });
+    
+    // 2. Accordion
+    withObservation('Accordion', 'acc-header1', (el) => {
+      const item = document.getElementById('acc1');
+      item.classList.toggle('active');
+      el.setAttribute('aria-expanded', item.classList.contains('active'));
+      el.textContent = item.classList.contains('active') ? 'Section 1 ▾' : 'Section 1 ▸';
+    });
+    
+    // 3. Modal
+    withObservation('Modal Open', 'modal-trigger', (el) => {
+      const backdrop = document.getElementById('modal-backdrop');
+      backdrop.classList.add('open');
+      backdrop.setAttribute('aria-hidden', 'false');
+    });
+    document.getElementById('modal-close').addEventListener('click', function() {
+      const backdrop = document.getElementById('modal-backdrop');
+      backdrop.classList.remove('open');
+      backdrop.setAttribute('aria-hidden', 'true');
+    });
+
+    // 4. Tabs — observe the tab container
+    withObservation('Tab Switch', 'tab-container', (el) => {
+      // This handler is attached to the container; actual tab switching is below
+    });
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        const targetId = this.getAttribute('data-tab');
+        document.getElementById(targetId).classList.add('active');
+      });
+    });
+
+    // 5. Amazon-style checkbox
+    withObservation('Amazon Checkbox', 'amazon-checkbox', (el) => {
+      e.preventDefault();
+      el.classList.toggle('checked');
+      const icon = el.querySelector('i.a-icon-checkbox');
+      if (icon) {
+        icon.setAttribute('aria-checked', el.classList.contains('checked'));
+      }
+    });
+
+    // 6. React-style async toggle
+    withObservation('React Async Toggle', 'react-toggle', (el) => {
+      // Simulate React's async state update with 300ms delay
+      setTimeout(() => {
+        el.classList.toggle('on');
+        const label = el.querySelector('.react-label');
+        if (label) {
+          label.textContent = el.classList.contains('on') ? 'On' : 'Off';
+        }
+      }, 300);
+    });
+
+    // 7. Dynamic list add
+    document.getElementById('todo-add').addEventListener('click', function() {
+      const input = document.getElementById('todo-input');
+      const text = input.value.trim();
+      if (!text) return;
+      const li = document.createElement('li');
+      li.id = 'todo-' + Date.now();
+      li.innerHTML = text + ' <button class="btn-remove">✕</button>';
+      li.querySelector('.btn-remove').addEventListener('click', function() { li.remove(); });
+      document.getElementById('todo-list').appendChild(li);
+      input.value = '';
+    });
+
+    // Observe the Add button
+    const todoAddBtn = document.getElementById('todo-add');
+    const origTodoAdd = todoAddBtn.onclick;
+    todoAddBtn.addEventListener('click', function() {
+      const timestamp = Date.now();
+      const eventId = 'evt-' + Math.random().toString(36).slice(2, 8);
+      observeBehavior(document.getElementById('todo-list'), eventId, timestamp, {
+        onComplete: (obs) => displayResult('Dynamic List Add (observing list)', obs),
+        stabilityMs: 200,
+        maxTimeoutMs: 3000,
+      });
+    });
+
+    // 8. Form validation
+    const emailInput = document.getElementById('email-input');
+    emailInput.addEventListener('blur', function() {
+      const group = document.getElementById('email-group');
+      const val = this.value.trim();
+      if (val && !val.includes('@')) {
+        group.classList.add('error');
+      } else {
+        group.classList.remove('error');
+      }
+    });
+    // Also fire on change for observation
+    emailInput.addEventListener('change', function() {
+      const group = document.getElementById('email-group');
+      const val = this.value.trim();
+      if (val && !val.includes('@')) {
+        group.classList.add('error');
+      } else {
+        group.classList.remove('error');
+      }
+    });
+
+    // 9. Tooltip — CSS only, no JS needed. But let's observe for completeness.
+    withObservation('Tooltip Trigger (CSS-only)', 'tooltip-host', (el) => {
+      // CSS handles :hover, no JS mutation expected
+    });
+
+    // 10. Loading spinner + delayed content
+    withObservation('Loading Spinner + Delayed Update', 'loading-btn', (el) => {
+      const spinner = el.querySelector('.loading-spinner');
+      const text = el.querySelector('.btn-text');
+      const result = document.getElementById('loading-result');
+      spinner.classList.add('active');
+      text.textContent = 'Loading...';
+      setTimeout(() => {
+        spinner.classList.remove('active');
+        text.textContent = 'Load Data';
+        result.textContent = '✅ Data loaded successfully at ' + new Date().toLocaleTimeString();
+      }, 800);
+    });
+
+    // 11. Toast notification
+    withObservation('Toast Notification', 'toast-btn', (el) => {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = 'Notification at ' + new Date().toLocaleTimeString();
+      container.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.add('show'));
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    });
+
+    // 12. Native select
+    withObservationChange('Native Select', 'native-select', (el) => {
+      const result = document.getElementById('select-result');
+      const val = el.value;
+      const colorMap = { red: '#ef4444', blue: '#3b82f6', green: '#22c55e' };
+      result.textContent = 'Selected: ' + (val || 'none');
+      result.style.color = colorMap[val] || '#1e293b';
+    });
+
+    // Dropdown item selection
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const dropdown = document.getElementById('dropdown1');
+        dropdown.classList.remove('open');
+        document.getElementById('dropdown-toggle').textContent = 'Options ▾';
+      });
+    });
+
+    // ============================================================
+    // AUTO-RUN: Programmatically trigger each pattern
+    // ============================================================
+    window.__m1_test = {
+      runAll: function() {
+        const patterns = [
+          { name: 'Dropdown', elId: 'dropdown-toggle' },
+          { name: 'Accordion', elId: 'acc-header1' },
+          { name: 'Modal', elId: 'modal-trigger' },
+          { name: 'Tab', elId: 'tab-container' },
+          { name: 'Amazon Checkbox', elId: 'amazon-checkbox' },
+          { name: 'React Toggle', elId: 'react-toggle' },
+          { name: 'Tooltip', elId: 'tooltip-host' },
+          { name: 'Loading', elId: 'loading-btn' },
+          { name: 'Toast', elId: 'toast-btn' },
+        ];
+        
+        patterns.forEach((p, i) => {
+          setTimeout(() => {
+            console.log('[M1 Test] Triggering:', p.name);
+            document.getElementById(p.elId).click();
+          }, i * 1500);
+        });
+        
+        // Also trigger native select
+        setTimeout(() => {
+          const sel = document.getElementById('native-select');
+          sel.value = 'blue';
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+          console.log('[M1 Test] Triggering: Native Select');
+        }, patterns.length * 1500);
+        
+        // Also trigger form validation
+        setTimeout(() => {
+          const input = document.getElementById('email-input');
+          input.value = 'invalid-email';
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          console.log('[M1 Test] Triggering: Form Validation');
+        }, (patterns.length + 1) * 1500);
+        
+        // Also add a todo item
+        setTimeout(() => {
+          document.getElementById('todo-input').value = 'Test Item';
+          document.getElementById('todo-add').click();
+          console.log('[M1 Test] Triggering: Dynamic List Add');
+        }, (patterns.length + 2) * 1500);
+      }
+    };
+
+    console.log('[M1 Test] Page loaded. Run window.__m1_test.runAll() to test all patterns.');
+  </script>
+</body>
+</html>

@@ -141,6 +141,27 @@ export interface DomContext {
 
   /** Provable-invalidity verdict + causes for the trusted click. */
   clickQualification?: ClickQualification;
+
+  /**
+   * Hover-capture generic fix v1 (G3): scoped `:hover`-reveal CSS fact,
+   * recorded on the mouseenter capture path only when the raw pointer
+   * element was probed (non-shaped). undefined = not probed = false.
+   * Discovery input only — classification-input, never identity/locators.
+   */
+  hoverReveal?: boolean;
+
+  // ── Hover Capture-Time Evidence Contract v1 (HEC v1, 2026-08-30) ──
+  // Spec .drytis/specs/hover-capture-evidence-contract-v1.md §7 R-A1/R-A4:
+  // recorded at the mouseenter capture instant so one physical act joins
+  // reliably downstream (R-A2) without re-deriving resolution later.
+  // Present ONLY on mouseenter captures; undefined = legacy event.
+
+  /** elementKey of the hover anchor A (resolveHoverTarget outcome). */
+  hoverAnchorKey?: string;
+  /** elementKey of resolveTarget(R) — the click-policy anchor (R-A1). */
+  hoverClickAnchorKey?: string;
+  /** Which G1 branch produced the hover anchor (R-A4 honesty fact). */
+  hoverAnchorResolution?: 'self' | 'ancestor-lift' | 'reveal-target' | 'body';
 }
 
 /** Why a trusted click is provably invalid (spec §4). Platform-enforced tier first. */
